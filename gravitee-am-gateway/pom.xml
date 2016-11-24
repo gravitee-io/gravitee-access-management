@@ -41,7 +41,7 @@
         <module>gravitee-am-gateway-definition</module>
         <module>gravitee-am-gateway-handlers</module>
         <module>gravitee-am-gateway-services</module>
-        <module>gravitee-am-gateway-identityproviders</module>
+        <module>gravitee-am-gateway-identityprovider</module>
     </modules>
 
     <dependencyManagement>
