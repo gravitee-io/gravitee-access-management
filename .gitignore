@@ -1,0 +1,15 @@
+!.gitignore
+
+target/
+.idea/
+*.iml
+.DS_Store
+
+# eclipse
+.settings/
+.project
+.classpath
+/bin/
+
+gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/src/main/resources/plugins/*
+gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/src/main/resources/logs/*

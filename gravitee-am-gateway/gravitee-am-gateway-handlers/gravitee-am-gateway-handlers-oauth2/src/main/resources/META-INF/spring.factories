@@ -1,0 +1,2 @@
+io.gravitee.am.gateway.core.context.ContextFactory=\
+  io.gravitee.am.gateway.handler.oauth2.context.OAuth2ContextFactory

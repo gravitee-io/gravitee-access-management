@@ -1,0 +1,2 @@
+io.gravitee.am.gateway.core.http.HttpServer=\
+  io.gravitee.am.gateway.jetty.JettyHttpServer

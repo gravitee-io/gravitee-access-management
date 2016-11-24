@@ -1,0 +1,25 @@
+{
+	"name": "my-security-domain",
+	"contextPath": "/my-security",
+	"type": "oauth2",
+	"clients": [
+		{
+			"clientId": "test",
+			"clientSecret": "test",
+			"scopes": ["read", "write", "openid"],
+			"redirectUris" : [
+				"http://localhost:8080/demo/*"
+			]
+		}, {
+			"clientId": "resource1",
+                        "clientSecret": "resource1",
+			"authorizedGrantTypes": ["client_credentials"],
+			"accessTokenValiditySeconds": 7200,
+			"refreshTokenValiditySeconds": 14400,
+			"scopes": ["read", "write"],
+                        "redirectUris" : [
+                                "http://localhost:8080/demo/*"
+                        ]
+		}
+	]
+}

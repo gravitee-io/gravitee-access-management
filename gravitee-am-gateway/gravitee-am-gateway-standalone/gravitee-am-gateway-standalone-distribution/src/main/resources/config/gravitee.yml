@@ -1,0 +1,61 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+############################################################################################################
+########################## Gravitee.io Access Management Gateway - Configuration ###########################
+############################################################################################################
+
+############################################################################################################
+# This file is the general configuration of Gravitee.io Access Management Gateway:
+# - Properties (and respective default values) in comment are provided for information.
+# - You can reference other property by using ${property.name} syntax
+# - gravitee.home property is automatically set-up by launcher and refers to the installation path. Do not override it !
+#
+# Please have a look to https://docs.gravitee.io/ for more options and fine-grained granularity
+############################################################################################################
+
+# HTTP Server
+#jetty:
+#  port: 8083
+#  idleTimeout: 30000
+#  acceptors: -1
+#  selectors: -1
+#  pool:
+#    minThreads: 10
+#    maxThreads: 200
+#    idleTimeout: 60000
+#    queueSize: 6000
+#  jmx: false
+#  statistics: false
+#  accesslog:
+#    enabled: true
+#    path: ${gravitee.home}/logs/gravitee_accesslog_yyyy_mm_dd.log
+
+# Path to plugins repository
+#plugins:
+#  path: ${gravitee.home}/plugins
+# If a plugin is already installed (but with a different version), management node does not start anymore
+#  failOnDuplicate: true
+
+# Gateway AM service configurations. Provided values are default values.
+# All services are enabled by default. To stop one of them, you have to add the property 'enabled: false' (See the
+# 'local' service for an example).
+services:
+  # Local registry service.
+  # This registry is used to load domain definitions with json format from the file system.
+  local:
+    enabled: true
+    path: ${gravitee.home}/domains # The path to domain descriptors
