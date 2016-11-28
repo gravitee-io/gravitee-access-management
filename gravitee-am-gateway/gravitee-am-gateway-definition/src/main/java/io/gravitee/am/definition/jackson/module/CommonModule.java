@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.definition.jackson.module;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
+import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
+import com.fasterxml.jackson.databind.deser.std.StringDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
@@ -59,6 +63,25 @@ public class CommonModule extends SimpleModule {
                 jgen.writeString(value.name().toLowerCase());
             }
         });
+
+        addDeserializer(String.class, new RawValueDeserializer());
+    }
+
+    private class RawValueDeserializer extends JsonDeserializer<String> implements ContextualDeserializer {
+        @Override
+        public String deserialize(JsonParser jp, DeserializationContext ctx) throws IOException {
+            TreeNode tree = jp.getCodec().readTree(jp);
+            return tree.toString();
+        }
+
+        @Override
+        public JsonDeserializer<?> createContextual(DeserializationContext ctx,
+                                                    BeanProperty property) throws JsonMappingException {
+            if (property != null && property.getMember().getAnnotation(JsonRawValue.class) != null) {
+                return this;
+            }
+            return new StringDeserializer();
+        }
     }
 
     @Override

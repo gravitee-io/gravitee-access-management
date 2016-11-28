@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.spring;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.definition.jackson.mapper.GraviteeMapper;
 import io.gravitee.am.gateway.core.spring.CoreConfiguration;
+import io.gravitee.am.gateway.idp.spring.IdentityProviderConfiguration;
 import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.jetty.spring.JettyContainerConfiguration;
 import io.gravitee.am.gateway.repository.spring.RepositoryConfiguration;
@@ -42,6 +43,7 @@ import org.springframework.context.annotation.Import;
         JettyContainerConfiguration.class,
         ServiceConfiguration.class,
         RepositoryConfiguration.class,
+        IdentityProviderConfiguration.class,
         CoreConfiguration.class})
 public class StandaloneConfiguration {
 

@@ -44,6 +44,12 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.gateway.identityprovider</groupId>
+            <artifactId>gravitee-am-gateway-identityprovider</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.gateway</groupId>
             <artifactId>gravitee-am-gateway-core</artifactId>
             <version>${project.version}</version>

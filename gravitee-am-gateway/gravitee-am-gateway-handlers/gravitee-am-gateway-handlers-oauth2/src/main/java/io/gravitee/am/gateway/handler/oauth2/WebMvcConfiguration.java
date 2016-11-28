@@ -40,7 +40,7 @@ public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
         ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
         templateResolver.setPrefix("/views/");
         templateResolver.setSuffix(".html");
-        templateResolver.setTemplateMode("XHTML");
+        templateResolver.setTemplateMode("HTML");
         return templateResolver;
     }
 

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.definition;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -36,6 +37,8 @@ public class Domain {
     private Type type;
 
     private Set<Client> clients;
+
+    private List<Identity> identities;
 
     public String getName() {
         return name;
@@ -91,6 +94,14 @@ public class Domain {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public List<Identity> getIdentities() {
+        return identities;
+    }
+
+    public void setIdentities(List<Identity> identities) {
+        this.identities = identities;
     }
 
     @Override

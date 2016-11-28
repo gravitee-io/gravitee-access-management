@@ -15,7 +15,8 @@
  */
 package io.gravitee.am.gateway.idp.plugin;
 
-import io.gravitee.am.gateway.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.idp.core.IdentityProviderDefinition;
+import io.gravitee.am.gateway.idp.core.IdentityProviderManager;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;

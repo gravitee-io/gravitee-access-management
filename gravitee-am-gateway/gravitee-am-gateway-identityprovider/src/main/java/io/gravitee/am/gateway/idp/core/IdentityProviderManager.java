@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.idp.spring;
+package io.gravitee.am.gateway.idp.core;
 
-import io.gravitee.am.gateway.idp.core.IdentityProviderManager;
-import io.gravitee.am.gateway.idp.core.impl.IdentityProviderManagerImpl;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import io.gravitee.am.identityprovider.api.IdentityProvider;
+
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Configuration
-public class IdentityProviderConfiguration {
+public interface IdentityProviderManager {
 
-    @Bean
-    public IdentityProviderManager identityProviderManager() {
-        return new IdentityProviderManagerImpl();
-    }
+    void register(IdentityProviderDefinition identityProviderPluginDefinition);
+
+    Collection<IdentityProvider> getAll();
+
+    //AuthenticationProvider loadIdentityProvider(String identityProvider, Map<String, Object> properties);
 }

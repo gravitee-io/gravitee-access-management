@@ -12,14 +12,31 @@
 			]
 		}, {
 			"clientId": "resource1",
-                        "clientSecret": "resource1",
+			"clientSecret": "resource1",
 			"authorizedGrantTypes": ["client_credentials"],
 			"accessTokenValiditySeconds": 7200,
 			"refreshTokenValiditySeconds": 14400,
 			"scopes": ["read", "write"],
-                        "redirectUris" : [
-                                "http://localhost:8080/demo/*"
-                        ]
+			"redirectUris" : [
+				"http://localhost:8080/demo/*"
+			]
+		}
+	],
+	"identities": [
+		{
+			"type": "inline",
+			"name": "Inline IDP",
+			"configuration": {
+				"users": [
+					{
+						"firstname": "David",
+						"lastname": "BRASSELY",
+						"username": "brasseld",
+						"password": "$2a$06$ezD413j5yfcTvFtucupXReJ9QM2OF3wt7F9w2PEV.XuvSVgkix.6e",
+						"roles": ["USER"]
+					}
+				]
+			}
 		}
 	]
 }

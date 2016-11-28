@@ -17,6 +17,11 @@ package io.gravitee.am.gateway.handler.oauth2;
 
 import io.gravitee.am.gateway.handler.oauth2.provider.code.RepositoryAuthorizationCodeServices;
 import io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore;
+import io.gravitee.am.definition.Domain;
+import io.gravitee.am.definition.Identity;
+import io.gravitee.am.gateway.idp.core.IdentityProviderManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,6 +49,11 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 @EnableWebSecurity
 public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
+    private final Logger logger = LoggerFactory.getLogger(OAuth2SecurityConfiguration.class);
+
+    @Autowired
+    private Domain domain;
+
     @Autowired
     private ClientDetailsService clientDetailsService;
 
@@ -54,7 +64,17 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private OAuth2AuthenticationEntryPoint oAuth2AuthenticationEntryPoint;
 
     @Autowired
+    private IdentityProviderManager identityProviderManager;
+
+    @Autowired
     public void globalUserDetails(AuthenticationManagerBuilder auth) throws Exception {
+        logger.info("Loading identity providers for authentication");
+
+        for(Identity idp : domain.getIdentities()) {
+            logger.info("Loading identity provider: {}", idp.getType());
+            System.out.println(idp.getConfiguration());
+        }
+
         auth.inMemoryAuthentication()
                 .withUser("user").password("password").roles("USER");
     }
