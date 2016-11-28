@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.oauth2.token.internal.model;
+package io.gravitee.am.repository.oauth2.model.code;
+
+import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 
 import java.util.Date;
 
@@ -21,11 +23,41 @@ import java.util.Date;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-abstract class Auditable {
+public class OAuth2AuthorizationCode {
+
+    private String code;
+
+    private OAuth2Authentication oAuth2Authentication;
+
+    private Date expiration;
 
     private Date createdAt;
 
     private Date updatedAt;
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public OAuth2Authentication getOAuth2Authentication() {
+        return oAuth2Authentication;
+    }
+
+    public void setOAuth2Authentication(OAuth2Authentication oAuth2Authentication) {
+        this.oAuth2Authentication = oAuth2Authentication;
+    }
+
+    public Date getExpiration() {
+        return expiration;
+    }
+
+    public void setExpiration(Date expiration) {
+        this.expiration = expiration;
+    }
 
     public Date getCreatedAt() {
         return createdAt;

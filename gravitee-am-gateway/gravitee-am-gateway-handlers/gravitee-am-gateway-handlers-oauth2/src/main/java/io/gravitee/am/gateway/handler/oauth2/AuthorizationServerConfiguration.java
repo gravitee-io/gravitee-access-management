@@ -28,6 +28,7 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.approval.UserApprovalHandler;
+import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 import org.springframework.security.oauth2.provider.token.TokenStore;
@@ -47,6 +48,9 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     private TokenStore tokenStore;
 
     @Autowired
+    private AuthorizationCodeServices authorizationCodeServices;
+
+    @Autowired
     private UserApprovalHandler userApprovalHandler;
 
     @Autowired
@@ -63,8 +67,11 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-        endpoints.tokenStore(tokenStore).userApprovalHandler(userApprovalHandler)
-                .authenticationManager(authenticationManager);
+        endpoints
+            .tokenStore(tokenStore)
+            .authorizationCodeServices(authorizationCodeServices)
+            .userApprovalHandler(userApprovalHandler)
+            .authenticationManager(authenticationManager);
     }
 
     @Override

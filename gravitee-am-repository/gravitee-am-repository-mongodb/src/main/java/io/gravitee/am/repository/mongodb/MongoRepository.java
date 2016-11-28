@@ -17,6 +17,7 @@ package io.gravitee.am.repository.mongodb;
 
 import io.gravitee.am.repository.Repository;
 import io.gravitee.am.repository.Scope;
+import io.gravitee.am.repository.mongodb.oauth2.code.AuthorizationCodeRepositoryConfiguration;
 import io.gravitee.am.repository.mongodb.oauth2.token.TokenRepositoryConfiguration;
 
 /**
@@ -32,7 +33,7 @@ public class MongoRepository implements Repository {
 
     @Override
     public Scope[] scopes() {
-        return new Scope [] { Scope.OAUTH2_TOKEN, Scope.OAUTH2_MANAGAMENT };
+        return new Scope [] { Scope.OAUTH2_TOKEN, Scope.OAUTH2_CODE, Scope.OAUTH2_MANAGAMENT };
     }
 
     @Override
@@ -40,6 +41,8 @@ public class MongoRepository implements Repository {
         switch (scope) {
             case OAUTH2_TOKEN:
                 return TokenRepositoryConfiguration.class;
+            case OAUTH2_CODE:
+                return AuthorizationCodeRepositoryConfiguration.class;
         }
 
         return null;

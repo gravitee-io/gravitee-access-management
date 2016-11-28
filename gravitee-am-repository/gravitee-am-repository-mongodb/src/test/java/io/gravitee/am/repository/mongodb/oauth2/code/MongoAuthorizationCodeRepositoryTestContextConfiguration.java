@@ -13,44 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.oauth2.token;
+package io.gravitee.am.repository.mongodb.oauth2.code;
 
 import com.mongodb.Mongo;
-import io.gravitee.am.repository.Scope;
+import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.mongo.tests.MongodForTestsFactory;
 import io.gravitee.am.repository.mongodb.oauth2.common.AbstractRepositoryConfiguration;
-import io.gravitee.am.repository.mongodb.oauth2.common.MongoFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Configuration
-@ComponentScan("io.gravitee.am.repository.mongodb.oauth2.token")
-public class TokenRepositoryConfiguration extends AbstractRepositoryConfiguration {
+@ComponentScan("io.gravitee.am.repository.mongodb.oauth2.code")
+@EnableMongoRepositories
+public class MongoAuthorizationCodeRepositoryTestContextConfiguration extends AbstractRepositoryConfiguration {
 
-    @Autowired
-    @Qualifier("tokenMongo")
-    private Mongo mongo;
-
-    @Bean(name = "tokenMongo")
-    public static MongoFactory mongoFactory() {
-        return new MongoFactory(Scope.OAUTH2_TOKEN.getName());
+    @Bean
+    public MongodForTestsFactory factory() throws Exception {
+        return MongodForTestsFactory.with(Version.Main.DEVELOPMENT);
     }
 
-    @Bean(name = "tokenMongoTemplate")
-    public MongoOperations mongoOperations() {
-        return new MongoTemplate(mongo, getDatabaseName());
-    }
-
-    @Override
+    @Bean(name = "authorizationCodeMongo")
     public Mongo mongo() throws Exception {
-        return mongo;
+        return factory().newMongo();
+    }
+
+    @Bean(name = "authorizationCodeMongoTemplate")
+    public MongoTemplate mongoTemplate(Mongo mongo) {
+        return new MongoTemplate(mongo, "gravitee-oauth2");
     }
 }

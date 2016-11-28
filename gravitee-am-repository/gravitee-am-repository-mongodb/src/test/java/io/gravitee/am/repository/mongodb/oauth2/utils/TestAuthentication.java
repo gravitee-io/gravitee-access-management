@@ -13,25 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository;
+package io.gravitee.am.repository.mongodb.oauth2.utils;
+
+
+import io.gravitee.am.repository.oauth2.model.authentication.AbstractAuthenticationToken;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Scope {
+public class TestAuthentication extends AbstractAuthenticationToken {
 
-    OAUTH2_TOKEN("oauth2_token"),
-    OAUTH2_MANAGAMENT("oauth2_management"),
-    OAUTH2_CODE("oauth2_code");
+    private String principal;
 
-    String name;
-
-    Scope(String name) {
-        this.name = name;
+    public TestAuthentication(String name, boolean authenticated) {
+        super(null);
+        setAuthenticated(authenticated);
+        this.principal = name;
     }
 
-    public String getName() {
-        return this.name;
+    public Object getCredentials() {
+        return null;
+    }
+
+    public Object getPrincipal() {
+        return this.principal;
     }
 }

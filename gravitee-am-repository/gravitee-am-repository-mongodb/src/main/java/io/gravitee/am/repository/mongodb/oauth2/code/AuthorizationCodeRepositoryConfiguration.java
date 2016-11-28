@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.oauth2.token;
+package io.gravitee.am.repository.mongodb.oauth2.code;
 
 import com.mongodb.Mongo;
 import io.gravitee.am.repository.Scope;
@@ -32,19 +32,19 @@ import org.springframework.data.mongodb.core.MongoTemplate;
  * @author GraviteeSource Team
  */
 @Configuration
-@ComponentScan("io.gravitee.am.repository.mongodb.oauth2.token")
-public class TokenRepositoryConfiguration extends AbstractRepositoryConfiguration {
+@ComponentScan("io.gravitee.am.repository.mongodb.oauth2.code")
+public class AuthorizationCodeRepositoryConfiguration extends AbstractRepositoryConfiguration {
 
     @Autowired
-    @Qualifier("tokenMongo")
+    @Qualifier("authorizationCodeMongo")
     private Mongo mongo;
 
-    @Bean(name = "tokenMongo")
+    @Bean(name = "authorizationCodeMongo")
     public static MongoFactory mongoFactory() {
-        return new MongoFactory(Scope.OAUTH2_TOKEN.getName());
+        return new MongoFactory(Scope.OAUTH2_CODE.getName());
     }
 
-    @Bean(name = "tokenMongoTemplate")
+    @Bean(name = "authorizationCodeMongoTemplate")
     public MongoOperations mongoOperations() {
         return new MongoTemplate(mongo, getDatabaseName());
     }

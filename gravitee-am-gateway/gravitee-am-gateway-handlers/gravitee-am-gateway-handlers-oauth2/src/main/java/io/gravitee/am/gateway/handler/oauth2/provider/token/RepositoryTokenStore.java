@@ -15,23 +15,21 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.provider.token;
 
+import io.gravitee.am.gateway.handler.oauth2.provider.RepositoryProviderUtils;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.common.DefaultExpiringOAuth2RefreshToken;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2RefreshToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
-import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.stereotype.Component;
 
-import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -50,7 +48,7 @@ public class RepositoryTokenStore implements TokenStore {
                 = tokenRepository.readAuthentication(convert(token));
 
         if (oAuth2Authentication.isPresent()) {
-            return convert(oAuth2Authentication.get());
+            return RepositoryProviderUtils.convert(oAuth2Authentication.get());
         } else {
             return null;
         }
@@ -62,7 +60,7 @@ public class RepositoryTokenStore implements TokenStore {
                 = tokenRepository.readAuthentication(token);
 
         if (oAuth2Authentication.isPresent()) {
-            return convert(oAuth2Authentication.get());
+            return RepositoryProviderUtils.convert(oAuth2Authentication.get());
         } else {
             return null;
         }
@@ -70,7 +68,7 @@ public class RepositoryTokenStore implements TokenStore {
 
     @Override
     public void storeAccessToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
-        tokenRepository.storeAccessToken(convert(token), convert(authentication));
+        tokenRepository.storeAccessToken(convert(token), RepositoryProviderUtils.convert(authentication));
     }
 
     @Override
@@ -91,7 +89,7 @@ public class RepositoryTokenStore implements TokenStore {
 
     @Override
     public void storeRefreshToken(OAuth2RefreshToken refreshToken, OAuth2Authentication authentication) {
-        tokenRepository.storeRefreshToken(convert(refreshToken), convert(authentication));
+        tokenRepository.storeRefreshToken(convert(refreshToken), RepositoryProviderUtils.convert(authentication));
     }
 
     @Override
@@ -112,7 +110,7 @@ public class RepositoryTokenStore implements TokenStore {
                 = tokenRepository.readAuthenticationForRefreshToken(convert(token));
 
         if (oAuth2Authentication.isPresent()) {
-            return convert(oAuth2Authentication.get());
+            return RepositoryProviderUtils.convert(oAuth2Authentication.get());
         } else {
             return null;
         }
@@ -130,7 +128,7 @@ public class RepositoryTokenStore implements TokenStore {
 
     @Override
     public OAuth2AccessToken getAccessToken(OAuth2Authentication authentication) {
-        Optional<io.gravitee.am.repository.oauth2.model.OAuth2AccessToken> oAuth2AccessToken = tokenRepository.getAccessToken(convert(authentication));
+        Optional<io.gravitee.am.repository.oauth2.model.OAuth2AccessToken> oAuth2AccessToken = tokenRepository.getAccessToken(RepositoryProviderUtils.convert(authentication));
 
         if (oAuth2AccessToken.isPresent()) {
             return convert(oAuth2AccessToken.get());
@@ -214,86 +212,5 @@ public class RepositoryTokenStore implements TokenStore {
 
     private OAuth2RefreshToken convert(io.gravitee.am.repository.oauth2.model.OAuth2RefreshToken _oAuth2RefreshToken) {
         return new DefaultExpiringOAuth2RefreshToken(_oAuth2RefreshToken.getValue(), _oAuth2RefreshToken.getExpiration());
-    }
-
-    private io.gravitee.am.repository.oauth2.model.OAuth2Authentication convert(OAuth2Authentication _oAuth2Authentication) {
-        // oauth2 request
-        OAuth2Request _oAuth2Request = _oAuth2Authentication.getOAuth2Request();
-        io.gravitee.am.repository.oauth2.model.request.OAuth2Request oAuth2Request =
-                new io.gravitee.am.repository.oauth2.model.request.OAuth2Request();
-        oAuth2Request.setRequestParameters(_oAuth2Request.getRequestParameters());
-        oAuth2Request.setClientId(_oAuth2Request.getClientId());
-        oAuth2Request.setAuthorities(convert(_oAuth2Request.getAuthorities()));
-        oAuth2Request.setApproved(_oAuth2Request.isApproved());
-        oAuth2Request.setScope(_oAuth2Request.getScope());
-        oAuth2Request.setResourceIds(_oAuth2Request.getResourceIds());
-        oAuth2Request.setRedirectUri(_oAuth2Request.getRedirectUri());
-        oAuth2Request.setResponseTypes(_oAuth2Request.getResponseTypes());
-        oAuth2Request.setExtensions(_oAuth2Request.getExtensions());
-
-        // user authentication
-        io.gravitee.am.repository.oauth2.model.authentication.Authentication userAuthentication = null;
-        Authentication _userAuthentication = _oAuth2Authentication.getUserAuthentication();
-        if (_userAuthentication != null) {
-            Object principal = _userAuthentication.getPrincipal();
-            Object credentials = _userAuthentication.getCredentials();
-            Collection<? extends io.gravitee.am.repository.oauth2.model.authority.GrantedAuthority> authorities = convert(_userAuthentication.getAuthorities());
-            userAuthentication =
-                    new io.gravitee.am.repository.oauth2.model.authentication.UsernamePasswordAuthenticationToken(principal, credentials, authorities);
-        }
-
-        io.gravitee.am.repository.oauth2.model.OAuth2Authentication oAuth2Authentication =
-                new io.gravitee.am.repository.oauth2.model.OAuth2Authentication(oAuth2Request, userAuthentication);
-
-        return oAuth2Authentication;
-    }
-
-    private OAuth2Authentication convert(io.gravitee.am.repository.oauth2.model.OAuth2Authentication _oAuth2Authentication) {
-        // oauth2 request
-        io.gravitee.am.repository.oauth2.model.request.OAuth2Request _oAuth2Request = _oAuth2Authentication.getOAuth2Request();
-
-        Map<String, String> requestParameters = _oAuth2Request.getRequestParameters();
-        String clientId = _oAuth2Request.getClientId();
-        Collection<? extends GrantedAuthority> authorities = map(_oAuth2Request.getAuthorities());
-        boolean approved = _oAuth2Request.isApproved();
-        Set<String> scope = _oAuth2Request.getScope();
-        Set<String> resourceIds = _oAuth2Request.getResourceIds();
-        String redirectUri = _oAuth2Request.getRedirectUri();
-        Set<String> responseTypes = _oAuth2Request.getResponseTypes();
-        Map<String, Serializable> extensions = _oAuth2Request.getExtensions();
-
-        OAuth2Request oAuth2Request =
-                new OAuth2Request(requestParameters, clientId, authorities, approved, scope, resourceIds, redirectUri, responseTypes, extensions);
-
-        // user authentication
-        Authentication userAuthentication = null;
-        io.gravitee.am.repository.oauth2.model.authentication.Authentication _userAuthentication = _oAuth2Authentication.getUserAuthentication();
-
-        if (_userAuthentication != null && _userAuthentication instanceof io.gravitee.am.repository.oauth2.model.authentication.UsernamePasswordAuthenticationToken) {
-            Object principal = _userAuthentication.getPrincipal();
-            Object credentials = _userAuthentication.getCredentials();
-            Collection<? extends GrantedAuthority> userAuthorities = map(_userAuthentication.getAuthorities());
-            userAuthentication =
-                    new UsernamePasswordAuthenticationToken(principal, credentials, userAuthorities);
-        }
-
-        OAuth2Authentication oAuth2Authentication =
-                new OAuth2Authentication(oAuth2Request, userAuthentication);
-
-        return oAuth2Authentication;
-    }
-
-    private Collection<? extends GrantedAuthority> map(Collection<? extends io.gravitee.am.repository.oauth2.model.authority.GrantedAuthority> _authorities) {
-        if (_authorities == null) {
-            return null;
-        }
-        return _authorities.stream().map(a -> new SimpleGrantedAuthority(a.getAuthority())).collect(Collectors.toList());
-    }
-
-    private Collection<? extends io.gravitee.am.repository.oauth2.model.authority.GrantedAuthority> convert(Collection<? extends GrantedAuthority> _authorities) {
-        if (_authorities == null) {
-            return null;
-        }
-        return _authorities.stream().map(a -> new io.gravitee.am.repository.oauth2.model.authority.SimpleGrantedAuthority(a.getAuthority())).collect(Collectors.toList());
     }
 }

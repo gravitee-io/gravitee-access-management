@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.oauth2.token.utils;
+package io.gravitee.am.repository.mongodb.oauth2.utils;
 
 import io.gravitee.am.repository.oauth2.model.authority.GrantedAuthority;
 import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Factory for tests to create OAuth2Request objects.

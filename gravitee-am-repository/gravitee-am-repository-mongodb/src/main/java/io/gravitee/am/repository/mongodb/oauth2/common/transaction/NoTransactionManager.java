@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.oauth2.token.transaction;
+package io.gravitee.am.repository.mongodb.oauth2.common.transaction;
 
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;

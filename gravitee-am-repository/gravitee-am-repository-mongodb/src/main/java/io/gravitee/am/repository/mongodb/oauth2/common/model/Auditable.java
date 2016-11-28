@@ -13,30 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.oauth2.token.utils;
+package io.gravitee.am.repository.mongodb.oauth2.common.model;
 
-
-import io.gravitee.am.repository.oauth2.model.authentication.AbstractAuthenticationToken;
+import java.util.Date;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class TestAuthentication extends AbstractAuthenticationToken {
+public abstract class Auditable {
 
-    private String principal;
+    private Date createdAt;
 
-    public TestAuthentication(String name, boolean authenticated) {
-        super(null);
-        setAuthenticated(authenticated);
-        this.principal = name;
+    private Date updatedAt;
+
+    public Date getCreatedAt() {
+        return createdAt;
     }
 
-    public Object getCredentials() {
-        return null;
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 
-    public Object getPrincipal() {
-        return this.principal;
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

@@ -13,20 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.repository.spring;
+package io.gravitee.am.repository.oauth2.api;
 
-import io.gravitee.am.repository.mongodb.oauth2.code.AuthorizationCodeRepositoryConfiguration;
-import io.gravitee.am.repository.mongodb.oauth2.token.TokenRepositoryConfiguration;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
+import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
+
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-// TODO : create repository plugin
-@Configuration
-@Import({ TokenRepositoryConfiguration.class, AuthorizationCodeRepositoryConfiguration.class })
-public class RepositoryConfiguration {
+public interface AuthorizationCodeRepository {
+
+    /**
+     * Store an authorization code.
+     *
+     * @param oAuth2AuthorizationCode The code with its associated authentication.
+     */
+    void store(OAuth2AuthorizationCode oAuth2AuthorizationCode);
+
+    /**
+     * Consume an authorization code and get the associated authentication
+     *
+     * @param code The code to consume.
+     */
+    Optional<OAuth2Authentication> remove(String code);
+
 
 }

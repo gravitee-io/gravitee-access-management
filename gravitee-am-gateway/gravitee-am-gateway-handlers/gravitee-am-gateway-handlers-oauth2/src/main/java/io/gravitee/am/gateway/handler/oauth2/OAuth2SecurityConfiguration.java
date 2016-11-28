@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2;
 
+import io.gravitee.am.gateway.handler.oauth2.provider.code.RepositoryAuthorizationCodeServices;
+import io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +29,7 @@ import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.approval.ApprovalStore;
 import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
 import org.springframework.security.oauth2.provider.approval.TokenStoreUserApprovalHandler;
+import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
@@ -76,7 +79,12 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Bean
     public TokenStore tokenStore() {
-        return new io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore();
+        return new RepositoryTokenStore();
+    }
+
+    @Bean
+    public AuthorizationCodeServices authorizationCodeServices() {
+        return new RepositoryAuthorizationCodeServices();
     }
 
     @Bean

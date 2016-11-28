@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.oauth2.token.internal.model;
+package io.gravitee.am.repository.mongodb.oauth2.code.model;
 
 import io.gravitee.am.repository.mongodb.oauth2.common.model.Auditable;
 
@@ -23,20 +23,28 @@ import java.util.Date;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class OAuth2RefreshTokenMongo extends Auditable {
+public class OAuth2AuthorizationCodeMongo extends Auditable {
 
-    private String value;
+    private String code;
+
+    private byte[] oAuth2Authentication;
 
     private Date expiration;
 
-    private byte[] authentication;
-
-    public String getValue() {
-        return value;
+    public String getCode() {
+        return code;
     }
 
-    public void setValue(String value) {
-        this.value = value;
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public byte[] getOAuth2Authentication() {
+        return oAuth2Authentication;
+    }
+
+    public void setOAuth2Authentication(byte[] oAuth2Authentication) {
+        this.oAuth2Authentication = oAuth2Authentication;
     }
 
     public Date getExpiration() {
@@ -45,13 +53,5 @@ public class OAuth2RefreshTokenMongo extends Auditable {
 
     public void setExpiration(Date expiration) {
         this.expiration = expiration;
-    }
-
-    public byte[] getAuthentication() {
-        return authentication;
-    }
-
-    public void setAuthentication(byte[] authentication) {
-        this.authentication = authentication;
     }
 }
