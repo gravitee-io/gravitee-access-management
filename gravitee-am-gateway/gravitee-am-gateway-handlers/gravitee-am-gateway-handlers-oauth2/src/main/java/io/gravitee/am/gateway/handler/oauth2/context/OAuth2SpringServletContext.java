@@ -16,9 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.context;
 
 import io.gravitee.am.definition.Domain;
-import io.gravitee.am.gateway.core.context.servlet.ServletContext;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
-import io.gravitee.am.gateway.repository.spring.RepositoryConfiguration;
 import io.gravitee.am.handler.spring.SpringServletContext;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.web.filter.DelegatingFilterProxy;
@@ -26,7 +24,10 @@ import org.springframework.web.servlet.DispatcherServlet;
 
 import javax.servlet.Filter;
 import javax.servlet.Servlet;
-import java.util.*;
+import java.util.Collections;
+import java.util.EventListener;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -62,8 +63,7 @@ public class OAuth2SpringServletContext extends SpringServletContext<Domain> {
 
     @Override
     protected Set<Class<?>> annotatedClasses() {
-        //TODO: Repository is scoped to a single domain or should be shared between all domains ?
-        return new HashSet<>(Arrays.asList(RepositoryConfiguration.class, OAuth2Configuration.class));
+        return Collections.singleton(OAuth2Configuration.class);
     }
 
     @Override
@@ -83,7 +83,7 @@ public class OAuth2SpringServletContext extends SpringServletContext<Domain> {
             this.domain = domain;
         }
 
-        ServletContext<Domain> build() {
+        SpringServletContext<Domain> build() {
             return new OAuth2SpringServletContext(domain);
         }
     }

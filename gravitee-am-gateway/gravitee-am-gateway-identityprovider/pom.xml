@@ -44,5 +44,12 @@
             <artifactId>gravitee-am-identityprovider-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <!-- Jackson libraries -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.library}</version>
+        </dependency>
     </dependencies>
 </project>

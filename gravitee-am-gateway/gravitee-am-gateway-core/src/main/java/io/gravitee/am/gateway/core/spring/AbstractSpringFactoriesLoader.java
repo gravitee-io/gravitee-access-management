@@ -88,6 +88,9 @@ public abstract class AbstractSpringFactoriesLoader<T> implements ApplicationCon
                 T instance = (T) BeanUtils.instantiateClass(constructor, args);
                 ((AbstractApplicationContext) applicationContext)
                         .getBeanFactory().autowireBean(instance);
+                if (instance instanceof ApplicationContextAware) {
+                    ((ApplicationContextAware) instance).setApplicationContext(applicationContext);
+                }
                 instances.add(instance);
             }
             catch (Throwable ex) {

@@ -11,5 +11,6 @@ target/
 .classpath
 /bin/
 
-gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/src/main/resources/plugins/*
-gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/src/main/resources/logs/*
+gravitee.oauth2.log.dir_IS_UNDEFINED/
+gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/src/main/resources/logs/*
+gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/src/main/resources/plugins/*

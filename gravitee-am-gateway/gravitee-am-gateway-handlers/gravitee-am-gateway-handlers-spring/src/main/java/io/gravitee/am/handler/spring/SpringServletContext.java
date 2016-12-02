@@ -17,6 +17,9 @@ package io.gravitee.am.handler.spring;
 
 import io.gravitee.am.gateway.core.context.servlet.ServletContext;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
@@ -29,7 +32,8 @@ import java.util.Set;
  */
 public abstract class SpringServletContext<T> implements ServletContext<T> {
 
-    private WebApplicationContext applicationContext;
+    private ConfigurableApplicationContext applicationContext;
+    private ApplicationContext rootApplicationContext;
 
     protected WebApplicationContext applicationContext() {
         if (applicationContext == null) {
@@ -46,13 +50,15 @@ public abstract class SpringServletContext<T> implements ServletContext<T> {
                 beanFactoryPostProcessors.iterator().forEachRemaining(webApplicationContext::addBeanFactoryPostProcessor);
             }
 
-            //TODO: how to pass root context ?
-//        webApplicationContext.setEnvironment((ConfigurableEnvironment) applicationContext.getEnvironment());
-//        webApplicationContext.setParent(applicationContext);
+            if (this.rootApplicationContext != null) {
+                webApplicationContext.setParent(this.rootApplicationContext);
+                webApplicationContext.setEnvironment((ConfigurableEnvironment) rootApplicationContext.getEnvironment());
+            }
+
             applicationContext = webApplicationContext;
         }
 
-        return applicationContext;
+        return (WebApplicationContext) applicationContext;
     }
 
     protected Set<Class<?>> annotatedClasses() {
@@ -61,5 +67,9 @@ public abstract class SpringServletContext<T> implements ServletContext<T> {
 
     protected Set<? extends BeanFactoryPostProcessor> beanFactoryPostProcessors() {
         return Collections.emptySet();
+    }
+
+    public void setRootApplicationContext(ApplicationContext rootApplicationContext) {
+        this.rootApplicationContext = rootApplicationContext;
     }
 }

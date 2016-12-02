@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.gateway.idp.core.impl;
 
+import io.gravitee.am.gateway.idp.core.IdentityProviderConfigurationFactory;
 import io.gravitee.am.gateway.idp.core.IdentityProviderDefinition;
 import io.gravitee.am.gateway.idp.core.IdentityProviderManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
+import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
@@ -27,11 +29,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.MapPropertySource;
-import org.springframework.core.env.MutablePropertySources;
-import org.springframework.core.env.StandardEnvironment;
 
 import java.util.*;
 
@@ -41,13 +40,16 @@ import java.util.*;
  */
 public class IdentityProviderManagerImpl implements IdentityProviderManager {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
 
     private final Map<String, IdentityProvider> identityProviders = new HashMap<>();
     private final Map<IdentityProvider, Plugin> identityProviderPlugins = new HashMap<>();
 
     @Autowired
     private PluginContextFactory pluginContextFactory;
+
+    @Autowired
+    private IdentityProviderConfigurationFactory identityProviderConfigurationFactory;
 
     @Override
     public void register(IdentityProviderDefinition identityProviderPluginDefinition) {
@@ -63,51 +65,26 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager {
         return identityProviders.values();
     }
 
-    public AuthenticationProvider loadIdentityProvider(String identityProvider, Map<String, Object> properties) {
-        // By loading an identity provider we are mounting both authentication provider and identity lookup
-        AuthenticationProvider authenticationProvider = authenticationProvider(identityProvider, properties);
-
-        /*
-        IdentityLookup identityLookup = identityLookup(identityProvider, properties);
-        compositeIdentityManager.addIdentityLookup(identityLookup);
-        */
-
-        return authenticationProvider;
-    }
-
-    private AuthenticationProvider authenticationProvider(String identityProviderType, Map<String, Object> properties) {
-        LOGGER.debug("Looking for an authentication provider for [{}]", identityProviderType);
-        IdentityProvider identityProvider = identityProviders.get(identityProviderType);
+    @Override
+    public AuthenticationProvider create(String type, String configuration) {
+        logger.debug("Looking for an authentication provider for [{}]", type);
+        IdentityProvider identityProvider = identityProviders.get(type);
 
         if (identityProvider != null) {
-            return create(
+            Class<? extends IdentityProviderConfiguration> configurationClass = identityProvider.configuration();
+            IdentityProviderConfiguration identityProviderConfiguration = identityProviderConfigurationFactory.create(configurationClass, configuration);
+
+            return create0(
                     identityProviderPlugins.get(identityProvider),
                     identityProvider.authenticationProvider(),
-                    properties);
+                    identityProviderConfiguration);
         } else {
-            LOGGER.error("No identity provider is registered for type {}", identityProviderType);
-            throw new IllegalStateException("No identity provider is registered for type " + identityProviderType);
+            logger.error("No identity provider is registered for type {}", type);
+            throw new IllegalStateException("No identity provider is registered for type " + type);
         }
     }
 
-    /*
-    private IdentityLookup identityLookup(String identityProviderType, Map<String, Object> properties) {
-        LOGGER.debug("Looking for an identity lookup for [{}]", identityProviderType);
-        IdentityProvider identityProvider = identityProviders.get(identityProviderType);
-
-        if (identityProvider != null) {
-            return create(
-                    identityProviderPlugins.get(identityProvider),
-                    identityProvider.identityLookup(),
-                    properties);
-        } else {
-            LOGGER.error("No identity provider is registered for type {}", identityProviderType);
-            throw new IllegalStateException("No identity provider is registered for type " + identityProviderType);
-        }
-    }
-    */
-
-    private <T> T create(Plugin plugin, Class<T> identityClass, Map<String, Object> properties) {
+    private <T> T create0(Plugin plugin, Class<T> identityClass, IdentityProviderConfiguration identityProviderConfiguration) {
         if (identityClass == null) {
             return null;
         }
@@ -125,14 +102,14 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager {
                 }
 
                 @Override
-                public ConfigurableEnvironment environment() {
-                    return new StandardEnvironment() {
-                        @Override
-                        protected void customizePropertySources(MutablePropertySources propertySources) {
-                            propertySources.addFirst(new MapPropertySource(plugin.id(), properties));
-                            super.customizePropertySources(propertySources);
-                        }
-                    };
+                public ConfigurableApplicationContext applicationContext() {
+                    ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
+
+                    // Add identity provider configuration bean
+                    configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new IdentityProviderConfigurationBeanFactoryPostProcessor(identityProviderConfiguration));
+
+                    return configurableApplicationContext;
                 }
             });
 
@@ -144,7 +121,7 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager {
 
             return identityObj;
         } catch (Exception ex) {
-            LOGGER.error("An unexpected error occurs while loading identity provider", ex);
+            logger.error("An unexpected error occurs while loading identity provider", ex);
             return null;
         }
     }
@@ -153,7 +130,7 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager {
         try {
             return clazz.newInstance();
         } catch (InstantiationException | IllegalAccessException ex) {
-            LOGGER.error("Unable to instantiate class: {}", ex);
+            logger.error("Unable to instantiate class: {}", ex);
             throw ex;
         }
     }

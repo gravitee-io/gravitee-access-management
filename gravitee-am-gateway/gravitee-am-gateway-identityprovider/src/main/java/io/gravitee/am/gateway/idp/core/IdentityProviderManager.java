@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.idp.core;
 
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
 
 import java.util.Collection;
@@ -30,5 +31,7 @@ public interface IdentityProviderManager {
 
     Collection<IdentityProvider> getAll();
 
-    //AuthenticationProvider loadIdentityProvider(String identityProvider, Map<String, Object> properties);
+    AuthenticationProvider create(String type, String configuration);
+
+    //AuthenticationProvider create0(String identityProvider, Map<String, Object> properties);
 }

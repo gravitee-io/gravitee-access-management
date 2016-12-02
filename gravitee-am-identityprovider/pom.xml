@@ -36,5 +36,6 @@
     <modules>
         <module>gravitee-am-identityprovider-api</module>
         <module>gravitee-am-identityprovider-properties</module>
+        <module>gravitee-am-identityprovider-inline</module>
     </modules>
 </project>

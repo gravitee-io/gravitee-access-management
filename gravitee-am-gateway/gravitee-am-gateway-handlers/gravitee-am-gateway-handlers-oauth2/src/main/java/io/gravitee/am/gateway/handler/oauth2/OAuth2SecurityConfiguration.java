@@ -20,12 +20,14 @@ import io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore
 import io.gravitee.am.definition.Domain;
 import io.gravitee.am.definition.Identity;
 import io.gravitee.am.gateway.idp.core.IdentityProviderManager;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.SecurityConfigurer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -70,13 +72,24 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     public void globalUserDetails(AuthenticationManagerBuilder auth) throws Exception {
         logger.info("Loading identity providers for authentication");
 
-        for(Identity idp : domain.getIdentities()) {
+        for (Identity idp : domain.getIdentities()) {
             logger.info("Loading identity provider: {}", idp.getType());
-            System.out.println(idp.getConfiguration());
-        }
 
-        auth.inMemoryAuthentication()
-                .withUser("user").password("password").roles("USER");
+            AuthenticationProvider authenticationProvider = identityProviderManager.create(idp.getType(), idp.getConfiguration());
+
+            if (authenticationProvider != null) {
+                Object authProviderInstance = authenticationProvider.configure();
+
+                if (authProviderInstance instanceof org.springframework.security.authentication.AuthenticationProvider) {
+                    auth.authenticationProvider((org.springframework.security.authentication.AuthenticationProvider) authProviderInstance);
+                }
+                else if (authProviderInstance instanceof SecurityConfigurer) {
+                    auth.apply((SecurityConfigurer) authProviderInstance);
+                }
+            } else {
+                logger.error("Identity provider can not be found for type {}", idp.getType());
+            }
+        }
     }
 
     @Override

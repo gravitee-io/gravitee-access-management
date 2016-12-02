@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.api;
+package io.gravitee.am.identityprovider.inline;
+
+import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.inline.model.User;
+
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdentityProvider {
+public class InlineIdentityProviderConfiguration implements IdentityProviderConfiguration {
 
-    String type();
+    private List<User> users;
 
-    Class<? extends IdentityProviderConfiguration> configuration();
+    public List<User> getUsers() {
+        return users;
+    }
 
-    Class<? extends AuthenticationProvider> authenticationProvider();
-
-    Class<? extends UserProvider> userProvider();
+    public void setUsers(List<User> users) {
+        this.users = users;
+    }
 }

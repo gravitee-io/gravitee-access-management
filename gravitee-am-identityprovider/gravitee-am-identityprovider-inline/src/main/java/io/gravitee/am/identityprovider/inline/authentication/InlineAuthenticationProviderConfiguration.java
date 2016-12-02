@@ -13,29 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.idp.spring;
+package io.gravitee.am.identityprovider.inline.authentication;
 
-import io.gravitee.am.gateway.idp.core.IdentityProviderConfigurationFactory;
-import io.gravitee.am.gateway.idp.core.IdentityProviderManager;
-import io.gravitee.am.gateway.idp.core.impl.IdentityProviderConfigurationFactoryImpl;
-import io.gravitee.am.gateway.idp.core.impl.IdentityProviderManagerImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+
+import java.util.Collections;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
-public class IdentityProviderConfiguration {
+public class InlineAuthenticationProviderConfiguration {
 
     @Bean
-    public IdentityProviderManager identityProviderManager() {
-        return new IdentityProviderManagerImpl();
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public IdentityProviderConfigurationFactory identityProviderConfigurationFactory() {
-        return new IdentityProviderConfigurationFactoryImpl();
+    public InMemoryUserDetailsManager userDetailsService() {
+        return new InMemoryUserDetailsManager(Collections.emptyList());
     }
 }
