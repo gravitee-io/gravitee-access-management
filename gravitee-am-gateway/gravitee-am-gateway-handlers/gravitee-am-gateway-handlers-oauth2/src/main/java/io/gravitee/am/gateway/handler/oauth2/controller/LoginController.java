@@ -16,8 +16,12 @@
 package io.gravitee.am.gateway.handler.oauth2.controller;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -27,8 +31,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/")
 public class LoginController {
 
+    /*
     @RequestMapping(value="/login")
-    public String login() {
-        return "login";
+    public ModelAndView login(
+            @RequestParam(value="clientId") String clientId) {
+        Map<String,String> params = new HashMap<>();
+        params.put("clientId", clientId);
+        return new ModelAndView("login", params);
+    }
+    */
+
+    @RequestMapping(value="/login")
+    public ModelAndView login(
+            @RequestParam(value="clientId", required = false) String clientId) {
+        Map<String,String> params = new HashMap<>();
+        params.put("clientId", clientId);
+        return new ModelAndView("login", params);
     }
 }

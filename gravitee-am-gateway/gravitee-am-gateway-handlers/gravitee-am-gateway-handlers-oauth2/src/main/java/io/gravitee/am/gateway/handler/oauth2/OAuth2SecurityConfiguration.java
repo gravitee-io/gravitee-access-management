@@ -15,10 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2;
 
-import io.gravitee.am.gateway.handler.oauth2.provider.code.RepositoryAuthorizationCodeServices;
-import io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore;
 import io.gravitee.am.definition.Domain;
 import io.gravitee.am.definition.Identity;
+import io.gravitee.am.gateway.handler.oauth2.authentication.OAuth2LoginUrlAuthenticationEntryPoint;
+import io.gravitee.am.gateway.handler.oauth2.provider.code.RepositoryAuthorizationCodeServices;
+import io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore;
 import io.gravitee.am.gateway.idp.core.IdentityProviderManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import org.slf4j.Logger;
@@ -41,7 +42,6 @@ import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHand
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.token.TokenStore;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -100,8 +100,9 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .and()
             .formLogin()
                 .permitAll()
-            .and().exceptionHandling()
-                .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"));
+                .and()
+            .exceptionHandling()
+                .authenticationEntryPoint(new OAuth2LoginUrlAuthenticationEntryPoint("/login"));
     }
 
     @Override
