@@ -104,7 +104,7 @@
 				</file>
 			</activation>
 			<modules>
-				<module>gravitee-am-server-standalone-distribution-rpm</module>
+				<module>gravitee-am-gateway-standalone-distribution-rpm</module>
 			</modules>
 		</profile>
 
@@ -118,7 +118,7 @@
 				</file>
 			</activation>
 			<modules>
-				<module>gravitee-am-server-standalone-distribution-rpm</module>
+				<module>gravitee-am-gateway-standalone-distribution-rpm</module>
 			</modules>
 		</profile>
 	</profiles>
