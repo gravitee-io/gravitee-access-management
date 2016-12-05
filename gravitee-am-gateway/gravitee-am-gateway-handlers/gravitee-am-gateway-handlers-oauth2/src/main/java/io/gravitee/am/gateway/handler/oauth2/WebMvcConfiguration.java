@@ -15,18 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2;
 
-import io.gravitee.am.definition.Domain;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
+import io.gravitee.am.gateway.handler.oauth2.view.ThymeleafConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.ViewResolver;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.spring4.SpringTemplateEngine;
-import org.thymeleaf.spring4.view.ThymeleafViewResolver;
-import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
-import org.thymeleaf.templateresolver.ITemplateResolver;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -34,33 +27,7 @@ import org.thymeleaf.templateresolver.ITemplateResolver;
  */
 @Configuration
 @ComponentScan("io.gravitee.am.gateway.handler.oauth2.controller")
+@Import(ThymeleafConfiguration.class)
 public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
 
-    @Autowired
-    private Domain domain;
-
-    @Bean
-    public ITemplateResolver getTemplateResolver() {
-        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
-        templateResolver.setPrefix("/views/");
-        templateResolver.setSuffix(".html");
-        templateResolver.setTemplateMode("HTML");
-        return templateResolver;
-    }
-
-    @Bean
-    public TemplateEngine getTemplateEngine() {
-        SpringTemplateEngine templateEngine = new SpringTemplateEngine();
-        templateEngine.setEnableSpringELCompiler(true);
-        templateEngine.setTemplateResolver(getTemplateResolver());
-        return templateEngine;
-    }
-
-    @Bean
-    public ViewResolver getViewResolver(){
-        ThymeleafViewResolver viewResolver = new ThymeleafViewResolver();
-        viewResolver.setTemplateEngine(getTemplateEngine());
-        viewResolver.setCharacterEncoding("UTF-8");
-        return viewResolver;
-    }
 }

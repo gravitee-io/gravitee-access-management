@@ -34,7 +34,7 @@ import java.util.List;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = OAuth2Domain.class, name = "oauth2")
 })
-public class Domain {
+public abstract class Domain {
 
     private String id;
 

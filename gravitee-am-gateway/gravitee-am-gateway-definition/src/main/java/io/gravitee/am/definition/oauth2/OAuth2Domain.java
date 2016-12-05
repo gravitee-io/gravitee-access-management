@@ -12,11 +12,21 @@ public class OAuth2Domain extends Domain {
 
     private Set<Client> clients;
 
+    private Template template;
+
     public Set<Client> getClients() {
         return clients;
     }
 
     public void setClients(Set<Client> clients) {
         this.clients = clients;
+    }
+
+    public Template getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(Template template) {
+        this.template = template;
     }
 }

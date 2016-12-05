@@ -30,5 +30,8 @@
 				"authorization": "cWxmcmN3OlFsZnJjVzAx"
 			}
 		}
-	]
+	],
+	"template": {
+		"path": "/Users/david/java-ext/auchan.net/access-management/template/"
+	}
 }
