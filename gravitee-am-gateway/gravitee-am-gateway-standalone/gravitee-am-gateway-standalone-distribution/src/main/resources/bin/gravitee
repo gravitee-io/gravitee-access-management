@@ -28,9 +28,9 @@ fi
 
 # Searching for configuration 
 GRAVITEE_OPTS=""
-if [ -f "/etc/gravitee-management/gravitee.yml" ]
+if [ -f "/etc/gravitee-am/gravitee.yml" ]
 then
-	GRAVITEE_OPTS="-Dgravitee.conf=/etc/gravitee-management/gravitee.yml"
+	GRAVITEE_OPTS="-Dgravitee.conf=/etc/gravitee-am/gravitee.yml"
 fi
 
 # Setup GRAVITEE_HOME
@@ -56,7 +56,7 @@ if [ "x$JAVA" = "x" ]; then
 fi
 
 # Setup the classpath
-runjar=`find $GRAVITEE_HOME -name "gravitee-management-api-standalone-bootstrap-*.jar"`
+runjar=`find $GRAVITEE_HOME -name "gravitee-am-gateway-standalone-bootstrap-*.jar"`
 if [ ! -f "$runjar" ]; then
     die "Missing required file: $runjar"
 fi
@@ -66,7 +66,7 @@ GRAVITEE_BOOT_CLASSPATH="$runjar"
 # Display our environment
 echo "========================================================================="
 echo ""
-echo "  Gravitee.IO Management Standalone Runtime Bootstrap Environment"
+echo "  Gravitee.io - Access Management - Gateway"
 echo ""
 echo "  GRAVITEE_HOME: $GRAVITEE_HOME"
 echo ""
@@ -85,7 +85,7 @@ echo ""
 "$JAVA" $JAVA_OPTS \
         -cp "$GRAVITEE_BOOT_CLASSPATH" \
         -Dgravitee.home=$GRAVITEE_HOME \
-        io.gravitee.management.standalone.boostrap.Bootstrap \
+        io.gravitee.am.gateway.bootstrap.Bootstrap \
         "$@"
 
 GRAVITEE_STATUS=$?

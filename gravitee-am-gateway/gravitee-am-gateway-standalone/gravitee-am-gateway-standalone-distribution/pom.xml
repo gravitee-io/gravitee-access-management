@@ -21,14 +21,13 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>io.gravitee.am.standalone</groupId>
-		<artifactId>gravitee-am-server-standalone</artifactId>
+		<groupId>io.gravitee.am.gateway.standalone</groupId>
+		<artifactId>gravitee-am-gateway-standalone</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>gravitee-am-server-standalone-distribution</artifactId>
+	<artifactId>gravitee-am-gateway-standalone-distribution</artifactId>
 	<packaging>pom</packaging>
-
 
 	<properties>
 		<!-- Properties used for building RPM & DEB package -->
@@ -44,6 +43,21 @@
 	</properties>
 
 	<name>Gravitee IO - Access Management - Standalone - Distribution</name>
+
+	<dependencies>
+		<!-- Gravitee dependencies -->
+		<dependency>
+			<groupId>io.gravitee.am.gateway.standalone</groupId>
+			<artifactId>gravitee-am-gateway-standalone-container</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.gravitee.am.gateway.standalone</groupId>
+			<artifactId>gravitee-am-gateway-standalone-bootstrap</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<finalName>distribution</finalName>
@@ -73,7 +87,7 @@
 	</build>
 
 	<modules>
-		<module>gravitee-am-server-standalone-distribution-zip</module>
+		<module>gravitee-am-gateway-standalone-distribution-zip</module>
 	</modules>
 
 	<profiles>

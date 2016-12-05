@@ -30,7 +30,7 @@ public class Bootstrap {
 
     private static final String GRAVITEE_HOME_PROP = "gravitee.home";
 
-    private final static String CONTAINER_CLASS = "io.gravitee.oauth2.server.Container";
+    private final static String CONTAINER_CLASS = "io.gravitee.am.gateway.container.Container";
 
     private ClassLoader graviteeClassLoader, extensionClassLoader;
 
@@ -128,7 +128,7 @@ public class Bootstrap {
     private void checkInstallRoot(File graviteeHomeDir) {
         // quick sanity check on the install root
         if (!graviteeHomeDir.isDirectory()) {
-            throw new RuntimeException("Invalid Gravitee.io OAuth2 Server Home. Not a directory: "
+            throw new RuntimeException("Invalid Gravitee.io Access Management Home. Not a directory: "
                     + graviteeHomeDir.getAbsolutePath());
         }
 
@@ -136,11 +136,11 @@ public class Bootstrap {
         File graviteeLibDir = new File(graviteeHomeDir, "lib");
 
         File [] files = graviteeLibDir.listFiles(pathname -> {
-            return pathname.getName().startsWith("gravitee-oauth2-server-standalone-bootstrap");
+            return pathname.getName().startsWith("gravitee-am-gateway-standalone-bootstrap");
         });
 
         if (files == null || files.length == 0 || files.length > 1) {
-            throw new RuntimeException("Invalid Gravitee.io OAuth2 Server Home. No bootstrapable jar can be " +
+            throw new RuntimeException("Invalid Gravitee.io Access Management Home. No bootstrapable jar can be " +
                     "found in " + graviteeLibDir.getAbsolutePath());
         }
     }

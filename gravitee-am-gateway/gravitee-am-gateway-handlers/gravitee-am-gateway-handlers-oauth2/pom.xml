@@ -67,12 +67,6 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>io.gravitee.oauth2.repository</groupId>
-            <artifactId>gravitee-oauth2-repository-mongodb</artifactId>
-            <version>${gravitee-oauth2-repository-mongodb.version}</version>
-        </dependency>
-
         <!-- Spring Security - OAuth2 -->
         <dependency>
             <groupId>org.springframework.security.oauth</groupId>

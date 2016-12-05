@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Login Template Page</title>
+</head>
+<body>
+<h1>Login Template Page</h1>
+<span>This page is provided as a sample and must not be used as-it!</span>
+<p th:if="${param.error}" class="error">Wrong user or password</p>
+<form th:action="@{/login}" method="post">
+    <label for="username">Username</label>:
+    <input type="text" id="username" name="username" autofocus="autofocus" /> <br />
+    <label for="password">Password</label>:
+    <input type="password" id="password" name="password" /> <br />
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <input type="submit" value="Log in" />
+</form>
+</body>
+</html>

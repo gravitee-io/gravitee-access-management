@@ -30,7 +30,7 @@ set JAVA_OPTS="-Djava.net.preferIPv4Stack=true"
 set JAVA="%JAVA_HOME%/bin/java"
 
 rem Setup the classpath
-for /f %%i in ('dir ..\lib\gravitee-management-api-standalone-bootstrap-*.jar /s /b') do set runjar=%%i
+for /f %%i in ('dir ..\lib\gravitee-am-gateway-standalone-bootstrap-*.jar /s /b') do set runjar=%%i
 
 set GRAVITEE_BOOT_CLASSPATH=%runjar%
 
@@ -38,7 +38,7 @@ set GRAVITEE_BOOT_CLASSPATH=%runjar%
 # Display our environment
 echo "========================================================================="
 echo ""
-echo "  Gravitee.IO Standalone Runtime Bootstrap Environment"
+echo "  Gravitee.io - Access Management - Gateway"
 echo ""
 echo "  GRAVITEE_HOME: %GRAVITEE_HOME%"
 echo ""
@@ -52,7 +52,7 @@ echo "========================================================================="
 echo ""
 
 rem Execute the JVM in the foreground
-%JAVA% %JAVA_OPTS% -cp %GRAVITEE_BOOT_CLASSPATH% -Dgravitee.home=%GRAVITEE_HOME% io.gravitee.management.standalone.boostrap.Bootstrap "%*"
+%JAVA% %JAVA_OPTS% -cp %GRAVITEE_BOOT_CLASSPATH% -Dgravitee.home=%GRAVITEE_HOME% io.gravitee.am.gateway.bootstrap.Bootstrap "%*"
 
 set GRAVITEE_STATUS=%?
 goto endbatch
