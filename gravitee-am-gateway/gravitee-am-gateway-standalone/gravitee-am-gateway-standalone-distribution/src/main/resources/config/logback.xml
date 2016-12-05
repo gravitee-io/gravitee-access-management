@@ -30,7 +30,7 @@
         <file>${gravitee.oauth2.log.dir}/gravitee.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>${gravitee.oauth2.log.dir}/gravitee_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${packaging.gravitee.am.log}/gravitee_%d{yyyy-MM-dd}.log</fileNamePattern>
 
             <!-- keep 30 days' worth of history -->
             <maxHistory>30</maxHistory>
