@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.context;
 
 import io.gravitee.am.definition.Domain;
+import io.gravitee.am.definition.oauth2.OAuth2Domain;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
 import io.gravitee.am.handler.spring.SpringServletContext;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
@@ -68,7 +69,7 @@ public class OAuth2SpringServletContext extends SpringServletContext<Domain> {
 
     @Override
     protected Set<? extends BeanFactoryPostProcessor> beanFactoryPostProcessors() {
-        return Collections.singleton(new DomainBeanFactoryPostProcessor(deployable()));
+        return Collections.singleton(new OAuth2DomainBeanFactoryPostProcessor((OAuth2Domain) deployable()));
     }
 
     static Builder create(Domain domain) {

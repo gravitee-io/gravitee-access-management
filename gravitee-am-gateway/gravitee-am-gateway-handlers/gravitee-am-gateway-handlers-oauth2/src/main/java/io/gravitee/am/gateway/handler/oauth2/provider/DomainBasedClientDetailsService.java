@@ -15,9 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.provider;
 
-import io.gravitee.am.definition.Client;
+import io.gravitee.am.definition.oauth2.Client;
 import io.gravitee.am.definition.Domain;
 import io.gravitee.am.definition.oauth2.GrantType;
+import io.gravitee.am.definition.oauth2.OAuth2Domain;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
@@ -38,11 +39,11 @@ public class DomainBasedClientDetailsService implements ClientDetailsService {
 
     private Map<String, ClientDetails> clientDetailsStore = new HashMap<>();
 
-    public DomainBasedClientDetailsService(@Autowired Domain domain) {
+    public DomainBasedClientDetailsService(@Autowired OAuth2Domain domain) {
         this.init(domain);
     }
 
-    private void init(Domain domain) {
+    private void init(OAuth2Domain domain) {
         for(Client client : domain.getClients()) {
             clientDetailsStore.put(client.getClientId(), convert(client));
         }

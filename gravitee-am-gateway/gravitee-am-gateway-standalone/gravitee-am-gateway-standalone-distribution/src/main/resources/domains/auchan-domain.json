@@ -1,6 +1,6 @@
 {
-	"name": "my-security-domain",
-	"contextPath": "/my-security",
+	"name": "auchan-connect-domain",
+	"contextPath": "/auchan-connect",
 	"type": "oauth2",
 	"clients": [
 		{
@@ -24,18 +24,10 @@
 	],
 	"identities": [
 		{
-			"type": "inline",
-			"name": "Inline IDP",
+			"type": "rcw-auchan",
+			"name": "RCW Auchan",
 			"configuration": {
-				"users": [
-					{
-						"firstname": "David",
-						"lastname": "BRASSELY",
-						"username": "brasseld",
-						"password": "$2a$06$ezD413j5yfcTvFtucupXReJ9QM2OF3wt7F9w2PEV.XuvSVgkix.6e",
-						"roles": ["USER"]
-					}
-				]
+				"authorization": "cWxmcmN3OlFsZnJjVzAx"
 			}
 		}
 	]

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2;
 
+import io.gravitee.am.definition.Domain;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +35,9 @@ import org.thymeleaf.templateresolver.ITemplateResolver;
 @Configuration
 @ComponentScan("io.gravitee.am.gateway.handler.oauth2.controller")
 public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
+
+    @Autowired
+    private Domain domain;
 
     @Bean
     public ITemplateResolver getTemplateResolver() {

@@ -15,13 +15,25 @@
  */
 package io.gravitee.am.definition;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.gravitee.am.definition.oauth2.OAuth2Domain;
+
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type",
+        defaultImpl = Type.class,
+        visible = true)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = OAuth2Domain.class, name = "oauth2")
+})
 public class Domain {
 
     private String id;
@@ -35,8 +47,6 @@ public class Domain {
     private String contextPath;
 
     private Type type;
-
-    private Set<Client> clients;
 
     private List<Identity> identities;
 
@@ -62,14 +72,6 @@ public class Domain {
 
     public void setType(Type type) {
         this.type = type;
-    }
-
-    public Set<Client> getClients() {
-        return clients;
-    }
-
-    public void setClients(Set<Client> clients) {
-        this.clients = clients;
     }
 
     public String getDescription() {
