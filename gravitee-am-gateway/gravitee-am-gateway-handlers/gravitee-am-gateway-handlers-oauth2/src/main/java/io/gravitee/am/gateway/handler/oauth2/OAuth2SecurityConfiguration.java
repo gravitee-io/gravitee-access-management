@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.oauth2;
 import io.gravitee.am.definition.Domain;
 import io.gravitee.am.definition.Identity;
 import io.gravitee.am.gateway.handler.oauth2.authentication.OAuth2LoginUrlAuthenticationEntryPoint;
+import io.gravitee.am.gateway.handler.oauth2.filter.CORSFilter;
+import io.gravitee.am.gateway.handler.oauth2.handler.CustomLogoutSuccessHandler;
 import io.gravitee.am.gateway.handler.oauth2.provider.code.RepositoryAuthorizationCodeServices;
 import io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore;
 import io.gravitee.am.gateway.idp.core.IdentityProviderManager;
@@ -27,10 +29,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.access.AccessDecisionManager;
+import org.springframework.security.access.vote.AuthenticatedVoter;
+import org.springframework.security.access.vote.UnanimousBased;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.SecurityConfigurer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
@@ -38,10 +46,14 @@ import org.springframework.security.oauth2.provider.approval.ApprovalStore;
 import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
 import org.springframework.security.oauth2.provider.approval.TokenStoreUserApprovalHandler;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
-import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
-import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.vote.ScopeVoter;
+import org.springframework.security.web.access.expression.WebExpressionVoter;
+import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
+
+import javax.servlet.Filter;
+import java.util.Arrays;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -58,12 +70,6 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private ClientDetailsService clientDetailsService;
-
-    @Autowired
-    private OAuth2AccessDeniedHandler oAuth2AccessDeniedHandler;
-
-    @Autowired
-    private OAuth2AuthenticationEntryPoint oAuth2AuthenticationEntryPoint;
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
@@ -95,14 +101,23 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
+            .requestMatchers()
+                .antMatchers("/oauth/**", "/authorize", "/login", "/logout")
+                .and()
             .authorizeRequests()
+                .antMatchers(HttpMethod.OPTIONS, "**").permitAll()
                 .anyRequest().authenticated()
                 .and()
             .formLogin()
                 .permitAll()
                 .and()
+            .logout()
+                .logoutSuccessHandler(new CustomLogoutSuccessHandler())
+                .and()
             .exceptionHandling()
-                .authenticationEntryPoint(new OAuth2LoginUrlAuthenticationEntryPoint("/login"));
+                .authenticationEntryPoint(new OAuth2LoginUrlAuthenticationEntryPoint("/login"))
+                .and()
+            .addFilterAfter(corsFilter(), AbstractPreAuthenticatedProcessingFilter.class);
     }
 
     @Override
@@ -137,5 +152,10 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
         TokenApprovalStore store = new TokenApprovalStore();
         store.setTokenStore(tokenStore);
         return store;
+    }
+
+    @Bean
+    public Filter corsFilter() {
+        return new CORSFilter();
     }
 }
