@@ -33,6 +33,7 @@
     <properties>
         <gravitee-oauth2-repository-api.version>0.1.0-SNAPSHOT</gravitee-oauth2-repository-api.version>
         <gravitee-oauth2-repository-mongodb.version>0.1.0-SNAPSHOT</gravitee-oauth2-repository-mongodb.version>
+        <jersey.version>2.23.2</jersey.version>
     </properties>
 
     <dependencies>
@@ -95,6 +96,20 @@
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <version>3.1.0</version>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

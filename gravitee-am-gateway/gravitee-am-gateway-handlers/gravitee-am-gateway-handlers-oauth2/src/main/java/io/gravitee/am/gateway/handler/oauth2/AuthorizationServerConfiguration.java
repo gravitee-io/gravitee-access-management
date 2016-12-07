@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
@@ -28,10 +30,14 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.approval.UserApprovalHandler;
+import org.springframework.security.oauth2.provider.client.ClientDetailsUserDetailsService;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+
+import java.util.Collections;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -65,6 +71,19 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
         clients.withClientDetails(clientDetailsService);
     }
 
+    @Bean
+    public ClientDetailsUserDetailsService clientDetailsUserDetailsService() {
+        return new ClientDetailsUserDetailsService(clientDetailsService);
+    }
+
+    @Bean
+    public AuthenticationManager clientAuthenticationManager() {
+        DaoAuthenticationProvider clientAuthenticationProvider = new DaoAuthenticationProvider();
+        clientAuthenticationProvider.setUserDetailsService(clientDetailsUserDetailsService());
+        clientAuthenticationProvider.setHideUserNotFoundExceptions(false);
+        return new ProviderManager(Collections.singletonList(clientAuthenticationProvider));
+    }
+
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints
@@ -81,6 +100,9 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
                 .checkTokenAccess("isAuthenticated()")
                 .accessDeniedHandler(oAuth2AccessDeniedHandler())
                 .authenticationEntryPoint(oAuth2AuthenticationEntryPoint());
+
+        oauthServer
+                .addTokenEndpointAuthenticationFilter(new BasicAuthenticationFilter(clientAuthenticationManager(), oAuth2AuthenticationEntryPoint()));
     }
 
     @Bean
