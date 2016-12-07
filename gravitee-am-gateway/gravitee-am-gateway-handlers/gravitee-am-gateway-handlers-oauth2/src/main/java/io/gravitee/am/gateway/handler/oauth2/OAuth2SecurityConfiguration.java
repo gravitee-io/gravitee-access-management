@@ -29,16 +29,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.access.AccessDecisionManager;
-import org.springframework.security.access.vote.AuthenticatedVoter;
-import org.springframework.security.access.vote.UnanimousBased;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.SecurityConfigurer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
@@ -48,12 +43,9 @@ import org.springframework.security.oauth2.provider.approval.TokenStoreUserAppro
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.token.TokenStore;
-import org.springframework.security.oauth2.provider.vote.ScopeVoter;
-import org.springframework.security.web.access.expression.WebExpressionVoter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
 import javax.servlet.Filter;
-import java.util.Arrays;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -112,6 +104,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .permitAll()
                 .and()
             .logout()
+                .logoutUrl("/logout")
                 .logoutSuccessHandler(new CustomLogoutSuccessHandler())
                 .and()
             .exceptionHandling()
