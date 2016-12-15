@@ -31,6 +31,12 @@
     <name>Gravitee IO - Access Management - Gateway - Core</name>
 
     <dependencies>
+        <!-- Gravitee.io dependencies -->
+        <dependency>
+            <groupId>io.gravitee.common</groupId>
+            <artifactId>gravitee-common</artifactId>
+        </dependency>
+
         <!-- Spring -->
         <dependency>
             <groupId>org.springframework</groupId>

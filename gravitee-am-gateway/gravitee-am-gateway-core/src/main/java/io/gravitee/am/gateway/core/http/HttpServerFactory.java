@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.core.http;
 
-import io.gravitee.am.gateway.core.spring.AbstractSpringFactoriesLoader;
+import io.gravitee.common.spring.factory.SpringFactoriesLoader;
 import org.springframework.beans.factory.FactoryBean;
 
 import java.util.Collection;
@@ -24,7 +24,7 @@ import java.util.Collection;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class HttpServerFactory extends AbstractSpringFactoriesLoader<HttpServer> implements FactoryBean<HttpServer> {
+public class HttpServerFactory extends SpringFactoriesLoader<HttpServer> implements FactoryBean<HttpServer> {
 
     @Override
     public HttpServer getObject() throws Exception {
