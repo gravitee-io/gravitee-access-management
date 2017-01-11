@@ -34,7 +34,7 @@
     <name>Gravitee IO - Access Management</name>
 
     <properties>
-        <gravitee-common.version>1.1.0-SNAPSHOT</gravitee-common.version>
+        <gravitee-common.version>1.1.0</gravitee-common.version>
         <gravitee-plugin-core.version>1.0.0</gravitee-plugin-core.version>
 
         <spring-security.version>3.2.8.RELEASE</spring-security.version>
