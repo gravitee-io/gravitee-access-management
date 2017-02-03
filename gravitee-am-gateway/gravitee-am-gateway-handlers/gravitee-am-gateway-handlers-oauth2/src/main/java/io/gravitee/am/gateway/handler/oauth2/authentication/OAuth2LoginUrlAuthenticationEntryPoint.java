@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.authentication;
 
+import io.gravitee.common.http.HttpHeaders;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,7 +37,26 @@ public class OAuth2LoginUrlAuthenticationEntryPoint extends LoginUrlAuthenticati
     protected String determineUrlToUseForThisRequest(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) {
         String url = super.determineUrlToUseForThisRequest(request, response, exception);
         // Does not work because ant pattern matcher does not allow to pass query parameters
-    //    return UriComponentsBuilder.fromPath(url).queryParam("client_id", request.getParameter("client_id")).toUriString();
+        // return UriComponentsBuilder.fromPath(url).queryParam("client_id", request.getParameter("client_id")).toUriString();
         return url;
+    }
+
+    @Override
+    protected String buildRedirectUrlToLoginPage(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) {
+        String url = super.buildRedirectUrlToLoginPage(request, response, authException);
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+
+        String scheme = request.getHeader(HttpHeaders.X_FORWARDED_PROTO);
+        if (scheme != null && !scheme.isEmpty()) {
+            builder.scheme(scheme);
+        }
+
+        String host = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
+        if (host != null && !host.isEmpty()) {
+            builder.host(host);
+        }
+
+        return builder.toUriString();
     }
 }
