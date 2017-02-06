@@ -99,8 +99,8 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
                 .realm("realm-" + domain.getName())
                 .checkTokenAccess("isAuthenticated()")
                 .accessDeniedHandler(oAuth2AccessDeniedHandler())
+                .allowFormAuthenticationForClients()
                 .authenticationEntryPoint(oAuth2AuthenticationEntryPoint());
-
         oauthServer
                 .addTokenEndpointAuthenticationFilter(new BasicAuthenticationFilter(clientAuthenticationManager(), oAuth2AuthenticationEntryPoint()));
     }
