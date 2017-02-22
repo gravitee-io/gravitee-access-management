@@ -18,6 +18,7 @@ package io.gravitee.am.definition;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.gravitee.am.definition.oauth2.OAuth2Domain;
+import io.gravitee.am.definition.resources.Asset;
 
 import java.util.List;
 
@@ -49,6 +50,8 @@ public abstract class Domain {
     private Type type;
 
     private List<Identity> identities;
+
+    private List<Asset> assets;
 
     public String getName() {
         return name;
@@ -104,6 +107,14 @@ public abstract class Domain {
 
     public void setIdentities(List<Identity> identities) {
         this.identities = identities;
+    }
+
+    public List<Asset> getAssets() {
+        return assets;
+    }
+
+    public void setAssets(List<Asset> assets) {
+        this.assets = assets;
     }
 
     @Override

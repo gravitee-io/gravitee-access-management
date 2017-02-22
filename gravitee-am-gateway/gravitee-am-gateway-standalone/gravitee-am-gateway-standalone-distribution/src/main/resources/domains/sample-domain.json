@@ -38,5 +38,11 @@
 				]
 			}
 		}
+	],
+	"assets": [
+		{
+			"mapping": "/assets",
+			"path": "/Users/david/temp/am/"
+		}
 	]
 }

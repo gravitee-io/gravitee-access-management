@@ -15,8 +15,12 @@
  */
 package io.gravitee.am.handler.spring;
 
+import io.gravitee.am.definition.Domain;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -24,5 +28,17 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
  */
 @Configuration
 @EnableWebMvc
-public class SpringWebConfiguration {
+public class SpringWebConfiguration extends WebMvcConfigurerAdapter {
+
+    @Autowired
+    private Domain domain;
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        if (domain.getAssets() != null && ! domain.getAssets().isEmpty()) {
+            domain.getAssets().forEach(asset -> registry
+                    .addResourceHandler(asset.getMapping() + "/**")
+                    .addResourceLocations("file:" + asset.getPath()));
+        }
+    }
 }
