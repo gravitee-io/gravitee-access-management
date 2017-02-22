@@ -48,7 +48,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractMongoConfi
 
     @Override
     protected String getDatabaseName() {
-        return environment.getProperty("oauth2.mongodb.dbname", "gravitee-oauth2");
+        return environment.getProperty("oauth2.mongodb.dbname", "gravitee-am");
     }
 
     protected Set<Class<?>> getInitialEntitySet() throws ClassNotFoundException {
