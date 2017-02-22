@@ -27,10 +27,10 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${gravitee.oauth2.log.dir}/gravitee.log</file>
+        <file>${gravitee.am.log.dir}/gravitee.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>${gravitee.am.log.dir}/graviteeam_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${gravitee.am.log.dir}/gravitee_am_%d{yyyy-MM-dd}.log</fileNamePattern>
 
             <!-- keep 30 days' worth of history -->
             <maxHistory>30</maxHistory>
@@ -41,7 +41,7 @@
         </encoder>
     </appender>
 
-    <logger name="io.gravitee" level="DEBUG" />
+    <logger name="io.gravitee" level="INFO" />
     <logger name="org.eclipse.jetty" level="INFO" />
     <logger name="org.springframework.security" level="INFO " />
 
