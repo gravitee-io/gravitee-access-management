@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
@@ -66,6 +67,10 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     @Autowired
     private ClientDetailsService clientDetailsService;
 
+    @Autowired
+    @Qualifier("userDetailsServiceBean")
+    private UserDetailsService userDetailsService;
+
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         clients.withClientDetails(clientDetailsService);
@@ -88,6 +93,8 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints
             .tokenStore(tokenStore)
+            .reuseRefreshTokens(false)
+            .userDetailsService(userDetailsService)
             .authorizationCodeServices(authorizationCodeServices)
             .userApprovalHandler(userApprovalHandler)
             .authenticationManager(authenticationManager);
@@ -102,7 +109,7 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
                 .allowFormAuthenticationForClients()
                 .authenticationEntryPoint(oAuth2AuthenticationEntryPoint());
         oauthServer
-                .addTokenEndpointAuthenticationFilter(new BasicAuthenticationFilter(clientAuthenticationManager(), oAuth2AuthenticationEntryPoint()));
+                .addTokenEndpointAuthenticationFilter(new BasicAuthenticationFilter(authenticationManager, oAuth2AuthenticationEntryPoint()));
     }
 
     @Bean

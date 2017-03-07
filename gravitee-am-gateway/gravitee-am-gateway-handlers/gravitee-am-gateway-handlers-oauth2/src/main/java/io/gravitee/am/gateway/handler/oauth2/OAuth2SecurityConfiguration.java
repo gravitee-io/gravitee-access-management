@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.filter.CORSFilter;
 import io.gravitee.am.gateway.handler.oauth2.handler.CustomLogoutSuccessHandler;
 import io.gravitee.am.gateway.handler.oauth2.provider.code.RepositoryAuthorizationCodeServices;
 import io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore;
+import io.gravitee.am.gateway.handler.oauth2.userdetails.CustomUserDetailsService;
 import io.gravitee.am.gateway.idp.core.IdentityProviderManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import org.slf4j.Logger;
@@ -36,6 +37,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.approval.ApprovalStore;
 import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
@@ -68,7 +70,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private IdentityProviderManager identityProviderManager;
 
     @Autowired
-    public void globalUserDetails(AuthenticationManagerBuilder auth) throws Exception {
+    protected void globalUserDetails(AuthenticationManagerBuilder auth) throws Exception {
         logger.info("Loading identity providers for authentication");
 
         for (Identity idp : domain.getIdentities()) {
@@ -118,6 +120,14 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
+    }
+
+    @Override
+    @Bean
+    public UserDetailsService userDetailsServiceBean() throws Exception {
+        // Do not use userDetailsService from WebSecurityConfigurerAdapter because this later
+        // register only the latest UserDetailsService even we have multiple authentication providers.
+        return new CustomUserDetailsService();
     }
 
     @Bean
