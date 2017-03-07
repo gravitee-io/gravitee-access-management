@@ -109,7 +109,7 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
                 .allowFormAuthenticationForClients()
                 .authenticationEntryPoint(oAuth2AuthenticationEntryPoint());
         oauthServer
-                .addTokenEndpointAuthenticationFilter(new BasicAuthenticationFilter(authenticationManager, oAuth2AuthenticationEntryPoint()));
+                .addTokenEndpointAuthenticationFilter(new BasicAuthenticationFilter(clientAuthenticationManager(), oAuth2AuthenticationEntryPoint()));
     }
 
     @Bean
