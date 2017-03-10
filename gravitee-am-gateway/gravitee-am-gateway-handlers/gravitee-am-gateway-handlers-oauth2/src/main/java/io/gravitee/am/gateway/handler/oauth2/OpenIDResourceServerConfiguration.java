@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2;
 
 import io.gravitee.am.gateway.handler.oauth2.filter.CORSFilter;
+import io.gravitee.am.gateway.handler.oauth2.provider.endpoint.TokenIntrospectEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.provider.endpoint.UserInfoEndpoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,6 +25,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
 import javax.servlet.Filter;
@@ -34,6 +37,11 @@ import javax.servlet.Filter;
 @Configuration
 @EnableResourceServer
 public class OpenIDResourceServerConfiguration extends ResourceServerConfigurerAdapter {
+
+    @Bean
+    public UserInfoEndpoint userInfoEndpoint() {
+        return new UserInfoEndpoint();
+    }
 
     @Override
     public void configure(HttpSecurity http) throws Exception {
