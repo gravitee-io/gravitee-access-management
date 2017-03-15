@@ -35,6 +35,9 @@ public class OAuth2Authentication extends AbstractAuthenticationToken {
         super(userAuthentication == null ? storedRequest.getAuthorities() : userAuthentication.getAuthorities());
         this.storedRequest = storedRequest;
         this.userAuthentication = userAuthentication;
+        if (userAuthentication != null) {
+            this.setName(userAuthentication.getName());
+        }
     }
 
     public boolean isClientOnly() {

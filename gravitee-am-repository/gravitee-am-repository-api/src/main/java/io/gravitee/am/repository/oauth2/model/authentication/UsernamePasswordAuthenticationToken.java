@@ -39,10 +39,11 @@ public class UsernamePasswordAuthenticationToken extends AbstractAuthenticationT
         setAuthenticated(false);
     }
 
-    public UsernamePasswordAuthenticationToken(Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities) {
+    public UsernamePasswordAuthenticationToken(String username, Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.principal = principal;
         this.credentials = credentials;
+        this.setName(username);
         super.setAuthenticated(true); // must use super, as we override
     }
 

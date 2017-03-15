@@ -57,7 +57,8 @@ import java.util.stream.Collectors;
             Object credentials = _userAuthentication.getCredentials();
             Collection<? extends GrantedAuthority> authorities = convert(_userAuthentication.getAuthorities());
             userAuthentication =
-                    new io.gravitee.am.repository.oauth2.model.authentication.UsernamePasswordAuthenticationToken(principal, credentials, authorities);
+                    new io.gravitee.am.repository.oauth2.model.authentication.UsernamePasswordAuthenticationToken(
+                            _userAuthentication.getName(), principal, credentials, authorities);
         }
 
         io.gravitee.am.repository.oauth2.model.OAuth2Authentication oAuth2Authentication =
