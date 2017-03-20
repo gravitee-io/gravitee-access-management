@@ -50,7 +50,7 @@ public class OAuth2AccessTokenMongoRepository {
     private static final String FIELD_CREATED_AT = "created_at";
 
     @Autowired
-    @Qualifier("tokenMongoTemplate")
+    @Qualifier("oauth2MongoTemplate")
     private MongoOperations mongoOperations;
 
     @PostConstruct

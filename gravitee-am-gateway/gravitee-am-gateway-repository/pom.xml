@@ -30,23 +30,18 @@
     <artifactId>gravitee-am-gateway-repository</artifactId>
     <name>Gravitee IO - Access Management - Gateway - Repository</name>
 
-    <properties>
-        <gravitee-am-repository-api.version>0.1.0-SNAPSHOT</gravitee-am-repository-api.version>
-        <gravitee-am-repository-mongodb.version>0.1.0-SNAPSHOT</gravitee-am-repository-mongodb.version>
-    </properties>
-
     <dependencies>
         <!-- Gravitee dependencies -->
         <dependency>
             <groupId>io.gravitee.am.repository</groupId>
             <artifactId>gravitee-am-repository-api</artifactId>
-            <version>${gravitee-am-repository-api.version}</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.gravitee.am.repository</groupId>
             <artifactId>gravitee-am-repository-mongodb</artifactId>
-            <version>${gravitee-am-repository-mongodb.version}</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

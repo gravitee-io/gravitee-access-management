@@ -43,7 +43,7 @@ public class OAuth2AuthorizationCodeMongoRepository {
     private static final String FIELD_UPDATED_AT = "updated_at";
 
     @Autowired
-    @Qualifier("authorizationCodeMongoTemplate")
+    @Qualifier("oauth2MongoTemplate")
     private MongoOperations mongoOperations;
 
     @PostConstruct

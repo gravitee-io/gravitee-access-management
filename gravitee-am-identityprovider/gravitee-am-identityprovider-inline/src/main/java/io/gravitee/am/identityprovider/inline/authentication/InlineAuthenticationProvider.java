@@ -15,16 +15,15 @@
  */
 package io.gravitee.am.identityprovider.inline.authentication;
 
+import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.inline.InlineIdentityProviderConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.User;
@@ -39,8 +38,7 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Import(InlineAuthenticationProviderConfiguration.class)
-public class InlineAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider
-        implements AuthenticationProvider<org.springframework.security.authentication.AuthenticationProvider> {
+public class InlineAuthenticationProvider implements AuthenticationProvider, InitializingBean {
 
     @Autowired
     private InlineIdentityProviderConfiguration configuration;
@@ -54,7 +52,7 @@ public class InlineAuthenticationProvider extends AbstractUserDetailsAuthenticat
     private InMemoryUserDetailsManager userDetailsService;
 
     @Override
-    public org.springframework.security.authentication.AuthenticationProvider configure() throws Exception {
+    public void afterPropertiesSet() throws Exception {
         for(io.gravitee.am.identityprovider.inline.model.User user : configuration.getUsers()) {
             List<GrantedAuthority> authorities = AuthorityUtils.createAuthorityList(user.getRoles());
             User newUser = new User(user.getUsername(), user.getPassword(), authorities);
@@ -62,39 +60,19 @@ public class InlineAuthenticationProvider extends AbstractUserDetailsAuthenticat
             LOGGER.debug("Add an inline user: {}", newUser);
             userDetailsService.createUser(newUser);
         }
-
-        return this;
     }
 
     @Override
-    protected void additionalAuthenticationChecks(UserDetails userDetails, UsernamePasswordAuthenticationToken authentication) throws AuthenticationException {
-        if (authentication.getCredentials() == null) {
-            LOGGER.debug("Authentication failed: no credentials provided");
-            throw new BadCredentialsException(messages.getMessage("AbstractUserDetailsAuthenticationProvider.badCredentials", "Bad credentials"));
-        }
+    public io.gravitee.am.identityprovider.api.User loadUserByUsername(Authentication authentication) {
+        final UserDetails userDetails = userDetailsService.loadUserByUsername((String) authentication.getPrincipal());
 
         String presentedPassword = authentication.getCredentials().toString();
 
         if (!passwordEncoder.matches(presentedPassword, userDetails.getPassword())) {
             LOGGER.debug("Authentication failed: password does not match stored value");
-            throw new BadCredentialsException(messages.getMessage("AbstractUserDetailsAuthenticationProvider.badCredentials", "Bad credentials"));
+            throw new BadCredentialsException("Bad getCredentials");
         }
-    }
 
-    @Override
-    protected UserDetails retrieveUser(String username, UsernamePasswordAuthenticationToken authentication) throws AuthenticationException {
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-        /*
-        io.gravitee.management.idp.api.authentication.UserDetails grUserDetails =
-                new io.gravitee.management.idp.api.authentication.UserDetails(userDetails.getUsername(), userDetails.getPassword(), userDetails.getAuthorities());
-
-        grUserDetails.setSource(InMemoryIdentityProvider.PROVIDER_TYPE);
-        grUserDetails.setSourceId(username);
-
-        return grUserDetails;
-        */
-
-        return userDetails;
+        return null;
     }
 }

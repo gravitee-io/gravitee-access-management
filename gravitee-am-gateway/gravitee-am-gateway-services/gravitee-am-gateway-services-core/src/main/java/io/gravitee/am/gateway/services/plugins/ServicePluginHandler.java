@@ -55,7 +55,7 @@ public class ServicePluginHandler implements PluginHandler {
             serviceManager.register((AbstractService) context.getBean(plugin.clazz()));
 
         } catch (Exception iae) {
-            LOGGER.error("Unexpected error while create reporter instance", iae);
+            LOGGER.error("Unexpected error while create service instance", iae);
             // Be sure that the context does not exist anymore.
             pluginContextFactory.remove(plugin);
         }

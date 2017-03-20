@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.jetty.handler.security;
 
 import io.gravitee.am.gateway.core.context.servlet.ServletContext;
-import io.gravitee.am.definition.Domain;
+import io.gravitee.am.model.Domain;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -24,8 +24,10 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.Servlet;
+import java.text.Normalizer;
 import java.util.EnumSet;
 import java.util.EventListener;
+import java.util.regex.Pattern;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -40,7 +42,7 @@ public class SecurityDomainHandler extends ServletContextHandler {
     SecurityDomainHandler(ServletContext<Domain> context) {
         super(SESSIONS);
         this.context = context;
-        setContextPath(context.deployable().getContextPath());
+        setContextPath('/' + context.deployable().getId());
         this.init();
     }
 

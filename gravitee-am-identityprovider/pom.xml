@@ -30,12 +30,24 @@
     <artifactId>gravitee-am-identityprovider</artifactId>
     <packaging>pom</packaging>
 
-    <version>0.0.1-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Identity Provider</name>
 
     <modules>
         <module>gravitee-am-identityprovider-api</module>
-        <module>gravitee-am-identityprovider-properties</module>
         <module>gravitee-am-identityprovider-inline</module>
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.common</groupId>
+            <artifactId>gravitee-common</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 </project>

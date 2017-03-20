@@ -39,7 +39,6 @@ public abstract class SpringServletContext<T> implements ServletContext<T> {
         if (applicationContext == null) {
             AnnotationConfigWebApplicationContext webApplicationContext = new AnnotationConfigWebApplicationContext();
 
-            webApplicationContext.register(SpringWebConfiguration.class);
             Set<Class<?>> annotatedClasses = annotatedClasses();
             if (annotatedClasses != null) {
                 annotatedClasses.iterator().forEachRemaining(webApplicationContext::register);

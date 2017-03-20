@@ -21,9 +21,8 @@ package io.gravitee.am.repository;
  */
 public enum Scope {
 
-    OAUTH2_TOKEN("oauth2_token"),
-    OAUTH2_MANAGAMENT("oauth2_management"),
-    OAUTH2_CODE("oauth2_code");
+    OAUTH2("oauth2"),
+    MANAGEMENT("management");
 
     String name;
 

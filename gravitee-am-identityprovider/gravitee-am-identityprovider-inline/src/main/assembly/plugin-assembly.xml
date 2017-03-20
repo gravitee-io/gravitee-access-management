@@ -30,6 +30,24 @@
 		</file>
 	</files>
 
+	<fileSets>
+		<!-- Then include identity provider configuration schemas -->
+		<fileSet>
+			<directory>src/main/resources/schemas</directory>
+			<outputDirectory>schemas</outputDirectory>
+		</fileSet>
+
+		<!-- Create the empty lib directory in case of no libraries is required -->
+		<!-- As there is no maven-assembly-plugin's method do to that, we hack it ourself -->
+		<fileSet>
+			<directory>${project.basedir}/src/assembly</directory>
+			<outputDirectory>lib</outputDirectory>
+			<excludes>
+				<exclude>*</exclude>
+			</excludes>
+		</fileSet>
+	</fileSets>
+
 	<!-- Finally include plugin dependencies -->
 	<dependencySets>
 		<dependencySet>

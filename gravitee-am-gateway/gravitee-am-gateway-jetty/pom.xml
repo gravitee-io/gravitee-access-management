@@ -37,10 +37,9 @@
             <artifactId>gravitee-common</artifactId>
         </dependency>
 
-        <!-- Gravitee.io Access Management -->
         <dependency>
-            <groupId>io.gravitee.am.gateway</groupId>
-            <artifactId>gravitee-am-gateway-definition</artifactId>
+            <groupId>io.gravitee.am.model</groupId>
+            <artifactId>gravitee-am-model</artifactId>
             <version>${project.version}</version>
         </dependency>
 

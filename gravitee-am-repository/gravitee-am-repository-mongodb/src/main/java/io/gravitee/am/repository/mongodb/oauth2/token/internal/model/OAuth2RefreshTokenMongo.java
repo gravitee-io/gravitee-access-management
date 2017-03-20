@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2.token.internal.model;
 
-import io.gravitee.am.repository.mongodb.oauth2.common.model.Auditable;
+import io.gravitee.am.repository.mongodb.common.model.Auditable;
 
 import java.util.Date;
 

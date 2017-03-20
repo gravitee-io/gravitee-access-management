@@ -54,6 +54,12 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.gateway</groupId>
+            <artifactId>gravitee-am-gateway-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.gateway.services</groupId>
             <artifactId>gravitee-am-gateway-services-core</artifactId>
             <version>${project.version}</version>
@@ -63,6 +69,32 @@
             <groupId>io.gravitee.am.gateway.handlers</groupId>
             <artifactId>gravitee-am-gateway-handlers-oauth2</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.gateway.handlers</groupId>
+            <artifactId>gravitee-am-gateway-handlers-management</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Jackson dependencies -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- Spring -->

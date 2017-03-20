@@ -15,8 +15,7 @@
  */
 package io.gravitee.am.gateway.repository.spring;
 
-import io.gravitee.am.repository.mongodb.oauth2.code.AuthorizationCodeRepositoryConfiguration;
-import io.gravitee.am.repository.mongodb.oauth2.token.TokenRepositoryConfiguration;
+import io.gravitee.am.repository.mongodb.oauth2.OAuth2RepositoryConfiguration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -26,7 +25,7 @@ import org.springframework.context.annotation.Import;
  */
 // TODO : create repository plugin
 @Configuration
-@Import({ TokenRepositoryConfiguration.class, AuthorizationCodeRepositoryConfiguration.class })
+@Import({OAuth2RepositoryConfiguration.class})
 public class RepositoryConfiguration {
 
 }

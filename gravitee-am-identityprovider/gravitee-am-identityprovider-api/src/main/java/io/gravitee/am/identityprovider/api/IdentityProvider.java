@@ -21,11 +21,7 @@ package io.gravitee.am.identityprovider.api;
  */
 public interface IdentityProvider {
 
-    String type();
-
     Class<? extends IdentityProviderConfiguration> configuration();
 
     Class<? extends AuthenticationProvider> authenticationProvider();
-
-    Class<? extends UserProvider> userProvider();
 }

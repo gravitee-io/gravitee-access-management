@@ -15,16 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.view;
 
-import io.gravitee.am.definition.oauth2.OAuth2Domain;
 import io.gravitee.common.spring.factory.AbstractAutowiringFactoryBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
-import org.thymeleaf.templateresolver.FileTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
-
-import java.io.File;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -34,6 +29,7 @@ public class ThymeleafTemplateResolverFactory extends AbstractAutowiringFactoryB
 
     private final Logger logger = LoggerFactory.getLogger(ThymeleafTemplateResolverFactory.class);
 
+    /*
     @Autowired
     private OAuth2Domain domain;
 
@@ -64,6 +60,7 @@ public class ThymeleafTemplateResolverFactory extends AbstractAutowiringFactoryB
         logger.warn("Custom template {} does not exist, skipping.", domain.getTemplate().getPath());
         return null;
     }
+    */
 
     private ITemplateResolver defaultTemplateResolver() {
         ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
@@ -76,5 +73,10 @@ public class ThymeleafTemplateResolverFactory extends AbstractAutowiringFactoryB
     @Override
     public Class<?> getObjectType() {
         return ITemplateResolver.class;
+    }
+
+    @Override
+    protected ITemplateResolver doCreateInstance() throws Exception {
+        return defaultTemplateResolver();
     }
 }

@@ -35,6 +35,7 @@
     <modules>
         <module>gravitee-am-gateway-services-core</module>
         <module>gravitee-am-gateway-services-localregistry</module>
+        <module>gravitee-am-gateway-services-sync</module>
     </modules>
 
     <dependencies>
@@ -42,13 +43,6 @@
         <dependency>
             <groupId>io.gravitee.am.gateway</groupId>
             <artifactId>gravitee-am-gateway-core</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.am.gateway</groupId>
-            <artifactId>gravitee-am-gateway-definition</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>

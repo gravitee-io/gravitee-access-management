@@ -27,14 +27,12 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.gravitee.am.repository</groupId>
     <artifactId>gravitee-am-repository-mongodb</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Repository MongoDB</name>
 
     <properties>
-        <spring.data.mongodb.version>1.9.5.RELEASE</spring.data.mongodb.version>
-        <org.mongodb.version>3.3.0</org.mongodb.version>
+        <spring.data.mongodb.version>1.9.8.RELEASE</spring.data.mongodb.version>
+        <org.mongodb.version>3.4.2</org.mongodb.version>
         <embed.mongo.version>1.50.2</embed.mongo.version>
         <junit.version>4.12</junit.version>
     </properties>
@@ -47,6 +45,13 @@
         </dependency>
 
         <!-- Gravitee dependencies -->
+        <dependency>
+            <groupId>io.gravitee.am.model</groupId>
+            <artifactId>gravitee-am-model</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>io.gravitee.am.repository</groupId>
             <artifactId>gravitee-am-repository-api</artifactId>
@@ -81,13 +86,6 @@
         </dependency>
 
         <!-- Test dependencies -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>

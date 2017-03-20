@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>6</version>
+        <version>7</version>
     </parent>
 
     <groupId>io.gravitee.am</groupId>
@@ -38,12 +38,14 @@
         <gravitee-plugin-core.version>1.0.0</gravitee-plugin-core.version>
 
         <spring-security.version>3.2.8.RELEASE</spring-security.version>
-        <spring-security-oauth2.version>2.0.12.RELEASE</spring-security-oauth2.version>
+
         <jackson.library>2.7.5</jackson.library>
         <jetty.version>9.3.14.v20161028</jetty.version>
+        <jersey.version>2.23.2</jersey.version>
     </properties>
 
     <modules>
+        <module>gravitee-am-model</module>
         <module>gravitee-am-gateway</module>
         <module>gravitee-am-identityprovider</module>
         <module>gravitee-am-repository</module>
@@ -144,6 +146,20 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

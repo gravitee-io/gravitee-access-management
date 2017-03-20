@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.jetty.handler.security;
 
-import io.gravitee.am.definition.Domain;
 import io.gravitee.am.gateway.core.event.DomainEvent;
+import io.gravitee.am.model.Domain;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
@@ -26,6 +26,7 @@ import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -55,14 +56,21 @@ public class SecurityDomainHandlerCollection extends HandlerWrapper implements H
     public void onEvent(Event<DomainEvent, Domain> event) {
         logger.debug("An event has been received: [{} - {}]", event.content().getName(), event.type());
 
+        MDC.put("domain", event.content().getName());
+
         switch (event.type()) {
             case DEPLOY:
                 create(event.content());
                 break;
-            case UNDEPLOY:
+            case UPDATE:
                 update(event.content());
                 break;
+            case UNDEPLOY:
+                remove(event.content());
+                break;
         }
+
+        MDC.remove("domain");
     }
 
     public void create(Domain domain) {
@@ -93,7 +101,7 @@ public class SecurityDomainHandlerCollection extends HandlerWrapper implements H
             parent.manage(handler);
             handler.start();
 
-            logger.info("Security domain {} has been been created on path {}", domain.getName(), domain.getContextPath());
+            logger.info("Security domain {} has been been published on path {}", domain.getName(), handler.getContextPath());
         } catch (Exception ex) {
             logger.error("Unable to add a new handler", ex);
         }

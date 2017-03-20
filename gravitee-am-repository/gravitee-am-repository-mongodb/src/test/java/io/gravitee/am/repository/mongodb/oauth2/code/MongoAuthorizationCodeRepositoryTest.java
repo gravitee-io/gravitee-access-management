@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -45,6 +46,7 @@ public class MongoAuthorizationCodeRepositoryTest {
     private MongoAuthorizationCodeRepository mongoAuthorizationCodeRepository;
 
     @Autowired
+    @Qualifier("oauth2MongoTemplate")
     private MongoTemplate mongoTemplate;
 
     @After

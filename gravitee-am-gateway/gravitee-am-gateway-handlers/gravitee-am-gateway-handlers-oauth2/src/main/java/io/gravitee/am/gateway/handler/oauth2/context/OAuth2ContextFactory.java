@@ -17,9 +17,8 @@ package io.gravitee.am.gateway.handler.oauth2.context;
 
 import io.gravitee.am.gateway.core.context.servlet.ServletContext;
 import io.gravitee.am.gateway.core.context.servlet.ServletContextFactory;
-import io.gravitee.am.definition.Domain;
-import io.gravitee.am.definition.Type;
 import io.gravitee.am.handler.spring.SpringServletContext;
+import io.gravitee.am.model.Domain;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -34,7 +33,7 @@ public class OAuth2ContextFactory implements ServletContextFactory<Domain>, Appl
 
     @Override
     public boolean canHandle(Domain domain) {
-        return domain.getType() == Type.OAUTH2;
+        return domain != null; // && domain.getType() == Type.OAUTH2;
     }
 
     @Override

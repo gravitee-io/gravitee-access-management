@@ -1,0 +1,43 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:inline:InlineIdentityProviderConfiguration",
+  "properties" : {
+    "users" : {
+      "type" : "array",
+      "title": "Users",
+      "items" : {
+        "type" : "object",
+        "id" : "urn:jsonschema:io:gravitee:am:identityprovider:inline:model:User",
+        "title": "Header",
+        "properties" : {
+          "firstname" : {
+            "title": "Firstname",
+            "description": "Firstname",
+            "type" : "string"
+          },
+          "lastname" : {
+            "title": "Lastname",
+            "description": "Lastname",
+            "type" : "string"
+          },
+          "username" : {
+            "title": "Username",
+            "description": "Username",
+            "type" : "string"
+          },
+          "password" : {
+            "title": "Password",
+            "description": "Password",
+            "type" : "string"
+          }
+        },
+        "required": [
+          "firstname",
+          "lastname",
+          "username",
+          "password"
+        ]
+      }
+    }
+  }
+}

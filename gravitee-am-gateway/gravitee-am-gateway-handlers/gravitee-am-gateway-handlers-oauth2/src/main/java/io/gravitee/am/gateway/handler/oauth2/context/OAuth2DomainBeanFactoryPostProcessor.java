@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.context;
 
-import io.gravitee.am.definition.oauth2.OAuth2Domain;
+import io.gravitee.am.model.Domain;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -27,9 +27,9 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
  */
 class OAuth2DomainBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 
-    private final OAuth2Domain domain;
+    private final Domain domain;
 
-    OAuth2DomainBeanFactoryPostProcessor(OAuth2Domain domain) {
+    OAuth2DomainBeanFactoryPostProcessor(Domain domain) {
         this.domain = domain;
     }
 
