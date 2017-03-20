@@ -18,7 +18,6 @@ package io.gravitee.am.identityprovider.inline;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.inline.authentication.InlineAuthenticationProvider;
 
 /**
@@ -26,13 +25,6 @@ import io.gravitee.am.identityprovider.inline.authentication.InlineAuthenticatio
  * @author GraviteeSource Team
  */
 public class InlineIdentityProvider implements IdentityProvider {
-
-    public final static String IDENTITY_PROVIDER_TYPE = "inline";
-
-    @Override
-    public String type() {
-        return IDENTITY_PROVIDER_TYPE;
-    }
 
     @Override
     public Class<? extends IdentityProviderConfiguration> configuration() {
@@ -42,10 +34,5 @@ public class InlineIdentityProvider implements IdentityProvider {
     @Override
     public Class<? extends AuthenticationProvider> authenticationProvider() {
         return InlineAuthenticationProvider.class;
-    }
-
-    @Override
-    public Class<? extends UserProvider> userProvider() {
-        return null;
     }
 }

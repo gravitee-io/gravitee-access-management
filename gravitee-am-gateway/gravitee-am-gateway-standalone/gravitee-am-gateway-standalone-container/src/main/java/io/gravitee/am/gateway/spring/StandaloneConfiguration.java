@@ -15,14 +15,13 @@
  */
 package io.gravitee.am.gateway.spring;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.definition.jackson.mapper.GraviteeMapper;
 import io.gravitee.am.gateway.core.spring.CoreConfiguration;
 import io.gravitee.am.gateway.idp.spring.IdentityProviderConfiguration;
-import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.jetty.spring.JettyContainerConfiguration;
+import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.repository.spring.RepositoryConfiguration;
 import io.gravitee.am.gateway.services.spring.ServiceConfiguration;
+import io.gravitee.am.repository.mongodb.management.ManagementRepositoryConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.common.node.Node;
@@ -44,6 +43,8 @@ import org.springframework.context.annotation.Import;
         ServiceConfiguration.class,
         RepositoryConfiguration.class,
         IdentityProviderConfiguration.class,
+        io.gravitee.am.gateway.service.ServiceConfiguration.class,
+        ManagementRepositoryConfiguration.class,
         CoreConfiguration.class})
 public class StandaloneConfiguration {
 
@@ -55,10 +56,5 @@ public class StandaloneConfiguration {
     @Bean
     public EventManager eventManager() {
         return new EventManagerImpl();
-    }
-
-    @Bean
-    public ObjectMapper objectMapper() {
-        return new GraviteeMapper();
     }
 }

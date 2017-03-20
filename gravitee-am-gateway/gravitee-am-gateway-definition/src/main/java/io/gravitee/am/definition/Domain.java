@@ -30,7 +30,7 @@ import java.util.List;
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
         property = "type",
-        defaultImpl = Type.class,
+        defaultImpl = OAuth2Domain.class,
         visible = true)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = OAuth2Domain.class, name = "oauth2")

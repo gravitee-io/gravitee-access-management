@@ -46,7 +46,9 @@ public class OpenIDResourceServerConfiguration extends ResourceServerConfigurerA
     @Override
     public void configure(HttpSecurity http) throws Exception {
         http
-                .antMatcher("/userinfo")
+                .requestMatchers()
+                    .antMatchers("/userinfo")
+                .and()
                 .authorizeRequests()
                     .antMatchers(HttpMethod.OPTIONS, "**").permitAll()
                     .antMatchers(HttpMethod.GET, "/userinfo").access("#oauth2.hasScope('openid')")

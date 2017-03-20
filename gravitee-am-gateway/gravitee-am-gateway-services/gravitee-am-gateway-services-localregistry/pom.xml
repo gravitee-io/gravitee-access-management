@@ -31,6 +31,33 @@
     <name>Gravitee IO - Access Management - Gateway - Services - Local Registry</name>
 
     <dependencies>
+        <!-- Gravitee.io dependencies -->
+        <dependency>
+            <groupId>io.gravitee.am.gateway</groupId>
+            <artifactId>gravitee-am-gateway-definition</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Jackson dependencies -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- Spring dependencies -->
         <dependency>
             <groupId>org.springframework</groupId>

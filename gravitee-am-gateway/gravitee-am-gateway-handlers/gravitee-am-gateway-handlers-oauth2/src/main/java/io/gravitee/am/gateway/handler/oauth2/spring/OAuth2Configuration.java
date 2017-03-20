@@ -15,12 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.spring;
 
-import io.gravitee.am.definition.oauth2.OAuth2Domain;
 import io.gravitee.am.gateway.handler.oauth2.AuthorizationServerConfiguration;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2SecurityConfiguration;
 import io.gravitee.am.gateway.handler.oauth2.OpenIDResourceServerConfiguration;
 import io.gravitee.am.gateway.handler.oauth2.WebMvcConfiguration;
-import io.gravitee.am.gateway.handler.oauth2.provider.DomainBasedClientDetailsService;
+import io.gravitee.am.gateway.handler.oauth2.provider.client.DomainBasedClientDetailsService;
+import io.gravitee.am.gateway.handler.oauth2.security.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.oauth2.security.impl.IdentityProviderManagerImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -40,7 +41,12 @@ import org.springframework.security.oauth2.provider.ClientDetailsService;
 public class OAuth2Configuration {
 
     @Bean
-    public ClientDetailsService clientDetailsService(OAuth2Domain domain) {
-        return new DomainBasedClientDetailsService(domain);
+    public ClientDetailsService clientDetailsService() {
+        return new DomainBasedClientDetailsService();
+    }
+
+    @Bean
+    public IdentityProviderManager identityProviderManager() {
+        return new IdentityProviderManagerImpl();
     }
 }

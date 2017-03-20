@@ -15,16 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.oauth2;
 
-import io.gravitee.am.definition.Domain;
-import io.gravitee.am.definition.Identity;
 import io.gravitee.am.gateway.handler.oauth2.authentication.OAuth2LoginUrlAuthenticationEntryPoint;
 import io.gravitee.am.gateway.handler.oauth2.filter.CORSFilter;
 import io.gravitee.am.gateway.handler.oauth2.handler.CustomLogoutSuccessHandler;
 import io.gravitee.am.gateway.handler.oauth2.provider.code.RepositoryAuthorizationCodeServices;
+import io.gravitee.am.gateway.handler.oauth2.provider.security.ClientBasedAuthenticationProvider;
 import io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore;
 import io.gravitee.am.gateway.handler.oauth2.userdetails.CustomUserDetailsService;
-import io.gravitee.am.gateway.idp.core.IdentityProviderManager;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.model.Domain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +30,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.SecurityConfigurer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -43,7 +40,6 @@ import org.springframework.security.oauth2.provider.approval.ApprovalStore;
 import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
 import org.springframework.security.oauth2.provider.approval.TokenStoreUserApprovalHandler;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
-import org.springframework.security.oauth2.provider.endpoint.FrameworkEndpointHandlerMapping;
 import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
@@ -59,45 +55,26 @@ import javax.servlet.Filter;
 @EnableWebSecurity
 public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
+    /**
+     * Logger
+     */
     private final Logger logger = LoggerFactory.getLogger(OAuth2SecurityConfiguration.class);
-
-    @Autowired
-    private Domain domain;
 
     @Autowired
     private ClientDetailsService clientDetailsService;
 
     @Autowired
-    private IdentityProviderManager identityProviderManager;
-
-    @Autowired
     protected void globalUserDetails(AuthenticationManagerBuilder auth) throws Exception {
-        logger.info("Loading identity providers for authentication");
+        logger.info("Loading identity providers to handle user authentication");
 
-        for (Identity idp : domain.getIdentities()) {
-            logger.info("Loading identity provider: {}", idp.getType());
-
-            AuthenticationProvider authenticationProvider = identityProviderManager.create(idp.getType(), idp.getConfiguration());
-
-            if (authenticationProvider != null) {
-                Object authProviderInstance = authenticationProvider.configure();
-
-                if (authProviderInstance instanceof org.springframework.security.authentication.AuthenticationProvider) {
-                    auth.authenticationProvider((org.springframework.security.authentication.AuthenticationProvider) authProviderInstance);
-                }
-                else if (authProviderInstance instanceof SecurityConfigurer) {
-                    auth.apply((SecurityConfigurer) authProviderInstance);
-                }
-            } else {
-                logger.error("Identity provider can not be found for type {}", idp.getType());
-            }
-        }
+        // By default we are associating users added to the domain
+        auth.authenticationProvider(userAuthenticationProvider());
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http
-            .requestMatchers()
+        http.
+            requestMatchers()
                 .antMatchers("/oauth/**", "/authorize", "/login", "/logout")
                 .and()
             .authorizeRequests()
@@ -139,6 +116,11 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public AuthorizationCodeServices authorizationCodeServices() {
         return new RepositoryAuthorizationCodeServices();
+    }
+
+    @Bean
+    public ClientBasedAuthenticationProvider userAuthenticationProvider() {
+        return new ClientBasedAuthenticationProvider();
     }
 
     @Bean

@@ -15,20 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.context;
 
-import io.gravitee.am.definition.Domain;
-import io.gravitee.am.definition.oauth2.OAuth2Domain;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
 import io.gravitee.am.handler.spring.SpringServletContext;
+import io.gravitee.am.model.Domain;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.web.filter.DelegatingFilterProxy;
 import org.springframework.web.servlet.DispatcherServlet;
 
 import javax.servlet.Filter;
 import javax.servlet.Servlet;
-import java.util.Collections;
-import java.util.EventListener;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -64,12 +60,12 @@ public class OAuth2SpringServletContext extends SpringServletContext<Domain> {
 
     @Override
     protected Set<Class<?>> annotatedClasses() {
-        return Collections.singleton(OAuth2Configuration.class);
+        return new HashSet<>(Arrays.asList(OAuth2Configuration.class));
     }
 
     @Override
     protected Set<? extends BeanFactoryPostProcessor> beanFactoryPostProcessors() {
-        return Collections.singleton(new OAuth2DomainBeanFactoryPostProcessor((OAuth2Domain) deployable()));
+        return Collections.singleton(new OAuth2DomainBeanFactoryPostProcessor((Domain) deployable()));
     }
 
     static Builder create(Domain domain) {

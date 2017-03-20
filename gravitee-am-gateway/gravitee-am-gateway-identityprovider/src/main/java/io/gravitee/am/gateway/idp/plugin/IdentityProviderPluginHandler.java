@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.idp.plugin;
 
 import io.gravitee.am.gateway.idp.core.IdentityProviderDefinition;
-import io.gravitee.am.gateway.idp.core.IdentityProviderManager;
+import io.gravitee.am.gateway.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
@@ -39,7 +39,7 @@ public class IdentityProviderPluginHandler implements PluginHandler {
     private PluginClassLoaderFactory pluginClassLoaderFactory;
 
     @Autowired
-    private IdentityProviderManager identityProviderManager;
+    private IdentityProviderPluginManager identityProviderPluginManager;
 
     @Override
     public boolean canHandle(Plugin plugin) {
@@ -57,7 +57,7 @@ public class IdentityProviderPluginHandler implements PluginHandler {
             Assert.isAssignable(IdentityProvider.class, identityProviderClass);
 
             IdentityProvider identityIdentityProvider = createInstance((Class<IdentityProvider>) identityProviderClass);
-            identityProviderManager.register(new IdentityProviderDefinition(identityIdentityProvider, plugin));
+            identityProviderPluginManager.register(new IdentityProviderDefinition(identityIdentityProvider, plugin));
         } catch (Exception iae) {
             LOGGER.error("Unexpected error while create identity provider instance", iae);
         }

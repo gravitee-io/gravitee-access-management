@@ -18,7 +18,7 @@ package io.gravitee.am.repository.mongodb.oauth2.token;
 import io.gravitee.am.repository.mongodb.oauth2.token.internal.model.OAuth2AccessTokenMongo;
 import io.gravitee.am.repository.mongodb.oauth2.token.internal.model.OAuth2RefreshTokenMongo;
 import io.gravitee.am.repository.mongodb.oauth2.token.internal.token.OAuth2RefreshTokenMongoRepository;
-import io.gravitee.am.repository.mongodb.oauth2.common.SerializationUtils;
+import io.gravitee.am.repository.mongodb.common.SerializationUtils;
 import io.gravitee.am.repository.mongodb.oauth2.token.internal.token.OAuth2AccessTokenMongoRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.OAuth2AccessToken;

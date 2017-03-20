@@ -36,5 +36,14 @@
     <modules>
         <module>gravitee-am-gateway-handlers-spring</module>
         <module>gravitee-am-gateway-handlers-oauth2</module>
+        <module>gravitee-am-gateway-handlers-management</module>
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.gravitee.am.gateway</groupId>
+            <artifactId>gravitee-am-gateway-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 </project>

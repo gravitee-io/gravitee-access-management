@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.gateway.jetty.handler.security;
 
-import io.gravitee.am.definition.Domain;
 import io.gravitee.am.gateway.core.context.Context;
 import io.gravitee.am.gateway.core.context.ContextFactoryRegistry;
 import io.gravitee.am.gateway.core.context.servlet.ServletContext;
+import io.gravitee.am.model.Domain;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 

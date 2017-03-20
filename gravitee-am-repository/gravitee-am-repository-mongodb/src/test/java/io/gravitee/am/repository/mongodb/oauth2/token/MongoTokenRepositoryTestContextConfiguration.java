@@ -18,7 +18,8 @@ package io.gravitee.am.repository.mongodb.oauth2.token;
 import com.mongodb.Mongo;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.mongo.tests.MongodForTestsFactory;
-import io.gravitee.am.repository.mongodb.oauth2.common.AbstractRepositoryConfiguration;
+import io.gravitee.am.repository.mongodb.common.AbstractRepositoryConfiguration;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -37,12 +38,12 @@ public class MongoTokenRepositoryTestContextConfiguration extends AbstractReposi
         return MongodForTestsFactory.with(Version.Main.DEVELOPMENT);
     }
 
-    @Bean(name = "tokenMongo")
+    @Bean(name = "oauth2Mongo")
     public Mongo mongo() throws Exception {
         return factory().newMongo();
     }
 
-    @Bean(name = "tokenMongoTemplate")
+    @Bean(name = "oauth2MongoTemplate")
     public MongoTemplate mongoTemplate(Mongo mongo) {
         return new MongoTemplate(mongo, "gravitee-oauth2");
     }

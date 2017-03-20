@@ -26,7 +26,6 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.gravitee.am.identityprovider</groupId>
     <artifactId>gravitee-am-identityprovider-inline</artifactId>
     <packaging>jar</packaging>
 
@@ -39,6 +38,7 @@
             <groupId>io.gravitee.am.identityprovider</groupId>
             <artifactId>gravitee-am-identityprovider-api</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Spring -->

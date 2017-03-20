@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2;
 
-import io.gravitee.am.definition.Domain;
+import io.gravitee.am.model.Domain;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -100,6 +100,8 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
             .userDetailsService(userDetailsService)
             .authorizationCodeServices(authorizationCodeServices)
             .userApprovalHandler(userApprovalHandler)
+                //TODO: create a token introspection endpoint
+        //    .pathMapping("/oauth/check_token", "/oauth/introspect")
             .authenticationManager(authenticationManager)
                 .addInterceptor(new HandlerInterceptorAdapter() {
                     @Override

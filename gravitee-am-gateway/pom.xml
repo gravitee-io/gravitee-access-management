@@ -30,7 +30,6 @@
     <artifactId>gravitee-am-gateway</artifactId>
     <packaging>pom</packaging>
 
-    <version>0.0.1-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Gateway</name>
 
     <modules>
@@ -40,6 +39,7 @@
         <module>gravitee-am-gateway-standalone</module>
         <module>gravitee-am-gateway-definition</module>
         <module>gravitee-am-gateway-handlers</module>
+        <module>gravitee-am-gateway-service</module>
         <module>gravitee-am-gateway-services</module>
         <module>gravitee-am-gateway-identityprovider</module>
     </modules>
