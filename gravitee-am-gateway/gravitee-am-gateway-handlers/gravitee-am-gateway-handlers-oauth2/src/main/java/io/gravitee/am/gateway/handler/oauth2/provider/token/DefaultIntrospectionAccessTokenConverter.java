@@ -19,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.UserAuthenticationConverter;
 
 import java.util.Collection;
 import java.util.Map;
@@ -29,29 +30,42 @@ import java.util.Map;
  */
 public class DefaultIntrospectionAccessTokenConverter extends DefaultAccessTokenConverter {
 
+    /**
+     * Boolean indicator of whether or not the presented token is currently active as described by
+     * <a href="http://tools.ietf.org/html/draft-ietf-oauth-v2-22#section-3.3">Section 3.3</a>
+     */
+    public static String ACTIVE = "active";
+
+    /**
+     * Human-readable identifier for the resource owner who
+     * authorized this token as described by <a href="https://tools.ietf.org/html/rfc7662#section-2.2">Section 2.2</a>
+     */
+    public static String USERNAME = "username";
+
     @Override
     public Map<String, ?> convertAccessToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
         Map<String, Object> response = (Map<String, Object>) super.convertAccessToken(token, authentication);
 
-        response.put("active", !token.isExpired());
+        response.put(ACTIVE, !token.isExpired());
+        response.put(OAuth2AccessToken.TOKEN_TYPE, "bearer");
 
         Authentication userAuth = authentication.getUserAuthentication();
         if (userAuth != null) {
-            response.remove("user_name");
-            response.put("username", userAuth.getName());
+            response.remove(UserAuthenticationConverter.USERNAME);
+            response.put(USERNAME, userAuth.getName());
+            response.remove(UserAuthenticationConverter.AUTHORITIES);
         }
 
-        Object rawScopes = response.remove("scope");
+        Object rawScopes = response.remove(OAuth2AccessToken.SCOPE);
         StringBuilder sb = new StringBuilder();
         if (rawScopes != null && rawScopes instanceof Collection) {
             Collection scopes = (Collection)rawScopes;
             for (Object scope : scopes) {
-                sb.append(scope);
-                sb.append(" ");
+                sb.append(scope).append(" ");
             }
         }
 
-        response.put("scope", sb.toString().trim());
+        response.put(OAuth2AccessToken.SCOPE, sb.toString().trim());
 
         return response;
     }

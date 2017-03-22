@@ -32,6 +32,7 @@
 
     <properties>
         <spring-security-oauth2.version>2.1.0.RELEASE</spring-security-oauth2.version>
+        <spring-security-jwt.version>1.0.7.RELEASE</spring-security-jwt.version>
     </properties>
 
     <dependencies>
@@ -74,6 +75,13 @@
             <artifactId>spring-security-oauth2</artifactId>
             <version>${spring-security-oauth2.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-jwt</artifactId>
+            <version>${spring-security-jwt.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-web</artifactId>

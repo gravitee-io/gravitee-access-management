@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2;
 
+import io.gravitee.am.gateway.handler.oauth2.provider.jwt.CustomJwtAccessTokenConverter;
 import io.gravitee.am.model.Domain;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,6 +37,7 @@ import org.springframework.security.oauth2.provider.code.AuthorizationCodeServic
 import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
@@ -92,10 +94,16 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
         return new ProviderManager(Collections.singletonList(clientAuthenticationProvider));
     }
 
+    @Bean
+    public JwtAccessTokenConverter accessTokenConverter() {
+        return new CustomJwtAccessTokenConverter();
+    }
+
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints
             .tokenStore(tokenStore)
+            .accessTokenConverter(accessTokenConverter())
             .reuseRefreshTokens(false)
             .userDetailsService(userDetailsService)
             .authorizationCodeServices(authorizationCodeServices)
