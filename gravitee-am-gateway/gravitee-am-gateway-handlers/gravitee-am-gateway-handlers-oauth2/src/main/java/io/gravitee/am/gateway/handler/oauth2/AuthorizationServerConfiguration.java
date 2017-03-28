@@ -37,7 +37,10 @@ import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHand
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
 
 /**
@@ -97,7 +100,17 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
             .userDetailsService(userDetailsService)
             .authorizationCodeServices(authorizationCodeServices)
             .userApprovalHandler(userApprovalHandler)
-            .authenticationManager(authenticationManager);
+            .authenticationManager(authenticationManager)
+                .addInterceptor(new HandlerInterceptorAdapter() {
+                    @Override
+                    public boolean preHandle(HttpServletRequest hsr, HttpServletResponse rs, Object o) throws Exception {
+                        rs.setHeader("Access-Control-Allow-Origin", hsr.getHeader("origin"));
+                        rs.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+                        rs.setHeader("Access-Control-Max-Age", "3600");
+                        rs.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+                        return true;
+                    }
+                });
     }
 
     @Override
