@@ -1,0 +1,80 @@
+/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+@import '~@angular/material/theming';
+@import '~@swimlane/ngx-datatable/release/themes/material.css';
+@include mat-core();
+
+/* Configure theme */
+$graviteeio-am-app-primary: mat-palette($mat-blue-grey);
+$graviteeio-am-candy-app-accent:  mat-palette($mat-blue);
+$graviteeio-am-theme: mat-light-theme($graviteeio-am-app-primary, $graviteeio-am-candy-app-accent);
+@include angular-material-theme($graviteeio-am-theme);
+
+html, body, material-app, md-sidenav-container, .mat-sidenav-content, .main-content {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+md-sidenav-container {
+  background-color: #ffffff !important;
+}
+
+body {
+  font-family: Roboto,Helvetica Neue Light,Helvetica Neue,Helvetica,Arial,Lucida Grande,sans-serif;
+}
+
+.mat-sidenav {
+  overflow-y: initial !important;
+}
+
+.mat-list .mat-list-item .mat-list-item-content, .mat-nav-list .mat-list-item .mat-list-item-content {
+  position: inherit !important;
+}
+
+.browsehappy {
+  margin: 0.2em 0;
+  background: #ccc;
+  color: #000;
+  padding: 0.2em 0;
+}
+
+.ng-hide:not(.ng-hide-animate) {
+  display: none !important;
+}
+
+.gravitee-splash-screen {
+  background-color: rgb(45, 50, 62);
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 99999;
+}
+
+img.gravitee-splash-screen {
+  color: silver;
+  display: flex;
+  margin: 0 auto;
+  max-width: 200px;
+  position: relative;
+  top: 40%;
+}
+
+.animate-show-hide.ng-hide {
+  opacity: 0;
+}
+
+.animate-show-hide.ng-hide-add,
+.animate-show-hide.ng-hide-remove {
+  transition: all linear 0.5s;
+}
+
+.md-whiteframe-1dp, .md-whiteframe-z1 {
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 2px 1px -1px rgba(0,0,0,.12);
+}
+
+.md-whiteframe-z2{
+  box-shadow:0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12)
+}

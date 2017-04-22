@@ -1,0 +1,63 @@
+.landing-header {
+  h3 {
+    margin: 0;
+    padding-top: 20px;
+    color: #006CAB;
+    font-weight: 500;
+    font-size: 32px;
+    small {
+      color: #777;
+      font-weight: 300;
+      font-size: 40%;
+    }
+  }
+}
+
+.add-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
+
+.add-button-center {
+  text-align: center;
+}
+
+.search-domains {
+  margin-top: 10px;
+
+  .search-domains-input {
+    padding: 8px;
+    margin: 15px auto;
+    width: 60%;
+    font-size: 14px;
+    font-weight: 100;
+
+    &:focus {
+      outline: none;
+      border: 1px solid rgb(68,138,255);
+    }
+  }
+}
+
+.domains-content {
+  margin: 20px 20px 0px 0px;
+
+  md-list-item {
+    border-top: 1px solid #f1f1f1;
+
+    md-icon {
+      color: grey;
+      &.domain-enabled {
+        color: green;
+      }
+      &.domain-disabled {
+        color: orange;
+      }
+    }
+  }
+}
+
+.empty-domains-container {
+  margin-top: 20vh;
+}
