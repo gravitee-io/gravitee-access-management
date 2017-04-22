@@ -49,6 +49,7 @@
         <module>gravitee-am-gateway</module>
         <module>gravitee-am-identityprovider</module>
         <module>gravitee-am-repository</module>
+        <module>gravitee-am-ui</module>
     </modules>
 
     <dependencyManagement>
