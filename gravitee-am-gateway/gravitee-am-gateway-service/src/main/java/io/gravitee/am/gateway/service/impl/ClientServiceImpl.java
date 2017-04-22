@@ -61,7 +61,13 @@ public class ClientServiceImpl implements ClientService {
                 throw new ClientNotFoundException(id);
             }
 
-            return clientOpt.get();
+            Client client = clientOpt.get();
+            // Send an empty array in case of no grant types
+            if (client.getAuthorizedGrantTypes() == null) {
+                client.setAuthorizedGrantTypes(Collections.emptyList());
+            }
+
+            return client;
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find a client using its ID: {}", id, ex);
             throw new TechnicalManagementException(
