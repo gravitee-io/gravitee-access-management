@@ -1,0 +1,45 @@
+.login-container {
+  height: 100%;
+  background: #2d323e;
+  padding-top: 100px;
+}
+
+.login-content {
+  background-color: #fafafa;
+  border-radius: 7px;
+  width: 350px;
+  margin: 40px auto 10px;
+  overflow: hidden;
+  padding: 10px 30px 30px;
+  position: relative;
+}
+
+.login-header {
+  padding-bottom: 30px;
+  text-align: center;
+  a {
+    margin: 10px auto;
+  }
+
+  img {
+    height: 100px;
+  }
+
+  label {
+    font-size: 28px;
+    font-weight: 400;
+    margin: 0 auto;
+  }
+}
+
+.login-registration {
+  margin-top: 10px;
+  font-size: 12px;
+  text-align: right;
+  color: #337ab7;
+  text-decoration: none;
+}
+
+md-input-container {
+  margin: 12px 0;
+}

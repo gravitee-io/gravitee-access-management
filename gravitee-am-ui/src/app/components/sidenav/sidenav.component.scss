@@ -1,0 +1,155 @@
+$bgColor: rgb(45,50,62);
+$fontColor: rgba(255,255,255,.7);
+$sidenavWidth: 200px;
+$sidenavMinWidth: 60px;
+$sidenavItemLeftWidth: 15px;
+$sidenavItemBorderSize: 4px;
+$sidenavFooterHeight: 100px;
+$sidenavHeaderHeight: 64px;
+
+@mixin min-max-width($width) {
+  width: $width;
+  min-width: $width;
+  max-width: $width;
+}
+
+.navigation-header {
+  height: 64px;
+  min-height: 64px;
+  background-color: rgba(255,255,255,.05);
+  .logo-image {
+    display: block;
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    line-height: 48px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: #FFF;
+    border-radius: 5px;
+    margin-left: 5px;
+  }
+  .reduce-mode {
+    margin-left: -10px;
+  }
+  .logo-text {
+    color: #FFF;
+    font-size: 14px;
+    margin-left: 5px;
+  }
+}
+
+md-toolbar.md-default-theme:not(.md-menu-toolbar), md-toolbar:not(.md-menu-toolbar) {
+  background-color: rgba(255,255,255,.05);
+  color: inherit;
+}
+
+.gs-sidenav {
+  @include min-max-width($sidenavWidth);
+  height: 100%;
+  background-color: $bgColor;
+}
+.gs-sidenav-min {
+  @include min-max-width($sidenavMinWidth);
+  .sidenav-list {
+    a {
+      width: 74%;
+    }
+  }
+}
+
+.sidenav-list {
+  overflow-y: auto;
+  height: calc(100vh - #{$sidenavFooterHeight} - #{$sidenavHeaderHeight});
+  padding: 2px 0 1rem 0;
+
+  md-list-item {
+    min-height: 40px;
+    margin-left: -15px;
+    margin-bottom: -6px;
+  }
+
+  ng-md-icon {
+    fill: $fontColor;
+  }
+
+  a {
+    color: $fontColor;
+    position: absolute;
+    text-decoration: none;
+    width: 92%;
+    padding: 7px 0 8px $sidenavItemLeftWidth;
+
+    &:hover, &.sidenav-active {
+      font-weight: bold;
+      background-color: #1C1C25;
+    }
+
+    &.sidenav-active {
+      border-left: $sidenavItemBorderSize solid $fontColor;
+      padding-left: calc(#{$sidenavItemLeftWidth} - #{$sidenavItemBorderSize});
+    }
+  }
+
+  h4 {
+    text-transform: uppercase;
+    color: #6B7682;
+    font-weight: 400;
+    letter-spacing: .5px;
+    padding: 15px 0 8px $sidenavItemLeftWidth;
+  }
+
+  hr {
+    width: 90%;
+  }
+
+  span {
+    font-size: 14px;
+    margin-left: 4px;
+  }
+}
+
+.sidenav-footer {
+  height: $sidenavFooterHeight;
+  width: 100%;
+
+  md-icon {
+    color: $fontColor;
+  }
+
+  a {
+    color: $fontColor;
+    text-decoration: none;
+  }
+
+  hr {
+    width: 90%;
+  }
+
+  .mat-icon-button.sidenav-toggle {
+    position: absolute;
+    bottom: 50px;
+    right: -8px;
+    width: 18px;
+    height: 18px;
+    min-height: 18px;
+    line-height: 18px;
+  }
+
+  md-icon.sidenav-toggle-icon {
+    position: absolute;
+    top: -11px;
+    right: -3px;
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  md-list-item:last-child {
+    margin-top: -10px;
+  }
+}
+
+a > md-icon {
+  vertical-align: middle;
+}
