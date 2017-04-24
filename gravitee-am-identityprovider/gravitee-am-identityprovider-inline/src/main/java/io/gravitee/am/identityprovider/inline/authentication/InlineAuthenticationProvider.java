@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.inline.authentication;
 
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.inline.InlineIdentityProviderConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
     @Override
     public void afterPropertiesSet() throws Exception {
         for(io.gravitee.am.identityprovider.inline.model.User user : configuration.getUsers()) {
-            List<GrantedAuthority> authorities = AuthorityUtils.createAuthorityList(user.getRoles());
+            List<GrantedAuthority> authorities = AuthorityUtils.NO_AUTHORITIES; //createAuthorityList(user.getRoles());
             User newUser = new User(user.getUsername(), user.getPassword(), authorities);
 
             LOGGER.debug("Add an inline user: {}", newUser);
@@ -73,6 +74,6 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
             throw new BadCredentialsException("Bad getCredentials");
         }
 
-        return null;
+        return new DefaultUser(userDetails.getUsername(), userDetails.getPassword());
     }
 }

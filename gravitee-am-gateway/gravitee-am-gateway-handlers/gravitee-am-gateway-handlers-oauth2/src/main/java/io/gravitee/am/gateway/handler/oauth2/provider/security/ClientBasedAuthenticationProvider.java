@@ -71,12 +71,12 @@ public class ClientBasedAuthenticationProvider implements AuthenticationProvider
                     user = authenticationProvider.loadUserByUsername(new io.gravitee.am.identityprovider.api.Authentication() {
                         @Override
                         public Object getCredentials() {
-                            return authentication.getName();
+                            return authentication.getCredentials().toString();
                         }
 
                         @Override
                         public Object getPrincipal() {
-                            return authentication.getCredentials().toString();
+                            return authentication.getName();
                         }
                     });
                 } catch (Exception ex) {
