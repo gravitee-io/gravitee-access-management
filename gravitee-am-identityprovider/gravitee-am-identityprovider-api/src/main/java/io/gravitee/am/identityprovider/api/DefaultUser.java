@@ -68,12 +68,12 @@ public class DefaultUser implements User {
 
     @Override
     public String getPassword() {
-        return null;
+        return password;
     }
 
     @Override
     public String getUsername() {
-        return null;
+        return user;
     }
 
     @Override
