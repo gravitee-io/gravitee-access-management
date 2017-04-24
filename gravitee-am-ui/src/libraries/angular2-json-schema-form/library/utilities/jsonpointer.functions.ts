@@ -537,8 +537,10 @@ export class JsonPointer {
       if (isMap(arrayMap)) {
         let arrayIndex: number = 0;
         return genericPointer.replace(/\/\-(?=\/|$)/g, (key, stringIndex) => {
-          const subPointer = genericPointer.slice(0, stringIndex);
-          if (arrayMap.has(subPointer)) { return '/' + indexArray[arrayIndex++]; }
+          // const subPointer = genericPointer.slice(0, stringIndex);
+          //if (arrayMap.has(subPointer)) {
+            return '/' + indexArray[arrayIndex++];
+          //}
         });
       } else {
         let indexedPointer = genericPointer;
