@@ -36,9 +36,7 @@ public class OAuth2LoginUrlAuthenticationEntryPoint extends LoginUrlAuthenticati
     @Override
     protected String determineUrlToUseForThisRequest(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) {
         String url = super.determineUrlToUseForThisRequest(request, response, exception);
-        // Does not work because ant pattern matcher does not allow to pass query parameters
-        // return UriComponentsBuilder.fromPath(url).queryParam("client_id", request.getParameter("client_id")).toUriString();
-        return url;
+        return UriComponentsBuilder.fromPath(url).queryParam("client_id", request.getParameter("client_id")).toUriString();
     }
 
     @Override

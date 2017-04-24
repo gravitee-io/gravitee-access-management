@@ -20,15 +20,17 @@ import io.gravitee.am.gateway.handler.oauth2.filter.CORSFilter;
 import io.gravitee.am.gateway.handler.oauth2.handler.CustomLogoutSuccessHandler;
 import io.gravitee.am.gateway.handler.oauth2.provider.code.RepositoryAuthorizationCodeServices;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.ClientBasedAuthenticationProvider;
+import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationDetailsSource;
+import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationFailureHandler;
 import io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore;
 import io.gravitee.am.gateway.handler.oauth2.userdetails.CustomUserDetailsService;
-import io.gravitee.am.model.Domain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -42,10 +44,12 @@ import org.springframework.security.oauth2.provider.approval.TokenStoreUserAppro
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import javax.servlet.Filter;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -79,9 +83,12 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .and()
             .authorizeRequests()
                 .antMatchers(HttpMethod.OPTIONS, "**").permitAll()
+                .antMatchers("/login").permitAll()
                 .anyRequest().authenticated()
                 .and()
             .formLogin()
+                .authenticationDetailsSource(authenticationDetailsSource())
+                .failureHandler(authenticationFailureHandler())
                 .permitAll()
                 .and()
             .logout()
@@ -92,6 +99,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .authenticationEntryPoint(new OAuth2LoginUrlAuthenticationEntryPoint("/login"))
                 .and()
             .addFilterAfter(corsFilter(), AbstractPreAuthenticatedProcessingFilter.class);
+
     }
 
     @Override
@@ -144,5 +152,15 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public Filter corsFilter() {
         return new CORSFilter();
+    }
+
+    @Bean
+    public AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource() {
+        return new ClientAwareAuthenticationDetailsSource();
+    }
+
+    @Bean
+    public AuthenticationFailureHandler authenticationFailureHandler() {
+        return new ClientAwareAuthenticationFailureHandler("/login?error");
     }
 }
