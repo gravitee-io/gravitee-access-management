@@ -37,7 +37,7 @@
         <gravitee-common.version>1.1.0</gravitee-common.version>
         <gravitee-plugin-core.version>1.0.0</gravitee-plugin-core.version>
 
-        <spring-security.version>3.2.8.RELEASE</spring-security.version>
+        <spring-security.version>3.2.10.RELEASE</spring-security.version>
 
         <jackson.version>2.7.5</jackson.version>
         <jetty.version>9.3.14.v20161028</jetty.version>
