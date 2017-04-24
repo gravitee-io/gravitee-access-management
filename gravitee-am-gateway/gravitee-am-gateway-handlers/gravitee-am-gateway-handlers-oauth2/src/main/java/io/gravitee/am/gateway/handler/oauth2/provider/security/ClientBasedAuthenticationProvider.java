@@ -57,41 +57,43 @@ public class ClientBasedAuthenticationProvider implements AuthenticationProvider
         String clientId = details.get("client_id");
 
         // TODO: is there an other way to access client details without calling storage again ?
-        ClientDetails clientDetails = clientDetailsService.loadClientByClientId(clientId);
-        if (clientDetails instanceof DelegateClientDetails) {
-            Set<String> identities = ((DelegateClientDetails) clientDetails).getClient().getIdentities();
-            Iterator<String> iter = identities.iterator();
-            io.gravitee.am.identityprovider.api.User user = null;
-            while (iter.hasNext() && user == null) {
-                String provider = iter.next();
-                io.gravitee.am.identityprovider.api.AuthenticationProvider authenticationProvider =
-                        identityProviderManager.get(provider);
+        try {
+            ClientDetails clientDetails = clientDetailsService.loadClientByClientId(clientId);
+            if (clientDetails instanceof DelegateClientDetails) {
+                Set<String> identities = ((DelegateClientDetails) clientDetails).getClient().getIdentities();
+                Iterator<String> iter = identities.iterator();
+                io.gravitee.am.identityprovider.api.User user = null;
+                while (iter.hasNext() && user == null) {
+                    String provider = iter.next();
+                    io.gravitee.am.identityprovider.api.AuthenticationProvider authenticationProvider =
+                            identityProviderManager.get(provider);
 
-                try {
-                    user = authenticationProvider.loadUserByUsername(new io.gravitee.am.identityprovider.api.Authentication() {
-                        @Override
-                        public Object getCredentials() {
-                            return authentication.getCredentials().toString();
-                        }
+                    try {
+                        user = authenticationProvider.loadUserByUsername(new io.gravitee.am.identityprovider.api.Authentication() {
+                            @Override
+                            public Object getCredentials() {
+                                return authentication.getCredentials().toString();
+                            }
 
-                        @Override
-                        public Object getPrincipal() {
-                            return authentication.getName();
-                        }
-                    });
-                } catch (Exception ex) {
-                    logger.info("Unable to authenticate user {} with provider {}",
-                            authentication.getName(), provider);
+                            @Override
+                            public Object getPrincipal() {
+                                return authentication.getName();
+                            }
+                        });
+                    } catch (Exception ex) {
+                        logger.info("Unable to authenticate user {} with provider {}",
+                                authentication.getName(), provider);
+                    }
                 }
-            }
 
-            if (user != null) {
-                return new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword(),
-                        AuthorityUtils.NO_AUTHORITIES);
-            }
+                if (user != null) {
+                    return new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword(),
+                            AuthorityUtils.NO_AUTHORITIES);
+                }
 
-            throw new BadCredentialsException("Bad credentials.");
-        }
+                throw new BadCredentialsException("Bad credentials.");
+            }
+        } catch (Exception ex) {}
 
         throw new BadCredentialsException("Authentication can not be handle");
     }
