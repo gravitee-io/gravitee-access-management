@@ -91,24 +91,6 @@ public class ClientBasedAuthenticationProvider implements AuthenticationProvider
             }
 
             throw new BadCredentialsException("Bad credentials.");
-
-            /*
-            String username = authentication.getName();
-            String password = authentication.getCredentials().toString();
-
-            User user = userService.loadUserByUsernameAndDomain(domain.getId(), username);
-
-            //TODO: check password
-            if (user == null || !username.equalsIgnoreCase(user.getUsername())) {
-                throw new BadCredentialsException("Username not found.");
-            }
-
-            if (!password.equals(user.getPassword())) {
-                throw new BadCredentialsException("Wrong password.");
-            }
-
-            return new UsernamePasswordAuthenticationToken(user, password, AuthorityUtils.NO_AUTHORITIES);
-            */
         }
 
         throw new BadCredentialsException("Authentication can not be handle");
