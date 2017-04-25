@@ -16,9 +16,11 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.LoginFormMongo;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -79,6 +81,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setName(domainMongo.getName());
         domain.setDescription(domainMongo.getDescription());
         domain.setEnabled(domainMongo.isEnabled());
+        domain.setLoginForm(convert(domainMongo.getLoginForm()));
         return domain;
     }
 
@@ -95,6 +98,31 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setName(domain.getName());
         domainMongo.setDescription(domain.getDescription());
         domainMongo.setEnabled(domain.isEnabled());
+        domainMongo.setLoginForm(convert(domain.getLoginForm()));
         return domainMongo;
+    }
+
+    private LoginForm convert(LoginFormMongo loginFormMongo) {
+        if (loginFormMongo == null) {
+            return null;
+        }
+
+        LoginForm loginForm = new LoginForm();
+        loginForm.setEnabled(loginFormMongo.isEnabled());
+        loginForm.setContent(loginFormMongo.getContent());
+        loginForm.setAssets(loginFormMongo.getAssets());
+        return loginForm;
+    }
+
+    private LoginFormMongo convert(LoginForm loginForm) {
+        if (loginForm == null) {
+            return null;
+        }
+
+        LoginFormMongo formMongo = new LoginFormMongo();
+        formMongo.setEnabled(loginForm.isEnabled());
+        formMongo.setContent(loginForm.getContent());
+        formMongo.setAssets(loginForm.getAssets());
+        return formMongo;
     }
 }

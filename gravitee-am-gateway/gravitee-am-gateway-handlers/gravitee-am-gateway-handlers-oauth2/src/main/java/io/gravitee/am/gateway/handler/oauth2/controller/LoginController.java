@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.controller;
 
+import io.gravitee.am.gateway.service.ClientService;
+import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Domain;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.common.util.OAuth2Utils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,11 +35,20 @@ import java.util.Map;
 @Controller
 public class LoginController {
 
+    private final static String LOGIN_VIEW = "login";
+
+    @Autowired
+    private ClientService clientService;
+
+    @Autowired
+    private Domain domain;
+
     @RequestMapping(value = "/login")
     public ModelAndView login(
-            @RequestParam(value=OAuth2Utils.CLIENT_ID) String clientId) {
+            @RequestParam(value = OAuth2Utils.CLIENT_ID) String clientId) {
+        Client client = clientService.findByDomainAndClientId(domain.getId(), clientId);
         Map<String,String> params = new HashMap<>();
-        params.put(OAuth2Utils.CLIENT_ID, clientId);
-        return new ModelAndView("login", params);
+        params.put(OAuth2Utils.CLIENT_ID, client.getClientId());
+        return new ModelAndView(LOGIN_VIEW, params);
     }
 }

@@ -15,11 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.view;
 
+import io.gravitee.am.model.Domain;
 import io.gravitee.common.spring.factory.AbstractAutowiringFactoryBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
+import org.thymeleaf.templateresolver.StringTemplateResolver;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -29,13 +32,12 @@ public class ThymeleafTemplateResolverFactory extends AbstractAutowiringFactoryB
 
     private final Logger logger = LoggerFactory.getLogger(ThymeleafTemplateResolverFactory.class);
 
-    /*
     @Autowired
-    private OAuth2Domain domain;
+    private Domain domain;
 
     @Override
     protected ITemplateResolver doCreateInstance() throws Exception {
-        if (domain.getTemplate() == null || domain.getTemplate().getPath() == null) {
+        if (domain.getLoginForm() == null || domain.getLoginForm().getContent() == null || !domain.getLoginForm().isEnabled()) {
             logger.debug("View templating has not been overridden with custom view, returning default views.");
             return defaultTemplateResolver();
         }
@@ -46,22 +48,9 @@ public class ThymeleafTemplateResolverFactory extends AbstractAutowiringFactoryB
     }
 
     private ITemplateResolver overrideTemplateResolver() {
-        logger.info("Loading custom template from {}", domain.getTemplate().getPath());
-        String templatePath = domain.getTemplate().getPath();
+        return new DomainBasedTemplateResolver();
 
-        if (new File(templatePath).exists()) {
-            FileTemplateResolver templateResolver = new FileTemplateResolver();
-            templateResolver.setPrefix(domain.getTemplate().getPath());
-            templateResolver.setSuffix(".html");
-            templateResolver.setTemplateMode("HTML");
-            return templateResolver;
-        }
-
-        logger.warn("Custom template {} does not exist, skipping.", domain.getTemplate().getPath());
-        return null;
     }
-    */
-
     private ITemplateResolver defaultTemplateResolver() {
         ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
         templateResolver.setPrefix("/views/");
@@ -73,10 +62,5 @@ public class ThymeleafTemplateResolverFactory extends AbstractAutowiringFactoryB
     @Override
     public Class<?> getObjectType() {
         return ITemplateResolver.class;
-    }
-
-    @Override
-    protected ITemplateResolver doCreateInstance() throws Exception {
-        return defaultTemplateResolver();
     }
 }

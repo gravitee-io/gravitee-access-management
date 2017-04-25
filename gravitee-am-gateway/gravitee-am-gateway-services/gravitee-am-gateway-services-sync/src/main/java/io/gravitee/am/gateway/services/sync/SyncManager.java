@@ -72,6 +72,7 @@ public class SyncManager {
                         // Check last update date
                         if (domain.getUpdatedAt().after(deployedDomain.getUpdatedAt())) {
                             eventManager.publishEvent(DomainEvent.UPDATE, domain);
+                            deployedDomains.put(domain.getId(), domain);
                         }
                     }
                 });

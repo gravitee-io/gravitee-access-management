@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.login.LoginForm;
+
 import java.util.Date;
 
 /**
@@ -57,6 +59,8 @@ public class Domain {
      * Domain HTTP path
      */
     private String path;
+
+    private LoginForm loginForm;
 
     public String getId() {
         return id;
@@ -112,6 +116,14 @@ public class Domain {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public LoginForm getLoginForm() {
+        return loginForm;
+    }
+
+    public void setLoginForm(LoginForm loginForm) {
+        this.loginForm = loginForm;
     }
 
     @Override
