@@ -27,6 +27,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.oauth2.common.util.OAuth2Utils;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 
@@ -54,48 +55,51 @@ public class ClientBasedAuthenticationProvider implements AuthenticationProvider
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Map<String, String> details = (Map<String, String>) authentication.getDetails();
-        String clientId = details.get("client_id");
+        if (details != null && details.containsKey(OAuth2Utils.CLIENT_ID)) {
+            String clientId = details.get(OAuth2Utils.CLIENT_ID);
 
-        // TODO: is there an other way to access client details without calling storage again ?
-        try {
-            ClientDetails clientDetails = clientDetailsService.loadClientByClientId(clientId);
-            if (clientDetails instanceof DelegateClientDetails) {
-                Set<String> identities = ((DelegateClientDetails) clientDetails).getClient().getIdentities();
-                Iterator<String> iter = identities.iterator();
-                io.gravitee.am.identityprovider.api.User user = null;
-                while (iter.hasNext() && user == null) {
-                    String provider = iter.next();
-                    io.gravitee.am.identityprovider.api.AuthenticationProvider authenticationProvider =
-                            identityProviderManager.get(provider);
+            // TODO: is there an other way to access client details without calling storage again ?
+            try {
+                ClientDetails clientDetails = clientDetailsService.loadClientByClientId(clientId);
+                if (clientDetails instanceof DelegateClientDetails) {
+                    Set<String> identities = ((DelegateClientDetails) clientDetails).getClient().getIdentities();
+                    Iterator<String> iter = identities.iterator();
+                    io.gravitee.am.identityprovider.api.User user = null;
+                    while (iter.hasNext() && user == null) {
+                        String provider = iter.next();
+                        io.gravitee.am.identityprovider.api.AuthenticationProvider authenticationProvider =
+                                identityProviderManager.get(provider);
 
-                    try {
-                        user = authenticationProvider.loadUserByUsername(new io.gravitee.am.identityprovider.api.Authentication() {
-                            @Override
-                            public Object getCredentials() {
-                                return authentication.getCredentials().toString();
-                            }
+                        try {
+                            user = authenticationProvider.loadUserByUsername(new io.gravitee.am.identityprovider.api.Authentication() {
+                                @Override
+                                public Object getCredentials() {
+                                    return authentication.getCredentials().toString();
+                                }
 
-                            @Override
-                            public Object getPrincipal() {
-                                return authentication.getName();
-                            }
-                        });
-                    } catch (Exception ex) {
-                        logger.info("Unable to authenticate user {} with provider {}",
-                                authentication.getName(), provider);
+                                @Override
+                                public Object getPrincipal() {
+                                    return authentication.getName();
+                                }
+                            });
+                        } catch (Exception ex) {
+                            logger.info("Unable to authenticate user {} with provider {}",
+                                    authentication.getName(), provider);
+                        }
                     }
-                }
 
-                if (user != null) {
-                    return new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword(),
-                            AuthorityUtils.NO_AUTHORITIES);
-                }
+                    if (user != null) {
+                        return new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword(),
+                                AuthorityUtils.NO_AUTHORITIES);
+                    }
 
-                throw new BadCredentialsException("Bad credentials.");
+                    throw new BadCredentialsException("Bad credentials");
+                }
+            } catch (Exception ex) {
             }
-        } catch (Exception ex) {}
+        }
 
-        throw new BadCredentialsException("Authentication can not be handle");
+        throw new BadCredentialsException(authentication.getName());
     }
 
     @Override

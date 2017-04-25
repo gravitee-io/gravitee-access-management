@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.codec.Base64;
 import org.springframework.security.oauth2.common.util.OAuth2Utils;
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,13 +36,50 @@ public class ClientAwareAuthenticationDetailsSource implements AuthenticationDet
     public ClientAwareAuthenticationDetailsSource() {
     }
 
-    public Map<String, String> buildDetails(HttpServletRequest context) {
-        WebAuthenticationDetails details = new WebAuthenticationDetails(context);
+    public Map<String, String> buildDetails(HttpServletRequest request) {
         Map<String, String> mapDetails = new HashMap<>();
-        mapDetails.put("remote_address", details.getRemoteAddress());
-        mapDetails.put("session_id", details.getSessionId());
-        mapDetails.put(OAuth2Utils.CLIENT_ID, context.getParameter(OAuth2Utils.CLIENT_ID));
+        mapDetails.put("remote_address", request.getRemoteAddr());
+
+        HttpSession session = request.getSession(false);
+        mapDetails.put("session_id",  (session != null) ? session.getId() : null);
+
+        String clientId = request.getParameter(OAuth2Utils.CLIENT_ID);
+
+        // In case of basic authentication, extract client_id from authorization header
+        if (clientId == null || clientId.isEmpty()) {
+            String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+            if (header != null && header.startsWith("Basic ")) {
+                try {
+                    String[] tokens = extractAndDecodeHeader(header);
+                    clientId = tokens[0];
+                } catch (IOException ioe) {
+                    // Nothing to do
+                }
+            }
+        }
+
+        mapDetails.put(OAuth2Utils.CLIENT_ID, clientId);
 
         return mapDetails;
+    }
+
+    private String[] extractAndDecodeHeader(String header) throws IOException {
+
+        byte[] base64Token = header.substring(6).getBytes("UTF-8");
+        byte[] decoded;
+        try {
+            decoded = Base64.decode(base64Token);
+        } catch (IllegalArgumentException e) {
+            throw new BadCredentialsException("Failed to decode basic authentication token");
+        }
+
+        String token = new String(decoded, "UTF-8");
+
+        int delim = token.indexOf(":");
+
+        if (delim == -1) {
+            throw new BadCredentialsException("Invalid basic authentication token");
+        }
+        return new String[] {token.substring(0, delim), token.substring(delim + 1)};
     }
 }

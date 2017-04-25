@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.handler.oauth2.authentication.OAuth2LoginUrlAuthen
 import io.gravitee.am.gateway.handler.oauth2.filter.CORSFilter;
 import io.gravitee.am.gateway.handler.oauth2.handler.CustomLogoutSuccessHandler;
 import io.gravitee.am.gateway.handler.oauth2.provider.code.RepositoryAuthorizationCodeServices;
+import io.gravitee.am.gateway.handler.oauth2.provider.request.CustomOAuth2RequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.ClientBasedAuthenticationProvider;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationDetailsSource;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationFailureHandler;
@@ -30,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -49,7 +49,6 @@ import org.springframework.security.web.authentication.preauth.AbstractPreAuthen
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import javax.servlet.Filter;
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -87,7 +86,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated()
                 .and()
             .formLogin()
-                .authenticationDetailsSource(authenticationDetailsSource())
+                .authenticationDetailsSource(new ClientAwareAuthenticationDetailsSource())
                 .failureHandler(authenticationFailureHandler())
                 .permitAll()
                 .and()
@@ -136,7 +135,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     public TokenStoreUserApprovalHandler userApprovalHandler(TokenStore tokenStore){
         TokenStoreUserApprovalHandler handler = new TokenStoreUserApprovalHandler();
         handler.setTokenStore(tokenStore);
-        handler.setRequestFactory(new DefaultOAuth2RequestFactory(clientDetailsService));
+        handler.setRequestFactory(new CustomOAuth2RequestFactory(clientDetailsService));
         handler.setClientDetailsService(clientDetailsService);
         return handler;
     }
@@ -152,11 +151,6 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public Filter corsFilter() {
         return new CORSFilter();
-    }
-
-    @Bean
-    public AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource() {
-        return new ClientAwareAuthenticationDetailsSource();
     }
 
     @Bean
