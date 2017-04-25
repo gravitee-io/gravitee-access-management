@@ -13,16 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpService } from "./services/http.service";
+import { Http}  from "@angular/http";
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
 
-  constructor(public router : Router) {}
+  constructor(public router : Router, private http: Http) {}
 
+  ngOnInit() {
+    (<HttpService>this.http).notifyObservable$.subscribe(response => {
+      console.log(response);
+      if (response && response === 'Unauthorized') {
+        sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('user');
+        this.router.navigate(['/login']);
+      }
+    })
+  }
 }

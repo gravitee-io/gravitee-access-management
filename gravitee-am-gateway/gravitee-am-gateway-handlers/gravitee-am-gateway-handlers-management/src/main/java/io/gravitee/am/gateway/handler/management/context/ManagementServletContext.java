@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.management.context;
 import io.gravitee.am.gateway.handler.management.api.spring.ManagementConfiguration;
 import io.gravitee.am.handler.spring.SpringServletContext;
 import org.glassfish.jersey.servlet.ServletContainer;
+import org.springframework.web.filter.DelegatingFilterProxy;
 
 import javax.servlet.Filter;
 import javax.servlet.Servlet;
@@ -39,7 +40,7 @@ class ManagementServletContext extends SpringServletContext<Object> {
 
     @Override
     public List<Filter> filters() {
-        return Collections.emptyList(); //Collections.singletonList(new DelegatingFilterProxy("springSecurityFilterChain"));
+        return Collections.singletonList(new DelegatingFilterProxy("springSecurityFilterChain"));
     }
 
     @Override

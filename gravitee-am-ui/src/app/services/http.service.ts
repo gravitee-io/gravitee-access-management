@@ -14,25 +14,38 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Http, XHRBackend, RequestOptions, RequestOptionsArgs, Request, Response } from '@angular/http';
-import { Observable } from "rxjs";
+import { Http, XHRBackend, RequestOptions, RequestOptionsArgs, Request, Response, Headers } from '@angular/http';
+import { Observable, Subject } from "rxjs";
 import { SnackbarService } from "./snackbar.service";
 
 @Injectable()
 export class HttpService extends Http {
+  private subject = new Subject();
+  notifyObservable$ = this.subject.asObservable();
 
   constructor(backend: XHRBackend, defaultOptions: RequestOptions, private snackbarService: SnackbarService) {
     super(backend, defaultOptions);
   }
 
   request(url: string | Request, options?: RequestOptionsArgs): Observable<Response> {
-    return super.request(url, options).catch((error: Response) => {
-      if ((error.status === 401 || error.status === 403) && (window.location.href.match(/\?/g) || []).length < 2) {
-        console.log('The authentication session expires or the user is not authorised. Force refresh of the current page.');
-        window.location.href = window.location.href + '?' + new Date().getMilliseconds();
-      } else if (error.status === 400 || error.status === 500) {
-        this.snackbarService.open(error.toString());
+    // set access token for every request
+    let accessToken = sessionStorage.getItem('access_token');
+    if (accessToken) {
+      if (typeof url === 'string') {
+        if (!options) {
+          options = { headers: new Headers() };
+        }
+        options.headers.set('Authorization', `Bearer ${accessToken}`);
+      } else {
+        url.headers.set('Authorization', `Bearer ${accessToken}`);
       }
+    }
+    return super.request(url, options).catch((error: Response) => {
+      if (error.status === 401 || error.status === 403) {
+        this.snackbarService.open('The authentication session expires or the user is not authorised');
+      }
+      // TODO : sometimes the REST API sends http 500 error because the access token is expired
+      this.subject.next('Unauthorized');
       return Observable.throw(error);
     });
   }

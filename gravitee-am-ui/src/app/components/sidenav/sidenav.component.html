@@ -20,6 +20,7 @@
     <div class="logo" fxLayout="row" fxLayoutAlign="center center" style="cursor: pointer">
       <img class="logo-image" [ngClass]="{'reduce-mode': reducedMode}" src="../../../assets/GRAVITEE_LOGO1-01.png"/>
     </div>
+    <small *ngIf="isAuthenticated() && !reducedMode">{{user}}</small>
   </md-toolbar>
 
   <md-list class="sidenav-list">
@@ -56,11 +57,11 @@
       </button>
     </md-list-item>
     <md-list-item>
-      <a [routerLink]="['/login']">
+      <a [routerLink]="['/login']" *ngIf="!isAuthenticated()">
         <md-icon>input</md-icon>
         <span *ngIf="!reducedMode">Login</span>
       </a>
-      <a [routerLink]="['/logout']" style="display: none;">
+      <a (click)="logout()" *ngIf="isAuthenticated()" style="cursor: pointer;">
         <md-icon>exit_to_app</md-icon>
         <span *ngIf="!reducedMode">Sign out</span>
       </a>

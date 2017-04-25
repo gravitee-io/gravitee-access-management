@@ -141,6 +141,7 @@
             <configuration>
               <includes>
                 <include>${project.basedir}/package.json</include>
+                <include>${project.basedir}/build.json</include>
               </includes>
               <replacements>
                 <replacement>

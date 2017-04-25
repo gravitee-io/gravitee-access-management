@@ -18,9 +18,36 @@ import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 
 import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
+import { AppConfig }  from "./config/app.config";
+import { Observable } from 'rxjs/Rx';
 
 if (environment.production) {
   enableProdMode();
 }
 
-platformBrowserDynamic().bootstrapModule(AppModule);
+let constants = Observable.create(observer => {
+  fetch('constants.json', {method: 'get'}).then(response => {
+    response.json().then(data => {
+      observer.next(data);
+      observer.complete();
+    })
+  })
+});
+
+let build = Observable.create(observer => {
+  fetch('build.json', {method: 'get'}).then(response => {
+    response.json().then(data => {
+      observer.next(data);
+      observer.complete();
+    })
+  })
+});
+
+Observable.forkJoin([constants, build])
+  .subscribe((response) => {
+    let config = {};
+    Object.keys(response[0]).forEach((key) => config[key] = response[0][key]);
+    Object.keys(response[1]).forEach((key) => config[key] = response[1][key]);
+    AppConfig.settings = config;
+    platformBrowserDynamic().bootstrapModule(AppModule);
+  });

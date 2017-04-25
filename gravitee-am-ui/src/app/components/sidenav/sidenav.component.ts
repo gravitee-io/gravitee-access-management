@@ -17,6 +17,7 @@ import {Component, OnInit, OnDestroy} from '@angular/core';
 import {Router, NavigationEnd, ActivatedRoute} from "@angular/router";
 import { SidenavService } from "./sidenav.service";
 import {Subscription} from "rxjs";
+import {AuthService} from "../../services/auth.service";
 
 @Component({
   selector: 'gs-sidenav',
@@ -30,7 +31,8 @@ export class SidenavComponent implements OnInit, OnDestroy {
   currentSubPaths: any[] = [];
   currentResource: any = {};
   subscription: Subscription;
-  constructor(private router: Router, private route: ActivatedRoute, private sidenavService : SidenavService) {
+
+  constructor(private router: Router, private sidenavService : SidenavService, private authService: AuthService) {
   }
 
   ngOnInit() {
@@ -66,5 +68,18 @@ export class SidenavComponent implements OnInit, OnDestroy {
           });
         }
       })
+  }
+
+  get user() {
+    return this.authService.user();
+  }
+
+  isAuthenticated() {
+    return this.authService.isAuthenticated();
+  }
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }

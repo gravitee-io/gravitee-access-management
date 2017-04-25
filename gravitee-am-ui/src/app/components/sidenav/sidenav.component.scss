@@ -38,6 +38,9 @@ $sidenavHeaderHeight: 64px;
     font-size: 14px;
     margin-left: 5px;
   }
+  small {
+    color: $fontColor;
+  }
 }
 
 md-toolbar.md-default-theme:not(.md-menu-toolbar), md-toolbar:not(.md-menu-toolbar) {
@@ -146,7 +149,7 @@ md-toolbar.md-default-theme:not(.md-menu-toolbar), md-toolbar:not(.md-menu-toolb
   }
 
   md-list-item:last-child {
-    margin-top: -10px;
+    margin-top: -20px;
   }
 }
 

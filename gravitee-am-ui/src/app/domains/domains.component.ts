@@ -15,6 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { DomainService } from "../services/domain.service";
+import { AppConfig } from "../../config/app.config";
 
 @Component({
   selector: 'app-domains',
@@ -22,8 +23,8 @@ import { DomainService } from "../services/domain.service";
   styleUrls: ['./domains.component.scss']
 })
 export class DomainsComponent implements OnInit {
-  title = 'Gravitee.io AM Portal';
-  version = '0.0.1-SNAPSHOT';
+  title = AppConfig.settings.portalTitle;
+  version = AppConfig.settings.version;
   domains = [];
 
   constructor(private domainService : DomainService) { }

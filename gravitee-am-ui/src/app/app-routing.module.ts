@@ -26,6 +26,7 @@ import { ProvidersComponent } from "./domains/domain/providers/providers.compone
 import { DomainCreationComponent } from "./domains/creation/domain-creation.component";
 import { ProviderCreationComponent } from "./domains/domain/providers/creation/provider-creation.component";
 import { ProviderComponent } from "./domains/domain/providers/provider/provider.component";
+import { CallbackComponent } from "./oauth/callback/callback.component";
 
 const routes: Routes = [
   { path: 'domains',
@@ -84,6 +85,7 @@ const routes: Routes = [
       }
     ]
   },
+  { path: 'oauth/callback', component: CallbackComponent },
   { path: 'login', component: LoginComponent },
   { path: '', redirectTo: '/domains', pathMatch: 'full' }
 ];
