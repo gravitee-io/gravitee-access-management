@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2;
 
 import io.gravitee.am.gateway.handler.oauth2.provider.jwt.CustomJwtAccessTokenConverter;
+import io.gravitee.am.gateway.handler.oauth2.provider.request.CustomOAuth2RequestFactory;
+import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationDetailsSource;
 import io.gravitee.am.model.Domain;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -86,6 +88,7 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
         return new ClientDetailsUserDetailsService(clientDetailsService);
     }
 
+
     @Bean
     public AuthenticationManager clientAuthenticationManager() {
         DaoAuthenticationProvider clientAuthenticationProvider = new DaoAuthenticationProvider();
@@ -107,9 +110,8 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
             .reuseRefreshTokens(false)
             .userDetailsService(userDetailsService)
             .authorizationCodeServices(authorizationCodeServices)
+            .requestFactory(new CustomOAuth2RequestFactory(clientDetailsService))
             .userApprovalHandler(userApprovalHandler)
-                //TODO: create a token introspection endpoint
-        //    .pathMapping("/oauth/check_token", "/oauth/introspect")
             .authenticationManager(authenticationManager)
                 .addInterceptor(new HandlerInterceptorAdapter() {
                     @Override
@@ -126,19 +128,21 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     @Override
     public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
         oauthServer
-                .realm("realm-" + domain.getName())
+                .realm("realm/" + domain.getName())
                 .checkTokenAccess("isAuthenticated()")
                 .accessDeniedHandler(oAuth2AccessDeniedHandler())
                 .allowFormAuthenticationForClients()
                 .authenticationEntryPoint(oAuth2AuthenticationEntryPoint());
-        oauthServer
-                .addTokenEndpointAuthenticationFilter(new BasicAuthenticationFilter(clientAuthenticationManager(), oAuth2AuthenticationEntryPoint()));
+
+        BasicAuthenticationFilter basicAuthenticationFilter = new BasicAuthenticationFilter(clientAuthenticationManager(), oAuth2AuthenticationEntryPoint());
+        basicAuthenticationFilter.setAuthenticationDetailsSource(new ClientAwareAuthenticationDetailsSource());
+        oauthServer.addTokenEndpointAuthenticationFilter(basicAuthenticationFilter);
     }
 
     @Bean
     public OAuth2AuthenticationEntryPoint oAuth2AuthenticationEntryPoint() {
         OAuth2AuthenticationEntryPoint oAuth2AuthenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
-        oAuth2AuthenticationEntryPoint.setRealmName("realm-" + domain.getName());
+        oAuth2AuthenticationEntryPoint.setRealmName("realm/" + domain.getName());
         oAuth2AuthenticationEntryPoint.setTypeName("Basic");
 
         return oAuth2AuthenticationEntryPoint;
