@@ -21,6 +21,8 @@ import io.gravitee.am.gateway.handler.management.api.resources.DomainsResource;
 import io.gravitee.am.gateway.handler.management.api.resources.platform.PlatformResource;
 import io.gravitee.common.util.Version;
 import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.jaxrs.listing.ApiListingResource;
+import io.swagger.jaxrs.listing.SwaggerSerializers;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.ServerProperties;
@@ -35,7 +37,7 @@ public class ManagementApplication extends ResourceConfig {
 
         BeanConfig beanConfig = new BeanConfig();
         beanConfig.setVersion(Version.RUNTIME_VERSION.MAJOR_VERSION);
-        beanConfig.setResourcePackage("io.gravitee.am.management.api");
+        beanConfig.setResourcePackage("io.gravitee.am.gateway.handler.management.api.resources");
         beanConfig.setTitle("Gravitee.io - Access Management API");
         beanConfig.setScan(true);
 
@@ -53,6 +55,9 @@ public class ManagementApplication extends ResourceConfig {
         register(UriBuilderRequestFilter.class);
         register(ByteArrayOutputStreamWriter.class);
         register(JacksonFeature.class);
+
+        register(ApiListingResource.class);
+        register(SwaggerSerializers.class);
 
         property(ServerProperties.BV_SEND_ERROR_IN_RESPONSE, true);
     }

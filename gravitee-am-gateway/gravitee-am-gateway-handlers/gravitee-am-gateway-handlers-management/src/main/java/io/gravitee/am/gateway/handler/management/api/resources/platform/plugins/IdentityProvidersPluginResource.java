@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Path("/policies")
 @Api(tags = {"Platform", "Plugin", "Identity Provider"})
 public class IdentityProvidersPluginResource {
 
