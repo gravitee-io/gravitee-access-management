@@ -17,7 +17,9 @@ package io.gravitee.am.gateway.service;
 
 import io.gravitee.am.gateway.service.model.NewDomain;
 import io.gravitee.am.gateway.service.model.UpdateDomain;
+import io.gravitee.am.gateway.service.model.UpdateLoginForm;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.login.LoginForm;
 
 import java.util.Set;
 
@@ -34,6 +36,10 @@ public interface DomainService {
     Domain create(NewDomain domain);
 
     Domain update(String domainId, UpdateDomain domain);
+
+    LoginForm updateLoginForm(String domainId, UpdateLoginForm loginForm);
+
+    void deleteLoginForm(String domainId);
 
     void delete(String domain);
 }

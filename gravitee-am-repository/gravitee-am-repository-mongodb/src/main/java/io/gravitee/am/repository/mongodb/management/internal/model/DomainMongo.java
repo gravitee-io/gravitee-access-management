@@ -37,6 +37,8 @@ public class DomainMongo extends Auditable {
 
     private String path;
 
+    private LoginFormMongo loginForm;
+
     public String getId() {
         return id;
     }
@@ -75,6 +77,14 @@ public class DomainMongo extends Auditable {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public LoginFormMongo getLoginForm() {
+        return loginForm;
+    }
+
+    public void setLoginForm(LoginFormMongo loginForm) {
+        this.loginForm = loginForm;
     }
 
     @Override

@@ -33,6 +33,6 @@ public class UserInfoEndpoint {
     @ResponseBody
     public Object loginInfo(Principal principal) {
         OAuth2Authentication oAuth2Authentication = (OAuth2Authentication) principal;
-        return oAuth2Authentication.getUserAuthentication().getPrincipal();
+        return oAuth2Authentication.getUserAuthentication();
     }
 }

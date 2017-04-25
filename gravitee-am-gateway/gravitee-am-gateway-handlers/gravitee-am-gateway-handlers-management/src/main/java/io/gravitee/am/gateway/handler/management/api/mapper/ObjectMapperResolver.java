@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.management.api.mapper;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
@@ -59,6 +60,7 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
                 jgen.writeString(value.name().toLowerCase());
             }
         });
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.registerModule(module);
     }
 

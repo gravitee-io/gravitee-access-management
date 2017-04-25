@@ -58,6 +58,10 @@ public class DomainsResource extends AbstractResource {
     public List<Domain> listDomains() {
         return domainService.findAll()
                 .stream()
+                .map(domain -> {
+                    domain.setLoginForm(null);
+                    return domain;
+                })
                 .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                 .collect(Collectors.toList());
     }

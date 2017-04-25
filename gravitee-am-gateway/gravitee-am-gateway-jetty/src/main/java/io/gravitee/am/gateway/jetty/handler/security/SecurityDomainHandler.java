@@ -42,7 +42,7 @@ public class SecurityDomainHandler extends ServletContextHandler {
     SecurityDomainHandler(ServletContext<Domain> context) {
         super(SESSIONS);
         this.context = context;
-        setContextPath('/' + context.deployable().getId());
+        setContextPath('/' + context.deployable().getPath());
         this.init();
     }
 

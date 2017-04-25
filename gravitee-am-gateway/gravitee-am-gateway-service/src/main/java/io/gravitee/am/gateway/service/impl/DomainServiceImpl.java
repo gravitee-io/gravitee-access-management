@@ -21,10 +21,11 @@ import io.gravitee.am.gateway.service.exception.DomainNotFoundException;
 import io.gravitee.am.gateway.service.exception.TechnicalManagementException;
 import io.gravitee.am.gateway.service.model.NewDomain;
 import io.gravitee.am.gateway.service.model.UpdateDomain;
+import io.gravitee.am.gateway.service.model.UpdateLoginForm;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
-import io.gravitee.common.utils.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,13 +119,13 @@ public class DomainServiceImpl implements DomainService {
 
             Domain domain = new Domain();
             domain.setId(domainId);
-            domain.setPath(updateDomain.getName());
+            domain.setPath(updateDomain.getPath());
             domain.setName(updateDomain.getName());
             domain.setDescription(updateDomain.getDescription());
             domain.setEnabled(updateDomain.isEnabled());
             domain.setCreatedAt(oldDomain.getCreatedAt());
             domain.setUpdatedAt(new Date());
-
+            domain.setLoginForm(oldDomain.getLoginForm());
             return domainRepository.update(domain);
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to update a domain", ex);
@@ -146,6 +147,53 @@ public class DomainServiceImpl implements DomainService {
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to delete security domain {}", domain, ex);
             throw new TechnicalManagementException("An error occurs while trying to delete security domain " + domain, ex);
+        }
+    }
+
+    @Override
+    public LoginForm updateLoginForm(String domainId, UpdateLoginForm loginForm) {
+        try {
+            LOGGER.debug("Update login form of an existing domain: {}", domainId);
+
+            Optional<Domain> domainOpt = domainRepository.findById(domainId);
+            if (!domainOpt.isPresent()) {
+                throw new DomainNotFoundException(domainId);
+            }
+
+            LoginForm form = new LoginForm();
+            form.setEnabled(loginForm.isEnabled());
+            form.setContent(loginForm.getContent());
+            form.setAssets(loginForm.getAssets());
+
+            Domain domain = domainOpt.get();
+            domain.setLoginForm(form);
+            domain.setUpdatedAt(new Date());
+            domainRepository.update(domain);
+
+            return form;
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to update login form domain", ex);
+            throw new TechnicalManagementException("An error occurs while trying to update a domain", ex);
+        }
+    }
+
+    @Override
+    public void deleteLoginForm(String domainId) {
+        try {
+            LOGGER.debug("Delete login form of an existing domain: {}", domainId);
+
+            Optional<Domain> domainOpt = domainRepository.findById(domainId);
+            if (!domainOpt.isPresent()) {
+                throw new DomainNotFoundException(domainId);
+            }
+
+            Domain domain = domainOpt.get();
+            domain.setLoginForm(null);
+            domain.setUpdatedAt(new Date());
+            domainRepository.update(domain);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to update login form domain", ex);
+            throw new TechnicalManagementException("An error occurs while trying to update a domain", ex);
         }
     }
 
