@@ -16,10 +16,11 @@
 import { Injectable } from '@angular/core';
 import { Http, Response } from "@angular/http";
 import { Observable } from "rxjs";
+import { AppConfig } from "../../config/app.config";
 
 @Injectable()
 export class ClientService {
-  private clientsURL = 'http://localhost:8092/management/domains/';
+  private clientsURL = AppConfig.settings.baseURL + '/management/domains/';
 
   constructor(private http: Http) { }
 

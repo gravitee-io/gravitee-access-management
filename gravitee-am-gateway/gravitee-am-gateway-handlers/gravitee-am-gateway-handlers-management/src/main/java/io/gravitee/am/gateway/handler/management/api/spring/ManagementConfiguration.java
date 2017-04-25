@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.management.api.spring;
 
+import io.gravitee.am.gateway.handler.management.api.spring.security.SecurityConfiguration;
 import io.gravitee.am.gateway.service.ServiceConfiguration;
-import io.gravitee.am.repository.mongodb.management.ManagementRepositoryConfiguration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Import;
 @Configuration
 @Import({
 //        ManagementRepositoryConfiguration.class,
+        SecurityConfiguration.class,
         ServiceConfiguration.class
 })
 public class ManagementConfiguration {

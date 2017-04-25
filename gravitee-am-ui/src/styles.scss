@@ -10,7 +10,7 @@ $graviteeio-am-candy-app-accent:  mat-palette($mat-blue);
 $graviteeio-am-theme: mat-light-theme($graviteeio-am-app-primary, $graviteeio-am-candy-app-accent);
 @include angular-material-theme($graviteeio-am-theme);
 
-html, body, material-app, md-sidenav-container, .mat-sidenav-content, .main-content {
+html, body, app-root, md-sidenav-container, .mat-sidenav-content, .main-content {
   margin: 0;
   width: 100%;
   height: 100%;

@@ -13,23 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { Http, Response } from "@angular/http";
-import { Observable } from "rxjs";
-import { AppConfig } from "../../config/app.config";
-
-@Injectable()
-export class PlatformService {
-  private platformURL = AppConfig.settings.baseURL + '/management/platform/';
-
-  constructor(private http: Http) { }
-
-  identities(): Observable<Response> {
-    return this.http.get(this.platformURL + 'plugins/identities');
-  }
-
-  identitySchema(id): Observable<Response> {
-    return this.http.get(this.platformURL + 'plugins/identities/' + id + '/schema');
-  }
-
+export class AppConfig {
+  public static settings: any;
 }

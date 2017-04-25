@@ -1,0 +1,7 @@
+{
+  "baseURL": "http://localhost:8092",
+  "portalTitle": "Gravitee.io AM Portal",
+  "redirectUri": "http://localhost:4200/oauth/callback",
+  "domainId": "domain-1",
+  "clientId": "client-1"
+}

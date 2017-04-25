@@ -54,6 +54,9 @@ import { ClientService } from "./services/client.service";
 import { ProviderService } from "./services/provider.service";
 import { PlatformService } from "./services/platform.service";
 import { HttpService } from "./services/http.service";
+import { CallbackComponent } from './oauth/callback/callback.component';
+import { AuthService } from "./services/auth.service";
+import { AppConfig } from "../config/app.config";
 
 @NgModule({
   declarations: [
@@ -76,7 +79,8 @@ import { HttpService } from "./services/http.service";
     ProviderCreationStep1Component,
     ProviderCreationStep2Component,
     ProviderComponent,
-    ProviderFormComponent
+    ProviderFormComponent,
+    CallbackComponent
   ],
   imports: [
     BrowserModule,
@@ -98,6 +102,8 @@ import { HttpService } from "./services/http.service";
     DialogService,
     SnackbarService,
     PlatformService,
+    AuthService,
+    AppConfig,
     { provide: Http, useClass: HttpService }
   ],
   entryComponents: [ConfirmComponent],

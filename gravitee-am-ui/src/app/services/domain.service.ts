@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, Subject} from "rxjs";
+import { BehaviorSubject, Observable } from "rxjs";
 import { Http, Response } from "@angular/http";
+import { AppConfig } from "../../config/app.config";
 
 @Injectable()
 export class DomainService {
   private subject = new BehaviorSubject<any>({});
   notifyObservable$ = this.subject.asObservable();
-  private domainsURL = 'http://localhost:8092/management/domains/';
+  private domainsURL: string = AppConfig.settings.baseURL + '/management/domains/';
 
-  constructor(private http: Http) { }
+  constructor(private http: Http) {}
 
   list(): Observable<Response> {
     return this.http.get(this.domainsURL);
