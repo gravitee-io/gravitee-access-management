@@ -29,7 +29,7 @@
 
 # HTTP Server
 #jetty:
-#  port: 8083
+#  port: 8092
 #  idleTimeout: 30000
 #  acceptors: -1
 #  selectors: -1
@@ -57,5 +57,5 @@ services:
   # Local registry service.
   # This registry is used to load domain definitions with json format from the file system.
   local:
-    enabled: true
+    enabled: false
     path: ${gravitee.home}/domains # The path to domain descriptors
