@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.oauth2.provider.jwt;
 import io.gravitee.am.gateway.handler.oauth2.provider.token.DefaultIntrospectionAccessTokenConverter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 
 import java.security.KeyPair;
@@ -35,5 +37,10 @@ public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter imple
     public void afterPropertiesSet() throws Exception {
         this.setKeyPair(keyPair);
         this.setAccessTokenConverter(new DefaultIntrospectionAccessTokenConverter());
+    }
+
+    @Override
+    public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
+        return super.enhance(accessToken, authentication);
     }
 }

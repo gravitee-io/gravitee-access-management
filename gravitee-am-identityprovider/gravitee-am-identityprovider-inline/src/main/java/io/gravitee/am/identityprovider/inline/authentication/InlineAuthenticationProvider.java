@@ -19,6 +19,8 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.inline.InlineIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.inline.authentication.provisioning.InlineInMemoryUserDetailsManager;
+import io.gravitee.am.identityprovider.inline.authentication.userdetails.InlineUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -27,12 +29,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -50,13 +52,15 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private InMemoryUserDetailsManager userDetailsService;
+    private InlineInMemoryUserDetailsManager userDetailsService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
         for(io.gravitee.am.identityprovider.inline.model.User user : configuration.getUsers()) {
             List<GrantedAuthority> authorities = AuthorityUtils.NO_AUTHORITIES; //createAuthorityList(user.getRoles());
-            User newUser = new User(user.getUsername(), user.getPassword(), authorities);
+            InlineUser newUser = new InlineUser(user.getUsername(), user.getPassword(), authorities);
+            newUser.setFirstname(user.getFirstname());
+            newUser.setLastname(user.getLastname());
 
             LOGGER.debug("Add an inline user: {}", newUser);
             userDetailsService.createUser(newUser);
@@ -74,6 +78,15 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
             throw new BadCredentialsException("Bad getCredentials");
         }
 
-        return new DefaultUser(userDetails.getUsername(), userDetails.getPassword());
+        InlineUser inlineUser = (InlineUser) userDetails;
+        DefaultUser user = new DefaultUser(inlineUser.getUsername());
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("sub", inlineUser.getUsername());
+        claims.put("given_name", inlineUser.getFirstname());
+        claims.put("family_name", inlineUser.getLastname());
+        user.setAdditonalInformation(claims);
+
+        return user;
     }
 }

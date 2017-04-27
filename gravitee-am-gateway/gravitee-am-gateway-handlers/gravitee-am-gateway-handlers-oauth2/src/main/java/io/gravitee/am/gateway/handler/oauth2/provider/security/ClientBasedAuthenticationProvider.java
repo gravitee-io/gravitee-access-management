@@ -65,23 +65,19 @@ public class ClientBasedAuthenticationProvider implements AuthenticationProvider
                     Set<String> identities = ((DelegateClientDetails) clientDetails).getClient().getIdentities();
                     Iterator<String> iter = identities.iterator();
                     io.gravitee.am.identityprovider.api.User user = null;
+
+                    // Create a end-user authentication for underlying providers associated to the client
+                    io.gravitee.am.identityprovider.api.Authentication provAuthentication = new EndUserAuthentication(
+                            authentication.getName(),
+                            authentication.getCredentials());
+
                     while (iter.hasNext() && user == null) {
                         String provider = iter.next();
                         io.gravitee.am.identityprovider.api.AuthenticationProvider authenticationProvider =
                                 identityProviderManager.get(provider);
 
                         try {
-                            user = authenticationProvider.loadUserByUsername(new io.gravitee.am.identityprovider.api.Authentication() {
-                                @Override
-                                public Object getCredentials() {
-                                    return authentication.getCredentials().toString();
-                                }
-
-                                @Override
-                                public Object getPrincipal() {
-                                    return authentication.getName();
-                                }
-                            });
+                            user = authenticationProvider.loadUserByUsername(provAuthentication);
                         } catch (Exception ex) {
                             logger.info("Unable to authenticate user {} with provider {}",
                                     authentication.getName(), provider);
@@ -89,7 +85,7 @@ public class ClientBasedAuthenticationProvider implements AuthenticationProvider
                     }
 
                     if (user != null) {
-                        return new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword(),
+                        return new UsernamePasswordAuthenticationToken(user, provAuthentication.getCredentials(),
                                 AuthorityUtils.NO_AUTHORITIES);
                     }
 
