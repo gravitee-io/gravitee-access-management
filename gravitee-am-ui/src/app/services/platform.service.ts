@@ -20,7 +20,7 @@ import { AppConfig } from "../../config/app.config";
 
 @Injectable()
 export class PlatformService {
-  private platformURL = AppConfig.settings.baseURL + '/management/platform/';
+  private platformURL = AppConfig.settings.baseURL + '/platform/';
 
   constructor(private http: Http) { }
 

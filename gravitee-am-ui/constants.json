@@ -1,7 +1,12 @@
 {
-  "baseURL": "http://localhost:8092",
   "portalTitle": "Gravitee.io AM Portal",
-  "redirectUri": "http://localhost:4200/oauth/callback",
-  "domainId": "domain-1",
-  "clientId": "client-1"
+  "baseURL": "http://localhost:8092/management",
+  "authentication": {
+    "oauth2": {
+      "authorize": "http://localhost:8092/admin/oauth/authorize",
+      "userInfo": "http://localhost:8092/admin/userinfo",
+      "clientId": "admin",
+      "redirectUri": "http://localhost:4200/oauth/callback"
+    }
+  }
 }

@@ -20,7 +20,7 @@ import { AppConfig } from "../../config/app.config";
 
 @Injectable()
 export class ClientService {
-  private clientsURL = AppConfig.settings.baseURL + '/management/domains/';
+  private clientsURL = AppConfig.settings.baseURL + '/domains/';
 
   constructor(private http: Http) { }
 

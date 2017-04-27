@@ -20,17 +20,15 @@ import { AppConfig } from "../../config/app.config";
 
 @Injectable()
 export class AuthService {
-  private baseUrl: string = AppConfig.settings.baseURL;
   private domainId: string = AppConfig.settings.domainId;
-  private clientId: string = AppConfig.settings.clientId;
-  private redirectUri: string = AppConfig.settings.redirectUri;
+  private clientId: string = AppConfig.settings.authentication.oauth2.clientId;
+  private redirectUri: string = AppConfig.settings.authentication.oauth2.redirectUri;
   private responseType: string = 'token';
   private _authorizationEndpoint: string =
-    this.baseUrl + '/' + this.domainId +
-    '/oauth/authorize?client_id=' + this.clientId +
+    AppConfig.settings.authentication.oauth2.authorize + '?client_id=' + this.clientId +
     '&response_type=' + this.responseType +
     '&redirect_uri='+ this.redirectUri;
-  private userInfoUrl: string = this.baseUrl + '/' + this.domainId + '/userinfo';
+  private userInfoUrl: string = AppConfig.settings.authentication.oauth2.userInfo;
   private CALLBACK_ACCESS_TOKEN_PATTERN: string = '#access_token=(.*)';
   private currentUser: any;
   private subject = new Subject();
