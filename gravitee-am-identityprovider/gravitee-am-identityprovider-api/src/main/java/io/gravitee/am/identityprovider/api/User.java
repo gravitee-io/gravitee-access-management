@@ -15,18 +15,14 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import java.io.Serializable;
+import java.util.Map;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface User {
-
-    /**
-     * Returns the password used to authenticate the user.
-     *
-     * @return the password
-     */
-    String getPassword();
+public interface User extends Serializable {
 
     /**
      * Returns the username used to authenticate the user. Cannot return <code>null</code>.
@@ -41,23 +37,7 @@ public interface User {
      * @return <code>true</code> if the user's account is valid (ie non-expired), <code>false</code> if no longer valid
      *         (ie expired)
      */
-    boolean isAccountNonExpired();
-
-    /**
-     * Indicates whether the user is locked or unlocked. A locked user cannot be authenticated.
-     *
-     * @return <code>true</code> if the user is not locked, <code>false</code> otherwise
-     */
-    boolean isAccountNonLocked();
-
-    /**
-     * Indicates whether the user's getCredentials (password) has expired. Expired getCredentials prevent
-     * authentication.
-     *
-     * @return <code>true</code> if the user's getCredentials are valid (ie non-expired), <code>false</code> if no longer
-     *         valid (ie expired)
-     */
-    boolean isCredentialsNonExpired();
+    boolean isAccountExpired();
 
     /**
      * Indicates whether the user is enabled or disabled. A disabled user cannot be authenticated.
@@ -65,4 +45,10 @@ public interface User {
      * @return <code>true</code> if the user is enabled, <code>false</code> otherwise
      */
     boolean isEnabled();
+
+    /**
+     *
+     * @return
+     */
+    Map<String, Object> getAdditionalInformation();
 }

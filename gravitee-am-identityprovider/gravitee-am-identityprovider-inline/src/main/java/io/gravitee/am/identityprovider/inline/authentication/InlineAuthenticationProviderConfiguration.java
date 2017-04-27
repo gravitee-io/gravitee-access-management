@@ -15,13 +15,11 @@
  */
 package io.gravitee.am.identityprovider.inline.authentication;
 
+import io.gravitee.am.identityprovider.inline.authentication.provisioning.InlineInMemoryUserDetailsManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-
-import java.util.Collections;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -36,7 +34,7 @@ public class InlineAuthenticationProviderConfiguration {
     }
 
     @Bean
-    public InMemoryUserDetailsManager userDetailsService() {
-        return new InMemoryUserDetailsManager(Collections.emptyList());
+    public InlineInMemoryUserDetailsManager userDetailsService() {
+        return new InlineInMemoryUserDetailsManager();
     }
 }

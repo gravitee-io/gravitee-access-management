@@ -15,84 +15,80 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import java.util.Map;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class DefaultUser implements User {
 
-    private String password;
+    private String username;
 
-    private String user;
+    private boolean accountExpired = false;
 
-    private boolean accountNonExpired;
+    private boolean enabled = true;
 
-    private boolean accountNonLocked;
+    private Map<String, Object> additonalInformation;
 
-    private boolean credentialsNonExpired;
-
-    private boolean enabled;
-
-    public DefaultUser(String username, String password) {
-        this.user = username;
-        this.password = password;
+    public DefaultUser(String username) {
+        this.username = username;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public void setAccountNonExpired(boolean accountNonExpired) {
-        this.accountNonExpired = accountNonExpired;
-    }
-
-    public void setAccountNonLocked(boolean accountNonLocked) {
-        this.accountNonLocked = accountNonLocked;
-    }
-
-    public void setCredentialsNonExpired(boolean credentialsNonExpired) {
-        this.credentialsNonExpired = credentialsNonExpired;
+    public void setAccountExpired(boolean accountExpired) {
+        this.accountExpired = accountExpired;
     }
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
-    @Override
-    public String getPassword() {
-        return password;
+    public void setAdditonalInformation(Map<String, Object> additonalInformation) {
+        this.additonalInformation = additonalInformation;
     }
 
     @Override
     public String getUsername() {
-        return user;
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     @Override
-    public boolean isAccountNonExpired() {
-        return false;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return false;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return false;
+    public boolean isAccountExpired() {
+        return accountExpired;
     }
 
     @Override
     public boolean isEnabled() {
+        return enabled;
+    }
+
+    @Override
+    public Map<String, Object> getAdditionalInformation() {
+        return additonalInformation;
+    }
+
+    @Override
+    public boolean equals(Object rhs) {
+        if (rhs instanceof User) {
+            return username.equals(((User) rhs).getUsername());
+        }
         return false;
+    }
+
+    /**
+     * Returns the hashcode of the {@code username}.
+     */
+    @Override
+    public int hashCode() {
+        return username.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return this.username;
     }
 }

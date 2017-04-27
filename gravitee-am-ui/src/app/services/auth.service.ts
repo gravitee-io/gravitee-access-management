@@ -82,13 +82,13 @@ export class AuthService {
 
   userInfo(): Observable<Response> {
     return this.http.get(this.userInfoUrl).map(res => {
-      this.setUser(res.json().name);
+      this.setUser(res.json());
       return res;
     });
   }
 
   setUser(user: any) {
-    this.currentUser = user;
+    this.currentUser = user.sub;
     sessionStorage.setItem('user', this.currentUser);
   }
 

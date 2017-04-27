@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.provider.endpoint;
 
+import io.gravitee.am.identityprovider.api.User;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.security.Principal;
@@ -27,12 +29,17 @@ import java.security.Principal;
  * @author GraviteeSource Team
  */
 @Controller
+@RequestMapping("/userinfo")
 public class UserInfoEndpoint {
 
-    @RequestMapping(value = "/userinfo")
+    @RequestMapping(method = {RequestMethod.GET, RequestMethod.POST})
     @ResponseBody
-    public Object loginInfo(Principal principal) {
-        OAuth2Authentication oAuth2Authentication = (OAuth2Authentication) principal;
-        return oAuth2Authentication.getUserAuthentication();
+    public Object loginInfo(OAuth2Authentication oAuth2Authentication) {
+        if (oAuth2Authentication == null) {
+            return null;
+        }
+
+        User user = (User) oAuth2Authentication.getUserAuthentication().getPrincipal();
+        return user.getAdditionalInformation();
     }
 }

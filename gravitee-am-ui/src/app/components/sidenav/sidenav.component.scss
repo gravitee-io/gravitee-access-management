@@ -156,3 +156,9 @@ md-toolbar.md-default-theme:not(.md-menu-toolbar), md-toolbar:not(.md-menu-toolb
 a > md-icon {
   vertical-align: middle;
 }
+
+.username {
+  width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
