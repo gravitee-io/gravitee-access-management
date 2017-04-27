@@ -44,31 +44,13 @@ body {
 }
 
 .gravitee-splash-screen {
-  background-color: rgb(45, 50, 62);
+  background: rgb(45, 50, 62) url('./assets/gravitee_logo_anim.gif') no-repeat center center;
   bottom: 0;
   left: 0;
   position: absolute;
   right: 0;
   top: 0;
   z-index: 99999;
-}
-
-img.gravitee-splash-screen {
-  color: silver;
-  display: flex;
-  margin: 0 auto;
-  max-width: 200px;
-  position: relative;
-  top: 40%;
-}
-
-.animate-show-hide.ng-hide {
-  opacity: 0;
-}
-
-.animate-show-hide.ng-hide-add,
-.animate-show-hide.ng-hide-remove {
-  transition: all linear 0.5s;
 }
 
 .md-whiteframe-1dp, .md-whiteframe-z1 {
