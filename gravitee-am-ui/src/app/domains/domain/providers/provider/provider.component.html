@@ -19,13 +19,13 @@
   <h3>Edit provider {{provider.name}}</h3>
   <md-card>
     <md-card-content>
-      <form #providerForm="ngForm">
+      <form #providerForm="ngForm" fxLayout="column">
         <h4>General</h4>
         <md-input-container fxLayout="row" fxFlex>
           <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
         </md-input-container>
 
-        <h4>Configuration</h4>
+        <h4 style="margin-top: 50px;">Configuration</h4>
         <provider-form *ngIf="provider" [providerConfiguration]="providerConfiguration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderUpdate($event)"></provider-form>
       </form>
     </md-card-content>

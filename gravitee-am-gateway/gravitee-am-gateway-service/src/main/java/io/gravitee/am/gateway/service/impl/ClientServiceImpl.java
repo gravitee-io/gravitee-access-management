@@ -32,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -165,6 +164,35 @@ public class ClientServiceImpl implements ClientService {
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to update a client", ex);
             throw new TechnicalManagementException("An error occurs while trying to update a client", ex);
+        }
+    }
+
+    @Override
+    public Set<Client> findByIdentityProvider(String identityProvider) {
+        try {
+            LOGGER.debug("Find clients by identity provider : {}", identityProvider);
+            return clientRepository.findByIdentityProvider(identityProvider);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find clients by identity provider", ex);
+            throw new TechnicalManagementException("An error occurs while trying to find clients by identity provider", ex);
+        }
+    }
+
+    @Override
+    public void delete(String clientId) {
+        try {
+            LOGGER.debug("Delete client {}", clientId);
+
+            Optional<Client> optClient = clientRepository.findById(clientId);
+            if (! optClient.isPresent()) {
+                throw new ClientNotFoundException(clientId);
+            }
+
+            clientRepository.delete(clientId);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to delete client: {}", clientId, ex);
+            throw new TechnicalManagementException(
+                    String.format("An error occurs while trying to delete client: %s", clientId), ex);
         }
     }
 }

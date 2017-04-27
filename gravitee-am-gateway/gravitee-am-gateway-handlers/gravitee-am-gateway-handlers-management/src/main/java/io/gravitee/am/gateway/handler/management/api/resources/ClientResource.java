@@ -84,6 +84,17 @@ public class ClientResource extends AbstractResource {
         return clientService.update(domain, client, updateClient);
     }
 
+    @DELETE
+    @ApiOperation(value = "Delete a client")
+    @ApiResponses({
+            @ApiResponse(code = 204, message = "Client successfully deleted"),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public Response delete(@PathParam("domain") String domain, @PathParam("client") String client) {
+        clientService.delete(client);
+
+        return Response.noContent().build();
+    }
+
     @GET
     @Path("identities")
     public ClientIdentityProvidersResource getClientIdentityProvidersResource() {

@@ -36,4 +36,6 @@ public interface IdentityProviderService {
     IdentityProvider create(String domain, NewIdentityProvider identityProvider);
 
     IdentityProvider update(String domain, String id, UpdateIdentityProvider updateIdentityProvider);
+
+    void delete(String identityProviderId);
 }

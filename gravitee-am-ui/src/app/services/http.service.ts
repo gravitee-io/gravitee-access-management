@@ -43,9 +43,10 @@ export class HttpService extends Http {
     return super.request(url, options).catch((error: Response) => {
       if (error.status === 401 || error.status === 403) {
         this.snackbarService.open('The authentication session expires or the user is not authorised');
+        this.subject.next('Unauthorized');
+      } else {
+        this.snackbarService.open(error.json().message || 'Server error');
       }
-      // TODO : sometimes the REST API sends http 500 error because the access token is expired
-      this.subject.next('Unauthorized');
       return Observable.throw(error);
     });
   }

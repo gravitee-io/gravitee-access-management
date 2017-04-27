@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.gateway.service.impl;
 
+import io.gravitee.am.gateway.service.ClientService;
 import io.gravitee.am.gateway.service.IdentityProviderService;
 import io.gravitee.am.gateway.service.exception.IdentityProviderNotFoundException;
+import io.gravitee.am.gateway.service.exception.IdentityProviderWithClientsException;
 import io.gravitee.am.gateway.service.exception.TechnicalManagementException;
 import io.gravitee.am.gateway.service.model.NewIdentityProvider;
 import io.gravitee.am.gateway.service.model.UpdateIdentityProvider;
@@ -48,6 +50,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Autowired
     private IdentityProviderRepository identityProviderRepository;
+
+    @Autowired
+    private ClientService clientService;
 
     @Override
     public IdentityProvider findById(String id) {
@@ -129,6 +134,29 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to update an identity provider", ex);
             throw new TechnicalManagementException("An error occurs while trying to update an identity provider", ex);
+        }
+    }
+
+    @Override
+    public void delete(String identityProviderId) {
+        try {
+            LOGGER.debug("Delete identity provider {}", identityProviderId);
+
+            Optional<IdentityProvider> optIdentityProvider = identityProviderRepository.findById(identityProviderId);
+            if (! optIdentityProvider.isPresent()) {
+                throw new IdentityProviderNotFoundException(identityProviderId);
+            }
+
+            int clients = clientService.findByIdentityProvider(identityProviderId).size();
+            if (clients > 0) {
+                throw new IdentityProviderWithClientsException();
+            }
+
+            identityProviderRepository.delete(identityProviderId);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to delete identity provider: {}", identityProviderId, ex);
+            throw new TechnicalManagementException(
+                    String.format("An error occurs while trying to delete identity provider: %s", identityProviderId), ex);
         }
     }
 }

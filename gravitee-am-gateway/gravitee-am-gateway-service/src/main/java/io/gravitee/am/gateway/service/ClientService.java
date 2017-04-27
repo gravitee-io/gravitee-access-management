@@ -36,4 +36,8 @@ public interface ClientService {
     Client create(String domain, NewClient newClient);
 
     Client update(String domain, String id, UpdateClient updateClient);
+
+    Set<Client> findByIdentityProvider(String identityProvider);
+
+    void delete(String clientId);
 }

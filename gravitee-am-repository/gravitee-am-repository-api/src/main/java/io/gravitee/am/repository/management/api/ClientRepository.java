@@ -36,4 +36,6 @@ public interface ClientRepository extends CrudRepository<Client, String> {
     Set<Client> findByDomain(String domain) throws TechnicalException;
 
     Optional<Client> findByClientIdAndDomain(String clientId, String domain) throws TechnicalException;
+
+    Set<Client> findByIdentityProvider(String identityProvider) throws TechnicalException;
 }
