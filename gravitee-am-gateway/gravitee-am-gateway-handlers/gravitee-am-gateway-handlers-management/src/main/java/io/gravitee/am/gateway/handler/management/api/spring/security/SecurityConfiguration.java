@@ -91,10 +91,9 @@ public class SecurityConfiguration extends ResourceServerConfigurerAdapter {
     public RemoteTokenServices remoteTokenServices() {
         RemoteTokenServices s = new RemoteTokenServices();
         s.setAccessTokenConverter(accessTokenConverter());
-        // TODO : check baseURL
-        s.setCheckTokenEndpointUrl("http://localhost:8092/" + environment.getProperty("security.oauth.domain.id") + "/oauth/check_token");
-        s.setClientId(environment.getProperty("security.oauth.client.id"));
-        s.setClientSecret(environment.getProperty("security.oauth.client.secret"));
+        s.setCheckTokenEndpointUrl(environment.getProperty("authentication.oauth2.url"));
+        s.setClientId(environment.getProperty("authentication.oauth2.clientId"));
+        s.setClientSecret(environment.getProperty("authentication.oauth2.clientSecret"));
         return s;
     }
 }

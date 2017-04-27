@@ -22,7 +22,7 @@ import { AppConfig } from "../../config/app.config";
 export class DomainService {
   private subject = new BehaviorSubject<any>({});
   notifyObservable$ = this.subject.asObservable();
-  private domainsURL: string = AppConfig.settings.baseURL + '/management/domains/';
+  private domainsURL: string = AppConfig.settings.baseURL + '/domains/';
 
   constructor(private http: Http) {}
 

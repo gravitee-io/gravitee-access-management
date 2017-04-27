@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.node;
 
 import io.gravitee.am.gateway.core.http.HttpServer;
 import io.gravitee.am.gateway.jetty.JettyHttpServer;
+import io.gravitee.am.gateway.service.InitializerService;
 import io.gravitee.am.gateway.services.ServiceManager;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.common.node.AbstractNode;
@@ -45,6 +46,7 @@ public class GatewayNode extends AbstractNode {
         components.add(PluginRegistry.class);
         components.add(HttpServer.class);
         components.add(ServiceManager.class);
+        components.add(InitializerService.class);
 
         return components;
     }

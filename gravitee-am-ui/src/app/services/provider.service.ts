@@ -20,7 +20,7 @@ import { AppConfig } from "../../config/app.config";
 
 @Injectable()
 export class ProviderService {
-  private providersURL = AppConfig.settings.baseURL + '/management/domains/';
+  private providersURL = AppConfig.settings.baseURL + '/domains/';
 
   constructor(private http: Http) { }
 

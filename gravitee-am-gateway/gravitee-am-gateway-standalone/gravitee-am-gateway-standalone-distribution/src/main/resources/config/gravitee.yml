@@ -60,9 +60,10 @@ services:
     enabled: false
     path: ${gravitee.home}/domains # The path to domain descriptors
 
-# Gateway AM security configuration
-security:
+# OAuth2 authentication
+authentication:
   # Authorization credentials to access secure validation end point
-  oauth.domain.id: domain-id
-  oauth.client.id: client-id
-  oauth.client.secret: client-secret
+  oauth2:
+    url: http://localhost:8092/admin/oauth/check_token
+    clientId: admin
+    clientSecret: admin-secret
