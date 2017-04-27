@@ -21,13 +21,13 @@
     Configure your identity provider.
   </small>
 
-  <div class="provider-creation-step2-form">
+  <div class="provider-creation-step2-form" fxLayout="column">
     <h4>General</h4>
     <md-input-container fxLayout="row" fxFlex>
       <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
     </md-input-container>
 
-    <h4>Configuration</h4>
+    <h4 style="margin-top: 50px;">Configuration</h4>
     <provider-form [providerConfiguration]="configuration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderCreation($event)"></provider-form>
   </div>
 

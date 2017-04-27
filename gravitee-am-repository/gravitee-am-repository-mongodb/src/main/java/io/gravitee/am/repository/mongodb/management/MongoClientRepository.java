@@ -36,6 +36,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
 
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_CLIENT_ID = "clientId";
+    private static final String FIELD_IDENTITIES = "identities";
 
     @Override
     public Set<Client> findByDomain(String domain) throws TechnicalException {
@@ -58,6 +59,18 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
 
         ClientMongo client = mongoOperations.findOne(query, ClientMongo.class);
         return Optional.ofNullable(convert(client));
+    }
+
+    @Override
+    public Set<Client> findByIdentityProvider(String identityProvider) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where(FIELD_IDENTITIES).is(identityProvider));
+
+        return mongoOperations
+                .find(query, ClientMongo.class)
+                .stream()
+                .map(this::convert)
+                .collect(Collectors.toSet());
     }
 
     @Override

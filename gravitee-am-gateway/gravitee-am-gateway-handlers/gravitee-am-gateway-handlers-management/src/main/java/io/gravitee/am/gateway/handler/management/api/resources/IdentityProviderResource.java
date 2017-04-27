@@ -60,7 +60,7 @@ public class IdentityProviderResource extends AbstractResource {
         domainService.findById(domain);
 
         IdentityProvider identityProvider1 = identityProviderService.findById(identityProvider);
-        if (! identityProvider1.getDomain().equalsIgnoreCase(domain)) {
+        if (!identityProvider1.getDomain().equalsIgnoreCase(domain)) {
             return Response
                     .status(Response.Status.BAD_REQUEST)
                     .entity("Identity provider does not belong to domain")
@@ -83,5 +83,17 @@ public class IdentityProviderResource extends AbstractResource {
         domainService.findById(domain);
 
         return identityProviderService.update(domain, identity, updateIdentityProvider);
+    }
+
+    @DELETE
+    @ApiOperation(value = "Delete an identity provider")
+    @ApiResponses({
+            @ApiResponse(code = 204, message = "Identity provider successfully deleted"),
+            @ApiResponse(code = 400, message = "Identity provider is bind to existing clients"),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public Response delete(@PathParam("domain") String domain, @PathParam("identity") String identity) {
+        identityProviderService.delete(identity);
+
+        return Response.noContent().build();
     }
 }

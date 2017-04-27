@@ -16,7 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { DialogService } from "../../../services/dialog.service";
 import { SnackbarService } from "../../../services/snackbar.service";
-import { Router, ActivatedRoute } from "@angular/router";
+import { ActivatedRoute } from "@angular/router";
 import { ClientService } from "../../../services/client.service";
 
 @Component({
@@ -30,11 +30,15 @@ export class ClientsComponent implements OnInit {
 
   constructor(private dialogService: DialogService,
               private snackbarService: SnackbarService, private clientService: ClientService,
-              private router: Router, private route: ActivatedRoute) {
+              private route: ActivatedRoute) {
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.loadClients();
+  }
+
+  loadClients() {
     this.clientService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.clients = data);
   }
 
@@ -49,8 +53,8 @@ export class ClientsComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.clientService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open("Client " + id + " deleted");
-            this.router.navigate(['/domains', this.domainId, 'clients'])
+            this.snackbarService.open("Client deleted");
+            this.loadClients();
           });
         }
       });

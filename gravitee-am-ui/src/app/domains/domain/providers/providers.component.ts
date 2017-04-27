@@ -17,7 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { ProviderService } from "../../../services/provider.service";
 import { SnackbarService } from "../../../services/snackbar.service";
 import { DialogService } from "../../../services/dialog.service";
-import { Router, ActivatedRoute } from "@angular/router";
+import { ActivatedRoute } from "@angular/router";
 
 @Component({
   selector: 'app-providers',
@@ -29,11 +29,15 @@ export class ProvidersComponent implements OnInit {
   domainId: string;
 
   constructor(private providerService: ProviderService, private dialogService: DialogService,
-              private snackbarService: SnackbarService, private router: Router, private route: ActivatedRoute) {
+              private snackbarService: SnackbarService, private route: ActivatedRoute) {
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.loadProviders();
+  }
+
+  loadProviders() {
     this.providerService.findByDomain(this.domainId).subscribe(response => this.providers = response.json());
   }
 
@@ -48,8 +52,8 @@ export class ProvidersComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.providerService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open("Provider " + id + " deleted");
-            this.router.navigate(['/domains', this.domainId, 'providers'])
+            this.snackbarService.open("Provider deleted");
+            this.loadProviders();
           });
         }
       });

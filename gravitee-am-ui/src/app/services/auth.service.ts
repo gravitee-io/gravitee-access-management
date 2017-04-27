@@ -69,7 +69,7 @@ export class AuthService {
 
   userInfo(): Observable<Response> {
     return this.http.get(this.userInfoUrl).map(res => {
-      this.setUser(res.text());
+      this.setUser(res.json().name);
       return res;
     });
   }
