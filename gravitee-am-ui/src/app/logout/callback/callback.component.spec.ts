@@ -15,21 +15,21 @@
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { OAuthCallbackComponent } from './callback.component';
+import { LogoutCallbackComponent } from './callback.component';
 
-describe('OAuthCallbackComponent', () => {
-  let component: OAuthCallbackComponent;
-  let fixture: ComponentFixture<OAuthCallbackComponent>;
+describe('LogoutCallbackComponent', () => {
+  let component: LogoutCallbackComponent;
+  let fixture: ComponentFixture<LogoutCallbackComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ OAuthCallbackComponent ]
+      declarations: [ LogoutCallbackComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(OAuthCallbackComponent);
+    fixture = TestBed.createComponent(LogoutCallbackComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

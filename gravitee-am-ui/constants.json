@@ -6,7 +6,8 @@
       "authorize": "http://localhost:8092/admin/oauth/authorize",
       "userInfo": "http://localhost:8092/admin/userinfo",
       "clientId": "admin",
-      "redirectUri": "http://localhost:4200/oauth/callback"
+      "redirectUri": "http://localhost:4200/oauth/callback",
+      "logoutUri": "http://localhost:8092/admin/logout?target_url=http://localhost:4200/logout/callback"
     }
   }
 }

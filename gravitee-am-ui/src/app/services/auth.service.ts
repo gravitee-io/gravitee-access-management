@@ -29,6 +29,7 @@ export class AuthService {
     '&response_type=' + this.responseType +
     '&redirect_uri='+ this.redirectUri;
   private userInfoUrl: string = AppConfig.settings.authentication.oauth2.userInfo;
+  private _logoutEndpoint: string = AppConfig.settings.authentication.oauth2.logoutUri;
   private CALLBACK_ACCESS_TOKEN_PATTERN: string = '#access_token=(.*)';
   private currentUser: any;
   private subject = new Subject();
@@ -65,6 +66,10 @@ export class AuthService {
     return this._authorizationEndpoint;
   }
 
+  logoutEndpoint(): string {
+    return this._logoutEndpoint;
+  }
+
   userInfo(): Observable<Response> {
     return this.http.get(this.userInfoUrl).map(res => {
       this.setUser(res.json().name);
@@ -77,9 +82,11 @@ export class AuthService {
     sessionStorage.setItem('user', this.currentUser);
   }
 
-  logout() {
-    sessionStorage.removeItem('user');
-    sessionStorage.removeItem('access_token');
+  logout(): Observable<boolean> {
+    return Observable.create(observer => {
+      sessionStorage.clear();
+      observer.next(true);
+    });
   }
 
   user() {

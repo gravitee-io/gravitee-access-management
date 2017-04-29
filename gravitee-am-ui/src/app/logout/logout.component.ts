@@ -14,26 +14,18 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { Router } from "@angular/router";
-import { AuthService } from "../../services/auth.service";
-import { SnackbarService } from "../../services/snackbar.service";
+import { AuthService } from "../services/auth.service";
 
 @Component({
-  selector: 'app-callback',
+  selector: 'app-logout',
   template: ``
 })
-export class OAuthCallbackComponent implements OnInit {
-  constructor(private router: Router, private authService: AuthService, private snackbarService: SnackbarService) { }
+export class LogoutComponent implements OnInit {
+
+  constructor(private authService: AuthService) { }
 
   ngOnInit() {
-    this.authService.handleAuthentication().subscribe(authentSuccess => {
-      if (authentSuccess) {
-        this.authService.userInfo().subscribe(res => {
-          this.snackbarService.open('Login successful');
-          this.router.navigate(['/']);
-        });
-      }
-    });
+    window.location.href = this.authService.logoutEndpoint();
   }
 
 }

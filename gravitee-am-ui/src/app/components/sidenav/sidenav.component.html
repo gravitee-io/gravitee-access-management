@@ -61,7 +61,7 @@
         <md-icon>input</md-icon>
         <span *ngIf="!reducedMode">Login</span>
       </a>
-      <a (click)="logout()" *ngIf="isAuthenticated()" style="cursor: pointer;">
+      <a [routerLink]="['/logout']" *ngIf="isAuthenticated()" style="cursor: pointer;">
         <md-icon>exit_to_app</md-icon>
         <span *ngIf="!reducedMode">Sign out</span>
       </a>

@@ -26,7 +26,9 @@ import { ProvidersComponent } from "./domains/domain/providers/providers.compone
 import { DomainCreationComponent } from "./domains/creation/domain-creation.component";
 import { ProviderCreationComponent } from "./domains/domain/providers/creation/provider-creation.component";
 import { ProviderComponent } from "./domains/domain/providers/provider/provider.component";
-import { CallbackComponent } from "./oauth/callback/callback.component";
+import { OAuthCallbackComponent } from "./oauth/callback/callback.component";
+import { LogoutCallbackComponent}  from "./logout/callback/callback.component";
+import { LogoutComponent } from "./logout/logout.component";
 
 const routes: Routes = [
   { path: 'domains',
@@ -85,8 +87,10 @@ const routes: Routes = [
       }
     ]
   },
-  { path: 'oauth/callback', component: CallbackComponent },
+  { path: 'oauth/callback', component: OAuthCallbackComponent },
   { path: 'login', component: LoginComponent },
+  { path: 'logout', component: LogoutComponent },
+  { path: 'logout/callback', component: LogoutCallbackComponent },
   { path: '', redirectTo: '/domains', pathMatch: 'full' }
 ];
 
