@@ -33,7 +33,9 @@ export class OAuthCallbackComponent implements OnInit {
           this.router.navigate(['/']);
         });
       }
+    }, error => {
+      this.snackbarService.open(error.replace(/%20/g, ' '));
+      this.router.navigate(['/logout']);
     });
   }
-
 }

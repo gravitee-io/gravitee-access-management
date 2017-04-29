@@ -31,6 +31,8 @@ export class AuthService {
   private userInfoUrl: string = AppConfig.settings.authentication.oauth2.userInfo;
   private _logoutEndpoint: string = AppConfig.settings.authentication.oauth2.logoutUri;
   private CALLBACK_ACCESS_TOKEN_PATTERN: string = '#access_token=(.*)';
+  private CALLBACK_ERROR_PATTERN: string = '#error=(.*)';
+  private CALLBACK_ERROR_DESCRIPTION_PATTERN: string = 'error_description=(.*)';
   private currentUser: any;
   private subject = new Subject();
   notifyObservable$ = this.subject.asObservable();
@@ -40,22 +42,30 @@ export class AuthService {
   }
 
   handleAuthentication(): Observable<boolean> {
+    let href = window.location.href;
+    // check error callback
+    let oauthErrorCallback = href.match(this.CALLBACK_ERROR_PATTERN);
+    if (oauthErrorCallback) {
+      let oauthErrorDescriptionCallback = href.match(this.CALLBACK_ERROR_DESCRIPTION_PATTERN);
+      return Observable.throw(oauthErrorDescriptionCallback[1]);
+    }
+
+    // check missing access token
+    let oauthCallbackParameters = href.match(this.CALLBACK_ACCESS_TOKEN_PATTERN);
+    if (!oauthCallbackParameters || oauthCallbackParameters.length <= 1) {
+      return Observable.throw('Missing access token in response');
+    }
+
     return Observable.create(observer => {
-      let href = window.location.href;
-      let oauthCallbackParameters = href.match(this.CALLBACK_ACCESS_TOKEN_PATTERN);
-      if (oauthCallbackParameters && oauthCallbackParameters.length > 1) {
-        let rawAccessToken = 'access_token=' + oauthCallbackParameters[1];
-        let accessTokenArray = rawAccessToken.split("&");
-        let accessTokenMap = [];
-        for(let i = 0; i < accessTokenArray.length; i++) {
-          accessTokenMap[accessTokenArray[i].split("=")[0]] = accessTokenArray[i].split("=")[1];
-        }
-        if (accessTokenMap['access_token']) {
-          sessionStorage.setItem("access_token", accessTokenMap['access_token']);
-          observer.next(true);
-        } else {
-          observer.next(false);
-        }
+      let rawAccessToken = 'access_token=' + oauthCallbackParameters[1];
+      let accessTokenArray = rawAccessToken.split("&");
+      let accessTokenMap = [];
+      for(let i = 0; i < accessTokenArray.length; i++) {
+        accessTokenMap[accessTokenArray[i].split("=")[0]] = accessTokenArray[i].split("=")[1];
+      }
+      if (accessTokenMap['access_token']) {
+        sessionStorage.setItem("access_token", accessTokenMap['access_token']);
+        observer.next(true);
       } else {
         observer.next(false);
       }
