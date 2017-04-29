@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
+import { Injectable } from '@angular/core';
+import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
+import { Observable } from "rxjs";
+import { ClientService } from "../services/client.service";
 
-@Component({
-  selector: 'app-client',
-  templateUrl: './client.component.html',
-  styleUrls: ['./client.component.scss']
-})
-export class ClientComponent implements OnInit {
-  client: any = {};
+@Injectable()
+export class ClientsResolver implements Resolve<any> {
 
-  constructor(private route: ActivatedRoute) {
+  constructor(private clientService: ClientService) { }
+
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+    return this.clientService.findByDomain(route.parent.paramMap.get('domainId')).map(res => res.json());
   }
 
-  ngOnInit() {
-    this.client = this.route.snapshot.data['client'];
-  }
 }

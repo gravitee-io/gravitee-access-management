@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { ClientService } from "../../../../../services/client.service";
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { ProviderService } from "../../../../../services/provider.service";
@@ -24,7 +24,7 @@ import { ActivatedRoute } from "@angular/router";
   templateUrl: 'client-form.component.html',
   styleUrls: ['client-form.component.scss']
 })
-export class ClientFormComponent implements OnInit, OnChanges {
+export class ClientFormComponent implements OnInit {
   @Input() client: any;
   private domainId: string;
   formChanged: boolean = false;
@@ -44,20 +44,18 @@ export class ClientFormComponent implements OnInit, OnChanges {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.params['domainId'];
     this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.identityProviders = data);
+    this.initGrantTypes();
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    let _client = changes.client.currentValue;
-    if (_client.id) {
-      let self = this;
-      (!_client.redirectUris) ? this.client.redirectUris = [] : this.client.redirectUris = _client.redirectUris;
-      (!_client.scopes) ? this.client.scopes = [] : this.client.scopes = _client.scopes;
-      this.grantTypes.forEach(function (grantType) {
-        if (self.contains(grantType.value, _client.authorizedGrantTypes)) {
-          grantType.checked = true;
-        }
-      })
-    }
+  initGrantTypes() {
+    (!this.client.redirectUris) ? this.client.redirectUris = [] : this.client.redirectUris = this.client.redirectUris;
+    (!this.client.scopes) ? this.client.scopes = [] : this.client.scopes = this.client.scopes;
+    let self = this;
+    this.grantTypes.forEach(function (grantType) {
+      if (self.contains(grantType.value, self.client.authorizedGrantTypes)) {
+        grantType.checked = true;
+      }
+    })
   }
 
   selectedGrantType(event) {

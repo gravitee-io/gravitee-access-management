@@ -35,7 +35,7 @@ export class ClientsComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.params['domainId'];
-    this.loadClients();
+    this.clients = this.route.snapshot.data['clients'];
   }
 
   loadClients() {

@@ -34,7 +34,7 @@ export class ProvidersComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.params['domainId'];
-    this.loadProviders();
+    this.providers = this.route.snapshot.data['providers'];
   }
 
   loadProviders() {

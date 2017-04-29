@@ -37,12 +37,9 @@ export class ProviderComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.params['domainId'];
-    let providerId = this.route.snapshot.params['providerId'];
-    this.providerService.get(this.domainId, providerId).map(res => res.json()).subscribe(data => {
-      this.provider = data;
-      this.providerConfiguration = JSON.parse(this.provider.configuration);
-      this.platformService.identitySchema(this.provider.type).map(res => res.json()).subscribe(data => this.providerSchema = data);
-    });
+    this.provider = this.route.snapshot.data['provider'];
+    this.providerConfiguration = JSON.parse(this.provider.configuration);
+    this.platformService.identitySchema(this.provider.type).map(res => res.json()).subscribe(data => this.providerSchema = data);
   }
 
   update() {
