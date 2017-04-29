@@ -29,10 +29,19 @@ import { ProviderComponent } from "./domains/domain/providers/provider/provider.
 import { OAuthCallbackComponent } from "./oauth/callback/callback.component";
 import { LogoutCallbackComponent}  from "./logout/callback/callback.component";
 import { LogoutComponent } from "./logout/logout.component";
+import { DomainsResolver } from "./resolvers/domains.resolver";
+import { DomainResolver } from "./resolvers/domain.resolver";
+import { ClientsResolver } from "./resolvers/clients.resolver";
+import { ClientResolver } from "./resolvers/client.resolver";
+import { ProvidersResolver } from "./resolvers/providers.resolver";
+import { ProviderResolver } from "./resolvers/provider.resolver";
 
 const routes: Routes = [
   { path: 'domains',
     component: DomainsComponent,
+    resolve: {
+      domains: DomainsResolver
+    },
     data: {
         menu: {
           label: 'Domains',
@@ -45,6 +54,9 @@ const routes: Routes = [
     component: DomainCreationComponent
   },
   { path: 'domains/:domainId', component: DomainComponent,
+    resolve: {
+      domain: DomainResolver
+    },
     children: [
       { path: '', redirectTo: 'general', pathMatch: 'full' },
       { path: 'general',
@@ -58,6 +70,9 @@ const routes: Routes = [
       },
       { path: 'clients',
         component: ClientsComponent,
+        resolve: {
+          clients: ClientsResolver
+        },
         data: {
           menu: {
             label: 'Clients',
@@ -70,8 +85,14 @@ const routes: Routes = [
       },
       { path: 'clients/:clientId/edit',
         component: ClientComponent,
+        resolve: {
+          client: ClientResolver
+        },
       },
       { path: 'providers', component: ProvidersComponent,
+        resolve: {
+          providers: ProvidersResolver
+        },
         data: {
           menu: {
             label: 'Providers',
@@ -84,6 +105,9 @@ const routes: Routes = [
       },
       { path: 'providers/:providerId/edit',
         component: ProviderComponent,
+        resolve: {
+          provider: ProviderResolver
+        }
       }
     ]
   },

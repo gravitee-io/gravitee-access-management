@@ -30,12 +30,9 @@ export class DomainComponent implements OnInit {
   }
 
   ngOnInit() {
-    let id = this.route.snapshot.params['domainId'];
-    this.domainService.get(id).map(res => res.json()).subscribe(data => {
-      this.domain = data;
-      this.domainService.notify(this.domain);
-      this.sidenavService.notify(this.domain);
-    });
+    this.domain = this.route.snapshot.data['domain'];
+    this.domainService.notify(this.domain);
+    this.sidenavService.notify(this.domain);
   }
 }
 

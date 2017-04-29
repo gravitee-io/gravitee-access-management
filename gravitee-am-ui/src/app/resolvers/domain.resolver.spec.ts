@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
+import { TestBed, inject } from '@angular/core/testing';
 
-@Component({
-  selector: 'app-client',
-  templateUrl: './client.component.html',
-  styleUrls: ['./client.component.scss']
-})
-export class ClientComponent implements OnInit {
-  client: any = {};
+import { DomainResolver } from './domain.resolver';
 
-  constructor(private route: ActivatedRoute) {
-  }
+describe('DomainResolver', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [DomainResolver]
+    });
+  });
 
-  ngOnInit() {
-    this.client = this.route.snapshot.data['client'];
-  }
-}
+  it('should ...', inject([DomainResolver], (service: DomainResolver) => {
+    expect(service).toBeTruthy();
+  }));
+});

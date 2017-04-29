@@ -59,6 +59,12 @@ import { AuthService } from "./services/auth.service";
 import { AppConfig } from "../config/app.config";
 import { LogoutComponent } from './logout/logout.component';
 import { LogoutCallbackComponent } from './logout/callback/callback.component';
+import { DomainsResolver } from "./resolvers/domains.resolver";
+import { DomainResolver } from "./resolvers/domain.resolver";
+import { ClientsResolver } from "./resolvers/clients.resolver";
+import { ClientResolver } from "./resolvers/client.resolver";
+import { ProvidersResolver } from "./resolvers/providers.resolver";
+import { ProviderResolver } from "./resolvers/provider.resolver";
 
 @NgModule({
   declarations: [
@@ -108,6 +114,12 @@ import { LogoutCallbackComponent } from './logout/callback/callback.component';
     PlatformService,
     AuthService,
     AppConfig,
+    DomainsResolver,
+    DomainResolver,
+    ClientsResolver,
+    ClientResolver,
+    ProvidersResolver,
+    ProviderResolver,
     { provide: Http, useClass: HttpService }
   ],
   entryComponents: [ConfirmComponent],

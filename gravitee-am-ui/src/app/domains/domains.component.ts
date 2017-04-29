@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { DomainService } from "../services/domain.service";
 import { AppConfig } from "../../config/app.config";
+import { ActivatedRoute } from "@angular/router";
 
 @Component({
   selector: 'app-domains',
@@ -27,10 +27,10 @@ export class DomainsComponent implements OnInit {
   version = AppConfig.settings.version;
   domains = [];
 
-  constructor(private domainService : DomainService) { }
+  constructor(private route : ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainService.list().subscribe(response => this.domains = response.json());
+    this.domains = this.route.snapshot.data['domains'];
   }
 
   searchDomains(value) {
