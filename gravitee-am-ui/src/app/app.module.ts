@@ -54,9 +54,11 @@ import { ClientService } from "./services/client.service";
 import { ProviderService } from "./services/provider.service";
 import { PlatformService } from "./services/platform.service";
 import { HttpService } from "./services/http.service";
-import { CallbackComponent } from './oauth/callback/callback.component';
+import { OAuthCallbackComponent } from './oauth/callback/callback.component';
 import { AuthService } from "./services/auth.service";
 import { AppConfig } from "../config/app.config";
+import { LogoutComponent } from './logout/logout.component';
+import { LogoutCallbackComponent } from './logout/callback/callback.component';
 
 @NgModule({
   declarations: [
@@ -80,7 +82,9 @@ import { AppConfig } from "../config/app.config";
     ProviderCreationStep2Component,
     ProviderComponent,
     ProviderFormComponent,
-    CallbackComponent
+    OAuthCallbackComponent,
+    LogoutComponent,
+    LogoutCallbackComponent
   ],
   imports: [
     BrowserModule,
