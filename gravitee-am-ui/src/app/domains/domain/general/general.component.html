@@ -27,7 +27,7 @@
           <input mdInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required>
         </md-input-container>
 
-        <md-slide-toggle mdTooltip="Enable/Disable domain ?" [mdTooltipPosition]="'before'"
+        <md-slide-toggle mdTooltip="{{domain.enabled ? 'Disable domain ?' : 'Enable domain ?'}}" [mdTooltipPosition]="'before'"
                          (change)="enableDomain($event)"
                          [checked]="domain.enabled"></md-slide-toggle>
       </div>

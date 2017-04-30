@@ -45,6 +45,8 @@ public class Client {
 
     private List<String> scopes;
 
+    private List<String> autoApproveScopes;
+
     private int accessTokenValiditySeconds = DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS;
 
     private int refreshTokenValiditySeconds = DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS;
@@ -117,6 +119,14 @@ public class Client {
 
     public void setScopes(List<String> scopes) {
         this.scopes = scopes;
+    }
+
+    public List<String> getAutoApproveScopes() {
+        return autoApproveScopes;
+    }
+
+    public void setAutoApproveScopes(List<String> autoApproveScopes) {
+        this.autoApproveScopes = autoApproveScopes;
     }
 
     public int getAccessTokenValiditySeconds() {

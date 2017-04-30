@@ -43,6 +43,8 @@ public class ClientMongo extends Auditable {
 
     private List<String> scopes;
 
+    private List<String> autoApproveScopes;
+
     private int accessTokenValiditySeconds;
 
     private int refreshTokenValiditySeconds;
@@ -113,6 +115,14 @@ public class ClientMongo extends Auditable {
 
     public void setScopes(List<String> scopes) {
         this.scopes = scopes;
+    }
+
+    public List<String> getAutoApproveScopes() {
+        return autoApproveScopes;
+    }
+
+    public void setAutoApproveScopes(List<String> autoApproveScopes) {
+        this.autoApproveScopes = autoApproveScopes;
     }
 
     public int getAccessTokenValiditySeconds() {

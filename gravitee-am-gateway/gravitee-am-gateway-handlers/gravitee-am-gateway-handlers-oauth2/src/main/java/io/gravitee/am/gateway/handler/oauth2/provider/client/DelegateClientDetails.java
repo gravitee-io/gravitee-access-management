@@ -19,6 +19,7 @@ import io.gravitee.am.model.Client;
 import io.gravitee.am.model.GrantType;
 import org.springframework.security.oauth2.provider.client.BaseClientDetails;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,7 @@ public class DelegateClientDetails extends BaseClientDetails {
         setClientSecret(client.getClientSecret());
         setRegisteredRedirectUri(client.getRedirectUris() != null ? new HashSet<>(client.getRedirectUris()) : null);
         setScope(client.getScopes());
+        setAutoApproveScopes(client.getAutoApproveScopes() != null ? new HashSet<>(client.getAutoApproveScopes()) : Collections.emptySet());
 //        setResourceIds(client.getResourceIds());
     }
 

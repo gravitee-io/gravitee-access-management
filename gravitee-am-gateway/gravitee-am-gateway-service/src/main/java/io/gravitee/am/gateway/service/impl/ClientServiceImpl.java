@@ -152,6 +152,7 @@ public class ClientServiceImpl implements ClientService {
 
             Client client = clientOpt.get();
             client.setScopes(updateClient.getScopes());
+            client.setAutoApproveScopes(updateClient.getAutoApproveScopes());
             client.setAccessTokenValiditySeconds(updateClient.getAccessTokenValiditySeconds());
             client.setRefreshTokenValiditySeconds(updateClient.getRefreshTokenValiditySeconds());
             client.setAuthorizedGrantTypes(updateClient.getAuthorizedGrantTypes());
