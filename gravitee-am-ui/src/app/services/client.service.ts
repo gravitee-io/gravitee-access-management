@@ -41,6 +41,7 @@ export class ClientService {
       'redirectUris': client.redirectUris,
       'authorizedGrantTypes': client.authorizedGrantTypes,
       'scopes': client.scopes,
+      'autoApproveScopes': client.autoApproveScopes,
       'accessTokenValiditySeconds': client.accessTokenValiditySeconds,
       'refreshTokenValiditySeconds': client.refreshTokenValiditySeconds,
       'enabled': client.enabled,

@@ -80,6 +80,15 @@ export class ClientFormComponent implements OnInit {
     this.formChanged = true;
   }
 
+  enableAutoApprove(event) {
+    this.client.autoApproveScopes = (event.checked) ? ["true"]: [];
+    this.formChanged = true;
+  }
+
+  isAutoApprove() {
+    return this.client.autoApproveScopes && this.client.autoApproveScopes.indexOf('true') > -1;
+  }
+
   update() {
     this.client.authorizedGrantTypes = this.selectedGrantTypes;
     this.clientService.update(this.domainId, this.client.id, this.client).map(res => res.json()).subscribe(data => {

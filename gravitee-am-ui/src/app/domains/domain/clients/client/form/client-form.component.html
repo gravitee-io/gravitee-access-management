@@ -25,10 +25,17 @@
       <input mdInput type="text" placeholder="Client Secret" name="clientSecret" [(ngModel)]="client.clientSecret" disabled>
     </md-input-container>
 
-    <md-slide-toggle mdTooltip="Enable/Disable client ?" [mdTooltipPosition]="'before'"
+    <md-slide-toggle mdTooltip="{{client.enabled ? 'Disable client ?' : 'Enable client ?'}}" [mdTooltipPosition]="'before'"
       (change)="enableClient($event)"
       [checked]="client.enabled"></md-slide-toggle>
   </div>
+
+  <h4>Auto approval</h4>
+  <md-slide-toggle
+    (change)="enableAutoApprove($event)"
+    [checked]="isAutoApprove()">
+  </md-slide-toggle>
+  <md-hint><small style="color: rgba(0, 0, 0, 0.38);">Allow to skip user approval. Generally used for internal trusted service applications.</small></md-hint>
 
   <h4>Identity providers</h4>
   <md-select placeholder="Identity providers" multiple name="identities" [(ngModel)]="client.identities">
