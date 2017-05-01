@@ -8,7 +8,7 @@
       "items" : {
         "type" : "object",
         "id" : "urn:jsonschema:io:gravitee:am:identityprovider:inline:model:User",
-        "title": "Header",
+        "title": "User",
         "properties" : {
           "firstname" : {
             "title": "Firstname",
@@ -28,7 +28,8 @@
           "password" : {
             "title": "Password",
             "description": "Password",
-            "type" : "string"
+            "type" : "string",
+            "widget": "password"
           }
         },
         "required": [
