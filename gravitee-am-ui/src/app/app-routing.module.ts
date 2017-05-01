@@ -35,6 +35,8 @@ import { ClientsResolver } from "./resolvers/clients.resolver";
 import { ClientResolver } from "./resolvers/client.resolver";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
 import { ProviderResolver } from "./resolvers/provider.resolver";
+import { DomainLoginComponent } from "./domains/domain/login/login.component";
+import { DomainLoginFormResolver } from "./resolvers/domain-login-form.resolver";
 
 const routes: Routes = [
   { path: 'domains',
@@ -65,6 +67,18 @@ const routes: Routes = [
           menu: {
             label: 'General',
             icon: 'blur_on',
+          }
+        }
+      },
+      { path: 'login',
+        component: DomainLoginComponent,
+        resolve: {
+          domainLoginForm: DomainLoginFormResolver
+        },
+        data: {
+          menu: {
+            label: 'Login page',
+            icon: 'web',
           }
         }
       },

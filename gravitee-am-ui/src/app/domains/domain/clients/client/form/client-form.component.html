@@ -35,7 +35,7 @@
     (change)="enableAutoApprove($event)"
     [checked]="isAutoApprove()">
   </md-slide-toggle>
-  <md-hint><small style="color: rgba(0, 0, 0, 0.38);">Allow to skip user approval. Generally used for internal trusted service applications.</small></md-hint>
+  <md-hint><small class="hint">Allow to skip user approval. Generally used for internal trusted service applications.</small></md-hint>
 
   <h4>Identity providers</h4>
   <md-select placeholder="Identity providers" multiple name="identities" [(ngModel)]="client.identities">
