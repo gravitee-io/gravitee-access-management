@@ -50,6 +50,18 @@ export class DomainService {
     return this.http.delete(this.domainsURL + id);
   }
 
+  getLoginForm(id): Observable<Response> {
+    return this.http.get(this.domainsURL + id + '/login');
+  }
+
+  createLoginForm(id, loginForm): Observable<Response> {
+    return this.http.put(this.domainsURL + id + '/login', loginForm);
+  }
+
+  deleteLoginForm(domainId): Observable<Response> {
+    return this.http.delete(this.domainsURL + domainId + '/login');
+  }
+
   notify(data: any) {
     if (data) {
       this.subject.next(data);

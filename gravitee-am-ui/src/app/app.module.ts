@@ -23,7 +23,11 @@ import { MaterialModule } from '@angular/material';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { JsonSchemaFormModule } from '../libraries/angular2-json-schema-form';
+import { CodemirrorModule } from 'ng2-codemirror';
 import 'hammerjs';
+import 'codemirror';
+import "codemirror/mode/htmlmixed/htmlmixed";
+import "codemirror/addon/selection/mark-selection";
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -32,6 +36,7 @@ import { LoginComponent } from './login/login.component';
 import { DomainsComponent } from './domains/domains.component';
 import { DomainService } from './services/domain.service';
 import { DomainComponent } from './domains/domain/domain.component';
+import { DomainLoginComponent, LoginInfoDialog } from './domains/domain/login/login.component';
 import { GeneralComponent } from './domains/domain/general/general.component';
 import { ClientsComponent } from './domains/domain/clients/clients.component';
 import { ProvidersComponent } from './domains/domain/providers/providers.component';
@@ -65,6 +70,7 @@ import { ClientsResolver } from "./resolvers/clients.resolver";
 import { ClientResolver } from "./resolvers/client.resolver";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
 import { ProviderResolver } from "./resolvers/provider.resolver";
+import { DomainLoginFormResolver } from "./resolvers/domain-login-form.resolver";
 
 @NgModule({
   declarations: [
@@ -73,6 +79,8 @@ import { ProviderResolver } from "./resolvers/provider.resolver";
     LoginComponent,
     DomainsComponent,
     DomainComponent,
+    DomainLoginComponent,
+    LoginInfoDialog,
     GeneralComponent,
     ClientsComponent,
     ProvidersComponent,
@@ -102,7 +110,8 @@ import { ProviderResolver } from "./resolvers/provider.resolver";
     MaterialModule,
     FlexLayoutModule,
     NgxDatatableModule,
-    JsonSchemaFormModule.forRoot()
+    JsonSchemaFormModule.forRoot(),
+    CodemirrorModule
   ],
   providers: [
     DomainService,
@@ -120,9 +129,10 @@ import { ProviderResolver } from "./resolvers/provider.resolver";
     ClientResolver,
     ProvidersResolver,
     ProviderResolver,
+    DomainLoginFormResolver,
     { provide: Http, useClass: HttpService }
   ],
-  entryComponents: [ConfirmComponent],
+  entryComponents: [ConfirmComponent, LoginInfoDialog],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

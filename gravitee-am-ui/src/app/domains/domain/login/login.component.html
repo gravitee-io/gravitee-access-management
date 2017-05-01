@@ -1,0 +1,48 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-card>
+  <md-card-content>
+    <div fxLayout="column">
+      <md-slide-toggle
+        (change)="enableLoginForm($event)"
+        [checked]="isEnabled()">
+        Custom login page
+      </md-slide-toggle>
+      <md-hint><small class="hint">Create a specific login page to authenticated users <button md-icon-button (click)="openLoginInfo()"><md-icon>info_outline</md-icon></button></small></md-hint>
+    </div>
+
+    <h4 [ngClass]="{'disabled': !isEnabled()}">Login page</h4>
+    <hr/>
+    <md-tab-group (selectChange)="onTabSelectedChanged($event);">
+      <md-tab label="Html" [disabled]="!isEnabled()">
+        <div style= "position:relative;">
+          <codemirror #editor [(ngModel)]="loginFormContent" [config]="config" (change)="onContentChanges($event)"></codemirror>
+        </div>
+      </md-tab>
+      <md-tab label="Preview" [disabled]="!isEnabled()">
+        <div class="preview" #preview>
+        </div>
+      </md-tab>
+    </md-tab-group>
+  </md-card-content>
+  <md-card-actions>
+    <button md-raised-button [disabled]="!formChanged" (click)="create()">SAVE</button>
+    <span fxFlex></span>
+    <button *ngIf="loginFormFound" md-raised-button color="warn" (click)="delete($event)">DELETE</button>
+  </md-card-actions>
+</md-card>
