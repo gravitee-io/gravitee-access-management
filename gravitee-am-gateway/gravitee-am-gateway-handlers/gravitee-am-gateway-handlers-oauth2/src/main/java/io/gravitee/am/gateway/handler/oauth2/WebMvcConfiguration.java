@@ -16,12 +16,16 @@
 package io.gravitee.am.gateway.handler.oauth2;
 
 import io.gravitee.am.gateway.handler.oauth2.view.ThymeleafConfiguration;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.login.LoginForm;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 /**
@@ -34,19 +38,22 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @Import(ThymeleafConfiguration.class)
 public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
 
-    /*
     @Autowired
     private Domain domain;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        if (domain.getAssets() != null && ! domain.getAssets().isEmpty()) {
-            domain.getAssets().forEach(asset -> registry
-                    .addResourceHandler(asset.getMapping() + "/**")
-                    .addResourceLocations("file:" + asset.getPath()));
+        LoginForm loginForm = domain.getLoginForm();
+        if (loginForm != null && loginForm.isEnabled() && loginForm.getAssets() != null) {
+            registry
+                    .addResourceHandler("/assets/**")
+                    .addResourceLocations("file:" + loginForm.getAssets());
+        } else {
+            registry
+                    .addResourceHandler("/assets/**")
+                    .addResourceLocations("classpath:/assets/");
         }
     }
-    */
 
     @Override
     public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
