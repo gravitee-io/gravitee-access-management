@@ -65,6 +65,14 @@
 			<type>zip</type>
 			<scope>runtime</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>io.gravitee.am.identityprovider</groupId>
+			<artifactId>gravitee-am-identityprovider-inline</artifactId>
+			<version>${project.version}</version>
+			<type>zip</type>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -84,9 +92,18 @@
 						<configuration>
 							<outputDirectory>${basedir}/target/staging</outputDirectory>
 							<artifactItems>
+                                <!-- Services -->
 								<artifactItem>
 									<groupId>io.gravitee.am.gateway.services</groupId>
 									<artifactId>gravitee-am-gateway-services-sync</artifactId>
+									<version>${project.version}</version>
+									<type>zip</type>
+								</artifactItem>
+
+								<!-- Identity providers -->
+								<artifactItem>
+									<groupId>io.gravitee.am.identityprovider</groupId>
+									<artifactId>gravitee-am-identityprovider-inline</artifactId>
 									<version>${project.version}</version>
 									<type>zip</type>
 								</artifactItem>
