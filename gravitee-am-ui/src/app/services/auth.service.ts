@@ -27,7 +27,8 @@ export class AuthService {
   private _authorizationEndpoint: string =
     AppConfig.settings.authentication.oauth2.authorize + '?client_id=' + this.clientId +
     '&response_type=' + this.responseType +
-    '&redirect_uri='+ this.redirectUri;
+    '&scope=openid' +
+    '&redirect_uri=' + this.redirectUri;
   private userInfoUrl: string = AppConfig.settings.authentication.oauth2.userInfo;
   private _logoutEndpoint: string = AppConfig.settings.authentication.oauth2.logoutUri;
   private CALLBACK_ACCESS_TOKEN_PATTERN: string = '#access_token=(.*)';
