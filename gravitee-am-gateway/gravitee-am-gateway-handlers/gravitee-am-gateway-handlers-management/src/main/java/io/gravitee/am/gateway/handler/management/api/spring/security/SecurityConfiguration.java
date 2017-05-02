@@ -32,7 +32,7 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Res
 import org.springframework.security.oauth2.provider.token.AccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
-import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
+import org.springframework.security.web.access.channel.ChannelProcessingFilter;
 
 import javax.servlet.Filter;
 
@@ -73,7 +73,7 @@ public class SecurityConfiguration extends ResourceServerConfigurerAdapter {
                     .disable()
                 .csrf()
                 .disable()
-            .addFilterAfter(corsFilter(), AbstractPreAuthenticatedProcessingFilter.class);
+            .addFilterBefore(corsFilter(), ChannelProcessingFilter.class);
     }
 
     @Bean
