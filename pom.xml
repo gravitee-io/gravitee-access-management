@@ -33,6 +33,17 @@
     <version>1.0.0-SNAPSHOT</version>
     <name>Gravitee IO - Access Management</name>
 
+    <scm>
+        <url>https://github.com/gravitee-io/graviteeio-access-management</url>
+        <connection>scm:git:git://github.com/gravitee-io/graviteeio-access-management.git</connection>
+        <developerConnection>scm:git:git@github.com:gravitee-io/graviteeio-access-management.git</developerConnection>
+    </scm>
+
+    <issueManagement>
+        <url>https://github.com/gravitee-io/graviteeio-access-management/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
+
     <properties>
         <gravitee-common.version>1.1.0</gravitee-common.version>
         <gravitee-plugin-core.version>1.0.0</gravitee-plugin-core.version>
