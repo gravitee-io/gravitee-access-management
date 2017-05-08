@@ -1,0 +1,13 @@
+= Gravitee.io Access Management
+
+image:https://ci.gravitee.io/buildStatus/icon?job=gravitee-io/graviteeio-access-management/master["Build status", link="https://ci.gravitee.io/job/gravitee-io/job/graviteeio-access-management/"]
+
+== Overview
+
+Gravitee.io AM aims to be a bridge between applications and identity providers to authenticate, authorize and getting information about user accounts.
+
+It relies on different protocols such as OAuth2 and OpenId Connect and supports many authentication/identity providers thanks to a plugin system that can specialized platform behavior to exactly fit your needs.
+
+== How to install
+
+link:gravitee-am-docs/installation-guide/installation-guide.adoc[Installation guidelines for this project]

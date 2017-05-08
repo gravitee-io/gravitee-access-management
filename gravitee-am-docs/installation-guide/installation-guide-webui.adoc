@@ -1,0 +1,93 @@
+= Administration UI
+
+== System Requirements
+
+=== Browsers
+
+Access Management administration UI has been tested with the latest versions of Google Chrome, Firefox and Internet Explorer >= 10
+
+== Installing from the ZIP archive
+
+The binaries are available from https://download.gravitee.io/graviteeio-am/components/gravitee-am-webui/gravitee-am-webui-GRAVITEEIO-AM-VERSION.zip.
+
+[source,bash]
+[subs="attributes"]
+$ curl -L https://download.gravitee.io/graviteeio-am/components/gravitee-am-webui/gravitee-am-webui-GRAVITEEIO-AM-VERSION.zip -o gravitee-am-webui-GRAVITEEIO-AM-VERSION.zip
+
+Once file has been downloaded, you just have to unpack it in the right place
+
+[source,bash]
+[subs="attributes"]
+$ unzip gravitee-am-webui-GRAVITEEIO-AM-VERSION.zip
+
+=== Deploy
+
+The AM administration UI is a client-side Angular application and can be deployed on any HTTP server like https://httpd.apache.org/[Apache] or http://nginx.org/[Nginx].
+
+NOTE: The AM UI use HTML5 mode and requires server side rewrites to make it works. Here are examples with Apache and Nginx
+
+==== Apache
+
+----
+<VirtualHost *:80>
+    ServerName my-app
+
+    DocumentRoot /path/to/app
+
+    <Directory /path/to/app>
+        RewriteEngine on
+
+        # Don't rewrite files or directories
+        RewriteCond %{REQUEST_FILENAME} -f [OR]
+        RewriteCond %{REQUEST_FILENAME} -d
+
+        # Rewrite everything else to index.html to allow html5 state links
+        RewriteRule ^ index.html [L]
+    </Directory>
+</VirtualHost>
+----
+
+==== Nginx
+
+----
+server {
+    server_name my-app;
+
+    index index.html;
+
+    root /path/to/app;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+----
+
+
+=== Configuration
+
+The Gravitee.io AM administration API is OAuth2 secured and requires some redirect callbacks to log in and log out a user. You can set these properties inside the `constants.json` file.
+
+NOTE: A default domain `admin` and a default OAuth2 client `admin` were created during the first Gravitee.io AM initialization stage.
+For current usage only `GRAVITEEIO-AM-GATEWAY-HOST` and `GRAVITEEIO-AM-UI-HOST` properties must be changed.
+
+[source,bash]
+[subs="attributes"]
+$ cd gravitee-am-webui-GRAVITEEIO-AM-VERSION
+$ vi constants.json
+
+[source,json]
+[subs="attributes"]
+{
+  "portalTitle": "Gravitee.io Access Management",
+  "baseURL": "http://${GRAVITEEIO-AM-GATEWAY-HOST}/management",
+  "authentication": {
+    "oauth2": {
+      "authorize": "http://${GRAVITEEIO-AM-GATEWAY-HOST}/admin/oauth/authorize",
+      "userInfo": "http://${GRAVITEEIO-AM-GATEWAY-HOST}/admin/userinfo",
+      "clientId": "admin",
+      "redirectUri": "http://${GRAVITEEIO-AM-UI-HOST}/oauth/callback",
+      "logoutUri": "http://${GRAVITEEIO-AM-GATEWAY-HOST}/admin/logout?target_url=http://${GRAVITEEIO-AM-UI-HOST}/logout/callback"
+    }
+  }
+}
