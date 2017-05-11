@@ -10,5 +10,5 @@ The following section will guide you to prepare the environment and be ready to 
 NOTE: Installation guide provides information about how to install Gravitee.io AM components. For external parties like
  MongoDB and others, please have a look to their respective documentation.
 
-include::installation-guide-gateway.adoc[]
-include::installation-guide-webui.adoc[]
+include::https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/gravitee-am-docs/installation-guide/installation-guide-gateway.adoc[]
+include::https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/gravitee-am-docs/installation-guide/installation-guide-webui.adoc[]
