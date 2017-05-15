@@ -86,6 +86,7 @@ public class CustomAuthorizationServerSecurityConfiguration extends WebSecurityC
                 .antMatchers(HttpMethod.DELETE, tokenEndpointPath).denyAll()
                 .and()
                 .authorizeRequests()
+                .antMatchers(HttpMethod.OPTIONS, "**").permitAll()
                 .antMatchers(tokenEndpointPath).fullyAuthenticated()
                 .antMatchers(tokenKeyPath).access(configurer.getTokenKeyAccess())
                 .antMatchers(checkTokenPath).access(configurer.getCheckTokenAccess())
