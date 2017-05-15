@@ -73,6 +73,14 @@
 			<type>zip</type>
 			<scope>runtime</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>io.gravitee.am.identityprovider</groupId>
+			<artifactId>gravitee-am-identityprovider-ldap</artifactId>
+			<version>${project.version}</version>
+			<type>zip</type>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -104,6 +112,12 @@
 								<artifactItem>
 									<groupId>io.gravitee.am.identityprovider</groupId>
 									<artifactId>gravitee-am-identityprovider-inline</artifactId>
+									<version>${project.version}</version>
+									<type>zip</type>
+								</artifactItem>
+								<artifactItem>
+									<groupId>io.gravitee.am.identityprovider</groupId>
+									<artifactId>gravitee-am-identityprovider-ldap</artifactId>
 									<version>${project.version}</version>
 									<type>zip</type>
 								</artifactItem>

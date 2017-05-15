@@ -1,0 +1,60 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:ldap:LdapIdentityProviderConfiguration",
+  "properties" : {
+    "contextSourceUrl" : {
+      "type" : "string",
+      "title": "LDAP URL",
+      "description": "The URL of the LDAP server to use. The URL should be in the format ldap://myserver.example.com:389. For SSL access, use the ldaps protocol and the appropriate port, e.g. ldaps://myserver.example.com:636. If fail-over functionality is desired, more than one URL can be specified, separated using comma (,).",
+      "default": "ldap://myserver.example.com:389"
+    },
+    "contextSourceBase" : {
+      "type" : "string",
+      "title": "Base DN",
+      "description": "The base DN. When this attribute has been configured, all Distinguished Names supplied to and received from LDAP operations will be relative to the specified LDAP path."
+    },
+    "contextSourceUsername" : {
+      "type" : "string",
+      "title": "Username",
+      "description": "The username (principal) to use when authenticating with the LDAP server. This will usually be the distinguished name of an admin user (e.g.cn=Administrator), but may differ depending on server and authentication method."
+    },
+    "contextSourcePassword" : {
+      "type" : "string",
+      "title": "Password",
+      "description": "The password (credentials) to use when authenticating with the LDAP server."
+    },
+    "userSearchFilter" : {
+      "type" : "string",
+      "title": "User search filter",
+      "default": "uid={0}"
+    },
+    "userSearchBase" : {
+      "type" : "string",
+      "default": "ou=users",
+      "title": "User search base",
+      "description": "If user-search-base isn't supplied, the search will be performed from the root."
+    },
+    "groupSearchBase" : {
+      "type" : "string",
+      "default": "ou=applications",
+      "title": "Group search base"
+    },
+    "groupSearchFilter" : {
+      "type" : "string",
+      "default": "(uniqueMember={0})",
+      "title": "Group search filter"
+    },
+    "groupRoleAttribute" : {
+      "type" : "string",
+      "default": "cn",
+      "title": "Group role attribute"
+    }
+  },
+  "required": [
+    "contextSourceUrl",
+    "contextSourceBase",
+    "contextSourceUsername",
+    "contextSourcePassword",
+    "userSearchFilter"
+  ]
+}
