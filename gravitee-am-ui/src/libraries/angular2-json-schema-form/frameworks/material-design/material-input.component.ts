@@ -23,7 +23,8 @@ import { JsonSchemaFormService } from '../../library/json-schema-form.service';
           [readonly]="options?.readonly ? 'readonly' : null"
           [style.width]="'100%'"
           [type]="layoutNode?.type"
-          [value]="controlValue"
+          [value]="defaultValue"
+          [ngModel]="controlValue"
           (input)="updateValue($event)" />
           <span *ngIf="options?.fieldAddonLeft"
             md-prefix>{{options?.fieldAddonLeft}}</span>
@@ -41,6 +42,7 @@ export class MaterialInputComponent implements OnInit {
   formControl: AbstractControl;
   controlName: string;
   controlValue: any;
+  defaultValue: any;
   controlDisabled: boolean = false;
   private boundControl: boolean = false;
   options: any;
@@ -57,6 +59,7 @@ export class MaterialInputComponent implements OnInit {
   ngOnInit() {
     this.options = this.layoutNode.options;
     this.jsf.initializeControl(this);
+    this.defaultValue = this.controlValue;
   }
 
   updateValue(event) {
