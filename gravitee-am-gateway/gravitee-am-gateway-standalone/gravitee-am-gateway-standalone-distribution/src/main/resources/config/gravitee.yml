@@ -90,6 +90,6 @@ authentication:
 # Referenced properties
 ds:
   mongodb:
-    dbname: gravitee
+    dbname: gravitee-am
     host: ${GRAVITEEIO_MONGODB_HOST:localhost}
     port: ${GRAVITEEIO_MONGODB_PORT:27017}

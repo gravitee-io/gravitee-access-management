@@ -134,6 +134,34 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
+    public Domain reload(String domainId) {
+        try {
+            LOGGER.debug("Reload a domain: {}", domainId);
+
+            Optional<Domain> domainOpt = domainRepository.findById(domainId);
+            if (!domainOpt.isPresent()) {
+                throw new DomainNotFoundException(domainId);
+            }
+
+            Domain oldDomain = domainOpt.get();
+
+            Domain domain = new Domain();
+            domain.setId(domainId);
+            domain.setPath(oldDomain.getPath());
+            domain.setName(oldDomain.getName());
+            domain.setDescription(oldDomain.getDescription());
+            domain.setEnabled(oldDomain.isEnabled());
+            domain.setCreatedAt(oldDomain.getCreatedAt());
+            domain.setUpdatedAt(new Date());
+            domain.setLoginForm(oldDomain.getLoginForm());
+            return domainRepository.update(domain);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to reload a domain", ex);
+            throw new TechnicalManagementException("An error occurs while trying to reload a domain", ex);
+        }
+    }
+
+    @Override
     public void delete(String domain) {
         try {
             LOGGER.debug("Delete security domain {}", domain);
