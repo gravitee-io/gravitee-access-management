@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.service.impl;
 
 import io.gravitee.am.gateway.service.ClientService;
+import io.gravitee.am.gateway.service.DomainService;
 import io.gravitee.am.gateway.service.IdentityProviderService;
 import io.gravitee.am.gateway.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.gateway.service.exception.IdentityProviderWithClientsException;
@@ -53,6 +54,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Autowired
     private ClientService clientService;
+
+    @Autowired
+    private DomainService domainService;
 
     @Override
     public IdentityProvider findById(String id) {
@@ -130,7 +134,12 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
             identityProvider.setConfiguration(updateIdentityProvider.getConfiguration());
             identityProvider.setUpdatedAt(new Date());
 
-            return identityProviderRepository.update(identityProvider);
+            IdentityProvider provider = identityProviderRepository.update(identityProvider);
+
+            // Reload domain to take care about identity provider update
+            domainService.reload(domain);
+
+            return provider;
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to update an identity provider", ex);
             throw new TechnicalManagementException("An error occurs while trying to update an identity provider", ex);

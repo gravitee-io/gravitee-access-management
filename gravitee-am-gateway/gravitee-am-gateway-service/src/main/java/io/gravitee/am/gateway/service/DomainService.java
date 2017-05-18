@@ -37,6 +37,8 @@ public interface DomainService {
 
     Domain update(String domainId, UpdateDomain domain);
 
+    Domain reload(String domainId);
+
     LoginForm updateLoginForm(String domainId, UpdateLoginForm loginForm);
 
     void deleteLoginForm(String domainId);
