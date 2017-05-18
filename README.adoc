@@ -8,6 +8,6 @@ Gravitee.io AM aims to be a bridge between applications and identity providers t
 
 It relies on different protocols such as OAuth2 and OpenId Connect and supports many authentication/identity providers thanks to a plugin system that can specialized platform behavior to exactly fit your needs.
 
-== How to install
+== Documentation
 
-link:gravitee-am-docs/installation-guide/installation-guide.adoc[Installation guidelines for this project]
+You can find Gravitee.io Access Management documentation from https://docs.gravitee.io/[Gravitee.io website].
