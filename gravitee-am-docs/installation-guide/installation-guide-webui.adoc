@@ -1,4 +1,7 @@
 = Administration UI
+:page-sidebar: am_sidebar
+:page-permalink: am_installguide_portal.html
+:page-folder: am/installation-guide
 
 == System Requirements
 

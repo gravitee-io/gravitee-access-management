@@ -1,4 +1,7 @@
 = Gateway
+:page-sidebar: am_sidebar
+:page-permalink: am_installguide_gateway.html
+:page-folder: am/installation-guide
 
 == System Requirements
 
