@@ -39,7 +39,8 @@ export class ProviderService {
   update(domainId, id, provider): Observable<Response>  {
     return this.http.put(this.providersURL + domainId + "/identities/" + id, {
       'name' : provider.name,
-      'configuration' : provider.configuration
+      'configuration' : provider.configuration,
+      'mappers' : provider.mappers
     });
   }
 

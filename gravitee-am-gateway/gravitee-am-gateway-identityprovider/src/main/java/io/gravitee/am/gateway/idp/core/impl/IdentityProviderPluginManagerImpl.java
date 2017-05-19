@@ -17,10 +17,12 @@ package io.gravitee.am.gateway.idp.core.impl;
 
 import io.gravitee.am.gateway.idp.core.IdentityProviderConfigurationFactory;
 import io.gravitee.am.gateway.idp.core.IdentityProviderDefinition;
+import io.gravitee.am.gateway.idp.core.IdentityProviderMapperFactory;
 import io.gravitee.am.gateway.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
@@ -57,6 +59,9 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     @Autowired
     private IdentityProviderConfigurationFactory identityProviderConfigurationFactory;
 
+    @Autowired
+    private IdentityProviderMapperFactory identityProviderMapperFactory;
+
     @Override
     public void register(IdentityProviderDefinition identityProviderPluginDefinition) {
         identityProviders.putIfAbsent(identityProviderPluginDefinition.getPlugin().id(),
@@ -78,7 +83,7 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     }
 
     @Override
-    public AuthenticationProvider create(String type, String configuration) {
+    public AuthenticationProvider create(String type, String configuration, Map<String, String> mappers) {
         logger.debug("Looking for an authentication provider for [{}]", type);
         IdentityProvider identityProvider = identityProviders.get(type);
 
@@ -86,10 +91,13 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
             Class<? extends IdentityProviderConfiguration> configurationClass = identityProvider.configuration();
             IdentityProviderConfiguration identityProviderConfiguration = identityProviderConfigurationFactory.create(configurationClass, configuration);
 
+            Class<? extends IdentityProviderMapper> mapperClass = identityProvider.mapper();
+            IdentityProviderMapper identityProviderMapper = identityProviderMapperFactory.create(mapperClass, mappers);
+
             return create0(
                     identityProviderPlugins.get(identityProvider),
                     identityProvider.authenticationProvider(),
-                    identityProviderConfiguration);
+                    identityProviderConfiguration, identityProviderMapper);
         } else {
             logger.error("No identity provider is registered for type {}", type);
             throw new IllegalStateException("No identity provider is registered for type " + type);
@@ -115,7 +123,7 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
         return null;
     }
 
-    private <T> T create0(Plugin plugin, Class<T> identityClass, IdentityProviderConfiguration identityProviderConfiguration) {
+    private <T> T create0(Plugin plugin, Class<T> identityClass, IdentityProviderConfiguration identityProviderConfiguration, IdentityProviderMapper identityProviderMapper) {
         if (identityClass == null) {
             return null;
         }
@@ -139,6 +147,10 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
                     // Add identity provider configuration bean
                     configurableApplicationContext.addBeanFactoryPostProcessor(
                             new IdentityProviderConfigurationBeanFactoryPostProcessor(identityProviderConfiguration));
+
+                    // Add identity provider mapper bean
+                    configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new IdentityProviderMapperBeanFactoryPostProcessor(identityProviderMapper));
 
                     return configurableApplicationContext;
                 }

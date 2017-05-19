@@ -48,7 +48,7 @@ export class ProviderCreationStep2Component implements OnInit {
     this.provider.configuration = JSON.stringify(this.provider.configuration);
     this.providerService.create(this.domainId, this.provider).map(res => res.json()).subscribe(data => {
       this.snackbarService.open("Provider " + data.name + " created");
-      this.router.navigate(['/domains', this.domainId, 'providers', data.id, 'edit']);
+      this.router.navigate(['/domains', this.domainId, 'providers', data.id]);
     })
   }
 

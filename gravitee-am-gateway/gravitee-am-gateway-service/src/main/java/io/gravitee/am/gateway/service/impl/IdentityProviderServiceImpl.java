@@ -132,6 +132,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
             IdentityProvider identityProvider = identityProviderOpt.get();
             identityProvider.setName(updateIdentityProvider.getName());
             identityProvider.setConfiguration(updateIdentityProvider.getConfiguration());
+            identityProvider.setMappers(updateIdentityProvider.getMappers());
             identityProvider.setUpdatedAt(new Date());
 
             IdentityProvider provider = identityProviderRepository.update(identityProvider);

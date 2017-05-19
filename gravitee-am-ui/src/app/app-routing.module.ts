@@ -37,6 +37,8 @@ import { ProvidersResolver } from "./resolvers/providers.resolver";
 import { ProviderResolver } from "./resolvers/provider.resolver";
 import { DomainLoginComponent } from "./domains/domain/login/login.component";
 import { DomainLoginFormResolver } from "./resolvers/domain-login-form.resolver";
+import { ProviderSettingsComponent } from "./domains/domain/providers/provider/settings/settings.component";
+import { ProviderMappersComponent } from "./domains/domain/providers/provider/mappers/mappers.component";
 
 const routes: Routes = [
   { path: 'domains',
@@ -117,11 +119,16 @@ const routes: Routes = [
       { path: 'providers/new',
         component: ProviderCreationComponent,
       },
-      { path: 'providers/:providerId/edit',
+      { path: 'providers/:providerId',
         component: ProviderComponent,
         resolve: {
           provider: ProviderResolver
-        }
+        },
+        children: [
+          { path: '', redirectTo: 'settings', pathMatch: 'full' },
+          { path: 'settings', component: ProviderSettingsComponent },
+          { path: 'mappers', component: ProviderMappersComponent }
+        ]
       }
     ]
   },

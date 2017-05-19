@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.service.model;
 
 import javax.validation.constraints.NotNull;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -28,6 +29,8 @@ public class UpdateIdentityProvider {
 
     @NotNull
     private String configuration;
+
+    private Map<String, String> mappers;
 
     public String getName() {
         return name;
@@ -43,6 +46,14 @@ public class UpdateIdentityProvider {
 
     public void setConfiguration(String configuration) {
         this.configuration = configuration;
+    }
+
+    public Map<String, String> getMappers() {
+        return mappers;
+    }
+
+    public void setMappers(Map<String, String> mappers) {
+        this.mappers = mappers;
     }
 
     @Override

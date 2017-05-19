@@ -35,7 +35,7 @@ public interface IdentityProviderPluginManager {
 
     Plugin findById(String identityProviderId);
 
-    AuthenticationProvider create(String type, String configuration);
+    AuthenticationProvider create(String type, String configuration, Map<String, String> mappers);
 
     String getSchema(String identityProviderId) throws IOException;
 }

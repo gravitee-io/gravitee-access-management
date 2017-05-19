@@ -18,6 +18,7 @@ package io.gravitee.am.identityprovider.ldap;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.ldap.authentication.LdapAuthenticationProvider;
 
 /**
@@ -35,4 +36,11 @@ public class LdapIdentityProvider implements IdentityProvider {
     public Class<? extends AuthenticationProvider> authenticationProvider() {
         return LdapAuthenticationProvider.class;
     }
+
+    @Override
+    public Class<? extends IdentityProviderMapper> mapper() {
+        return LdapIdentityProviderMapper.class;
+    }
+
+
 }

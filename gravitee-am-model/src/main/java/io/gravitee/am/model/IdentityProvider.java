@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -30,6 +31,8 @@ public class IdentityProvider {
     private String type;
 
     private String configuration;
+
+    private Map<String, String> mappers;
 
     private String domain;
 
@@ -67,6 +70,14 @@ public class IdentityProvider {
 
     public void setConfiguration(String configuration) {
         this.configuration = configuration;
+    }
+
+    public Map<String, String> getMappers() {
+        return mappers;
+    }
+
+    public void setMappers(Map<String, String> mappers) {
+        this.mappers = mappers;
     }
 
     public String getDomain() {

@@ -13,17 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.api;
+package io.gravitee.am.identityprovider.ldap;
+
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+
+import java.util.Map;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdentityProvider {
+public class LdapIdentityProviderMapper implements IdentityProviderMapper {
 
-    Class<? extends IdentityProviderConfiguration> configuration();
+    private Map<String, String> mappers;
 
-    Class<? extends AuthenticationProvider> authenticationProvider();
+    @Override
+    public Map<String, String> getMappers() {
+        return mappers;
+    }
 
-    Class<? extends IdentityProviderMapper> mapper();
+    @Override
+    public void setMappers(Map<String, String> mappers) {
+        this.mappers = mappers;
+    }
 }
