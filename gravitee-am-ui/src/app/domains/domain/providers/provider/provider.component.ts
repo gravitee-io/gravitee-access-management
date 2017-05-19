@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ProviderService } from "../../../../services/provider.service";
 import { ActivatedRoute } from "@angular/router";
-import { PlatformService } from "../../../../services/platform.service";
-import { SnackbarService } from "../../../../services/snackbar.service";
 
 @Component({
   selector: 'app-provider',
@@ -25,33 +22,12 @@ import { SnackbarService } from "../../../../services/snackbar.service";
   styleUrls: ['./provider.component.scss']
 })
 export class ProviderComponent implements OnInit {
-  private domainId: string;
-  private configurationIsValid: boolean = true;
-  private configurationPristine: boolean = true;
   provider: any;
-  providerSchema: any;
-  providerConfiguration: any;
+  navLinks: any = [{'href': 'settings' , 'label': 'Settings'}, {'href': 'mappers' , 'label': 'Mappers'}];
 
-  constructor(private providerService: ProviderService, private platformService: PlatformService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute) { }
+  constructor(private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
     this.provider = this.route.snapshot.data['provider'];
-    this.providerConfiguration = JSON.parse(this.provider.configuration);
-    this.platformService.identitySchema(this.provider.type).map(res => res.json()).subscribe(data => this.providerSchema = data);
-  }
-
-  update() {
-    this.provider.configuration = JSON.stringify(this.provider.configuration);
-    this.providerService.update(this.domainId, this.provider.id, this.provider).map(res => res.json()).subscribe(data => {
-      this.snackbarService.open("Provider updated");
-    })
-  }
-
-  enableProviderUpdate(configurationWrapper) {
-    this.configurationPristine = false;
-    this.configurationIsValid = configurationWrapper.isValid;
-    this.provider.configuration = configurationWrapper.configuration;
   }
 }

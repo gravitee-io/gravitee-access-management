@@ -62,7 +62,7 @@ export class WidgetLibraryService {
     // 'button': <input type="button"> not used, use <button> instead
     'checkbox': CheckboxComponent, // TODO: Set ternary = true for 3-state ??
     'file': FileComponent, // TODO: Figure out how to handle these
-    'hidden': 'text',
+    'hidden': HiddenComponent,
     'image': 'text', // TODO: Figure out how to handle these
     'radio': 'radios',
     'reset': 'submit', // TODO: Figure out how to handle these

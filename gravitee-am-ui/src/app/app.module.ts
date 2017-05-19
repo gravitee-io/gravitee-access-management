@@ -71,6 +71,8 @@ import { ClientResolver } from "./resolvers/client.resolver";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
 import { ProviderResolver } from "./resolvers/provider.resolver";
 import { DomainLoginFormResolver } from "./resolvers/domain-login-form.resolver";
+import { ProviderSettingsComponent } from './domains/domain/providers/provider/settings/settings.component';
+import { CreateMapperComponent, ProviderMappersComponent } from './domains/domain/providers/provider/mappers/mappers.component';
 
 @NgModule({
   declarations: [
@@ -96,6 +98,9 @@ import { DomainLoginFormResolver } from "./resolvers/domain-login-form.resolver"
     ProviderCreationStep2Component,
     ProviderComponent,
     ProviderFormComponent,
+    ProviderSettingsComponent,
+    ProviderMappersComponent,
+    CreateMapperComponent,
     OAuthCallbackComponent,
     LogoutComponent,
     LogoutCallbackComponent
@@ -132,7 +137,7 @@ import { DomainLoginFormResolver } from "./resolvers/domain-login-form.resolver"
     DomainLoginFormResolver,
     { provide: Http, useClass: HttpService }
   ],
-  entryComponents: [ConfirmComponent, LoginInfoDialog],
+  entryComponents: [ConfirmComponent, LoginInfoDialog, CreateMapperComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

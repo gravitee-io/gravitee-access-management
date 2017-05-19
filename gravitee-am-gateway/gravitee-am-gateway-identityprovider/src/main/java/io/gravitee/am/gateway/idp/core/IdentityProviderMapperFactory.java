@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.api;
+package io.gravitee.am.gateway.idp.core;
+
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+
+import java.util.Map;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdentityProvider {
+public interface IdentityProviderMapperFactory {
 
-    Class<? extends IdentityProviderConfiguration> configuration();
-
-    Class<? extends AuthenticationProvider> authenticationProvider();
-
-    Class<? extends IdentityProviderMapper> mapper();
+    <T extends IdentityProviderMapper> T create(Class<T> clazz, Map<String, String> mappers);
 }

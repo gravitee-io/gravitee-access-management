@@ -30,7 +30,7 @@
     <ngx-datatable-column name="Actions" [flexGrow]="1">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <div fxLayout="row" class="providers-actions">
-          <a md-icon-button [routerLink]="['/domains', domainId, 'providers', row.id, 'edit']"><md-icon>settings</md-icon></a>
+          <a md-icon-button [routerLink]="['/domains', domainId, 'providers', row.id]"><md-icon>settings</md-icon></a>
           <button md-icon-button color="warn" (click)="delete(row.id, $event)"><md-icon>delete</md-icon></button>
         </div>
       </ng-template>

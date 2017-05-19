@@ -23,7 +23,6 @@
   <properties>
     <frontend-maven-plugin.version>1.3</frontend-maven-plugin.version>
     <node.version>v6.9.4</node.version>
-    <yarn.version>v0.19.1</yarn.version>
   </properties>
 
   <parent>

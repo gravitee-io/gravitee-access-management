@@ -16,23 +16,19 @@
 
 -->
 <div *ngIf="provider" class="provider-container">
-  <h3>Edit provider {{provider.name}}</h3>
+  <h3>{{provider.name}}</h3>
   <md-card>
     <md-card-content>
-      <form #providerForm="ngForm" fxLayout="column">
-        <h4>General</h4>
-        <md-input-container fxLayout="row" fxFlex>
-          <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
-        </md-input-container>
-
-        <h4 style="margin-top: 50px;">Configuration</h4>
-        <provider-form *ngIf="provider" [providerConfiguration]="providerConfiguration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderUpdate($event)"></provider-form>
-      </form>
+      <nav md-tab-nav-bar>
+        <a md-tab-link
+           *ngFor="let link of navLinks"
+           [routerLink]="link.href"
+           routerLinkActive #rla="routerLinkActive"
+           [active]="rla.isActive">
+          {{link.label}}
+        </a>
+      </nav>
+      <router-outlet></router-outlet>
     </md-card-content>
-    <md-card-actions>
-      <div fxLayout="row" fxLayoutAlign="end end">
-        <button md-raised-button [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
-      </div>
-    </md-card-actions>
   </md-card>
 </div>

@@ -19,6 +19,8 @@ import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Map;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -34,6 +36,8 @@ public class IdentityProviderMongo extends Auditable {
     private String type;
 
     private String configuration;
+
+    private Map<String, String> mappers;
 
     private String domain;
 
@@ -69,6 +73,14 @@ public class IdentityProviderMongo extends Auditable {
         this.configuration = configuration;
     }
 
+    public Map<String, String> getMappers() {
+        return mappers;
+    }
+
+    public void setMappers(Map<String, String> mappers) {
+        this.mappers = mappers;
+    }
+
     public String getDomain() {
         return domain;
     }
@@ -91,4 +103,5 @@ public class IdentityProviderMongo extends Auditable {
     public int hashCode() {
         return id.hashCode();
     }
+
 }

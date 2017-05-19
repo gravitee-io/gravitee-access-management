@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderMapper;
 import io.gravitee.am.identityprovider.ldap.authentication.spring.LdapAuthenticationProviderConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
@@ -42,6 +43,9 @@ public class LdapAuthenticationProvider implements AuthenticationProvider {
     @Autowired
     private LdapAuthenticator authenticator;
 
+    @Autowired
+    private LdapIdentityProviderMapper mapper;
+
     @Override
     public User loadUserByUsername(Authentication authentication) {
         try {
@@ -57,11 +61,18 @@ public class LdapAuthenticationProvider implements AuthenticationProvider {
 
             DefaultUser user = new DefaultUser(authenticate.getNameInNamespace());
             Map<String, Object> claims = new HashMap<>();
-            claims.put("sub", authenticate.getStringAttribute("uid"));
-            claims.put("email", authenticate.getStringAttribute("mail"));
-            claims.put("name", authenticate.getStringAttribute("displayname"));
-            claims.put("given_name", authenticate.getStringAttribute("givenname"));
-            claims.put("family_name", authenticate.getStringAttribute("iirBirthName"));
+            if (mapper.getMappers() != null) {
+                mapper.getMappers().forEach((k, v) -> {
+                    claims.put(k, authenticate.getStringAttribute(v));
+                });
+            } else {
+                // default values
+                claims.put("sub", authenticate.getStringAttribute("uid"));
+                claims.put("email", authenticate.getStringAttribute("mail"));
+                claims.put("name", authenticate.getStringAttribute("displayname"));
+                claims.put("given_name", authenticate.getStringAttribute("givenname"));
+                claims.put("family_name", authenticate.getStringAttribute("sn"));
+            }
 
             user.setAdditonalInformation(claims);
 

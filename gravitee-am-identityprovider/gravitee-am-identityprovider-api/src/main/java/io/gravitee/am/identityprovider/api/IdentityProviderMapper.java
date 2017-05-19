@@ -15,15 +15,16 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import java.util.Map;
+
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdentityProvider {
+public interface IdentityProviderMapper {
 
-    Class<? extends IdentityProviderConfiguration> configuration();
+    Map<String, String> getMappers();
 
-    Class<? extends AuthenticationProvider> authenticationProvider();
+    void setMappers(Map<String, String> mappers);
 
-    Class<? extends IdentityProviderMapper> mapper();
 }

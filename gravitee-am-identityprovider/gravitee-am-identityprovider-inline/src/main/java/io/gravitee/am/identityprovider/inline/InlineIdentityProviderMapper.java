@@ -1,3 +1,5 @@
+
+package io.gravitee.am.identityprovider.inline;
 /**
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -13,17 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.api;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+
+import java.util.Map;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdentityProvider {
+public class InlineIdentityProviderMapper implements IdentityProviderMapper {
 
-    Class<? extends IdentityProviderConfiguration> configuration();
+    @Override
+    public Map<String, String> getMappers() {
+        return null;
+    }
 
-    Class<? extends AuthenticationProvider> authenticationProvider();
+    @Override
+    public void setMappers(Map<String, String> mappers) {
+        // nothing to do
+    }
 
-    Class<? extends IdentityProviderMapper> mapper();
+
 }

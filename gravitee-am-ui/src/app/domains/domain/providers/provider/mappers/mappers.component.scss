@@ -1,0 +1,28 @@
+.provider-mappers-container {
+  margin-top: 20px;
+
+  small.note {
+    color: grey;
+  }
+}
+
+.ngx-datatable.material {
+  box-shadow: none;
+  margin-bottom: 30px;
+}
+
+.provider-mappers-actions {
+  button, a {
+    top: -7px;
+  }
+}
+
+.add-button {
+  position: absolute;
+  bottom: 10px;
+  right: 20px;
+}
+
+.add-button-center {
+  text-align: center;
+}

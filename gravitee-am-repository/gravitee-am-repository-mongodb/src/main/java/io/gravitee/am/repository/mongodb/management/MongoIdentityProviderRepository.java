@@ -83,6 +83,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProvider.setName(identityProviderMongo.getName());
         identityProvider.setType(identityProviderMongo.getType());
         identityProvider.setConfiguration(identityProviderMongo.getConfiguration());
+        identityProvider.setMappers(identityProviderMongo.getMappers());
         identityProvider.setDomain(identityProviderMongo.getDomain());
         identityProvider.setCreatedAt(identityProviderMongo.getCreatedAt());
         identityProvider.setUpdatedAt(identityProviderMongo.getUpdatedAt());
@@ -99,6 +100,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProviderMongo.setName(identityProvider.getName());
         identityProviderMongo.setType(identityProvider.getType());
         identityProviderMongo.setConfiguration(identityProvider.getConfiguration());
+        identityProviderMongo.setMappers(identityProvider.getMappers());
         identityProviderMongo.setDomain(identityProvider.getDomain());
         identityProviderMongo.setCreatedAt(identityProvider.getCreatedAt());
         identityProviderMongo.setUpdatedAt(identityProvider.getUpdatedAt());
