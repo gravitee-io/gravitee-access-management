@@ -99,7 +99,7 @@ const routes: Routes = [
       { path: 'clients/new',
         component: ClientCreationComponent,
       },
-      { path: 'clients/:clientId/edit',
+      { path: 'clients/:clientId',
         component: ClientComponent,
         resolve: {
           client: ClientResolver

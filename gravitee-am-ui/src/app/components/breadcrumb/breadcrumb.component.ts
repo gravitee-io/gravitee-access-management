@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
-  selector: 'domain-header',
-  templateUrl: './header.component.html',
-  styleUrls: ['./header.component.scss']
+  selector: 'gs-breadcrumb',
+  templateUrl: './breadcrumb.component.html',
+  styleUrls: ['./breadcrumb.component.scss']
 })
-export class HeaderComponent implements OnInit {
-  @Input() domain: any;
+export class BreadcrumbComponent implements OnInit {
 
   constructor() { }
 

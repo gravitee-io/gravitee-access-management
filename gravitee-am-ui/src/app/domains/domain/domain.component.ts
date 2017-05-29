@@ -15,8 +15,8 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
-import { DomainService } from "../../services/domain.service";
 import { SidenavService } from "../../components/sidenav/sidenav.service";
+import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
 
 @Component({
   selector: 'app-domain',
@@ -26,13 +26,26 @@ import { SidenavService } from "../../components/sidenav/sidenav.service";
 export class DomainComponent implements OnInit {
   domain: any = {};
 
-  constructor(private route: ActivatedRoute, private domainService: DomainService, private sidenavService: SidenavService) {
+  constructor(private route: ActivatedRoute, private sidenavService: SidenavService, private breadcrumbService: BreadcrumbService) {
   }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
-    this.domainService.notify(this.domain);
     this.sidenavService.notify(this.domain);
+    this.initBreadcrumb();
   }
+
+  initBreadcrumb() {
+    this.breadcrumbService.addFriendlyNameForRoute('/domains', 'Domains');
+    this.breadcrumbService.addFriendlyNameForRoute('/domains/'+this.domain.id, this.domain.name);
+    this.breadcrumbService.addFriendlyNameForRoute('/domains/'+this.domain.id+'/login', 'Login Page');
+    this.breadcrumbService.addFriendlyNameForRoute('/domains/'+this.domain.id+'/clients', 'Clients');
+    this.breadcrumbService.addFriendlyNameForRoute('/domains/'+this.domain.id+'/providers', 'Identity providers');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domain.id+'/(clients|providers)/.*', ' ');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domain.id+'/(clients|providers)/new$', 'new');
+    this.breadcrumbService.hideRoute('/domains/'+this.domain.id+'/general');
+    this.breadcrumbService.hideRouteRegex('/domains/'+this.domain.id+'/providers/.*/settings$');
+  }
+
 }
 

@@ -15,6 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
+import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
 
 @Component({
   selector: 'app-provider',
@@ -22,12 +23,20 @@ import { ActivatedRoute } from "@angular/router";
   styleUrls: ['./provider.component.scss']
 })
 export class ProviderComponent implements OnInit {
+  private domainId: string;
   provider: any;
   navLinks: any = [{'href': 'settings' , 'label': 'Settings'}, {'href': 'mappers' , 'label': 'Mappers'}];
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) { }
 
   ngOnInit() {
+    this.domainId = this.route.snapshot.parent.params['domainId'];
     this.provider = this.route.snapshot.data['provider'];
+    this.initBreadcrumb();
+  }
+
+  initBreadcrumb() {
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/providers/'+this.provider.id+'$', this.provider.name);
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/providers/'+this.provider.id+'/mappers$', 'mappers');
   }
 }

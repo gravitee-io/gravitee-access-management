@@ -15,6 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
+import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
 
 @Component({
   selector: 'app-client',
@@ -22,12 +23,19 @@ import { ActivatedRoute } from "@angular/router";
   styleUrls: ['./client.component.scss']
 })
 export class ClientComponent implements OnInit {
+  private domainId: string;
   client: any = {};
 
-  constructor(private route: ActivatedRoute) {
+  constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) {
   }
 
   ngOnInit() {
+    this.domainId = this.route.snapshot.parent.params['domainId'];
     this.client = this.route.snapshot.data['client'];
+    this.initBreadcrumb();
+  }
+
+  initBreadcrumb() {
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/clients/'+this.client.id+'$', this.client.clientId);
   }
 }

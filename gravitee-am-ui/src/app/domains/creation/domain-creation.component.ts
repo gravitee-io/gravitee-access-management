@@ -17,6 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { DomainService } from "../../services/domain.service";
 import { SnackbarService } from "../../services/snackbar.service";
 import { Router } from "@angular/router";
+import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
 
 @Component({
   selector: 'app-creation',
@@ -26,9 +27,10 @@ import { Router } from "@angular/router";
 export class DomainCreationComponent implements OnInit {
   domain: any = {};
 
-  constructor(private domainService: DomainService, private snackbarService: SnackbarService, private router: Router) { }
+  constructor(private domainService: DomainService, private snackbarService: SnackbarService, private router: Router, private breadcrumbService: BreadcrumbService) { }
 
   ngOnInit() {
+    this.breadcrumbService.addFriendlyNameForRoute('/domains', 'Domains');
   }
 
   create() {

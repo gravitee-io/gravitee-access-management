@@ -13,34 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { DomainService } from "../../../services/domain.service";
-import { Subscription } from "rxjs";
 import { DialogService } from "../../../services/dialog.service";
-import { Router } from "@angular/router";
-import {SnackbarService} from "../../../services/snackbar.service";
+import { ActivatedRoute, Router } from "@angular/router";
+import { SnackbarService } from "../../../services/snackbar.service";
+import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
 
 @Component({
   selector: 'app-general',
   templateUrl: './general.component.html',
   styleUrls: ['./general.component.scss']
 })
-export class GeneralComponent implements OnInit, OnDestroy {
-  private subscription : Subscription;
+export class GeneralComponent implements OnInit {
   formChanged: boolean = false;
   domain: any = {};
 
-  constructor(private domainService: DomainService, private dialogService: DialogService, private snackbarService: SnackbarService, private router: Router) {
+  constructor(private domainService: DomainService, private dialogService: DialogService, private snackbarService: SnackbarService,
+              private router: Router, private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) {
   }
 
   ngOnInit() {
-    this.subscription = this.domainService.notifyObservable$.subscribe(data => {
-      this.domain = data;
-    });
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
+    this.domain = this.route.snapshot.parent.data['domain'];
   }
 
   enableDomain(event) {
@@ -51,6 +45,7 @@ export class GeneralComponent implements OnInit, OnDestroy {
   update() {
     this.domainService.update(this.domain.id, this.domain).subscribe(response => {
       this.domain = response.json();
+      this.breadcrumbService.addFriendlyNameForRoute('/domains/'+this.domain.id, this.domain.name);
       this.snackbarService.open("Domain " + this.domain.name + " updated");
     });
   }

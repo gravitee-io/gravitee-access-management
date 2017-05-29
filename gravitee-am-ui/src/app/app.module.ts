@@ -41,7 +41,6 @@ import { GeneralComponent } from './domains/domain/general/general.component';
 import { ClientsComponent } from './domains/domain/clients/clients.component';
 import { ProvidersComponent } from './domains/domain/providers/providers.component';
 import { SidenavService } from "./components/sidenav/sidenav.service";
-import { HeaderComponent } from './domains/domain/header/header.component';
 import { ConfirmComponent } from './components/dialog/confirm/confirm.component';
 import { DialogService } from "./services/dialog.service";
 import { SnackbarService } from "./services/snackbar.service";
@@ -73,6 +72,8 @@ import { ProviderResolver } from "./resolvers/provider.resolver";
 import { DomainLoginFormResolver } from "./resolvers/domain-login-form.resolver";
 import { ProviderSettingsComponent } from './domains/domain/providers/provider/settings/settings.component';
 import { CreateMapperComponent, ProviderMappersComponent } from './domains/domain/providers/provider/mappers/mappers.component';
+import { Ng2BreadcrumbModule } from "ng2-breadcrumb/bundles/app.module";
+import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.component';
 
 @NgModule({
   declarations: [
@@ -86,7 +87,6 @@ import { CreateMapperComponent, ProviderMappersComponent } from './domains/domai
     GeneralComponent,
     ClientsComponent,
     ProvidersComponent,
-    HeaderComponent,
     ConfirmComponent,
     EmptystateComponent,
     DomainCreationComponent,
@@ -103,7 +103,8 @@ import { CreateMapperComponent, ProviderMappersComponent } from './domains/domai
     CreateMapperComponent,
     OAuthCallbackComponent,
     LogoutComponent,
-    LogoutCallbackComponent
+    LogoutCallbackComponent,
+    BreadcrumbComponent
   ],
   imports: [
     BrowserModule,
@@ -116,7 +117,8 @@ import { CreateMapperComponent, ProviderMappersComponent } from './domains/domai
     FlexLayoutModule,
     NgxDatatableModule,
     JsonSchemaFormModule.forRoot(),
-    CodemirrorModule
+    CodemirrorModule,
+    Ng2BreadcrumbModule.forRoot()
   ],
   providers: [
     DomainService,
