@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ProviderService } from "../../../../../services/provider.service";
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { ActivatedRoute } from "@angular/router";
 import { PlatformService } from "../../../../../services/platform.service";
+import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
 
 @Component({
   selector: 'provider-settings',
@@ -33,7 +34,7 @@ export class ProviderSettingsComponent implements OnInit {
   providerConfiguration: any;
 
   constructor(private providerService: ProviderService, private platformService: PlatformService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute) { }
+              private snackbarService: SnackbarService, private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
@@ -45,6 +46,7 @@ export class ProviderSettingsComponent implements OnInit {
   update() {
     this.provider.configuration = JSON.stringify(this.provider.configuration);
     this.providerService.update(this.domainId, this.provider.id, this.provider).map(res => res.json()).subscribe(data => {
+      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/providers/'+this.provider.id+'$', this.provider.name);
       this.snackbarService.open("Provider updated");
     })
   }

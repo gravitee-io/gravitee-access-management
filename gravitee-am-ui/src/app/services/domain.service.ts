@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from "rxjs";
+import { Observable } from "rxjs";
 import { Http, Response } from "@angular/http";
 import { AppConfig } from "../../config/app.config";
 
 @Injectable()
 export class DomainService {
-  private subject = new BehaviorSubject<any>({});
-  notifyObservable$ = this.subject.asObservable();
   private domainsURL: string = AppConfig.settings.baseURL + '/domains/';
 
   constructor(private http: Http) {}
@@ -60,11 +58,5 @@ export class DomainService {
 
   deleteLoginForm(domainId): Observable<Response> {
     return this.http.delete(this.domainsURL + domainId + '/login');
-  }
-
-  notify(data: any) {
-    if (data) {
-      this.subject.next(data);
-    }
   }
 }

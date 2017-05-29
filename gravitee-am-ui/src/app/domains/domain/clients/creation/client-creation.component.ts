@@ -13,40 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ClientService } from "../../../../services/client.service";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../../services/snackbar.service";
-import { Subscription } from "rxjs";
-import { DomainService } from "../../../../services/domain.service";
 
 @Component({
   selector: 'app-creation',
   templateUrl: 'client-creation.component.html',
   styleUrls: ['client-creation.component.scss']
 })
-export class ClientCreationComponent implements OnInit, OnDestroy {
-  private domain: any;
-  private subscription: Subscription;
+export class ClientCreationComponent implements OnInit {
+  private domainId: string;
   client: any = {};
 
-  constructor(private clientService: ClientService, private router: Router,
-              private snackbarService : SnackbarService, private domainService: DomainService) { }
+  constructor(private clientService: ClientService, private router: Router, private route: ActivatedRoute,
+              private snackbarService : SnackbarService) { }
 
   ngOnInit() {
-    this.subscription = this.domainService.notifyObservable$.subscribe(data => {
-      this.domain = data;
-    });
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
+    this.domainId = this.route.snapshot.parent.params['domainId'];
   }
 
   create() {
-    this.clientService.create(this.domain.id, this.client).map(res => res.json()).subscribe(data => {
+    this.clientService.create(this.domainId, this.client).map(res => res.json()).subscribe(data => {
       this.snackbarService.open("Client " + data.clientId + " created");
-      this.router.navigate(['/domains', this.domain.id, 'clients', data.id, 'edit']);
+      this.router.navigate(['/domains', this.domainId, 'clients', data.id]);
     });
   }
 

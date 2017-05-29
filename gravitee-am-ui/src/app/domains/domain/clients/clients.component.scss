@@ -1,9 +1,20 @@
 .clients-container {
-  margin: 50px 20px 0px 0px;
+  margin: 20px 20px 0px 0px;
+
+  h3 {
+    color: grey;
+  }
+
+  ngx-datatable {
+    box-shadow: none;
+  }
 }
 
 .clients-actions {
+  margin-left: -10px;
+
   button, a {
+    color: grey;
     top: -7px;
   }
 }
