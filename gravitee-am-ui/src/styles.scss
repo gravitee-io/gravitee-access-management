@@ -1,5 +1,4 @@
 /* You can add global styles to this file, and also import other style files */
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 @import '~@angular/material/theming';
 @import '~@swimlane/ngx-datatable/release/themes/material.css';
 @import '~codemirror/lib/codemirror.css';
@@ -10,6 +9,44 @@ $graviteeio-am-app-primary: mat-palette($mat-blue-grey);
 $graviteeio-am-candy-app-accent:  mat-palette($mat-blue);
 $graviteeio-am-theme: mat-light-theme($graviteeio-am-app-primary, $graviteeio-am-candy-app-accent);
 @include angular-material-theme($graviteeio-am-theme);
+
+/* Material Icons */
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url(assets/iconfont/MaterialIcons-Regular.eot); /* For IE6-8 */
+  src: local('Material Icons'),
+  local('MaterialIcons-Regular'),
+  url(assets/iconfont/MaterialIcons-Regular.woff2) format('woff2'),
+  url(assets/iconfont/MaterialIcons-Regular.woff) format('woff'),
+  url(assets/iconfont/MaterialIcons-Regular.ttf) format('truetype');
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;  /* Preferred icon size */
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizeLegibility;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Support for IE. */
+  font-feature-settings: 'liga';
+}
 
 html, body, app-root, md-sidenav-container, .mat-sidenav-content, .main-content {
   margin: 0;
