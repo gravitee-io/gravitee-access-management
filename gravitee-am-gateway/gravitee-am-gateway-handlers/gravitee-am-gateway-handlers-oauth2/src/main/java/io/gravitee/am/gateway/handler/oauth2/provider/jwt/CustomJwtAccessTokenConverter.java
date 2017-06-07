@@ -15,14 +15,31 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.provider.jwt;
 
+import io.gravitee.am.gateway.handler.oauth2.oidc.OIDCClaims;
+import io.gravitee.am.gateway.handler.oauth2.provider.client.DelegateClientDetails;
 import io.gravitee.am.gateway.handler.oauth2.provider.token.DefaultIntrospectionAccessTokenConverter;
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Client;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.jwt.JwtHelper;
+import org.springframework.security.jwt.crypto.sign.RsaSigner;
+import org.springframework.security.jwt.crypto.sign.Signer;
+import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.common.util.JsonParser;
+import org.springframework.security.oauth2.common.util.JsonParserFactory;
+import org.springframework.security.oauth2.provider.ClientDetails;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
+import org.springframework.security.oauth2.provider.NoSuchClientException;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 
 import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.util.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -30,17 +47,86 @@ import java.security.KeyPair;
  */
 public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter implements InitializingBean {
 
+    @Value("${oidc.iss:http://gravitee.am}")
+    private String iss;
+
     @Autowired
     private KeyPair keyPair;
+
+    @Autowired
+    private ClientDetailsService clientService;
+
+    private Signer signer;
+
+    private JsonParser objectMapper = JsonParserFactory.create();
+
+    private static final int defaultIDTokenExpireIn = 14400;
+
+    private static final String OPEN_ID = "openid";
+
+    private static final String ID_TOKEN = "id_token";
 
     @Override
     public void afterPropertiesSet() throws Exception {
         this.setKeyPair(keyPair);
+        PrivateKey privateKey = keyPair.getPrivate();
+        signer = new RsaSigner((RSAPrivateKey) privateKey);
         this.setAccessTokenConverter(new DefaultIntrospectionAccessTokenConverter());
     }
 
     @Override
     public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
+        if (authentication.getOAuth2Request().getScope() != null && authentication.getOAuth2Request().getScope().contains(OPEN_ID)) {
+            return enhance0(accessToken, authentication);
+        }
         return super.enhance(accessToken, authentication);
+    }
+
+    private OAuth2AccessToken enhance0(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
+
+        // create ID token
+        Map<String, Object> IDToken = new HashMap<>();
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        IDToken.put(OIDCClaims.iss, iss);
+        IDToken.put(OIDCClaims.sub, authentication.isClientOnly() ? ((String) authentication.getPrincipal()) : authentication.getName());
+        IDToken.put(OIDCClaims.aud, authentication.getOAuth2Request().getClientId());
+        IDToken.put(OIDCClaims.iat, calendar.getTimeInMillis() / 1000l);
+
+        // enhance ID token with OAuth client information
+        try {
+            ClientDetails clientDetails = clientService.loadClientByClientId(authentication.getOAuth2Request().getClientId());
+            if (clientDetails instanceof DelegateClientDetails) {
+                Client client = ((DelegateClientDetails) clientDetails).getClient();
+                calendar.add(Calendar.SECOND, client.getIdTokenValiditySeconds());
+                IDToken.put(OIDCClaims.exp, calendar.getTimeInMillis() / 1000l);
+                // we only override claims for an end-user (grant_type != client_credentials)
+                if (!authentication.isClientOnly() && client.getIdTokenCustomClaims() != null) {
+                    client.getIdTokenCustomClaims().forEach((key, value) -> {
+                        // retrieve user attributes
+                        User user = (User) authentication.getUserAuthentication().getPrincipal();
+                        if (user.getAdditionalInformation().get(key) != null) {
+                            IDToken.put(key, user.getAdditionalInformation().get(key));
+                        }
+                    });
+                }
+            } else {
+                throw new IllegalArgumentException();
+            }
+        } catch (NoSuchClientException | IllegalArgumentException e) {
+            // no client found, set default expiration time
+            calendar.add(Calendar.SECOND, defaultIDTokenExpireIn);
+            IDToken.put(OIDCClaims.exp, calendar.getTimeInMillis() / 1000l);
+        }
+
+        // generate ID Token payload
+        String payload = objectMapper.formatMap(IDToken);
+        payload = JwtHelper.encode(payload, signer).getEncoded();
+
+        // enhance access token
+        Map<String, Object> additionalInformation = new HashMap<>(accessToken.getAdditionalInformation());
+        additionalInformation.put(ID_TOKEN, payload);
+        ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInformation);
+
+        return accessToken;
     }
 }

@@ -39,6 +39,8 @@ import { DomainLoginComponent } from "./domains/domain/login/login.component";
 import { DomainLoginFormResolver } from "./resolvers/domain-login-form.resolver";
 import { ProviderSettingsComponent } from "./domains/domain/providers/provider/settings/settings.component";
 import { ProviderMappersComponent } from "./domains/domain/providers/provider/mappers/mappers.component";
+import { ClientOIDCComponent } from "./domains/domain/clients/client/oidc/oidc.component";
+import { ClientSettingsComponent } from "./domains/domain/clients/client/settings/settings.component";
 
 const routes: Routes = [
   { path: 'domains',
@@ -104,6 +106,11 @@ const routes: Routes = [
         resolve: {
           client: ClientResolver
         },
+        children: [
+          { path: '', redirectTo: 'settings', pathMatch: 'full' },
+          { path: 'settings', component: ClientSettingsComponent },
+          { path: 'oidc', component: ClientOIDCComponent }
+        ]
       },
       { path: 'providers', component: ProvidersComponent,
         resolve: {

@@ -19,7 +19,16 @@
   <h3>{{client.clientId}}</h3>
   <md-card>
     <md-card-content>
-      <client-form [client]="client"></client-form>
+      <nav md-tab-nav-bar>
+        <a md-tab-link
+           *ngFor="let link of navLinks"
+           [routerLink]="link.href"
+           routerLinkActive #rla="routerLinkActive"
+           [active]="rla.isActive">
+          {{link.label}}
+        </a>
+      </nav>
+      <router-outlet></router-outlet>
     </md-card-content>
   </md-card>
 </div>

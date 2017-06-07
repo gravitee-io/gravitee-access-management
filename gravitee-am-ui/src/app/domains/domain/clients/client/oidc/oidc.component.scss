@@ -1,0 +1,39 @@
+span.code {
+  color: #cccccc;
+  font-size: small;
+}
+
+md-list-item {
+  color: grey;
+
+  span.code {
+    margin-right: 10px;
+  }
+}
+
+.idtoken-description {
+  color: grey;
+  font-size: small;
+}
+
+ngx-datatable.material {
+  margin-top: 10px;
+  box-shadow: none;
+}
+
+.provider-claims-actions {
+  button, a {
+    top: -7px;
+    color: grey;
+  }
+}
+
+.add-button {
+  position: absolute;
+  bottom: 60px;
+  right: 20px;
+}
+
+.add-button-center {
+  text-align: center;
+}

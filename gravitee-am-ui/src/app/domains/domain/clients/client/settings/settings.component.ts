@@ -20,13 +20,13 @@ import { ProviderService } from "../../../../../services/provider.service";
 import { ActivatedRoute } from "@angular/router";
 
 @Component({
-  selector: 'client-form',
-  templateUrl: 'client-form.component.html',
-  styleUrls: ['client-form.component.scss']
+  selector: 'client-settings',
+  templateUrl: './settings.component.html',
+  styleUrls: ['./settings.component.scss']
 })
-export class ClientFormComponent implements OnInit {
-  @Input() client: any;
+export class ClientSettingsComponent implements OnInit {
   private domainId: string;
+  client: any;
   formChanged: boolean = false;
   identityProviders: any[] = [];
   grantTypes: any[] = [
@@ -42,7 +42,8 @@ export class ClientFormComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.client = this.route.snapshot.parent.data['client'];
     this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.identityProviders = data);
     this.initGrantTypes();
   }
