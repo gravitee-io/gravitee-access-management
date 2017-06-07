@@ -15,10 +15,7 @@
  */
 package io.gravitee.am.model;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -28,6 +25,7 @@ public class Client {
 
     public final static int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
     public final static int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
+    public final static int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
 
     public final static List<GrantType> AUTHORIZED_GRANT_TYPES = Arrays.asList(
             GrantType.AUTHORIZATION_CODE, GrantType.CLIENT_CREDENTIALS, GrantType.IMPLICIT,
@@ -51,6 +49,10 @@ public class Client {
 
     private int refreshTokenValiditySeconds = DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS;
 
+    private int idTokenValiditySeconds = DEFAULT_ID_TOKEN_VALIDITY_SECONDS;
+
+    private Map<String, Object> idTokenCustomClaims;
+
     /**
      * Security domain associated to the client
      */
@@ -62,12 +64,12 @@ public class Client {
     private boolean enabled;
 
     /**
-     * The Api creation date
+     * The Client creation date
      */
     private Date createdAt;
 
     /**
-     * The Api last updated date
+     * The Client last updated date
      */
     private Date updatedAt;
 
@@ -183,6 +185,22 @@ public class Client {
 
     public void setIdentities(Set<String> identities) {
         this.identities = identities;
+    }
+
+    public int getIdTokenValiditySeconds() {
+        return idTokenValiditySeconds;
+    }
+
+    public void setIdTokenValiditySeconds(int idTokenValiditySeconds) {
+        this.idTokenValiditySeconds = idTokenValiditySeconds;
+    }
+
+    public Map<String, Object> getIdTokenCustomClaims() {
+        return idTokenCustomClaims;
+    }
+
+    public void setIdTokenCustomClaims(Map<String, Object> idTokenCustomClaims) {
+        this.idTokenCustomClaims = idTokenCustomClaims;
     }
 
     @Override

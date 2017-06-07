@@ -44,6 +44,8 @@ export class ClientService {
       'autoApproveScopes': client.autoApproveScopes,
       'accessTokenValiditySeconds': client.accessTokenValiditySeconds,
       'refreshTokenValiditySeconds': client.refreshTokenValiditySeconds,
+      'idTokenValiditySeconds': client.idTokenValiditySeconds,
+      'idTokenCustomClaims': client.idTokenCustomClaims,
       'enabled': client.enabled,
       'identities': client.identities
     });

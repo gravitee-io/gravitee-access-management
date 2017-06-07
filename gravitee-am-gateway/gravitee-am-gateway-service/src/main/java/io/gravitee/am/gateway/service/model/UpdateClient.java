@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.service.model;
 import io.gravitee.am.model.GrantType;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -37,6 +38,10 @@ public class UpdateClient {
     private int accessTokenValiditySeconds;
 
     private int refreshTokenValiditySeconds;
+
+    private int idTokenValiditySeconds;
+
+    private Map<String, Object> idTokenCustomClaims;
 
     private boolean enabled;
 
@@ -104,5 +109,21 @@ public class UpdateClient {
 
     public void setIdentities(Set<String> identities) {
         this.identities = identities;
+    }
+
+    public int getIdTokenValiditySeconds() {
+        return idTokenValiditySeconds;
+    }
+
+    public void setIdTokenValiditySeconds(int idTokenValiditySeconds) {
+        this.idTokenValiditySeconds = idTokenValiditySeconds;
+    }
+
+    public Map<String, Object> getIdTokenCustomClaims() {
+        return idTokenCustomClaims;
+    }
+
+    public void setIdTokenCustomClaims(Map<String, Object> idTokenCustomClaims) {
+        this.idTokenCustomClaims = idTokenCustomClaims;
     }
 }

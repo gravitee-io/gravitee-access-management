@@ -116,6 +116,8 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setIdentities(clientMongo.getIdentities());
         client.setDomain(clientMongo.getDomain());
         client.setAuthorizedGrantTypes(clientMongo.getAuthorizedGrantTypes());
+        client.setIdTokenValiditySeconds(clientMongo.getIdTokenValiditySeconds());
+        client.setIdTokenCustomClaims(clientMongo.getIdTokenCustomClaims());
         client.setCreatedAt(clientMongo.getCreatedAt());
         client.setUpdatedAt(clientMongo.getUpdatedAt());
         return client;
@@ -139,6 +141,8 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setEnabled(client.isEnabled());
         clientMongo.setIdentities(client.getIdentities());
         clientMongo.setDomain(client.getDomain());
+        clientMongo.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
+        clientMongo.setIdTokenCustomClaims(client.getIdTokenCustomClaims());
         clientMongo.setCreatedAt(client.getCreatedAt());
         clientMongo.setUpdatedAt(client.getUpdatedAt());
         return clientMongo;

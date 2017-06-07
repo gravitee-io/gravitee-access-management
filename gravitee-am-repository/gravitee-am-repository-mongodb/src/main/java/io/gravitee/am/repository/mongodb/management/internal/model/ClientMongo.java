@@ -21,6 +21,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -48,6 +49,10 @@ public class ClientMongo extends Auditable {
     private int accessTokenValiditySeconds;
 
     private int refreshTokenValiditySeconds;
+
+    private int idTokenValiditySeconds;
+
+    private Map<String, Object> idTokenCustomClaims;
 
     /**
      * Security domain associated to the client
@@ -155,6 +160,22 @@ public class ClientMongo extends Auditable {
 
     public void setIdentities(Set<String> identities) {
         this.identities = identities;
+    }
+
+    public int getIdTokenValiditySeconds() {
+        return idTokenValiditySeconds;
+    }
+
+    public void setIdTokenValiditySeconds(int idTokenValiditySeconds) {
+        this.idTokenValiditySeconds = idTokenValiditySeconds;
+    }
+
+    public Map<String, Object> getIdTokenCustomClaims() {
+        return idTokenCustomClaims;
+    }
+
+    public void setIdTokenCustomClaims(Map<String, Object> idTokenCustomClaims) {
+        this.idTokenCustomClaims = idTokenCustomClaims;
     }
 
     @Override

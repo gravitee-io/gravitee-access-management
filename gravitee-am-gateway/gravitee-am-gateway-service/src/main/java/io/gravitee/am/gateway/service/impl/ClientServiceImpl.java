@@ -122,6 +122,7 @@ public class ClientServiceImpl implements ClientService {
             client.setScopes(DEFAULT_SCOPES);
             client.setAccessTokenValiditySeconds(Client.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS);
             client.setRefreshTokenValiditySeconds(Client.DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS);
+            client.setIdTokenValiditySeconds(Client.DEFAULT_ID_TOKEN_VALIDITY_SECONDS);
             client.setAuthorizedGrantTypes(Client.AUTHORIZED_GRANT_TYPES);
             client.setEnabled(true);
             client.setCreatedAt(new Date());
@@ -159,6 +160,8 @@ public class ClientServiceImpl implements ClientService {
             client.setRedirectUris(updateClient.getRedirectUris());
             client.setEnabled(updateClient.isEnabled());
             client.setIdentities(updateClient.getIdentities());
+            client.setIdTokenValiditySeconds(updateClient.getIdTokenValiditySeconds());
+            client.setIdTokenCustomClaims(updateClient.getIdTokenCustomClaims());
             client.setUpdatedAt(new Date());
 
             return clientRepository.update(client);

@@ -15,21 +15,21 @@
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FormComponent } from './client-form.component';
+import { ClientOIDCComponent } from './oidc.component';
 
-describe('FormComponent', () => {
-  let component: FormComponent;
-  let fixture: ComponentFixture<FormComponent>;
+describe('ClientOIDCComponent', () => {
+  let component: ClientOIDCComponent;
+  let fixture: ComponentFixture<ClientOIDCComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ FormComponent ]
+      declarations: [ ClientOIDCComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FormComponent);
+    fixture = TestBed.createComponent(ClientOIDCComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

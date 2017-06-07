@@ -49,7 +49,8 @@ import { DomainCreationComponent } from './domains/creation/domain-creation.comp
 import { ProviderCreationComponent } from './domains/domain/providers/creation/provider-creation.component';
 import { ClientComponent } from './domains/domain/clients/client/client.component';
 import { ClientCreationComponent } from './domains/domain/clients/creation/client-creation.component';
-import { ClientFormComponent } from './domains/domain/clients/client/form/client-form.component';
+import { ClientSettingsComponent } from './domains/domain/clients/client/settings/settings.component';
+import { ClientOIDCComponent, CreateClaimComponent } from './domains/domain/clients/client/oidc/oidc.component';
 import { ProviderCreationStep1Component } from './domains/domain/providers/creation/steps/step1/step1.component';
 import { ProviderCreationStep2Component } from './domains/domain/providers/creation/steps/step2/step2.component';
 import { ProviderComponent } from './domains/domain/providers/provider/provider.component';
@@ -93,7 +94,8 @@ import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.componen
     ProviderCreationComponent,
     ClientComponent,
     ClientCreationComponent,
-    ClientFormComponent,
+    ClientSettingsComponent,
+    ClientOIDCComponent,
     ProviderCreationStep1Component,
     ProviderCreationStep2Component,
     ProviderComponent,
@@ -104,7 +106,8 @@ import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.componen
     OAuthCallbackComponent,
     LogoutComponent,
     LogoutCallbackComponent,
-    BreadcrumbComponent
+    BreadcrumbComponent,
+    CreateClaimComponent
   ],
   imports: [
     BrowserModule,
@@ -139,7 +142,7 @@ import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.componen
     DomainLoginFormResolver,
     { provide: Http, useClass: HttpService }
   ],
-  entryComponents: [ConfirmComponent, LoginInfoDialog, CreateMapperComponent],
+  entryComponents: [ConfirmComponent, LoginInfoDialog, CreateMapperComponent, CreateClaimComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -45,6 +45,7 @@ export class DomainComponent implements OnInit {
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domain.id+'/(clients|providers)/new$', 'new');
     this.breadcrumbService.hideRoute('/domains/'+this.domain.id+'/general');
     this.breadcrumbService.hideRouteRegex('/domains/'+this.domain.id+'/providers/.*/settings$');
+    this.breadcrumbService.hideRouteRegex('/domains/'+this.domain.id+'/clients/.*/settings$');
   }
 
 }
