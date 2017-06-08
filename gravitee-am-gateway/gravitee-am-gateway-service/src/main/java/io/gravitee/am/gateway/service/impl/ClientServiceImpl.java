@@ -42,8 +42,6 @@ public class ClientServiceImpl implements ClientService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ClientServiceImpl.class);
 
-    private final static List<String> DEFAULT_SCOPES = Collections.singletonList("openid");
-
     @Autowired
     private ClientRepository clientRepository;
 
@@ -119,7 +117,6 @@ public class ClientServiceImpl implements ClientService {
                 client.setClientSecret(newClient.getClientSecret());
             }
             client.setDomain(domain);
-            client.setScopes(DEFAULT_SCOPES);
             client.setAccessTokenValiditySeconds(Client.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS);
             client.setRefreshTokenValiditySeconds(Client.DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS);
             client.setIdTokenValiditySeconds(Client.DEFAULT_ID_TOKEN_VALIDITY_SECONDS);
