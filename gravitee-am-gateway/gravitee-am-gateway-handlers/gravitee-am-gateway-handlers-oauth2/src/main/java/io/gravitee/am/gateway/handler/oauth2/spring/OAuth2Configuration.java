@@ -21,7 +21,9 @@ import io.gravitee.am.gateway.handler.oauth2.OpenIDResourceServerConfiguration;
 import io.gravitee.am.gateway.handler.oauth2.WebMvcConfiguration;
 import io.gravitee.am.gateway.handler.oauth2.provider.client.DomainBasedClientDetailsService;
 import io.gravitee.am.gateway.handler.oauth2.provider.jwt.JwtKeyPairFactory;
+import io.gravitee.am.gateway.handler.oauth2.security.CertificateManager;
 import io.gravitee.am.gateway.handler.oauth2.security.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.oauth2.security.impl.CertificateManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.security.impl.IdentityProviderManagerImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,5 +56,10 @@ public class OAuth2Configuration {
     @Bean
     public IdentityProviderManager identityProviderManager() {
         return new IdentityProviderManagerImpl();
+    }
+
+    @Bean
+    public CertificateManager certificateManager() {
+        return new CertificateManagerImpl();
     }
 }

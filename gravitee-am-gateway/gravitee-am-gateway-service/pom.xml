@@ -53,6 +53,12 @@
             <artifactId>gravitee-am-gateway-identityprovider</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.gateway.certificate</groupId>
+            <artifactId>gravitee-am-gateway-certificate</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!--
             TODO: This dependency must be removed as soon as repository is a plugin
         -->
@@ -74,6 +80,13 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
             <version>${spring.version}</version>
+        </dependency>
+
+        <!-- Jackson libraries -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
     </dependencies>
 </project>

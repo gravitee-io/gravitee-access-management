@@ -125,7 +125,6 @@ export class JsonSchemaFormService {
   }
 
   private validateData(newValue: any, updateSubscriptions: boolean = true): void {
-
     // Format raw form data to correct data types
     this.data = formatFormData(
       newValue, this.dataMap, this.dataRecursiveRefMap, this.arrayMap
@@ -355,7 +354,6 @@ export class JsonSchemaFormService {
   }
 
   public updateValue(ctx: any, value): void {
-
     // Set value of current control
     ctx.controlValue = value;
     if (ctx.boundControl) {
@@ -526,4 +524,5 @@ export class JsonSchemaFormService {
     JsonPointer.remove(this.layout, layoutPointer);
     return true;
   }
+
 }

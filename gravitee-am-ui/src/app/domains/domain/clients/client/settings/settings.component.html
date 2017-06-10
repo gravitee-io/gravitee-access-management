@@ -87,7 +87,15 @@
     </md-input-container>
   </div>
 
-  <div fxLayout="row">
+  <h4>Certificate</h4>
+  <md-select placeholder="Certificate" name="certificate" [(ngModel)]="client.certificate">
+    <md-option *ngFor="let certificate of certificates" [value]="certificate.id">{{ certificate.name }}</md-option>
+  </md-select>
+  <div fxLayout="row" fxLayoutAlign="end end">
+    <md-hint><small class="hint">Certificate use to sign tokens.</small></md-hint>
+  </div>
+
+  <div fxLayout="row" style="margin-top: 20px;">
     <button md-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>
   </div>
 </form>

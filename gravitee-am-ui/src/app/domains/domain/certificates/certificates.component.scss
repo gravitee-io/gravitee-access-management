@@ -1,0 +1,30 @@
+.certificates-container {
+  margin: 20px 20px 0px 0px;
+
+  h3 {
+    color: grey;
+  }
+
+  ngx-datatable {
+    box-shadow: none;
+  }
+}
+
+.providers-actions {
+  margin-left: -10px;
+
+  button, a {
+    top: -7px;
+    color: grey;
+  }
+}
+
+.add-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
+
+.add-button-center {
+  text-align: center;
+}

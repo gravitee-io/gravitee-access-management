@@ -19,6 +19,7 @@ import { DialogService } from "../../../services/dialog.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../services/snackbar.service";
 import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
+import { SidenavService } from "../../../components/sidenav/sidenav.service";
 
 @Component({
   selector: 'app-general',
@@ -30,7 +31,7 @@ export class GeneralComponent implements OnInit {
   domain: any = {};
 
   constructor(private domainService: DomainService, private dialogService: DialogService, private snackbarService: SnackbarService,
-              private router: Router, private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) {
+              private router: Router, private route: ActivatedRoute, private breadcrumbService: BreadcrumbService, private sidenavService: SidenavService) {
   }
 
   ngOnInit() {
@@ -45,6 +46,7 @@ export class GeneralComponent implements OnInit {
   update() {
     this.domainService.update(this.domain.id, this.domain).subscribe(response => {
       this.domain = response.json();
+      this.sidenavService.notify(this.domain);
       this.breadcrumbService.addFriendlyNameForRoute('/domains/'+this.domain.id, this.domain.name);
       this.snackbarService.open("Domain " + this.domain.name + " updated");
     });

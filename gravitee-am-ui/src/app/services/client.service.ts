@@ -47,7 +47,8 @@ export class ClientService {
       'idTokenValiditySeconds': client.idTokenValiditySeconds,
       'idTokenCustomClaims': client.idTokenCustomClaims,
       'enabled': client.enabled,
-      'identities': client.identities
+      'identities': client.identities,
+      'certificate': client.certificate
     });
   }
 

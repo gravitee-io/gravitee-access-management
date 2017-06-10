@@ -18,6 +18,7 @@ import { ClientService } from "../../../../../services/client.service";
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { ProviderService } from "../../../../../services/provider.service";
 import { ActivatedRoute } from "@angular/router";
+import { CertificateService } from "../../../../../services/certificate.service";
 
 @Component({
   selector: 'client-settings',
@@ -29,6 +30,7 @@ export class ClientSettingsComponent implements OnInit {
   client: any;
   formChanged: boolean = false;
   identityProviders: any[] = [];
+  certificates: any[] = [];
   grantTypes: any[] = [
     { name:'CLIENT CREDENTIALS', value:'client_credentials', checked:false },
     { name:'PASSWORD', value:'password', checked:false },
@@ -38,13 +40,14 @@ export class ClientSettingsComponent implements OnInit {
   ];
 
   constructor(private clientService: ClientService, private snackbarService: SnackbarService,
-              private providerService: ProviderService, private route: ActivatedRoute) {
+              private providerService: ProviderService, private certificateService: CertificateService, private route: ActivatedRoute) {
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.client = this.route.snapshot.parent.data['client'];
     this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.identityProviders = data);
+    this.certificateService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.certificates = data);
     this.initGrantTypes();
   }
 

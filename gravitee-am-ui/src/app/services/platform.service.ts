@@ -32,4 +32,11 @@ export class PlatformService {
     return this.http.get(this.platformURL + 'plugins/identities/' + id + '/schema');
   }
 
+  certificates(): Observable<Response> {
+    return this.http.get(this.platformURL + 'plugins/certificates');
+  }
+
+  certificateSchema(id): Observable<Response> {
+    return this.http.get(this.platformURL + 'plugins/certificates/' + id + '/schema');
+  }
 }

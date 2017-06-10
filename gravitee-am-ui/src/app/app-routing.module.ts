@@ -41,6 +41,11 @@ import { ProviderSettingsComponent } from "./domains/domain/providers/provider/s
 import { ProviderMappersComponent } from "./domains/domain/providers/provider/mappers/mappers.component";
 import { ClientOIDCComponent } from "./domains/domain/clients/client/oidc/oidc.component";
 import { ClientSettingsComponent } from "./domains/domain/clients/client/settings/settings.component";
+import { CertificatesComponent } from "./domains/domain/certificates/certificates.component";
+import { CertificatesResolver } from "./resolvers/certificates.resolver";
+import { CertificateCreationComponent } from "./domains/domain/certificates/creation/certificate-creation.component";
+import { CertificateComponent } from "./domains/domain/certificates/certificate/certificate.component";
+import { CertificateResolver } from "./resolvers/certificate.resolver";
 
 const routes: Routes = [
   { path: 'domains',
@@ -124,7 +129,7 @@ const routes: Routes = [
         }
       },
       { path: 'providers/new',
-        component: ProviderCreationComponent,
+        component: ProviderCreationComponent
       },
       { path: 'providers/:providerId',
         component: ProviderComponent,
@@ -136,6 +141,27 @@ const routes: Routes = [
           { path: 'settings', component: ProviderSettingsComponent },
           { path: 'mappers', component: ProviderMappersComponent }
         ]
+      },
+      { path: 'certificates', component: CertificatesComponent,
+        resolve: {
+          certificates: CertificatesResolver
+        },
+        data: {
+          menu: {
+            label: 'Certificates',
+            icon: 'vpn_key',
+          }
+        }
+      },
+      { path: 'certificates/new',
+        component: CertificateCreationComponent
+      },
+      {
+        path: 'certificates/:certificateId',
+        component: CertificateComponent,
+        resolve: {
+          certificate: CertificateResolver
+        }
       }
     ]
   },

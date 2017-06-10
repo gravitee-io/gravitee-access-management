@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.spring;
 
+import io.gravitee.am.gateway.certificate.spring.CertificateConfiguration;
 import io.gravitee.am.gateway.core.spring.CoreConfiguration;
 import io.gravitee.am.gateway.idp.spring.IdentityProviderConfiguration;
 import io.gravitee.am.gateway.jetty.spring.JettyContainerConfiguration;
@@ -43,6 +44,7 @@ import org.springframework.context.annotation.Import;
         ServiceConfiguration.class,
         RepositoryConfiguration.class,
         IdentityProviderConfiguration.class,
+        CertificateConfiguration.class,
         io.gravitee.am.gateway.service.ServiceConfiguration.class,
         ManagementRepositoryConfiguration.class,
         CoreConfiguration.class})

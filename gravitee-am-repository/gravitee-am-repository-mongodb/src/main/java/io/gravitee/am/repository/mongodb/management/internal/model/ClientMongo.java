@@ -66,6 +66,8 @@ public class ClientMongo extends Auditable {
 
     private Set<String> identities;
 
+    private String certificate;
+
     public String getId() {
         return id;
     }
@@ -176,6 +178,14 @@ public class ClientMongo extends Auditable {
 
     public void setIdTokenCustomClaims(Map<String, Object> idTokenCustomClaims) {
         this.idTokenCustomClaims = idTokenCustomClaims;
+    }
+
+    public String getCertificate() {
+        return certificate;
+    }
+
+    public void setCertificate(String certificate) {
+        this.certificate = certificate;
     }
 
     @Override
