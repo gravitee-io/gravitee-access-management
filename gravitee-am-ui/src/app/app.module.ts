@@ -75,6 +75,16 @@ import { ProviderSettingsComponent } from './domains/domain/providers/provider/s
 import { CreateMapperComponent, ProviderMappersComponent } from './domains/domain/providers/provider/mappers/mappers.component';
 import { Ng2BreadcrumbModule } from "ng2-breadcrumb/bundles/app.module";
 import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.component';
+import { CertificatesComponent, CertitificatePublicKeyDialog } from './domains/domain/certificates/certificates.component';
+import { CertificateCreationComponent } from './domains/domain/certificates/creation/certificate-creation.component';
+import { CertificateComponent } from './domains/domain/certificates/certificate/certificate.component';
+import { CertificatesResolver } from "./resolvers/certificates.resolver";
+import { CertificateService } from "./services/certificate.service";
+import { CertificateCreationStep1Component } from "./domains/domain/certificates/creation/steps/step1/step1.component";
+import { CertificateCreationStep2Component } from "app/domains/domain/certificates/creation/steps/step2/step2.component";
+import { CertificateFormComponent } from "./domains/domain/certificates/certificate/form/form.component";
+import { CertificateResolver } from "./resolvers/certificate.resolver";
+import { ClipboardModule } from "ngx-clipboard/dist";
 
 @NgModule({
   declarations: [
@@ -107,7 +117,14 @@ import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.componen
     LogoutComponent,
     LogoutCallbackComponent,
     BreadcrumbComponent,
-    CreateClaimComponent
+    CreateClaimComponent,
+    CertificatesComponent,
+    CertificateCreationComponent,
+    CertificateComponent,
+    CertificateCreationStep1Component,
+    CertificateCreationStep2Component,
+    CertificateFormComponent,
+    CertitificatePublicKeyDialog
   ],
   imports: [
     BrowserModule,
@@ -121,7 +138,8 @@ import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.componen
     NgxDatatableModule,
     JsonSchemaFormModule.forRoot(),
     CodemirrorModule,
-    Ng2BreadcrumbModule.forRoot()
+    Ng2BreadcrumbModule.forRoot(),
+    ClipboardModule
   ],
   providers: [
     DomainService,
@@ -132,6 +150,7 @@ import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.componen
     SnackbarService,
     PlatformService,
     AuthService,
+    CertificateService,
     AppConfig,
     DomainsResolver,
     DomainResolver,
@@ -140,9 +159,11 @@ import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.componen
     ProvidersResolver,
     ProviderResolver,
     DomainLoginFormResolver,
+    CertificatesResolver,
+    CertificateResolver,
     { provide: Http, useClass: HttpService }
   ],
-  entryComponents: [ConfirmComponent, LoginInfoDialog, CreateMapperComponent, CreateClaimComponent],
+  entryComponents: [ConfirmComponent, LoginInfoDialog, CreateMapperComponent, CreateClaimComponent, CertitificatePublicKeyDialog],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

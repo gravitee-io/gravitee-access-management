@@ -37,6 +37,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_CLIENT_ID = "clientId";
     private static final String FIELD_IDENTITIES = "identities";
+    private static final String FIELD_CERTIFICATE = "certificate";
 
     @Override
     public Set<Client> findByDomain(String domain) throws TechnicalException {
@@ -74,6 +75,18 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     }
 
     @Override
+    public Set<Client> findByCertificate(String certificate) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where(FIELD_CERTIFICATE).is(certificate));
+
+        return mongoOperations
+                .find(query, ClientMongo.class)
+                .stream()
+                .map(this::convert)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public Optional<Client> findById(String client) throws TechnicalException {
         return Optional.ofNullable(convert(mongoOperations.findById(client, ClientMongo.class)));
     }
@@ -87,9 +100,9 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Client update(Client item) throws TechnicalException {
-        ClientMongo domain = convert(item);
-        mongoOperations.save(domain);
-        return convert(domain);
+        ClientMongo client = convert(item);
+        mongoOperations.save(client);
+        return convert(client);
     }
 
     @Override
@@ -118,6 +131,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setAuthorizedGrantTypes(clientMongo.getAuthorizedGrantTypes());
         client.setIdTokenValiditySeconds(clientMongo.getIdTokenValiditySeconds());
         client.setIdTokenCustomClaims(clientMongo.getIdTokenCustomClaims());
+        client.setCertificate(clientMongo.getCertificate());
         client.setCreatedAt(clientMongo.getCreatedAt());
         client.setUpdatedAt(clientMongo.getUpdatedAt());
         return client;
@@ -143,6 +157,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setDomain(client.getDomain());
         clientMongo.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
         clientMongo.setIdTokenCustomClaims(client.getIdTokenCustomClaims());
+        clientMongo.setCertificate(client.getCertificate());
         clientMongo.setCreatedAt(client.getCreatedAt());
         clientMongo.setUpdatedAt(client.getUpdatedAt());
         return clientMongo;

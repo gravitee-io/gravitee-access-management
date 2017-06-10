@@ -159,6 +159,7 @@ public class ClientServiceImpl implements ClientService {
             client.setIdentities(updateClient.getIdentities());
             client.setIdTokenValiditySeconds(updateClient.getIdTokenValiditySeconds());
             client.setIdTokenCustomClaims(updateClient.getIdTokenCustomClaims());
+            client.setCertificate(updateClient.getCertificate());
             client.setUpdatedAt(new Date());
 
             return clientRepository.update(client);
@@ -176,6 +177,17 @@ public class ClientServiceImpl implements ClientService {
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find clients by identity provider", ex);
             throw new TechnicalManagementException("An error occurs while trying to find clients by identity provider", ex);
+        }
+    }
+
+    @Override
+    public Set<Client> findByCertificate(String certificate) {
+        try {
+            LOGGER.debug("Find clients by certificate : {}", certificate);
+            return clientRepository.findByCertificate(certificate);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find clients by certificate", ex);
+            throw new TechnicalManagementException("An error occurs while trying to find clients by certificate", ex);
         }
     }
 

@@ -30,11 +30,6 @@
     <artifactId>gravitee-am-gateway-handlers-oauth2</artifactId>
     <name>Gravitee IO - Access Management - Gateway - Handlers - OAuth2</name>
 
-    <properties>
-        <spring-security-oauth2.version>2.1.0.RELEASE</spring-security-oauth2.version>
-        <spring-security-jwt.version>1.0.7.RELEASE</spring-security-jwt.version>
-    </properties>
-
     <dependencies>
         <!-- Gravitee dependencies -->
         <dependency>
@@ -50,18 +45,16 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.gateway.certificate</groupId>
+            <artifactId>gravitee-am-gateway-certificate</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.gateway</groupId>
             <artifactId>gravitee-am-gateway-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-
-        <!--
-        <dependency>
-            <groupId>io.gravitee.am.gateway</groupId>
-            <artifactId>gravitee-am-gateway-definition</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        -->
 
         <dependency>
             <groupId>io.gravitee.am.gateway</groupId>

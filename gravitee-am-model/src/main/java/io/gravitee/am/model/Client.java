@@ -75,6 +75,8 @@ public class Client {
 
     private Set<String> identities;
 
+    private String certificate;
+
     public String getId() {
         return id;
     }
@@ -201,6 +203,14 @@ public class Client {
 
     public void setIdTokenCustomClaims(Map<String, Object> idTokenCustomClaims) {
         this.idTokenCustomClaims = idTokenCustomClaims;
+    }
+
+    public String getCertificate() {
+        return certificate;
+    }
+
+    public void setCertificate(String certificate) {
+        this.certificate = certificate;
     }
 
     @Override

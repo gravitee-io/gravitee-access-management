@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Import;
 @Import({
 //        ManagementRepositoryConfiguration.class,
         SecurityConfiguration.class,
-        ServiceConfiguration.class
+        //ServiceConfiguration.class
 })
 public class ManagementConfiguration {
 }

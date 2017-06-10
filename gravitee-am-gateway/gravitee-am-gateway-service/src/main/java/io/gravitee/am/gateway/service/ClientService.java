@@ -39,5 +39,7 @@ public interface ClientService {
 
     Set<Client> findByIdentityProvider(String identityProvider);
 
+    Set<Client> findByCertificate(String certificate);
+
     void delete(String clientId);
 }
