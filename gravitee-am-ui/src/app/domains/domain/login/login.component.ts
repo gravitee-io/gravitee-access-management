@@ -102,7 +102,14 @@ export class DomainLoginComponent implements OnInit, AfterViewInit {
   }
 
   refreshPreview() {
-    this.preview.nativeElement.innerHTML = this.loginFormContent;
+    let doc =  this.preview.nativeElement.contentDocument || this.preview.nativeElement.contentWindow;
+    doc.open();
+    doc.write(this.loginFormContent);
+    doc.close();
+  }
+
+  resizeIframe(obj) {
+    this.preview.nativeElement.style.height = this.preview.nativeElement.contentWindow.document.body.scrollHeight + 'px';
   }
 
   openLoginInfo() {
