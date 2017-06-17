@@ -36,8 +36,8 @@
         </div>
       </md-tab>
       <md-tab label="Preview" [disabled]="!isEnabled()">
-        <div class="preview" #preview>
-        </div>
+        <iframe frameborder="0" class="preview" #preview width="100%" (load)="resizeIframe()">
+        </iframe>
       </md-tab>
     </md-tab-group>
   </md-card-content>
