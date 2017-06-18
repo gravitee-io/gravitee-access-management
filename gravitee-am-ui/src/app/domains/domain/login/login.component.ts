@@ -108,7 +108,7 @@ export class DomainLoginComponent implements OnInit, AfterViewInit {
     doc.close();
   }
 
-  resizeIframe(obj) {
+  resizeIframe() {
     this.preview.nativeElement.style.height = this.preview.nativeElement.contentWindow.document.body.scrollHeight + 'px';
   }
 
