@@ -27,7 +27,7 @@
             <title>Login custom</title>
         </head>
         <body>
-          <form th:action="@{/login}" method="post">
+          <form th:action="@{login}" method="post">
               <input type="text" name="username" required/>
               <input type="password" name="password" required/>
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
