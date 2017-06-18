@@ -46,7 +46,7 @@ export class CertificateComponent implements OnInit {
   }
 
   update() {
-    this.certificate.configuration = JSON.stringify(this.certificate.configuration);
+    this.certificate.configuration = JSON.stringify(this.certificateConfiguration);
     this.certificateService.update(this.domainId, this.certificate.id, this.certificate).map(res => res.json()).subscribe(data => {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/certificates/'+this.certificate.id+'$', this.certificate.name);
       this.snackbarService.open("Certificate updated");
@@ -56,7 +56,7 @@ export class CertificateComponent implements OnInit {
   enableCertificateUpdate(configurationWrapper) {
     this.configurationPristine = false;
     this.configurationIsValid = configurationWrapper.isValid;
-    this.certificate.configuration = configurationWrapper.configuration;
+    this.certificateConfiguration = configurationWrapper.configuration;
   }
 
   initBreadcrumb() {
