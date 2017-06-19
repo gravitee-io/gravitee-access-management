@@ -142,10 +142,12 @@ public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter imple
             calendar.add(Calendar.SECOND, client.getIdTokenValiditySeconds());
             IDToken.put(OIDCClaims.exp, calendar.getTimeInMillis() / 1000l);
             // we only override claims for an end-user (grant_type != client_credentials)
-            if (!authentication.isClientOnly() && client.getIdTokenCustomClaims() != null) {
+            if (!authentication.isClientOnly()
+                    && client.getIdTokenCustomClaims() != null
+                    && authentication.getUserAuthentication().getPrincipal() instanceof User) {
+                // retrieve user attributes
+                User user = (User) authentication.getUserAuthentication().getPrincipal();
                 client.getIdTokenCustomClaims().forEach((key, value) -> {
-                    // retrieve user attributes
-                    User user = (User) authentication.getUserAuthentication().getPrincipal();
                     if (user.getAdditionalInformation().get(key) != null) {
                         IDToken.put(key, user.getAdditionalInformation().get(key));
                     }

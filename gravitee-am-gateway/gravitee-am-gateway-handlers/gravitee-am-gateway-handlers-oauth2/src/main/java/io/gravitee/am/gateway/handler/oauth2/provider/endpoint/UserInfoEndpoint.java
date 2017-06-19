@@ -16,13 +16,13 @@
 package io.gravitee.am.gateway.handler.oauth2.provider.endpoint;
 
 import io.gravitee.am.identityprovider.api.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import java.security.Principal;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -32,6 +32,8 @@ import java.security.Principal;
 @RequestMapping("/userinfo")
 public class UserInfoEndpoint {
 
+    private final Logger logger = LoggerFactory.getLogger(UserInfoEndpoint.class);
+
     @RequestMapping(method = {RequestMethod.GET, RequestMethod.POST})
     @ResponseBody
     public Object loginInfo(OAuth2Authentication oAuth2Authentication) {
@@ -39,7 +41,12 @@ public class UserInfoEndpoint {
             return null;
         }
 
-        User user = (User) oAuth2Authentication.getUserAuthentication().getPrincipal();
-        return user.getAdditionalInformation();
+        try {
+            User user = (User) oAuth2Authentication.getUserAuthentication().getPrincipal();
+            return user.getAdditionalInformation();
+        } catch (Exception e) {
+            logger.warn("Failed to get user profile information, fallback to default user authentication", e);
+            return oAuth2Authentication.getUserAuthentication().getPrincipal();
+        }
     }
 }
