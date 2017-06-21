@@ -152,7 +152,7 @@ public class MongoTokenRepositoryTest {
         mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication);
 
         OAuth2AccessToken actualOAuth2AccessToken = mongoTokenRepository.readAccessToken("testToken").get();
-        assertNotNull(actualOAuth2AccessToken.getRefreshToken());
+        assertNull(actualOAuth2AccessToken.getRefreshToken());
 
         assertFalse(mongoTokenRepository.readRefreshToken("refreshToken").isPresent());
     }
