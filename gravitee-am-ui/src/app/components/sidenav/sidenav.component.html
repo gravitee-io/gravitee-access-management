@@ -18,7 +18,7 @@
 <div class="gs-sidenav" fxLayout="column" fxFlex [ngClass]="{'gs-sidenav-min': reducedMode}">
   <md-toolbar class="navigation-header md-whiteframe-1dp" fxLayout="row" fxLayoutAlign="space-between center">
     <div class="logo" fxLayout="row" fxLayoutAlign="center center" style="cursor: pointer">
-      <img class="logo-image" [ngClass]="{'reduce-mode': reducedMode}" src="../../../assets/GRAVITEE_LOGO1-01.png"/>
+      <img class="logo-image" [ngClass]="{'reduce-mode': reducedMode}" src="assets/GRAVITEE_LOGO1-01.png"/>
     </div>
     <small *ngIf="isAuthenticated() && !reducedMode" class="username">{{user}}</small>
   </md-toolbar>
