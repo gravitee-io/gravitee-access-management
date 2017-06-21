@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -49,6 +50,7 @@ public class InitializerServiceImpl extends AbstractService<InitializerServiceIm
 
     private final static String ADMIN_CLIENT_ID = "admin";
     private final static String ADMIN_CLIENT_SECRET = "admin-secret";
+    private final static List<String> DEFAULT_SCOPES = Collections.singletonList("openid");
 
     @Autowired
     private DomainService domainService;
@@ -102,8 +104,8 @@ public class InitializerServiceImpl extends AbstractService<InitializerServiceIm
             updateClient.setAccessTokenValiditySeconds(createdClient.getAccessTokenValiditySeconds());
             updateClient.setRefreshTokenValiditySeconds(createdClient.getRefreshTokenValiditySeconds());
             updateClient.setAuthorizedGrantTypes(Collections.singletonList(GrantType.IMPLICIT));
-            updateClient.setScopes(createdClient.getScopes());
-            updateClient.setAutoApproveScopes(createdClient.getScopes());
+            updateClient.setScopes(DEFAULT_SCOPES);
+            updateClient.setAutoApproveScopes(updateClient.getScopes());
             updateClient.setIdentities(Collections.singleton(createdIdentityProvider.getId()));
             updateClient.setEnabled(true);
             clientService.update(createdDomain.getId(), createdClient.getId(), updateClient);
