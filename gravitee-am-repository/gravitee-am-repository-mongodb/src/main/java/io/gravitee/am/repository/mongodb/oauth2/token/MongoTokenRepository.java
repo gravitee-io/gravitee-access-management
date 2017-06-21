@@ -188,11 +188,11 @@ public class MongoTokenRepository implements TokenRepository {
 
         // get refresh token
         OAuth2RefreshTokenMongo oAuth2RefreshTokenMongo = oAuth2RefreshTokenMongoRepository.findOne(oAuth2AccessTokenMongo.getRefreshToken());
-        OAuth2RefreshToken oAuth2RefreshToken = new OAuth2RefreshToken(oAuth2AccessTokenMongo.getRefreshToken());
         if (oAuth2RefreshTokenMongo != null) {
+            OAuth2RefreshToken oAuth2RefreshToken = new OAuth2RefreshToken(oAuth2AccessTokenMongo.getRefreshToken());
             oAuth2RefreshToken.setExpiration(oAuth2RefreshTokenMongo.getExpiration());
+            oAuth2AccessToken.setRefreshToken(oAuth2RefreshToken);
         }
-        oAuth2AccessToken.setRefreshToken(oAuth2RefreshToken);
         oAuth2AccessToken.setExpiration(oAuth2AccessTokenMongo.getExpiration());
         oAuth2AccessToken.setScope(oAuth2AccessTokenMongo.getScope());
         oAuth2AccessToken.setTokenType(oAuth2AccessTokenMongo.getTokenType());
