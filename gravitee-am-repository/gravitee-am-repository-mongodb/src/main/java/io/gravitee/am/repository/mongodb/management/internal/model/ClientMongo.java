@@ -68,6 +68,8 @@ public class ClientMongo extends Auditable {
 
     private String certificate;
 
+    private boolean enhanceScopesWithUserPermissions;
+
     public String getId() {
         return id;
     }
@@ -186,6 +188,14 @@ public class ClientMongo extends Auditable {
 
     public void setCertificate(String certificate) {
         this.certificate = certificate;
+    }
+
+    public boolean isEnhanceScopesWithUserPermissions() {
+        return enhanceScopesWithUserPermissions;
+    }
+
+    public void setEnhanceScopesWithUserPermissions(boolean enhanceScopesWithUserPermissions) {
+        this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
     }
 
     @Override

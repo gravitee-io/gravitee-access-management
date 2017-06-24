@@ -55,6 +55,7 @@ import { ProviderCreationStep1Component } from './domains/domain/providers/creat
 import { ProviderCreationStep2Component } from './domains/domain/providers/creation/steps/step2/step2.component';
 import { ProviderComponent } from './domains/domain/providers/provider/provider.component';
 import { ProviderFormComponent } from './domains/domain/providers/provider/form/form.component';
+import { CreateRoleMapperComponent, ProviderRolesComponent } from "app/domains/domain/providers/provider/roles/roles.component";
 import { ClientService } from "./services/client.service";
 import { ProviderService } from "./services/provider.service";
 import { PlatformService } from "./services/platform.service";
@@ -85,6 +86,13 @@ import { CertificateCreationStep2Component } from "app/domains/domain/certificat
 import { CertificateFormComponent } from "./domains/domain/certificates/certificate/form/form.component";
 import { CertificateResolver } from "./resolvers/certificate.resolver";
 import { ClipboardModule } from "ngx-clipboard/dist";
+import { RoleService } from "./services/role.service";
+import { RolesResolver } from "./resolvers/roles.resolver";
+import { RoleResolver } from "./resolvers/role.resolver";
+import { RolesComponent } from './domains/domain/roles/roles.component';
+import { RoleCreationComponent } from './domains/domain/roles/creation/role-creation.component';
+import { RoleComponent } from './domains/domain/roles/role/role.component';
+import { SnackbarComponent } from "./components/snackbar/snackbar.component";
 
 @NgModule({
   declarations: [
@@ -112,6 +120,7 @@ import { ClipboardModule } from "ngx-clipboard/dist";
     ProviderFormComponent,
     ProviderSettingsComponent,
     ProviderMappersComponent,
+    ProviderRolesComponent,
     CreateMapperComponent,
     OAuthCallbackComponent,
     LogoutComponent,
@@ -124,7 +133,12 @@ import { ClipboardModule } from "ngx-clipboard/dist";
     CertificateCreationStep1Component,
     CertificateCreationStep2Component,
     CertificateFormComponent,
-    CertitificatePublicKeyDialog
+    CertitificatePublicKeyDialog,
+    RolesComponent,
+    RoleCreationComponent,
+    RoleComponent,
+    CreateRoleMapperComponent,
+    SnackbarComponent
   ],
   imports: [
     BrowserModule,
@@ -151,6 +165,7 @@ import { ClipboardModule } from "ngx-clipboard/dist";
     PlatformService,
     AuthService,
     CertificateService,
+    RoleService,
     AppConfig,
     DomainsResolver,
     DomainResolver,
@@ -161,9 +176,19 @@ import { ClipboardModule } from "ngx-clipboard/dist";
     DomainLoginFormResolver,
     CertificatesResolver,
     CertificateResolver,
+    RolesResolver,
+    RoleResolver,
     { provide: Http, useClass: HttpService }
   ],
-  entryComponents: [ConfirmComponent, LoginInfoDialog, CreateMapperComponent, CreateClaimComponent, CertitificatePublicKeyDialog],
+  entryComponents: [
+    ConfirmComponent,
+    LoginInfoDialog,
+    CreateMapperComponent,
+    CreateClaimComponent,
+    CertitificatePublicKeyDialog,
+    CreateRoleMapperComponent,
+    SnackbarComponent
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

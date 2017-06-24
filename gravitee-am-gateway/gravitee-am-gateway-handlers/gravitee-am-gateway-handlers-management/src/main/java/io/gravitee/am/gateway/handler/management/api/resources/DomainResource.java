@@ -92,6 +92,11 @@ public class DomainResource extends AbstractResource {
         return resourceContext.getResource(CertificatesResource.class);
     }
 
+    @Path("roles")
+    public RolesResource getRolesResource() {
+        return resourceContext.getResource(RolesResource.class);
+    }
+
     @Path("login")
     public DomainLoginFormResource getDomainLoginFormResource() {
         return resourceContext.getResource(DomainLoginFormResource.class);

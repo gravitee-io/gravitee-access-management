@@ -57,6 +57,7 @@ public class LdapAuthenticationProviderConfiguration {
                 configuration.getGroupSearchBase());
         populator.setGroupSearchFilter(configuration.getGroupSearchFilter());
         populator.setGroupRoleAttribute(configuration.getGroupRoleAttribute());
+        populator.setSearchSubtree(true);
         populator.setRolePrefix("");
         return populator;
     }

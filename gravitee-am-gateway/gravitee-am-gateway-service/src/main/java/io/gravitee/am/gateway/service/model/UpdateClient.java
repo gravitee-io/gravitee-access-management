@@ -49,6 +49,8 @@ public class UpdateClient {
 
     private String certificate;
 
+    private boolean enhanceScopesWithUserPermissions;
+
     public List<String> getRedirectUris() {
         return redirectUris;
     }
@@ -135,5 +137,13 @@ public class UpdateClient {
 
     public void setCertificate(String certificate) {
         this.certificate = certificate;
+    }
+
+    public boolean isEnhanceScopesWithUserPermissions() {
+        return enhanceScopesWithUserPermissions;
+    }
+
+    public void setEnhanceScopesWithUserPermissions(boolean enhanceScopesWithUserPermissions) {
+        this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
     }
 }

@@ -137,12 +137,21 @@ public class MongoTokenRepository implements TokenRepository {
         if (oAuth2AccessTokenMongo != null) {
             accessToken = convert(oAuth2AccessTokenMongo);
         }
-        if (accessToken != null
-                && !key.equals(authenticationKeyGenerator.extractKey(readAuthentication(accessToken.getValue()).get()))) {
-            removeAccessToken(accessToken.getValue());
-            // Keep the store consistent (maybe the same user is represented by this authentication but the details have
-            // changed)
-            storeAccessToken(accessToken, oAuth2Authentication);
+
+        if (accessToken != null) {
+            Optional<OAuth2Authentication> optExtractedAuthentication = readAuthentication(accessToken.getValue());
+           if ((!optExtractedAuthentication.isPresent() || !key.equals(authenticationKeyGenerator.extractKey(optExtractedAuthentication.get())))) {
+               removeAccessToken(accessToken.getValue());
+               // Keep the store consistent (maybe the same user is represented by this authentication but the details have
+               // changed)
+               storeAccessToken(accessToken, oAuth2Authentication);
+
+               // something happens with authentication (different serialization object)
+               // Keep the refresh token consistent
+               if (!optExtractedAuthentication.isPresent() && accessToken.getRefreshToken() != null) {
+                   storeRefreshToken(accessToken.getRefreshToken(), oAuth2Authentication);
+               }
+           }
         }
         return Optional.ofNullable(accessToken);
     }
@@ -217,10 +226,18 @@ public class MongoTokenRepository implements TokenRepository {
     }
 
     private OAuth2Authentication deserializeAuthentication(byte[] authentication) {
-        return SerializationUtils.deserialize(authentication);
+        try {
+            return SerializationUtils.deserialize(authentication);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private byte[] serializeAuthentication(OAuth2Authentication authentication) {
-        return SerializationUtils.serialize(authentication);
+        try {
+            return SerializationUtils.serialize(authentication);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

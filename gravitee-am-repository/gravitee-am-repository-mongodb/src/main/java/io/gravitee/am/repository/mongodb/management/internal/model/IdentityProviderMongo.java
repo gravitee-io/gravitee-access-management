@@ -39,6 +39,8 @@ public class IdentityProviderMongo extends Auditable {
 
     private Map<String, String> mappers;
 
+    private Map<String, String[]> roleMapper;
+
     private String domain;
 
     public String getId() {
@@ -79,6 +81,14 @@ public class IdentityProviderMongo extends Auditable {
 
     public void setMappers(Map<String, String> mappers) {
         this.mappers = mappers;
+    }
+
+    public Map<String, String[]> getRoleMapper() {
+        return roleMapper;
+    }
+
+    public void setRoleMapper(Map<String, String[]> roleMapper) {
+        this.roleMapper = roleMapper;
     }
 
     public String getDomain() {

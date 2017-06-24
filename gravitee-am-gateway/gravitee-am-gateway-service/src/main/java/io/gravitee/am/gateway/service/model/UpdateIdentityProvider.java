@@ -32,6 +32,8 @@ public class UpdateIdentityProvider {
 
     private Map<String, String> mappers;
 
+    private Map<String, String[]> roleMapper;
+
     public String getName() {
         return name;
     }
@@ -54,6 +56,14 @@ public class UpdateIdentityProvider {
 
     public void setMappers(Map<String, String> mappers) {
         this.mappers = mappers;
+    }
+
+    public Map<String, String[]> getRoleMapper() {
+        return roleMapper;
+    }
+
+    public void setRoleMapper(Map<String, String[]> roleMapper) {
+        this.roleMapper = roleMapper;
     }
 
     @Override

@@ -28,4 +28,8 @@ public interface IdentityProvider {
     default Class<? extends IdentityProviderMapper> mapper() {
         return null;
     }
+
+    default Class<? extends IdentityProviderRoleMapper> roleMapper() {
+        return null;
+    }
 }

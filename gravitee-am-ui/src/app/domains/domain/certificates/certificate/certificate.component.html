@@ -21,11 +21,11 @@
     <md-card-content>
       <form #certificateForm="ngForm" fxLayout="column">
         <h4>General</h4>
-        <md-input-container fxLayout="row" fxFlex>
+        <md-input-container>
           <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
         </md-input-container>
 
-        <h4 style="margin-top: 50px;">Configuration</h4>
+        <h4>Configuration</h4>
         <certificate-form *ngIf="certificate" [certificateConfiguration]="certificateConfiguration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateUpdate($event)"></certificate-form>
       </form>
 

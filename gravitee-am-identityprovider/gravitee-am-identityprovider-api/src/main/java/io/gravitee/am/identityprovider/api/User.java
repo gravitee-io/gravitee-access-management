@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.api;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,6 +46,13 @@ public interface User extends Serializable {
      * @return <code>true</code> if the user is enabled, <code>false</code> otherwise
      */
     boolean isEnabled();
+
+    /**
+     * Returns the user roles
+     *
+     * @return the user roles
+     */
+    List<String> getRoles();
 
     /**
      *

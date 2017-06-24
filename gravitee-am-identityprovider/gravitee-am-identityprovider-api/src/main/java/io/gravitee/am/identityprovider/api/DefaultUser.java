@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,6 +29,8 @@ public class DefaultUser implements User {
     private boolean accountExpired = false;
 
     private boolean enabled = true;
+
+    private List<String> roles;
 
     private Map<String, Object> additonalInformation;
 
@@ -69,6 +72,15 @@ public class DefaultUser implements User {
     @Override
     public Map<String, Object> getAdditionalInformation() {
         return additonalInformation;
+    }
+
+    @Override
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 
     @Override

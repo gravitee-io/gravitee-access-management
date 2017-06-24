@@ -73,6 +73,13 @@
     <input mdInput #inputScope (keyup.enter)="addScope(inputScope, $event)" placeholder="New scope..."/>
   </md-input-container>
 
+  <h5 style="margin: 10px 0 10px 0;">Enhance scopes</h5>
+  <md-slide-toggle
+    (change)="enhanceScopesWithUserPermissions($event)"
+    [checked]="isScopesEnhanceWithUserPermissions()">
+  </md-slide-toggle>
+  <md-hint><small class="hint">Enhance client scopes with user permissions. Useful for fine tuned resources access.</small></md-hint>
+
   <h4>Tokens</h4>
   <div fxLayout="row">
     <md-input-container fxFlex style="margin-right: 20px;">

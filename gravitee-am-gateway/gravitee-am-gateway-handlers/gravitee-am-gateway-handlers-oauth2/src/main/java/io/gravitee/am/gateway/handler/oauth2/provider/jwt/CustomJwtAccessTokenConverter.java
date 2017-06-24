@@ -20,8 +20,10 @@ import io.gravitee.am.gateway.handler.oauth2.oidc.OIDCClaims;
 import io.gravitee.am.gateway.handler.oauth2.provider.client.DelegateClientDetails;
 import io.gravitee.am.gateway.handler.oauth2.provider.token.DefaultIntrospectionAccessTokenConverter;
 import io.gravitee.am.gateway.handler.oauth2.security.CertificateManager;
+import io.gravitee.am.gateway.service.RoleService;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Role;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,10 +42,8 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.interfaces.RSAPrivateKey;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -62,6 +62,9 @@ public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter imple
 
     @Autowired
     private CertificateManager certificateManager;
+
+    @Autowired
+    private RoleService roleService;
 
     private Signer signer;
 
@@ -88,10 +91,14 @@ public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter imple
         // fetch client details
         setClientDetails(authentication.getOAuth2Request().getClientId());
 
-        // enhance token
+        // enhance token scopes
+        enhanceTokenScopes(accessToken, authentication);
+
+        // enhance token with ID token
         if (authentication.getOAuth2Request().getScope() != null && authentication.getOAuth2Request().getScope().contains(OPEN_ID)) {
             return enhance0(accessToken, authentication);
         }
+
         return super.enhance(accessToken, authentication);
     }
 
@@ -183,5 +190,25 @@ public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter imple
             clientDetails = clientService.loadClientByClientId(clientId);
         } catch (Exception ex) {
         }
+    }
+
+    private OAuth2AccessToken enhanceTokenScopes(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
+        // enhance token scopes with user permissions
+        if (clientDetails != null && clientDetails instanceof DelegateClientDetails) {
+            Client client = ((DelegateClientDetails) clientDetails).getClient();
+            if (!authentication.isClientOnly()
+                    && client.isEnhanceScopesWithUserPermissions()
+                    && authentication.getUserAuthentication().getPrincipal() instanceof User) {
+                User user = (User) authentication.getUserAuthentication().getPrincipal();
+                if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+                    Set<Role> roles = roleService.findByIdIn(user.getRoles());
+                    Set<String> enhanceScopes = new HashSet<>(accessToken.getScope());
+                    enhanceScopes.addAll(roles.stream().map(r -> r.getPermissions()).flatMap(List::stream).collect(Collectors.toList()));
+                    ((DefaultOAuth2AccessToken) accessToken).setScope(enhanceScopes);
+                }
+            }
+        }
+
+        return accessToken;
     }
 }

@@ -42,5 +42,10 @@ public class LdapIdentityProvider implements IdentityProvider {
         return LdapIdentityProviderMapper.class;
     }
 
+    @Override
+    public Class<? extends LdapIdentityProviderRoleMapper> roleMapper() {
+        return LdapIdentityProviderRoleMapper.class;
+    }
+
 
 }
