@@ -43,4 +43,8 @@ public class InlineIdentityProvider implements IdentityProvider {
     }
 
 
+    @Override
+    public Class<? extends InlineIdentityProviderRoleMapper> roleMapper() {
+        return InlineIdentityProviderRoleMapper.class;
+    }
 }

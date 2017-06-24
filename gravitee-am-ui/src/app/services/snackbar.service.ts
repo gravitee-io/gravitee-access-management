@@ -15,6 +15,7 @@
  */
 import { Injectable } from '@angular/core';
 import { MdSnackBar, MdSnackBarConfig } from "@angular/material";
+import { SnackbarComponent } from "../components/snackbar/snackbar.component";
 
 @Injectable()
 export class SnackbarService {
@@ -25,5 +26,13 @@ export class SnackbarService {
     let config = new MdSnackBarConfig();
     config.duration = 1500;
     this.snackBar.open(message, '', config);
+  }
+
+  openFromComponent(title: string, errors: any) {
+    let config = new MdSnackBarConfig();
+    config.duration = 3000;
+    let snackBarRef = this.snackBar.openFromComponent(SnackbarComponent, config);
+    snackBarRef.instance.title = title;
+    snackBarRef.instance.errors = errors
   }
 }

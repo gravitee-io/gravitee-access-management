@@ -48,7 +48,8 @@ export class ClientService {
       'idTokenCustomClaims': client.idTokenCustomClaims,
       'enabled': client.enabled,
       'identities': client.identities,
-      'certificate': client.certificate
+      'certificate': client.certificate,
+      'enhanceScopesWithUserPermissions' : client.enhanceScopesWithUserPermissions
     });
   }
 

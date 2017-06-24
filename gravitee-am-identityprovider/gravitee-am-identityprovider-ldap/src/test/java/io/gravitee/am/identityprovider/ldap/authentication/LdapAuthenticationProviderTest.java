@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderMapper;
+import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.ldap.authentication.spring.EmbeddedLdapExecutionListener;
 import io.gravitee.am.identityprovider.ldap.authentication.spring.LdapAuthenticationProviderTestConfiguration;
 import org.junit.Assert;
@@ -97,6 +98,11 @@ public class LdapAuthenticationProviderTest {
         @Bean
         public LdapIdentityProviderMapper mapper() {
             return new LdapIdentityProviderMapper();
+        }
+
+        @Bean
+        public LdapIdentityProviderRoleMapper roleMapper() {
+            return new LdapIdentityProviderRoleMapper();
         }
     }
 }

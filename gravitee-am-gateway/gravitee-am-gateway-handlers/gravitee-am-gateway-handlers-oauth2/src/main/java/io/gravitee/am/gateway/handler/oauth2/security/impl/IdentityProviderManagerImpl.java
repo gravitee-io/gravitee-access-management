@@ -66,7 +66,8 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
             logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
 
             AuthenticationProvider authenticationProvider =
-                    identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider.getMappers());
+                    identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
+                            identityProvider.getMappers(), identityProvider.getRoleMapper());
             providers.put(identityProvider.getId(), authenticationProvider);
         });
     }

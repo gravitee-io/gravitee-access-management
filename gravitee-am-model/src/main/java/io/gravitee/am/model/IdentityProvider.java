@@ -34,6 +34,8 @@ public class IdentityProvider {
 
     private Map<String, String> mappers;
 
+    private Map<String, String[]> roleMapper;
+
     private String domain;
 
     private Date createdAt;
@@ -78,6 +80,14 @@ public class IdentityProvider {
 
     public void setMappers(Map<String, String> mappers) {
         this.mappers = mappers;
+    }
+
+    public Map<String, String[]> getRoleMapper() {
+        return roleMapper;
+    }
+
+    public void setRoleMapper(Map<String, String[]> roleMapper) {
+        this.roleMapper = roleMapper;
     }
 
     public String getDomain() {

@@ -15,14 +15,8 @@
  */
 package io.gravitee.am.gateway.idp.core.impl;
 
-import io.gravitee.am.gateway.idp.core.IdentityProviderConfigurationFactory;
-import io.gravitee.am.gateway.idp.core.IdentityProviderDefinition;
-import io.gravitee.am.gateway.idp.core.IdentityProviderMapperFactory;
-import io.gravitee.am.gateway.idp.core.IdentityProviderPluginManager;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.IdentityProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.gateway.idp.core.*;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
@@ -62,6 +56,9 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     @Autowired
     private IdentityProviderMapperFactory identityProviderMapperFactory;
 
+    @Autowired
+    private IdentityProviderRoleMapperFactory identityProviderRoleMapperFactory;
+
     @Override
     public void register(IdentityProviderDefinition identityProviderPluginDefinition) {
         identityProviders.putIfAbsent(identityProviderPluginDefinition.getPlugin().id(),
@@ -83,7 +80,7 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     }
 
     @Override
-    public AuthenticationProvider create(String type, String configuration, Map<String, String> mappers) {
+    public AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper) {
         logger.debug("Looking for an authentication provider for [{}]", type);
         IdentityProvider identityProvider = identityProviders.get(type);
 
@@ -94,10 +91,13 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
             Class<? extends IdentityProviderMapper> mapperClass = identityProvider.mapper();
             IdentityProviderMapper identityProviderMapper = identityProviderMapperFactory.create(mapperClass, mappers);
 
+            Class<? extends IdentityProviderRoleMapper> roleMapperClass = identityProvider.roleMapper();
+            IdentityProviderRoleMapper identityProviderRoleMapper = identityProviderRoleMapperFactory.create(roleMapperClass, roleMapper);
+
             return create0(
                     identityProviderPlugins.get(identityProvider),
                     identityProvider.authenticationProvider(),
-                    identityProviderConfiguration, identityProviderMapper);
+                    identityProviderConfiguration, identityProviderMapper, identityProviderRoleMapper);
         } else {
             logger.error("No identity provider is registered for type {}", type);
             throw new IllegalStateException("No identity provider is registered for type " + type);
@@ -123,7 +123,8 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
         return null;
     }
 
-    private <T> T create0(Plugin plugin, Class<T> identityClass, IdentityProviderConfiguration identityProviderConfiguration, IdentityProviderMapper identityProviderMapper) {
+    private <T> T create0(Plugin plugin, Class<T> identityClass, IdentityProviderConfiguration identityProviderConfiguration,
+                          IdentityProviderMapper identityProviderMapper, IdentityProviderRoleMapper identityProviderRoleMapper) {
         if (identityClass == null) {
             return null;
         }
@@ -151,6 +152,10 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
                     // Add identity provider mapper bean
                     configurableApplicationContext.addBeanFactoryPostProcessor(
                             new IdentityProviderMapperBeanFactoryPostProcessor(identityProviderMapper));
+
+                    // Add identity provider role mapper bean
+                    configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new IdentityProviderRoleMapperBeanFactoryPostProcessor(identityProviderRoleMapper));
 
                     return configurableApplicationContext;
                 }

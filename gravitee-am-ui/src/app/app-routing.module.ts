@@ -35,6 +35,7 @@ import { ClientsResolver } from "./resolvers/clients.resolver";
 import { ClientResolver } from "./resolvers/client.resolver";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
 import { ProviderResolver } from "./resolvers/provider.resolver";
+import { ProviderRolesComponent } from "./domains/domain/providers/provider/roles/roles.component";
 import { DomainLoginComponent } from "./domains/domain/login/login.component";
 import { DomainLoginFormResolver } from "./resolvers/domain-login-form.resolver";
 import { ProviderSettingsComponent } from "./domains/domain/providers/provider/settings/settings.component";
@@ -46,6 +47,11 @@ import { CertificatesResolver } from "./resolvers/certificates.resolver";
 import { CertificateCreationComponent } from "./domains/domain/certificates/creation/certificate-creation.component";
 import { CertificateComponent } from "./domains/domain/certificates/certificate/certificate.component";
 import { CertificateResolver } from "./resolvers/certificate.resolver";
+import { RolesComponent } from "./domains/domain/roles/roles.component";
+import { RolesResolver } from "./resolvers/roles.resolver";
+import { RoleCreationComponent } from "./domains/domain/roles/creation/role-creation.component";
+import { RoleComponent } from "./domains/domain/roles/role/role.component";
+import { RoleResolver } from "./resolvers/role.resolver";
 
 const routes: Routes = [
   { path: 'domains',
@@ -139,7 +145,8 @@ const routes: Routes = [
         children: [
           { path: '', redirectTo: 'settings', pathMatch: 'full' },
           { path: 'settings', component: ProviderSettingsComponent },
-          { path: 'mappers', component: ProviderMappersComponent }
+          { path: 'mappers', component: ProviderMappersComponent },
+          { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver} }
         ]
       },
       { path: 'certificates', component: CertificatesComponent,
@@ -161,6 +168,27 @@ const routes: Routes = [
         component: CertificateComponent,
         resolve: {
           certificate: CertificateResolver
+        }
+      },
+      { path: 'roles', component: RolesComponent,
+        resolve: {
+          roles: RolesResolver
+        },
+        data: {
+          menu: {
+            label: 'Roles',
+            icon: 'supervisor_account',
+          }
+        }
+      },
+      { path: 'roles/new',
+        component: RoleCreationComponent
+      },
+      {
+        path: 'roles/:roleId',
+        component: RoleComponent,
+        resolve: {
+          role: RoleResolver
         }
       }
     ]

@@ -17,7 +17,6 @@ import { getControl, inArray, isDefined } from '../../library/utilities/index';
           [required]="options?.required"
           [attr.readonly]="options?.readonly ? 'readonly' : null"
           [attr.step]="options?.multipleOf || options?.step || 'any'"
-          [class]="options?.fieldHtmlClass"
           [disabled]="controlDisabled"
           [id]="'control' + layoutNode?._id"
           [name]="controlName"

@@ -40,7 +40,7 @@ public class MongoAuthorizationCodeRepository implements AuthorizationCodeReposi
     public void store(OAuth2AuthorizationCode oAuth2AuthorizationCode) {
         OAuth2AuthorizationCodeMongo oAuth2AuthorizationCodeMongo = new OAuth2AuthorizationCodeMongo();
         oAuth2AuthorizationCodeMongo.setCode(oAuth2AuthorizationCode.getCode());
-        oAuth2AuthorizationCodeMongo.setOAuth2Authentication(SerializationUtils.serialize(oAuth2AuthorizationCode.getOAuth2Authentication()));
+        oAuth2AuthorizationCodeMongo.setOAuth2Authentication(serializeAuthentication(oAuth2AuthorizationCode.getOAuth2Authentication()));
         oAuth2AuthorizationCodeMongo.setExpiration(oAuth2AuthorizationCode.getExpiration());
         oAuth2AuthorizationCodeMongo.setCreatedAt(oAuth2AuthorizationCode.getCreatedAt());
         oAuth2AuthorizationCodeMongo.setUpdatedAt(oAuth2AuthorizationCode.getUpdatedAt());
@@ -51,6 +51,22 @@ public class MongoAuthorizationCodeRepository implements AuthorizationCodeReposi
     @Override
     public Optional<OAuth2Authentication> remove(String code) {
         OAuth2AuthorizationCodeMongo oAuth2AuthorizationCodeMongo =  oAuth2AuthorizationCodeMongoRepository.remove(code);
-        return Optional.ofNullable((oAuth2AuthorizationCodeMongo == null) ? null : SerializationUtils.deserialize(oAuth2AuthorizationCodeMongo.getOAuth2Authentication()));
+        return Optional.ofNullable((oAuth2AuthorizationCodeMongo == null) ? null : deserializeAuthentication(oAuth2AuthorizationCodeMongo.getOAuth2Authentication()));
+    }
+
+    private OAuth2Authentication deserializeAuthentication(byte[] authentication) {
+        try {
+            return SerializationUtils.deserialize(authentication);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private byte[] serializeAuthentication(OAuth2Authentication authentication) {
+        try {
+            return SerializationUtils.serialize(authentication);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

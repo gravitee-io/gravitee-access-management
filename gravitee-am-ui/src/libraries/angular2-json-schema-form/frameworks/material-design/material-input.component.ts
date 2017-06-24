@@ -15,7 +15,6 @@ import { JsonSchemaFormService } from '../../library/json-schema-form.service';
           [attr.minlength]="options?.minLength"
           [attr.pattern]="options?.pattern"
           [required]="options?.required"
-          [class]="options?.fieldHtmlClass"
           [disabled]="controlDisabled"
           [id]="'control' + layoutNode?._id"
           [name]="controlName"

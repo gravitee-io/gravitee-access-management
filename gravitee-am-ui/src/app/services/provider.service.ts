@@ -40,7 +40,8 @@ export class ProviderService {
     return this.http.put(this.providersURL + domainId + "/identities/" + id, {
       'name' : provider.name,
       'configuration' : provider.configuration,
-      'mappers' : provider.mappers
+      'mappers' : provider.mappers,
+      'roleMapper' : provider.roleMapper
     });
   }
 

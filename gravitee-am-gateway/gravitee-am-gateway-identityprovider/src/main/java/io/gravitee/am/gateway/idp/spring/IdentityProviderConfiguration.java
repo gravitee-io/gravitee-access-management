@@ -18,9 +18,11 @@ package io.gravitee.am.gateway.idp.spring;
 import io.gravitee.am.gateway.idp.core.IdentityProviderConfigurationFactory;
 import io.gravitee.am.gateway.idp.core.IdentityProviderMapperFactory;
 import io.gravitee.am.gateway.idp.core.IdentityProviderPluginManager;
+import io.gravitee.am.gateway.idp.core.IdentityProviderRoleMapperFactory;
 import io.gravitee.am.gateway.idp.core.impl.IdentityProviderConfigurationFactoryImpl;
 import io.gravitee.am.gateway.idp.core.impl.IdentityProviderMapperFactoryImpl;
 import io.gravitee.am.gateway.idp.core.impl.IdentityProviderPluginManagerImpl;
+import io.gravitee.am.gateway.idp.core.impl.IdentityProviderRoleMapperFactoryImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -44,5 +46,10 @@ public class IdentityProviderConfiguration {
     @Bean
     public IdentityProviderMapperFactory identityProviderMapperFactory() {
         return new IdentityProviderMapperFactoryImpl();
+    }
+
+    @Bean
+    public IdentityProviderRoleMapperFactory identityProviderRoleMapperFactory() {
+        return new IdentityProviderRoleMapperFactoryImpl();
     }
 }

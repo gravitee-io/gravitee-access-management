@@ -25,7 +25,9 @@ import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbS
 export class ProviderComponent implements OnInit {
   private domainId: string;
   provider: any;
-  navLinks: any = [{'href': 'settings' , 'label': 'Settings'}, {'href': 'mappers' , 'label': 'Mappers'}];
+  navLinks: any = [{'href': 'settings' , 'label': 'Settings'},
+    {'href': 'mappers' , 'label': 'User mappers'},
+    {'href': 'roles' , 'label': 'Role mappers'}];
 
   constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) { }
 
@@ -37,6 +39,7 @@ export class ProviderComponent implements OnInit {
 
   initBreadcrumb() {
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/providers/'+this.provider.id+'$', this.provider.name);
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/providers/'+this.provider.id+'/mappers$', 'mappers');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/providers/'+this.provider.id+'/mappers$', 'user mappers');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/providers/'+this.provider.id+'/roles$', 'role mappers');
   }
 }

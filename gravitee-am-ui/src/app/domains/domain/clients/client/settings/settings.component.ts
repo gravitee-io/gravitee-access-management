@@ -93,6 +93,15 @@ export class ClientSettingsComponent implements OnInit {
     return this.client.autoApproveScopes && this.client.autoApproveScopes.indexOf('true') > -1;
   }
 
+  enhanceScopesWithUserPermissions(event) {
+    this.client.enhanceScopesWithUserPermissions = event.checked;
+    this.formChanged = true;
+  }
+
+  isScopesEnhanceWithUserPermissions() {
+    return this.client.enhanceScopesWithUserPermissions;
+  }
+
   update() {
     this.client.authorizedGrantTypes = this.selectedGrantTypes;
     this.clientService.update(this.domainId, this.client.id, this.client).map(res => res.json()).subscribe(data => {
