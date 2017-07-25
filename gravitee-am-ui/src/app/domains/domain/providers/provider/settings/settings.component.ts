@@ -18,7 +18,7 @@ import { ProviderService } from "../../../../../services/provider.service";
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { ActivatedRoute } from "@angular/router";
 import { PlatformService } from "../../../../../services/platform.service";
-import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
+import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 
 @Component({
   selector: 'provider-settings',

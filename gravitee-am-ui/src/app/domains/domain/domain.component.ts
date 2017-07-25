@@ -16,7 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
 import { SidenavService } from "../../components/sidenav/sidenav.service";
-import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
+import { BreadcrumbService } from "../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 
 @Component({
   selector: 'app-domain',
@@ -31,7 +31,9 @@ export class DomainComponent implements OnInit {
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
-    this.sidenavService.notify(this.domain);
+    setTimeout(() => {
+      this.sidenavService.notify(this.domain);
+    });
     this.initBreadcrumb();
   }
 
