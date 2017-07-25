@@ -74,7 +74,7 @@ import { ProviderResolver } from "./resolvers/provider.resolver";
 import { DomainLoginFormResolver } from "./resolvers/domain-login-form.resolver";
 import { ProviderSettingsComponent } from './domains/domain/providers/provider/settings/settings.component';
 import { CreateMapperComponent, ProviderMappersComponent } from './domains/domain/providers/provider/mappers/mappers.component';
-import { Ng2BreadcrumbModule } from "ng2-breadcrumb/bundles/app.module";
+import { Ng2BreadcrumbModule } from "libraries/ng2-breadcrumb/app.module";
 import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.component';
 import { CertificatesComponent, CertitificatePublicKeyDialog } from './domains/domain/certificates/certificates.component';
 import { CertificateCreationComponent } from './domains/domain/certificates/creation/certificate-creation.component';

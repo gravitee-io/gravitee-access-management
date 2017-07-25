@@ -17,7 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
 import { RoleService } from "../../../../services/role.service";
 import { SnackbarService } from "../../../../services/snackbar.service";
-import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
+import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 
 @Component({
   selector: 'app-role',

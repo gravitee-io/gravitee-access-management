@@ -17,7 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { DomainService } from "../../services/domain.service";
 import { SnackbarService } from "../../services/snackbar.service";
 import { Router } from "@angular/router";
-import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
+import { BreadcrumbService } from "../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 
 @Component({
   selector: 'app-creation',

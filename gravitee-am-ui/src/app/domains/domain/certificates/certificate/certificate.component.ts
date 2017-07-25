@@ -15,7 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
-import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
+import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { PlatformService } from "../../../../services/platform.service";
 import { CertificateService } from "../../../../services/certificate.service";
 import { SnackbarService } from "../../../../services/snackbar.service";

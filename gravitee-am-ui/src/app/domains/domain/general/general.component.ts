@@ -18,7 +18,7 @@ import { DomainService } from "../../../services/domain.service";
 import { DialogService } from "../../../services/dialog.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../services/snackbar.service";
-import { BreadcrumbService } from "ng2-breadcrumb/bundles/components/breadcrumbService";
+import { BreadcrumbService } from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { SidenavService } from "../../../components/sidenav/sidenav.service";
 
 @Component({
