@@ -68,7 +68,13 @@ public class RepositoryTokenStore implements TokenStore {
 
     @Override
     public void storeAccessToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
-        tokenRepository.storeAccessToken(convert(token), RepositoryProviderUtils.convert(authentication));
+        io.gravitee.am.repository.oauth2.model.OAuth2AccessToken accessToken = convert(token);
+
+        // store date information
+        accessToken.setCreatedAt(new Date());
+        accessToken.setUpdatedAt(accessToken.getCreatedAt());
+
+        tokenRepository.storeAccessToken(accessToken, RepositoryProviderUtils.convert(authentication));
     }
 
     @Override
@@ -88,8 +94,14 @@ public class RepositoryTokenStore implements TokenStore {
     }
 
     @Override
-    public void storeRefreshToken(OAuth2RefreshToken refreshToken, OAuth2Authentication authentication) {
-        tokenRepository.storeRefreshToken(convert(refreshToken), RepositoryProviderUtils.convert(authentication));
+    public void storeRefreshToken(OAuth2RefreshToken _refreshToken, OAuth2Authentication authentication) {
+        io.gravitee.am.repository.oauth2.model.OAuth2RefreshToken refreshToken = convert(_refreshToken);
+
+        // store date information
+        refreshToken.setCreatedAt(new Date());
+        refreshToken.setUpdatedAt(refreshToken.getCreatedAt());
+
+        tokenRepository.storeRefreshToken(refreshToken, RepositoryProviderUtils.convert(authentication));
     }
 
     @Override

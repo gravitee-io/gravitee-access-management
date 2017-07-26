@@ -177,6 +177,8 @@ public class MongoTokenRepository implements TokenRepository {
     private OAuth2RefreshToken convert(OAuth2RefreshTokenMongo oAuth2RefreshTokenMongo) {
         OAuth2RefreshToken oAuth2RefreshToken = new OAuth2RefreshToken(oAuth2RefreshTokenMongo.getValue());
         oAuth2RefreshToken.setExpiration(oAuth2RefreshTokenMongo.getExpiration());
+        oAuth2RefreshToken.setCreatedAt(oAuth2RefreshTokenMongo.getCreatedAt());
+        oAuth2RefreshToken.setUpdatedAt(oAuth2RefreshTokenMongo.getUpdatedAt());
 
         return oAuth2RefreshToken;
     }
@@ -186,6 +188,8 @@ public class MongoTokenRepository implements TokenRepository {
         oAuth2RefreshTokenMongo.setValue(oAuth2RefreshToken.getValue());
         oAuth2RefreshTokenMongo.setExpiration(oAuth2RefreshToken.getExpiration());
         oAuth2RefreshTokenMongo.setAuthentication(serializeAuthentication(oAuth2Authentication));
+        oAuth2RefreshTokenMongo.setCreatedAt(oAuth2RefreshToken.getCreatedAt());
+        oAuth2RefreshTokenMongo.setUpdatedAt(oAuth2RefreshToken.getUpdatedAt());
 
         return oAuth2RefreshTokenMongo;
     }
@@ -205,6 +209,8 @@ public class MongoTokenRepository implements TokenRepository {
         oAuth2AccessToken.setExpiration(oAuth2AccessTokenMongo.getExpiration());
         oAuth2AccessToken.setScope(oAuth2AccessTokenMongo.getScope());
         oAuth2AccessToken.setTokenType(oAuth2AccessTokenMongo.getTokenType());
+        oAuth2AccessToken.setCreatedAt(oAuth2AccessTokenMongo.getCreatedAt());
+        oAuth2AccessToken.setUpdatedAt(oAuth2AccessTokenMongo.getUpdatedAt());
 
         return oAuth2AccessToken;
     }
@@ -221,6 +227,8 @@ public class MongoTokenRepository implements TokenRepository {
         oAuth2AccessTokenMongo.setClientId(oAuth2Authentication.getOAuth2Request().getClientId());
         oAuth2AccessTokenMongo.setAuthenticationKey(authenticationKeyGenerator.extractKey(oAuth2Authentication));
         oAuth2AccessTokenMongo.setAuthentication(serializeAuthentication(oAuth2Authentication));
+        oAuth2AccessTokenMongo.setCreatedAt(oAuth2AccessToken.getCreatedAt());
+        oAuth2AccessTokenMongo.setUpdatedAt(oAuth2AccessToken.getUpdatedAt());
 
         return oAuth2AccessTokenMongo;
     }
