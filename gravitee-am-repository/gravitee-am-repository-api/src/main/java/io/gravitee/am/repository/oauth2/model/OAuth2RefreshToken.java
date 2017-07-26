@@ -27,6 +27,10 @@ public class OAuth2RefreshToken {
 
     private Date expiration;
 
+    private Date createdAt;
+
+    private Date updatedAt;
+
     public OAuth2RefreshToken(String value) {
         this.value = value;
     }
@@ -45,5 +49,21 @@ public class OAuth2RefreshToken {
 
     public void setExpiration(Date expiration) {
         this.expiration = expiration;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

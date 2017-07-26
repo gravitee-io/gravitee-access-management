@@ -37,6 +37,10 @@ public class OAuth2AccessToken {
 
     private Map<String, Object> additionalInformation = Collections.emptyMap();
 
+    private Date createdAt;
+
+    private Date updatedAt;
+
     public OAuth2AccessToken(String value) {
         this.value = value;
     }
@@ -87,5 +91,21 @@ public class OAuth2AccessToken {
 
     public void setAdditionalInformation(Map<String, Object> additionalInformation) {
         this.additionalInformation = new LinkedHashMap<String, Object>(additionalInformation);
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }
