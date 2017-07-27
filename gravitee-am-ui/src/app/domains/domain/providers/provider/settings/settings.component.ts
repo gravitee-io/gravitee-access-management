@@ -32,6 +32,7 @@ export class ProviderSettingsComponent implements OnInit {
   providerSchema: any;
   provider: any;
   providerConfiguration: any;
+  updateProviderConfiguration: any;
 
   constructor(private providerService: ProviderService, private platformService: PlatformService,
               private snackbarService: SnackbarService, private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) { }
@@ -40,20 +41,28 @@ export class ProviderSettingsComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.provider = this.route.snapshot.parent.data['provider'];
     this.providerConfiguration = JSON.parse(this.provider.configuration);
-    this.platformService.identitySchema(this.provider.type).map(res => res.json()).subscribe(data => this.providerSchema = data);
+    this.updateProviderConfiguration = this.providerConfiguration;
+    this.platformService.identitySchema(this.provider.type).map(res => res.json()).subscribe(data => {
+      this.providerSchema = data;
+      // handle default null values
+      let self = this;
+      Object.keys(this.providerSchema['properties']).forEach(function(key) {
+        self.providerSchema['properties'][key].default = '';
+      });
+    });
   }
 
   update() {
-    this.provider.configuration = JSON.stringify(this.provider.configuration);
+    this.provider.configuration = JSON.stringify(this.updateProviderConfiguration);
     this.providerService.update(this.domainId, this.provider.id, this.provider).map(res => res.json()).subscribe(data => {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/providers/'+this.provider.id+'$', this.provider.name);
       this.snackbarService.open("Provider updated");
-    })
+    });
   }
 
   enableProviderUpdate(configurationWrapper) {
     this.configurationPristine = false;
     this.configurationIsValid = configurationWrapper.isValid;
-    this.provider.configuration = configurationWrapper.configuration;
+    this.updateProviderConfiguration = configurationWrapper.configuration;
   }
 }
