@@ -31,10 +31,7 @@
     <name>Gravitee IO - Access Management - Gateway - Handlers - Management</name>
 
     <properties>
-        <gravitee-oauth2-repository-api.version>0.1.0-SNAPSHOT</gravitee-oauth2-repository-api.version>
-        <gravitee-oauth2-repository-mongodb.version>0.1.0-SNAPSHOT</gravitee-oauth2-repository-mongodb.version>
         <jersey.version>2.23.2</jersey.version>
-        <spring-security-oauth2.version>2.1.0.RELEASE</spring-security-oauth2.version>
     </properties>
 
     <dependencies>

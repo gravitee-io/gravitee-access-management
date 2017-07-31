@@ -22,7 +22,6 @@ import io.gravitee.am.gateway.jetty.spring.JettyContainerConfiguration;
 import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.repository.spring.RepositoryConfiguration;
 import io.gravitee.am.gateway.services.spring.ServiceConfiguration;
-import io.gravitee.am.repository.mongodb.management.ManagementRepositoryConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.common.node.Node;
@@ -46,7 +45,6 @@ import org.springframework.context.annotation.Import;
         IdentityProviderConfiguration.class,
         CertificateConfiguration.class,
         io.gravitee.am.gateway.service.ServiceConfiguration.class,
-        ManagementRepositoryConfiguration.class,
         CoreConfiguration.class})
 public class StandaloneConfiguration {
 

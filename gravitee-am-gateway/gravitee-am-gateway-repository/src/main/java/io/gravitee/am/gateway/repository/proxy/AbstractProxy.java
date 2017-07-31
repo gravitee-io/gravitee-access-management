@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.repository.spring;
-
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+package io.gravitee.am.gateway.repository.proxy;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Configuration
-@ComponentScan(basePackages = "io.gravitee.am.gateway.repository.proxy")
-public class RepositoryConfiguration {
+public abstract class AbstractProxy<T> {
 
+    protected T target;
+
+    public void setTarget(T target) {
+        this.target = target;
+    }
 }
+

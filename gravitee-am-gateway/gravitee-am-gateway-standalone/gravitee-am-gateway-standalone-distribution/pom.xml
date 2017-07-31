@@ -89,6 +89,14 @@
 			<type>zip</type>
 			<scope>runtime</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>io.gravitee.am.repository</groupId>
+			<artifactId>gravitee-am-repository-mongodb</artifactId>
+			<version>${project.version}</version>
+			<type>zip</type>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -134,6 +142,14 @@
 								<artifactItem>
 									<groupId>io.gravitee.am.certificate</groupId>
 									<artifactId>gravitee-am-certificate-javakeystore</artifactId>
+									<version>${project.version}</version>
+									<type>zip</type>
+								</artifactItem>
+
+								<!-- Repositories -->
+								<artifactItem>
+									<groupId>io.gravitee.am.repository</groupId>
+									<artifactId>gravitee-am-repository-mongodb</artifactId>
 									<version>${project.version}</version>
 									<type>zip</type>
 								</artifactItem>

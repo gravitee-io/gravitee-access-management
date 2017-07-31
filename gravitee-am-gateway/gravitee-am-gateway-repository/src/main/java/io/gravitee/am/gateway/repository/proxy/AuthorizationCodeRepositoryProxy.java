@@ -13,17 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.repository.spring;
+package io.gravitee.am.gateway.repository.proxy;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
+import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
+import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
+import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Configuration
-@ComponentScan(basePackages = "io.gravitee.am.gateway.repository.proxy")
-public class RepositoryConfiguration {
+@Component
+public class AuthorizationCodeRepositoryProxy extends AbstractProxy<AuthorizationCodeRepository> implements AuthorizationCodeRepository {
+
+    public void store(OAuth2AuthorizationCode oAuth2AuthorizationCode) {
+        target.store(oAuth2AuthorizationCode);
+    }
+
+    public Optional<OAuth2Authentication> remove(String code) {
+        return target.remove(code);
+    }
 
 }
