@@ -59,14 +59,6 @@
             <artifactId>gravitee-am-gateway-certificate</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!--
-            TODO: This dependency must be removed as soon as repository is a plugin
-        -->
-        <dependency>
-            <groupId>io.gravitee.am.repository</groupId>
-            <artifactId>gravitee-am-repository-mongodb</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <!-- Validation API-->
         <dependency>

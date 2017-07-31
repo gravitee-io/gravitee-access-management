@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -33,7 +34,10 @@ import org.springframework.data.mongodb.core.MongoTemplate;
  */
 @Configuration
 @ComponentScan("io.gravitee.am.repository.mongodb.oauth2")
-public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfiguration {
+public class OAuth2RepositoryConfiguration {
+
+    @Autowired
+    private Environment environment;
 
     @Autowired
     @Qualifier("oauth2Mongo")
@@ -49,8 +53,7 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
         return new MongoTemplate(mongo, getDatabaseName());
     }
 
-    @Override
-    public Mongo mongo() throws Exception {
-        return mongo;
+    protected String getDatabaseName() {
+        return environment.getProperty("oauth2.mongodb.dbname", "gravitee-am");
     }
 }

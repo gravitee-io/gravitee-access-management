@@ -33,14 +33,13 @@
     <dependencies>
         <!-- Gravitee dependencies -->
         <dependency>
-            <groupId>io.gravitee.am.repository</groupId>
-            <artifactId>gravitee-am-repository-api</artifactId>
-            <version>${project.version}</version>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-core</artifactId>
         </dependency>
 
         <dependency>
             <groupId>io.gravitee.am.repository</groupId>
-            <artifactId>gravitee-am-repository-mongodb</artifactId>
+            <artifactId>gravitee-am-repository-api</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
