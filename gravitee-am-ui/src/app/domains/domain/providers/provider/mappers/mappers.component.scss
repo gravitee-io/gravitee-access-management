@@ -1,6 +1,4 @@
 .provider-mappers-container {
-  margin-top: 20px;
-
   small.note {
     color: grey;
   }
@@ -8,7 +6,9 @@
 
 .ngx-datatable.material {
   box-shadow: none;
-  margin-bottom: 30px;
+  margin-top: 20px;
+  font-size: 14px;
+
 }
 
 .provider-mappers-actions {
@@ -18,9 +18,13 @@
   }
 }
 
+.datatable-input {
+  font-size: 12px;
+}
+
 .add-button {
   position: absolute;
-  bottom: 10px;
+  bottom: 20px;
   right: 20px;
 }
 

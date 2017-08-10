@@ -54,61 +54,60 @@
       <input mdInput type="number" placeholder="ID token validity" name="idTokenValidity" [(ngModel)]="client.idTokenValiditySeconds" />
       <span mdSuffix>seconds</span>
     </md-input-container>
-
-    <h4>Custom Claims</h4>
-    <div class="idtoken-description">
-      You can add custom claims to the ID Token by picking user attributes provided by the client identity provider.
-      <p><small *ngIf="!isEmpty"><i>Double click to edit and press enter to validate changes</i></small></p>
-    </div>
-    <ngx-datatable *ngIf="!isEmpty" [columnMode]="'flex'" class="material" [headerHeight]="40" [footerHeight]="40" [rowHeight]="40" [rows]='claims'>
-      <ngx-datatable-column name="Claims name" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <span (dblclick)="editing[row.$$index + '-key'] = true" *ngIf="!editing[row.$$index + '-key']">
-            {{row.key}}
-          </span>
-          <md-input-container *ngIf="editing[row.$$index + '-key']">
-            <input mdInput type="text" required autofocus placeholder="User attribute"
-                   (keyup.enter)="updateClaim($event, 'key', row)"
-                   (blur)="editing[row.$$index + '-key'] = false"
-                   [value]="row.key" />
-          </md-input-container>
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Claims value" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <span (dblclick)="editing[row.$$index + '-value'] = true" *ngIf="!editing[row.$$index + '-value']">
-            {{row.value}}
-          </span>
-          <md-input-container *ngIf="editing[row.$$index + '-value']">
-            <input mdInput type="text" required autofocus placeholder="Raw attribute"
-                   (keyup.enter)="updateClaim($event, 'value', row)"
-                   (blur)="editing[row.$$index + '-value'] = false"
-                   [value]="row.value" />
-          </md-input-container>
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Actions" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="provider-claims-actions">
-            <button md-icon-button (click)="delete(row.key, $event)"><md-icon>delete</md-icon></button>
-          </div>
-        </ng-template>
-      </ngx-datatable-column>
-    </ngx-datatable>
-
-    <app-emptystate *ngIf="isEmpty"
-                    [message]="'ID Token claims will appear here'"
-                    [subMessage]="'Start creating a claim'"
-                    [icon]="'compare_arrows'"></app-emptystate>
-
-    <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
-      <button md-mini-fab color="accent" (click)="addClaim($event)">
-        <md-icon>add</md-icon>
-      </button>
-    </div>
-
-    <div fxLayout="row" style="margin-top: 40px;">
+    <div fxLayout="row">
       <button md-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>
     </div>
   </form>
+
+  <h4>Custom Claims</h4>
+  <div class="idtoken-description">
+    You can add custom claims to the ID Token by picking user attributes provided by the client identity provider.
+    <p><small *ngIf="!isEmpty"><i>Double click to edit and press enter to save changes</i></small></p>
+  </div>
+  <ngx-datatable *ngIf="!isEmpty" [columnMode]="'flex'" class="material" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]='claims'>
+    <ngx-datatable-column name="Claims name" [flexGrow]="1">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <span (dblclick)="editing[row.$$index + '-key'] = true" *ngIf="!editing[row.$$index + '-key']">
+          {{row.key}}
+        </span>
+        <md-input-container *ngIf="editing[row.$$index + '-key']" class="datatable-input">
+          <input mdInput type="text" required autofocus placeholder="Claim name"
+                 (keyup.enter)="updateClaim($event, 'key', row)"
+                 (blur)="editing[row.$$index + '-key'] = false"
+                 [value]="row.key" />
+        </md-input-container>
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="Claims value" [flexGrow]="1">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <span (dblclick)="editing[row.$$index + '-value'] = true" *ngIf="!editing[row.$$index + '-value']">
+          {{row.value}}
+        </span>
+        <md-input-container *ngIf="editing[row.$$index + '-value']" class="datatable-input">
+          <input mdInput type="text" required autofocus placeholder="Claim value"
+                 (keyup.enter)="updateClaim($event, 'value', row)"
+                 (blur)="editing[row.$$index + '-value'] = false"
+                 [value]="row.value" />
+        </md-input-container>
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="Actions" [flexGrow]="1">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <div fxLayout="row" class="provider-claims-actions">
+          <button md-icon-button (click)="delete(row.key, $event)"><md-icon>delete</md-icon></button>
+        </div>
+      </ng-template>
+    </ngx-datatable-column>
+  </ngx-datatable>
+
+  <app-emptystate *ngIf="isEmpty"
+                  [message]="'ID Token claims will appear here'"
+                  [subMessage]="'Start creating a claim'"
+                  [icon]="'compare_arrows'"></app-emptystate>
+
+  <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+    <button md-fab color="accent" (click)="addClaim($event)">
+      <md-icon>add</md-icon>
+    </button>
+  </div>
 </div>

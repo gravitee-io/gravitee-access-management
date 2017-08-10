@@ -93,6 +93,7 @@ import { RolesComponent } from './domains/domain/roles/roles.component';
 import { RoleCreationComponent } from './domains/domain/roles/creation/role-creation.component';
 import { RoleComponent } from './domains/domain/roles/role/role.component';
 import { SnackbarComponent } from "./components/snackbar/snackbar.component";
+import { ClientIdPComponent } from './domains/domain/clients/client/idp/idp.component';
 
 @NgModule({
   declarations: [
@@ -114,6 +115,7 @@ import { SnackbarComponent } from "./components/snackbar/snackbar.component";
     ClientCreationComponent,
     ClientSettingsComponent,
     ClientOIDCComponent,
+    ClientIdPComponent,
     ProviderCreationStep1Component,
     ProviderCreationStep2Component,
     ProviderComponent,
@@ -138,7 +140,7 @@ import { SnackbarComponent } from "./components/snackbar/snackbar.component";
     RoleCreationComponent,
     RoleComponent,
     CreateRoleMapperComponent,
-    SnackbarComponent
+    SnackbarComponent,
   ],
   imports: [
     BrowserModule,

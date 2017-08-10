@@ -12,13 +12,13 @@ md-list-item {
 }
 
 .idtoken-description {
-  color: grey;
-  font-size: small;
+  font-size: smaller;
 }
 
 ngx-datatable.material {
-  margin-top: 10px;
+  margin-top: 20px;
   box-shadow: none;
+  font-size: 14px;
 }
 
 .provider-claims-actions {
@@ -28,10 +28,12 @@ ngx-datatable.material {
   }
 }
 
+.datatable-input {
+  font-size: 12px;
+}
+
 .add-button {
-  position: absolute;
-  bottom: 60px;
-  right: 20px;
+  text-align: right;
 }
 
 .add-button-center {

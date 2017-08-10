@@ -16,19 +16,17 @@
 
 -->
 <div class="new-provider-container">
-  <h3>New provider</h3>
-  <md-card>
-    <md-card-content>
-      <div *ngIf="currentStep == 1">
-        <provider-creation-step1 [provider]="provider" (providerTypeSelected)="selectProviderType($event)" (nextStepTriggered)="nextStep()"></provider-creation-step1>
-      </div>
+  <h1>New provider</h1>
+  <div class="new-provider-content">
+    <div *ngIf="currentStep == 1">
+      <provider-creation-step1 [provider]="provider" (providerTypeSelected)="selectProviderType($event)" (nextStepTriggered)="nextStep()"></provider-creation-step1>
+    </div>
 
-      <div *ngIf="currentStep > 1">
-        <provider-creation-step2 [provider]="provider"></provider-creation-step2>
-      </div>
-    </md-card-content>
-    <md-card-actions fxLayout="row">
+    <div *ngIf="currentStep > 1">
+      <provider-creation-step2 [provider]="provider"></provider-creation-step2>
+    </div>
+    <div fxLayout="row" style="margin-top: 20px;">
       <button *ngIf="currentStep > 1" md-button (click)="previousStep()">PREVIOUS</button>
-    </md-card-actions>
-  </md-card>
+    </div>
+  </div>
 </div>

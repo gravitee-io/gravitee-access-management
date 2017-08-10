@@ -10,9 +10,11 @@ import { toTitleCase } from '../../library/utilities/index';
 @Component({
   selector: 'material-design-framework',
   template: `
-    <button style="position: absolute; right: 30px;" md-icon-button *ngIf="layoutNode?.arrayItem && options?.removable" (click)="removeItem()">
-      <md-icon style="color: grey; position: absolute; top: 0px;">delete</md-icon>
-    </button>
+    <div *ngIf="layoutNode?.arrayItem && options?.removable" fxLayout="row" style="text-align: end; margin-bottom: -30px;">
+      <button md-icon-button (click)="removeItem()">
+        <md-icon style="color: grey;">delete</md-icon>
+      </button>
+    </div>
     <select-widget-widget
       [formID]="formID"
       [layoutNode]="layoutNode"

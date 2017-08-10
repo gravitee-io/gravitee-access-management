@@ -59,7 +59,7 @@ export class ClientOIDCComponent implements OnInit {
       if (claim) {
         if (!this.claimExits(claim.key)) {
           this.claims.push(claim);
-          this.formChanged = true;
+          this.update("Claim added");
         } else {
           this.snackbarService.open(`Error : claim ${claim.key} already exists`);
         }
@@ -76,15 +76,15 @@ export class ClientOIDCComponent implements OnInit {
       }
       this.editing[row.$$index + '-' + cell] = false;
       this.claims[row.$$index][cell] = claim;
-      this.formChanged = true;
+      this.update("Claim updated");
     }
   }
 
-  update() {
+  update(message: string) {
     this.client.idTokenCustomClaims = this.claims.reduce(function(map, obj) { map[obj.key] = obj.value; return map; }, {});
     this.clientService.update(this.domainId, this.client.id, this.client).map(res => res.json()).subscribe(data => {
       this.client = data;
-      this.snackbarService.open("Client updated");
+      this.snackbarService.open((message) ? message : 'Client updated');
       this.formChanged = false;
     });
   }
@@ -96,7 +96,7 @@ export class ClientOIDCComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.claims = this.claims.filter(function(el) { return el.key !== key; });
-          this.formChanged = true;
+          this.update("Claim deleted");
         }
       });
   }

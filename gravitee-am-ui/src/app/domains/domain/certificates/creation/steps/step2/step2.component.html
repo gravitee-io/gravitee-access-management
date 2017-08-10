@@ -21,17 +21,19 @@
     Configure your certificate.
   </small>
 
-  <div class="certificate-creation-step2-form" fxLayout="column">
-    <h4>General</h4>
-    <md-input-container>
-      <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
-    </md-input-container>
+  <div class="certificate-creation-step2-content">
+    <form class="certificate-creation-step2-form" fxLayout="column">
+      <h4>General</h4>
+      <md-input-container>
+        <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
+      </md-input-container>
 
-    <h4>Configuration</h4>
-    <certificate-form [certificateConfiguration]="configuration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateCreation($event)"></certificate-form>
-  </div>
+      <h4>Configuration</h4>
+      <certificate-form [certificateConfiguration]="configuration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateCreation($event)"></certificate-form>
 
-  <div fxLayout="row" fxLayoutAlign="end end" class="next-button">
-    <button md-raised-button [disabled]="!isValid" (click)="create()">CREATE</button>
+      <div fxLayout="row" fxLayoutAlign="end end" class="next-button">
+        <button md-raised-button [disabled]="!isValid" (click)="create()">CREATE</button>
+      </div>
+    </form>
   </div>
 </div>

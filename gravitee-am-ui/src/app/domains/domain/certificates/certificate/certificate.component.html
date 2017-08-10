@@ -16,22 +16,28 @@
 
 -->
 <div class="certificate-container">
-  <h3>{{certificate.name}}</h3>
-  <md-card>
-    <md-card-content>
-      <form #certificateForm="ngForm" fxLayout="column">
-        <h4>General</h4>
-        <md-input-container>
-          <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
-        </md-input-container>
+  <h1>{{certificate.name}}</h1>
+  <div class="certificate-content">
+    <form #certificateForm="ngForm" fxLayout="column" fxFlex="70">
+      <h4>General</h4>
+      <md-input-container>
+        <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
+      </md-input-container>
 
-        <h4>Configuration</h4>
-        <certificate-form *ngIf="certificate" [certificateConfiguration]="certificateConfiguration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateUpdate($event)"></certificate-form>
-      </form>
+      <h4>Configuration</h4>
+      <certificate-form *ngIf="certificate" [certificateConfiguration]="certificateConfiguration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateUpdate($event)"></certificate-form>
 
       <div fxLayout="row" fxLayoutAlign="end end" class="certificate-actions">
         <button md-raised-button [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
       </div>
-    </md-card-content>
-  </md-card>
+    </form>
+    <div class="certificate-description" fxFlex>
+      <h3>Manage certificate</h3>
+      <div class="certificate-description-content">
+        <p>
+          Configure your certificate to ensure data integrity.
+        </p>
+      </div>
+    </div>
+  </div>
 </div>

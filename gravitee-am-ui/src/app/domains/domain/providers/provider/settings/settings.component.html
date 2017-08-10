@@ -15,16 +15,25 @@
     limitations under the License.
 
 -->
-<form #providerForm="ngForm" fxLayout="column">
-  <h4>General</h4>
+<form #providerForm="ngForm" fxLayout="column" fxFlex="70">
+  <h4 style="margin-top: 0px;">General</h4>
   <md-input-container>
     <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
+    <md-hint>A name for your identity provider.</md-hint>
   </md-input-container>
 
-  <h4>Configuration</h4>
+  <h4 style="margin-top: 10px;">Configuration</h4>
   <provider-form *ngIf="provider" [providerConfiguration]="providerConfiguration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderUpdate($event)"></provider-form>
-</form>
 
-<div fxLayout="row" fxLayoutAlign="end end" class="update-provider">
-  <button md-raised-button [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
+  <div fxLayout="row" class="update-provider">
+    <button md-raised-button [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">SAVE</button>
+  </div>
+</form>
+<div class="provider-settings-description" fxFlex>
+  <h3>Manage identity provider</h3>
+  <div class="provider-settings-description-content">
+    <p>
+      Register your users to interact with the access management server.
+    </p>
+  </div>
 </div>

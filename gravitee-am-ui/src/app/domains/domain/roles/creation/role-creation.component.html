@@ -16,23 +16,30 @@
 
 -->
 <div class="new-role-container">
-  <h3>New Role</h3>
-  <md-card>
-    <md-card-content>
-      <form (ngSubmit)="create()" #roleForm="ngForm" fxLayout="column">
-        <div fxLayout="row">
-          <md-input-container fxFlex="30" style="margin-right: 20px;">
-            <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required>
-          </md-input-container>
+  <h1>New Role</h1>
+  <div class="new-role-content">
+    <form (ngSubmit)="create()" #roleForm="ngForm" fxLayout="column" fxFlex="70">
+      <md-input-container>
+        <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required>
+        <md-hint>A name for your role.</md-hint>
+      </md-input-container>
 
-          <md-input-container fxFlex>
-            <input mdInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description">
-          </md-input-container>
-        </div>
-        <div fxLayout="row">
-          <button md-raised-button [disabled]="!roleForm.valid || roleForm.pristine" type="submit">SAVE</button>
-        </div>
-      </form>
-    </md-card-content>
-  </md-card>
+      <md-input-container fxFlex>
+        <input mdInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description">
+        <md-hint>A description for your role.</md-hint>
+      </md-input-container>
+      <div fxLayout="row" fxLayoutAlign="center" style="margin-top: 50px;">
+        <button md-raised-button [disabled]="!roleForm.valid || roleForm.pristine" type="submit">CREATE</button>
+      </div>
+    </form>
+    <div class="new-role-description" fxFlex>
+      <h3>Role ?</h3>
+      <div class="new-role-description-content">
+        <p>
+          Role determines how users can access protected resources.
+          Each role has a set of permissions to limit user actions.
+        </p>
+      </div>
+    </div>
+  </div>
 </div>
