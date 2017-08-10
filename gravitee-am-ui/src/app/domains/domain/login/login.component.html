@@ -15,35 +15,33 @@
     limitations under the License.
 
 -->
-<h3>Login Page</h3>
-<md-card>
-  <md-card-content>
-    <div fxLayout="column">
-      <md-slide-toggle
-        (change)="enableLoginForm($event)"
-        [checked]="isEnabled()">
-        Custom login page
+<div class="domain-login-container">
+  <h1>Login Page</h1>
+  <div fxLayout="column">
+    <div>
+      <md-slide-toggle mdTooltip="{{isEnabled() ? 'Disable custom login page ?' : 'Enable custom login page ?'}}"
+                       [mdTooltipPosition]="'after'"
+                       (change)="enableLoginForm($event)"
+                       [checked]="isEnabled()">
       </md-slide-toggle>
-      <md-hint><small class="hint">Create a specific login page to authenticated users <button md-icon-button (click)="openLoginInfo()"><md-icon>info_outline</md-icon></button></small></md-hint>
     </div>
+    <md-hint><small class="hint">Create a specific login page to authenticated users <button md-icon-button (click)="openLoginInfo()"><md-icon>info_outline</md-icon></button></small></md-hint>
+  </div>
 
-    <h4 [ngClass]="{'disabled': !isEnabled()}">Login page</h4>
-    <hr/>
-    <md-tab-group (selectChange)="onTabSelectedChanged($event);">
-      <md-tab label="Html" [disabled]="!isEnabled()">
-        <div style= "position:relative;">
-          <codemirror #editor [(ngModel)]="loginFormContent" [config]="config" (change)="onContentChanges($event)"></codemirror>
-        </div>
-      </md-tab>
-      <md-tab label="Preview" [disabled]="!isEnabled()">
-        <iframe frameborder="0" class="preview" #preview width="100%" (load)="resizeIframe()">
-        </iframe>
-      </md-tab>
-    </md-tab-group>
-  </md-card-content>
-  <md-card-actions>
+  <md-tab-group (selectChange)="onTabSelectedChanged($event);">
+    <md-tab label="Html" [disabled]="!isEnabled()">
+      <div style= "position:relative;">
+        <codemirror #editor [(ngModel)]="loginFormContent" [config]="config" (change)="onContentChanges($event)"></codemirror>
+      </div>
+    </md-tab>
+    <md-tab label="Preview" [disabled]="!isEnabled()">
+      <iframe frameborder="0" class="preview" #preview width="100%" (load)="resizeIframe()">
+      </iframe>
+    </md-tab>
+  </md-tab-group>
+  <div style="margin-top: 50px;">
     <button md-raised-button [disabled]="!formChanged" (click)="create()">SAVE</button>
     <span fxFlex></span>
     <button *ngIf="loginFormFound" md-raised-button color="warn" (click)="delete($event)">DELETE</button>
-  </md-card-actions>
-</md-card>
+  </div>
+</div>

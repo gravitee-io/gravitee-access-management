@@ -16,14 +16,21 @@
 
 -->
 <div class="provider-mappers-container">
-  <small *ngIf="!isEmpty" class="note"><i>Double click to edit and press enter to save changes</i></small>
-  <ngx-datatable *ngIf="!isEmpty" [columnMode]="'flex'" class="material" [headerHeight]="40" [footerHeight]="40" [rowHeight]="40" [rows]='mappers'>
+  <div fxLayout="column">
+    <small>
+      Attributes mapping let you bind user profile attributes with your identity provider attributes.
+      These new attributes specified in this mapping can be retrieved via the UserInfo Endpoint or be used with ID Token claims.
+      This mapping occurs during user authentication.
+    </small>
+    <small style="margin-top: 10px;" *ngIf="!isEmpty" class="note"><i>Double click to edit and press enter to save changes</i></small>
+  </div>
+  <ngx-datatable *ngIf="!isEmpty" [columnMode]="'flex'" class="material" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]='mappers'>
     <ngx-datatable-column name="User profile attributes" [flexGrow]="1">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <span (dblclick)="editing[row.$$index + '-key'] = true" *ngIf="!editing[row.$$index + '-key']">
           {{row.key}}
         </span>
-        <md-input-container *ngIf="editing[row.$$index + '-key']">
+        <md-input-container *ngIf="editing[row.$$index + '-key']" class="datatable-input">
           <input mdInput type="text" required autofocus placeholder="User attribute"
             (keyup.enter)="updateMapper($event, 'key', row)"
             (blur)="editing[row.$$index + '-key'] = false"
@@ -36,7 +43,7 @@
         <span (dblclick)="editing[row.$$index + '-value'] = true" *ngIf="!editing[row.$$index + '-value']">
           {{row.value}}
         </span>
-        <md-input-container *ngIf="editing[row.$$index + '-value']">
+        <md-input-container *ngIf="editing[row.$$index + '-value']" class="datatable-input">
           <input mdInput type="text" required autofocus placeholder="Raw attribute"
             (keyup.enter)="updateMapper($event, 'value', row)"
             (blur)="editing[row.$$index + '-value'] = false"
@@ -59,7 +66,7 @@
                   [icon]="'compare_arrows'"></app-emptystate>
 
   <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
-    <button md-mini-fab color="accent" (click)="add()">
+    <button md-fab color="accent" (click)="add()">
       <md-icon>add</md-icon>
     </button>
   </div>

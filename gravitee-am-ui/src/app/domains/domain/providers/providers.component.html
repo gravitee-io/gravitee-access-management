@@ -16,31 +16,29 @@
 
 -->
 <div class="providers-container">
-  <h3 *ngIf="!isEmpty">Identity providers</h3>
-  <md-card *ngIf="!isEmpty">
-    <md-card-content>
-      <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="40" [rows]='providers'>
-        <ngx-datatable-column name="Name" [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.name}}
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column name="Type" [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.type}}
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column name="Actions" [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            <div fxLayout="row" class="providers-actions">
-              <a md-icon-button [routerLink]="['/domains', domainId, 'providers', row.id]"><md-icon>settings</md-icon></a>
-              <button md-icon-button (click)="delete(row.id, $event)"><md-icon>delete</md-icon></button>
-            </div>
-          </ng-template>
-        </ngx-datatable-column>
-      </ngx-datatable>
-    </md-card-content>
-  </md-card>
+  <h1 *ngIf="!isEmpty">Identity providers</h1>
+  <div class="providers-content" *ngIf="!isEmpty">
+    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="40" [rows]='providers'>
+      <ngx-datatable-column name="Name" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{row.name}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Type" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{row.type}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Actions" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div fxLayout="row" class="providers-actions">
+            <a md-icon-button [routerLink]="['/domains', domainId, 'providers', row.id]"><md-icon>settings</md-icon></a>
+            <button md-icon-button (click)="delete(row.id, $event)"><md-icon>delete</md-icon></button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+  </div>
 
   <app-emptystate *ngIf="isEmpty"
                   [message]="'Identity providers will appear here'"

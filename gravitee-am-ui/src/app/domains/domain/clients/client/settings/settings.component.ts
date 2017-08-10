@@ -149,4 +149,8 @@ export class ClientSettingsComponent implements OnInit {
       this.formChanged = true;
     }
   }
+
+  valueCopied(message: string) {
+    this.snackbarService.open(message);
+  }
 }

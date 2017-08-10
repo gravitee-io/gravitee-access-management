@@ -15,37 +15,44 @@
     limitations under the License.
 
 -->
-<div class="edit-role-container">
-  <h3>{{role.name}}</h3>
-  <md-card>
-    <md-card-content>
-      <form (keydown.enter)="false" (ngSubmit)="update()" #roleForm="ngForm" fxLayout="column">
-        <div fxLayout="row">
-          <md-input-container fxFlex="30" style="margin-right: 20px;">
-            <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required>
-          </md-input-container>
+<div class="role-container">
+  <h1>{{role.name}}</h1>
+  <div class="role-content">
+    <form (keydown.enter)="false" (ngSubmit)="update()" #roleForm="ngForm" fxLayout="column" fxFlex="70">
+      <md-input-container fxFlex>
+        <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required>
+      </md-input-container>
 
-          <md-input-container fxFlex>
-            <input mdInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description">
-          </md-input-container>
-        </div>
+      <md-input-container fxFlex>
+        <input mdInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description">
+      </md-input-container>
 
-        <h4 style="margin-bottom: 0px;">Permissions</h4>
-        <md-chip-list style="margin-top: 10px; margin-bottom: 10px;">
-          <md-chip *ngFor="let permission of role.permissions" color="accent" selected="true">
-            <span>{{permission}}</span>
-            <md-icon class="delete-chip" (click)="removePermission(permission, $event)">clear</md-icon>
-          </md-chip>
-        </md-chip-list>
-        <md-input-container fxFlex>
-          <input mdInput #inputScope (keyup.enter)="addPermission(inputScope, $event)" placeholder="New permission..."/>
-        </md-input-container>
+      <h4 style="margin-bottom: 0px;">Permissions</h4>
+      <md-chip-list style="margin-top: 10px; margin-bottom: 10px;">
+        <md-chip *ngFor="let permission of role.permissions" color="accent" selected="true">
+          <span>{{permission}}</span>
+          <md-icon class="delete-chip" (click)="removePermission(permission, $event)">clear</md-icon>
+        </md-chip>
+      </md-chip-list>
+      <md-input-container fxFlex>
+        <input mdInput #inputScope (keyup.enter)="addPermission(inputScope, $event)" placeholder="New permission..."/>
+      </md-input-container>
 
-        <div fxLayout="row">
-          <button md-raised-button [disabled]="(!roleForm.valid || roleForm.pristine) && !formChanged" type="submit">SAVE</button>
-        </div>
-      </form>
-    </md-card-content>
-  </md-card>
+      <div fxLayout="row" class="role-form-actions">
+        <button md-raised-button [disabled]="(!roleForm.valid || roleForm.pristine) && !formChanged" type="submit">SAVE</button>
+      </div>
+    </form>
+    <div class="role-description" fxFlex>
+      <h3>Manage role</h3>
+      <div class="role-description-content">
+        <p>
+          Configure your role's name, description and permissions. Permissions can be used to configure access scopes to grant specific access to a your APIs.
+        </p>
+        <p>
+          For example you can create a <code>member</code> role with <code>read</code> permission to grant readonly access to your protected resources.
+        </p>
+      </div>
+    </div>
+  </div>
 </div>
 

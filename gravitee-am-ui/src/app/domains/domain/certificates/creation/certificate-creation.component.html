@@ -16,19 +16,17 @@
 
 -->
 <div class="new-certificate-container">
-  <h3>New certificate</h3>
-  <md-card>
-    <md-card-content>
-      <div *ngIf="currentStep == 1">
-        <certificate-creation-step1 [certificate]="certificate" (certificateTypeSelected)="selectCertificateType($event)" (nextStepTriggered)="nextStep()"></certificate-creation-step1>
-      </div>
+  <h1>New certificate</h1>
+  <div class="new-certificate-content">
+    <div *ngIf="currentStep == 1">
+      <certificate-creation-step1 [certificate]="certificate" (certificateTypeSelected)="selectCertificateType($event)" (nextStepTriggered)="nextStep()"></certificate-creation-step1>
+    </div>
 
-      <div *ngIf="currentStep > 1">
-        <certificate-creation-step2 [certificate]="certificate"></certificate-creation-step2>
-      </div>
-    </md-card-content>
-    <md-card-actions fxLayout="row">
+    <div *ngIf="currentStep > 1">
+      <certificate-creation-step2 [certificate]="certificate"></certificate-creation-step2>
+    </div>
+    <div fxLayout="row" style="margin-top: 20px;">
       <button *ngIf="currentStep > 1" md-button (click)="previousStep()">PREVIOUS</button>
-    </md-card-actions>
-  </md-card>
+    </div>
+  </div>
 </div>

@@ -16,19 +16,17 @@
 
 -->
 <div *ngIf="provider" class="provider-container">
-  <h3>{{provider.name}}</h3>
-  <md-card>
-    <md-card-content>
-      <nav md-tab-nav-bar>
-        <a md-tab-link
-           *ngFor="let link of navLinks"
-           [routerLink]="link.href"
-           routerLinkActive #rla="routerLinkActive"
-           [active]="rla.isActive">
-          {{link.label}}
-        </a>
-      </nav>
-      <router-outlet></router-outlet>
-    </md-card-content>
-  </md-card>
+  <h1>{{provider.name}}</h1>
+  <nav md-tab-nav-bar>
+    <a md-tab-link
+       *ngFor="let link of navLinks"
+       [routerLink]="link.href"
+       routerLinkActive #rla="routerLinkActive"
+       [active]="rla.isActive">
+      {{link.label}}
+    </a>
+  </nav>
+  <div class="provider-content">
+    <router-outlet></router-outlet>
+  </div>
 </div>

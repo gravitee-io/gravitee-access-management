@@ -42,6 +42,7 @@ import { ProviderSettingsComponent } from "./domains/domain/providers/provider/s
 import { ProviderMappersComponent } from "./domains/domain/providers/provider/mappers/mappers.component";
 import { ClientOIDCComponent } from "./domains/domain/clients/client/oidc/oidc.component";
 import { ClientSettingsComponent } from "./domains/domain/clients/client/settings/settings.component";
+import { ClientIdPComponent } from "./domains/domain/clients/client/idp/idp.component";
 import { CertificatesComponent } from "./domains/domain/certificates/certificates.component";
 import { CertificatesResolver } from "./resolvers/certificates.resolver";
 import { CertificateCreationComponent } from "./domains/domain/certificates/creation/certificate-creation.component";
@@ -120,6 +121,7 @@ const routes: Routes = [
         children: [
           { path: '', redirectTo: 'settings', pathMatch: 'full' },
           { path: 'settings', component: ClientSettingsComponent },
+          { path: 'idp', component: ClientIdPComponent },
           { path: 'oidc', component: ClientOIDCComponent }
         ]
       },
