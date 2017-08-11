@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, OnDestroy} from '@angular/core';
-import {Router, NavigationEnd, ActivatedRoute} from "@angular/router";
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import  {Router, NavigationEnd } from "@angular/router";
 import { SidenavService } from "./sidenav.service";
-import {Subscription} from "rxjs";
-import {AuthService} from "../../services/auth.service";
+import { Subscription} from "rxjs";
+import { AuthService } from "../../services/auth.service";
+import { AppConfig } from "../../../config/app.config";
 
 @Component({
   selector: 'gs-sidenav',
@@ -25,6 +26,8 @@ import {AuthService} from "../../services/auth.service";
   styleUrls: ['./sidenav.component.scss']
 })
 export class SidenavComponent implements OnInit, OnDestroy {
+  title = AppConfig.settings.portalTitle;
+  version = AppConfig.settings.version;
   reducedMode: boolean = false;
   paths: any[] = [];
   subPaths: any = {};

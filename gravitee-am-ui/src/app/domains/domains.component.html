@@ -15,33 +15,34 @@
     limitations under the License.
 
 -->
-<div fxFlexOffset="20px">
-  <div class="landing-header">
-    <h3>{{title}} <small>version {{version}}</small></h3>
+<div class="domains-container">
+  <h1 *ngIf="!isEmpty">Domains</h1>
+  <div class="domains-content" *ngIf="!isEmpty">
+    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="40" [rows]='domains'>
+      <ngx-datatable-column name="Name" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{row.name}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="State" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <span *ngIf="row.enabled; else elseBlock" style="color: green;">Enabled</span>
+          <ng-template #elseBlock><span style="color: orange;">Disabled</span></ng-template>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Actions" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div fxLayout="row" class="domains-actions">
+            <a md-icon-button [routerLink]="['/domains', row.id]"><md-icon>settings</md-icon></a>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
   </div>
 
-  <div *ngIf="!isEmpty">
-    <div class="search-domains" fxLayoutAlign="center center">
-      <input class="search-domains-input" #input type="text" placeholder='Search domains ...' (input)='searchDomains(input.value)' autofocus/>
-    </div>
-
-    <div class="domains-content">
-      <md-list>
-        <h3 md-subheader>Domains</h3>
-        <md-list-item *ngFor="let domain of domains">
-          <md-icon mdTooltip="{{domain.enabled ? 'Domain enabled' : 'Domain disabled'}}" md-list-icon [ngClass]="{'domain-enabled': domain.enabled, 'domain-disabled' : !domain.enabled}">domain</md-icon>
-          <h4 md-line>{{domain.name}}</h4>
-          <a md-icon-button color="accent" [routerLink]="['/domains', domain.id]"><md-icon>settings</md-icon></a>
-        </md-list-item>
-      </md-list>
-    </div>
-  </div>
-
-  <div *ngIf="isEmpty" class="empty-domains-container">
-    <app-emptystate [message]="'Domains will appear here'"
-                    [subMessage]="'Start creating a domain'"
-                    [icon]="'domain'"></app-emptystate>
-  </div>
+  <app-emptystate *ngIf="isEmpty" [message]="'Domains will appear here'"
+                  [subMessage]="'Start creating a domain'"
+                  [icon]="'domain'"></app-emptystate>
 
   <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
     <a md-fab color="accent" [routerLink]="['/domains/new']">
