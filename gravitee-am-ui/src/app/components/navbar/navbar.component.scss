@@ -1,0 +1,37 @@
+md-toolbar {
+  position: fixed;
+  z-index: 100;
+  background-color: #fff;
+  border-bottom: 1px solid rgb(226, 229, 231);
+  padding: 0 16px 0 7px;
+  height: 60px;
+  min-height: 60px;
+  max-height: 60px;
+}
+
+/deep/ .mat-toolbar-row {
+  height: 60px !important;
+}
+
+/deep/ .mat-menu-panel {
+  max-width: 380px !important;
+}
+
+/deep/ .mat-menu-content {
+  padding-bottom: 2px !important;
+}
+
+.userAccount {
+  width: 380px;
+  .userAccountPicture {
+    md-icon {
+      font-size: 78px;
+      height: 78px;
+      width: 78px;
+      color: grey;
+    }
+  }
+  .userAccountActions {
+    border-top: 1px solid rgb(226, 229, 231);
+  }
+}

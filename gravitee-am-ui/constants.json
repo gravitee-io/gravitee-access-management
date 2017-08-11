@@ -1,5 +1,5 @@
 {
-  "portalTitle": "Gravitee.io Access Management",
+  "portalTitle": "Access Management",
   "baseURL": "http://localhost:8092/management",
   "authentication": {
     "oauth2": {
