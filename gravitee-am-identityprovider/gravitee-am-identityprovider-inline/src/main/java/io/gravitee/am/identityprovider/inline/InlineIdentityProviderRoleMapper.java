@@ -17,7 +17,6 @@ package io.gravitee.am.identityprovider.inline;
  */
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,14 +25,15 @@ import java.util.Map;
  */
 public class InlineIdentityProviderRoleMapper implements IdentityProviderRoleMapper {
 
+    private Map<String, String[]> roles;
 
     @Override
     public Map<String, String[]> getRoles() {
-        return null;
+        return roles;
     }
 
     @Override
     public void setRoles(Map<String, String[]> roles) {
-        // nothing to do
+        this.roles = roles;
     }
 }

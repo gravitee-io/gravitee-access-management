@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.inline.InlineIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.inline.InlineIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.inline.authentication.provisioning.InlineInMemoryUserDetailsManager;
 import io.gravitee.am.identityprovider.inline.authentication.userdetails.InlineUser;
 import org.slf4j.Logger;
@@ -32,9 +33,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -43,16 +42,20 @@ import java.util.Map;
 @Import(InlineAuthenticationProviderConfiguration.class)
 public class InlineAuthenticationProvider implements AuthenticationProvider, InitializingBean {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(InlineAuthenticationProvider.class);
+    private static final String USERNAME = "username";
+
     @Autowired
     private InlineIdentityProviderConfiguration configuration;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(InlineAuthenticationProvider.class);
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
     private InlineInMemoryUserDetailsManager userDetailsService;
+
+    @Autowired
+    private InlineIdentityProviderRoleMapper roleMapper;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -87,6 +90,29 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
         claims.put("family_name", inlineUser.getLastname());
         user.setAdditonalInformation(claims);
 
+        // set user roles
+        user.setRoles(getUserRoles(inlineUser));
+
         return user;
+    }
+
+    private List<String> getUserRoles(InlineUser inlineUser) {
+        Set<String> roles = new HashSet();
+        if (roleMapper != null && roleMapper.getRoles() != null) {
+            roleMapper.getRoles().forEach((role, users) -> {
+                Arrays.asList(users).forEach(u -> {
+                    // user/group have the following syntax userAttribute=userValue
+                    String[] attributes = u.split("=");
+                    String userAttribute = attributes[0];
+                    String userValue = attributes[1];
+
+                    // for inline provider we only find by username
+                    if (USERNAME.equals(userAttribute) && inlineUser.getUsername().equals(userValue)) {
+                        roles.add(role);
+                    }
+                });
+            });
+        }
+        return new ArrayList<>(roles);
     }
 }
