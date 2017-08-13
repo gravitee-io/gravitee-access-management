@@ -124,8 +124,9 @@ public class LdapAuthenticationProvider implements AuthenticationProvider {
             roleMapper.getRoles().forEach((role, users) -> {
                 Arrays.asList(users).forEach(u -> {
                     // user/group have the following syntax userAttribute=userValue
-                    String userAttribute = u.split("=")[0];
-                    String userValue = u.split("=")[1];
+                    String[] attributes = u.split("=");
+                    String userAttribute = attributes[0];
+                    String userValue = attributes[1];
 
                     // group
                     if (MEMBEROF_ATTRIBUTE.equals(userAttribute) && authenticate.attributeExists(MEMBEROF_ATTRIBUTE)) {
