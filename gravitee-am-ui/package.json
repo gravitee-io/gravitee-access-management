@@ -25,7 +25,7 @@
     "@angular/platform-browser": "^4.3.1",
     "@angular/platform-browser-dynamic": "^4.3.1",
     "@angular/router": "^4.3.1",
-    "@swimlane/ngx-datatable": "^7.1.1",
+    "@swimlane/ngx-datatable": "^10.0.5",
     "@types/hammerjs": "^2.0.34",
     "angular2-json-schema-form": "^0.4.0-alpha.18",
     "codemirror": "^5.25.2",

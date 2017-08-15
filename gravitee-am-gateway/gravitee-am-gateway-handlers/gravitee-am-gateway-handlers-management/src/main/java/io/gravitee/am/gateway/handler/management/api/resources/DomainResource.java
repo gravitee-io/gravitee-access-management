@@ -101,4 +101,9 @@ public class DomainResource extends AbstractResource {
     public DomainLoginFormResource getDomainLoginFormResource() {
         return resourceContext.getResource(DomainLoginFormResource.class);
     }
+
+    @Path("users")
+    public UsersResource getUsersResource() {
+        return resourceContext.getResource(UsersResource.class);
+    }
 }

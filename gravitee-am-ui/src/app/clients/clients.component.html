@@ -18,7 +18,7 @@
 <div class="domain-clients-container">
   <h1 *ngIf="!isEmpty">Clients</h1>
   <div class="domain-clients-content" *ngIf="!isEmpty">
-    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="40" [rows]='clients'>
+    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]='clients'>
       <ngx-datatable-column name="Client ID" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <a [routerLink]="['/domains', row.domainId, 'clients', row.id]">{{row.clientId}}</a>

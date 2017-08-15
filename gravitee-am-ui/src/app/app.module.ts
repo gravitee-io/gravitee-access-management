@@ -112,6 +112,11 @@ import { SettingsComponent } from './settings/settings.component';
 import { HumanDatePipe } from './pipes/human-date.pipe';
 import { MapToIterablePipe } from './pipes/map-to-iterable.pipe';
 import { DummyComponent } from "./components/dummy/dummy.component";
+import { UsersComponent } from './domains/domain/users/users.component';
+import { UserComponent } from './domains/domain/users/user/user.component';
+import { UserService} from "./services/user.service";
+import { UsersResolver } from "./resolvers/users.resolver";
+import { UserResolver } from "./resolvers/user.resolver";
 
 @NgModule({
   declarations: [
@@ -175,7 +180,9 @@ import { DummyComponent } from "./components/dummy/dummy.component";
     SettingsComponent,
     HumanDatePipe,
     MapToIterablePipe,
-    DummyComponent
+    DummyComponent,
+    UsersComponent,
+    UserComponent
   ],
   imports: [
     BrowserModule,
@@ -204,6 +211,7 @@ import { DummyComponent } from "./components/dummy/dummy.component";
     CertificateService,
     RoleService,
     DashboardService,
+    UserService,
     AppConfig,
     DomainsResolver,
     DomainResolver,
@@ -216,6 +224,8 @@ import { DummyComponent } from "./components/dummy/dummy.component";
     CertificateResolver,
     RolesResolver,
     RoleResolver,
+    UsersResolver,
+    UserResolver,
     { provide: Http, useClass: HttpService }
   ],
   entryComponents: [

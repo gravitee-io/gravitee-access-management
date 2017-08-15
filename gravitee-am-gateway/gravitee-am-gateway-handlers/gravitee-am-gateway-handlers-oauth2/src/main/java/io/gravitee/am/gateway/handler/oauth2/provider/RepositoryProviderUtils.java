@@ -34,6 +34,11 @@ import java.util.stream.Collectors;
  */
  public class RepositoryProviderUtils {
 
+    /**
+     * Constant to use while setting identity provider used to authenticate a user
+     */
+    public static final String SOURCE = "source";
+
     public static io.gravitee.am.repository.oauth2.model.OAuth2Authentication convert(OAuth2Authentication _oAuth2Authentication) {
         // oauth2 request
         OAuth2Request _oAuth2Request = _oAuth2Authentication.getOAuth2Request();

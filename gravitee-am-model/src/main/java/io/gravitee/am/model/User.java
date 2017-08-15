@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.model;
 
+import java.util.Date;
+import java.util.Map;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -45,6 +48,20 @@ public class User {
      * Security domain associated to the client
      */
     private String domain;
+
+    private String source;
+
+    private String client;
+
+    private long loginsCount;
+
+    private Date loggedAt;
+
+    private Map<String, Object> additionalInformation;
+
+    private Date createdAt;
+
+    private Date updatedAt;
 
     public String getId() {
         return id;
@@ -132,5 +149,61 @@ public class User {
 
     public void setDomain(String domain) {
         this.domain = domain;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public String getClient() {
+        return client;
+    }
+
+    public void setClient(String client) {
+        this.client = client;
+    }
+
+    public long getLoginsCount() {
+        return loginsCount;
+    }
+
+    public void setLoginsCount(long loginsCount) {
+        this.loginsCount = loginsCount;
+    }
+
+    public Date getLoggedAt() {
+        return loggedAt;
+    }
+
+    public void setLoggedAt(Date loggedAt) {
+        this.loggedAt = loggedAt;
+    }
+
+    public Map<String, Object> getAdditionalInformation() {
+        return additionalInformation;
+    }
+
+    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
+        this.additionalInformation = additionalInformation;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

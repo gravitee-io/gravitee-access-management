@@ -15,21 +15,69 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.userdetails;
 
-import org.springframework.security.core.userdetails.User;
+import io.gravitee.am.gateway.handler.oauth2.security.IdentityProviderManager;
+import io.gravitee.am.gateway.service.UserService;
+import io.gravitee.am.gateway.service.exception.TechnicalManagementException;
+import io.gravitee.am.gateway.service.exception.UserNotFoundException;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import java.util.Collections;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class CustomUserDetailsService implements UserDetailsService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CustomUserDetailsService.class);
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private Domain domain;
+
+    @Autowired
+    private IdentityProviderManager identityProviderManager;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return new User(username, "password", Collections.emptyList());
+        // use to find a pre-authenticated user
+        // The user should be present in gravitee repository and should be retrieved from the user last identity provider
+        User user;
+        try {
+            user = userService.loadUserByUsernameAndDomain(domain.getId(), username);
+        } catch (UserNotFoundException e) {
+            LOGGER.info("User with username : {} and for domain : {} not found", username, domain.getId(), e);
+            throw new UsernameNotFoundException(username);
+        } catch (TechnicalManagementException e) {
+            LOGGER.error("Failed to find user by username {} and domain {}", username, domain.getId(), e);
+            throw new UsernameNotFoundException(username);
+        }
+
+        AuthenticationProvider authenticationprovider = identityProviderManager.get(user.getSource());
+
+        if (authenticationprovider == null) {
+            LOGGER.info("Registered identity provider : {} not found for username : {}", user.getSource(), username);
+            throw new UsernameNotFoundException("Registered identity provider : " + user.getSource() + " not found for username : " + username);
+        }
+
+        io.gravitee.am.identityprovider.api.User idpUser;
+        try {
+            idpUser = authenticationprovider.loadUserByUsername(username);
+        } catch(Exception e) {
+            LOGGER.info("User with username : {} and for domain : {} not found", username, domain.getId(), e);
+            throw new UsernameNotFoundException(username);
+        }
+
+        return new CustomUserDetails(user, idpUser);
     }
+
 }
