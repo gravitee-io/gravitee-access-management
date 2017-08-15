@@ -22,4 +22,7 @@ package io.gravitee.am.identityprovider.api;
 public interface AuthenticationProvider {
 
     User loadUserByUsername(Authentication authentication);
+
+    User loadUserByUsername(String username);
+
 }

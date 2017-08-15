@@ -69,6 +69,7 @@ export class ProviderMappersComponent implements OnInit {
       if (mapper) {
         if (!this.attributeExits(mapper.key)) {
           this.mappers.push(mapper);
+          this.mappers = [...this.mappers];
           this.update("Attribute added");
         } else {
           this.snackbarService.open(`Error : attribute ${mapper.key} already exists`);
@@ -84,7 +85,7 @@ export class ProviderMappersComponent implements OnInit {
     })
   }
 
-  updateMapper(event, cell, row) {
+  updateMapper(event, cell, rowIndex) {
     let mapper = event.target.value;
     if (mapper) {
       if (cell === 'key' && this.attributeExits(mapper)) {
@@ -92,8 +93,9 @@ export class ProviderMappersComponent implements OnInit {
         return;
       }
 
-      this.editing[row.$$index + '-' + cell] = false;
-      this.mappers[row.$$index][cell] = mapper;
+      this.editing[rowIndex + '-' + cell] = false;
+      this.mappers[rowIndex][cell] = mapper;
+      this.mappers = [...this.mappers];
       this.update("Mapper saved");
     }
   }

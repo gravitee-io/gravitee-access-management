@@ -18,6 +18,7 @@ package io.gravitee.am.identityprovider.inline.authentication;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.inline.InlineIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.inline.InlineIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.inline.authentication.provisioning.InlineInMemoryUserDetailsManager;
@@ -81,19 +82,14 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
             throw new BadCredentialsException("Bad getCredentials");
         }
 
-        InlineUser inlineUser = (InlineUser) userDetails;
-        DefaultUser user = new DefaultUser(inlineUser.getUsername());
+        return createUser(userDetails);
+    }
 
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", inlineUser.getUsername());
-        claims.put("given_name", inlineUser.getFirstname());
-        claims.put("family_name", inlineUser.getLastname());
-        user.setAdditonalInformation(claims);
+    @Override
+    public User loadUserByUsername(String username) {
+        final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-        // set user roles
-        user.setRoles(getUserRoles(inlineUser));
-
-        return user;
+        return createUser(userDetails);
     }
 
     private List<String> getUserRoles(InlineUser inlineUser) {
@@ -114,5 +110,21 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
             });
         }
         return new ArrayList<>(roles);
+    }
+
+    private User createUser(UserDetails userDetails) {
+        InlineUser inlineUser = (InlineUser) userDetails;
+        DefaultUser user = new DefaultUser(inlineUser.getUsername());
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("sub", inlineUser.getUsername());
+        claims.put("given_name", inlineUser.getFirstname());
+        claims.put("family_name", inlineUser.getLastname());
+        user.setAdditonalInformation(claims);
+
+        // set user roles
+        user.setRoles(getUserRoles(inlineUser));
+
+        return user;
     }
 }

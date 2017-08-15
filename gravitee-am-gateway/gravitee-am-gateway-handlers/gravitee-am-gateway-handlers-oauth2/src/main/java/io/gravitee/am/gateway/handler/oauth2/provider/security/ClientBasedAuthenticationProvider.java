@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.provider.security;
 
 
+import io.gravitee.am.gateway.handler.oauth2.provider.RepositoryProviderUtils;
 import io.gravitee.am.gateway.handler.oauth2.provider.client.DelegateClientDetails;
 import io.gravitee.am.gateway.handler.oauth2.security.IdentityProviderManager;
 import org.slf4j.Logger;
@@ -78,6 +79,8 @@ public class ClientBasedAuthenticationProvider implements AuthenticationProvider
 
                         try {
                             user = authenticationProvider.loadUserByUsername(provAuthentication);
+                            // set user identity provider source
+                            details.put(RepositoryProviderUtils.SOURCE, provider);
                         } catch (Exception ex) {
                             logger.info("Unable to authenticate user {} with provider {}",
                                     authentication.getName(), provider);

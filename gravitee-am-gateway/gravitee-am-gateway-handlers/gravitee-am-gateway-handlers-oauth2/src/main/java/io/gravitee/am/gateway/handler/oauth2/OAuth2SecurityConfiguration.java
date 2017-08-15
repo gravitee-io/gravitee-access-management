@@ -24,14 +24,17 @@ import io.gravitee.am.gateway.handler.oauth2.provider.security.ClientBasedAuthen
 import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationDetailsSource;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationFailureHandler;
 import io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore;
+import io.gravitee.am.gateway.handler.oauth2.security.listener.AuthenticationSuccessListener;
 import io.gravitee.am.gateway.handler.oauth2.userdetails.CustomUserDetailsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -67,11 +70,15 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private ClientDetailsService clientDetailsService;
 
     @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    @Autowired
     protected void globalUserDetails(AuthenticationManagerBuilder auth) throws Exception {
         logger.info("Loading identity providers to handle user authentication");
 
         // By default we are associating users added to the domain
         auth.authenticationProvider(userAuthenticationProvider());
+        auth.authenticationEventPublisher(new DefaultAuthenticationEventPublisher(applicationEventPublisher));
     }
 
     @Override
@@ -156,5 +163,10 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public AuthenticationFailureHandler authenticationFailureHandler() {
         return new ClientAwareAuthenticationFailureHandler("/login?error");
+    }
+
+    @Bean
+    public AuthenticationSuccessListener authenticationSuccessListener() {
+        return new AuthenticationSuccessListener();
     }
 }

@@ -24,29 +24,29 @@
     </small>
     <small style="margin-top: 10px;" *ngIf="!isEmpty" class="note"><i>Double click to edit and press enter to save changes</i></small>
   </div>
-  <ngx-datatable *ngIf="!isEmpty" [columnMode]="'flex'" class="material" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]='mappers'>
+  <ngx-datatable *ngIf="!isEmpty" [columnMode]="'flex'" class="material" [headerHeight]="40" [footerHeight]="40" [rowHeight]="55" [rows]='mappers'>
     <ngx-datatable-column name="User profile attributes" [flexGrow]="1">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        <span (dblclick)="editing[row.$$index + '-key'] = true" *ngIf="!editing[row.$$index + '-key']">
+      <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+        <span (dblclick)="editing[rowIndex + '-key'] = true" *ngIf="!editing[rowIndex + '-key']">
           {{row.key}}
         </span>
-        <md-input-container *ngIf="editing[row.$$index + '-key']" class="datatable-input">
+        <md-input-container *ngIf="editing[rowIndex + '-key']" class="datatable-input">
           <input mdInput type="text" required autofocus placeholder="User attribute"
-            (keyup.enter)="updateMapper($event, 'key', row)"
-            (blur)="editing[row.$$index + '-key'] = false"
+            (keyup.enter)="updateMapper($event, 'key', rowIndex)"
+            (blur)="editing[rowIndex + '-key'] = false"
             [value]="row.key" />
         </md-input-container>
       </ng-template>
     </ngx-datatable-column>
     <ngx-datatable-column name="Raw attributes" [flexGrow]="1">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        <span (dblclick)="editing[row.$$index + '-value'] = true" *ngIf="!editing[row.$$index + '-value']">
+      <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+        <span (dblclick)="editing[rowIndex + '-value'] = true" *ngIf="!editing[rowIndex + '-value']">
           {{row.value}}
         </span>
-        <md-input-container *ngIf="editing[row.$$index + '-value']" class="datatable-input">
+        <md-input-container *ngIf="editing[rowIndex + '-value']" class="datatable-input">
           <input mdInput type="text" required autofocus placeholder="Raw attribute"
-            (keyup.enter)="updateMapper($event, 'value', row)"
-            (blur)="editing[row.$$index + '-value'] = false"
+            (keyup.enter)="updateMapper($event, 'value', rowIndex)"
+            (blur)="editing[rowIndex + '-value'] = false"
             [value]="row.value" />
         </md-input-container>
       </ng-template>

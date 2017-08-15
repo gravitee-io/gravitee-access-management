@@ -59,6 +59,7 @@ export class ClientOIDCComponent implements OnInit {
       if (claim) {
         if (!this.claimExits(claim.key)) {
           this.claims.push(claim);
+          this.claims = [...this.claims];
           this.update("Claim added");
         } else {
           this.snackbarService.open(`Error : claim ${claim.key} already exists`);
@@ -67,15 +68,16 @@ export class ClientOIDCComponent implements OnInit {
     });
   }
 
-  updateClaim(event, cell, row) {
+  updateClaim(event, cell, rowIndex) {
     let claim = event.target.value;
     if (claim) {
       if (cell === 'key' && this.claimExits(claim)) {
         this.snackbarService.open(`Error : claim ${claim} already exists`);
         return;
       }
-      this.editing[row.$$index + '-' + cell] = false;
-      this.claims[row.$$index][cell] = claim;
+      this.editing[rowIndex + '-' + cell] = false;
+      this.claims[rowIndex][cell] = claim;
+      this.claims = [...this.claims];
       this.update("Claim updated");
     }
   }

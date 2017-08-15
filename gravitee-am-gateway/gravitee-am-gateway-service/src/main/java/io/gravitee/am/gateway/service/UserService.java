@@ -15,14 +15,30 @@
  */
 package io.gravitee.am.gateway.service;
 
+import io.gravitee.am.gateway.service.model.NewUser;
+import io.gravitee.am.gateway.service.model.UpdateUser;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.Page;
+
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface UserService {
 
+    Page<User> findByDomain(String domain, int page, int size);
+
+    User findById(String id);
+
     User loadUserByUsernameAndDomain(String domain, String username);
+
+    User create(String domain, NewUser newUser);
+
+    User update(String domain, String id, UpdateUser updateUser);
+
+    void delete(String userId);
 
 }

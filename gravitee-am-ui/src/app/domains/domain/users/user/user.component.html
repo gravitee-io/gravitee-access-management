@@ -1,0 +1,63 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="user-container">
+  <h1>{{user.username}}</h1>
+  <div class="user-content">
+    <form fxFlex="70" fxLayout="column">
+      <md-input-container fxFlex>
+        <input mdInput placeholder="Username" disabled value="{{user.username}}">
+      </md-input-container>
+
+      <md-input-container fxFlex *ngFor="let keyValuePair of user.additionalInformation | mapToIterable">
+        <input mdInput placeholder="{{keyValuePair.key}}" disabled value="{{keyValuePair.value}}">
+      </md-input-container>
+    </form>
+    <div class="user-activities" fxFlex>
+      <h3>User activities</h3>
+      <div class="user-activities-content">
+        <md-list>
+          <md-list-item>
+            <md-icon md-list-icon>trending_up</md-icon>
+            <h4 md-line>Logins count</h4>
+            <p md-line>{{user.loginsCount}}</p>
+          </md-list-item>
+          <md-list-item>
+            <md-icon md-list-icon>alarm</md-icon>
+            <h4 md-line>Last login</h4>
+            <p md-line>{{user.loggedAt | humanDate}}</p>
+          </md-list-item>
+          <md-list-item>
+            <md-icon md-list-icon>alarm_on</md-icon>
+            <h4 md-line>Created at</h4>
+            <p md-line>{{user.createdAt | humanDate}}</p>
+          </md-list-item>
+          <md-list-item>
+            <md-icon md-list-icon>dock</md-icon>
+            <h4 md-line>Last client</h4>
+            <p md-line>{{user.client}}</p>
+          </md-list-item>
+          <md-list-item>
+            <md-icon md-list-icon>device_hub</md-icon>
+            <h4 md-line>Last identity provider</h4>
+            <p md-line>{{user.source}}</p>
+          </md-list-item>
+        </md-list>
+      </div>
+    </div>
+  </div>
+</div>
