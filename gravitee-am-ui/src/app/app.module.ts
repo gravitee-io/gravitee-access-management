@@ -22,7 +22,7 @@ import { Http } from '@angular/http';
 import { MaterialModule } from '@angular/material';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { JsonSchemaFormModule } from '../libraries/angular2-json-schema-form';
+import { JsonSchemaFormModule } from 'angular2-json-schema-form';
 import { CodemirrorModule } from 'ng2-codemirror';
 import 'hammerjs';
 import 'codemirror';
@@ -95,6 +95,10 @@ import { RoleComponent } from './domains/domain/roles/role/role.component';
 import { SnackbarComponent } from "./components/snackbar/snackbar.component";
 import { ClientIdPComponent } from './domains/domain/clients/client/idp/idp.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
+import { MaterialInputComponent } from "./components/json-schema-form/material-input.component";
+import { MaterialDesignFrameworkComponent } from "./components/json-schema-form/material-design-framework.component";
+import { MaterialFileComponent } from "./components/json-schema-form/material-file.component";
+import { MaterialAddReferenceComponent } from "./components/json-schema-form/material-add-reference.component";
 
 @NgModule({
   declarations: [
@@ -143,6 +147,10 @@ import { NavbarComponent } from './components/navbar/navbar.component';
     CreateRoleMapperComponent,
     SnackbarComponent,
     NavbarComponent,
+    MaterialDesignFrameworkComponent,
+    MaterialInputComponent,
+    MaterialFileComponent,
+    MaterialAddReferenceComponent
   ],
   imports: [
     BrowserModule,
@@ -154,7 +162,7 @@ import { NavbarComponent } from './components/navbar/navbar.component';
     MaterialModule,
     FlexLayoutModule,
     NgxDatatableModule,
-    JsonSchemaFormModule.forRoot(),
+    JsonSchemaFormModule,
     CodemirrorModule,
     Ng2BreadcrumbModule.forRoot(),
     ClipboardModule
@@ -191,7 +199,11 @@ import { NavbarComponent } from './components/navbar/navbar.component';
     CreateClaimComponent,
     CertitificatePublicKeyDialog,
     CreateRoleMapperComponent,
-    SnackbarComponent
+    SnackbarComponent,
+    MaterialDesignFrameworkComponent,
+    MaterialInputComponent,
+    MaterialFileComponent,
+    MaterialAddReferenceComponent
   ],
   bootstrap: [AppComponent]
 })
