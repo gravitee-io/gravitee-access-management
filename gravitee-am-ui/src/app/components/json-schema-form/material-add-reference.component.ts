@@ -1,14 +1,27 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import { Component, DoCheck, Input, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { JsonSchemaFormService } from "angular2-json-schema-form";
 
-import { JsonSchemaFormService } from '../../library/json-schema-form.service';
 
 @Component({
   selector: 'material-add-reference-widget',
   template: `
     <section [class]="options?.htmlClass" align="end">
-      <button *ngIf="showAddButton" md-raised-button style="margin-top: 20px;"
-        [class]="'mat-raised-button'"
+      <button md-raised-button *ngIf="showAddButton" style="margin-top: 10px;"
         [color]="options?.color || 'accent'"
         [disabled]="options?.readonly"
         (click)="addItem($event)">
@@ -19,10 +32,10 @@ import { JsonSchemaFormService } from '../../library/json-schema-form.service';
 })
 export class MaterialAddReferenceComponent implements OnInit, DoCheck {
   options: any;
-  private itemCount: number;
+  itemCount: number;
   showAddButton: boolean = true;
-  private previousLayoutIndex: number[];
-  private previousDataIndex: number[];
+  previousLayoutIndex: number[];
+  previousDataIndex: number[];
   @Input() formID: number;
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
@@ -33,7 +46,7 @@ export class MaterialAddReferenceComponent implements OnInit, DoCheck {
   ) { }
 
   ngOnInit() {
-    this.options = this.layoutNode.options;
+    this.options = this.layoutNode.options || {};
     this.updateControl();
   }
 
@@ -45,14 +58,14 @@ export class MaterialAddReferenceComponent implements OnInit, DoCheck {
     }
   }
 
-  private addItem(event) {
+  addItem(event) {
     event.preventDefault();
     this.itemCount = this.layoutIndex[this.layoutIndex.length - 1] + 1;
     this.jsf.addItem(this);
     this.updateControl();
   }
 
-  private updateControl() {
+  updateControl() {
     this.itemCount = this.layoutIndex[this.layoutIndex.length - 1];
     this.previousLayoutIndex = this.layoutIndex;
     this.previousDataIndex = this.dataIndex;
@@ -60,7 +73,7 @@ export class MaterialAddReferenceComponent implements OnInit, DoCheck {
       this.itemCount < (this.options.maxItems || 1000000);
   }
 
-  private setTitle(): string {
+  setTitle(): string {
     const parent: any = {
       dataIndex: this.dataIndex.slice(0, -1),
       layoutNode: this.jsf.getParentNode(this)
