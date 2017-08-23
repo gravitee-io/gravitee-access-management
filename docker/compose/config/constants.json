@@ -1,13 +1,13 @@
 {
   "portalTitle": "Access Management",
-  "baseURL": "http://localhost/oauth2/management",
+  "baseURL": "http://localhost/am/management",
   "authentication": {
     "oauth2": {
-      "authorize": "http://localhost/oauth2/admin/oauth/authorize",
-      "userInfo": "http://localhost/oauth2/admin/userinfo",
+      "authorize": "http://localhost/am/admin/oauth/authorize",
+      "userInfo": "http://localhost/am/admin/userinfo",
       "clientId": "admin",
-      "redirectUri": "http://localhost/oauth2/ui/oauth/callback",
-      "logoutUri": "http://localhost/oauth2/admin/logout?target_url=http://localhost/oauth2/ui/logout/callback"
+      "redirectUri": "http://localhost/am/ui/oauth/callback",
+      "logoutUri": "http://localhost/am/admin/logout?target_url=http://localhost/am/ui/logout/callback"
     }
   }
 }
