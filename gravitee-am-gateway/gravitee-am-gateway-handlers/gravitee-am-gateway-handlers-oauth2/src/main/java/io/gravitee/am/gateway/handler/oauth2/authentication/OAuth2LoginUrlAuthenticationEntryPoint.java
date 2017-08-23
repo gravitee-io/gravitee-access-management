@@ -52,7 +52,14 @@ public class OAuth2LoginUrlAuthenticationEntryPoint extends LoginUrlAuthenticati
 
         String host = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
         if (host != null && !host.isEmpty()) {
-            builder.host(host);
+            if (host.contains(":")) {
+                // Forwarded host contains both host and port
+                String [] parts = host.split(":");
+                builder.host(parts[0]);
+                builder.port(parts[1]);
+            } else {
+                builder.host(host);
+            }
         }
 
         return builder.toUriString();

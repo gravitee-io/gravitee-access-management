@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authenticatio
 import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationFailureHandler;
 import io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore;
 import io.gravitee.am.gateway.handler.oauth2.security.listener.AuthenticationSuccessListener;
+import io.gravitee.am.gateway.handler.oauth2.security.web.XForwardedAwareRedirectStrategy;
 import io.gravitee.am.gateway.handler.oauth2.userdetails.CustomUserDetailsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,9 +46,10 @@ import org.springframework.security.oauth2.provider.approval.ApprovalStore;
 import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
 import org.springframework.security.oauth2.provider.approval.TokenStoreUserApprovalHandler;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
-import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -95,6 +97,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .formLogin()
                 .authenticationDetailsSource(new ClientAwareAuthenticationDetailsSource())
                 .failureHandler(authenticationFailureHandler())
+                .successHandler(authenticationSuccessHandler())
                 .permitAll()
                 .and()
             .logout()
@@ -168,5 +171,11 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public AuthenticationSuccessListener authenticationSuccessListener() {
         return new AuthenticationSuccessListener();
+    }
+
+    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+        SavedRequestAwareAuthenticationSuccessHandler successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
+        successHandler.setRedirectStrategy(new XForwardedAwareRedirectStrategy());
+        return successHandler;
     }
 }
