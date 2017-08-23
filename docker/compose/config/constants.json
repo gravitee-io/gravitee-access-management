@@ -6,8 +6,8 @@
       "authorize": "http://localhost/oauth2/admin/oauth/authorize",
       "userInfo": "http://localhost/oauth2/admin/userinfo",
       "clientId": "admin",
-      "redirectUri": "http://localhost/oauth2-webui/oauth/callback",
-      "logoutUri": "http://localhost/oauth2/admin/logout?target_url=http://localhost/oauth2-webui/logout/callback"
+      "redirectUri": "http://localhost/oauth2/ui/oauth/callback",
+      "logoutUri": "http://localhost/oauth2/admin/logout?target_url=http://localhost/oauth2/ui/logout/callback"
     }
   }
 }
