@@ -1,0 +1,29 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-list fxFlex *ngIf="topClients">
+  <h3 md-subheader>Top Clients <small>by active access tokens</small></h3>
+  <md-list-item *ngFor="let topClient of topClients">
+    <md-icon md-list-icon>web_asset</md-icon>
+    <h4 md-line>
+      <a [routerLink]="['/domains', topClient.domainId]">{{topClient.domainName}}</a> /
+      <a [routerLink]="['/domains', topClient.domainId, 'clients', topClient.id]">{{topClient.clientId}}</a>
+    </h4>
+    <p md-line><small>{{topClient.accessTokens}} access tokens</small></p>
+  </md-list-item>
+</md-list>
+<md-spinner *ngIf="!topClients"></md-spinner>

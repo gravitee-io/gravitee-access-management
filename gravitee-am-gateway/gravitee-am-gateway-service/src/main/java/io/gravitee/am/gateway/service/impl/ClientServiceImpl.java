@@ -21,10 +21,14 @@ import io.gravitee.am.gateway.service.exception.ClientAlreadyExistsException;
 import io.gravitee.am.gateway.service.exception.ClientNotFoundException;
 import io.gravitee.am.gateway.service.exception.TechnicalManagementException;
 import io.gravitee.am.gateway.service.model.NewClient;
+import io.gravitee.am.gateway.service.model.TopClient;
+import io.gravitee.am.gateway.service.model.TotalClient;
 import io.gravitee.am.gateway.service.model.UpdateClient;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.common.utils.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -47,6 +52,9 @@ public class ClientServiceImpl implements ClientService {
 
     @Autowired
     private IdentityProviderService identityProviderService;
+
+    @Autowired
+    private TokenRepository tokenRepository;
 
     @Override
     public Client findById(String id) {
@@ -82,19 +90,138 @@ public class ClientServiceImpl implements ClientService {
 
             return clientOpt.get();
         } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find client by domain", ex);
-            throw new TechnicalManagementException("An error occurs while trying to find client by domain", ex);
+            LOGGER.error("An error occurs while trying to find client by domain: {} and client id: {}", domain, clientId, ex);
+            throw new TechnicalManagementException(
+                    String.format("An error occurs while trying to find client by domain: %s and client id: %s", domain, clientId), ex);
         }
     }
 
     @Override
     public Set<Client> findByDomain(String domain) {
         try {
-            LOGGER.debug("Find clients by domain: {}", domain);
+            LOGGER.debug("Find clients by domain", domain);
             return clientRepository.findByDomain(domain);
         } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find clients by domain", ex);
-            throw new TechnicalManagementException("An error occurs while trying to find clients by domain", ex);
+            LOGGER.error("An error occurs while trying to find clients by domain: {}", domain, ex);
+            throw new TechnicalManagementException(
+                    String.format("An error occurs while trying to find clients by domain: %s", domain), ex);
+        }
+    }
+
+    @Override
+    public Page<Client> findByDomain(String domain, int page, int size) {
+        try {
+            LOGGER.debug("Find clients by domain", domain);
+            return clientRepository.findByDomain(domain, page, size);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find clients by domain: {}", domain, ex);
+            throw new TechnicalManagementException(
+                    String.format("An error occurs while trying to find clients by domain: %s", domain), ex);
+        }
+    }
+
+    @Override
+    public Set<Client> findByIdentityProvider(String identityProvider) {
+        try {
+            LOGGER.debug("Find clients by identity provider : {}", identityProvider);
+            return clientRepository.findByIdentityProvider(identityProvider);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find clients by identity provider", ex);
+            throw new TechnicalManagementException("An error occurs while trying to find clients by identity provider", ex);
+        }
+    }
+
+    @Override
+    public Set<Client> findByCertificate(String certificate) {
+        try {
+            LOGGER.debug("Find clients by certificate : {}", certificate);
+            return clientRepository.findByCertificate(certificate);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find clients by certificate", ex);
+            throw new TechnicalManagementException("An error occurs while trying to find clients by certificate", ex);
+        }
+    }
+
+    @Override
+    public Set<Client> findAll() {
+        try {
+            LOGGER.debug("Find clients");
+            return clientRepository.findAll();
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find clients", ex);
+            throw new TechnicalManagementException("An error occurs while trying to find clients", ex);
+        }
+    }
+
+    @Override
+    public Page<Client> findAll(int page, int size) {
+        try {
+            LOGGER.debug("Find clients");
+            return clientRepository.findAll(page, size);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find clients", ex);
+            throw new TechnicalManagementException("An error occurs while trying to find clients", ex);
+        }
+    }
+
+    @Override
+    public Set<TopClient> findTopClients() {
+        try {
+            LOGGER.debug("Find top clients");
+            Set<Client> clients = clientRepository.findAll();
+            return clients.parallelStream().map(c -> {
+                TopClient client = new TopClient();
+                client.setClient(c);
+                client.setAccessTokens(tokenRepository.findTokensByClientId(c.getClientId()).size());
+                return client;
+            }).collect(Collectors.toSet());
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find top clients", ex);
+            throw new TechnicalManagementException("An error occurs while trying to find top clients", ex);
+        }
+    }
+
+    @Override
+    public Set<TopClient> findTopClientsByDomain(String domain) {
+        try {
+            LOGGER.debug("Find top clients by domain: {}", domain);
+            Set<Client> clients = clientRepository.findByDomain(domain);
+            return clients.parallelStream().map(c -> {
+                TopClient client = new TopClient();
+                client.setClient(c);
+                client.setAccessTokens(tokenRepository.findTokensByClientId(c.getClientId()).size());
+                return client;
+            }).collect(Collectors.toSet());
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find top clients by domain", ex);
+            throw new TechnicalManagementException("An error occurs while trying to find top clients by domain", ex);
+        }
+    }
+
+    @Override
+    public TotalClient findTotalClientsByDomain(String domain) {
+        try {
+            LOGGER.debug("Find total clients by domain: {}", domain);
+            TotalClient totalClient = new TotalClient();
+            totalClient.setTotalClients(clientRepository.countByDomain(domain));
+            return totalClient;
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find total clients by domain: {}", domain, ex);
+            throw new TechnicalManagementException(
+                    String.format("An error occurs while trying to find total clients by domain: %s", domain), ex);
+        }
+    }
+
+    @Override
+    public TotalClient findTotalClients() {
+        try {
+            LOGGER.debug("Find total client");
+            TotalClient totalClient = new TotalClient();
+            totalClient.setTotalClients(clientRepository.count());
+            return totalClient;
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find total clients", ex);
+            throw new TechnicalManagementException("An error occurs while trying to find total clients", ex);
         }
     }
 
@@ -167,28 +294,6 @@ public class ClientServiceImpl implements ClientService {
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to update a client", ex);
             throw new TechnicalManagementException("An error occurs while trying to update a client", ex);
-        }
-    }
-
-    @Override
-    public Set<Client> findByIdentityProvider(String identityProvider) {
-        try {
-            LOGGER.debug("Find clients by identity provider : {}", identityProvider);
-            return clientRepository.findByIdentityProvider(identityProvider);
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find clients by identity provider", ex);
-            throw new TechnicalManagementException("An error occurs while trying to find clients by identity provider", ex);
-        }
-    }
-
-    @Override
-    public Set<Client> findByCertificate(String certificate) {
-        try {
-            LOGGER.debug("Find clients by certificate : {}", certificate);
-            return clientRepository.findByCertificate(certificate);
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find clients by certificate", ex);
-            throw new TechnicalManagementException("An error occurs while trying to find clients by certificate", ex);
         }
     }
 

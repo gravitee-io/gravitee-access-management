@@ -24,7 +24,8 @@ export class DomainResolver implements Resolve<any> {
   constructor(private domainService: DomainService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    return this.domainService.get(route.paramMap.get('domainId')).map(res => res.json());
+    let domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId');
+    return this.domainService.get(domainId).map(res => res.json());
   }
 
 }

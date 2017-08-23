@@ -15,6 +15,9 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from "../../services/auth.service";
+import { DomainService } from "../../services/domain.service";
+import {SidenavService} from "../sidenav/sidenav.service";
+import {Router} from "@angular/router";
 
 @Component({
   selector: 'gs-navbar',
@@ -22,8 +25,9 @@ import { AuthService } from "../../services/auth.service";
   styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent implements OnInit {
+  domains: any[];
 
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService, private domainService: DomainService, private router:Router) { }
 
   ngOnInit() {
   }
@@ -36,4 +40,13 @@ export class NavbarComponent implements OnInit {
     return this.authService.isAuthenticated();
   }
 
+  listDomains() {
+    this.domainService.list().map(res => res.json()).subscribe(data => this.domains = data);
+  }
+
+  goTo(routerLink) {
+    // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
+    this.router.navigateByUrl('/dummy', { skipLocationChange: true })
+      .then(() => this.router.navigate(routerLink));
+  }
 }

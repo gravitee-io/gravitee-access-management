@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.service.model.UpdateLoginForm;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginForm;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -32,6 +33,8 @@ public interface DomainService {
     Domain findById(String id);
 
     Set<Domain> findAll();
+
+    Set<Domain> findByIdIn(Collection<String> ids);
 
     Domain create(NewDomain domain);
 

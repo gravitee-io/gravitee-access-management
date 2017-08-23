@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.management.api.spring;
 
 import io.gravitee.am.gateway.handler.management.api.spring.security.SecurityConfiguration;
 import io.gravitee.am.gateway.service.ServiceConfiguration;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -25,6 +26,7 @@ import org.springframework.context.annotation.Import;
  * @author GraviteeSource Team
  */
 @Configuration
+@ComponentScan("io.gravitee.am.gateway.handler.management.api.resources.enhancer")
 @Import({
 //        ManagementRepositoryConfiguration.class,
         SecurityConfiguration.class,

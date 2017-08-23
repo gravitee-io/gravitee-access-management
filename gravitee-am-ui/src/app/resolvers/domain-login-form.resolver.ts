@@ -24,7 +24,8 @@ export class DomainLoginFormResolver implements Resolve<any> {
   constructor(private domainService: DomainService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    return this.domainService.getLoginForm(route.parent.paramMap.get('domainId'))
+    let domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
+    return this.domainService.getLoginForm(domainId)
       .map(res => res.json())
       .catch(res => {
         return Observable.of({});

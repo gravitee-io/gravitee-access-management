@@ -21,8 +21,11 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginFormMongo;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,6 +36,8 @@ import java.util.stream.Collectors;
  */
 @Component
 public class MongoDomainRepository extends AbstractManagementMongoRepository implements DomainRepository {
+
+    private static final String ID_FIELD = "_id";
 
     @Override
     public Set<Domain> findAll() throws TechnicalException {
@@ -45,6 +50,17 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     @Override
     public Optional<Domain> findById(String id) throws TechnicalException {
         return Optional.ofNullable(convert(mongoOperations.findById(id, DomainMongo.class)));
+    }
+
+    @Override
+    public Set<Domain> findByIdIn(Collection<String> ids) throws TechnicalException {
+        Query query = new Query();
+        query.addCriteria(Criteria.where(ID_FIELD).in(ids));
+
+        return mongoOperations.find(query, DomainMongo.class)
+                .stream()
+                .map(this::convert)
+                .collect(Collectors.toSet());
     }
 
     @Override

@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.repository.proxy;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,11 @@ public class ClientRepositoryProxy extends AbstractProxy<ClientRepository> imple
     }
 
     @Override
+    public Page<Client> findByDomain(String domain, int page, int size) throws TechnicalException {
+        return target.findByDomain(domain, page, size);
+    }
+
+    @Override
     public Optional<Client> findByClientIdAndDomain(String clientId, String domain) throws TechnicalException {
         return target.findByClientIdAndDomain(clientId, domain);
     }
@@ -48,6 +54,16 @@ public class ClientRepositoryProxy extends AbstractProxy<ClientRepository> imple
     @Override
     public Set<Client> findByCertificate(String certificate) throws TechnicalException {
         return target.findByCertificate(certificate);
+    }
+
+    @Override
+    public Set<Client> findAll() throws TechnicalException {
+        return target.findAll();
+    }
+
+    @Override
+    public Page<Client> findAll(int page, int size) throws TechnicalException {
+        return target.findAll(page, size);
     }
 
     @Override
@@ -68,5 +84,15 @@ public class ClientRepositoryProxy extends AbstractProxy<ClientRepository> imple
     @Override
     public void delete(String id) throws TechnicalException {
         target.delete(id);
+    }
+
+    @Override
+    public long countByDomain(String domain) throws TechnicalException {
+        return target.countByDomain(domain);
+    }
+
+    @Override
+    public long count() throws TechnicalException {
+        return target.count();
     }
 }

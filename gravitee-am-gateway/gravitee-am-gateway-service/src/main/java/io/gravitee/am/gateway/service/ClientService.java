@@ -16,8 +16,11 @@
 package io.gravitee.am.gateway.service;
 
 import io.gravitee.am.gateway.service.model.NewClient;
+import io.gravitee.am.gateway.service.model.TopClient;
+import io.gravitee.am.gateway.service.model.TotalClient;
 import io.gravitee.am.gateway.service.model.UpdateClient;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.common.Page;
 
 import java.util.Set;
 
@@ -31,6 +34,8 @@ public interface ClientService {
 
     Client findByDomainAndClientId(String domain, String clientId);
 
+    Page<Client> findByDomain(String domain, int page, int size);
+
     Set<Client> findByDomain(String domain);
 
     Client create(String domain, NewClient newClient);
@@ -40,6 +45,18 @@ public interface ClientService {
     Set<Client> findByIdentityProvider(String identityProvider);
 
     Set<Client> findByCertificate(String certificate);
+
+    Set<Client> findAll();
+
+    Page<Client> findAll(int page, int size);
+
+    Set<TopClient> findTopClients();
+
+    Set<TopClient> findTopClientsByDomain(String domain);
+
+    TotalClient findTotalClientsByDomain(String domain);
+
+    TotalClient findTotalClients();
 
     void delete(String clientId);
 }

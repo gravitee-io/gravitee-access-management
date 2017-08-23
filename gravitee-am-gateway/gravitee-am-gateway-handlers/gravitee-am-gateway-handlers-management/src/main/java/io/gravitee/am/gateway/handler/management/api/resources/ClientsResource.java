@@ -15,11 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.management.api.resources;
 
+import io.gravitee.am.gateway.handler.management.api.resources.enhancer.ClientEnhancer;
 import io.gravitee.am.gateway.service.ClientService;
 import io.gravitee.am.gateway.service.DomainService;
 import io.gravitee.am.gateway.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.gateway.service.model.NewClient;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.ClientListItem;
+import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +34,7 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,18 +54,22 @@ public class ClientsResource extends AbstractResource {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private ClientEnhancer clientEnhancer;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered clients for a security domain")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered clients for a security domain",
-                    response = Client.class, responseContainer = "Set"),
+                    response = ClientListItem.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public List<Client> listClients(@PathParam("domain") String domain) {
-        domainService.findById(domain);
+    public List<ClientListItem> listClients(@PathParam("domain") String _domain) {
+        Domain domain = domainService.findById(_domain);
 
-        return clientService.findByDomain(domain)
+        return clientService.findByDomain(_domain)
                 .stream()
+                .map(clientEnhancer.enhanceClient(Collections.singletonMap(domain.getId(), domain)))
                 .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getClientId(), o2.getClientId()))
                 .collect(Collectors.toList());
     }

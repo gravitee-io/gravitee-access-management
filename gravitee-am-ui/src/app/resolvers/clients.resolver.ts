@@ -17,14 +17,20 @@ import { Injectable } from '@angular/core';
 import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { ClientService } from "../services/client.service";
+import { DashboardService } from "../services/dashboard.service";
 
 @Injectable()
 export class ClientsResolver implements Resolve<any> {
 
-  constructor(private clientService: ClientService) { }
+  constructor(private clientService: ClientService, private dashboardService: DashboardService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    return this.clientService.findByDomain(route.parent.paramMap.get('domainId')).map(res => res.json());
+    let domainId = route.parent.paramMap.get('domainId');
+    if (domainId) {
+      return this.clientService.findByDomain(route.parent.paramMap.get('domainId')).map(res => res.json());
+    } else {
+      return this.dashboardService.findClients(null).map(res => res.json());
+    }
   }
 
 }

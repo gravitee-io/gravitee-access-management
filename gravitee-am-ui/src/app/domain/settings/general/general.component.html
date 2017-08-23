@@ -1,0 +1,57 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="domain-general-container">
+  <h1>General</h1>
+  <div class="domain-general-content">
+    <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column" fxFlex="70">
+      <div fxLayout="row" fxLayoutAlign="end">
+        <md-slide-toggle mdTooltip="{{domain.enabled ? 'Disable domain ?' : 'Enable domain ?'}}"
+                         (change)="enableDomain($event)"
+                         [checked]="domain.enabled">
+        </md-slide-toggle>
+      </div>
+      <md-input-container fxFlex style="margin-top: -20px;">
+        <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required>
+        <md-hint>Your domain's name</md-hint>
+      </md-input-container>
+      <md-input-container fxFlex>
+        <input mdInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required>
+        <md-hint>Your domain's path. Context path for Authentication and Authorization API operations.</md-hint>
+      </md-input-container>
+      <md-input-container>
+        <textarea mdInput placeholder="Description" name="description" [(ngModel)]="domain.description"></textarea>
+        <md-hint>Your domain's description.</md-hint>
+      </md-input-container>
+
+      <div class="domain-general-form-actions" fxLayout="row">
+        <button md-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
+        <span fxFlex></span>
+        <button md-raised-button color="warn" (click)="delete($event)">DELETE</button>
+      </div>
+    </form>
+    <div class="domain-general-description" fxFlex>
+      <h3>Manage security domain</h3>
+      <div class="domain-general-description-content">
+        <p>
+          Configure your security domain's name, path and description.
+        </p>
+        <small>Changing the security domain's path involve to change endpoint URLs in your current applications.</small>
+      </div>
+    </div>
+  </div>
+</div>
