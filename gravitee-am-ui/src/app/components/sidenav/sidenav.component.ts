@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import  {Router, NavigationEnd } from "@angular/router";
+import { Router, NavigationEnd, ActivatedRoute } from "@angular/router";
 import { SidenavService } from "./sidenav.service";
 import { Subscription} from "rxjs";
 import { AuthService } from "../../services/auth.service";
@@ -34,8 +34,10 @@ export class SidenavComponent implements OnInit, OnDestroy {
   currentSubPaths: any[] = [];
   currentResource: any = {};
   subscription: Subscription;
+  displayFirstLevel: boolean = false;
+  displaySettingsLevel: boolean = false;
 
-  constructor(private router: Router, private sidenavService : SidenavService, private authService: AuthService) {
+  constructor(private router: Router, private currentRoute:ActivatedRoute, private sidenavService : SidenavService, private authService: AuthService) {
   }
 
   ngOnInit() {
@@ -61,14 +63,34 @@ export class SidenavComponent implements OnInit, OnDestroy {
     this.router.events
       .filter(event => event instanceof NavigationEnd)
       .subscribe(event => {
+        this.displayFirstLevel = false;
+        this.displaySettingsLevel = false;
+        if (this.currentRoute.root.firstChild.snapshot.data && this.currentRoute.root.firstChild.snapshot.data.menu) {
+          // check if we display first level menu items
+          let displayFirstLevel = this.currentRoute.root.firstChild.snapshot.data.menu.displayFirstLevel;
+          this.displayFirstLevel = (typeof displayFirstLevel != 'undefined') ? displayFirstLevel : true;
+          // check if we display settings level menu items
+          if (this.currentRoute.root.firstChild.snapshot.data.menu.displaySettingsLevel) {
+            let displaySettingsLevel = this.currentRoute.root.firstChild.snapshot.data.menu.displaySettingsLevel;
+            this.displaySettingsLevel = (typeof displaySettingsLevel != 'undefined') ? displaySettingsLevel : false;
+          }
+        }
         this.currentSubPaths = [];
         let _currentSubPaths = this.router.routerState.snapshot.url.split('/');
-        if (_currentSubPaths.length > 3) {
+        if (_currentSubPaths.length > 2) {
           this.currentSubPaths = this.subPaths[_currentSubPaths[1]];
-          this.currentSubPaths.forEach(cS => {
-            cS.parentPath = _currentSubPaths[1];
-            cS.currentResourceId = _currentSubPaths[2];
-          });
+          if (this.currentSubPaths) {
+            this.currentSubPaths.forEach(cS => {
+              cS.parentPath = _currentSubPaths[1];
+              cS.currentResourceId = _currentSubPaths[2];
+              cS.fullPath = [];
+              cS.fullPath.push(cS.parentPath);
+              if (!this.displaySettingsLevel) {
+                cS.fullPath.push(cS.currentResourceId);
+              }
+              cS.fullPath.push(cS.path);
+            });
+          }
         }
       })
   }

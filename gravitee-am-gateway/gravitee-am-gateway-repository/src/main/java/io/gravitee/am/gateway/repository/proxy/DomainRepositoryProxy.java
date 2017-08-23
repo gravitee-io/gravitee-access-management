@@ -20,6 +20,7 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
@@ -33,6 +34,11 @@ public class DomainRepositoryProxy extends AbstractProxy<DomainRepository> imple
     @Override
     public Set<Domain> findAll() throws TechnicalException {
         return target.findAll();
+    }
+
+    @Override
+    public Set<Domain> findByIdIn(Collection<String> ids) throws TechnicalException {
+        return target.findByIdIn(ids);
     }
 
     @Override

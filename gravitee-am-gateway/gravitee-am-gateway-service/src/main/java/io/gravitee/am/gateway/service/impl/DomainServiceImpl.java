@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.text.Normalizer;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
@@ -75,6 +76,17 @@ public class DomainServiceImpl implements DomainService {
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find all domains", ex);
             throw new TechnicalManagementException("An error occurs while trying to find all domains", ex);
+        }
+    }
+
+    @Override
+    public Set<Domain> findByIdIn(Collection<String> ids) {
+        try {
+            LOGGER.debug("Find domains by id in {}", ids);
+            return domainRepository.findByIdIn(ids);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find domains by id in {}", ids, ex);
+            throw new TechnicalManagementException("An error occurs while trying to find domains by id in", ex);
         }
     }
 

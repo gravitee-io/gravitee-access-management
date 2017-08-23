@@ -16,16 +16,21 @@
 import { NgModule } from "@angular/core";
 import { Routes, RouterModule } from '@angular/router';
 import { LoginComponent } from "./login/login.component";
-import { DomainsComponent } from "./domains/domains.component";
-import { DomainComponent } from "./domains/domain/domain.component";
-import { GeneralComponent } from "./domains/domain/general/general.component";
-import { ClientsComponent } from "./domains/domain/clients/clients.component";
-import { ClientComponent } from "./domains/domain/clients/client/client.component";
-import { ClientCreationComponent } from "./domains/domain/clients/creation/client-creation.component";
-import { ProvidersComponent } from "./domains/domain/providers/providers.component";
-import { DomainCreationComponent } from "./domains/creation/domain-creation.component";
-import { ProviderCreationComponent } from "./domains/domain/providers/creation/provider-creation.component";
-import { ProviderComponent } from "./domains/domain/providers/provider/provider.component";
+import { DomainsComponent } from "./settings/domains/domains.component";
+import { DomainComponent } from "./domain/domain.component";
+import { DomainDashboardComponent } from "./domain/dashboard/dashboard.component";
+import { DomainSettingsComponent } from "./domain/settings/settings.component";
+import { DomainSettingsGeneralComponent } from "./domain/settings/general/general.component";
+import { DomainSettingsLoginComponent } from "./domain/settings/login/login.component";
+import { DomainSettingsCertificatesComponent } from "./domain/settings/certificates/certificates.component";
+import { DomainSettingsProvidersComponent } from "./domain/settings/providers/providers.component";
+import { DomainSettingsRolesComponent } from "./domain/settings/roles/roles.component";
+import { ClientsComponent } from "./clients/clients.component";
+import { ClientComponent } from "./domain/clients/client/client.component";
+import { ClientCreationComponent } from "./clients/creation/client-creation.component";
+import { DomainCreationComponent } from "./settings/domains/creation/domain-creation.component";
+import { ProviderCreationComponent } from "./domain/settings/providers/creation/provider-creation.component";
+import { ProviderComponent } from "./domain/settings/providers/provider/provider.component";
 import { OAuthCallbackComponent } from "./oauth/callback/callback.component";
 import { LogoutCallbackComponent}  from "./logout/callback/callback.component";
 import { LogoutComponent } from "./logout/logout.component";
@@ -35,66 +40,99 @@ import { ClientsResolver } from "./resolvers/clients.resolver";
 import { ClientResolver } from "./resolvers/client.resolver";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
 import { ProviderResolver } from "./resolvers/provider.resolver";
-import { ProviderRolesComponent } from "./domains/domain/providers/provider/roles/roles.component";
-import { DomainLoginComponent } from "./domains/domain/login/login.component";
+import { ProviderRolesComponent } from "./domain/settings/providers/provider/roles/roles.component";
 import { DomainLoginFormResolver } from "./resolvers/domain-login-form.resolver";
-import { ProviderSettingsComponent } from "./domains/domain/providers/provider/settings/settings.component";
-import { ProviderMappersComponent } from "./domains/domain/providers/provider/mappers/mappers.component";
-import { ClientOIDCComponent } from "./domains/domain/clients/client/oidc/oidc.component";
-import { ClientSettingsComponent } from "./domains/domain/clients/client/settings/settings.component";
-import { ClientIdPComponent } from "./domains/domain/clients/client/idp/idp.component";
-import { CertificatesComponent } from "./domains/domain/certificates/certificates.component";
+import { ProviderSettingsComponent } from "./domain/settings/providers/provider/settings/settings.component";
+import { ProviderMappersComponent } from "./domain/settings/providers/provider/mappers/mappers.component";
+import { ClientOIDCComponent } from "./domain/clients/client/oidc/oidc.component";
+import { ClientSettingsComponent } from "./domain/clients/client/settings/settings.component";
+import { ClientIdPComponent } from "./domain/clients/client/idp/idp.component";
 import { CertificatesResolver } from "./resolvers/certificates.resolver";
-import { CertificateCreationComponent } from "./domains/domain/certificates/creation/certificate-creation.component";
-import { CertificateComponent } from "./domains/domain/certificates/certificate/certificate.component";
+import { CertificateCreationComponent } from "./domain/settings/certificates/creation/certificate-creation.component";
+import { CertificateComponent } from "./domain/settings/certificates/certificate/certificate.component";
 import { CertificateResolver } from "./resolvers/certificate.resolver";
-import { RolesComponent } from "./domains/domain/roles/roles.component";
 import { RolesResolver } from "./resolvers/roles.resolver";
-import { RoleCreationComponent } from "./domains/domain/roles/creation/role-creation.component";
-import { RoleComponent } from "./domains/domain/roles/role/role.component";
+import { RoleCreationComponent } from "./domain/settings/roles/creation/role-creation.component";
+import { RoleComponent } from "./domain/settings/roles/role/role.component";
 import { RoleResolver } from "./resolvers/role.resolver";
+import { DashboardComponent } from "./dashboard/dashboard.component";
+import { SettingsComponent } from "./settings/settings.component";
+import {DummyComponent} from "./components/dummy/dummy.component";
 
 const routes: Routes = [
-  { path: 'domains',
-    component: DomainsComponent,
+  { path: 'dashboard',
+    component: DashboardComponent,
+    data: {
+      menu: {
+        label: 'Dashboard',
+        icon: 'dashboard',
+        firstLevel: true
+      }
+    }
+  },
+  { path: 'dashboard/clients',
+    component: ClientsComponent,
     resolve: {
-      domains: DomainsResolver
+      clients: ClientsResolver
     },
     data: {
-        menu: {
-          label: 'Domains',
-          icon: 'dashboard',
-          firstLevel: true
-        }
+      menu: {
+        label: 'Clients',
+        icon: 'list',
+        firstLevel: true
       }
+    }
   },
-  { path: 'domains/new',
-    component: DomainCreationComponent
-  },
-  { path: 'domains/:domainId', component: DomainComponent,
-    resolve: {
-      domain: DomainResolver
+  {
+    path: 'settings', component: SettingsComponent,
+    data: {
+      menu: {
+        displayFirstLevel: false,
+        displaySettingsLevel: true
+      }
     },
     children: [
-      { path: '', redirectTo: 'general', pathMatch: 'full' },
-      { path: 'general',
-        component: GeneralComponent,
-        data: {
-          menu: {
-            label: 'General',
-            icon: 'blur_on',
-          }
-        }
-      },
-      { path: 'login',
-        component: DomainLoginComponent,
+      { path: '', redirectTo: 'domains', pathMatch: 'full' },
+      { path: 'domains',
+        component: DomainsComponent,
         resolve: {
-          domainLoginForm: DomainLoginFormResolver
+          domains: DomainsResolver
         },
         data: {
           menu: {
-            label: 'Login page',
-            icon: 'web',
+            label: 'Domains',
+            icon: 'view_module'
+          }
+        }
+      },
+      { path: 'domains/new',
+        component: DomainCreationComponent
+      },
+    ]
+  },
+  { path: 'clients/new',
+    component: ClientCreationComponent,
+    resolve: {
+      domains: DomainsResolver
+    }
+  },
+  { path: 'domains/:domainId', component: DomainComponent,
+    resolve: {
+      domain: DomainResolver,
+    },
+    data: {
+      menu: {
+        displayFirstLevel: false
+      }
+    },
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard',
+        component: DomainDashboardComponent,
+        data: {
+          menu: {
+            label: 'Dashboard',
+            icon: 'blur_on',
           }
         }
       },
@@ -110,9 +148,6 @@ const routes: Routes = [
           }
         }
       },
-      { path: 'clients/new',
-        component: ClientCreationComponent,
-      },
       { path: 'clients/:clientId',
         component: ClientComponent,
         resolve: {
@@ -125,73 +160,110 @@ const routes: Routes = [
           { path: 'oidc', component: ClientOIDCComponent }
         ]
       },
-      { path: 'providers', component: ProvidersComponent,
+      { path: 'settings', component: DomainSettingsComponent,
         resolve: {
-          providers: ProvidersResolver
+          domain: DomainResolver,
         },
         data: {
           menu: {
-            label: 'Providers',
-            icon: 'device_hub',
+            label: 'Settings',
+            icon: 'settings',
           }
-        }
-      },
-      { path: 'providers/new',
-        component: ProviderCreationComponent
-      },
-      { path: 'providers/:providerId',
-        component: ProviderComponent,
-        resolve: {
-          provider: ProviderResolver
         },
         children: [
-          { path: '', redirectTo: 'settings', pathMatch: 'full' },
-          { path: 'settings', component: ProviderSettingsComponent },
-          { path: 'mappers', component: ProviderMappersComponent },
-          { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver} }
+          { path: '', redirectTo: 'general', pathMatch: 'full' },
+          { path: 'general',
+            component: DomainSettingsGeneralComponent,
+            data: {
+              menu: {
+                label: 'General',
+                section: 'Settings'
+              }
+            }
+          },
+          { path: 'login',
+            component: DomainSettingsLoginComponent,
+            resolve: {
+              domainLoginForm: DomainLoginFormResolver
+            },
+            data: {
+              menu: {
+                label: 'Login Page',
+                section: 'Settings'
+              }
+            }
+          },
+          { path: 'providers',
+            component: DomainSettingsProvidersComponent,
+            resolve: {
+              providers: ProvidersResolver
+            },
+            data: {
+              menu: {
+                label: 'Providers',
+                section: 'Identities'
+              }
+            }
+          },
+          { path: 'providers/new',
+            component: ProviderCreationComponent
+          },
+          { path: 'providers/:providerId',
+            component: ProviderComponent,
+            resolve: {
+              provider: ProviderResolver
+            },
+            children: [
+              { path: '', redirectTo: 'settings', pathMatch: 'full' },
+              { path: 'settings', component: ProviderSettingsComponent },
+              { path: 'mappers', component: ProviderMappersComponent },
+              { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver} }
+            ]
+          },
+          { path: 'certificates',
+            component: DomainSettingsCertificatesComponent,
+            resolve: {
+              certificates: CertificatesResolver
+            },
+            data: {
+              menu: {
+                label: 'Certificates',
+                section: 'Security'
+              }
+            }
+          },
+          { path: 'certificates/new',
+            component: CertificateCreationComponent
+          },
+          {
+            path: 'certificates/:certificateId',
+            component: CertificateComponent,
+            resolve: {
+              certificate: CertificateResolver
+            }
+          },
+          { path: 'roles', component: DomainSettingsRolesComponent,
+            resolve: {
+              roles: RolesResolver
+            },
+            data: {
+              menu: {
+                label: 'Roles',
+                section: 'Security',
+              }
+            }
+          },
+          { path: 'roles/new',
+            component: RoleCreationComponent
+          },
+          {
+            path: 'roles/:roleId',
+            component: RoleComponent,
+            resolve: {
+              role: RoleResolver
+            }
+          },
         ]
-      },
-      { path: 'certificates', component: CertificatesComponent,
-        resolve: {
-          certificates: CertificatesResolver
-        },
-        data: {
-          menu: {
-            label: 'Certificates',
-            icon: 'vpn_key',
-          }
-        }
-      },
-      { path: 'certificates/new',
-        component: CertificateCreationComponent
-      },
-      {
-        path: 'certificates/:certificateId',
-        component: CertificateComponent,
-        resolve: {
-          certificate: CertificateResolver
-        }
-      },
-      { path: 'roles', component: RolesComponent,
-        resolve: {
-          roles: RolesResolver
-        },
-        data: {
-          menu: {
-            label: 'Roles',
-            icon: 'supervisor_account',
-          }
-        }
-      },
-      { path: 'roles/new',
-        component: RoleCreationComponent
-      },
-      {
-        path: 'roles/:roleId',
-        component: RoleComponent,
-        resolve: {
-          role: RoleResolver
-        }
       }
     ]
   },
@@ -199,7 +271,8 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'logout', component: LogoutComponent },
   { path: 'logout/callback', component: LogoutCallbackComponent },
-  { path: '', redirectTo: '/domains', pathMatch: 'full' }
+  { path: 'dummy', component: DummyComponent },
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' }
 ];
 
 @NgModule({

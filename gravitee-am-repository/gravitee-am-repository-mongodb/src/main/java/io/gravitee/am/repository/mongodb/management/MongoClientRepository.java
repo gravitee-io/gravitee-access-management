@@ -16,9 +16,11 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.ClientMongo;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
@@ -49,6 +51,23 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
                 .stream()
                 .map(this::convert)
                 .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Page<Client> findByDomain(String domain, int page, int size) throws TechnicalException {
+        Query query = new Query();
+        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain));
+        query.with(new PageRequest(page, size));
+
+        long totalCount = mongoOperations.count(query, ClientMongo.class);
+
+        Set<Client> clients = mongoOperations
+                .find(query, ClientMongo.class)
+                .stream()
+                .map(this::convert)
+                .collect(Collectors.toSet());
+
+        return new Page(clients, page, totalCount);
     }
 
     @Override
@@ -87,6 +106,31 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     }
 
     @Override
+    public Set<Client> findAll() throws TechnicalException {
+        return mongoOperations
+                .findAll(ClientMongo.class)
+                .stream()
+                .map(this::convert)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Page<Client> findAll(int page, int size) throws TechnicalException {
+        Query query = new Query();
+        query.with(new PageRequest(page, size));
+
+        long totalCount = mongoOperations.count(query, ClientMongo.class);
+
+        Set<Client> clients = mongoOperations
+                .find(query, ClientMongo.class)
+                .stream()
+                .map(this::convert)
+                .collect(Collectors.toSet());
+
+        return new Page(clients, page, totalCount);
+    }
+
+    @Override
     public Optional<Client> findById(String client) throws TechnicalException {
         return Optional.ofNullable(convert(mongoOperations.findById(client, ClientMongo.class)));
     }
@@ -109,6 +153,18 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     public void delete(String id) throws TechnicalException {
         ClientMongo client = mongoOperations.findById(id, ClientMongo.class);
         mongoOperations.remove(client);
+    }
+
+    @Override
+    public long countByDomain(String domain) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain));
+
+        return mongoOperations.count(query, ClientMongo.class);
+    }
+
+    public long count() {
+        return mongoOperations.getCollection( "clients").count();
     }
 
     private Client convert(ClientMongo clientMongo) {

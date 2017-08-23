@@ -1,5 +1,7 @@
 $bgColor: #383C48;
 $fontColor: #fff;
+$bgSettingsColor: #f5f5f5;
+$fontSettingsColor: #383C48;
 $sidenavWidth: 200px;
 $sidenavMinWidth: 60px;
 $sidenavItemLeftWidth: 15px;
@@ -63,6 +65,18 @@ $sidenavHeaderHeight: 64px;
   .sidenav-list {
     a {
       width: 74%;
+    }
+  }
+}
+.gs-sidenav-settings {
+  background-color: $bgSettingsColor;
+  .navigation-header {
+    background-color: $bgSettingsColor;
+  }
+  a {
+    color: $fontSettingsColor !important;
+    &.sidenav-active {
+      border-left: $sidenavItemBorderSize solid $fontSettingsColor !important;
     }
   }
 }

@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 
 import java.util.Optional;
@@ -35,9 +36,19 @@ public interface ClientRepository extends CrudRepository<Client, String> {
      */
     Set<Client> findByDomain(String domain) throws TechnicalException;
 
+    Page<Client> findByDomain(String domain, int page, int size) throws TechnicalException;
+
     Optional<Client> findByClientIdAndDomain(String clientId, String domain) throws TechnicalException;
 
     Set<Client> findByIdentityProvider(String identityProvider) throws TechnicalException;
 
     Set<Client> findByCertificate(String certificate) throws TechnicalException;
+
+    Set<Client> findAll() throws TechnicalException;
+
+    Page<Client> findAll(int page, int size) throws TechnicalException;
+
+    long countByDomain(String domain) throws TechnicalException;
+
+    long count() throws TechnicalException;
 }

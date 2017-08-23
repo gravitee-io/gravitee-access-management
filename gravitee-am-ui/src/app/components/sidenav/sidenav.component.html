@@ -15,35 +15,36 @@
     limitations under the License.
 
 -->
-<div class="gs-sidenav" fxLayout="column" fxFlex [ngClass]="{'gs-sidenav-min': reducedMode}">
+<div class="gs-sidenav" fxLayout="column" fxFlex [ngClass]="{'gs-sidenav-min': reducedMode, 'gs-sidenav-settings': displaySettingsLevel}">
   <md-toolbar class="navigation-header md-whiteframe-1dp" fxLayout="row" fxLayoutAlign="space-between center">
+    <a [routerLink]="['']" style="text-decoration: none;" mdTooltip="Go to AM homepage" [mdTooltipPosition]="'right'">
     <div fxLayout="row" fxLayoutAlign="center center">
-      <img class="logo-image" [ngClass]="{'reduce-mode': reducedMode}" src="assets/GRAVITEE_LOGO1-01.png"/>
-      <div *ngIf="!reducedMode" fxLayout="column" class="logo-text">
-        <span>{{title}}<small>{{version}}</small></span>
-      </div>
+        <img class="logo-image" [ngClass]="{'reduce-mode': reducedMode}" src="assets/GRAVITEE_LOGO1-01.png"/>
+        <div *ngIf="!reducedMode" fxLayout="column" class="logo-text">
+          <span>{{title}}<small>{{version}}</small></span>
+        </div>
     </div>
+    </a>
   </md-toolbar>
 
   <md-list class="sidenav-list">
     <!-- First level menus -->
-    <md-list-item *ngFor="let path of paths">
-      <a [routerLink]="path.path" title="{{path.data.menu.label}}"
-         routerLinkActive="sidenav-active" [routerLinkActiveOptions]="{ exact: true }">
-        <md-icon>{{path.data.menu.icon}}</md-icon>
-        <span *ngIf="!reducedMode">{{path.data.menu.label}}</span>
-      </a>
-    </md-list-item>
+    <div *ngIf="displayFirstLevel">
+      <md-list-item *ngFor="let path of paths">
+        <a [routerLink]="path.path" title="{{path.data.menu.label}}"
+           routerLinkActive="sidenav-active" [routerLinkActiveOptions]="{ exact: true }">
+          <md-icon>{{path.data.menu.icon}}</md-icon>
+          <span *ngIf="!reducedMode">{{path.data.menu.label}}</span>
+        </a>
+      </md-list-item>
+    </div>
 
-    <!-- Sub level menus -->
-    <hr *ngIf="reducedMode && currentSubPaths.length > 0"/>
-
-    <md-list-item *ngIf="!reducedMode && currentSubPaths.length > 0">
+    <md-list-item *ngIf="!reducedMode && !displaySettingsLevel && currentSubPaths && currentSubPaths.length > 0">
       <h4>{{currentResource?.name}}</h4>
     </md-list-item>
 
     <md-list-item *ngFor="let subPath of currentSubPaths">
-      <a [routerLink]="[subPath.parentPath, subPath.currentResourceId, subPath.path]" title="{{subPath.data.menu.label}}"
+      <a [routerLink]="subPath.fullPath" title="{{subPath.data.menu.label}}"
          routerLinkActive="sidenav-active">
         <md-icon>{{subPath.data.menu.icon}}</md-icon>
         <span *ngIf="!reducedMode">{{subPath.data.menu.label}}</span>

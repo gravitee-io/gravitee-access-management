@@ -24,7 +24,8 @@ export class ProvidersResolver implements Resolve<any> {
   constructor(private providerService: ProviderService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    return this.providerService.findByDomain(route.parent.paramMap.get('domainId')).map(res => res.json());
+    let domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
+    return this.providerService.findByDomain(domainId).map(res => res.json());
   }
 
 }

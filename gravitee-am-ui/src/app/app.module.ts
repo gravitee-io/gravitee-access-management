@@ -33,29 +33,26 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { SidenavComponent } from './components/sidenav/sidenav.component';
 import { LoginComponent } from './login/login.component';
-import { DomainsComponent } from './domains/domains.component';
+import { DomainsComponent } from './settings/domains/domains.component';
 import { DomainService } from './services/domain.service';
-import { DomainComponent } from './domains/domain/domain.component';
-import { DomainLoginComponent, LoginInfoDialog } from './domains/domain/login/login.component';
-import { GeneralComponent } from './domains/domain/general/general.component';
-import { ClientsComponent } from './domains/domain/clients/clients.component';
-import { ProvidersComponent } from './domains/domain/providers/providers.component';
+import { DomainComponent } from './domain/domain.component';
+import { ClientsComponent } from './clients/clients.component';
 import { SidenavService } from "./components/sidenav/sidenav.service";
 import { ConfirmComponent } from './components/dialog/confirm/confirm.component';
 import { DialogService } from "./services/dialog.service";
 import { SnackbarService } from "./services/snackbar.service";
 import { EmptystateComponent } from './components/emptystate/emptystate.component';
-import { DomainCreationComponent } from './domains/creation/domain-creation.component';
-import { ProviderCreationComponent } from './domains/domain/providers/creation/provider-creation.component';
-import { ClientComponent } from './domains/domain/clients/client/client.component';
-import { ClientCreationComponent } from './domains/domain/clients/creation/client-creation.component';
-import { ClientSettingsComponent } from './domains/domain/clients/client/settings/settings.component';
-import { ClientOIDCComponent, CreateClaimComponent } from './domains/domain/clients/client/oidc/oidc.component';
-import { ProviderCreationStep1Component } from './domains/domain/providers/creation/steps/step1/step1.component';
-import { ProviderCreationStep2Component } from './domains/domain/providers/creation/steps/step2/step2.component';
-import { ProviderComponent } from './domains/domain/providers/provider/provider.component';
-import { ProviderFormComponent } from './domains/domain/providers/provider/form/form.component';
-import { CreateRoleMapperComponent, ProviderRolesComponent } from "app/domains/domain/providers/provider/roles/roles.component";
+import { DomainCreationComponent } from './settings/domains/creation/domain-creation.component';
+import { ProviderCreationComponent } from './domain/settings/providers/creation/provider-creation.component';
+import { ClientComponent } from './domain/clients/client/client.component';
+import { ClientCreationComponent } from './clients/creation/client-creation.component';
+import { ClientSettingsComponent } from './domain/clients/client/settings/settings.component';
+import { ClientOIDCComponent, CreateClaimComponent } from './domain/clients/client/oidc/oidc.component';
+import { ProviderCreationStep1Component } from './domain/settings/providers/creation/steps/step1/step1.component';
+import { ProviderCreationStep2Component } from './domain/settings/providers/creation/steps/step2/step2.component';
+import { ProviderComponent } from './domain/settings/providers/provider/provider.component';
+import { ProviderFormComponent } from './domain/settings/providers/provider/form/form.component';
+import { CreateRoleMapperComponent, ProviderRolesComponent } from "app/domain/settings/providers/provider/roles/roles.component";
 import { ClientService } from "./services/client.service";
 import { ProviderService } from "./services/provider.service";
 import { PlatformService } from "./services/platform.service";
@@ -67,38 +64,54 @@ import { LogoutComponent } from './logout/logout.component';
 import { LogoutCallbackComponent } from './logout/callback/callback.component';
 import { DomainsResolver } from "./resolvers/domains.resolver";
 import { DomainResolver } from "./resolvers/domain.resolver";
+import { DomainDashboardComponent } from "./domain/dashboard/dashboard.component";
+import { DomainSettingsComponent } from './domain/settings/settings.component';
+import { DomainSettingsSidenavComponent } from "./domain/settings/sidenav/sidenav.component";
+import { DomainSettingsGeneralComponent } from "./domain/settings/general/general.component";
+import { DomainSettingsLoginComponent, DomainSettingsLoginInfoDialog } from "./domain/settings/login/login.component";
+import { DomainSettingsRolesComponent } from "./domain/settings/roles/roles.component";
+import { DomainSettingsCertificatesComponent, CertitificatePublicKeyDialog } from './domain/settings/certificates/certificates.component';
+import { DomainSettingsProvidersComponent } from "./domain/settings/providers/providers.component";
 import { ClientsResolver } from "./resolvers/clients.resolver";
 import { ClientResolver } from "./resolvers/client.resolver";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
 import { ProviderResolver } from "./resolvers/provider.resolver";
 import { DomainLoginFormResolver } from "./resolvers/domain-login-form.resolver";
-import { ProviderSettingsComponent } from './domains/domain/providers/provider/settings/settings.component';
-import { CreateMapperComponent, ProviderMappersComponent } from './domains/domain/providers/provider/mappers/mappers.component';
+import { ProviderSettingsComponent } from './domain/settings/providers/provider/settings/settings.component';
+import { CreateMapperComponent, ProviderMappersComponent } from './domain/settings/providers/provider/mappers/mappers.component';
 import { Ng2BreadcrumbModule } from "libraries/ng2-breadcrumb/app.module";
 import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.component';
-import { CertificatesComponent, CertitificatePublicKeyDialog } from './domains/domain/certificates/certificates.component';
-import { CertificateCreationComponent } from './domains/domain/certificates/creation/certificate-creation.component';
-import { CertificateComponent } from './domains/domain/certificates/certificate/certificate.component';
+import { CertificateCreationComponent } from './domain/settings/certificates/creation/certificate-creation.component';
+import { CertificateComponent } from './domain/settings/certificates/certificate/certificate.component';
 import { CertificatesResolver } from "./resolvers/certificates.resolver";
 import { CertificateService } from "./services/certificate.service";
-import { CertificateCreationStep1Component } from "./domains/domain/certificates/creation/steps/step1/step1.component";
-import { CertificateCreationStep2Component } from "app/domains/domain/certificates/creation/steps/step2/step2.component";
-import { CertificateFormComponent } from "./domains/domain/certificates/certificate/form/form.component";
+import { CertificateCreationStep1Component } from "./domain/settings/certificates/creation/steps/step1/step1.component";
+import { CertificateCreationStep2Component } from "app/domain/settings/certificates/creation/steps/step2/step2.component";
+import { CertificateFormComponent } from "./domain/settings/certificates/certificate/form/form.component";
 import { CertificateResolver } from "./resolvers/certificate.resolver";
 import { ClipboardModule } from "ngx-clipboard/dist";
 import { RoleService } from "./services/role.service";
 import { RolesResolver } from "./resolvers/roles.resolver";
 import { RoleResolver } from "./resolvers/role.resolver";
-import { RolesComponent } from './domains/domain/roles/roles.component';
-import { RoleCreationComponent } from './domains/domain/roles/creation/role-creation.component';
-import { RoleComponent } from './domains/domain/roles/role/role.component';
+import { RoleCreationComponent } from './domain/settings/roles/creation/role-creation.component';
+import { RoleComponent } from './domain/settings/roles/role/role.component';
 import { SnackbarComponent } from "./components/snackbar/snackbar.component";
-import { ClientIdPComponent } from './domains/domain/clients/client/idp/idp.component';
+import { ClientIdPComponent } from './domain/clients/client/idp/idp.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { MaterialInputComponent } from "./components/json-schema-form/material-input.component";
 import { MaterialDesignFrameworkComponent } from "./components/json-schema-form/material-design-framework.component";
 import { MaterialFileComponent } from "./components/json-schema-form/material-file.component";
 import { MaterialAddReferenceComponent } from "./components/json-schema-form/material-add-reference.component";
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { DashboardService} from "./services/dashboard.service";
+import { WidgetClientsComponent } from './components/widget/clients/clients.component';
+import { WidgetTopClientsComponent } from './components/widget/top-clients/top-clients.component';
+import { WidgetTotalClientsComponent } from './components/widget/total-clients/total-clients.component';
+import { WidgetTotalTokensComponent } from './components/widget/total-tokens/total-tokens.component';
+import { SettingsComponent } from './settings/settings.component';
+import { HumanDatePipe } from './pipes/human-date.pipe';
+import { MapToIterablePipe } from './pipes/map-to-iterable.pipe';
+import { DummyComponent } from "./components/dummy/dummy.component";
 
 @NgModule({
   declarations: [
@@ -107,11 +120,16 @@ import { MaterialAddReferenceComponent } from "./components/json-schema-form/mat
     LoginComponent,
     DomainsComponent,
     DomainComponent,
-    DomainLoginComponent,
-    LoginInfoDialog,
-    GeneralComponent,
+    DomainDashboardComponent,
+    DomainSettingsComponent,
+    DomainSettingsLoginComponent,
+    DomainSettingsSidenavComponent,
+    DomainSettingsGeneralComponent,
+    DomainSettingsProvidersComponent,
+    DomainSettingsRolesComponent,
+    DomainSettingsCertificatesComponent,
+    DomainSettingsLoginInfoDialog,
     ClientsComponent,
-    ProvidersComponent,
     ConfirmComponent,
     EmptystateComponent,
     DomainCreationComponent,
@@ -134,14 +152,12 @@ import { MaterialAddReferenceComponent } from "./components/json-schema-form/mat
     LogoutCallbackComponent,
     BreadcrumbComponent,
     CreateClaimComponent,
-    CertificatesComponent,
     CertificateCreationComponent,
     CertificateComponent,
     CertificateCreationStep1Component,
     CertificateCreationStep2Component,
     CertificateFormComponent,
     CertitificatePublicKeyDialog,
-    RolesComponent,
     RoleCreationComponent,
     RoleComponent,
     CreateRoleMapperComponent,
@@ -150,7 +166,16 @@ import { MaterialAddReferenceComponent } from "./components/json-schema-form/mat
     MaterialDesignFrameworkComponent,
     MaterialInputComponent,
     MaterialFileComponent,
-    MaterialAddReferenceComponent
+    MaterialAddReferenceComponent,
+    DashboardComponent,
+    WidgetClientsComponent,
+    WidgetTopClientsComponent,
+    WidgetTotalClientsComponent,
+    WidgetTotalTokensComponent,
+    SettingsComponent,
+    HumanDatePipe,
+    MapToIterablePipe,
+    DummyComponent
   ],
   imports: [
     BrowserModule,
@@ -178,6 +203,7 @@ import { MaterialAddReferenceComponent } from "./components/json-schema-form/mat
     AuthService,
     CertificateService,
     RoleService,
+    DashboardService,
     AppConfig,
     DomainsResolver,
     DomainResolver,
@@ -194,7 +220,7 @@ import { MaterialAddReferenceComponent } from "./components/json-schema-form/mat
   ],
   entryComponents: [
     ConfirmComponent,
-    LoginInfoDialog,
+    DomainSettingsLoginInfoDialog,
     CreateMapperComponent,
     CreateClaimComponent,
     CertitificatePublicKeyDialog,

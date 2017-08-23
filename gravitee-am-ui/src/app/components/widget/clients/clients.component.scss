@@ -1,0 +1,18 @@
+md-icon {
+  color:rgba(0, 0, 0, 0.54);
+}
+h4 {
+  font-size: 14px;
+  a {
+    text-decoration: none;
+    color: #006CAB;
+    &:hover {
+      color: #2196f3;
+      text-decoration: underline;
+    }
+  }
+}
+md-spinner {
+  height: 48px;
+  margin-top: 20px;
+}

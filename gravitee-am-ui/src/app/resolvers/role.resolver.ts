@@ -24,7 +24,7 @@ export class RoleResolver implements Resolve<any> {
   constructor(private roleService: RoleService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId: string = route.parent.paramMap.get('domainId');
+    let domainId: string = route.parent.parent.paramMap.get('domainId');
     let roleId: string = route.paramMap.get('roleId');
     return this.roleService.get(domainId, roleId).map(res => res.json());
   }
