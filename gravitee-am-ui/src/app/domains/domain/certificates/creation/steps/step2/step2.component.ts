@@ -36,13 +36,7 @@ export class CertificateCreationStep2Component implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.params['domainId'];
-    this.platformService.certificateSchema(this.certificate.type).map(resp => resp.json()).subscribe(data => {
-      // handle default null values
-      let self = this;
-      Object.keys(this.certificateSchema['properties']).forEach(function(key) {
-        self.certificateSchema['properties'][key].default = '';
-      });
-    });
+    this.platformService.certificateSchema(this.certificate.type).map(resp => resp.json()).subscribe(data => this.certificateSchema = data);
   }
 
   enableCertificateCreation(configurationWrapper) {
