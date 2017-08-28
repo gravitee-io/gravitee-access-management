@@ -18,32 +18,41 @@
 <div class="domain-general-container">
   <h1>General</h1>
   <div class="domain-general-content">
-    <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column" fxFlex="70">
-      <div fxLayout="row" fxLayoutAlign="end">
-        <md-slide-toggle mdTooltip="{{domain.enabled ? 'Disable domain ?' : 'Enable domain ?'}}"
-                         (change)="enableDomain($event)"
-                         [checked]="domain.enabled">
-        </md-slide-toggle>
-      </div>
-      <md-input-container fxFlex style="margin-top: -20px;">
-        <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required>
-        <md-hint>Your domain's name</md-hint>
-      </md-input-container>
-      <md-input-container fxFlex>
-        <input mdInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required>
-        <md-hint>Your domain's path. Context path for Authentication and Authorization API operations.</md-hint>
-      </md-input-container>
-      <md-input-container>
-        <textarea mdInput placeholder="Description" name="description" [(ngModel)]="domain.description"></textarea>
-        <md-hint>Your domain's description.</md-hint>
-      </md-input-container>
+    <div fxLayout="column" fxFlex="70">
+      <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column">
+        <div fxLayout="row" fxLayoutAlign="end">
+          <md-slide-toggle mdTooltip="{{domain.enabled ? 'Disable domain ?' : 'Enable domain ?'}}"
+                           (change)="enableDomain($event)"
+                           [checked]="domain.enabled">
+          </md-slide-toggle>
+        </div>
+        <md-input-container fxFlex style="margin-top: -20px;">
+          <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required>
+          <md-hint>Your domain's name</md-hint>
+        </md-input-container>
+        <md-input-container fxFlex>
+          <input mdInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required>
+          <md-hint>Your domain's path. Context path for Authentication and Authorization API operations.</md-hint>
+        </md-input-container>
+        <md-input-container>
+          <textarea mdInput placeholder="Description" name="description" [(ngModel)]="domain.description"></textarea>
+          <md-hint>Your domain's description.</md-hint>
+        </md-input-container>
 
-      <div class="domain-general-form-actions" fxLayout="row">
-        <button md-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
-        <span fxFlex></span>
-        <button md-raised-button color="warn" (click)="delete($event)">DELETE</button>
+        <div class="domain-general-form-actions">
+          <button md-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+      <div class="domain-general-delete-zone" fxLayout="column" *ngIf="!domain.master">
+        <p>This operation cannot be undone.</p>
+        Domain will be deleted included all related data such as clients, identity providers, certificates and roles.
+        Current domain's users will no longer have access to the platform to log in and access protected resources.
+        <div class="domain-general-delete-button" fxLayout="row">
+          <span fxFlex></span>
+          <button md-raised-button color="warn" (click)="delete($event)">DELETE</button>
+        </div>
       </div>
-    </form>
+    </div>
     <div class="domain-general-description" fxFlex>
       <h3>Manage security domain</h3>
       <div class="domain-general-description-content">

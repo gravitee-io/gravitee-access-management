@@ -24,8 +24,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -48,6 +50,21 @@ public class SyncManager {
 
         // Registered domains
         Set<Domain> domains = domainService.findAll();
+
+        // Look for deleted domains
+        if (deployedDomains.size() > domains.size()) {
+            Set<String> domainIds = domains.stream().map(domain -> domain.getId()).collect(Collectors.toSet());
+            Set<String> deployedDomainIds = new HashSet<>(deployedDomains.keySet());
+            deployedDomainIds.forEach(domainId -> {
+                if (!domainIds.contains(domainId)) {
+                    Domain deployedDomain = deployedDomains.get(domainId);
+                    if (deployedDomain != null) {
+                        deployedDomains.remove(domainId);
+                        eventManager.publishEvent(DomainEvent.UNDEPLOY, deployedDomain);
+                    }
+                }
+            });
+        }
 
         // Look for disabled domains
         domains.stream()

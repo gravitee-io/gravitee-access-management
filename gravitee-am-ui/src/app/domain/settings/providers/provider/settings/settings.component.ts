@@ -38,7 +38,7 @@ export class ProviderSettingsComponent implements OnInit {
               private snackbarService: SnackbarService, private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.provider = this.route.snapshot.parent.data['provider'];
     this.providerConfiguration = JSON.parse(this.provider.configuration);
     this.updateProviderConfiguration = this.providerConfiguration;

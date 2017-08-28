@@ -72,7 +72,13 @@ public class InitializerServiceImpl extends AbstractService<InitializerServiceIm
         logger.info("Looking for a registered {} domain", ADMIN_DOMAIN);
 
         try {
-            domainService.findById(ADMIN_DOMAIN);
+            Domain adminDomain = domainService.findById(ADMIN_DOMAIN);
+            // update master flag
+            // TODO: keep history in database to avoid this call
+            if (!adminDomain.isMaster()) {
+                logger.info("Set master flag for security domain {}", ADMIN_DOMAIN);
+                domainService.setMasterDomain(adminDomain.getId(), true);
+            }
             logger.info("{} domain already exists. Skipping.", ADMIN_DOMAIN);
         } catch (DomainNotFoundException dnfe) {
             //TODO: Use configuration to get admin values
@@ -118,6 +124,10 @@ public class InitializerServiceImpl extends AbstractService<InitializerServiceIm
             updateDomain.setEnabled(true);
             updateDomain.setPath(createdDomain.getPath());
             domainService.update(createdDomain.getId(), updateDomain);
+
+            // Set master flag
+            logger.info("Set master flag for security domain {}", ADMIN_DOMAIN);
+            domainService.setMasterDomain(createdDomain.getId(), true);
         }
     }
 }

@@ -35,6 +35,8 @@ public class DomainMongo extends Auditable {
 
     private boolean enabled;
 
+    private boolean master;
+
     private String path;
 
     private LoginFormMongo loginForm;
@@ -61,6 +63,14 @@ public class DomainMongo extends Auditable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public boolean isMaster() {
+        return master;
+    }
+
+    public void setMaster(boolean master) {
+        this.master = master;
     }
 
     public boolean isEnabled() {

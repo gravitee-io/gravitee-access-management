@@ -15,8 +15,9 @@
  */
 package io.gravitee.am.gateway.service.impl;
 
-import io.gravitee.am.gateway.service.DomainService;
+import io.gravitee.am.gateway.service.*;
 import io.gravitee.am.gateway.service.exception.DomainAlreadyExistsException;
+import io.gravitee.am.gateway.service.exception.DomainDeleteMasterException;
 import io.gravitee.am.gateway.service.exception.DomainNotFoundException;
 import io.gravitee.am.gateway.service.exception.TechnicalManagementException;
 import io.gravitee.am.gateway.service.model.NewDomain;
@@ -49,6 +50,21 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private DomainRepository domainRepository;
+
+    @Autowired
+    private ClientService clientService;
+
+    @Autowired
+    private CertificateService certificateService;
+
+    @Autowired
+    private IdentityProviderService identityProviderService;
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public Domain findById(String id) {
@@ -174,6 +190,35 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
+    public Domain setMasterDomain(String domainId, boolean isMaster) {
+        try {
+            LOGGER.debug("Set master flag for domain: {}", domainId);
+
+            Optional<Domain> domainOpt = domainRepository.findById(domainId);
+            if (!domainOpt.isPresent()) {
+                throw new DomainNotFoundException(domainId);
+            }
+
+            Domain oldDomain = domainOpt.get();
+
+            Domain domain = new Domain();
+            domain.setId(domainId);
+            domain.setPath(oldDomain.getPath());
+            domain.setName(oldDomain.getName());
+            domain.setDescription(oldDomain.getDescription());
+            domain.setEnabled(oldDomain.isEnabled());
+            domain.setMaster(isMaster);
+            domain.setCreatedAt(oldDomain.getCreatedAt());
+            domain.setUpdatedAt(new Date());
+            domain.setLoginForm(oldDomain.getLoginForm());
+            return domainRepository.update(domain);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to set master flag for domain {}", domainId, ex);
+            throw new TechnicalManagementException("An error occurs while trying to set master flag for a domain", ex);
+        }
+    }
+
+    @Override
     public void delete(String domain) {
         try {
             LOGGER.debug("Delete security domain {}", domain);
@@ -182,6 +227,25 @@ public class DomainServiceImpl implements DomainService {
             if (! optApi.isPresent()) {
                 throw new DomainNotFoundException(domain);
             }
+
+            if (optApi.get().isMaster()) {
+                throw new DomainDeleteMasterException(domain);
+            }
+
+            // delete clients
+            clientService.findByDomain(domain).forEach(c -> clientService.delete(c.getId()));
+
+            // delete certificates
+            certificateService.findByDomain(domain).forEach(c -> certificateService.delete(c.getId()));
+
+            // delete identity providers
+            identityProviderService.findByDomain(domain).forEach(i -> identityProviderService.delete(i.getId()));
+
+            // delete roles
+            roleService.findByDomain(domain).forEach(r -> roleService.delete(r.getId()));
+
+            // delete users
+            userService.findByDomain(domain).forEach(u -> userService.delete(u.getId()));
 
             domainRepository.delete(domain);
         } catch (TechnicalException ex) {

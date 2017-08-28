@@ -42,7 +42,7 @@ export class ProviderMappersComponent implements OnInit {
               private dialogService: DialogService, private route: ActivatedRoute, private dialog: MdDialog) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.provider = this.route.snapshot.parent.data['provider'];
     if (!this.provider.mappers) {
       this.setMappers(this.defaultMappers);
