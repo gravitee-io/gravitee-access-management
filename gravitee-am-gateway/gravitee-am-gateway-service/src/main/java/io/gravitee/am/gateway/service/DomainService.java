@@ -42,9 +42,12 @@ public interface DomainService {
 
     Domain reload(String domainId);
 
+    Domain setMasterDomain(String domainId, boolean isMaster);
+
     LoginForm updateLoginForm(String domainId, UpdateLoginForm loginForm);
 
     void deleteLoginForm(String domainId);
 
     void delete(String domain);
+
 }

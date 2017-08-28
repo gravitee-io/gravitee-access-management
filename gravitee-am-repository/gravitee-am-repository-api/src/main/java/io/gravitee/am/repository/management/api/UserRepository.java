@@ -28,6 +28,8 @@ import java.util.Set;
  */
 public interface UserRepository extends CrudRepository<User, String> {
 
+    Set<User> findByDomain(String domain) throws TechnicalException;
+
     Page<User> findByDomain(String domain, int page, int size) throws TechnicalException;
 
     Optional<User> findByUsernameAndDomain(String username, String domain) throws TechnicalException;

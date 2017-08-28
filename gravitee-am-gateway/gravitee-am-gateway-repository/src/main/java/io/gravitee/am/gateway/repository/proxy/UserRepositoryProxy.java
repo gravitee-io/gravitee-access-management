@@ -31,6 +31,10 @@ import java.util.Set;
 @Component
 public class UserRepositoryProxy extends AbstractProxy<UserRepository> implements UserRepository {
 
+    @Override
+    public Set<User> findByDomain(String domain) throws TechnicalException {
+        return target.findByDomain(domain);
+    }
 
     @Override
     public Page<User> findByDomain(String domain, int page, int size) throws TechnicalException {

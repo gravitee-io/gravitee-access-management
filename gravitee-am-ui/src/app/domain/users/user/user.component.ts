@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
+import { BreadcrumbService } from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { ActivatedRoute } from "@angular/router";
 
 @Component({

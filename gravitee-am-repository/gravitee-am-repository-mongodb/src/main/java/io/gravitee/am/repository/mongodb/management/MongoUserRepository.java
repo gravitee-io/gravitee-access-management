@@ -40,6 +40,18 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     private static final String USERNAME_FIELD = "username";
 
     @Override
+    public Set<User> findByDomain(String domain) throws TechnicalException {
+        Query query = new Query();
+        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain));
+
+        return mongoOperations
+                .find(query, UserMongo.class)
+                .stream()
+                .map(this::convert)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public Page<User> findByDomain(String domain, int page, int size) throws TechnicalException {
         Query query = new Query();
         query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain));

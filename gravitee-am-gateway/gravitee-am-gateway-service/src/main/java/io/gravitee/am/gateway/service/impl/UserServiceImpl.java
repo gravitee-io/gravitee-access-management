@@ -54,6 +54,18 @@ public class UserServiceImpl implements UserService {
 
     private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+
+    @Override
+    public Set<User> findByDomain(String domain) {
+        try {
+            LOGGER.debug("Find users by domain: {}", domain);
+            return userRepository.findByDomain(domain);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find users by domain", ex);
+            throw new TechnicalManagementException("An error occurs while trying to find users by domain", ex);
+        }
+    }
+
     @Override
     public Page<User> findByDomain(String domain, int page, int size) {
         try {

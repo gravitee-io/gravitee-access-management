@@ -46,6 +46,11 @@ public class Domain {
     private boolean enabled;
 
     /**
+     * Domain master flag.
+     */
+    private boolean master;
+
+    /**
      * Domain creation date
      */
     private Date createdAt;
@@ -92,6 +97,14 @@ public class Domain {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isMaster() {
+        return master;
+    }
+
+    public void setMaster(boolean master) {
+        this.master = master;
     }
 
     public Date getCreatedAt() {

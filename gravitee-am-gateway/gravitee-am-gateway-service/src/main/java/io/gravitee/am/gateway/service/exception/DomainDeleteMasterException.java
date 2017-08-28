@@ -13,34 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.service;
+package io.gravitee.am.gateway.service.exception;
 
-import io.gravitee.am.gateway.service.model.NewUser;
-import io.gravitee.am.gateway.service.model.UpdateUser;
-import io.gravitee.am.model.User;
-import io.gravitee.am.model.common.Page;
-
-import java.util.Set;
+import io.gravitee.common.http.HttpStatusCode;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserService {
+public class DomainDeleteMasterException extends AbstractManagementException {
 
-    Set<User> findByDomain(String domain);
+    private final String domain;
 
-    Page<User> findByDomain(String domain, int page, int size);
+    public DomainDeleteMasterException(String domain) {
+        this.domain = domain;
+    }
 
-    User findById(String id);
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.BAD_REQUEST_400;
+    }
 
-    User loadUserByUsernameAndDomain(String domain, String username);
-
-    User create(String domain, NewUser newUser);
-
-    User update(String domain, String id, UpdateUser updateUser);
-
-    void delete(String userId);
-
+    @Override
+    public String getMessage() {
+        return "Domain [" + domain + "] is master and cannot be deleted.";
+    }
 }

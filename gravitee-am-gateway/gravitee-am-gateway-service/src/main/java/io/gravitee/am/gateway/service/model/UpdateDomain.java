@@ -32,7 +32,6 @@ public class UpdateDomain {
     /**
      * Domain description.
      */
-    @NotNull
     private String description;
 
     /**

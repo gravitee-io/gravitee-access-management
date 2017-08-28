@@ -36,7 +36,7 @@ export class ProviderRolesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.provider = this.route.snapshot.parent.data['provider'];
     this.roles = this.route.snapshot.data['roles'];
     if (this.provider.roleMapper) {

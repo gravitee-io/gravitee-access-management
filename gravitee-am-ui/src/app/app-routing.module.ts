@@ -58,9 +58,9 @@ import { RoleResolver } from "./resolvers/role.resolver";
 import { DashboardComponent } from "./dashboard/dashboard.component";
 import { SettingsComponent } from "./settings/settings.component";
 import { DummyComponent } from "./components/dummy/dummy.component";
-import { UsersComponent } from "./domains/domain/users/users.component";
+import { UsersComponent } from "./domain/users/users.component";
 import { UsersResolver } from "./resolvers/users.resolver";
-import { UserComponent } from "./domains/domain/users/user/user.component";
+import { UserComponent } from "./domain/users/user/user.component";
 import { UserResolver } from "./resolvers/user.resolver";
 
 const routes: Routes = [
