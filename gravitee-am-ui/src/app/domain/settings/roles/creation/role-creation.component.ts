@@ -32,13 +32,13 @@ export class RoleCreationComponent implements OnInit {
               private snackbarService : SnackbarService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
   }
 
   create() {
     this.roleService.create(this.domainId, this.role).map(res => res.json()).subscribe(data => {
       this.snackbarService.open("Role " + data.name + " created");
-      this.router.navigate(['/domains', this.domainId, 'roles', data.id]);
+      this.router.navigate(['/domains', this.domainId, 'settings', 'roles', data.id]);
     });
   }
 
