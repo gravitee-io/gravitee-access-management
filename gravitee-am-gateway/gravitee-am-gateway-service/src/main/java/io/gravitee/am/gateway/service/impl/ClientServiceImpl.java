@@ -174,7 +174,7 @@ public class ClientServiceImpl implements ClientService {
                 client.setClient(c);
                 client.setAccessTokens(tokenRepository.findTokensByClientId(c.getClientId()).size());
                 return client;
-            }).collect(Collectors.toSet());
+            }).filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet());
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find top clients", ex);
             throw new TechnicalManagementException("An error occurs while trying to find top clients", ex);
@@ -191,7 +191,7 @@ public class ClientServiceImpl implements ClientService {
                 client.setClient(c);
                 client.setAccessTokens(tokenRepository.findTokensByClientId(c.getClientId()).size());
                 return client;
-            }).collect(Collectors.toSet());
+            }).filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet());
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find top clients by domain", ex);
             throw new TechnicalManagementException("An error occurs while trying to find top clients by domain", ex);
