@@ -116,6 +116,8 @@ echo ""
 daemon=`echo $* | egrep -- '(^-d |-d$| -d |--daemon$|--daemon )'`
 if [ -z "$daemon" ] ; then
 	exec "$JAVA" $JAVA_OPTS \
+        -cp "$GRAVITEE_BOOT_CLASSPATH" \
+        $GRAVITEE_OPTS \
         io.gravitee.am.gateway.bootstrap.Bootstrap \
         "$@"
 else
