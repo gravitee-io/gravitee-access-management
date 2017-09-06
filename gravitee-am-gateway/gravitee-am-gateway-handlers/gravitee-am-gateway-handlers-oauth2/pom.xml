@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.am.gateway.handlers</groupId>
         <artifactId>gravitee-am-gateway-handlers</artifactId>
-        <version>1.4.1</version>
+        <version>1.4.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-gateway-handlers-oauth2</artifactId>
