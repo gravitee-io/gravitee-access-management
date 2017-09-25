@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.am.gateway</groupId>
         <artifactId>gravitee-am-gateway</artifactId>
-        <version>1.4.2</version>
+        <version>1.5.0-SNAPSHOT</version>
     </parent>
 
     <groupId>io.gravitee.am.gateway.identityprovider</groupId>
