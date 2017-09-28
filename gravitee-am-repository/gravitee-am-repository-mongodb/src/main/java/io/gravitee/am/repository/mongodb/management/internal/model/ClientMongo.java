@@ -70,6 +70,8 @@ public class ClientMongo extends Auditable {
 
     private boolean enhanceScopesWithUserPermissions;
 
+    private boolean generateNewTokenPerRequest;
+
     public String getId() {
         return id;
     }
@@ -196,6 +198,14 @@ public class ClientMongo extends Auditable {
 
     public void setEnhanceScopesWithUserPermissions(boolean enhanceScopesWithUserPermissions) {
         this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
+    }
+
+    public boolean isGenerateNewTokenPerRequest() {
+        return generateNewTokenPerRequest;
+    }
+
+    public void setGenerateNewTokenPerRequest(boolean generateNewTokenPerRequest) {
+        this.generateNewTokenPerRequest = generateNewTokenPerRequest;
     }
 
     @Override

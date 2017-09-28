@@ -23,6 +23,8 @@ import io.gravitee.am.gateway.handler.oauth2.provider.request.CustomOAuth2Reques
 import io.gravitee.am.gateway.handler.oauth2.provider.security.ClientBasedAuthenticationProvider;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationDetailsSource;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationFailureHandler;
+import io.gravitee.am.gateway.handler.oauth2.provider.token.AuthenticationKeyGenerator;
+import io.gravitee.am.gateway.handler.oauth2.provider.token.DefaultAuthenticationKeyGenerator;
 import io.gravitee.am.gateway.handler.oauth2.provider.token.RepositoryTokenStore;
 import io.gravitee.am.gateway.handler.oauth2.security.listener.AuthenticationSuccessListener;
 import io.gravitee.am.gateway.handler.oauth2.security.web.XForwardedAwareRedirectStrategy;
@@ -128,6 +130,11 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public TokenStore tokenStore() {
         return new RepositoryTokenStore();
+    }
+
+    @Bean
+    public AuthenticationKeyGenerator authenticationKeyGenerator() {
+        return new DefaultAuthenticationKeyGenerator();
     }
 
     @Bean

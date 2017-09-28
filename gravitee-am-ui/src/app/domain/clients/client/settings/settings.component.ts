@@ -104,6 +104,11 @@ export class ClientSettingsComponent implements OnInit {
     return this.client.enhanceScopesWithUserPermissions;
   }
 
+  enableMultipeTokens(event) {
+    this.client.generateNewTokenPerRequest = event.checked;
+    this.formChanged = true;
+  }
+
   update() {
     this.client.authorizedGrantTypes = this.selectedGrantTypes;
     this.clientService.update(this.domainId, this.client.id, this.client).map(res => res.json()).subscribe(data => {

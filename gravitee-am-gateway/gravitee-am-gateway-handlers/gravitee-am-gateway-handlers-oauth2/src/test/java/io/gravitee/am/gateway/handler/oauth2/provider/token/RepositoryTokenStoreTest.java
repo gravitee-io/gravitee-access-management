@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -64,7 +65,13 @@ public class RepositoryTokenStoreTest {
     private OAuth2Authentication oAuth2Authentication;
 
     @Mock
+    private OAuth2Authentication extractedOAuth2Authentication;
+
+    @Mock
     private OAuth2Request oAuth2Request;
+
+    @Mock
+    private AuthenticationKeyGenerator authenticationKeyGenerator;
 
     @Test
     public void shouldReadAuthentication() {
@@ -99,11 +106,14 @@ public class RepositoryTokenStoreTest {
         when(oAuth2Request.getClientId()).thenReturn(clientId);
         when(oAuth2Authentication.getOAuth2Request()).thenReturn(oAuth2Request);
 
+        // prepare authentication key
+        when(authenticationKeyGenerator.extractKey(oAuth2Authentication)).thenReturn("test-key");
+
         // Run
         tokenStore.storeAccessToken(springOAuth2AccessToken, RepositoryProviderUtils.convert(oAuth2Authentication));
 
         // Verify
-        verify(tokenRepository, times(1)).storeAccessToken(any(OAuth2AccessToken.class), any(OAuth2Authentication.class));
+        verify(tokenRepository, times(1)).storeAccessToken(any(OAuth2AccessToken.class), any(OAuth2Authentication.class), anyString());
     }
 
     @Test
@@ -227,6 +237,11 @@ public class RepositoryTokenStoreTest {
         when(oAuth2Request.getClientId()).thenReturn(clientId);
         when(oAuth2Authentication.getOAuth2Request()).thenReturn(oAuth2Request);
         when(tokenRepository.getAccessToken(any())).thenReturn(Optional.ofNullable(oAuth2AccessToken));
+        when(tokenRepository.readAuthentication(tokenId)).thenReturn(Optional.ofNullable(extractedOAuth2Authentication));
+
+        // prepare authentication key
+        when(authenticationKeyGenerator.extractKey(any())).thenReturn("test-key");
+        when(authenticationKeyGenerator.extractKey(extractedOAuth2Authentication)).thenReturn("test-key");
 
         // Run
         final org.springframework.security.oauth2.common.OAuth2AccessToken oAuth2AccessToken =
@@ -235,6 +250,34 @@ public class RepositoryTokenStoreTest {
         // Verify
         verify(tokenRepository, times(1)).getAccessToken(any());
         assertEquals(tokenId, oAuth2AccessToken.getValue());
+    }
+
+    @Test
+    public void shouldGetNewAccessTokenIfAuthenticationKeyHasChanged() {
+        // prepare OAuth2AccessToken
+        final String tokenId = "test-token";
+        when(oAuth2AccessToken.getValue()).thenReturn(tokenId);
+
+        // prepare authentication key
+        when(authenticationKeyGenerator.extractKey(any())).thenReturn("test-key-new");
+        when(authenticationKeyGenerator.extractKey(extractedOAuth2Authentication)).thenReturn("test-key");
+
+        // prepare OAuth2Authentication
+        final String clientId = "test-client";
+        when(oAuth2Request.getClientId()).thenReturn(clientId);
+        when(oAuth2Authentication.getOAuth2Request()).thenReturn(oAuth2Request);
+        when(tokenRepository.getAccessToken(any())).thenReturn(Optional.ofNullable(oAuth2AccessToken));
+        when(tokenRepository.readAuthentication(tokenId)).thenReturn(Optional.ofNullable(extractedOAuth2Authentication));
+
+        // Run
+        final org.springframework.security.oauth2.common.OAuth2AccessToken oAuth2AccessToken =
+                tokenStore.getAccessToken(RepositoryProviderUtils.convert(oAuth2Authentication));
+
+        // Verify
+        verify(tokenRepository, times(1)).getAccessToken(any());
+        verify(tokenRepository, times(1)).removeAccessToken(tokenId);
+        verify(tokenRepository, times( 1)).storeAccessToken(any(), any(), eq("test-key-new"));
+
     }
 
     @Test

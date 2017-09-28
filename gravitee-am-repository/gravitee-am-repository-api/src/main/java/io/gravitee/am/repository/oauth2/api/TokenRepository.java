@@ -49,8 +49,9 @@ public interface TokenRepository {
      *
      * @param token The token to store.
      * @param authentication The authentication associated with the token.
+     * @param authenticationKey The authentication key generated from the authentication
      */
-    void storeAccessToken(OAuth2AccessToken token, OAuth2Authentication authentication);
+    void storeAccessToken(OAuth2AccessToken token, OAuth2Authentication authentication, String authenticationKey);
 
     /**
      * Read an access token from the store.
@@ -66,6 +67,13 @@ public interface TokenRepository {
      * @param token The token to remove from the database.
      */
     void removeAccessToken(OAuth2AccessToken token);
+
+    /**
+     * Remove an access token from the database.
+     *
+     * @param token The token key to remove from the database.
+     */
+    void removeAccessToken(String token);
 
     /**
      * Store the specified refresh token in the database.
@@ -84,6 +92,8 @@ public interface TokenRepository {
     Optional<OAuth2RefreshToken> readRefreshToken(String tokenValue);
 
     /**
+     * Read the authentication stored under the specified refresh token value.
+     *
      * @param token a refresh token
      * @return the authentication originally used to grant the refresh token
      */
@@ -107,13 +117,15 @@ public interface TokenRepository {
     /**
      * Retrieve an access token stored against the provided authentication key, if it exists.
      *
-     * @param authentication the authentication key for the access token
+     * @param authenticationKey the authentication key for the access token
      *
      * @return the access token or null if there was none
      */
-    Optional<OAuth2AccessToken> getAccessToken(OAuth2Authentication authentication);
+    Optional<OAuth2AccessToken> getAccessToken(String authenticationKey);
 
     /**
+     * Retrieve access tokens stored against the provided client id.
+     *
      * @param clientId the client id to search
      * @param userName the user name to search
      * @return a collection of access tokens
@@ -121,6 +133,8 @@ public interface TokenRepository {
     Collection<OAuth2AccessToken> findTokensByClientIdAndUserName(String clientId, String userName);
 
     /**
+     * Retrieve access tokens stored against the provided client id.
+     *
      * @param clientId the client id to search
      * @return a collection of access tokens
      */

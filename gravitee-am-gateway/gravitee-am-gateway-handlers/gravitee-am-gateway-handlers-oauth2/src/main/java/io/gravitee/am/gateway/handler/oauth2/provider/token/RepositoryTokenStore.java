@@ -42,6 +42,9 @@ public class RepositoryTokenStore implements TokenStore {
     @Autowired
     private TokenRepository tokenRepository;
 
+    @Autowired
+    private AuthenticationKeyGenerator authenticationKeyGenerator;
+
     @Override
     public OAuth2Authentication readAuthentication(OAuth2AccessToken token) {
         Optional<io.gravitee.am.repository.oauth2.model.OAuth2Authentication> oAuth2Authentication
@@ -70,11 +73,15 @@ public class RepositoryTokenStore implements TokenStore {
     public void storeAccessToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
         io.gravitee.am.repository.oauth2.model.OAuth2AccessToken accessToken = convert(token);
 
+        // extract authentication key
+        io.gravitee.am.repository.oauth2.model.OAuth2Authentication oAuth2Authentication = RepositoryProviderUtils.convert(authentication);
+        String authenticationKey = authenticationKeyGenerator.extractKey(oAuth2Authentication);
+
         // store date information
         accessToken.setCreatedAt(new Date());
         accessToken.setUpdatedAt(accessToken.getCreatedAt());
 
-        tokenRepository.storeAccessToken(accessToken, RepositoryProviderUtils.convert(authentication));
+        tokenRepository.storeAccessToken(accessToken, oAuth2Authentication, authenticationKey);
     }
 
     @Override
@@ -140,10 +147,29 @@ public class RepositoryTokenStore implements TokenStore {
 
     @Override
     public OAuth2AccessToken getAccessToken(OAuth2Authentication authentication) {
-        Optional<io.gravitee.am.repository.oauth2.model.OAuth2AccessToken> oAuth2AccessToken = tokenRepository.getAccessToken(RepositoryProviderUtils.convert(authentication));
+        // extract authentication key
+        io.gravitee.am.repository.oauth2.model.OAuth2Authentication oAuth2Authentication = RepositoryProviderUtils.convert(authentication);
+        String authenticationKey = authenticationKeyGenerator.extractKey(oAuth2Authentication);
+
+        // get access token
+        Optional<io.gravitee.am.repository.oauth2.model.OAuth2AccessToken> oAuth2AccessToken = tokenRepository.getAccessToken(authenticationKey);
 
         if (oAuth2AccessToken.isPresent()) {
-            return convert(oAuth2AccessToken.get());
+            io.gravitee.am.repository.oauth2.model.OAuth2AccessToken accessToken = oAuth2AccessToken.get();
+            Optional<io.gravitee.am.repository.oauth2.model.OAuth2Authentication> optExtractedAuthentication = tokenRepository.readAuthentication(accessToken.getValue());
+            if ((!optExtractedAuthentication.isPresent() || !authenticationKey.equals(authenticationKeyGenerator.extractKey(optExtractedAuthentication.get())))) {
+                tokenRepository.removeAccessToken(accessToken.getValue());
+                // Keep the store consistent (maybe the same user is represented by this authentication but the details have
+                // changed)
+                tokenRepository.storeAccessToken(accessToken, oAuth2Authentication, authenticationKey);
+
+                // something happens with authentication (different serialization object)
+                // Keep the refresh token consistent
+                if (!optExtractedAuthentication.isPresent() && accessToken.getRefreshToken() != null) {
+                    tokenRepository.storeRefreshToken(accessToken.getRefreshToken(), oAuth2Authentication);
+                }
+            }
+            return convert(accessToken);
         } else {
             return null;
         }

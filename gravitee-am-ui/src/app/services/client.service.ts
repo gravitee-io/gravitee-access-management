@@ -49,7 +49,8 @@ export class ClientService {
       'enabled': client.enabled,
       'identities': client.identities,
       'certificate': client.certificate,
-      'enhanceScopesWithUserPermissions' : client.enhanceScopesWithUserPermissions
+      'enhanceScopesWithUserPermissions' : client.enhanceScopesWithUserPermissions,
+      'generateNewTokenPerRequest' : client.generateNewTokenPerRequest
     });
   }
 
