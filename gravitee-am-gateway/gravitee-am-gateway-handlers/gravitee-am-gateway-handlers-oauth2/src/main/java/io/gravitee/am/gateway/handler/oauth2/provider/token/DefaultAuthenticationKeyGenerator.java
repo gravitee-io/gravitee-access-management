@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.oauth2.model.token;
+package io.gravitee.am.gateway.handler.oauth2.provider.token;
 
-import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
+import io.gravitee.am.gateway.handler.oauth2.provider.client.DelegateClientDetails;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
+import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
 import io.gravitee.am.repository.oauth2.utils.OAuth2Utils;
+import io.gravitee.common.utils.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.provider.ClientDetails;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
+import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
@@ -30,6 +37,7 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Component
 public class DefaultAuthenticationKeyGenerator implements AuthenticationKeyGenerator {
 
     private static final String CLIENT_ID = "client_id";
@@ -38,9 +46,14 @@ public class DefaultAuthenticationKeyGenerator implements AuthenticationKeyGener
 
     private static final String USERNAME = "username";
 
+    private static final String UUID_KEY = "uuid";
+
+    @Autowired
+    private ClientDetailsService clientDetailsService;
+
     @Override
     public String extractKey(OAuth2Authentication authentication) {
-        Map<String, String> values = new LinkedHashMap<String, String>();
+        Map<String, String> values = new LinkedHashMap<>();
         OAuth2Request authorizationRequest = authentication.getOAuth2Request();
         if (!authentication.isClientOnly()) {
             values.put(USERNAME, authentication.getName());
@@ -49,6 +62,16 @@ public class DefaultAuthenticationKeyGenerator implements AuthenticationKeyGener
         if (authorizationRequest.getScope() != null) {
             values.put(SCOPE, OAuth2Utils.formatParameterList(authorizationRequest.getScope()));
         }
+        // retrieve client unique access token option
+        ClientDetails clientDetails = clientDetailsService.loadClientByClientId(authorizationRequest.getClientId());
+        if (clientDetails != null && clientDetails instanceof DelegateClientDetails) {
+            Client client = ((DelegateClientDetails) clientDetails).getClient();
+            if (client.isGenerateNewTokenPerRequest()) {
+                String uuid = UUID.random().toString();
+                values.put(UUID_KEY, uuid);
+            }
+        }
+
         MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("MD5");

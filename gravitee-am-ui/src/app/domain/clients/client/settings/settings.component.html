@@ -102,6 +102,14 @@
         <span mdSuffix>seconds</span>
       </md-input-container>
     </div>
+    <div fxLayout="column">
+      <h5 style="margin: 10px 0 10px 0;">Multiple tokens for the same account</h5>
+      <md-slide-toggle
+        (change)="enableMultipeTokens($event)"
+        [checked]="client.generateNewTokenPerRequest">
+      </md-slide-toggle>
+      <md-hint style="font-size: 75%;">Generate new access/refresh token per request for the same account. Useful to avoid cross-devices logout.</md-hint>
+    </div>
 
     <h4>Certificate</h4>
     <md-select placeholder="Certificate" name="certificate" [(ngModel)]="client.certificate">

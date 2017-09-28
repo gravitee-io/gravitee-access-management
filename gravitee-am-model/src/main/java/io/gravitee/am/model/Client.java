@@ -79,6 +79,8 @@ public class Client {
 
     private boolean enhanceScopesWithUserPermissions;
 
+    private boolean generateNewTokenPerRequest;
+
     public String getId() {
         return id;
     }
@@ -221,6 +223,14 @@ public class Client {
 
     public void setEnhanceScopesWithUserPermissions(boolean enhanceScopesWithUserPermissions) {
         this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
+    }
+
+    public boolean isGenerateNewTokenPerRequest() {
+        return generateNewTokenPerRequest;
+    }
+
+    public void setGenerateNewTokenPerRequest(boolean generateNewTokenPerRequest) {
+        this.generateNewTokenPerRequest = generateNewTokenPerRequest;
     }
 
     @Override

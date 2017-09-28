@@ -24,8 +24,6 @@ import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.OAuth2AccessToken;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.am.repository.oauth2.model.OAuth2RefreshToken;
-import io.gravitee.am.repository.oauth2.model.token.AuthenticationKeyGenerator;
-import io.gravitee.am.repository.oauth2.model.token.DefaultAuthenticationKeyGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -46,8 +44,6 @@ public class MongoTokenRepository implements TokenRepository {
     @Autowired
     private OAuth2RefreshTokenMongoRepository oAuth2RefreshTokenMongoRepository;
 
-    private AuthenticationKeyGenerator authenticationKeyGenerator = new DefaultAuthenticationKeyGenerator();
-
     @Override
     public Optional<OAuth2Authentication> readAuthentication(OAuth2AccessToken oAuth2AccessToken) {
         return readAuthentication(oAuth2AccessToken.getValue());
@@ -60,7 +56,7 @@ public class MongoTokenRepository implements TokenRepository {
     }
 
     @Override
-    public void storeAccessToken(OAuth2AccessToken oAuth2AccessToken, OAuth2Authentication oAuth2Authentication) {
+    public void storeAccessToken(OAuth2AccessToken oAuth2AccessToken, OAuth2Authentication oAuth2Authentication, String authenticationKey) {
         String refreshToken = null;
         if (oAuth2AccessToken.getRefreshToken() != null) {
             refreshToken = oAuth2AccessToken.getRefreshToken().getValue();
@@ -70,7 +66,7 @@ public class MongoTokenRepository implements TokenRepository {
             removeAccessToken(oAuth2AccessToken.getValue());
         }
 
-        OAuth2AccessTokenMongo oAuth2AccessTokenMongo = convert(oAuth2AccessToken, refreshToken, oAuth2Authentication);
+        OAuth2AccessTokenMongo oAuth2AccessTokenMongo = convert(oAuth2AccessToken, refreshToken, oAuth2Authentication, authenticationKey);
         oAuth2AccessTokenMongoRepository.save(oAuth2AccessTokenMongo);
     }
 
@@ -85,7 +81,8 @@ public class MongoTokenRepository implements TokenRepository {
         removeAccessToken(oAuth2AccessToken.getValue());
     }
 
-    private void removeAccessToken(String tokenValue) {
+    @Override
+    public void removeAccessToken(String tokenValue) {
         oAuth2AccessTokenMongoRepository.delete(tokenValue);
     }
 
@@ -130,30 +127,9 @@ public class MongoTokenRepository implements TokenRepository {
     }
 
     @Override
-    public Optional<OAuth2AccessToken> getAccessToken(OAuth2Authentication oAuth2Authentication) {
-        OAuth2AccessToken accessToken = null;
-        String key = authenticationKeyGenerator.extractKey(oAuth2Authentication);
-        OAuth2AccessTokenMongo oAuth2AccessTokenMongo = oAuth2AccessTokenMongoRepository.findByAuthenticationKey(key);
-        if (oAuth2AccessTokenMongo != null) {
-            accessToken = convert(oAuth2AccessTokenMongo);
-        }
-
-        if (accessToken != null) {
-            Optional<OAuth2Authentication> optExtractedAuthentication = readAuthentication(accessToken.getValue());
-           if ((!optExtractedAuthentication.isPresent() || !key.equals(authenticationKeyGenerator.extractKey(optExtractedAuthentication.get())))) {
-               removeAccessToken(accessToken.getValue());
-               // Keep the store consistent (maybe the same user is represented by this authentication but the details have
-               // changed)
-               storeAccessToken(accessToken, oAuth2Authentication);
-
-               // something happens with authentication (different serialization object)
-               // Keep the refresh token consistent
-               if (!optExtractedAuthentication.isPresent() && accessToken.getRefreshToken() != null) {
-                   storeRefreshToken(accessToken.getRefreshToken(), oAuth2Authentication);
-               }
-           }
-        }
-        return Optional.ofNullable(accessToken);
+    public Optional<OAuth2AccessToken> getAccessToken(String authenticationKey) {
+        OAuth2AccessTokenMongo oAuth2AccessTokenMongo = oAuth2AccessTokenMongoRepository.findByAuthenticationKey(authenticationKey);
+        return (oAuth2AccessTokenMongo == null) ? Optional.ofNullable(null) : Optional.of(convert(oAuth2AccessTokenMongo));
     }
 
     @Override
@@ -215,7 +191,7 @@ public class MongoTokenRepository implements TokenRepository {
         return oAuth2AccessToken;
     }
 
-    private OAuth2AccessTokenMongo convert(OAuth2AccessToken oAuth2AccessToken, String oAuth2RefreshToken, OAuth2Authentication oAuth2Authentication) {
+    private OAuth2AccessTokenMongo convert(OAuth2AccessToken oAuth2AccessToken, String oAuth2RefreshToken, OAuth2Authentication oAuth2Authentication, String authenticationKey) {
         OAuth2AccessTokenMongo oAuth2AccessTokenMongo = new OAuth2AccessTokenMongo();
         oAuth2AccessTokenMongo.setValue(oAuth2AccessToken.getValue());
         oAuth2AccessTokenMongo.setAdditionalInformation(oAuth2AccessToken.getAdditionalInformation());
@@ -225,7 +201,7 @@ public class MongoTokenRepository implements TokenRepository {
         oAuth2AccessTokenMongo.setTokenType(oAuth2AccessToken.getTokenType());
         oAuth2AccessTokenMongo.setUserName(oAuth2Authentication.isClientOnly() ? null : oAuth2Authentication.getName());
         oAuth2AccessTokenMongo.setClientId(oAuth2Authentication.getOAuth2Request().getClientId());
-        oAuth2AccessTokenMongo.setAuthenticationKey(authenticationKeyGenerator.extractKey(oAuth2Authentication));
+        oAuth2AccessTokenMongo.setAuthenticationKey(authenticationKey);
         oAuth2AccessTokenMongo.setAuthentication(serializeAuthentication(oAuth2Authentication));
         oAuth2AccessTokenMongo.setCreatedAt(oAuth2AccessToken.getCreatedAt());
         oAuth2AccessTokenMongo.setUpdatedAt(oAuth2AccessToken.getUpdatedAt());

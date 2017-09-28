@@ -42,8 +42,8 @@ public class TokenRepositoryProxy extends AbstractProxy<TokenRepository> impleme
     }
 
     @Override
-    public void storeAccessToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
-        target.storeAccessToken(token, authentication);
+    public void storeAccessToken(OAuth2AccessToken token, OAuth2Authentication authentication, String authenticationKey) {
+        target.storeAccessToken(token, authentication, authenticationKey);
     }
 
     @Override
@@ -53,6 +53,11 @@ public class TokenRepositoryProxy extends AbstractProxy<TokenRepository> impleme
 
     @Override
     public void removeAccessToken(OAuth2AccessToken token) {
+        target.removeAccessToken(token);
+    }
+
+    @Override
+    public void removeAccessToken(String token) {
         target.removeAccessToken(token);
     }
 
@@ -82,8 +87,8 @@ public class TokenRepositoryProxy extends AbstractProxy<TokenRepository> impleme
     }
 
     @Override
-    public Optional<OAuth2AccessToken> getAccessToken(OAuth2Authentication authentication) {
-        return target.getAccessToken(authentication);
+    public Optional<OAuth2AccessToken> getAccessToken(String authenticationKey) {
+        return target.getAccessToken(authenticationKey);
     }
 
     @Override

@@ -63,7 +63,7 @@ public class MongoTokenRepositoryTest {
     public void testStoreAccessToken() {
         OAuth2Authentication expectedAuthentication = new OAuth2Authentication(RequestTokenFactory.createOAuth2Request("id", false), new TestAuthentication("test2", false));
         OAuth2AccessToken expectedOAuth2AccessToken = new OAuth2AccessToken("testToken");
-        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication);
+        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication, "test2");
 
         OAuth2AccessToken actualOAuth2AccessToken = mongoTokenRepository.readAccessToken("testToken").get();
         assertEquals(expectedOAuth2AccessToken.getValue(), actualOAuth2AccessToken.getValue());
@@ -77,8 +77,8 @@ public class MongoTokenRepositoryTest {
     public void testStoreAccessTokenTwice() {
         OAuth2Authentication expectedAuthentication = new OAuth2Authentication(RequestTokenFactory.createOAuth2Request( "id", false), new TestAuthentication("test2", false));
         OAuth2AccessToken expectedOAuth2AccessToken = new OAuth2AccessToken("testToken");
-        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication);
-        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication);
+        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication, "test2");
+        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication, "test2");
 
         OAuth2AccessToken actualOAuth2AccessToken = mongoTokenRepository.readAccessToken("testToken").get();
         assertEquals(expectedOAuth2AccessToken.getValue(), actualOAuth2AccessToken.getValue());
@@ -95,22 +95,18 @@ public class MongoTokenRepositoryTest {
         OAuth2Authentication authentication = new OAuth2Authentication(storedOAuth2Request, new TestAuthentication("test2", true));
         OAuth2AccessToken expectedOAuth2AccessToken = new OAuth2AccessToken("testToken");
         expectedOAuth2AccessToken.setExpiration(new Date(Long.MAX_VALUE-1));
-        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, authentication);
+        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, authentication, "test2");
 
         //Test unapproved request
-        storedOAuth2Request = RequestTokenFactory.createOAuth2Request("id", false);
-        authentication = new OAuth2Authentication(storedOAuth2Request, new TestAuthentication("test2", true));
-        OAuth2AccessToken actualOAuth2AccessToken = mongoTokenRepository.getAccessToken(authentication).get();
+        OAuth2AccessToken actualOAuth2AccessToken = mongoTokenRepository.getAccessToken("test2").get();
         assertEquals(expectedOAuth2AccessToken.getValue(), actualOAuth2AccessToken.getValue());
         //assertEquals(authentication.getUserAuthentication(), mongoTokenRepository.readAuthentication(expectedOAuth2AccessToken.getValue()).getUserAuthentication());
         // The authorizationRequest does not match because it is unapproved, but the token was granted to an approved request
         // assertFalse(storedOAuth2Request.equals(mongoTokenRepository.readAuthentication(expectedOAuth2AccessToken.getValue()).getOAuth2Request()));
-        actualOAuth2AccessToken = mongoTokenRepository.getAccessToken(authentication).get();
-        assertEquals(expectedOAuth2AccessToken.getValue(), actualOAuth2AccessToken.getValue());
         mongoTokenRepository.removeAccessToken(expectedOAuth2AccessToken);
         assertFalse(mongoTokenRepository.readAccessToken("testToken").isPresent());
         assertFalse(mongoTokenRepository.readAuthentication(expectedOAuth2AccessToken.getValue()).isPresent());
-        assertFalse(mongoTokenRepository.getAccessToken(authentication).isPresent());
+        assertFalse(mongoTokenRepository.getAccessToken("test2").isPresent());
     }
 
     @Test
@@ -120,7 +116,7 @@ public class MongoTokenRepositoryTest {
         OAuth2Authentication expectedAuthentication = new OAuth2Authentication(RequestTokenFactory.createOAuth2Request(clientId, false), new TestAuthentication(name, false));
         expectedAuthentication.setName(name);
         OAuth2AccessToken expectedOAuth2AccessToken = new OAuth2AccessToken("testToken");
-        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication);
+        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication, "test2");
 
         Collection<OAuth2AccessToken> actualOAuth2AccessTokens = mongoTokenRepository.findTokensByClientIdAndUserName(clientId, name);
         assertEquals(1, actualOAuth2AccessTokens.size());
@@ -133,7 +129,7 @@ public class MongoTokenRepositoryTest {
         OAuth2Authentication expectedAuthentication = new OAuth2Authentication(RequestTokenFactory.createOAuth2Request(clientId, false), new TestAuthentication(userName, false));
         expectedAuthentication.setName(userName);
         OAuth2AccessToken expectedOAuth2AccessToken = new OAuth2AccessToken("testToken");
-        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication);
+        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication, "test2");
 
         Collection<OAuth2AccessToken> actualOAuth2AccessTokens = mongoTokenRepository.findTokensByClientId(clientId);
         assertEquals(1, actualOAuth2AccessTokens.size());
@@ -149,7 +145,7 @@ public class MongoTokenRepositoryTest {
         OAuth2Authentication expectedAuthentication = new OAuth2Authentication(RequestTokenFactory.createOAuth2Request("id", false), new TestAuthentication("test2", false));
         OAuth2AccessToken expectedOAuth2AccessToken = new OAuth2AccessToken("testToken");
         expectedOAuth2AccessToken.setRefreshToken(new OAuth2RefreshToken("refreshToken"));
-        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication);
+        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication, "test2");
 
         OAuth2AccessToken actualOAuth2AccessToken = mongoTokenRepository.readAccessToken("testToken").get();
         assertNull(actualOAuth2AccessToken.getRefreshToken());
@@ -183,14 +179,13 @@ public class MongoTokenRepositoryTest {
         OAuth2Request storedOAuth2Request = RequestTokenFactory.createOAuth2Request("id", true);
         OAuth2Authentication expectedAuthentication = new OAuth2Authentication(storedOAuth2Request, new TestAuthentication("test", true));
         OAuth2AccessToken expectedOAuth2AccessToken = new OAuth2AccessToken("testToken");
-        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication);
-        assertEquals(expectedOAuth2AccessToken.getValue(), mongoTokenRepository.getAccessToken(expectedAuthentication).get().getValue());
+        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication, "test");
+        assertEquals(expectedOAuth2AccessToken.getValue(), mongoTokenRepository.getAccessToken("test").get().getValue());
         //assertEquals(expectedAuthentication, mongoTokenRepository.readAuthentication(expectedOAuth2AccessToken.getValue()));
 
         //Test unapproved request
         storedOAuth2Request = RequestTokenFactory.createOAuth2Request("id", false);
-        OAuth2Authentication anotherAuthentication = new OAuth2Authentication(storedOAuth2Request, new TestAuthentication("test", true));
-        assertEquals(expectedOAuth2AccessToken.getValue(), mongoTokenRepository.getAccessToken(anotherAuthentication).get().getValue());
+        assertEquals(expectedOAuth2AccessToken.getValue(), mongoTokenRepository.getAccessToken("test").get().getValue());
         // The generated key for the authentication is the same as before, but the two auths are not equal. This could
         // happen if there are 2 users in a system with the same username, or (more likely), if a user account was
         // deleted and re-created.
@@ -214,7 +209,7 @@ public class MongoTokenRepositoryTest {
         OAuth2AccessToken token = new OAuth2AccessToken("testToken");
         OAuth2Authentication expectedAuthentication = new OAuth2Authentication(RequestTokenFactory.createOAuth2Request(
                 "id", false), new TestAuthentication("test2", false));
-        mongoTokenRepository.storeAccessToken(token, expectedAuthentication);
+        mongoTokenRepository.storeAccessToken(token, expectedAuthentication, "test2");
         mongoTokenRepository.removeAccessToken(token);
         Collection<OAuth2AccessToken> tokens = mongoTokenRepository.findTokensByClientIdAndUserName("id", "test2");
         assertFalse(tokens.contains(token));

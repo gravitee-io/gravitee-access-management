@@ -288,6 +288,7 @@ public class ClientServiceImpl implements ClientService {
             client.setIdTokenCustomClaims(updateClient.getIdTokenCustomClaims());
             client.setCertificate(updateClient.getCertificate());
             client.setEnhanceScopesWithUserPermissions(updateClient.isEnhanceScopesWithUserPermissions());
+            client.setGenerateNewTokenPerRequest(updateClient.isGenerateNewTokenPerRequest());
             client.setUpdatedAt(new Date());
 
             return clientRepository.update(client);
