@@ -1,0 +1,37 @@
+.token-granter-creation-step2-container {
+  text-align: center;
+
+  h3 {
+    color: grey;
+  }
+
+  h4 {
+    margin: 0;
+  }
+
+  small {
+    color: rgba(0,0,0,.87);
+  }
+
+  form {
+    text-align: left;
+    padding: 20px;
+    background: #fafafa;
+    border-radius: 2px;
+    border: 1px solid rgb(226, 229, 231);
+  }
+  .token-granter-contextual-help {
+    text-align: left;
+    margin-top: 20px;
+    border-radius: 2px;
+    border: 1px solid rgb(226, 229, 231);
+    padding: 20px;
+  }
+  .token-granter-creation-step2-content {
+    padding: 21px 0px 0px 0px;
+  }
+
+  .next-button {
+    margin-top: 20px;
+  }
+}

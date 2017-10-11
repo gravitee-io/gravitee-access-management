@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.provider;
 
-import io.gravitee.am.repository.oauth2.model.authority.GrantedAuthority;
+import io.gravitee.am.model.oauth2.authority.GrantedAuthority;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -39,11 +39,11 @@ import java.util.stream.Collectors;
      */
     public static final String SOURCE = "source";
 
-    public static io.gravitee.am.repository.oauth2.model.OAuth2Authentication convert(OAuth2Authentication _oAuth2Authentication) {
+    public static io.gravitee.am.model.oauth2.OAuth2Authentication convert(OAuth2Authentication _oAuth2Authentication) {
         // oauth2 request
         OAuth2Request _oAuth2Request = _oAuth2Authentication.getOAuth2Request();
-        io.gravitee.am.repository.oauth2.model.request.OAuth2Request oAuth2Request =
-                new io.gravitee.am.repository.oauth2.model.request.OAuth2Request();
+        io.gravitee.am.model.oauth2.request.OAuth2Request oAuth2Request =
+                new io.gravitee.am.model.oauth2.request.OAuth2Request();
         oAuth2Request.setRequestParameters(_oAuth2Request.getRequestParameters());
         oAuth2Request.setClientId(_oAuth2Request.getClientId());
         oAuth2Request.setAuthorities(convert(_oAuth2Request.getAuthorities()));
@@ -55,26 +55,26 @@ import java.util.stream.Collectors;
         oAuth2Request.setExtensions(_oAuth2Request.getExtensions());
 
         // user authentication
-        io.gravitee.am.repository.oauth2.model.authentication.Authentication userAuthentication = null;
+        io.gravitee.am.model.oauth2.authentication.Authentication userAuthentication = null;
         Authentication _userAuthentication = _oAuth2Authentication.getUserAuthentication();
         if (_userAuthentication != null) {
             Object principal = _userAuthentication.getPrincipal();
             Object credentials = _userAuthentication.getCredentials();
             Collection<? extends GrantedAuthority> authorities = convert(_userAuthentication.getAuthorities());
             userAuthentication =
-                    new io.gravitee.am.repository.oauth2.model.authentication.UsernamePasswordAuthenticationToken(
+                    new io.gravitee.am.model.oauth2.authentication.UsernamePasswordAuthenticationToken(
                             _userAuthentication.getName(), principal, credentials, authorities);
         }
 
-        io.gravitee.am.repository.oauth2.model.OAuth2Authentication oAuth2Authentication =
-                new io.gravitee.am.repository.oauth2.model.OAuth2Authentication(oAuth2Request, userAuthentication);
+        io.gravitee.am.model.oauth2.OAuth2Authentication oAuth2Authentication =
+                new io.gravitee.am.model.oauth2.OAuth2Authentication(oAuth2Request, userAuthentication);
 
         return oAuth2Authentication;
     }
 
-    public static OAuth2Authentication convert(io.gravitee.am.repository.oauth2.model.OAuth2Authentication _oAuth2Authentication) {
+    public static OAuth2Authentication convert(io.gravitee.am.model.oauth2.OAuth2Authentication _oAuth2Authentication) {
         // oauth2 request
-        io.gravitee.am.repository.oauth2.model.request.OAuth2Request _oAuth2Request = _oAuth2Authentication.getOAuth2Request();
+        io.gravitee.am.model.oauth2.request.OAuth2Request _oAuth2Request = _oAuth2Authentication.getOAuth2Request();
 
         Map<String, String> requestParameters = _oAuth2Request.getRequestParameters();
         String clientId = _oAuth2Request.getClientId();
@@ -91,9 +91,9 @@ import java.util.stream.Collectors;
 
         // user authentication
         Authentication userAuthentication = null;
-        io.gravitee.am.repository.oauth2.model.authentication.Authentication _userAuthentication = _oAuth2Authentication.getUserAuthentication();
+        io.gravitee.am.model.oauth2.authentication.Authentication _userAuthentication = _oAuth2Authentication.getUserAuthentication();
 
-        if (_userAuthentication != null && _userAuthentication instanceof io.gravitee.am.repository.oauth2.model.authentication.UsernamePasswordAuthenticationToken) {
+        if (_userAuthentication != null && _userAuthentication instanceof io.gravitee.am.model.oauth2.authentication.UsernamePasswordAuthenticationToken) {
             Object principal = _userAuthentication.getPrincipal();
             Object credentials = _userAuthentication.getCredentials();
             Collection<? extends org.springframework.security.core.GrantedAuthority> userAuthorities = map(_userAuthentication.getAuthorities());
@@ -107,17 +107,17 @@ import java.util.stream.Collectors;
         return oAuth2Authentication;
     }
 
-    private static Collection<? extends org.springframework.security.core.GrantedAuthority> map(Collection<? extends io.gravitee.am.repository.oauth2.model.authority.GrantedAuthority> _authorities) {
+    private static Collection<? extends org.springframework.security.core.GrantedAuthority> map(Collection<? extends io.gravitee.am.model.oauth2.authority.GrantedAuthority> _authorities) {
         if (_authorities == null) {
             return null;
         }
         return _authorities.stream().map(a -> new SimpleGrantedAuthority(a.getAuthority())).collect(Collectors.toList());
     }
 
-    private static Collection<? extends io.gravitee.am.repository.oauth2.model.authority.GrantedAuthority> convert(Collection<? extends org.springframework.security.core.GrantedAuthority> _authorities) {
+    private static Collection<? extends io.gravitee.am.model.oauth2.authority.GrantedAuthority> convert(Collection<? extends org.springframework.security.core.GrantedAuthority> _authorities) {
         if (_authorities == null) {
             return null;
         }
-        return _authorities.stream().map(a -> new io.gravitee.am.repository.oauth2.model.authority.SimpleGrantedAuthority(a.getAuthority())).collect(Collectors.toList());
+        return _authorities.stream().map(a -> new io.gravitee.am.model.oauth2.authority.SimpleGrantedAuthority(a.getAuthority())).collect(Collectors.toList());
     }
 }

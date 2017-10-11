@@ -17,10 +17,10 @@ package io.gravitee.am.repository.mongodb.oauth2.token;
 
 import io.gravitee.am.repository.mongodb.oauth2.utils.RequestTokenFactory;
 import io.gravitee.am.repository.mongodb.oauth2.utils.TestAuthentication;
-import io.gravitee.am.repository.oauth2.model.OAuth2AccessToken;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.OAuth2RefreshToken;
-import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
+import io.gravitee.am.model.oauth2.OAuth2AccessToken;
+import io.gravitee.am.model.oauth2.OAuth2Authentication;
+import io.gravitee.am.model.oauth2.OAuth2RefreshToken;
+import io.gravitee.am.model.oauth2.request.OAuth2Request;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;

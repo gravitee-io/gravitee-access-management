@@ -106,4 +106,9 @@ public class DomainResource extends AbstractResource {
     public UsersResource getUsersResource() {
         return resourceContext.getResource(UsersResource.class);
     }
+
+    @Path("extensionGrants")
+    public ExtensionGrantsResource getTokenGrantersResource() {
+        return resourceContext.getResource(ExtensionGrantsResource.class);
+    }
 }

@@ -109,7 +109,7 @@ public class InitializerServiceImpl extends AbstractService<InitializerServiceIm
             UpdateClient updateClient = new UpdateClient();
             updateClient.setAccessTokenValiditySeconds(createdClient.getAccessTokenValiditySeconds());
             updateClient.setRefreshTokenValiditySeconds(createdClient.getRefreshTokenValiditySeconds());
-            updateClient.setAuthorizedGrantTypes(Collections.singletonList(GrantType.IMPLICIT));
+            updateClient.setAuthorizedGrantTypes(Collections.singletonList(GrantType.IMPLICIT.type()));
             updateClient.setScopes(DEFAULT_SCOPES);
             updateClient.setAutoApproveScopes(updateClient.getScopes());
             updateClient.setIdentities(Collections.singleton(createdIdentityProvider.getId()));

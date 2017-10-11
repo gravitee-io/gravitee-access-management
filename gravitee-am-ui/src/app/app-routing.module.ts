@@ -62,6 +62,11 @@ import { UsersComponent } from "./domain/users/users.component";
 import { UsersResolver } from "./resolvers/users.resolver";
 import { UserComponent } from "./domain/users/user/user.component";
 import { UserResolver } from "./resolvers/user.resolver";
+import { DomainSettingsExtensionGrantsComponent } from "./domain/settings/extension-grants/extension-grants.component";
+import { ExtensionGrantCreationComponent } from "./domain/settings/extension-grants/creation/extension-grant-creation.component";
+import { ExtensionGrantComponent } from "./domain/settings/extension-grants/extension-grant/extension-grant.component";
+import { ExtensionGrantsResolver } from "./resolvers/extension-grants.resolver";
+import { ExtensionGrantResolver } from "./resolvers/extension-grant.resolver";
 
 const routes: Routes = [
   { path: 'dashboard',
@@ -159,7 +164,12 @@ const routes: Routes = [
         },
         children: [
           { path: '', redirectTo: 'settings', pathMatch: 'full' },
-          { path: 'settings', component: ClientSettingsComponent },
+          { path: 'settings',
+            component: ClientSettingsComponent,
+            resolve: {
+              domainGrantTypes: ExtensionGrantsResolver
+            }
+          },
           { path: 'idp', component: ClientIdPComponent },
           { path: 'oidc', component: ClientOIDCComponent }
         ]
@@ -241,6 +251,32 @@ const routes: Routes = [
               { path: 'mappers', component: ProviderMappersComponent },
               { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver} }
             ]
+          },
+          { path: 'extensionGrants',
+            component: DomainSettingsExtensionGrantsComponent,
+            resolve: {
+              extensionGrants: ExtensionGrantsResolver
+            },
+            data: {
+              menu: {
+                label: 'Extension Grants',
+                section: 'OAuth 2.0'
+              }
+            }
+          },
+          { path: 'extensionGrants/new',
+            component: ExtensionGrantCreationComponent,
+            resolve: {
+              identityProviders: ProvidersResolver
+            }
+          },
+          {
+            path: 'extensionGrants/:extensionGrantId',
+            component: ExtensionGrantComponent,
+            resolve: {
+              extensionGrant: ExtensionGrantResolver,
+              identityProviders: ProvidersResolver
+            }
           },
           { path: 'certificates',
             component: DomainSettingsCertificatesComponent,

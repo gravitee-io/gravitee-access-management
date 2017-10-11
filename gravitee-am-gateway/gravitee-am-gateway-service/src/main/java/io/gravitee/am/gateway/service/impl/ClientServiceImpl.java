@@ -143,6 +143,17 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    public Set<Client> findByExtensionGrant(String extensionGrant) {
+        try {
+            LOGGER.debug("Find clients by extension grant : {}", extensionGrant);
+            return clientRepository.findByExtensionGrant(extensionGrant);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to find clients by extension grant", ex);
+            throw new TechnicalManagementException("An error occurs while trying to find clients by extension grant", ex);
+        }
+    }
+
+    @Override
     public Set<Client> findAll() {
         try {
             LOGGER.debug("Find clients");

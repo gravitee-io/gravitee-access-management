@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.repository.oauth2.api;
 
-import io.gravitee.am.repository.oauth2.model.OAuth2RefreshToken;
-import io.gravitee.am.repository.oauth2.model.OAuth2AccessToken;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
+import io.gravitee.am.model.oauth2.OAuth2RefreshToken;
+import io.gravitee.am.model.oauth2.OAuth2AccessToken;
+import io.gravitee.am.model.oauth2.OAuth2Authentication;
 
 import java.util.Collection;
 import java.util.Optional;

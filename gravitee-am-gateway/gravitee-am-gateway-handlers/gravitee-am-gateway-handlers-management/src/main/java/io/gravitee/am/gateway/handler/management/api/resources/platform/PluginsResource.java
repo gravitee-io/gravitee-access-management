@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.management.api.resources.platform;
 
 import io.gravitee.am.gateway.handler.management.api.resources.platform.plugins.CertificatesPluginResource;
 import io.gravitee.am.gateway.handler.management.api.resources.platform.plugins.IdentityProvidersPluginResource;
+import io.gravitee.am.gateway.handler.management.api.resources.platform.plugins.ExtensionGrantsPluginResource;
 import io.swagger.annotations.Api;
 
 import javax.ws.rs.Path;
@@ -41,5 +42,10 @@ public class PluginsResource {
     @Path("certificates")
     public CertificatesPluginResource getCertificatePlugins() {
         return resourceContext.getResource(CertificatesPluginResource.class);
+    }
+
+    @Path("extensionGrants")
+    public ExtensionGrantsPluginResource getTokenGrantersPlugins() {
+        return resourceContext.getResource(ExtensionGrantsPluginResource.class);
     }
 }

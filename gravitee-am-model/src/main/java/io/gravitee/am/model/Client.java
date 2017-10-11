@@ -27,9 +27,9 @@ public class Client {
     public final static int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
     public final static int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
 
-    public final static List<GrantType> AUTHORIZED_GRANT_TYPES = Arrays.asList(
-            GrantType.AUTHORIZATION_CODE, GrantType.CLIENT_CREDENTIALS, GrantType.IMPLICIT,
-            GrantType.PASSWORD, GrantType.REFRESH_TOKEN);
+    public final static List<String> AUTHORIZED_GRANT_TYPES = Arrays.asList(
+            GrantType.AUTHORIZATION_CODE.type(), GrantType.CLIENT_CREDENTIALS.type(), GrantType.IMPLICIT.type(),
+            GrantType.PASSWORD.type(), GrantType.REFRESH_TOKEN.type());
 
     private String id;
 
@@ -39,7 +39,7 @@ public class Client {
 
     private List<String> redirectUris;
 
-    private List<GrantType> authorizedGrantTypes = AUTHORIZED_GRANT_TYPES;
+    private List<String> authorizedGrantTypes = AUTHORIZED_GRANT_TYPES;
 
     private List<String> scopes;
 
@@ -113,11 +113,11 @@ public class Client {
         this.redirectUris = redirectUris;
     }
 
-    public List<GrantType> getAuthorizedGrantTypes() {
+    public List<String> getAuthorizedGrantTypes() {
         return authorizedGrantTypes;
     }
 
-    public void setAuthorizedGrantTypes(List<GrantType> authorizedGrantTypes) {
+    public void setAuthorizedGrantTypes(List<String> authorizedGrantTypes) {
         this.authorizedGrantTypes = authorizedGrantTypes;
     }
 

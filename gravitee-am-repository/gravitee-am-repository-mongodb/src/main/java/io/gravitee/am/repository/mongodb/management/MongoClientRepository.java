@@ -40,6 +40,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     private static final String FIELD_CLIENT_ID = "clientId";
     private static final String FIELD_IDENTITIES = "identities";
     private static final String FIELD_CERTIFICATE = "certificate";
+    private static final String FIELD_GRANT_TYPES= "authorizedGrantTypes";
 
     @Override
     public Set<Client> findByDomain(String domain) throws TechnicalException {
@@ -97,6 +98,18 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     public Set<Client> findByCertificate(String certificate) {
         Query query = new Query();
         query.addCriteria(Criteria.where(FIELD_CERTIFICATE).is(certificate));
+
+        return mongoOperations
+                .find(query, ClientMongo.class)
+                .stream()
+                .map(this::convert)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<Client> findByExtensionGrant(String tokenGranter) throws TechnicalException {
+        Query query = new Query();
+        query.addCriteria(Criteria.where(FIELD_GRANT_TYPES).is(tokenGranter));
 
         return mongoOperations
                 .find(query, ClientMongo.class)

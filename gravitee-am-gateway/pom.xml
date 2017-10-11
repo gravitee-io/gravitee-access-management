@@ -43,6 +43,7 @@
         <module>gravitee-am-gateway-services</module>
         <module>gravitee-am-gateway-identityprovider</module>
         <module>gravitee-am-gateway-certificate</module>
+        <module>gravitee-am-gateway-extensiongrant</module>
     </modules>
 
     <dependencyManagement>

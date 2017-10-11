@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.provider.client;
 
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.GrantType;
 import org.springframework.security.oauth2.provider.client.BaseClientDetails;
 
 import java.util.Collections;
@@ -37,7 +36,7 @@ public class DelegateClientDetails extends BaseClientDetails {
         setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());
         setRefreshTokenValiditySeconds(client
                 .getRefreshTokenValiditySeconds());
-        setAuthorizedGrantTypes(client.getAuthorizedGrantTypes().stream().map(GrantType::type).collect(Collectors.toList()));
+        setAuthorizedGrantTypes(client.getAuthorizedGrantTypes().stream().map(grantType -> grantType.toLowerCase()).collect(Collectors.toSet()));
         setClientId(client.getClientId());
         setClientSecret(client.getClientSecret());
         setRegisteredRedirectUri(client.getRedirectUris() != null ? new HashSet<>(client.getRedirectUris()) : null);

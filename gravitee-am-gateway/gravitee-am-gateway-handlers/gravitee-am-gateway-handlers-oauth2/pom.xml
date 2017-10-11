@@ -62,6 +62,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.gateway.extensiongrant</groupId>
+            <artifactId>gravitee-am-gateway-extensiongrant</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Spring Security - OAuth2 -->
         <dependency>
             <groupId>org.springframework.security.oauth</groupId>

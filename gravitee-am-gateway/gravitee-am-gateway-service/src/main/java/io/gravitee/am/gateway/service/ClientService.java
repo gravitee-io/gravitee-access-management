@@ -46,6 +46,8 @@ public interface ClientService {
 
     Set<Client> findByCertificate(String certificate);
 
+    Set<Client> findByExtensionGrant(String tokenGranter);
+
     Set<Client> findAll();
 
     Page<Client> findAll(int page, int size);

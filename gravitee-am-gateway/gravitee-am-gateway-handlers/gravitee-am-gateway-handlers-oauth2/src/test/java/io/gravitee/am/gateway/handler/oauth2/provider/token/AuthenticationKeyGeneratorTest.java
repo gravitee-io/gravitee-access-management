@@ -19,8 +19,8 @@ import io.gravitee.am.gateway.handler.oauth2.provider.client.DelegateClientDetai
 import io.gravitee.am.gateway.handler.oauth2.provider.client.DomainBasedClientDetailsService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
+import io.gravitee.am.model.oauth2.OAuth2Authentication;
+import io.gravitee.am.model.oauth2.request.OAuth2Request;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

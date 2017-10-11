@@ -17,8 +17,8 @@ package io.gravitee.am.repository.mongodb.oauth2.code;
 
 import io.gravitee.am.repository.mongodb.oauth2.utils.RequestTokenFactory;
 import io.gravitee.am.repository.mongodb.oauth2.utils.TestAuthentication;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
+import io.gravitee.am.model.oauth2.OAuth2Authentication;
+import io.gravitee.am.model.oauth2.code.OAuth2AuthorizationCode;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
