@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.gateway.service.model;
 
-import io.gravitee.am.model.GrantType;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,7 +27,7 @@ public class UpdateClient {
 
     private List<String> redirectUris;
 
-    private List<GrantType> authorizedGrantTypes;
+    private List<String> authorizedGrantTypes;
 
     private List<String> scopes;
 
@@ -61,11 +59,11 @@ public class UpdateClient {
         this.redirectUris = redirectUris;
     }
 
-    public List<GrantType> getAuthorizedGrantTypes() {
+    public List<String> getAuthorizedGrantTypes() {
         return authorizedGrantTypes;
     }
 
-    public void setAuthorizedGrantTypes(List<GrantType> authorizedGrantTypes) {
+    public void setAuthorizedGrantTypes(List<String> authorizedGrantTypes) {
         this.authorizedGrantTypes = authorizedGrantTypes;
     }
 

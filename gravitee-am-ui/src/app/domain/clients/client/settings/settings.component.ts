@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ClientService } from "../../../../services/client.service";
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { ProviderService } from "../../../../services/provider.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { CertificateService } from "../../../../services/certificate.service";
 import { DialogService } from "../../../../services/dialog.service";
+import * as _ from 'lodash';
 
 @Component({
   selector: 'client-settings',
@@ -39,6 +40,7 @@ export class ClientSettingsComponent implements OnInit {
     { name:'REFRESH TOKEN', value:'refresh_token', checked:false },
     { name:'IMPLICIT', value:'implicit', checked:false }
   ];
+  customGrantTypes: any[];
 
   constructor(private clientService: ClientService, private snackbarService: SnackbarService,
               private providerService: ProviderService, private certificateService: CertificateService,
@@ -48,20 +50,26 @@ export class ClientSettingsComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.client = this.route.snapshot.parent.data['client'];
+    this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'];
+    (!this.client.redirectUris) ? this.client.redirectUris = [] : this.client.redirectUris = this.client.redirectUris;
+    (!this.client.scopes) ? this.client.scopes = [] : this.client.scopes = this.client.scopes;
     this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.identityProviders = data);
     this.certificateService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.certificates = data);
     this.initGrantTypes();
+    this.initCustomGrantTypes();
   }
 
   initGrantTypes() {
-    (!this.client.redirectUris) ? this.client.redirectUris = [] : this.client.redirectUris = this.client.redirectUris;
-    (!this.client.scopes) ? this.client.scopes = [] : this.client.scopes = this.client.scopes;
-    let self = this;
-    this.grantTypes.forEach(function (grantType) {
-      if (self.contains(grantType.value, self.client.authorizedGrantTypes)) {
-        grantType.checked = true;
-      }
+    this.grantTypes.forEach(grantType => {
+      grantType.checked = _.some(this.client.authorizedGrantTypes, authorizedGrantType => authorizedGrantType.toLowerCase() === grantType.value.toLowerCase());
     })
+  }
+
+  initCustomGrantTypes() {
+    this.customGrantTypes.forEach(customGrantType => {
+      customGrantType.value = customGrantType.grantType;
+      customGrantType.checked = _.some(this.client.authorizedGrantTypes, authorizedGrantType => authorizedGrantType.toLowerCase() === customGrantType.value.toLowerCase());
+    });
   }
 
   selectedGrantType(event) {
@@ -71,14 +79,11 @@ export class ClientSettingsComponent implements OnInit {
     this.formChanged = true;
   }
 
-  contains(obj, list) {
-    let i;
-    for (i = 0; i < list.length; i++) {
-      if (list[i] === obj) {
-        return true;
-      }
-    }
-    return false;
+  selectedCustomGrantType(event) {
+    this.customGrantTypes
+      .filter(grantType => grantType.value === event.source.value)
+      .map(grantType => grantType.checked = event.checked);
+    this.formChanged = true;
   }
 
   enableClient(event) {
@@ -110,7 +115,7 @@ export class ClientSettingsComponent implements OnInit {
   }
 
   update() {
-    this.client.authorizedGrantTypes = this.selectedGrantTypes;
+    this.client.authorizedGrantTypes = this.selectedGrantTypes.concat(this.selectedCustomGrantTypes);
     this.clientService.update(this.domainId, this.client.id, this.client).map(res => res.json()).subscribe(data => {
       this.client = data;
       this.snackbarService.open("Client updated");
@@ -119,6 +124,12 @@ export class ClientSettingsComponent implements OnInit {
 
   get selectedGrantTypes() {
     return this.grantTypes
+      .filter(grantType => grantType.checked)
+      .map(grantType => grantType.value)
+  }
+
+  get selectedCustomGrantTypes() {
+    return this.customGrantTypes
       .filter(grantType => grantType.checked)
       .map(grantType => grantType.value)
   }
@@ -160,7 +171,6 @@ export class ClientSettingsComponent implements OnInit {
   valueCopied(message: string) {
     this.snackbarService.open(message);
   }
-
 
   delete(event) {
     event.preventDefault();

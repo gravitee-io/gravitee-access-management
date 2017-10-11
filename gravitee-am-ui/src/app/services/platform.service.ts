@@ -39,4 +39,12 @@ export class PlatformService {
   certificateSchema(id): Observable<Response> {
     return this.http.get(this.platformURL + 'plugins/certificates/' + id + '/schema');
   }
+
+  extensionGrants(): Observable<Response> {
+    return this.http.get(this.platformURL + 'plugins/extensionGrants');
+  }
+
+  extensionGrantSchema(id): Observable<Response> {
+    return this.http.get(this.platformURL + 'plugins/extensionGrants/' + id + '/schema');
+  }
 }

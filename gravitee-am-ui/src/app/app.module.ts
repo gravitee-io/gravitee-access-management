@@ -72,6 +72,7 @@ import { DomainSettingsLoginComponent, DomainSettingsLoginInfoDialog } from "./d
 import { DomainSettingsRolesComponent } from "./domain/settings/roles/roles.component";
 import { DomainSettingsCertificatesComponent, CertitificatePublicKeyDialog } from './domain/settings/certificates/certificates.component';
 import { DomainSettingsProvidersComponent } from "./domain/settings/providers/providers.component";
+import { DomainSettingsExtensionGrantsComponent } from "./domain/settings/extension-grants/extension-grants.component";
 import { ClientsResolver } from "./resolvers/clients.resolver";
 import { ClientResolver } from "./resolvers/client.resolver";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
@@ -117,6 +118,14 @@ import { UserComponent } from './domain/users/user/user.component';
 import { UserService} from "./services/user.service";
 import { UsersResolver } from "./resolvers/users.resolver";
 import { UserResolver } from "./resolvers/user.resolver";
+import { ExtensionGrantService } from "./services/extension-grant.service";
+import { ExtensionGrantsResolver } from "./resolvers/extension-grants.resolver";
+import { ExtensionGrantResolver } from 'app/resolvers/extension-grant.resolver';
+import { ExtensionGrantCreationComponent } from "./domain/settings/extension-grants/creation/extension-grant-creation.component";
+import { ExtensionGrantComponent } from 'app/domain/settings/extension-grants/extension-grant/extension-grant.component';
+import { ExtensionGrantFormComponent } from "./domain/settings/extension-grants/extension-grant/form/form.component";
+import { ExtensionGrantCreationStep1Component } from "./domain/settings/extension-grants/creation/steps/step1/step1.component";
+import { ExtensionGrantCreationStep2Component } from "./domain/settings/extension-grants/creation/steps/step2/step2.component";
 
 @NgModule({
   declarations: [
@@ -134,6 +143,7 @@ import { UserResolver } from "./resolvers/user.resolver";
     DomainSettingsRolesComponent,
     DomainSettingsCertificatesComponent,
     DomainSettingsLoginInfoDialog,
+    DomainSettingsExtensionGrantsComponent,
     ClientsComponent,
     ConfirmComponent,
     EmptystateComponent,
@@ -166,6 +176,11 @@ import { UserResolver } from "./resolvers/user.resolver";
     RoleCreationComponent,
     RoleComponent,
     CreateRoleMapperComponent,
+    ExtensionGrantCreationComponent,
+    ExtensionGrantComponent,
+    ExtensionGrantCreationStep1Component,
+    ExtensionGrantCreationStep2Component,
+    ExtensionGrantFormComponent,
     SnackbarComponent,
     NavbarComponent,
     MaterialDesignFrameworkComponent,
@@ -212,6 +227,7 @@ import { UserResolver } from "./resolvers/user.resolver";
     RoleService,
     DashboardService,
     UserService,
+    ExtensionGrantService,
     AppConfig,
     DomainsResolver,
     DomainResolver,
@@ -226,6 +242,8 @@ import { UserResolver } from "./resolvers/user.resolver";
     RoleResolver,
     UsersResolver,
     UserResolver,
+    ExtensionGrantsResolver,
+    ExtensionGrantResolver,
     { provide: Http, useClass: HttpService }
   ],
   entryComponents: [

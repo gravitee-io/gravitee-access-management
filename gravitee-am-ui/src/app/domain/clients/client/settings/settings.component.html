@@ -54,6 +54,18 @@
                  (change)="selectedGrantType($event)">
       {{grantType.name}}
     </md-checkbox>
+    <div>
+      <h5>Extension grants</h5>
+      <div fxLayout="column">
+        <md-checkbox *ngFor="let extensionGrant of customGrantTypes"
+                     name="customGrantTypes"
+                     value="{{extensionGrant.value}}"
+                     [checked]="extensionGrant.checked"
+                     (change)="selectedCustomGrantType($event)">
+          <span style="text-transform: uppercase;">{{extensionGrant.name}}</span>
+        </md-checkbox>
+      </div>
+    </div>
 
     <h4 style="margin-bottom: 0px;">Redirect URIs</h4>
     <md-chip-list style="margin-top: 10px; margin-bottom: 10px;" class="mat-chip-list-stacked">

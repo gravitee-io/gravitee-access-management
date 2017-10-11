@@ -44,6 +44,8 @@ public interface ClientRepository extends CrudRepository<Client, String> {
 
     Set<Client> findByCertificate(String certificate) throws TechnicalException;
 
+    Set<Client> findByExtensionGrant(String tokenGranter) throws TechnicalException;
+
     Set<Client> findAll() throws TechnicalException;
 
     Page<Client> findAll(int page, int size) throws TechnicalException;

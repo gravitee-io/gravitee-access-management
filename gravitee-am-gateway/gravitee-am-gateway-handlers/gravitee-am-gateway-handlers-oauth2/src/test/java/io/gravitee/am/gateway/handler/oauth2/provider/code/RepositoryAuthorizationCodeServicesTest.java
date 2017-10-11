@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.oauth2.provider.code;
 
 import io.gravitee.am.gateway.handler.oauth2.provider.RepositoryProviderUtils;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
+import io.gravitee.am.model.oauth2.OAuth2Authentication;
+import io.gravitee.am.model.oauth2.request.OAuth2Request;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;

@@ -1,0 +1,58 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="token-granter-container">
+  <h1>{{extensionGrant.name}}</h1>
+  <div *ngIf="extensionGrantSchema && extensionGrantSchema.description" class="token-granter-contextual-help">
+    <pre [innerHTML]="extensionGrantSchema?.description"></pre>
+  </div>
+  <div class="token-granter-content">
+    <form #tokenGranterForm="ngForm" fxLayout="column" fxFlex="70">
+      <h4>General</h4>
+      <md-input-container>
+        <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="extensionGrant.name" required>
+      </md-input-container>
+      <md-input-container>
+        <input mdInput type="text" placeholder="Grant type" name="grantType" [(ngModel)]="extensionGrant.grantType" [pattern]="rfc3986_absolute_URI" required>
+        <md-hint align="end">Must be a unique absolute URI. OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type" parameter of the token endpoint.</md-hint>
+      </md-input-container>
+
+      <h4 style="margin: 10px 0 20px 0;">Identity provider</h4>
+      <md-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider">
+        <md-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</md-option>
+      </md-select>
+      <md-hint align="end" style="font-size: 75%;">Identity provider used to retrieve user information from incoming request assertion.</md-hint>
+
+      <h4 style="margin: 10px 0 10px 0;">Configuration</h4>
+      <extension-grant-form *ngIf="extensionGrant" [extensionGrantConfiguration]="extensionGrantConfiguration" [extensionGrantSchema]="extensionGrantSchema" (configurationCompleted)="enableTokenGranterUpdate($event)"></extension-grant-form>
+
+      <div fxLayout="row" fxLayoutAlign="end end" class="token-granter-actions">
+        <button md-raised-button [disabled]="(!tokenGranterForm.valid || tokenGranterForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
+      </div>
+    </form>
+    <div class="token-granter-description" fxFlex>
+      <h3>Manage extension grant</h3>
+      <div class="token-granter-description-content">
+        <p>
+          Configure new extension grant to request OAuth 2.0 access tokens. OAuth 2.0 specification defines four
+          grant types : authorization code, implicit, resource owner password credentials, and client credentials. Extension grant act as an extensibility
+          mechanism for defining additional types.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

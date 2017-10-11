@@ -57,6 +57,11 @@ public class ClientRepositoryProxy extends AbstractProxy<ClientRepository> imple
     }
 
     @Override
+    public Set<Client> findByExtensionGrant(String tokenGranter) throws TechnicalException {
+        return target.findByExtensionGrant(tokenGranter);
+    }
+
+    @Override
     public Set<Client> findAll() throws TechnicalException {
         return target.findAll();
     }

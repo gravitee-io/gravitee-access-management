@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.oauth2;
 import io.gravitee.am.gateway.handler.oauth2.provider.jwt.CustomJwtAccessTokenConverter;
 import io.gravitee.am.gateway.handler.oauth2.provider.request.CustomOAuth2RequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationDetailsSource;
+import io.gravitee.am.gateway.handler.oauth2.provider.token.CustomTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.security.ExtensionGrantManager;
 import io.gravitee.am.model.Domain;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,6 +35,8 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.A
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
+import org.springframework.security.oauth2.provider.CompositeTokenGranter;
+import org.springframework.security.oauth2.provider.TokenGranter;
 import org.springframework.security.oauth2.provider.approval.UserApprovalHandler;
 import org.springframework.security.oauth2.provider.client.ClientDetailsUserDetailsService;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
@@ -45,7 +49,10 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -77,6 +84,9 @@ public class AuthorizationServerConfiguration implements AuthorizationServerConf
     @Autowired
     @Qualifier("userDetailsServiceBean")
     private UserDetailsService userDetailsService;
+
+    @Autowired
+    private ExtensionGrantManager extensionGrantManager;
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -113,6 +123,7 @@ public class AuthorizationServerConfiguration implements AuthorizationServerConf
             .requestFactory(new CustomOAuth2RequestFactory(clientDetailsService))
             .userApprovalHandler(userApprovalHandler)
             .authenticationManager(authenticationManager)
+            .tokenGranter(tokenGranter(endpoints))
                 .addInterceptor(new HandlerInterceptorAdapter() {
                     @Override
                     public boolean preHandle(HttpServletRequest hsr, HttpServletResponse rs, Object o) throws Exception {
@@ -151,5 +162,15 @@ public class AuthorizationServerConfiguration implements AuthorizationServerConf
     @Bean
     public OAuth2AccessDeniedHandler oAuth2AccessDeniedHandler() {
         return new OAuth2AccessDeniedHandler();
+    }
+
+    private TokenGranter tokenGranter(final AuthorizationServerEndpointsConfigurer endpoints) {
+        List<TokenGranter> granters = new ArrayList<>(Arrays.asList(endpoints.getTokenGranter()));
+        extensionGrantManager.providers().forEach((id, tokenGranterProvider) -> {
+            CustomTokenGranter customTokenGranter = new CustomTokenGranter(endpoints.getTokenServices(), endpoints.getClientDetailsService(), endpoints.getOAuth2RequestFactory(), extensionGrantManager.getTokenGranter(id).getGrantType());
+            customTokenGranter.setExtensionGrantProvider(tokenGranterProvider);
+            granters.add(customTokenGranter);
+        });
+        return new CompositeTokenGranter(granters);
     }
 }
