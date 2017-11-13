@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.provider.token;
 
-import io.gravitee.am.model.oauth2.OAuth2Authentication;
+import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

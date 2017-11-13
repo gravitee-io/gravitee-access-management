@@ -16,7 +16,7 @@
 package io.gravitee.am.repository.mongodb.oauth2.utils;
 
 
-import io.gravitee.am.model.oauth2.authentication.AbstractAuthenticationToken;
+import io.gravitee.am.repository.oauth2.model.authentication.AbstractAuthenticationToken;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

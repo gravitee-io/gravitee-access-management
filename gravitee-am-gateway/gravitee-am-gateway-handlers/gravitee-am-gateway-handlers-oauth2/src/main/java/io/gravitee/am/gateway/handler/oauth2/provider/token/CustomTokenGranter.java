@@ -59,8 +59,8 @@ public class CustomTokenGranter extends AbstractTokenGranter {
         this.extensionGrantProvider = extensionGrantProvider;
     }
 
-    private io.gravitee.am.model.oauth2.request.TokenRequest convert(TokenRequest request) {
-        io.gravitee.am.model.oauth2.request.TokenRequest tokenRequest = new io.gravitee.am.model.oauth2.request.TokenRequest();
+    private io.gravitee.am.repository.oauth2.model.request.TokenRequest convert(TokenRequest request) {
+        io.gravitee.am.repository.oauth2.model.request.TokenRequest tokenRequest = new io.gravitee.am.repository.oauth2.model.request.TokenRequest();
         tokenRequest.setGrantType(request.getGrantType());
         tokenRequest.setClientId(request.getClientId());
         tokenRequest.setScope(request.getScope());

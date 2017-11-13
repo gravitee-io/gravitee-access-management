@@ -19,8 +19,8 @@ import io.gravitee.am.repository.mongodb.oauth2.code.internal.OAuth2Authorizatio
 import io.gravitee.am.repository.mongodb.oauth2.code.model.OAuth2AuthorizationCodeMongo;
 import io.gravitee.am.repository.mongodb.common.SerializationUtils;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
-import io.gravitee.am.model.oauth2.OAuth2Authentication;
-import io.gravitee.am.model.oauth2.code.OAuth2AuthorizationCode;
+import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
+import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

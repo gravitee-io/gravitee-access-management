@@ -17,7 +17,7 @@ package io.gravitee.am.extensiongrant.api;
 
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.oauth2.request.TokenRequest;
+import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

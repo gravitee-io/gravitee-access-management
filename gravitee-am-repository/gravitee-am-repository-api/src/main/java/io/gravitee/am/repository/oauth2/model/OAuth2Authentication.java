@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.oauth2;
+package io.gravitee.am.repository.oauth2.model;
 
-import io.gravitee.am.model.oauth2.authentication.AbstractAuthenticationToken;
-import io.gravitee.am.model.oauth2.authentication.Authentication;
-import io.gravitee.am.model.oauth2.request.OAuth2Request;
+import io.gravitee.am.repository.oauth2.model.authentication.AbstractAuthenticationToken;
+import io.gravitee.am.repository.oauth2.model.authentication.Authentication;
+import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
