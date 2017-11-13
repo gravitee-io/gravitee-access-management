@@ -32,8 +32,8 @@
     <dependencies>
         <!-- Gravitee.io -->
         <dependency>
-            <groupId>io.gravitee.am.model</groupId>
-            <artifactId>gravitee-am-model</artifactId>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

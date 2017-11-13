@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.oauth2.authentication;
+package io.gravitee.am.repository.oauth2.model.authentication;
 
-import io.gravitee.am.model.oauth2.authority.GrantedAuthority;
+import io.gravitee.am.repository.oauth2.model.authority.GrantedAuthority;
 
 import java.io.Serializable;
 import java.security.Principal;

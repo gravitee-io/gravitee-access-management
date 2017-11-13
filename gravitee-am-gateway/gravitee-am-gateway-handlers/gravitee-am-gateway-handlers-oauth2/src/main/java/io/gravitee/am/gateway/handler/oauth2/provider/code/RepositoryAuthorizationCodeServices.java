@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.provider.code;
 
 import io.gravitee.am.gateway.handler.oauth2.provider.RepositoryProviderUtils;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
-import io.gravitee.am.model.oauth2.code.OAuth2AuthorizationCode;
+import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -54,7 +54,7 @@ public class RepositoryAuthorizationCodeServices extends RandomValueAuthorizatio
 
     @Override
     protected OAuth2Authentication remove(String code) {
-        Optional<io.gravitee.am.model.oauth2.OAuth2Authentication> oAuth2Authentication = authorizationCodeRepository.remove(code);
+        Optional<io.gravitee.am.repository.oauth2.model.OAuth2Authentication> oAuth2Authentication = authorizationCodeRepository.remove(code);
 
         if (oAuth2Authentication.isPresent()) {
             return RepositoryProviderUtils.convert(oAuth2Authentication.get());

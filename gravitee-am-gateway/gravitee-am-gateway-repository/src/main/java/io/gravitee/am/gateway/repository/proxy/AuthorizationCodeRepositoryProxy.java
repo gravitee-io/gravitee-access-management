@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.repository.proxy;
 
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
-import io.gravitee.am.model.oauth2.OAuth2Authentication;
-import io.gravitee.am.model.oauth2.code.OAuth2AuthorizationCode;
+import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
+import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;

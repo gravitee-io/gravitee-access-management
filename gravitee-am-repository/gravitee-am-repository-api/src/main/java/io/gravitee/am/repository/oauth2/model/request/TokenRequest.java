@@ -13,28 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.oauth2.authority;
+package io.gravitee.am.repository.oauth2.model.request;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SimpleGrantedAuthority implements GrantedAuthority {
+public class TokenRequest extends BaseRequest {
 
-    private static final long serialVersionUID = 5798000739859713272L;
+    private static final long serialVersionUID = 5153205892311272426L;
 
-    private String role;
+    private String grantType;
 
-    public SimpleGrantedAuthority(String role) {
-        this.role = role;
+    public String getGrantType() {
+        return grantType;
     }
 
-    @Override
-    public String getAuthority() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
+    public void setGrantType(String grantType) {
+        this.grantType = grantType;
     }
 }

@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2.utils;
 
-import io.gravitee.am.model.oauth2.authority.GrantedAuthority;
-import io.gravitee.am.model.oauth2.request.OAuth2Request;
+import io.gravitee.am.repository.oauth2.model.authority.GrantedAuthority;
+import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
 
 import java.io.Serializable;
 import java.util.*;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.oauth2.authority;
+package io.gravitee.am.repository.oauth2.model.authority;
 
 import java.io.Serializable;
 

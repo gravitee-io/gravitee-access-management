@@ -17,7 +17,7 @@ package io.gravitee.am.extensiongrant.jwtbearer.provider;
 
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.oauth2.request.TokenRequest;
+import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.jwtbearer.JwtBearerExtensionGrantConfiguration;
