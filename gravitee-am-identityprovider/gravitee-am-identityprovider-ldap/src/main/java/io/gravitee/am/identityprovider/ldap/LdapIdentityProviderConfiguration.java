@@ -31,7 +31,7 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     private String contextSourcePassword;
 
-    private String userSearchBase;
+    private String userSearchBase = "";
 
     private String userSearchFilter;
 
