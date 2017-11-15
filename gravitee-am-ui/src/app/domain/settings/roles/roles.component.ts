@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { RoleService } from "../../../services/role.service";
-import { DialogService } from "../../../services/dialog.service";
+import { RoleService } from "../../shared/services/role.service";
+import { DialogService } from "../../../core/services/dialog.service";
 import { ActivatedRoute } from "@angular/router";
-import { SnackbarService } from "../../../services/snackbar.service";
+import { SnackbarService } from "../../../core/services/snackbar.service";
 
 @Component({
   selector: 'app-roles',

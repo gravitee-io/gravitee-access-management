@@ -15,7 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
-import { SidenavService } from "../components/sidenav/sidenav.service";
+import { SidenavService } from "../core/components/sidenav/sidenav.service";
 import { BreadcrumbService } from "../../libraries/ng2-breadcrumb/components/breadcrumbService";
 
 @Component({

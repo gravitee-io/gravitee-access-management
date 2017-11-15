@@ -15,9 +15,9 @@
  */
 import { Component, OnInit, Input } from '@angular/core';
 import { Router, ActivatedRoute } from "@angular/router";
-import { PlatformService } from "../../../../../../services/platform.service";
-import { SnackbarService } from "../../../../../../services/snackbar.service";
-import { ExtensionGrantService } from "../../../../../../services/extension-grant.service";
+import { PlatformService } from "../../../../../shared/services/platform.service";
+import { SnackbarService } from "../../../../../../core/services/snackbar.service";
+import { ExtensionGrantService } from "../../../../../shared/services/extension-grant.service";
 
 @Component({
   selector: 'extension-grant-creation-step2',

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ClientService } from "../../../../services/client.service";
-import { SnackbarService } from "../../../../services/snackbar.service";
-import { ProviderService } from "../../../../services/provider.service";
+import { ClientService } from "../../../../clients/shared/services/client.service";
+import { SnackbarService } from "../../../../core/services/snackbar.service";
+import { ProviderService } from "../../../shared/services/provider.service";
 import { ActivatedRoute, Router } from "@angular/router";
-import { CertificateService } from "../../../../services/certificate.service";
-import { DialogService } from "../../../../services/dialog.service";
+import { CertificateService } from "../../../shared/services/certificate.service";
+import { DialogService } from "../../../../core/services/dialog.service";
 import * as _ from 'lodash';
 
 @Component({

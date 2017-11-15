@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { UserService} from "../../services/user.service";
-import { SnackbarService } from "../../services/snackbar.service";
-import { DialogService } from "../../services/dialog.service";
+import { UserService } from "../shared/services/user.service";
+import { SnackbarService } from "../../core/services/snackbar.service";
+import { DialogService } from "../../core/services/dialog.service";
 import { ActivatedRoute } from "@angular/router";
 
 @Component({

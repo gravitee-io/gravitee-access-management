@@ -16,9 +16,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
 import { MdDialog, MdDialogRef } from "@angular/material";
-import { CertificateService } from "../../../services/certificate.service";
-import { DialogService } from "app/services/dialog.service";
-import { SnackbarService } from "../../../services/snackbar.service";
+import { CertificateService } from "../../shared/services/certificate.service";
+import { DialogService } from "app/core/services/dialog.service";
+import { SnackbarService } from "../../../core/services/snackbar.service";
 
 @Component({
   selector: 'app-certificates',

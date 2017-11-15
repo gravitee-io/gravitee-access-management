@@ -15,7 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpService } from "./services/http.service";
+import { HttpService } from "./core/services/http.service";
 import { Http}  from "@angular/http";
 
 @Component({

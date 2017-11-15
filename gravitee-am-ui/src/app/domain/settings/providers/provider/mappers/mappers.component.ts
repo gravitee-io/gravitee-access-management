@@ -15,9 +15,9 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
-import { SnackbarService } from "../../../../../services/snackbar.service";
-import { ProviderService } from "../../../../../services/provider.service";
-import { DialogService } from "../../../../../services/dialog.service";
+import { SnackbarService } from "../../../../../core/services/snackbar.service";
+import { ProviderService } from "../../../../shared/services/provider.service";
+import { DialogService } from "../../../../../core/services/dialog.service";
 import { MdDialog, MdDialogRef } from "@angular/material";
 
 @Component({

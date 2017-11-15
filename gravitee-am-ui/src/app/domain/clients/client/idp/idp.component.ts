@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ClientService } from "../../../../services/client.service";
-import { SnackbarService } from "../../../../services/snackbar.service";
+import { ClientService } from "../../../../clients/shared/services/client.service";
+import { SnackbarService } from "../../../../core/services/snackbar.service";
 import { ActivatedRoute } from "@angular/router";
-import { ProviderService } from "../../../../services/provider.service";
+import { ProviderService } from "../../../shared/services/provider.service";
 
 @Component({
   selector: 'app-idp',

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { DomainService } from "../../../services/domain.service";
-import { SnackbarService } from "../../../services/snackbar.service";
+import { DomainService } from "../../../domain/shared/services/domain.service";
+import { SnackbarService } from "../../../core/services/snackbar.service";
 import { Router } from "@angular/router";
 import { BreadcrumbService } from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 

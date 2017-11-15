@@ -16,9 +16,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
 import { MdDialog, MdDialogRef } from "@angular/material";
-import { SnackbarService } from "../../../../services/snackbar.service";
-import { DialogService } from "../../../../services/dialog.service";
-import { ClientService } from "../../../../services/client.service";
+import { SnackbarService } from "../../../../core/services/snackbar.service";
+import { DialogService } from "../../../../core/services/dialog.service";
+import { ClientService } from "../../../../clients/shared/services/client.service";
 
 @Component({
   selector: 'app-oidc',

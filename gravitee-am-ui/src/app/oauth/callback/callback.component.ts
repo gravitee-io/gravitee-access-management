@@ -15,8 +15,8 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { Router } from "@angular/router";
-import { AuthService } from "../../services/auth.service";
-import { SnackbarService } from "../../services/snackbar.service";
+import { AuthService } from "../../core/services/auth.service";
+import { SnackbarService } from "../../core/services/snackbar.service";
 
 @Component({
   selector: 'app-callback',

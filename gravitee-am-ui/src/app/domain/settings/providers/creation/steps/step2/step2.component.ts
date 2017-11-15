@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
-import { PlatformService } from "../../../../../../services/platform.service";
-import { ProviderService } from "../../../../../../services/provider.service";
-import { SnackbarService } from "../../../../../../services/snackbar.service";
+import { PlatformService } from "../../../../../shared/services/platform.service";
+import { ProviderService } from "../../../../../shared/services/provider.service";
+import { SnackbarService } from "../../../../../../core/services/snackbar.service";
 import { Router, ActivatedRoute } from "@angular/router";
 
 @Component({

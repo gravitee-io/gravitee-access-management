@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ProviderService } from "../../../../../services/provider.service";
-import { SnackbarService } from "../../../../../services/snackbar.service";
+import { ProviderService } from "../../../../shared/services/provider.service";
+import { SnackbarService } from "../../../../../core/services/snackbar.service";
 import { ActivatedRoute } from "@angular/router";
-import { PlatformService } from "../../../../../services/platform.service";
+import { PlatformService } from "../../../../shared/services/platform.service";
 import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 
 @Component({

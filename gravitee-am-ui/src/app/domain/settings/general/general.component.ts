@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { DomainService } from "../../../services/domain.service";
-import { DialogService } from "../../../services/dialog.service";
+import { DomainService } from "../../shared/services/domain.service";
+import { DialogService } from "../../../core/services/dialog.service";
 import { ActivatedRoute, Router } from "@angular/router";
-import { SnackbarService } from "../../../services/snackbar.service";
+import { SnackbarService } from "../../../core/services/snackbar.service";
 import { BreadcrumbService } from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { SidenavService } from "../../../components/sidenav/sidenav.service";
+import { SidenavService } from "../../../core/components/sidenav/sidenav.service";
 
 @Component({
   selector: 'app-general',

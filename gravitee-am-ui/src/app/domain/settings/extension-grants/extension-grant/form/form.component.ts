@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
-import { MaterialDesignFrameworkComponent } from "../../../../../components/json-schema-form/material-design-framework.component";
-import { MaterialInputComponent } from "../../../../../components/json-schema-form/material-input.component";
-import { MaterialFileComponent } from "../../../../../components/json-schema-form/material-file.component";
-import { MaterialAddReferenceComponent } from "../../../../../components/json-schema-form/material-add-reference.component";
+import {MaterialDesignFrameworkComponent} from "../../../../shared/components/json-schema-form/material-design-framework.component";
+import {MaterialInputComponent} from "../../../../shared/components/json-schema-form/material-input.component";
+import {MaterialFileComponent} from "../../../../shared/components/json-schema-form/material-file.component";
+import {MaterialAddReferenceComponent} from "../../../../shared/components/json-schema-form/material-add-reference.component";
 
 @Component({
   selector: 'extension-grant-form',

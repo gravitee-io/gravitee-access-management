@@ -15,10 +15,10 @@
  */
 import { Component, OnInit, Inject } from '@angular/core';
 import { MD_DIALOG_DATA, MdDialog, MdDialogRef } from "@angular/material";
-import { SnackbarService } from "../../../../../services/snackbar.service";
+import { SnackbarService } from "../../../../../core/services/snackbar.service";
 import { ActivatedRoute } from "@angular/router";
-import { ProviderService } from "../../../../../services/provider.service";
-import { DialogService } from "../../../../../services/dialog.service";
+import { ProviderService } from "../../../../shared/services/provider.service";
+import { DialogService } from "../../../../../core/services/dialog.service";
 
 @Component({
   selector: 'app-roles',

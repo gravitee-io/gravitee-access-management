@@ -15,9 +15,9 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { ClientService } from "../../services/client.service";
+import { ClientService } from "../shared/services/client.service";
 import { ActivatedRoute, Router } from "@angular/router";
-import { SnackbarService } from "../../services/snackbar.service";
+import { SnackbarService } from "../../core/services/snackbar.service";
 
 @Component({
   selector: 'app-creation',

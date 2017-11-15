@@ -16,9 +16,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { PlatformService } from "../../../../services/platform.service";
-import { CertificateService}  from "../../../../services/certificate.service";
-import { SnackbarService } from "../../../../services/snackbar.service";
+import { PlatformService } from "../../../shared/services/platform.service";
+import { CertificateService } from "../../../shared/services/certificate.service";
+import { SnackbarService } from "../../../../core/services/snackbar.service";
 
 @Component({
   selector: 'app-certificate',

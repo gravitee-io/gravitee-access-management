@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, Output, EventEmitter, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { PlatformService } from "../../../../../../services/platform.service";
+import { PlatformService } from "../../../../../shared/services/platform.service";
 
 @Component({
   selector: 'extension-grant-creation-step1',

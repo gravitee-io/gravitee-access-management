@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { DialogService } from "../services/dialog.service";
-import { SnackbarService } from "../services/snackbar.service";
+import { DialogService } from "../core/services/dialog.service";
+import { SnackbarService } from "../core/services/snackbar.service";
 import { ActivatedRoute } from "@angular/router";
-import { ClientService } from "../services/client.service";
+import { ClientService } from "./shared/services/client.service";
 
 @Component({
   selector: 'app-clients',
@@ -29,9 +29,7 @@ export class ClientsComponent implements OnInit {
   domainId: string;
   newClientRouterLink:any[] = ['/clients', 'new'];
 
-  constructor(private dialogService: DialogService,
-              private snackbarService: SnackbarService, private clientService: ClientService,
-              private route: ActivatedRoute) {
+  constructor(private route: ActivatedRoute) {
   }
 
   ngOnInit() {
