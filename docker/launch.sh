@@ -89,13 +89,23 @@ main() {
     pushd $WORKDIR > /dev/null
         echo "Download required files ..."
         mkdir -p config
-        curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/docker-compose.yml -o "docker-compose.yml"
-        cd config && { curl -O https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/config/constants.json ; cd -; }
-        cd config && { curl -O https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/config/nginx.conf ; cd -; }
+        curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/docker-compose-standalone.yml -o "docker-compose.yml"
+        cd config && { curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/config/constants-standalone.json -o "constants.json" ; cd -; }
+        cd config && { curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/config/nginx-standalone.conf -o "nginx.conf" ; cd -; }
+        sed -i.bak "s/#PORT/$PORT/g" config/constants.json
+        sed -i.bak "s/#PORT/$PORT/g" config/nginx.conf
+        rm config/constants.json.bak config/nginx.conf.bak
         echo
         echo "Launch Gravitee.io Access Management ..."
         $dc_exec
     popd > /dev/null
 }
+
+# init port from input parameter
+if [ "$1" != "" ]; then
+    export PORT=$1
+else
+    export PORT=80
+fi
 
 main
