@@ -1,0 +1,13 @@
+{
+  "portalTitle": "Access Management",
+  "baseURL": "http://localhost:#PORT/am/management",
+  "authentication": {
+    "oauth2": {
+      "authorize": "http://localhost:#PORT/am/admin/oauth/authorize",
+      "userInfo": "http://localhost:#PORT/am/admin/userinfo",
+      "clientId": "admin",
+      "redirectUri": "http://localhost:#PORT/am/ui/oauth/callback",
+      "logoutUri": "http://localhost:#PORT/am/admin/logout?target_url=http://localhost:#PORT/am/ui/logout/callback"
+    }
+  }
+}

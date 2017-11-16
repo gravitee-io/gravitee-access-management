@@ -21,3 +21,9 @@ Install via curl
 ```
 $ curl -L http://bit.ly/graviteeio-am | bash
 ```
+
+> To change default http port, launch previous command with -s parameter
+
+```
+$ curl -L http://bit.ly/graviteeio-am | bash -s <port>
+```
