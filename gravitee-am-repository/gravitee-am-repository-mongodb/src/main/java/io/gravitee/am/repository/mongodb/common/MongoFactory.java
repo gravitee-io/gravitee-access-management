@@ -123,15 +123,16 @@ public class MongoFactory implements FactoryBean<Mongo> {
                     new MongoClientURI(uri, builder));
         } else {
 
-            String databaseName = readPropertyValue(propertyPrefix + "dbname", String.class, "gravitee");
+            String databaseName = readPropertyValue(propertyPrefix + "dbname", String.class, "gravitee-am");
 
             String username = readPropertyValue(propertyPrefix + "username");
             String password = readPropertyValue(propertyPrefix + "password");
 
             List<MongoCredential> credentials = null;
             if (username != null || password != null) {
-                credentials = Collections.singletonList(MongoCredential.createMongoCRCredential(
-                        username, databaseName, password.toCharArray()));
+                String authSource = readPropertyValue(propertyPrefix + "authSource", String.class, "gravitee-am");
+                credentials = Collections.singletonList(MongoCredential.createCredential(
+                        username, authSource, password.toCharArray()));
             }
 
 
