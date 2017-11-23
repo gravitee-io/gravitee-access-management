@@ -60,6 +60,27 @@ management:
     dbname: ${ds.mongodb.dbname}
     host: ${ds.mongodb.host}
     port: ${ds.mongodb.port}
+#    username:
+#    password:
+#    authSource:
+#    connectionsPerHost: 0
+#    connectTimeout: 500
+#    maxWaitTime: 120000
+#    socketTimeout: 500
+#    socketKeepAlive: false
+#    maxConnectionLifeTime: 0
+#    maxConnectionIdleTime: 0
+#    serverSelectionTimeout: 0
+#    description: gravitee.io
+#    heartbeatFrequency: 10000
+#    minHeartbeatFrequency: 500
+#    heartbeatConnectTimeout: 1000
+#    heartbeatSocketTimeout: 20000
+#    localThreshold: 15
+#    minConnectionsPerHost: 0
+#    sslEnabled: false
+#    threadsAllowedToBlockForConnectionMultiplier: 5
+#    cursorFinalizerEnabled: true
 
 # OAuth2 repository is used to store OAuth2 tokens: access_token, refresh_token
 oauth2:
