@@ -31,6 +31,13 @@
         <md-hint align="end">Must be a unique absolute URI. OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type" parameter of the token endpoint.</md-hint>
       </md-input-container>
 
+      <h4 style="margin: 10px 0 10px 0;">User creation</h4>
+      <md-slide-toggle
+        (change)="enableCreateUser($event)"
+        [checked]="extensionGrant.createUser">
+      </md-slide-toggle>
+      <md-hint style="font-size: 75%;">Allow to store user information. Used for user account activity and OAuth 2.0 refresh token flow.</md-hint>
+
       <h4 style="margin: 10px 0 20px 0;">Identity provider</h4>
       <md-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider">
         <md-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</md-option>
@@ -41,7 +48,7 @@
       <extension-grant-form *ngIf="extensionGrant" [extensionGrantConfiguration]="extensionGrantConfiguration" [extensionGrantSchema]="extensionGrantSchema" (configurationCompleted)="enableTokenGranterUpdate($event)"></extension-grant-form>
 
       <div fxLayout="row" fxLayoutAlign="end end" class="token-granter-actions">
-        <button md-raised-button [disabled]="(!tokenGranterForm.valid || tokenGranterForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
+        <button md-raised-button [disabled]="(!tokenGranterForm.valid || tokenGranterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">UPDATE</button>
       </div>
     </form>
     <div class="token-granter-description" fxFlex>

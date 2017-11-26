@@ -95,6 +95,7 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
         extensionGrant.setDomain(extensionGrantMongo.getDomain());
         extensionGrant.setGrantType(extensionGrantMongo.getGrantType());
         extensionGrant.setIdentityProvider(extensionGrantMongo.getIdentityProvider());
+        extensionGrant.setCreateUser(extensionGrantMongo.isCreateUser());
         extensionGrant.setCreatedAt(extensionGrantMongo.getCreatedAt());
         extensionGrant.setUpdatedAt(extensionGrantMongo.getUpdatedAt());
         return extensionGrant;
@@ -113,6 +114,7 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
         extensionGrantMongo.setDomain(extensionGrant.getDomain());
         extensionGrantMongo.setGrantType(extensionGrant.getGrantType());
         extensionGrantMongo.setIdentityProvider(extensionGrant.getIdentityProvider());
+        extensionGrantMongo.setCreateUser(extensionGrant.isCreateUser());
         extensionGrantMongo.setCreatedAt(extensionGrant.getCreatedAt());
         extensionGrantMongo.setUpdatedAt(extensionGrant.getUpdatedAt());
         return extensionGrantMongo;

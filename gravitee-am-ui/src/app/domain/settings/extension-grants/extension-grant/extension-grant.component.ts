@@ -27,6 +27,7 @@ import { ExtensionGrantService } from "../../../../services/extension-grant.serv
 })
 export class ExtensionGrantComponent implements OnInit {
   private domainId: string;
+  formChanged: boolean = false;
   configurationIsValid: boolean = true;
   configurationPristine: boolean = true;
   extensionGrant: any;
@@ -65,6 +66,11 @@ export class ExtensionGrantComponent implements OnInit {
 
   initBreadcrumb() {
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/extensionGrants/'+this.extensionGrant.id+'$', this.extensionGrant.name);
+  }
+
+  enableCreateUser(event) {
+    this.extensionGrant.createUser = event.checked;
+    this.formChanged = true;
   }
 
 }

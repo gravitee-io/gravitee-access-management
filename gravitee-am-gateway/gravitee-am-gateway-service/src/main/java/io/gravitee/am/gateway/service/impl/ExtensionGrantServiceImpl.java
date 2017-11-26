@@ -105,6 +105,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
             extensionGrant.setName(newExtensionGrant.getName());
             extensionGrant.setGrantType(newExtensionGrant.getGrantType());
             extensionGrant.setIdentityProvider(newExtensionGrant.getIdentityProvider());
+            extensionGrant.setCreateUser(newExtensionGrant.isCreateUser());
             extensionGrant.setType(newExtensionGrant.getType());
             extensionGrant.setConfiguration(newExtensionGrant.getConfiguration());
             extensionGrant.setCreatedAt(new Date());
@@ -141,6 +142,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
             oldExtensionGrant.setName(updateExtensionGrant.getName());
             oldExtensionGrant.setGrantType(updateExtensionGrant.getGrantType());
             oldExtensionGrant.setIdentityProvider(updateExtensionGrant.getIdentityProvider());
+            oldExtensionGrant.setCreateUser(updateExtensionGrant.isCreateUser());
             oldExtensionGrant.setConfiguration(updateExtensionGrant.getConfiguration());
             oldExtensionGrant.setUpdatedAt(new Date());
 
