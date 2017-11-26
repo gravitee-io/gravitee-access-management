@@ -36,6 +36,8 @@ public class UpdateExtensionGrant {
 
     private String identityProvider;
 
+    private boolean createUser;
+
     public String getName() {
         return name;
     }
@@ -68,12 +70,21 @@ public class UpdateExtensionGrant {
         this.identityProvider = identityProvider;
     }
 
+    public boolean isCreateUser() {
+        return createUser;
+    }
+
+    public void setCreateUser(boolean createUser) {
+        this.createUser = createUser;
+    }
+
     @Override
     public String toString() {
         return "UpdateExtensionGrant{" +
                 ", name='" + name + '\'' +
                 ", grantType='" + grantType + '\'' +
-                ", identityProvider='" + identityProvider +
+                ", identityProvider='" + identityProvider + '\'' +
+                ", createUser='" + createUser +
                 '}';
     }
 }

@@ -23,10 +23,12 @@ import io.gravitee.am.gateway.handler.oauth2.security.ExtensionGrantManager;
 import io.gravitee.am.model.Domain;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -87,6 +89,9 @@ public class AuthorizationServerConfiguration implements AuthorizationServerConf
 
     @Autowired
     private ExtensionGrantManager extensionGrantManager;
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -167,8 +172,9 @@ public class AuthorizationServerConfiguration implements AuthorizationServerConf
     private TokenGranter tokenGranter(final AuthorizationServerEndpointsConfigurer endpoints) {
         List<TokenGranter> granters = new ArrayList<>(Arrays.asList(endpoints.getTokenGranter()));
         extensionGrantManager.providers().forEach((id, tokenGranterProvider) -> {
-            CustomTokenGranter customTokenGranter = new CustomTokenGranter(endpoints.getTokenServices(), endpoints.getClientDetailsService(), endpoints.getOAuth2RequestFactory(), extensionGrantManager.getTokenGranter(id).getGrantType());
+            CustomTokenGranter customTokenGranter = new CustomTokenGranter(endpoints.getTokenServices(), endpoints.getClientDetailsService(), endpoints.getOAuth2RequestFactory(), extensionGrantManager.getTokenGranter(id));
             customTokenGranter.setExtensionGrantProvider(tokenGranterProvider);
+            customTokenGranter.setAuthenticationEventPublisher(new DefaultAuthenticationEventPublisher(applicationEventPublisher));
             granters.add(customTokenGranter);
         });
         return new CompositeTokenGranter(granters);

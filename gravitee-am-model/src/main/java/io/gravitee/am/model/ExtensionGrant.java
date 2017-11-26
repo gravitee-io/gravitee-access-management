@@ -37,6 +37,8 @@ public class ExtensionGrant {
 
     private String identityProvider;
 
+    private boolean createUser;
+
     private Date createdAt;
 
     private Date updatedAt;
@@ -91,6 +93,14 @@ public class ExtensionGrant {
 
     public String getGrantType() {
         return grantType;
+    }
+
+    public boolean isCreateUser() {
+        return createUser;
+    }
+
+    public void setCreateUser(boolean createUser) {
+        this.createUser = createUser;
     }
 
     public void setGrantType(String grantType) {

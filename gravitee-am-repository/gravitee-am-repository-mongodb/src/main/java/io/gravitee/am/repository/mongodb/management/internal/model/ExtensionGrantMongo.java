@@ -39,6 +39,8 @@ public class ExtensionGrantMongo extends Auditable {
 
     private String identityProvider;
 
+    private boolean createUser;
+
     public String getId() {
         return id;
     }
@@ -93,6 +95,14 @@ public class ExtensionGrantMongo extends Auditable {
 
     public void setIdentityProvider(String identityProvider) {
         this.identityProvider = identityProvider;
+    }
+
+    public boolean isCreateUser() {
+        return createUser;
+    }
+
+    public void setCreateUser(boolean createUser) {
+        this.createUser = createUser;
     }
 
     @Override

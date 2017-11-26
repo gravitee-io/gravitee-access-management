@@ -34,6 +34,14 @@
         <md-hint align="end">Must be a unique absolute URI.. OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type" parameter of the token endpoint.</md-hint>
       </md-input-container>
 
+      <h4 style="margin: 10px 0 10px 0;">User creation</h4>
+      <md-slide-toggle
+        (change)="enableCreateUser($event)"
+        [checked]="extensionGrant.createUser">
+      </md-slide-toggle>
+      <md-hint style="font-size: 75%;">Allow to store user information. Used for user account activity and OAuth 2.0 refresh token flow.</md-hint>
+
+
       <h4>Identity provider</h4>
       <md-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider">
         <md-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</md-option>
@@ -44,7 +52,7 @@
       <extension-grant-form [extensionGrantConfiguration]="configuration" [extensionGrantSchema]="extensionGrantSchema" (configurationCompleted)="enableTokenGranterCreation($event)"></extension-grant-form>
 
       <div fxLayout="row" fxLayoutAlign="end end" class="next-button">
-        <button md-raised-button [disabled]="!isValid" (click)="create()">CREATE</button>
+        <button md-raised-button [disabled]="!isValid && !formChanged" (click)="create()">CREATE</button>
       </div>
     </form>
   </div>

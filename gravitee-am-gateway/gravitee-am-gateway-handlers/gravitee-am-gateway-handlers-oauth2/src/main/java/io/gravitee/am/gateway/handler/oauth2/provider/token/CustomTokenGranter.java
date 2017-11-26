@@ -15,9 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.provider.token;
 
+import io.gravitee.am.gateway.handler.oauth2.provider.RepositoryProviderUtils;
+import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -26,16 +30,24 @@ import org.springframework.security.oauth2.provider.token.AbstractTokenGranter;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.util.Assert;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class CustomTokenGranter extends AbstractTokenGranter {
 
+    private ExtensionGrant extensionGrant;
+
     private ExtensionGrantProvider extensionGrantProvider;
 
-    public CustomTokenGranter(AuthorizationServerTokenServices tokenServices, ClientDetailsService clientDetailsService, OAuth2RequestFactory requestFactory, String grantType) {
-        super(tokenServices, clientDetailsService, requestFactory, grantType);
+    private AuthenticationEventPublisher eventPublisher;
+
+    public CustomTokenGranter(AuthorizationServerTokenServices tokenServices, ClientDetailsService clientDetailsService, OAuth2RequestFactory requestFactory, ExtensionGrant extensionGrant) {
+        super(tokenServices, clientDetailsService, requestFactory, extensionGrant.getGrantType());
+        this.extensionGrant = extensionGrant;
     }
 
     @Override
@@ -45,6 +57,12 @@ public class CustomTokenGranter extends AbstractTokenGranter {
             User user = extensionGrantProvider.grant(convert(tokenRequest));
             if (user != null) {
                 userAuth = new UsernamePasswordAuthenticationToken(user, "", AuthorityUtils.NO_AUTHORITIES);
+                if (extensionGrant.isCreateUser()) {
+                    Map<String, String> parameters = new LinkedHashMap<String, String>(tokenRequest.getRequestParameters());
+                    parameters.put(RepositoryProviderUtils.SOURCE, extensionGrant.getIdentityProvider());
+                    ((AbstractAuthenticationToken) userAuth).setDetails(parameters);
+                    eventPublisher.publishAuthenticationSuccess(userAuth);
+                }
             }
 
             OAuth2Request storedOAuth2Request = getRequestFactory().createOAuth2Request(client, tokenRequest);
@@ -57,6 +75,11 @@ public class CustomTokenGranter extends AbstractTokenGranter {
     public void setExtensionGrantProvider(ExtensionGrantProvider extensionGrantProvider) {
         Assert.notNull(extensionGrantProvider, "Extension Grant provider must not be null");
         this.extensionGrantProvider = extensionGrantProvider;
+    }
+
+    public void setAuthenticationEventPublisher(AuthenticationEventPublisher eventPublisher) {
+        Assert.notNull(eventPublisher, "AuthenticationEventPublisher cannot be null");
+        this.eventPublisher = eventPublisher;
     }
 
     private io.gravitee.am.repository.oauth2.model.request.TokenRequest convert(TokenRequest request) {
