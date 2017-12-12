@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.provider.endpoint;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -45,8 +46,10 @@ import java.security.Principal;
 @FrameworkEndpoint
 public class RevokeTokenEndpoint {
 
+    @Autowired
     private ResourceServerTokenServices resourceServerTokenServices;
 
+    @Autowired
     private TokenStore tokenStore;
 
     protected final Logger logger = LoggerFactory.getLogger(RevokeTokenEndpoint.class);

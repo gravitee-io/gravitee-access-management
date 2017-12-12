@@ -26,14 +26,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
-import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
@@ -61,8 +61,9 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Configuration
-@Import({CustomAuthorizationServerEndpointsConfiguration.class, CustomAuthorizationServerSecurityConfiguration.class})
-public class AuthorizationServerConfiguration implements AuthorizationServerConfigurer {
+@EnableAuthorizationServer
+//@Import({CustomAuthorizationServerEndpointsConfiguration.class, CustomAuthorizationServerSecurityConfiguration.class})
+public class AuthorizationServerConfiguration extends AuthorizationServerConfigurerAdapter {
 
     @Autowired
     private Domain domain;
@@ -93,6 +94,32 @@ public class AuthorizationServerConfiguration implements AuthorizationServerConf
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
 
+    /*
+    @Autowired
+    private AuthorizationEndpoint authorizationEndpoint;
+
+    @PostConstruct
+    public void init() {
+        authorizationEndpoint.setUserApprovalPage("forward:/oauth/scope_approval");
+        authorizationEndpoint.setErrorPage("forward:/oauth/scope_approval_error");
+    }
+*/
+    /*
+    @Bean
+    public ScopeApprovalEndpoint approvalEndpoint() {
+        ScopeApprovalEndpoint endpoint = new ScopeApprovalEndpoint();
+        endpoint.setClientDetailsService(clientDetailsService);
+        return endpoint;
+    }
+    */
+
+    /*
+    @Bean
+    public ScopeApprovalErrorEndpoint approvalErrorEndpoint() {
+        return new ScopeApprovalErrorEndpoint();
+    }
+    */
+
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         clients.withClientDetails(clientDetailsService);
@@ -102,7 +129,6 @@ public class AuthorizationServerConfiguration implements AuthorizationServerConf
     public ClientDetailsUserDetailsService clientDetailsUserDetailsService() {
         return new ClientDetailsUserDetailsService(clientDetailsService);
     }
-
 
     @Bean
     public AuthenticationManager clientAuthenticationManager() {
