@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Access Confirmation</title>
+
+    <link rel="stylesheet" type="text/css" th:href="@{/assets/bootstrap.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/assets/style.css}">
+</head>
+<body>
+    <div class="login-page">
+        <div class="form">
+            <p><span style="font-weight: bold" th:text="${client.client.clientId}"></span> is requesting permissions to:</p>
+
+            <form th:id="confirmationForm" th:action="@{authorize}" method="post">
+                    <div class="form-group" th:each="scope : ${scopes}">
+                        <span th:text="${scope.key}"></span>
+                        <label class="form-check-label">
+                            <input class="form-check-input" type="radio" th:name="${scope.key}" value="true" th:checked="${scope.value}">
+                            Approve
+                        </label>
+                        <label class="form-check-label">
+                            <input class="form-check-input" type="radio" th:name="${scope.key}" value="false" th:checked="${!scope.value}">
+                            Deny
+                        </label>
+                    </div>
+                <input name="user_oauth_approval" value="true" type="hidden"/>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <p>Only click Authorize for applications you trust.</p>
+
+                <button>Authorize</button>
+            </form>
+
+            <br/>
+
+            <form th:id="denialForm" th:action="@{authorize}" method="post">
+                <input name="user_oauth_approval" value="false" type="hidden"/>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button style="background: #777">Deny</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+

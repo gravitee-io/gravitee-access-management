@@ -25,6 +25,28 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.A
  */
 public class CustomAuthorizationServerEndpointsConfiguration extends AuthorizationServerEndpointsConfiguration {
 
+    /*
+    @Autowired
+    private AuthorizationEndpoint authorizationEndpoint;
+
+    @PostConstruct
+    public void init() {
+        authorizationEndpoint.setUserApprovalPage("forward:/oauth/scope_approval");
+        authorizationEndpoint.setErrorPage("forward:/oauth/scope_approval_error");
+    }
+
+    @Bean
+    public ScopeApprovalEndpoint approvalEndpoint() {
+        return new ScopeApprovalEndpoint();
+    }
+
+    @Bean
+    public ScopeApprovalErrorEndpoint approvalErrorEndpoint() {
+        return new ScopeApprovalErrorEndpoint();
+    }
+    */
+
+    /*
     @Bean
     public RevokeTokenEndpoint revokeTokenEndpoint() {
         RevokeTokenEndpoint endpoint = new RevokeTokenEndpoint(
@@ -33,4 +55,5 @@ public class CustomAuthorizationServerEndpointsConfiguration extends Authorizati
         endpoint.setExceptionTranslator(getEndpointsConfigurer().getExceptionTranslator());
         return endpoint;
     }
+    */
 }
