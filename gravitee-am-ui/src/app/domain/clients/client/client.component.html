@@ -17,8 +17,8 @@
 -->
 <div class="client-container">
   <h1>{{client.clientId}}</h1>
-  <nav md-tab-nav-bar>
-    <a md-tab-link
+  <nav mat-tab-nav-bar>
+    <a mat-tab-link
        *ngFor="let link of navLinks"
        [routerLink]="link.href"
        routerLinkActive #rla="routerLinkActive"

@@ -1,0 +1,42 @@
+.scope-container {
+  padding: 20px 70px 20px 50px;
+  h1 {
+    font-weight: 400;
+  }
+  .scope-content {
+    padding: 50px 0 20px;
+    form {
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 2px;
+      border: 1px solid rgb(226, 229, 231);
+      .scope-form-actions {
+        margin-top: 20px;
+      }
+    }
+    .scope-description {
+      margin-left: 20px;
+      h3 {
+        font-weight: 400;
+      }
+      .scope-description-content {
+        border-top: 1px solid rgb(226, 229, 231);
+        p {
+          margin-top: 20px;
+          font-size: 14px;
+        }
+        small {
+          font-size: 12px;
+          color: rgba(0, 0, 0, 0.38);
+        }
+      }
+    }
+  }
+}
+
+
+mat-icon.delete-chip {
+  cursor: pointer;
+  vertical-align: middle;
+  font-size: 20px;
+}

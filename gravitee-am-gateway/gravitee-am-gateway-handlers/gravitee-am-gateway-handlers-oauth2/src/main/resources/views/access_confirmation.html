@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login</title>
+
+    <!-- CSS -->
+    <!--<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:400,100,300,500">-->
+    <link rel="stylesheet" th:href="@{/assets/bootstrap/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/assets/font-awesome/css/font-awesome.min.css}">
+    <link rel="stylesheet" th:href="@{/assets/css/form-elements.css}">
+    <link rel="stylesheet" th:href="@{/assets/css/style.css}">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="@{/assets/ico/favicon.ico}">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" th:href="@{/assets/ico/apple-touch-icon-144-precomposed.png}">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" th:href="@{/assets/ico/apple-touch-icon-114-precomposed.png}">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" th:href="@{/assets/ico/apple-touch-icon-72-precomposed.png}">
+    <link rel="apple-touch-icon-precomposed" th:href="@{/assets/ico/apple-touch-icon-57-precomposed.png}">
+
+    <style>
+        .form-bottom form button.btn {
+            width: auto;
+        }
+
+        .feature-heading {
+            text-align: center;
+            margin: 0px 0px 25px;
+        }
+
+        .recipes {
+            margin: 0 -15px;
+            padding-top: 15px;
+            position: relative;
+        }
+        .recipes .recipe {
+            width: 100%;
+            margin: 0 auto 15px;
+            border-radius: 5px;
+            display: flex;
+            background-clip: content-box;
+            overflow: hidden;
+            background: #f8f8f8;
+            border: 3px solid #ddd;
+            -moz-border-radius: 4px 4px 0 0; -webkit-border-radius: 4px 4px 0 0; border-radius: 4px 4px 0 0;
+            text-align: left;
+        }
+        .recipes .recipe .add-recipe {
+            display: flex;
+            width: 20%;
+            align-items: center;
+            justify-content: center;
+            transition: all 200ms ease-in-out;
+        }
+        .recipes .recipe .add-recipe::before {
+            content: '\f023';
+            font-family: FontAwesome;
+            font-size: 20px;
+            color: black;
+            animation: add-recipe-grow 300ms linear;
+        }
+        .recipes .recipe .recipe-info {
+            padding: 10px;
+        }
+        .recipes .recipe .recipe-info h3, .recipes .recipe .recipe-info p {
+            margin: 0px;
+            line-height: 18px;
+        }
+        .recipes .recipe .recipe-info h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #666;
+        }
+        .recipes .recipe .recipe-info p {
+            font-size: 14px;
+            color: #888;
+        }
+        .recipes .recipe .recipe-info ul {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .recipes .recipe .recipe-info ul li {
+            list-style: none;
+            margin-left: 15px;
+            color: #888;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Top content -->
+<div class="top-content">
+
+    <div class="inner-bg">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-6 col-sm-offset-3 form-box">
+                    <div class="form-top">
+                        <div class="form-top-left">
+                            <h3><span style="font-weight: bold" th:text="${client.client.clientId}"></span> is requesting permissions to:</h3>
+                        </div>
+                        <div class="form-top-right">
+                            <i class="fa fa-key"></i>
+                        </div>
+                    </div>
+                    <div class="form-bottom">
+                        <form role="form" th:id="confirmationForm" th:action="@{authorize}" method="post">
+                            <div class="row recipes">
+                                <h3 class="feature-heading">Review permissions</h3>
+                                <div class="recipe" th:each="scope : ${scopes}">
+                                    <div class="add-recipe">
+                                        <i class="fa lock"></i>
+                                    </div>
+                                    <div class="recipe-info">
+                                        <h3><span th:text="${scope.name}"></span> (<span th:text="${scope.key}"></span>)</h3>
+                                        <p th:text="${scope.description}"></p>
+                                        <input type="hidden" th:name="'scope.'+${scope.key}" value="true"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <div class="form-group">
+                                <button type="submit" name="user_oauth_approval" value="true" class="btn btn-success">Authorize</button>
+                                <button type="submit" name="user_oauth_approval" value="false" class="btn btn-danger">Deny</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- Javascript -->
+<script th:src="@{/assets/js/jquery-1.11.1.min.js}"></script>
+<script th:src="@{/assets/bootstrap/js/bootstrap.min.js}"></script>
+
+<!--[if lt IE 10]>
+<script th:src="@{/assets/js/placeholder.js}"></script>
+<![endif]-->
+
+</body>
+
+</html>

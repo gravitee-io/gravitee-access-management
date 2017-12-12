@@ -1,6 +1,5 @@
-md-toolbar {
+mat-toolbar {
   position: fixed;
-  z-index: 100;
   background-color: #fff;
   border-bottom: 1px solid rgb(226, 229, 231);
   padding: 0 16px 0 7px;
@@ -24,7 +23,7 @@ md-toolbar {
 .userAccount {
   width: 380px;
   .userAccountPicture {
-    md-icon {
+    mat-icon {
       font-size: 78px;
       height: 78px;
       width: 78px;

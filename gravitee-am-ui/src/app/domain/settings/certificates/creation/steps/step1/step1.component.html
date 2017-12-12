@@ -22,19 +22,19 @@
   </small>
 
   <div fxLayout="row" fxLayoutWrap fxLayoutAlign="center center" class="certificate-creation-step1-content">
-    <md-card *ngFor="let certificate of certificates" fxFlex="40">
-      <md-card-header fxLayoutAlign="end end" fxLayout="row">
-        <md-radio-group [(ngModel)]="selectedCertificateTypeId" (ngModelChange)="selectCertificateType()">
-          <md-radio-button [value]="certificate.id"></md-radio-button>
-        </md-radio-group>
-      </md-card-header>
-      <md-card-content>
+    <mat-card *ngFor="let certificate of certificates" fxFlex="40">
+      <mat-card-header fxLayoutAlign="end end" fxLayout="row">
+        <mat-radio-group [(ngModel)]="selectedCertificateTypeId" (ngModelChange)="selectCertificateType()">
+          <mat-radio-button [value]="certificate.id"></mat-radio-button>
+        </mat-radio-group>
+      </mat-card-header>
+      <mat-card-content>
         {{certificate.name}}
-      </md-card-content>
-    </md-card>
+      </mat-card-content>
+    </mat-card>
   </div>
 
   <div fxLayout="row" fxLayoutAlign="end end" class="next-button">
-    <button md-button [disabled]="!selectedCertificateTypeId" (click)="nextStep()">NEXT</button>
+    <button mat-button [disabled]="!selectedCertificateTypeId" (click)="nextStep()">NEXT</button>
   </div>
 </div>

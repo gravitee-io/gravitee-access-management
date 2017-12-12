@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
-import { MaterialDesignFrameworkComponent } from "../../../../../components/json-schema-form/material-design-framework.component";
-import { MaterialInputComponent } from "../../../../../components/json-schema-form/material-input.component";
-import { MaterialFileComponent } from "../../../../../components/json-schema-form/material-file.component";
-import { MaterialAddReferenceComponent } from "../../../../../components/json-schema-form/material-add-reference.component";
 
 @Component({
   selector: 'extension-grant-form',
@@ -30,10 +26,6 @@ export class ExtensionGrantFormComponent implements OnInit, OnChanges {
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm: boolean = false;
   data: any = {};
-  schemaFormCustomFramework = {
-    framework: MaterialDesignFrameworkComponent,
-    widgets: { 'text': MaterialInputComponent, 'file': MaterialFileComponent, '$ref' : MaterialAddReferenceComponent }
-  };
 
   constructor() { }
 

@@ -22,19 +22,19 @@
   </small>
 
   <div fxLayout="row" fxLayoutWrap fxLayoutAlign="center center" class="token-granter-creation-step1-content">
-    <md-card *ngFor="let extensionGrant of extensionGrants" fxFlex="40">
-      <md-card-header fxLayoutAlign="end end" fxLayout="row">
-        <md-radio-group [(ngModel)]="selectedExtensionGrantTypeId" (ngModelChange)="selectExtensionGrantType()">
-          <md-radio-button [value]="extensionGrant.id"></md-radio-button>
-        </md-radio-group>
-      </md-card-header>
-      <md-card-content>
+    <mat-card *ngFor="let extensionGrant of extensionGrants" fxFlex="40">
+      <mat-card-header fxLayoutAlign="end end" fxLayout="row">
+        <mat-radio-group [(ngModel)]="selectedExtensionGrantTypeId" (ngModelChange)="selectExtensionGrantType()">
+          <mat-radio-button [value]="extensionGrant.id"></mat-radio-button>
+        </mat-radio-group>
+      </mat-card-header>
+      <mat-card-content>
         {{extensionGrant.name}}
-      </md-card-content>
-    </md-card>
+      </mat-card-content>
+    </mat-card>
   </div>
 
   <div fxLayout="row" fxLayoutAlign="end end" class="next-button">
-    <button md-button [disabled]="!selectedExtensionGrantTypeId" (click)="nextStep()">NEXT</button>
+    <button mat-button [disabled]="!selectedExtensionGrantTypeId" (click)="nextStep()">NEXT</button>
   </div>
 </div>

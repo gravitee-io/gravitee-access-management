@@ -21,10 +21,13 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,7 +40,19 @@ import java.util.stream.Collectors;
 public class MongoUserRepository extends AbstractManagementMongoRepository implements UserRepository {
 
     private static final String FIELD_DOMAIN = "domain";
-    private static final String USERNAME_FIELD = "username";
+    private static final String FIELD_USERNAME = "username";
+
+    @PostConstruct
+    public void ensureIndexes() {
+        mongoOperations.indexOps(UserMongo.class)
+                .ensureIndex(new Index()
+                        .on(FIELD_DOMAIN, Sort.Direction.ASC));
+
+        mongoOperations.indexOps(UserMongo.class)
+                .ensureIndex(new Index()
+                        .on(FIELD_DOMAIN, Sort.Direction.ASC)
+                        .on(FIELD_USERNAME, Sort.Direction.ASC));
+    }
 
     @Override
     public Set<User> findByDomain(String domain) throws TechnicalException {
@@ -71,7 +86,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     @Override
     public Optional<User> findByUsernameAndDomain(String username, String domain) throws TechnicalException {
         Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain).and(USERNAME_FIELD).is(username));
+        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain).and(FIELD_USERNAME).is(username));
 
         return Optional.ofNullable(convert(mongoOperations.findOne(query, UserMongo.class)));
     }

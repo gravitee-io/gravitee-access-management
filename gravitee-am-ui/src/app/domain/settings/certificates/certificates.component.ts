@@ -15,7 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
-import { MdDialog, MdDialogRef } from "@angular/material";
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { CertificateService } from "../../../services/certificate.service";
 import { DialogService } from "app/services/dialog.service";
 import { SnackbarService } from "../../../services/snackbar.service";
@@ -30,7 +30,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   domainId: string;
 
   constructor(private certificateService: CertificateService, private dialogService: DialogService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute, private dialog: MdDialog) { }
+              private snackbarService: SnackbarService, private route: ActivatedRoute, private dialog: MatDialog) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
@@ -86,7 +86,7 @@ export class CertitificatePublicKeyDialog {
   public message: string;
   public error: boolean;
 
-  constructor(public dialogRef: MdDialogRef<CertitificatePublicKeyDialog>, private snackbarService: SnackbarService) {}
+  constructor(public dialogRef: MatDialogRef<CertitificatePublicKeyDialog>, private snackbarService: SnackbarService) {}
 
   keyCopied() {
     this.snackbarService.open("Key copied to the clipboard");

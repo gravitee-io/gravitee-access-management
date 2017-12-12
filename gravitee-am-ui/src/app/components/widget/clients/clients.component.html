@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<md-list *ngIf="clients">
-  <h3 md-subheader>Clients <small>by last updated date</small></h3>
-  <md-list-item *ngFor="let client of clients">
-    <md-icon md-list-icon>web_asset</md-icon>
-    <h4 md-line>
+<mat-list *ngIf="clients">
+  <h3 matSubheader>Clients <small>by last updated date</small></h3>
+  <mat-list-item *ngFor="let client of clients">
+    <mat-icon mat-list-icon>web_asset</mat-icon>
+    <h4 matLine>
       <a [routerLink]="['/domains', client.domainId]">{{client.domainName}}</a> /
       <a [routerLink]="['/domains', client.domainId, 'clients', client.id]">{{client.clientId}}</a>
     </h4>
-    <p md-line><small>{{client.updatedAt | humanDate}}</small></p>
-  </md-list-item>
-</md-list>
-<md-spinner *ngIf="!clients"></md-spinner>
+    <p matLine><small>{{client.updatedAt | humanDate}}</small></p>
+  </mat-list-item>
+</mat-list>
+<mat-spinner *ngIf="!clients"></mat-spinner>

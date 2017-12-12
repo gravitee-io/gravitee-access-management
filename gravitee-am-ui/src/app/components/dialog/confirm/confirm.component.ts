@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import {MdDialogRef} from "@angular/material";
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-confirm',
@@ -26,7 +26,7 @@ export class ConfirmComponent implements OnInit {
   public title: string;
   public message: string;
 
-  constructor(public dialogRef: MdDialogRef<ConfirmComponent>) {
+  constructor(public dialogRef: MatDialogRef<ConfirmComponent>) {
   }
 
   ngOnInit() {

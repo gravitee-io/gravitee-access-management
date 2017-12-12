@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<md-list fxFlex *ngIf="topClients">
-  <h3 md-subheader>Top Clients <small>by active access tokens</small></h3>
-  <md-list-item *ngFor="let topClient of topClients">
-    <md-icon md-list-icon>web_asset</md-icon>
-    <h4 md-line>
+<mat-list fxFlex *ngIf="topClients">
+  <h3 matSubheader>Top Clients <small>by active access tokens</small></h3>
+  <mat-list-item *ngFor="let topClient of topClients">
+    <mat-icon mat-list-icon>web_asset</mat-icon>
+    <h4 matLine>
       <a [routerLink]="['/domains', topClient.domainId]">{{topClient.domainName}}</a> /
       <a [routerLink]="['/domains', topClient.domainId, 'clients', topClient.id]">{{topClient.clientId}}</a>
     </h4>
-    <p md-line><small>{{topClient.accessTokens}} access tokens</small></p>
-  </md-list-item>
-</md-list>
-<md-spinner *ngIf="!topClients"></md-spinner>
+    <p matLine><small>{{topClient.accessTokens}} access tokens</small></p>
+  </mat-list-item>
+</mat-list>
+<mat-spinner *ngIf="!topClients"></mat-spinner>

@@ -16,12 +16,12 @@
 
 -->
 <div>
-  <h1 md-dialog-title>{{title}}</h1>
-  <md-dialog-content>
+  <h1 matDialogTitle>{{title}}</h1>
+  <mat-dialog-content>
     <p>{{ message }}</p>
-  </md-dialog-content>
-  <md-dialog-actions>
-    <button type="button" md-raised-button color="primary" (click)="dialogRef.close(true)">OK</button>
-    <button type="button" md-button (click)="dialogRef.close()" class="dialog-cancel">Cancel</button>
-  </md-dialog-actions>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <button type="button" mat-raised-button color="primary" (click)="dialogRef.close(true)">OK</button>
+    <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel">Cancel</button>
+  </mat-dialog-actions>
 </div>

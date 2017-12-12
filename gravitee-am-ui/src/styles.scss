@@ -49,13 +49,13 @@ $graviteeio-am-theme: mat-light-theme($graviteeio-am-app-primary, $graviteeio-am
   font-feature-settings: 'liga';
 }
 
-html, body, app-root, md-sidenav-container, .mat-sidenav-content, .main-content {
+html, body, app-root, mat-sidenav-container, .mat-sidenav-content, .main-content {
   margin: 0;
   width: 100%;
   height: 100%;
 }
 
-md-sidenav-container {
+mat-sidenav-container {
   background-color: #ffffff !important;
 }
 
@@ -105,4 +105,12 @@ body {
 
 .md-whiteframe-z2{
   box-shadow:0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12)
+}
+
+.mat-form-field {
+  width: 100%;
+}
+
+mat-form-field {
+  width: 100%;
 }

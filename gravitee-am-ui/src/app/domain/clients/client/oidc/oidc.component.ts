@@ -15,7 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
-import { MdDialog, MdDialogRef } from "@angular/material";
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { DialogService } from "../../../../services/dialog.service";
 import { ClientService } from "../../../../services/client.service";
@@ -32,7 +32,7 @@ export class ClientOIDCComponent implements OnInit {
   editing = {};
   formChanged: boolean = false;
 
-  constructor(private route: ActivatedRoute, private dialog: MdDialog, private clientService: ClientService,
+  constructor(private route: ActivatedRoute, private dialog: MatDialog, private clientService: ClientService,
               private snackbarService: SnackbarService, private dialogService: DialogService) { }
 
   ngOnInit() {
@@ -117,5 +117,5 @@ export class ClientOIDCComponent implements OnInit {
   templateUrl: './claims/add-claim.component.html',
 })
 export class CreateClaimComponent {
-  constructor(public dialogRef: MdDialogRef<CreateClaimComponent>) { }
+  constructor(public dialogRef: MatDialogRef<CreateClaimComponent>) { }
 }

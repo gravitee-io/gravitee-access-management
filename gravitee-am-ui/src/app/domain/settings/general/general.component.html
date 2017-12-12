@@ -21,26 +21,26 @@
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column">
         <div fxLayout="row" fxLayoutAlign="end">
-          <md-slide-toggle mdTooltip="{{domain.enabled ? 'Disable domain ?' : 'Enable domain ?'}}"
+          <mat-slide-toggle matTooltip="{{domain.enabled ? 'Disable domain ?' : 'Enable domain ?'}}"
                            (change)="enableDomain($event)"
                            [checked]="domain.enabled">
-          </md-slide-toggle>
+          </mat-slide-toggle>
         </div>
-        <md-input-container fxFlex style="margin-top: -20px;">
-          <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required>
-          <md-hint>Your domain's name</md-hint>
-        </md-input-container>
-        <md-input-container fxFlex>
-          <input mdInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required>
-          <md-hint>Your domain's path. Context path for Authentication and Authorization API operations.</md-hint>
-        </md-input-container>
-        <md-input-container>
-          <textarea mdInput placeholder="Description" name="description" [(ngModel)]="domain.description"></textarea>
-          <md-hint>Your domain's description.</md-hint>
-        </md-input-container>
+        <mat-form-field fxFlex style="margin-top: -20px;">
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required>
+          <mat-hint>Your domain's name</mat-hint>
+        </mat-form-field>
+        <mat-form-field fxFlex>
+          <input matInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required>
+          <mat-hint>Your domain's path. Context path for Authentication and Authorization API operations.</mat-hint>
+        </mat-form-field>
+        <mat-form-field>
+          <textarea matInput placeholder="Description" name="description" [(ngModel)]="domain.description"></textarea>
+          <mat-hint>Your domain's description.</mat-hint>
+        </mat-form-field>
 
         <div class="domain-general-form-actions">
-          <button md-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
       <div class="domain-general-delete-zone" fxLayout="column" *ngIf="!domain.master">
@@ -49,7 +49,7 @@
         Current domain's users will no longer have access to the platform to log in and access protected resources.
         <div class="domain-general-delete-button" fxLayout="row">
           <span fxFlex></span>
-          <button md-raised-button color="warn" (click)="delete($event)">DELETE</button>
+          <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
         </div>
       </div>
     </div>

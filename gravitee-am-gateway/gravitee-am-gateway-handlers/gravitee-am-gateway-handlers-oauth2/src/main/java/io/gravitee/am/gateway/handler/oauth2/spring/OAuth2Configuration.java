@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.oauth2.security.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.security.impl.CertificateManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.security.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.security.impl.ExtensionGrantManagerImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.DomainScopeService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -68,5 +69,10 @@ public class OAuth2Configuration {
     @Bean
     public ExtensionGrantManager tokenGranterManager() {
         return new ExtensionGrantManagerImpl();
+    }
+
+    @Bean
+    public DomainScopeService scopeService() {
+        return new DomainScopeService();
     }
 }

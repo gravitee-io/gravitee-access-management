@@ -85,13 +85,13 @@ $sidenavHeaderHeight: 64px;
   overflow-y: auto;
   height: calc(100vh - #{$sidenavFooterHeight} - #{$sidenavHeaderHeight});
 
-  md-list-item {
+  mat-list-item {
     min-height: 40px;
     margin-left: -16px;
     margin-bottom: -6px;
   }
 
-  ng-md-icon {
+  ng-mat-icon {
     fill: $fontColor;
   }
 
@@ -134,7 +134,7 @@ $sidenavHeaderHeight: 64px;
   height: $sidenavFooterHeight;
   width: 100%;
 
-  md-icon {
+  mat-icon {
     color: $fontColor;
   }
 
@@ -157,20 +157,20 @@ $sidenavHeaderHeight: 64px;
     line-height: 18px;
   }
 
-  md-icon.sidenav-toggle-icon {
+  mat-icon.sidenav-toggle-icon {
     position: absolute;
-    top: -11px;
+    top: -2px;
     right: -3px;
     font-weight: bold;
     font-size: 16px;
   }
 
-  md-list-item:last-child {
+  mat-list-item:last-child {
     margin-top: -20px;
   }
 }
 
-a > md-icon {
+a > mat-icon {
   vertical-align: middle;
 }
 

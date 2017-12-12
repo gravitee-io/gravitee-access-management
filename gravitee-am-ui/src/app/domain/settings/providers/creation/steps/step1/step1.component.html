@@ -23,19 +23,19 @@
   </small>
 
   <div fxLayout="row" fxLayoutWrap fxLayoutAlign="center center" class="provider-creation-step1-content">
-    <md-card *ngFor="let provider of providers" fxFlex="40">
-      <md-card-header fxLayoutAlign="end end" fxLayout="row">
-        <md-radio-group [(ngModel)]="selectedProviderTypeId" (ngModelChange)="selectProviderType()">
-          <md-radio-button [value]="provider.id"></md-radio-button>
-        </md-radio-group>
-      </md-card-header>
-      <md-card-content>
+    <mat-card *ngFor="let provider of providers" fxFlex="40">
+      <mat-card-header fxLayoutAlign="end end" fxLayout="row">
+        <mat-radio-group [(ngModel)]="selectedProviderTypeId" (ngModelChange)="selectProviderType()">
+          <mat-radio-button [value]="provider.id"></mat-radio-button>
+        </mat-radio-group>
+      </mat-card-header>
+      <mat-card-content>
         {{provider.name}}
-      </md-card-content>
-    </md-card>
+      </mat-card-content>
+    </mat-card>
   </div>
 
   <div fxLayout="row" fxLayoutAlign="end end" class="next-button">
-    <button md-button [disabled]="!selectedProviderTypeId" (click)="nextStep()">NEXT</button>
+    <button mat-button [disabled]="!selectedProviderTypeId" (click)="nextStep()">NEXT</button>
   </div>
 </div>

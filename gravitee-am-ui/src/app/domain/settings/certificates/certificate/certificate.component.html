@@ -20,15 +20,15 @@
   <div class="certificate-content">
     <form #certificateForm="ngForm" fxLayout="column" fxFlex="70">
       <h4>General</h4>
-      <md-input-container>
-        <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
-      </md-input-container>
+      <mat-form-field>
+        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
+      </mat-form-field>
 
       <h4>Configuration</h4>
       <certificate-form *ngIf="certificate" [certificateConfiguration]="certificateConfiguration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateUpdate($event)"></certificate-form>
 
       <div fxLayout="row" fxLayoutAlign="end end" class="certificate-actions">
-        <button md-raised-button [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
+        <button mat-raised-button [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
       </div>
     </form>
     <div class="certificate-description" fxFlex>

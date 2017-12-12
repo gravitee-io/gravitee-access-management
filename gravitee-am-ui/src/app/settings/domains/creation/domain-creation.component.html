@@ -22,19 +22,19 @@
   <div class="new-domain-content">
     <form (ngSubmit)="create()" #domainForm="ngForm" fxLayout="column" fxFlex="70">
 
-      <md-input-container>
-        <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required>
-        <md-hint>A name for your security domain. The security domain's name is used to generate the security domain's path. The security domain's path will be used as a context path for the API operations.</md-hint>
-      </md-input-container>
+      <mat-form-field>
+        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required>
+        <mat-hint>A name for your security domain. The security domain's name is used to generate the security domain's path. The security domain's path will be used as a context path for the API operations.</mat-hint>
+      </mat-form-field>
 
-      <md-input-container style="margin-top: 20px;">
-        <textarea mdInput placeholder="Description" name="description" [(ngModel)]="domain.description"></textarea>
-        <md-hint>A description for your security domain.</md-hint>
-      </md-input-container>
+      <mat-form-field style="margin-top: 20px;">
+        <textarea matInput placeholder="Description" name="description" [(ngModel)]="domain.description"></textarea>
+        <mat-hint>A description for your security domain.</mat-hint>
+      </mat-form-field>
 
       <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;">
-        <a md-button [routerLink]="['']" style="margin-right: 20px;">CANCEL</a>
-        <button md-raised-button [disabled]="!domainForm.valid || domainForm.pristine" type="submit">CREATE</button>
+        <a mat-button [routerLink]="['']" style="margin-right: 20px;">CANCEL</a>
+        <button mat-raised-button [disabled]="!domainForm.valid || domainForm.pristine" type="submit">CREATE</button>
       </div>
     </form>
     <div class="new-domain-description" fxFlex>

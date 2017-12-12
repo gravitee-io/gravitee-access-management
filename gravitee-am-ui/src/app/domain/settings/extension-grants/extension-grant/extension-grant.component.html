@@ -23,32 +23,32 @@
   <div class="token-granter-content">
     <form #tokenGranterForm="ngForm" fxLayout="column" fxFlex="70">
       <h4>General</h4>
-      <md-input-container>
-        <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="extensionGrant.name" required>
-      </md-input-container>
-      <md-input-container>
-        <input mdInput type="text" placeholder="Grant type" name="grantType" [(ngModel)]="extensionGrant.grantType" [pattern]="rfc3986_absolute_URI" required>
-        <md-hint align="end">Must be a unique absolute URI. OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type" parameter of the token endpoint.</md-hint>
-      </md-input-container>
+      <mat-form-field>
+        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="extensionGrant.name" required>
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput type="text" placeholder="Grant type" name="grantType" [(ngModel)]="extensionGrant.grantType" [pattern]="rfc3986_absolute_URI" required>
+        <mat-hint align="end">Must be a unique absolute URI. OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type" parameter of the token endpoint.</mat-hint>
+      </mat-form-field>
 
       <h4 style="margin: 10px 0 10px 0;">User creation</h4>
-      <md-slide-toggle
+      <mat-slide-toggle
         (change)="enableCreateUser($event)"
         [checked]="extensionGrant.createUser">
-      </md-slide-toggle>
-      <md-hint style="font-size: 75%;">Allow to store user information. Used for user account activity and OAuth 2.0 refresh token flow.</md-hint>
+      </mat-slide-toggle>
+      <mat-hint style="font-size: 75%;">Allow to store user information. Used for user account activity and OAuth 2.0 refresh token flow.</mat-hint>
 
       <h4 style="margin: 10px 0 20px 0;">Identity provider</h4>
-      <md-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider">
-        <md-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</md-option>
-      </md-select>
-      <md-hint align="end" style="font-size: 75%;">Identity provider used to retrieve user information from incoming request assertion.</md-hint>
+      <mat-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider">
+        <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
+      </mat-select>
+      <mat-hint align="end" style="font-size: 75%;">Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
 
       <h4 style="margin: 10px 0 10px 0;">Configuration</h4>
       <extension-grant-form *ngIf="extensionGrant" [extensionGrantConfiguration]="extensionGrantConfiguration" [extensionGrantSchema]="extensionGrantSchema" (configurationCompleted)="enableTokenGranterUpdate($event)"></extension-grant-form>
 
       <div fxLayout="row" fxLayoutAlign="end end" class="token-granter-actions">
-        <button md-raised-button [disabled]="(!tokenGranterForm.valid || tokenGranterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">UPDATE</button>
+        <button mat-raised-button [disabled]="(!tokenGranterForm.valid || tokenGranterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">UPDATE</button>
       </div>
     </form>
     <div class="token-granter-description" fxFlex>

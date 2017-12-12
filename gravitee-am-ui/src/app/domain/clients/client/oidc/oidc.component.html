@@ -49,13 +49,13 @@
 
   <form #clientForm="ngForm" (keydown.enter)="false" (ngSubmit)="update('Client updated')" fxLayout="column">
     <h4>ID Token</h4>
-    <md-input-container fxFlex>
-      <md-icon mdPrefix>timer</md-icon>
-      <input mdInput type="number" placeholder="ID token validity" name="idTokenValidity" [(ngModel)]="client.idTokenValiditySeconds" />
-      <span mdSuffix>seconds</span>
-    </md-input-container>
+    <mat-form-field fxFlex>
+      <mat-icon matPrefix>timer</mat-icon>
+      <input matInput type="number" placeholder="ID token validity" name="idTokenValidity" [(ngModel)]="client.idTokenValiditySeconds" />
+      <span matSuffix>seconds</span>
+    </mat-form-field>
     <div fxLayout="row">
-      <button md-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>
+      <button mat-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>
     </div>
   </form>
 
@@ -70,12 +70,12 @@
         <span (dblclick)="editing[rowIndex + '-key'] = true" *ngIf="!editing[rowIndex + '-key']">
           {{row.key}}
         </span>
-        <md-input-container *ngIf="editing[rowIndex + '-key']" class="datatable-input">
-          <input mdInput type="text" required autofocus placeholder="Claim name"
+        <mat-form-field *ngIf="editing[rowIndex + '-key']" class="datatable-input">
+          <input matInput type="text" required autofocus placeholder="Claim name"
                  (keyup.enter)="updateClaim($event, 'key', rowIndex)"
                  (blur)="editing[rowIndex + '-key'] = false"
                  [value]="row.key" />
-        </md-input-container>
+        </mat-form-field>
       </ng-template>
     </ngx-datatable-column>
     <ngx-datatable-column name="Claims value" [flexGrow]="1">
@@ -83,18 +83,18 @@
         <span (dblclick)="editing[rowIndex + '-value'] = true" *ngIf="!editing[rowIndex + '-value']">
           {{row.value}}
         </span>
-        <md-input-container *ngIf="editing[rowIndex + '-value']" class="datatable-input">
-          <input mdInput type="text" required autofocus placeholder="Claim value"
+        <mat-form-field *ngIf="editing[rowIndex + '-value']" class="datatable-input">
+          <input matInput type="text" required autofocus placeholder="Claim value"
                  (keyup.enter)="updateClaim($event, 'value', rowIndex)"
                  (blur)="editing[rowIndex + '-value'] = false"
                  [value]="row.value" />
-        </md-input-container>
+        </mat-form-field>
       </ng-template>
     </ngx-datatable-column>
     <ngx-datatable-column name="Actions" [flexGrow]="1">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <div fxLayout="row" class="provider-claims-actions">
-          <button md-icon-button (click)="delete(row.key, $event)"><md-icon>delete</md-icon></button>
+          <button mat-icon-button (click)="delete(row.key, $event)"><mat-icon>delete</mat-icon></button>
         </div>
       </ng-template>
     </ngx-datatable-column>
@@ -106,8 +106,8 @@
                   [icon]="'compare_arrows'"></app-emptystate>
 
   <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
-    <button md-fab color="accent" (click)="addClaim($event)">
-      <md-icon>add</md-icon>
+    <button mat-fab color="accent" (click)="addClaim($event)">
+      <mat-icon>add</mat-icon>
     </button>
   </div>
 </div>

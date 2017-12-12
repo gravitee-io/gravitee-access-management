@@ -19,10 +19,13 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.CertificateMongo;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,6 +38,13 @@ import java.util.stream.Collectors;
 public class MongoCertificateRepository extends AbstractManagementMongoRepository implements CertificateRepository {
 
     private static final String FIELD_DOMAIN = "domain";
+
+    @PostConstruct
+    public void ensureIndexes() {
+        mongoOperations.indexOps(CertificateMongo.class)
+                .ensureIndex(new Index()
+                        .on(FIELD_DOMAIN, Sort.Direction.ASC));
+    }
 
     @Override
     public Set<Certificate> findByDomain(String domain) throws TechnicalException {

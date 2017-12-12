@@ -19,44 +19,44 @@
   <h1>{{user.username}}</h1>
   <div class="user-content">
     <form fxFlex="70" fxLayout="column">
-      <md-input-container fxFlex>
-        <input mdInput placeholder="Username" disabled value="{{user.username}}">
-      </md-input-container>
+      <mat-form-field fxFlex>
+        <input matInput placeholder="Username" disabled value="{{user.username}}">
+      </mat-form-field>
 
-      <md-input-container fxFlex *ngFor="let keyValuePair of user.additionalInformation | mapToIterable">
-        <input mdInput placeholder="{{keyValuePair.key}}" disabled value="{{keyValuePair.value}}">
-      </md-input-container>
+      <mat-form-field fxFlex *ngFor="let keyValuePair of user.additionalInformation | mapToIterable">
+        <input matInput placeholder="{{keyValuePair.key}}" disabled value="{{keyValuePair.value}}">
+      </mat-form-field>
     </form>
     <div class="user-activities" fxFlex>
       <h3>User activities</h3>
       <div class="user-activities-content">
-        <md-list>
-          <md-list-item>
-            <md-icon md-list-icon>trending_up</md-icon>
-            <h4 md-line>Logins count</h4>
-            <p md-line>{{user.loginsCount}}</p>
-          </md-list-item>
-          <md-list-item>
-            <md-icon md-list-icon>alarm</md-icon>
-            <h4 md-line>Last login</h4>
-            <p md-line>{{user.loggedAt | humanDate}}</p>
-          </md-list-item>
-          <md-list-item>
-            <md-icon md-list-icon>alarm_on</md-icon>
-            <h4 md-line>Created at</h4>
-            <p md-line>{{user.createdAt | humanDate}}</p>
-          </md-list-item>
-          <md-list-item>
-            <md-icon md-list-icon>dock</md-icon>
-            <h4 md-line>Last client</h4>
-            <p md-line>{{user.client}}</p>
-          </md-list-item>
-          <md-list-item>
-            <md-icon md-list-icon>device_hub</md-icon>
-            <h4 md-line>Last identity provider</h4>
-            <p md-line>{{user.source}}</p>
-          </md-list-item>
-        </md-list>
+        <mat-list>
+          <mat-list-item>
+            <mat-icon mat-list-icon>trending_up</mat-icon>
+            <h4 matLine>Logins count</h4>
+            <p matLine>{{user.loginsCount}}</p>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon mat-list-icon>alarm</mat-icon>
+            <h4 matLine>Last login</h4>
+            <p matLine>{{user.loggedAt | humanDate}}</p>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon mat-list-icon>alarm_on</mat-icon>
+            <h4 matLine>Created at</h4>
+            <p matLine>{{user.createdAt | humanDate}}</p>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon mat-list-icon>dock</mat-icon>
+            <h4 matLine>Last client</h4>
+            <p matLine>{{user.client}}</p>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon mat-list-icon>device_hub</mat-icon>
+            <h4 matLine>Last identity provider</h4>
+            <p matLine>{{user.source}}</p>
+          </mat-list-item>
+        </mat-list>
       </div>
     </div>
   </div>

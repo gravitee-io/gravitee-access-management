@@ -19,25 +19,25 @@
   <h1>New Client</h1>
   <div class="new-client-content">
     <form (ngSubmit)="create()" #clientForm="ngForm" fxLayout="column" fxFlex="70">
-      <md-select placeholder="Domain" [(ngModel)]="selectedDomainId" name="domain" required>
-        <md-option *ngFor="let domain of domains" [value]="domain.id">{{ domain.name }}</md-option>
-      </md-select>
-      <md-hint style="font-size: 75%;">Client's security domain.</md-hint>
+      <mat-select placeholder="Domain" [(ngModel)]="selectedDomainId" name="domain" required>
+        <mat-option *ngFor="let domain of domains" [value]="domain.id">{{ domain.name }}</mat-option>
+      </mat-select>
+      <mat-hint style="font-size: 75%;">Client's security domain.</mat-hint>
 
-      <md-input-container fxFlex>
-        <input mdInput type="text" placeholder="Client ID" name="client_id" [(ngModel)]="client.clientId" required>
-        <md-hint>Unique identifier used to interact with authentication and authorization endpoints. The value cannot be edited after save.</md-hint>
-      </md-input-container>
+      <mat-form-field fxFlex>
+        <input matInput type="text" placeholder="Client ID" name="client_id" [(ngModel)]="client.clientId" required>
+        <mat-hint>Unique identifier used to interact with authentication and authorization endpoints. The value cannot be edited after save.</mat-hint>
+      </mat-form-field>
 
-      <md-input-container fxFlex>
-        <input mdInput type="text" placeholder="Client Secret" name="client_secret" [(ngModel)]="client.clientSecret">
-        <md-hint>Client's secret used as credential for the authorization server to request and validate access tokens.
+      <mat-form-field fxFlex>
+        <input matInput type="text" placeholder="Client Secret" name="client_secret" [(ngModel)]="client.clientSecret">
+        <mat-hint>Client's secret used as credential for the authorization server to request and validate access tokens.
             The client secret must be kept confidential.
-          You can specify a value or leave it blank to generate a random one.</md-hint>
-      </md-input-container>
+          You can specify a value or leave it blank to generate a random one.</mat-hint>
+      </mat-form-field>
       <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;">
-        <a md-button [routerLink]="['']" style="margin-right: 20px;">CANCEL</a>
-        <button md-raised-button [disabled]="!clientForm.valid || clientForm.pristine" type="submit">CREATE</button>
+        <a mat-button [routerLink]="['']" style="margin-right: 20px;">CANCEL</a>
+        <button mat-raised-button [disabled]="!clientForm.valid || clientForm.pristine" type="submit">CREATE</button>
       </div>
     </form>
     <div class="new-client-description" fxFlex>

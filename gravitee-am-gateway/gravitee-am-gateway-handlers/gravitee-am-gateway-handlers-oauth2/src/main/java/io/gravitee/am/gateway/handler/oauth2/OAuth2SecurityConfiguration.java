@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2;
 import io.gravitee.am.gateway.handler.oauth2.authentication.OAuth2LoginUrlAuthenticationEntryPoint;
 import io.gravitee.am.gateway.handler.oauth2.filter.CORSFilter;
 import io.gravitee.am.gateway.handler.oauth2.handler.CustomLogoutSuccessHandler;
+import io.gravitee.am.gateway.handler.oauth2.provider.approval.DefaultApprovalStore;
 import io.gravitee.am.gateway.handler.oauth2.provider.code.RepositoryAuthorizationCodeServices;
 import io.gravitee.am.gateway.handler.oauth2.provider.request.CustomOAuth2RequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.ClientBasedAuthenticationProvider;
@@ -44,9 +45,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
-import org.springframework.security.oauth2.provider.approval.ApprovalStore;
-import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
-import org.springframework.security.oauth2.provider.approval.TokenStoreUserApprovalHandler;
+import org.springframework.security.oauth2.provider.approval.*;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -147,6 +146,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return new ClientBasedAuthenticationProvider();
     }
 
+    /*
     @Bean
     @Autowired
     public TokenStoreUserApprovalHandler userApprovalHandler(TokenStore tokenStore){
@@ -164,6 +164,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
         store.setTokenStore(tokenStore);
         return store;
     }
+    */
 
     @Bean
     public Filter corsFilter() {
@@ -180,7 +181,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return new AuthenticationSuccessListener();
     }
 
-    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+    private AuthenticationSuccessHandler authenticationSuccessHandler() {
         SavedRequestAwareAuthenticationSuccessHandler successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
         successHandler.setRedirectStrategy(new XForwardedAwareRedirectStrategy());
         return successHandler;

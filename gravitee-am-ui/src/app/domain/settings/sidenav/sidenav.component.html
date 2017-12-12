@@ -16,12 +16,12 @@
 
 -->
 <div class="domain-settings-sidenav">
-  <md-list>
+  <mat-list>
     <span *ngFor="let keyValuePair of paths | mapToIterable">
-      <h3 md-subheader>{{keyValuePair.key}}</h3>
-      <md-list-item *ngFor="let link of keyValuePair.value">
-        <h4 md-line><a [routerLink]="[link.path]" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{link.data.menu.label}}</a></h4>
-      </md-list-item>
+      <h3 matSubheader>{{keyValuePair.key}}</h3>
+      <mat-list-item *ngFor="let link of keyValuePair.value">
+        <h4 matLine><a [routerLink]="[link.path]" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{link.data.menu.label}}</a></h4>
+      </mat-list-item>
     </span>
-  </md-list>
+  </mat-list>
 </div>

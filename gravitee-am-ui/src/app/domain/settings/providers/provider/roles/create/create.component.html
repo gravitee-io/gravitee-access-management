@@ -15,22 +15,22 @@
     limitations under the License.
 
 -->
-<h5 md-dialog-title>
+<h5 matDialogTitle>
   Set users to a role
 </h5>
-<md-dialog-content>
+<mat-dialog-content>
   <form #userRoleForm="ngForm" fxLayout="column">
     <h5 style="color: grey; margin: 5px 0 5px 0;">User/group</h5>
-    <md-input-container fxFlex>
-      <input mdInput name="user" placeholder="attributeName=attributeValue" pattern="^(.+)\=(.+)" required autofocus ngModel/>
-    </md-input-container>
+    <mat-form-field fxFlex>
+      <input matInput name="user" placeholder="attributeName=attributeValue" pattern="^(.+)\=(.+)" required autofocus ngModel/>
+    </mat-form-field>
     <h5 style="color: grey; margin:  5px 0 15px 0;">Roles</h5>
-    <md-select placeholder="Roles" name="roles" ngModel multiple required>
-      <md-option *ngFor="let role of data" [value]="role.id">{{ role.name }}</md-option>
-    </md-select>
+    <mat-select placeholder="Roles" name="roles" ngModel multiple required>
+      <mat-option *ngFor="let role of data" [value]="role.id">{{ role.name }}</mat-option>
+    </mat-select>
   </form>
-</md-dialog-content>
-<md-dialog-actions>
-  <button type="button" md-raised-button (click)="dialogRef.close(userRoleForm.value)" color="primary" [disabled]="userRoleForm.invalid">Save</button>
-  <button type="button" md-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
-</md-dialog-actions>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button type="button" mat-raised-button (click)="dialogRef.close(userRoleForm.value)" color="primary" [disabled]="userRoleForm.invalid">Save</button>
+  <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
+</mat-dialog-actions>

@@ -17,12 +17,12 @@
 -->
 <form (keydown.enter)="false" (ngSubmit)="update()" #clientForm="ngForm" fxLayout="column" fxFlex="70">
   <h4 style="margin-top: 0px;">Identity providers</h4>
-  <md-select placeholder="Identity providers" multiple name="identities" [(ngModel)]="client.identities">
-    <md-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</md-option>
-  </md-select>
+  <mat-select placeholder="Identity providers" multiple name="identities" [(ngModel)]="client.identities">
+    <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
+  </mat-select>
 
   <div fxLayout="row" class="client-idp-form-actions">
-    <button md-raised-button [disabled]="(!clientForm.valid || clientForm.pristine)" type="submit">SAVE</button>
+    <button mat-raised-button [disabled]="(!clientForm.valid || clientForm.pristine)" type="submit">SAVE</button>
   </div>
 </form>
 <div class="client-idp-description" fxFlex>

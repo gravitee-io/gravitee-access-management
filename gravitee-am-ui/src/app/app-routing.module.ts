@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { NgModule } from "@angular/core";
-import { Routes, RouterModule } from '@angular/router';
+import { RouterModule, Routes } from "@angular/router";
 import { LoginComponent } from "./login/login.component";
 import { DomainsComponent } from "./settings/domains/domains.component";
 import { DomainComponent } from "./domain/domain.component";
@@ -25,6 +25,7 @@ import { DomainSettingsLoginComponent } from "./domain/settings/login/login.comp
 import { DomainSettingsCertificatesComponent } from "./domain/settings/certificates/certificates.component";
 import { DomainSettingsProvidersComponent } from "./domain/settings/providers/providers.component";
 import { DomainSettingsRolesComponent } from "./domain/settings/roles/roles.component";
+import { DomainSettingsScopesComponent } from "./domain/settings/scopes/scopes.component";
 import { ClientsComponent } from "./clients/clients.component";
 import { ClientComponent } from "./domain/clients/client/client.component";
 import { ClientCreationComponent } from "./clients/creation/client-creation.component";
@@ -32,7 +33,7 @@ import { DomainCreationComponent } from "./settings/domains/creation/domain-crea
 import { ProviderCreationComponent } from "./domain/settings/providers/creation/provider-creation.component";
 import { ProviderComponent } from "./domain/settings/providers/provider/provider.component";
 import { OAuthCallbackComponent } from "./oauth/callback/callback.component";
-import { LogoutCallbackComponent}  from "./logout/callback/callback.component";
+import { LogoutCallbackComponent } from "./logout/callback/callback.component";
 import { LogoutComponent } from "./logout/logout.component";
 import { DomainsResolver } from "./resolvers/domains.resolver";
 import { DomainResolver } from "./resolvers/domain.resolver";
@@ -55,6 +56,10 @@ import { RolesResolver } from "./resolvers/roles.resolver";
 import { RoleCreationComponent } from "./domain/settings/roles/creation/role-creation.component";
 import { RoleComponent } from "./domain/settings/roles/role/role.component";
 import { RoleResolver } from "./resolvers/role.resolver";
+import { ScopeResolver } from "./resolvers/scope.resolver";
+import { ScopesResolver } from "./resolvers/scopes.resolver";
+import { ScopeCreationComponent } from "./domain/settings/scopes/creation/scope-creation.component";
+import { ScopeComponent } from './domain/settings/scopes/scope/scope.component';
 import { DashboardComponent } from "./dashboard/dashboard.component";
 import { SettingsComponent } from "./settings/settings.component";
 import { DummyComponent } from "./components/dummy/dummy.component";
@@ -167,6 +172,7 @@ const routes: Routes = [
           { path: 'settings',
             component: ClientSettingsComponent,
             resolve: {
+              scopes: ScopesResolver,
               domainGrantTypes: ExtensionGrantsResolver
             }
           },
@@ -223,6 +229,27 @@ const routes: Routes = [
                 label: 'Login Page',
                 section: 'Settings'
               }
+            }
+          },
+          { path: 'scopes',
+            component: DomainSettingsScopesComponent,
+            resolve: {
+              scopes: ScopesResolver
+            },
+            data: {
+              menu: {
+                label: 'Scopes',
+                section: 'OAuth 2.0'
+              }
+            }
+          },
+          { path: 'scopes/new',
+            component: ScopeCreationComponent
+          },
+          { path: 'scopes/:scopeId',
+            component: ScopeComponent,
+            resolve: {
+              scope: ScopeResolver
             }
           },
           { path: 'providers',
@@ -312,13 +339,17 @@ const routes: Routes = [
             }
           },
           { path: 'roles/new',
-            component: RoleCreationComponent
+            component: RoleCreationComponent,
+            resolve: {
+              scopes: ScopesResolver
+            }
           },
           {
             path: 'roles/:roleId',
             component: RoleComponent,
             resolve: {
-              role: RoleResolver
+              role: RoleResolver,
+              scopes: ScopesResolver
             }
           },
         ]

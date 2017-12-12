@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ClientService } from "../../../../services/client.service";
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { ProviderService } from "../../../../services/provider.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { CertificateService } from "../../../../services/certificate.service";
 import { DialogService } from "../../../../services/dialog.service";
+import { MatInput } from "@angular/material/input";
 import * as _ from 'lodash';
+
+export interface Scope {
+  id: string;
+  key: string;
+  name: string;
+}
 
 @Component({
   selector: 'client-settings',
@@ -28,11 +35,16 @@ import * as _ from 'lodash';
   styleUrls: ['./settings.component.scss']
 })
 export class ClientSettingsComponent implements OnInit {
+
+  @ViewChild('chipInput') chipInput: MatInput;
+
   private domainId: string;
+  private selectedScopes: Scope[];
   client: any;
   formChanged: boolean = false;
   identityProviders: any[] = [];
   certificates: any[] = [];
+  scopes: any[] = [];
   grantTypes: any[] = [
     { name:'CLIENT CREDENTIALS', value:'client_credentials', checked:false },
     { name:'PASSWORD', value:'password', checked:false },
@@ -51,11 +63,13 @@ export class ClientSettingsComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.client = this.route.snapshot.parent.data['client'];
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'];
+    this.scopes = this.route.snapshot.data['scopes'];
     (!this.client.redirectUris) ? this.client.redirectUris = [] : this.client.redirectUris = this.client.redirectUris;
     (!this.client.scopes) ? this.client.scopes = [] : this.client.scopes = this.client.scopes;
     this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.identityProviders = data);
     this.certificateService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.certificates = data);
     this.initGrantTypes();
+    this.initScopes();
     this.initCustomGrantTypes();
   }
 
@@ -63,6 +77,22 @@ export class ClientSettingsComponent implements OnInit {
     this.grantTypes.forEach(grantType => {
       grantType.checked = _.some(this.client.authorizedGrantTypes, authorizedGrantType => authorizedGrantType.toLowerCase() === grantType.value.toLowerCase());
     })
+  }
+
+  initScopes() {
+    let that = this;
+    // Merge with existing scope
+    this.selectedScopes = _.map(this.client.scopes, function(scope) {
+      let definedScope = _.find(that.scopes, { 'key': scope });
+      if (definedScope !== undefined) {
+        return definedScope;
+      }
+
+      return undefined;
+    });
+
+    this.scopes = _.difference(this.scopes, this.selectedScopes);
+
   }
 
   initCustomGrantTypes() {
@@ -76,6 +106,13 @@ export class ClientSettingsComponent implements OnInit {
     this.grantTypes
       .filter(grantType => grantType.value === event.source.value)
       .map(grantType => grantType.checked = event.checked);
+    this.formChanged = true;
+  }
+
+  selectedScope(event) {
+    this.scopes
+      .filter(scope => scope.key === event.source.value)
+      .map(scope => scope.checked = event.checked);
     this.formChanged = true;
   }
 
@@ -100,6 +137,21 @@ export class ClientSettingsComponent implements OnInit {
     return this.client.autoApproveScopes && this.client.autoApproveScopes.indexOf('true') > -1;
   }
 
+  addScope(event) {
+    this.selectedScopes = this.selectedScopes.concat(_.remove(this.scopes, { 'key': event.option.value }));
+    this.chipInput['nativeElement'].blur();
+    this.formChanged = true;
+  }
+
+  removeScope(scope) {
+    this.scopes = this.scopes.concat(_.remove(this.selectedScopes, function(selectPermission) {
+      return selectPermission.key === scope.key;
+    }));
+
+    this.chipInput['nativeElement'].blur();
+    this.formChanged = true;
+  }
+
   enhanceScopesWithUserPermissions(event) {
     this.client.enhanceScopesWithUserPermissions = event.checked;
     this.formChanged = true;
@@ -116,6 +168,7 @@ export class ClientSettingsComponent implements OnInit {
 
   update() {
     this.client.authorizedGrantTypes = this.selectedGrantTypes.concat(this.selectedCustomGrantTypes);
+    this.client.scopes = _.map(this.selectedScopes, scope => scope.key);
     this.clientService.update(this.domainId, this.client.id, this.client).map(res => res.json()).subscribe(data => {
       this.client = data;
       this.snackbarService.open("Client updated");
@@ -134,6 +187,14 @@ export class ClientSettingsComponent implements OnInit {
       .map(grantType => grantType.value)
   }
 
+  /*
+  get selectedScopes() {
+    return this.scopes
+      .filter(scope => scope.checked)
+      .map(scope => scope.key)
+  }
+  */
+
   addRedirectURI(event, input: HTMLInputElement) {
     this.addElement(input, this.client.redirectUris, event);
   }
@@ -142,6 +203,7 @@ export class ClientSettingsComponent implements OnInit {
     this.removeElement(redirectURI, this.client.redirectUris, event);
   }
 
+  /*
   addScope(input: HTMLInputElement, event) {
     this.addElement(input, this.client.scopes, event);
   }
@@ -149,6 +211,7 @@ export class ClientSettingsComponent implements OnInit {
   removeScope(scope, event) {
     this.removeElement(scope, this.client.scopes, event);
   }
+  */
 
   addElement(input: HTMLInputElement, list: any[], event: any) {
     event.preventDefault();

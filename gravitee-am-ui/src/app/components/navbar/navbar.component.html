@@ -15,43 +15,46 @@
     limitations under the License.
 
 -->
-<md-toolbar>
-  <span fxFlex></span>
-  <button *ngIf="isAuthenticated()" md-icon-button [mdMenuTriggerFor]="userAccountMenu" (click)="listDomains()"><md-icon style="color: grey;">account_circle</md-icon></button>
-</md-toolbar>
+<mat-toolbar>
+  <mat-toolbar-row>
+    <button *ngIf="isAuthenticated()" mat-icon-button [matMenuTriggerFor]="userAccountMenu" (click)="listDomains()">
+      <mat-icon style="color: grey;">account_circle</mat-icon>
+    </button>
+  </mat-toolbar-row>
+</mat-toolbar>
 
-<md-menu #userAccountMenu="mdMenu" [overlapTrigger]="false">
+<mat-menu #userAccountMenu="matMenu" [overlapTrigger]="false">
   <div class="userAccount" fxLayout="column">
     <div class="userAccountProfile" fxLayout="row">
       <div class="userAccountPicture">
-        <md-icon>account_circle</md-icon>
+        <mat-icon>account_circle</mat-icon>
       </div>
       <div class="userAccountInfo" fxLayoutAlign="start center" style="margin: 20px;">
         <span>{{user}}</span>
       </div>
     </div>
     <div class="userAccountActions" style="background-color: #f5f5f5">
-      <md-list>
-        <h3 md-subheader style="color: #006CAB;">Domains</h3>
-        <a (click)="goTo(['/domains', domain.id])" *ngFor="let domain of domains" md-menu-item>
-          <md-list-item>
-              <md-icon md-list-icon>domain</md-icon>
-              <h4 md-line >{{domain.name}}</h4>
-          </md-list-item>
+      <mat-list>
+        <h3 matSubheader style="color: #006CAB;">Domains</h3>
+        <a (click)="goTo(['/domains', domain.id])" *ngFor="let domain of domains" mat-menu-item>
+          <mat-list-item>
+              <mat-icon mat-list-icon>domain</mat-icon>
+              <h4 matLine >{{domain.name}}</h4>
+          </mat-list-item>
         </a>
-      </md-list>
+      </mat-list>
     </div>
     <div class="userAccountActions">
-      <a [routerLink]="['/settings']" md-menu-item>
-        <md-icon>settings</md-icon>
+      <a [routerLink]="['/settings']" mat-menu-item>
+        <mat-icon>settings</mat-icon>
         <span>Global settings</span>
       </a>
     </div>
     <div class="userAccountActions">
-      <a [routerLink]="['/logout']" md-menu-item>
-        <md-icon>exit_to_app</md-icon>
+      <a [routerLink]="['/logout']" mat-menu-item>
+        <mat-icon>exit_to_app</mat-icon>
         <span>Sign out</span>
       </a>
     </div>
   </div>
-</md-menu>
+</mat-menu>
