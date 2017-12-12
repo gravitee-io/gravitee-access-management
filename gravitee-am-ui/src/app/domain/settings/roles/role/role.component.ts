@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { RoleService } from "../../../../services/role.service";
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
+import { MatInput } from "@angular/material/input";
+import * as _ from "lodash";
+
+export interface Scope {
+  id: string;
+  key: string;
+  name: string;
+}
 
 @Component({
   selector: 'app-role',
@@ -25,6 +33,11 @@ import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/compo
   styleUrls: ['./role.component.scss']
 })
 export class RoleComponent implements OnInit {
+
+  @ViewChild('chipInput') chipInput: MatInput;
+
+  private scopes: Scope[];
+  private selectedPermissions: Scope[];
   private domainId: string;
   role: any;
   formChanged: boolean = false;
@@ -35,13 +48,33 @@ export class RoleComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.role = this.route.snapshot.data['role'];
+    this.scopes = this.route.snapshot.data['scopes'];
+
     if (!this.role.permissions) {
       this.role.permissions = [];
     }
+
     this.initBreadcrumb();
+    this.initScopes();
+  }
+
+  initScopes() {
+    let that = this;
+    // Merge with existing scope
+    this.selectedPermissions = _.map(this.role.permissions, function(permission) {
+      let scope = _.find(that.scopes, { 'key': permission });
+      if (scope !== undefined) {
+        return scope;
+      }
+
+      return undefined;
+    });
+
+    this.scopes = _.difference(this.scopes, this.selectedPermissions);
   }
 
   update() {
+    this.role.permissions = _.map(this.selectedPermissions, permission => permission.key);
     this.roleService.update(this.domainId, this.role.id, this.role).map(res => res.json()).subscribe(data => {
       this.role = data;
       this.initBreadcrumb();
@@ -49,30 +82,19 @@ export class RoleComponent implements OnInit {
     });
   }
 
-  addPermission(input: HTMLInputElement, event) {
-    this.addElement(input, this.role.permissions, event);
+  addPermission(event) {
+    this.selectedPermissions = this.selectedPermissions.concat(_.remove(this.scopes, { 'key': event.option.value }));
+    this.chipInput['nativeElement'].blur();
+    this.formChanged = true;
   }
 
-  removePermission(role, event) {
-    this.removeElement(role, this.role.permissions, event);
-  }
+  removePermission(permission) {
+    this.scopes = this.scopes.concat(_.remove(this.selectedPermissions, function(selectPermission) {
+      return selectPermission.key === permission.key;
+    }));
 
-  addElement(input: HTMLInputElement, list: any[], event: any) {
-    event.preventDefault();
-    if (input.value && input.value.trim() != '' && list.indexOf(input.value.trim()) == -1) {
-      list.push(input.value.trim());
-      input.value = '';
-      this.formChanged = true;
-    }
-  }
-
-  removeElement(element: any, list: any[], event: any) {
-    event.preventDefault();
-    let index = list.indexOf(element);
-    if (index !== -1) {
-      list.splice(index, 1);
-      this.formChanged = true;
-    }
+    this.chipInput['nativeElement'].blur();
+    this.formChanged = true;
   }
 
   initBreadcrumb() {

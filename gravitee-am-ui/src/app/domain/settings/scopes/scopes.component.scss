@@ -1,0 +1,29 @@
+.scopes-container {
+  padding: 20px 70px 20px 50px;
+  h1 {
+    font-weight: 400;
+  }
+  ngx-datatable {
+    font-size: 14px;
+    box-shadow: none;
+  }
+}
+
+.scopes-actions {
+  margin-left: -10px;
+
+  button, a {
+    top: -9px;
+    color: grey;
+  }
+}
+
+.add-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
+
+.add-button-center {
+  text-align: center;
+}

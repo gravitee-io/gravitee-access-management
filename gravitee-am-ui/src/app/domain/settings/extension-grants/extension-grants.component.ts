@@ -15,7 +15,6 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
-import { MdDialog } from "@angular/material";
 import { DialogService } from "app/services/dialog.service";
 import { SnackbarService }  from "../../../services/snackbar.service";
 import { ExtensionGrantService } from "../../../services/extension-grant.service";

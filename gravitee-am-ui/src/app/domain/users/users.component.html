@@ -48,7 +48,7 @@
       <ngx-datatable-column name="Actions" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="users-actions">
-            <a md-icon-button [routerLink]="['/domains', domainId, 'users', row.id]"><md-icon mdTooltip="More info">more_horiz</md-icon></a>
+            <a mat-icon-button [routerLink]="['/domains', domainId, 'users', row.id]"><mat-icon matTooltip="More info">more_horiz</mat-icon></a>
           </div>
         </ng-template>
       </ngx-datatable-column>

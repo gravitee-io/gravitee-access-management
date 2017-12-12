@@ -31,8 +31,8 @@
       </ngx-datatable-column>
       <ngx-datatable-column name="State" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <span *ngIf="row.enabled; else elseBlock" style="color: green;" mdTooltip="Enabled"><md-icon>play_arrow</md-icon></span>
-          <ng-template #elseBlock><span style="color: orange;" mdTooltip="Disabled"><md-icon>pause</md-icon></span></ng-template>
+          <span *ngIf="row.enabled; else elseBlock" style="color: green;" matTooltip="Enabled"><mat-icon>play_arrow</mat-icon></span>
+          <ng-template #elseBlock><span style="color: orange;" matTooltip="Disabled"><mat-icon>pause</mat-icon></span></ng-template>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Last updated at" [flexGrow]="1">
@@ -49,8 +49,8 @@
                   [icon]="'list'"></app-emptystate>
 
   <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
-    <a md-fab color="accent" [routerLink]="this.newClientRouterLink">
-      <md-icon>add</md-icon>
+    <a mat-fab color="accent" [routerLink]="this.newClientRouterLink">
+      <mat-icon>add</mat-icon>
     </a>
   </div>
 </div>

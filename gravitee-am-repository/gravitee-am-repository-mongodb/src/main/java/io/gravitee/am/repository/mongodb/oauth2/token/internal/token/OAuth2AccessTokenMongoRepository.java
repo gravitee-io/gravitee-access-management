@@ -19,7 +19,9 @@ import com.mongodb.*;
 import io.gravitee.am.repository.mongodb.oauth2.token.internal.model.OAuth2AccessTokenMongo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.index.IndexDefinition;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -67,6 +69,19 @@ public class OAuth2AccessTokenMongoRepository {
                 return new BasicDBObject("expireAfterSeconds", 0);
             }
         });
+
+        mongoOperations.indexOps(ACCESS_TOKEN_COLLECTION)
+                .ensureIndex(new Index()
+                        .on(FIELD_CLIENT_ID, Sort.Direction.ASC));
+
+        mongoOperations.indexOps(ACCESS_TOKEN_COLLECTION)
+                .ensureIndex(new Index()
+                        .on(FIELD_AUTHENTICATION_KEY, Sort.Direction.ASC));
+
+        mongoOperations.indexOps(ACCESS_TOKEN_COLLECTION)
+                .ensureIndex(new Index()
+                        .on(FIELD_CLIENT_ID, Sort.Direction.ASC)
+                        .on(FIELD_USER_NAME, Sort.Direction.ASC));
     }
 
     public OAuth2AccessTokenMongo findOne(String value) {

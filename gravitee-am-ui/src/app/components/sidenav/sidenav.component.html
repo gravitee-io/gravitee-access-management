@@ -16,8 +16,8 @@
 
 -->
 <div class="gs-sidenav" fxLayout="column" fxFlex [ngClass]="{'gs-sidenav-min': reducedMode, 'gs-sidenav-settings': displaySettingsLevel}">
-  <md-toolbar class="navigation-header md-whiteframe-1dp" fxLayout="row" fxLayoutAlign="space-between center">
-    <a [routerLink]="['']" style="text-decoration: none;" mdTooltip="Go to AM homepage" [mdTooltipPosition]="'right'">
+  <mat-toolbar class="navigation-header md-whiteframe-1dp" fxLayout="row" fxLayoutAlign="space-between center">
+    <a [routerLink]="['']" style="text-decoration: none;" matTooltip="Go to AM homepage" [matTooltipPosition]="'right'">
     <div fxLayout="row" fxLayoutAlign="center center">
         <img class="logo-image" [ngClass]="{'reduce-mode': reducedMode}" src="assets/GRAVITEE_LOGO1-01.png"/>
         <div *ngIf="!reducedMode" fxLayout="column" class="logo-text">
@@ -25,39 +25,39 @@
         </div>
     </div>
     </a>
-  </md-toolbar>
+  </mat-toolbar>
 
-  <md-list class="sidenav-list">
+  <mat-list class="sidenav-list">
     <!-- First level menus -->
     <div *ngIf="displayFirstLevel">
-      <md-list-item *ngFor="let path of paths">
+      <mat-list-item *ngFor="let path of paths">
         <a [routerLink]="path.path" title="{{path.data.menu.label}}"
            routerLinkActive="sidenav-active" [routerLinkActiveOptions]="{ exact: true }">
-          <md-icon>{{path.data.menu.icon}}</md-icon>
+          <mat-icon>{{path.data.menu.icon}}</mat-icon>
           <span *ngIf="!reducedMode">{{path.data.menu.label}}</span>
         </a>
-      </md-list-item>
+      </mat-list-item>
     </div>
 
-    <md-list-item *ngIf="!reducedMode && !displaySettingsLevel && currentSubPaths && currentSubPaths.length > 0">
+    <mat-list-item *ngIf="!reducedMode && !displaySettingsLevel && currentSubPaths && currentSubPaths.length > 0">
       <h4>{{currentResource?.name}}</h4>
-    </md-list-item>
+    </mat-list-item>
 
-    <md-list-item *ngFor="let subPath of currentSubPaths">
+    <mat-list-item *ngFor="let subPath of currentSubPaths">
       <a [routerLink]="subPath.fullPath" title="{{subPath.data.menu.label}}"
          routerLinkActive="sidenav-active">
-        <md-icon>{{subPath.data.menu.icon}}</md-icon>
+        <mat-icon>{{subPath.data.menu.icon}}</mat-icon>
         <span *ngIf="!reducedMode">{{subPath.data.menu.label}}</span>
       </a>
-    </md-list-item>
-  </md-list>
+    </mat-list-item>
+  </mat-list>
 
-  <md-list class="sidenav-footer">
-    <md-list-item>
-      <button md-icon-button md-mini-fab class="sidenav-toggle" (click)="reducedMode = !reducedMode">
-        <md-icon *ngIf="reducedMode" class="sidenav-toggle-icon">keyboard_arrow_right</md-icon>
-        <md-icon *ngIf="!reducedMode" class="sidenav-toggle-icon">keyboard_arrow_left</md-icon>
+  <mat-list class="sidenav-footer">
+    <mat-list-item>
+      <button mat-icon-button mat-mini-fab class="sidenav-toggle" (click)="reducedMode = !reducedMode">
+        <mat-icon *ngIf="reducedMode" class="sidenav-toggle-icon">keyboard_arrow_right</mat-icon>
+        <mat-icon *ngIf="!reducedMode" class="sidenav-toggle-icon">keyboard_arrow_left</mat-icon>
       </button>
-    </md-list-item>
-  </md-list>
+    </mat-list-item>
+  </mat-list>
 </div>

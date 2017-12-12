@@ -21,10 +21,13 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.ClientMongo;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,6 +44,30 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     private static final String FIELD_IDENTITIES = "identities";
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_GRANT_TYPES= "authorizedGrantTypes";
+
+    @PostConstruct
+    public void ensureIndexes() {
+        mongoOperations.indexOps(ClientMongo.class)
+                .ensureIndex(new Index()
+                        .on(FIELD_DOMAIN, Sort.Direction.ASC));
+
+        mongoOperations.indexOps(ClientMongo.class)
+                .ensureIndex(new Index()
+                        .on(FIELD_DOMAIN, Sort.Direction.ASC)
+                        .on(FIELD_CLIENT_ID, Sort.Direction.ASC));
+
+        mongoOperations.indexOps(ClientMongo.class)
+                .ensureIndex(new Index()
+                        .on(FIELD_IDENTITIES, Sort.Direction.ASC));
+
+        mongoOperations.indexOps(ClientMongo.class)
+                .ensureIndex(new Index()
+                        .on(FIELD_CERTIFICATE, Sort.Direction.ASC));
+
+        mongoOperations.indexOps(ClientMongo.class)
+                .ensureIndex(new Index()
+                        .on(FIELD_GRANT_TYPES, Sort.Direction.ASC));
+    }
 
     @Override
     public Set<Client> findByDomain(String domain) throws TechnicalException {

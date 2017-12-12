@@ -47,8 +47,9 @@ public class LoginController {
     public ModelAndView login(
             @RequestParam(value = OAuth2Utils.CLIENT_ID) String clientId) {
         Client client = clientService.findByDomainAndClientId(domain.getId(), clientId);
-        Map<String,String> params = new HashMap<>();
+        Map<String,Object> params = new HashMap<>();
         params.put(OAuth2Utils.CLIENT_ID, client.getClientId());
+        params.put("domain", domain);
         return new ModelAndView(LOGIN_VIEW, params);
     }
 }

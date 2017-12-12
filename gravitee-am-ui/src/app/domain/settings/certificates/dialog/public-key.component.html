@@ -16,16 +16,16 @@
 
 -->
 <div>
-  <h1 md-dialog-title>{{title}}</h1>
-  <md-dialog-content>
+  <h1 matDialogTitle>{{title}}</h1>
+  <mat-dialog-content>
     <p *ngIf="error" style="width: 600px;">{{message}}</p>
     <div *ngIf="!error" fxLayout="row">
       <div class="public-key-information" fxFlex="95">{{ message }}</div>
-      <button md-icon-button mdTooltip="Copy public key" ngxClipboard [cbContent]="message" (cbOnSuccess)="keyCopied()"><md-icon>content_copy</md-icon></button>
+      <button mat-icon-button matTooltip="Copy public key" ngxClipboard [cbContent]="message" (cbOnSuccess)="keyCopied()"><mat-icon>content_copy</mat-icon></button>
     </div>
-  </md-dialog-content>
-  <md-dialog-actions>
+  </mat-dialog-content>
+  <mat-dialog-actions>
     <span fxFlex></span>
-    <button type="button" md-raised-button (click)="dialogRef.close()" class="dialog-cancel">Close</button>
-  </md-dialog-actions>
+    <button type="button" mat-raised-button (click)="dialogRef.close()" class="dialog-cancel">Close</button>
+  </mat-dialog-actions>
 </div>

@@ -41,7 +41,7 @@ import java.util.List;
  */
 @Configuration
 @Order(0)
-@Import({ ClientDetailsServiceConfiguration.class, CustomAuthorizationServerEndpointsConfiguration.class })
+@Import({ ClientDetailsServiceConfiguration.class})
 public class CustomAuthorizationServerSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Autowired

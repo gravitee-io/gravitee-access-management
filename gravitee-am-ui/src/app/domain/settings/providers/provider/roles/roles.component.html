@@ -32,17 +32,17 @@
       </pre>
     </small>
   </div>
-  <md-list *ngIf="!isEmpty">
+  <mat-list *ngIf="!isEmpty">
     <span *ngFor="let role of providerRoles">
-      <h3 md-subheader>{{getRole(role)}}</h3>
-      <md-list-item *ngFor="let user of providerRoleMapper[role]">
-        <md-icon md-list-icon>person</md-icon>
-        <h4 md-line>{{user}}</h4>
-        <button md-icon-button (click)="deleteUserFromRole(role, user, $event);"><md-icon>delete</md-icon></button>
-      </md-list-item>
-      <md-divider></md-divider>
+      <h3 matSubheader>{{getRole(role)}}</h3>
+      <mat-list-item *ngFor="let user of providerRoleMapper[role]">
+        <mat-icon mat-list-icon>person</mat-icon>
+        <h4 matLine>{{user}}</h4>
+        <button mat-icon-button (click)="deleteUserFromRole(role, user, $event);"><mat-icon>delete</mat-icon></button>
+      </mat-list-item>
+      <mat-divider></mat-divider>
     </span>
-  </md-list>
+  </mat-list>
 
   <app-emptystate *ngIf="isEmpty"
                   [message]="'Role mappers will appear here'"
@@ -50,8 +50,8 @@
                   [icon]="'supervisor_account'"></app-emptystate>
 
   <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
-    <button md-fab color="accent" (click)="add()">
-      <md-icon>add</md-icon>
+    <button mat-fab color="accent" (click)="add()">
+      <mat-icon>add</mat-icon>
     </button>
   </div>
 </div>

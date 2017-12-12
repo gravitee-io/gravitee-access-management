@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2;
 
+import io.gravitee.am.gateway.handler.oauth2.provider.approval.DefaultApprovalStore;
+import io.gravitee.am.gateway.handler.oauth2.provider.approval.DefaultApprovalStoreUserApprovalHandler;
 import io.gravitee.am.gateway.handler.oauth2.provider.jwt.CustomJwtAccessTokenConverter;
 import io.gravitee.am.gateway.handler.oauth2.provider.request.CustomOAuth2RequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationDetailsSource;
@@ -26,19 +28,21 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
-import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.CompositeTokenGranter;
 import org.springframework.security.oauth2.provider.TokenGranter;
+import org.springframework.security.oauth2.provider.approval.ApprovalStore;
+import org.springframework.security.oauth2.provider.approval.ApprovalStoreUserApprovalHandler;
 import org.springframework.security.oauth2.provider.approval.UserApprovalHandler;
 import org.springframework.security.oauth2.provider.client.ClientDetailsUserDetailsService;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
@@ -61,8 +65,9 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Configuration
-@Import({CustomAuthorizationServerEndpointsConfiguration.class, CustomAuthorizationServerSecurityConfiguration.class})
-public class AuthorizationServerConfiguration implements AuthorizationServerConfigurer {
+@EnableAuthorizationServer
+//@Import({CustomAuthorizationServerEndpointsConfiguration.class, CustomAuthorizationServerSecurityConfiguration.class})
+public class AuthorizationServerConfiguration extends AuthorizationServerConfigurerAdapter {
 
     @Autowired
     private Domain domain;
@@ -73,8 +78,10 @@ public class AuthorizationServerConfiguration implements AuthorizationServerConf
     @Autowired
     private AuthorizationCodeServices authorizationCodeServices;
 
+    /*
     @Autowired
     private UserApprovalHandler userApprovalHandler;
+    */
 
     @Autowired
     @Qualifier("authenticationManagerBean")
@@ -93,6 +100,32 @@ public class AuthorizationServerConfiguration implements AuthorizationServerConf
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
 
+    /*
+    @Autowired
+    private AuthorizationEndpoint authorizationEndpoint;
+
+    @PostConstruct
+    public void init() {
+        authorizationEndpoint.setUserApprovalPage("forward:/oauth/scope_approval");
+        authorizationEndpoint.setErrorPage("forward:/oauth/scope_approval_error");
+    }
+*/
+    /*
+    @Bean
+    public ScopeApprovalEndpoint approvalEndpoint() {
+        ScopeApprovalEndpoint endpoint = new ScopeApprovalEndpoint();
+        endpoint.setClientDetailsService(clientDetailsService);
+        return endpoint;
+    }
+    */
+
+    /*
+    @Bean
+    public ScopeApprovalErrorEndpoint approvalErrorEndpoint() {
+        return new ScopeApprovalErrorEndpoint();
+    }
+    */
+
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         clients.withClientDetails(clientDetailsService);
@@ -102,7 +135,6 @@ public class AuthorizationServerConfiguration implements AuthorizationServerConf
     public ClientDetailsUserDetailsService clientDetailsUserDetailsService() {
         return new ClientDetailsUserDetailsService(clientDetailsService);
     }
-
 
     @Bean
     public AuthenticationManager clientAuthenticationManager() {
@@ -126,8 +158,9 @@ public class AuthorizationServerConfiguration implements AuthorizationServerConf
             .userDetailsService(userDetailsService)
             .authorizationCodeServices(authorizationCodeServices)
             .requestFactory(new CustomOAuth2RequestFactory(clientDetailsService))
-            .userApprovalHandler(userApprovalHandler)
             .authenticationManager(authenticationManager)
+            .userApprovalHandler(userApprovalHandler())
+            .approvalStore(approvalStore())
             .tokenGranter(tokenGranter(endpoints))
                 .addInterceptor(new HandlerInterceptorAdapter() {
                     @Override
@@ -178,5 +211,23 @@ public class AuthorizationServerConfiguration implements AuthorizationServerConf
             granters.add(customTokenGranter);
         });
         return new CompositeTokenGranter(granters);
+    }
+
+    //
+    // Approval store
+    //
+
+    @Bean
+    public UserApprovalHandler userApprovalHandler() {
+        DefaultApprovalStoreUserApprovalHandler approvalHandler = new DefaultApprovalStoreUserApprovalHandler();
+        approvalHandler.setClientDetailsService(clientDetailsService);
+        approvalHandler.setApprovalStore(approvalStore());
+        approvalHandler.setRequestFactory(new CustomOAuth2RequestFactory(clientDetailsService));
+        return approvalHandler;
+    }
+
+    @Bean
+    public ApprovalStore approvalStore() {
+        return new DefaultApprovalStore();
     }
 }

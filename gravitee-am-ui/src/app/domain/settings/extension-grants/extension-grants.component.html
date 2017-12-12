@@ -37,8 +37,8 @@
       <ngx-datatable-column name="Actions" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="token-granters-actions">
-            <a md-icon-button [routerLink]="[row.id]"><md-icon mdTooltip="Settings">settings</md-icon></a>
-            <button md-icon-button (click)="delete(row.id, $event)"><md-icon mdTooltip="Delete">delete</md-icon></button>
+            <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="Settings">settings</mat-icon></a>
+            <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
           </div>
         </ng-template>
       </ngx-datatable-column>
@@ -51,8 +51,8 @@
                   [icon]="'vpn_key'"></app-emptystate>
 
   <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
-    <a md-fab color="accent" [routerLink]="['new']">
-      <md-icon>add</md-icon>
+    <a mat-fab color="accent" [routerLink]="['new']">
+      <mat-icon>add</mat-icon>
     </a>
   </div>
 </div>

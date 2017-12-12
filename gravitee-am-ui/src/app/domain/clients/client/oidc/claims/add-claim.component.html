@@ -15,20 +15,20 @@
     limitations under the License.
 
 -->
-<h5 md-dialog-title>
+<h5 matDialogTitle>
   Add ID Token claim
 </h5>
-<md-dialog-content>
+<mat-dialog-content>
   <form #claimForm="ngForm">
-    <md-input-container>
-      <input mdInput name="key" placeholder="Claim name" required autofocus ngModel/>
-    </md-input-container>
-    <md-input-container>
-      <input mdInput name="value" placeholder="Claim value" required ngModel/>
-    </md-input-container>
+    <mat-form-field>
+      <input matInput name="key" placeholder="Claim name" required autofocus ngModel/>
+    </mat-form-field>
+    <mat-form-field>
+      <input matInput name="value" placeholder="Claim value" required ngModel/>
+    </mat-form-field>
   </form>
-</md-dialog-content>
-<md-dialog-actions>
-  <button type="button" md-raised-button (click)="dialogRef.close(claimForm.value)" color="primary" [disabled]="claimForm.invalid">Save</button>
-  <button type="button" md-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
-</md-dialog-actions>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button type="button" mat-raised-button (click)="dialogRef.close(claimForm.value)" color="primary" [disabled]="claimForm.invalid">Save</button>
+  <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
+</mat-dialog-actions>

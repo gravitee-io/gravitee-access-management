@@ -18,119 +18,154 @@
 <div fxLayout="column" fxFlex="70">
   <form (keydown.enter)="false" (ngSubmit)="update()" #clientForm="ngForm" fxLayout="column">
     <div fxLayout="row">
-      <md-input-container fxFlex="85">
-        <input mdInput type="text" placeholder="Client ID" name="clientId" [(ngModel)]="client.clientId" disabled>
-        <md-hint>The client's identifier.</md-hint>
-      </md-input-container>
-      <button md-icon-button mdTooltip="Copy Client ID" ngxClipboard [cbContent]="client.clientId" (cbOnSuccess)="valueCopied('Client ID copied to the clipboard')" (click)="$event.preventDefault();"><md-icon>content_copy</md-icon></button>
+      <mat-form-field fxFlex="85">
+        <input matInput type="text" placeholder="Client ID" name="clientId" [(ngModel)]="client.clientId" disabled>
+        <mat-hint>The client's identifier.</mat-hint>
+      </mat-form-field>
+      <button mat-icon-button matTooltip="Copy Client ID" ngxClipboard [cbContent]="client.clientId" (cbOnSuccess)="valueCopied('Client ID copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
       <div fxFlex fxLayoutAlign="end">
-        <md-slide-toggle mdTooltip="{{client.enabled ? 'Disable client ?' : 'Enable client ?'}}"
+        <mat-slide-toggle matTooltip="{{client.enabled ? 'Disable client ?' : 'Enable client ?'}}"
                        (change)="enableClient($event)"
-                       [checked]="client.enabled"></md-slide-toggle>
+                       [checked]="client.enabled"></mat-slide-toggle>
       </div>
     </div>
 
     <div fxLayout="row">
-      <md-input-container fxFlex="85">
-        <input mdInput type="text" placeholder="Client Secret" name="clientSecret" [(ngModel)]="client.clientSecret" disabled>
-        <md-hint>The client's secret.</md-hint>
-      </md-input-container>
-      <button md-icon-button mdTooltip="Copy Client Secret" ngxClipboard [cbContent]="client.clientSecret" (cbOnSuccess)="valueCopied('Client Secret copied to the clipboard')" (click)="$event.preventDefault();"><md-icon>content_copy</md-icon></button>
+      <mat-form-field fxFlex="85">
+        <input matInput type="text" placeholder="Client Secret" name="clientSecret" [(ngModel)]="client.clientSecret" disabled>
+        <mat-hint>The client's secret.</mat-hint>
+      </mat-form-field>
+      <button mat-icon-button matTooltip="Copy Client Secret" ngxClipboard [cbContent]="client.clientSecret" (cbOnSuccess)="valueCopied('Client Secret copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
     </div>
 
-    <h4>Auto approval</h4>
-    <md-slide-toggle
-      (change)="enableAutoApprove($event)"
-      [checked]="isAutoApprove()">
-    </md-slide-toggle>
-    <md-hint style="font-size: 75%;">Allow to skip user approval. Generally used for internal trusted service applications.</md-hint>
-
     <h4 style="margin-bottom: 5px;">Grant types</h4>
-    <md-hint style="font-size: 75%; margin-bottom: 20px;">OAuth 2.0 grant types used by the client to obtain an access token. Each grant type is specific to a type of application.</md-hint>
-    <md-checkbox *ngFor="let grantType of grantTypes"
+    <mat-hint style="font-size: 75%; margin-bottom: 20px;">OAuth 2.0 grant types used by the client to obtain an access token. Each grant type is specific to a type of application.</mat-hint>
+    <mat-checkbox *ngFor="let grantType of grantTypes"
                  name="grantTypes"
                  value="{{grantType.value}}"
                  [checked]="grantType.checked"
                  (change)="selectedGrantType($event)">
       {{grantType.name}}
-    </md-checkbox>
+    </mat-checkbox>
     <div>
       <h5>Extension grants</h5>
       <div fxLayout="column">
-        <md-checkbox *ngFor="let extensionGrant of customGrantTypes"
+        <mat-checkbox *ngFor="let extensionGrant of customGrantTypes"
                      name="customGrantTypes"
                      value="{{extensionGrant.value}}"
                      [checked]="extensionGrant.checked"
                      (change)="selectedCustomGrantType($event)">
           <span style="text-transform: uppercase;">{{extensionGrant.name}}</span>
-        </md-checkbox>
+        </mat-checkbox>
       </div>
     </div>
 
     <h4 style="margin-bottom: 0px;">Redirect URIs</h4>
-    <md-chip-list style="margin-top: 10px; margin-bottom: 10px;" class="mat-chip-list-stacked">
-      <md-chip *ngFor="let redirectURI of client.redirectUris" color="accent" selected="true" fxLayout="row">
+    <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" class="mat-chip-list-stacked">
+      <mat-chip *ngFor="let redirectURI of client.redirectUris" color="accent" selected="true" fxLayout="row">
         <span fxFlex style="margin-top: 3px;">{{redirectURI}}</span>
-        <md-icon class="delete-chip" (click)="removeRedirectURI(redirectURI, $event)">clear</md-icon>
-      </md-chip>
-    </md-chip-list>
-    <md-input-container fxFlex>
-      <input mdInput #inputRedirectURI (keyup.enter)="addRedirectURI($event, inputRedirectURI)" placeholder="New redirect URI..."/>
-      <md-hint>
+        <mat-icon class="delete-chip" (click)="removeRedirectURI(redirectURI, $event)">clear</mat-icon>
+      </mat-chip>
+    </mat-chip-list>
+    <mat-form-field fxFlex>
+      <input matInput #inputRedirectURI (keyup.enter)="addRedirectURI($event, inputRedirectURI)" placeholder="New redirect URI..."/>
+      <mat-hint>
         Set of allowed URLs where the user will be redirected after successfully login to your client.
         It prevents some vulnerabilities like being redirected to unsafe websites. Once written, press enter to add the redirect URI.
-      </md-hint>
-    </md-input-container>
+      </mat-hint>
+    </mat-form-field>
 
-    <h4 style="margin-bottom: 0px;">Scopes</h4>
-    <md-chip-list style="margin-top: 10px; margin-bottom: 10px;">
-      <md-chip *ngFor="let scope of client.scopes" color="accent" selected="true">
-        <span>{{scope}}</span>
-        <md-icon class="delete-chip" (click)="removeScope(scope, $event)">clear</md-icon>
-      </md-chip>
-    </md-chip-list>
-    <md-input-container fxFlex>
-      <input mdInput #inputScope (keyup.enter)="addScope(inputScope, $event)" placeholder="New scope..."/>
-      <md-hint>Let you limit client's access to protected resources/APIs. Once written, press enter to add the scope.</md-hint>
-    </md-input-container>
+    <br>
+
+    <h4 style="margin-bottom: 5px;">Scopes</h4>
+    <mat-hint style="font-size: 75%; margin-bottom: 20px;">Let you limit client's access to protected resources/APIs.</mat-hint>
+    <mat-form-field>
+      <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" #chipListPermissions>
+        <mat-chip *ngFor="let scope of selectedScopes" color="accent"
+                  selected="true" (remove)="removeScope(scope)">
+          <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
+          &nbsp;<span>{{scope.key}}</span>&nbsp;|&nbsp;<small>{{scope.name}}</small>
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip>
+        <input matInput
+               placeholder="Permissions"
+               aria-label="Permissions"
+               [matAutocomplete]="auto"
+               [matChipInputFor]="chipListPermissions"
+               #chipInput>
+      </mat-chip-list>
+
+      <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="addScope($event)">
+        <mat-option *ngFor="let scope of scopes" [value]="scope.key">
+          <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
+          <span>{{ scope.key }}</span> | <small>{{scope.name}}</small>
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+
+    <!--
+    <mat-card *ngFor="let scope of scopes" style="margin-bottom: 3px;">
+      <mat-card-header>
+        <div mat-card-avatar>
+          <mat-checkbox
+            name="scopes"
+            value="{{scope.key}}"
+            [checked]="scope.checked"
+            (change)="selectedScope($event)">
+          </mat-checkbox>
+        </div>
+        <mat-card-title>{{scope.key}} ({{ scope.name }})</mat-card-title>
+        <mat-card-subtitle>{{ scope.description }}</mat-card-subtitle>
+      </mat-card-header>
+    </mat-card>
+    -->
+
+    <h4>Auto approval</h4>
+    <mat-slide-toggle
+      (change)="enableAutoApprove($event)"
+      [checked]="isAutoApprove()">
+    </mat-slide-toggle>
+    <mat-hint style="font-size: 75%;">Allow to skip user approval. Generally used for internal trusted service applications.</mat-hint>
 
     <h5 style="margin: 10px 0 10px 0;">Enhance scopes</h5>
-    <md-slide-toggle
+    <mat-slide-toggle
       (change)="enhanceScopesWithUserPermissions($event)"
       [checked]="isScopesEnhanceWithUserPermissions()">
-    </md-slide-toggle>
-    <md-hint style="font-size: 75%;">Enhance client scopes with user permissions. Useful for fine tuned resources access.</md-hint>
+    </mat-slide-toggle>
+    <mat-hint style="font-size: 75%;">Enhance client scopes with user permissions. Useful for fine tuned resources access.</mat-hint>
+
+    <br>
 
     <h4>Tokens</h4>
     <div fxLayout="row">
-      <md-input-container fxFlex style="margin-right: 20px;">
-        <md-icon mdPrefix>timer</md-icon>
-        <input mdInput type="number" placeholder="Access token validity" name="accessTokenValidity" [(ngModel)]="client.accessTokenValiditySeconds" />
-        <span mdSuffix>seconds</span>
-      </md-input-container>
-      <md-input-container fxFlex>
-        <md-icon mdPrefix>timer</md-icon>
-        <input mdInput type="number" placeholder="Refresh token validity" name="refreshTokenValidity" [(ngModel)]="client.refreshTokenValiditySeconds" />
-        <span mdSuffix>seconds</span>
-      </md-input-container>
+      <mat-form-field fxFlex style="margin-right: 20px;">
+        <mat-icon matPrefix>timer</mat-icon>
+        <input matInput type="number" placeholder="Access token validity" name="accessTokenValidity" [(ngModel)]="client.accessTokenValiditySeconds" />
+        <span matSuffix>seconds</span>
+      </mat-form-field>
+      <mat-form-field fxFlex>
+        <mat-icon matPrefix>timer</mat-icon>
+        <input matInput type="number" placeholder="Refresh token validity" name="refreshTokenValidity" [(ngModel)]="client.refreshTokenValiditySeconds" />
+        <span matSuffix>seconds</span>
+      </mat-form-field>
     </div>
     <div fxLayout="column">
       <h5 style="margin: 10px 0 10px 0;">Multiple tokens for the same account</h5>
-      <md-slide-toggle
+      <mat-slide-toggle
         (change)="enableMultipeTokens($event)"
         [checked]="client.generateNewTokenPerRequest">
-      </md-slide-toggle>
-      <md-hint style="font-size: 75%;">Generate new access/refresh token per request for the same account. Useful to avoid cross-devices logout.</md-hint>
+      </mat-slide-toggle>
+      <mat-hint style="font-size: 75%;">Generate new access/refresh token per request for the same account. Useful to avoid cross-devices logout.</mat-hint>
     </div>
 
     <h4>Certificate</h4>
-    <md-select placeholder="Certificate" name="certificate" [(ngModel)]="client.certificate">
-      <md-option *ngFor="let certificate of certificates" [value]="certificate.id">{{ certificate.name }}</md-option>
-    </md-select>
-    <md-hint style="font-size: 75%;">Certificate use to sign tokens.</md-hint>
+    <mat-select placeholder="Certificate" name="certificate" [(ngModel)]="client.certificate">
+      <mat-option *ngFor="let certificate of certificates" [value]="certificate.id">{{ certificate.name }}</mat-option>
+    </mat-select>
+    <mat-hint style="font-size: 75%;">Certificate use to sign tokens.</mat-hint>
 
     <div fxLayout="row" class="client-settings-form-actions">
-      <button md-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>
+      <button mat-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>
     </div>
   </form>
   <div class="client-settings-delete-zone" fxLayout="column">
@@ -138,7 +173,7 @@
     Client will be deleted, applications related to this client will no longer be able to request for tokens and access protected resources.
     <div class="client-settings-delete-button" fxLayout="row">
       <span fxFlex></span>
-      <button md-raised-button color="warn" (click)="delete($event)">DELETE</button>
+      <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
     </div>
   </div>
 </div>

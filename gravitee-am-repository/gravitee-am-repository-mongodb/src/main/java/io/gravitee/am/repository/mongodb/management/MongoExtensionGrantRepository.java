@@ -19,10 +19,13 @@ import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.ExtensionGrantMongo;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,6 +39,18 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
 
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_GRANT_TYPE = "grantType";
+
+    @PostConstruct
+    public void ensureIndexes() {
+        mongoOperations.indexOps(ExtensionGrantMongo.class)
+                .ensureIndex(new Index()
+                        .on(FIELD_DOMAIN, Sort.Direction.ASC));
+
+        mongoOperations.indexOps(ExtensionGrantMongo.class)
+                .ensureIndex(new Index()
+                        .on(FIELD_DOMAIN, Sort.Direction.ASC)
+                        .on(FIELD_GRANT_TYPE, Sort.Direction.ASC));
+    }
 
     @Override
     public Set<ExtensionGrant> findByDomain(String domain) throws TechnicalException {

@@ -19,29 +19,29 @@
   <h1>Login Page</h1>
   <div fxLayout="column">
     <div>
-      <md-slide-toggle mdTooltip="{{isEnabled() ? 'Disable custom login page ?' : 'Enable custom login page ?'}}"
-                       [mdTooltipPosition]="'after'"
+      <mat-slide-toggle matTooltip="{{isEnabled() ? 'Disable custom login page ?' : 'Enable custom login page ?'}}"
+                       [matTooltipPosition]="'after'"
                        (change)="enableLoginForm($event)"
                        [checked]="isEnabled()">
-      </md-slide-toggle>
+      </mat-slide-toggle>
     </div>
-    <md-hint><small class="hint">Create a specific login page to authenticated users <button md-icon-button (click)="openLoginInfo()"><md-icon>info_outline</md-icon></button></small></md-hint>
+    <mat-hint><small class="hint">Create a specific login page to authenticated users <button mat-icon-button (click)="openLoginInfo()"><mat-icon>info_outline</mat-icon></button></small></mat-hint>
   </div>
 
-  <md-tab-group (selectChange)="onTabSelectedChanged($event);">
-    <md-tab label="Html" [disabled]="!isEnabled()">
+  <mat-tab-group (selectChange)="onTabSelectedChanged($event);">
+    <mat-tab label="Html" [disabled]="!isEnabled()">
       <div style= "position:relative;">
         <codemirror #editor [(ngModel)]="loginFormContent" [config]="config" (change)="onContentChanges($event)"></codemirror>
       </div>
-    </md-tab>
-    <md-tab label="Preview" [disabled]="!isEnabled()">
+    </mat-tab>
+    <mat-tab label="Preview" [disabled]="!isEnabled()">
       <iframe frameborder="0" class="preview" #preview width="100%" (load)="resizeIframe()">
       </iframe>
-    </md-tab>
-  </md-tab-group>
+    </mat-tab>
+  </mat-tab-group>
   <div style="margin-top: 50px;">
-    <button md-raised-button [disabled]="!formChanged" (click)="create()">SAVE</button>
+    <button mat-raised-button [disabled]="!formChanged" (click)="create()">SAVE</button>
     <span fxFlex></span>
-    <button *ngIf="loginFormFound" md-raised-button color="warn" (click)="delete($event)">DELETE</button>
+    <button *ngIf="loginFormFound" mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
   </div>
 </div>

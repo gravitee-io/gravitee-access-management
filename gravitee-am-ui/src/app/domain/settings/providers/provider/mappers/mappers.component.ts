@@ -18,7 +18,7 @@ import { ActivatedRoute } from "@angular/router";
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { ProviderService } from "../../../../../services/provider.service";
 import { DialogService } from "../../../../../services/dialog.service";
-import { MdDialog, MdDialogRef } from "@angular/material";
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'provider-mappers',
@@ -39,7 +39,7 @@ export class ProviderMappersComponent implements OnInit {
   editing = {};
 
   constructor(private providerService: ProviderService, private snackbarService: SnackbarService,
-              private dialogService: DialogService, private route: ActivatedRoute, private dialog: MdDialog) { }
+              private dialogService: DialogService, private route: ActivatedRoute, private dialog: MatDialog) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
@@ -126,5 +126,5 @@ export class ProviderMappersComponent implements OnInit {
   templateUrl: './create/create.component.html',
 })
 export class CreateMapperComponent {
-  constructor(public dialogRef: MdDialogRef<CreateMapperComponent>) { }
+  constructor(public dialogRef: MatDialogRef<CreateMapperComponent>) { }
 }

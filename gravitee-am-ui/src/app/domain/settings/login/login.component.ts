@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild, AfterViewInit, ElementRef } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { DomainService } from "../../../services/domain.service";
 import { SnackbarService } from "../../../services/snackbar.service";
 import { DialogService } from "../../../services/dialog.service";
-import { MdDialogRef, MdDialog } from "@angular/material";
+import { MatDialog, MatDialogRef } from "@angular/material/dialog";
 
 @Component({
   selector: 'app-login',
@@ -37,7 +37,7 @@ export class DomainSettingsLoginComponent implements OnInit, AfterViewInit {
   @ViewChild('preview') preview: ElementRef;
 
   constructor(private route: ActivatedRoute, private domainService: DomainService, private snackbarService: SnackbarService,
-              private dialogService: DialogService, public dialog: MdDialog) { }
+              private dialogService: DialogService, public dialog: MatDialog) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
@@ -127,5 +127,5 @@ export class DomainSettingsLoginComponent implements OnInit, AfterViewInit {
   templateUrl: './dialog/login-info.component.html',
 })
 export class DomainSettingsLoginInfoDialog {
-  constructor(public dialogRef: MdDialogRef<DomainSettingsLoginInfoDialog>) {}
+  constructor(public dialogRef: MatDialogRef<DomainSettingsLoginInfoDialog>) {}
 }

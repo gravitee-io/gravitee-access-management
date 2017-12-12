@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, Inject } from '@angular/core';
-import { MD_DIALOG_DATA, MdDialog, MdDialogRef } from "@angular/material";
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { ActivatedRoute } from "@angular/router";
 import { ProviderService } from "../../../../../services/provider.service";
@@ -32,7 +32,7 @@ export class ProviderRolesComponent implements OnInit {
   providerRoleMapper: any = {};
 
   constructor(private snackbarService: SnackbarService, private providerService: ProviderService,
-              private dialogService: DialogService, private dialog: MdDialog, private route: ActivatedRoute) {
+              private dialogService: DialogService, private dialog: MatDialog, private route: ActivatedRoute) {
   }
 
   ngOnInit() {
@@ -123,5 +123,5 @@ export class ProviderRolesComponent implements OnInit {
   templateUrl: './create/create.component.html',
 })
 export class CreateRoleMapperComponent {
-  constructor(@Inject(MD_DIALOG_DATA) public data: any, public dialogRef: MdDialogRef<CreateRoleMapperComponent>) { }
+  constructor(@Inject(MAT_DIALOG_DATA) public data: any, public dialogRef: MatDialogRef<CreateRoleMapperComponent>) { }
 }

@@ -33,7 +33,7 @@
       <ngx-datatable-column name="Actions" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="domains-actions">
-            <a md-icon-button [routerLink]="['/domains', row.id, 'settings']"><md-icon>settings</md-icon></a>
+            <a mat-icon-button [routerLink]="['/domains', row.id, 'settings']"><mat-icon>settings</mat-icon></a>
           </div>
         </ng-template>
       </ngx-datatable-column>
@@ -45,8 +45,8 @@
                   [icon]="'domain'"></app-emptystate>
 
   <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
-    <a md-fab color="accent" [routerLink]="['new']">
-      <md-icon>add</md-icon>
+    <a mat-fab color="accent" [routerLink]="['new']">
+      <mat-icon>add</mat-icon>
     </a>
   </div>
 </div>

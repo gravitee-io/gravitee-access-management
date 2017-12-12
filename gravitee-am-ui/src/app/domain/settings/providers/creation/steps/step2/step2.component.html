@@ -24,15 +24,15 @@
   <div class="provider-creation-step2-content">
     <form class="provider-creation-step2-form" fxLayout="column">
       <h4>General</h4>
-      <md-input-container>
-        <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
-      </md-input-container>
+      <mat-form-field>
+        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
+      </mat-form-field>
 
       <h4>Configuration</h4>
       <provider-form [providerConfiguration]="configuration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderCreation($event)"></provider-form>
 
       <div fxLayout="row" fxLayoutAlign="end end" class="next-button">
-        <button md-raised-button [disabled]="!isValid" (click)="create()">CREATE</button>
+        <button mat-raised-button [disabled]="!isValid" (click)="create()">CREATE</button>
       </div>
     </form>
   </div>

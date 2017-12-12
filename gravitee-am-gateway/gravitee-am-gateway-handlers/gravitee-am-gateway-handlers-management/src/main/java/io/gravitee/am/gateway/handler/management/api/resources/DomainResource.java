@@ -111,4 +111,9 @@ public class DomainResource extends AbstractResource {
     public ExtensionGrantsResource getTokenGrantersResource() {
         return resourceContext.getResource(ExtensionGrantsResource.class);
     }
+
+    @Path("scopes")
+    public ScopesResource getScopesResource() {
+        return resourceContext.getResource(ScopesResource.class);
+    }
 }

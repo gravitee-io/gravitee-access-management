@@ -19,10 +19,13 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -37,6 +40,13 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
 
     private static final String FIELD_DOMAIN = "domain";
     private static final String ID_FIELD = "_id";
+
+    @PostConstruct
+    public void ensureIndexes() {
+        mongoOperations.indexOps(RoleMongo.class)
+                .ensureIndex(new Index()
+                        .on(FIELD_DOMAIN, Sort.Direction.ASC));
+    }
 
     @Override
     public Set<Role> findByDomain(String domain) throws TechnicalException {

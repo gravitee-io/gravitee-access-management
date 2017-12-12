@@ -13,13 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import 'polyfills';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { Http } from '@angular/http';
-import { MaterialModule } from '@angular/material';
+import {
+  MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatDialogModule, MatExpansionModule,
+  MatGridListModule, MatIconModule, MatListModule, MatNativeDateModule, MatProgressBarModule, MatProgressSpinnerModule,
+  MatRadioModule, MatRippleModule, MatSelectModule, MatSliderModule, MatSnackBarModule, MatSortModule, MatTableModule,
+  MatTabsModule, MatToolbarModule, MatTooltipModule } from '@angular/material';
+import { MATERIAL_COMPATIBILITY_MODE } from '@angular/material';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { JsonSchemaFormModule } from 'angular2-json-schema-form';
@@ -70,6 +85,7 @@ import { DomainSettingsSidenavComponent } from "./domain/settings/sidenav/sidena
 import { DomainSettingsGeneralComponent } from "./domain/settings/general/general.component";
 import { DomainSettingsLoginComponent, DomainSettingsLoginInfoDialog } from "./domain/settings/login/login.component";
 import { DomainSettingsRolesComponent } from "./domain/settings/roles/roles.component";
+import { DomainSettingsScopesComponent } from "./domain/settings/scopes/scopes.component";
 import { DomainSettingsCertificatesComponent, CertitificatePublicKeyDialog } from './domain/settings/certificates/certificates.component';
 import { DomainSettingsProvidersComponent } from "./domain/settings/providers/providers.component";
 import { DomainSettingsExtensionGrantsComponent } from "./domain/settings/extension-grants/extension-grants.component";
@@ -96,13 +112,20 @@ import { RolesResolver } from "./resolvers/roles.resolver";
 import { RoleResolver } from "./resolvers/role.resolver";
 import { RoleCreationComponent } from './domain/settings/roles/creation/role-creation.component';
 import { RoleComponent } from './domain/settings/roles/role/role.component';
+import { ScopeService } from "./services/scope.service";
+import { ScopesResolver } from "./resolvers/scopes.resolver";
+import { ScopeResolver } from "./resolvers/scope.resolver";
+import { ScopeCreationComponent } from './domain/settings/scopes/creation/scope-creation.component';
+import { ScopeComponent } from './domain/settings/scopes/scope/scope.component';
 import { SnackbarComponent } from "./components/snackbar/snackbar.component";
 import { ClientIdPComponent } from './domain/clients/client/idp/idp.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
+/*
 import { MaterialInputComponent } from "./components/json-schema-form/material-input.component";
 import { MaterialDesignFrameworkComponent } from "./components/json-schema-form/material-design-framework.component";
 import { MaterialFileComponent } from "./components/json-schema-form/material-file.component";
 import { MaterialAddReferenceComponent } from "./components/json-schema-form/material-add-reference.component";
+*/
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DashboardService} from "./services/dashboard.service";
 import { WidgetClientsComponent } from './components/widget/clients/clients.component';
@@ -140,6 +163,7 @@ import { ExtensionGrantCreationStep2Component } from "./domain/settings/extensio
     DomainSettingsSidenavComponent,
     DomainSettingsGeneralComponent,
     DomainSettingsProvidersComponent,
+    DomainSettingsScopesComponent,
     DomainSettingsRolesComponent,
     DomainSettingsCertificatesComponent,
     DomainSettingsLoginInfoDialog,
@@ -183,10 +207,6 @@ import { ExtensionGrantCreationStep2Component } from "./domain/settings/extensio
     ExtensionGrantFormComponent,
     SnackbarComponent,
     NavbarComponent,
-    MaterialDesignFrameworkComponent,
-    MaterialInputComponent,
-    MaterialFileComponent,
-    MaterialAddReferenceComponent,
     DashboardComponent,
     WidgetClientsComponent,
     WidgetTopClientsComponent,
@@ -197,7 +217,9 @@ import { ExtensionGrantCreationStep2Component } from "./domain/settings/extensio
     MapToIterablePipe,
     DummyComponent,
     UsersComponent,
-    UserComponent
+    UserComponent,
+    ScopeCreationComponent,
+    ScopeComponent,
   ],
   imports: [
     BrowserModule,
@@ -206,13 +228,14 @@ import { ExtensionGrantCreationStep2Component } from "./domain/settings/extensio
     ReactiveFormsModule,
     HttpModule,
     AppRoutingModule,
-    MaterialModule,
+    MatAutocompleteModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule, MatDialogModule, MatExpansionModule, MatGridListModule, MatIconModule, MatInputModule, MatListModule, MatMenuModule, MatNativeDateModule, MatPaginatorModule, MatProgressBarModule, MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule, MatSidenavModule, MatSliderModule, MatSlideToggleModule, MatSnackBarModule, MatSortModule, MatTableModule, MatTabsModule, MatToolbarModule, MatTooltipModule,
     FlexLayoutModule,
     NgxDatatableModule,
     JsonSchemaFormModule,
     CodemirrorModule,
     Ng2BreadcrumbModule.forRoot(),
-    ClipboardModule
+    ClipboardModule,
+    JsonSchemaFormModule
   ],
   providers: [
     DomainService,
@@ -244,6 +267,10 @@ import { ExtensionGrantCreationStep2Component } from "./domain/settings/extensio
     UserResolver,
     ExtensionGrantsResolver,
     ExtensionGrantResolver,
+    ScopesResolver,
+    ScopeResolver,
+    ScopeService,
+    { provide: MATERIAL_COMPATIBILITY_MODE, useValue: true},
     { provide: Http, useClass: HttpService }
   ],
   entryComponents: [
@@ -253,11 +280,7 @@ import { ExtensionGrantCreationStep2Component } from "./domain/settings/extensio
     CreateClaimComponent,
     CertitificatePublicKeyDialog,
     CreateRoleMapperComponent,
-    SnackbarComponent,
-    MaterialDesignFrameworkComponent,
-    MaterialInputComponent,
-    MaterialFileComponent,
-    MaterialAddReferenceComponent
+    SnackbarComponent
   ],
   bootstrap: [AppComponent]
 })

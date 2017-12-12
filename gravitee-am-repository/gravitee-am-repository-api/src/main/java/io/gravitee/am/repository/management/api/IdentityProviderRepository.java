@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 
 import java.util.Set;

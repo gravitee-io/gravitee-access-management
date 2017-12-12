@@ -30,12 +30,12 @@
         <span (dblclick)="editing[rowIndex + '-key'] = true" *ngIf="!editing[rowIndex + '-key']">
           {{row.key}}
         </span>
-        <md-input-container *ngIf="editing[rowIndex + '-key']" class="datatable-input">
-          <input mdInput type="text" required autofocus placeholder="User attribute"
+        <mat-form-field *ngIf="editing[rowIndex + '-key']" class="datatable-input">
+          <input matInput type="text" required autofocus placeholder="User attribute"
             (keyup.enter)="updateMapper($event, 'key', rowIndex)"
             (blur)="editing[rowIndex + '-key'] = false"
             [value]="row.key" />
-        </md-input-container>
+        </mat-form-field>
       </ng-template>
     </ngx-datatable-column>
     <ngx-datatable-column name="Raw attributes" [flexGrow]="1">
@@ -43,18 +43,18 @@
         <span (dblclick)="editing[rowIndex + '-value'] = true" *ngIf="!editing[rowIndex + '-value']">
           {{row.value}}
         </span>
-        <md-input-container *ngIf="editing[rowIndex + '-value']" class="datatable-input">
-          <input mdInput type="text" required autofocus placeholder="Raw attribute"
+        <mat-form-field *ngIf="editing[rowIndex + '-value']" class="datatable-input">
+          <input matInput type="text" required autofocus placeholder="Raw attribute"
             (keyup.enter)="updateMapper($event, 'value', rowIndex)"
             (blur)="editing[rowIndex + '-value'] = false"
             [value]="row.value" />
-        </md-input-container>
+        </mat-form-field>
       </ng-template>
     </ngx-datatable-column>
     <ngx-datatable-column name="Actions" [flexGrow]="1">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <div fxLayout="row" class="provider-mappers-actions">
-          <button md-icon-button (click)="delete(row.key, $event)"><md-icon>delete</md-icon></button>
+          <button mat-icon-button (click)="delete(row.key, $event)"><mat-icon>delete</mat-icon></button>
         </div>
       </ng-template>
     </ngx-datatable-column>
@@ -66,8 +66,8 @@
                   [icon]="'compare_arrows'"></app-emptystate>
 
   <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
-    <button md-fab color="accent" (click)="add()">
-      <md-icon>add</md-icon>
+    <button mat-fab color="accent" (click)="add()">
+      <mat-icon>add</mat-icon>
     </button>
   </div>
 </div>

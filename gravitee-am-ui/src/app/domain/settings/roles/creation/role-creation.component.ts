@@ -24,6 +24,7 @@ import { SnackbarService } from "../../../../services/snackbar.service";
   styleUrls: ['./role-creation.component.scss']
 })
 export class RoleCreationComponent implements OnInit {
+  private scopes: any[];
   private domainId: string;
   role: any = {};
 
@@ -33,6 +34,7 @@ export class RoleCreationComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.scopes = this.route.snapshot.data['scopes'];
   }
 
   create() {

@@ -19,27 +19,41 @@
   <h1>{{role.name}}</h1>
   <div class="role-content">
     <form (keydown.enter)="false" (ngSubmit)="update()" #roleForm="ngForm" fxLayout="column" fxFlex="70">
-      <md-input-container fxFlex>
-        <input mdInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required>
-      </md-input-container>
+      <mat-form-field fxFlex>
+        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required>
+      </mat-form-field>
 
-      <md-input-container fxFlex>
-        <input mdInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description">
-      </md-input-container>
+      <mat-form-field fxFlex>
+        <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description">
+      </mat-form-field>
 
       <h4 style="margin-bottom: 0px;">Permissions</h4>
-      <md-chip-list style="margin-top: 10px; margin-bottom: 10px;">
-        <md-chip *ngFor="let permission of role.permissions" color="accent" selected="true">
-          <span>{{permission}}</span>
-          <md-icon class="delete-chip" (click)="removePermission(permission, $event)">clear</md-icon>
-        </md-chip>
-      </md-chip-list>
-      <md-input-container fxFlex>
-        <input mdInput #inputScope (keyup.enter)="addPermission(inputScope, $event)" placeholder="New permission..."/>
-      </md-input-container>
+      <mat-form-field>
+        <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" #chipListPermissions>
+          <mat-chip *ngFor="let permission of selectedPermissions" color="accent"
+                    selected="true" (remove)="removePermission(permission)">
+            <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
+            &nbsp;<span>{{permission.key}}</span>&nbsp;|&nbsp;<small>{{permission.name}}</small>
+            <mat-icon matChipRemove>cancel</mat-icon>
+          </mat-chip>
+          <input matInput
+                 placeholder="Permissions"
+                 aria-label="Permissions"
+                 [matAutocomplete]="auto"
+                 [matChipInputFor]="chipListPermissions"
+                 #chipInput>
+        </mat-chip-list>
+
+        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="addPermission($event)">
+          <mat-option *ngFor="let scope of scopes" [value]="scope.key">
+            <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
+            <span>{{ scope.key }}</span> | <small>{{scope.name}}</small>
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
 
       <div fxLayout="row" class="role-form-actions">
-        <button md-raised-button [disabled]="(!roleForm.valid || roleForm.pristine) && !formChanged" type="submit">SAVE</button>
+        <button mat-raised-button [disabled]="(!roleForm.valid || roleForm.pristine) && !formChanged" type="submit">SAVE</button>
       </div>
     </form>
     <div class="role-description" fxFlex>
