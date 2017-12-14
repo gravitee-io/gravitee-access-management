@@ -79,7 +79,7 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
 
         if (!passwordEncoder.matches(presentedPassword, userDetails.getPassword())) {
             LOGGER.debug("Authentication failed: password does not match stored value");
-            throw new BadCredentialsException("Bad getCredentials");
+            throw new BadCredentialsException("Bad credentials");
         }
 
         return createUser(userDetails);
