@@ -49,7 +49,7 @@ $graviteeio-am-theme: mat-light-theme($graviteeio-am-app-primary, $graviteeio-am
   font-feature-settings: 'liga';
 }
 
-html, body, app-root, mat-sidenav-container, .mat-sidenav-content, .main-content {
+html, body, app-root, mat-sidenav-container {
   margin: 0;
   width: 100%;
   height: 100%;

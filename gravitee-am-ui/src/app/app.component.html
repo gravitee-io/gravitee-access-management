@@ -15,12 +15,14 @@
     limitations under the License.
 
 -->
-<mat-sidenav-container fxLayout="row" fxFlex>
+<mat-sidenav-container>
   <mat-sidenav *ngIf="router.url !== '/login'" mode="side" opened="true">
     <gs-sidenav></gs-sidenav>
   </mat-sidenav>
-  <gs-navbar></gs-navbar>
-  <div class="main-content">
-    <router-outlet></router-outlet>
-  </div>
+  <mat-sidenav-content [ngClass]="{'gs-sidenav-content-min': reducedMode}">
+    <gs-navbar></gs-navbar>
+    <div class="main-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
 </mat-sidenav-container>

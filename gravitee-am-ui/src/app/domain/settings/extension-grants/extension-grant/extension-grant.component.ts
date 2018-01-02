@@ -59,9 +59,11 @@ export class ExtensionGrantComponent implements OnInit {
   }
 
   enableTokenGranterUpdate(configurationWrapper) {
-    this.configurationPristine = false;
-    this.configurationIsValid = configurationWrapper.isValid;
-    this.updateTokenGranterConfiguration = configurationWrapper.configuration;
+    window.setTimeout(() => {
+      this.configurationPristine = this.extensionGrant.configuration === JSON.stringify(configurationWrapper.configuration);
+      this.configurationIsValid = configurationWrapper.isValid;
+      this.updateTokenGranterConfiguration = configurationWrapper.configuration;
+    });
   }
 
   initBreadcrumb() {

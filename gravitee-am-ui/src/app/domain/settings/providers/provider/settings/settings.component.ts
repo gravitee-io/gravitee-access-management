@@ -61,8 +61,10 @@ export class ProviderSettingsComponent implements OnInit {
   }
 
   enableProviderUpdate(configurationWrapper) {
-    this.configurationPristine = false;
-    this.configurationIsValid = configurationWrapper.isValid;
-    this.updateProviderConfiguration = configurationWrapper.configuration;
+    window.setTimeout(() => {
+      this.configurationPristine = this.provider.configuration === JSON.stringify(configurationWrapper.configuration);
+      this.configurationIsValid = configurationWrapper.isValid;
+      this.updateProviderConfiguration = configurationWrapper.configuration;
+    });
   }
 }

@@ -1,4 +1,8 @@
-.domain-settings-main-content {
-  width: 100%;
-  height: calc(100vh - 120px);
+:host {
+  mat-sidenav-content {
+    width: 100%;
+  }
+  .domain-settings-main-content {
+    height: calc(100vh - 120px);
+  }
 }

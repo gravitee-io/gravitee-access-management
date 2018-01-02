@@ -17,6 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpService } from "./services/http.service";
 import { Http}  from "@angular/http";
+import { SidenavService } from "./components/sidenav/sidenav.service";
 
 @Component({
   selector: 'app-root',
@@ -24,17 +25,19 @@ import { Http}  from "@angular/http";
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
+  private reducedMode: boolean = false;
 
-  constructor(public router : Router, private http: Http) {}
+  constructor(public router : Router, private http: Http, private sidenavService: SidenavService) {}
 
   ngOnInit() {
     (<HttpService>this.http).notifyObservable$.subscribe(response => {
-      console.log(response);
       if (response && response === 'Unauthorized') {
         sessionStorage.removeItem('access_token');
         sessionStorage.removeItem('user');
         this.router.navigate(['/login']);
       }
     })
+
+    this.sidenavService.resizeSidenavObservable.subscribe(reducedMode => this.reducedMode = reducedMode);
   }
 }

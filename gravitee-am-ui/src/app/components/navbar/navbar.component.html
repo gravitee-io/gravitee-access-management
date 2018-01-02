@@ -16,11 +16,10 @@
 
 -->
 <mat-toolbar>
-  <mat-toolbar-row>
+    <span class="fill-remaining-space"></span>
     <button *ngIf="isAuthenticated()" mat-icon-button [matMenuTriggerFor]="userAccountMenu" (click)="listDomains()">
       <mat-icon style="color: grey;">account_circle</mat-icon>
     </button>
-  </mat-toolbar-row>
 </mat-toolbar>
 
 <mat-menu #userAccountMenu="matMenu" [overlapTrigger]="false">

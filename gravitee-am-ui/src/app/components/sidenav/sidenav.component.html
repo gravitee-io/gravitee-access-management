@@ -54,7 +54,7 @@
 
   <mat-list class="sidenav-footer">
     <mat-list-item>
-      <button mat-icon-button mat-mini-fab class="sidenav-toggle" (click)="reducedMode = !reducedMode">
+      <button mat-icon-button mat-mini-fab class="sidenav-toggle" (click)="resize()">
         <mat-icon *ngIf="reducedMode" class="sidenav-toggle-icon">keyboard_arrow_right</mat-icon>
         <mat-icon *ngIf="!reducedMode" class="sidenav-toggle-icon">keyboard_arrow_left</mat-icon>
       </button>

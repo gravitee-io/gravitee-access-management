@@ -159,10 +159,12 @@
     </div>
 
     <h4>Certificate</h4>
-    <mat-select placeholder="Certificate" name="certificate" [(ngModel)]="client.certificate">
-      <mat-option *ngFor="let certificate of certificates" [value]="certificate.id">{{ certificate.name }}</mat-option>
-    </mat-select>
-    <mat-hint style="font-size: 75%;">Certificate use to sign tokens.</mat-hint>
+    <mat-form-field>
+      <mat-select placeholder="Certificate" name="certificate" [(ngModel)]="client.certificate">
+        <mat-option *ngFor="let certificate of certificates" [value]="certificate.id">{{ certificate.name }}</mat-option>
+      </mat-select>
+      <mat-hint style="font-size: 75%;">Certificate use to sign tokens.</mat-hint>
+    </mat-form-field>
 
     <div fxLayout="row" class="client-settings-form-actions">
       <button mat-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>

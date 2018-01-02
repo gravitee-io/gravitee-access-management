@@ -20,5 +20,6 @@
   [options]="{'formDefaults' : { 'orderable' : false}, 'addSubmit' : false}"
   (isValid)="isValid($event)"
   (onChanges)="onChanges($event)"
-  framework="material-design">
+  [framework]="'material-design'"
+  [widgets]="customWidgets">
 </json-schema-form>

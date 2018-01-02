@@ -120,12 +120,6 @@ import { ScopeComponent } from './domain/settings/scopes/scope/scope.component';
 import { SnackbarComponent } from "./components/snackbar/snackbar.component";
 import { ClientIdPComponent } from './domain/clients/client/idp/idp.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
-/*
-import { MaterialInputComponent } from "./components/json-schema-form/material-input.component";
-import { MaterialDesignFrameworkComponent } from "./components/json-schema-form/material-design-framework.component";
-import { MaterialFileComponent } from "./components/json-schema-form/material-file.component";
-import { MaterialAddReferenceComponent } from "./components/json-schema-form/material-add-reference.component";
-*/
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DashboardService} from "./services/dashboard.service";
 import { WidgetClientsComponent } from './components/widget/clients/clients.component';
@@ -149,6 +143,7 @@ import { ExtensionGrantComponent } from 'app/domain/settings/extension-grants/ex
 import { ExtensionGrantFormComponent } from "./domain/settings/extension-grants/extension-grant/form/form.component";
 import { ExtensionGrantCreationStep1Component } from "./domain/settings/extension-grants/creation/steps/step1/step1.component";
 import { ExtensionGrantCreationStep2Component } from "./domain/settings/extension-grants/creation/steps/step2/step2.component";
+import { MaterialFileComponent } from "./components/json-schema-form/material-file.component";
 
 @NgModule({
   declarations: [
@@ -220,6 +215,7 @@ import { ExtensionGrantCreationStep2Component } from "./domain/settings/extensio
     UserComponent,
     ScopeCreationComponent,
     ScopeComponent,
+    MaterialFileComponent
   ],
   imports: [
     BrowserModule,
@@ -280,7 +276,8 @@ import { ExtensionGrantCreationStep2Component } from "./domain/settings/extensio
     CreateClaimComponent,
     CertitificatePublicKeyDialog,
     CreateRoleMapperComponent,
-    SnackbarComponent
+    SnackbarComponent,
+    MaterialFileComponent
   ],
   bootstrap: [AppComponent]
 })
