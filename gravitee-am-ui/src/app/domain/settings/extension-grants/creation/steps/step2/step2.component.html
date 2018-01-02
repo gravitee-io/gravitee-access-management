@@ -43,10 +43,12 @@
 
 
       <h4>Identity provider</h4>
-      <mat-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider">
-        <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
-      </mat-select>
-      <mat-hint align="end" style="font-size: 75%;">Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
+      <mat-form-field>
+        <mat-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider">
+          <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
+        </mat-select>
+        <mat-hint align="end" style="font-size: 75%;">Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
+      </mat-form-field>
 
       <h4>Configuration</h4>
       <extension-grant-form [extensionGrantConfiguration]="configuration" [extensionGrantSchema]="extensionGrantSchema" (configurationCompleted)="enableTokenGranterCreation($event)"></extension-grant-form>

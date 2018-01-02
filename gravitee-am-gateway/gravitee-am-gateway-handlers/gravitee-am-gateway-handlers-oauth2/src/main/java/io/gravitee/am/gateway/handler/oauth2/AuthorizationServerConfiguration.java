@@ -66,7 +66,6 @@ import java.util.List;
  */
 @Configuration
 @EnableAuthorizationServer
-//@Import({CustomAuthorizationServerEndpointsConfiguration.class, CustomAuthorizationServerSecurityConfiguration.class})
 public class AuthorizationServerConfiguration extends AuthorizationServerConfigurerAdapter {
 
     @Autowired
@@ -77,11 +76,6 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
 
     @Autowired
     private AuthorizationCodeServices authorizationCodeServices;
-
-    /*
-    @Autowired
-    private UserApprovalHandler userApprovalHandler;
-    */
 
     @Autowired
     @Qualifier("authenticationManagerBean")
@@ -99,32 +93,6 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
-
-    /*
-    @Autowired
-    private AuthorizationEndpoint authorizationEndpoint;
-
-    @PostConstruct
-    public void init() {
-        authorizationEndpoint.setUserApprovalPage("forward:/oauth/scope_approval");
-        authorizationEndpoint.setErrorPage("forward:/oauth/scope_approval_error");
-    }
-*/
-    /*
-    @Bean
-    public ScopeApprovalEndpoint approvalEndpoint() {
-        ScopeApprovalEndpoint endpoint = new ScopeApprovalEndpoint();
-        endpoint.setClientDetailsService(clientDetailsService);
-        return endpoint;
-    }
-    */
-
-    /*
-    @Bean
-    public ScopeApprovalErrorEndpoint approvalErrorEndpoint() {
-        return new ScopeApprovalErrorEndpoint();
-    }
-    */
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -212,10 +180,6 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
         });
         return new CompositeTokenGranter(granters);
     }
-
-    //
-    // Approval store
-    //
 
     @Bean
     public UserApprovalHandler userApprovalHandler() {

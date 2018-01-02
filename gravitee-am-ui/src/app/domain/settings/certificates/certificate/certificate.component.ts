@@ -55,9 +55,11 @@ export class CertificateComponent implements OnInit {
   }
 
   enableCertificateUpdate(configurationWrapper) {
-    this.configurationPristine = false;
-    this.configurationIsValid = configurationWrapper.isValid;
-    this.updateCertificateConfiguration = configurationWrapper.configuration;
+    window.setTimeout(() => {
+      this.configurationPristine = this.certificate.configuration === JSON.stringify(configurationWrapper.configuration);
+      this.configurationIsValid = configurationWrapper.isValid;
+      this.updateCertificateConfiguration = configurationWrapper.configuration;
+    });
   }
 
   initBreadcrumb() {

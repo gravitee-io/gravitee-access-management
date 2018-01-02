@@ -19,7 +19,9 @@
   <mat-sidenav mode="side" opened="true">
     <domain-settings-sidenav></domain-settings-sidenav>
   </mat-sidenav>
-  <div class="domain-settings-main-content">
-    <router-outlet></router-outlet>
-  </div>
+  <mat-sidenav-content>
+    <div class="domain-settings-main-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
 </mat-sidenav-container>

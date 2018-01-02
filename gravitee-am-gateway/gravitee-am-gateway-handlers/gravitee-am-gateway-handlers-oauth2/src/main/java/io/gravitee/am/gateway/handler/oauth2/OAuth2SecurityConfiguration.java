@@ -18,9 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2;
 import io.gravitee.am.gateway.handler.oauth2.authentication.OAuth2LoginUrlAuthenticationEntryPoint;
 import io.gravitee.am.gateway.handler.oauth2.filter.CORSFilter;
 import io.gravitee.am.gateway.handler.oauth2.handler.CustomLogoutSuccessHandler;
-import io.gravitee.am.gateway.handler.oauth2.provider.approval.DefaultApprovalStore;
 import io.gravitee.am.gateway.handler.oauth2.provider.code.RepositoryAuthorizationCodeServices;
-import io.gravitee.am.gateway.handler.oauth2.provider.request.CustomOAuth2RequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.ClientBasedAuthenticationProvider;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationDetailsSource;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationFailureHandler;
@@ -44,8 +42,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.oauth2.provider.ClientDetailsService;
-import org.springframework.security.oauth2.provider.approval.*;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -68,9 +64,6 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
      * Logger
      */
     private final Logger logger = LoggerFactory.getLogger(OAuth2SecurityConfiguration.class);
-
-    @Autowired
-    private ClientDetailsService clientDetailsService;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -145,26 +138,6 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     public ClientBasedAuthenticationProvider userAuthenticationProvider() {
         return new ClientBasedAuthenticationProvider();
     }
-
-    /*
-    @Bean
-    @Autowired
-    public TokenStoreUserApprovalHandler userApprovalHandler(TokenStore tokenStore){
-        TokenStoreUserApprovalHandler handler = new TokenStoreUserApprovalHandler();
-        handler.setTokenStore(tokenStore);
-        handler.setRequestFactory(new CustomOAuth2RequestFactory(clientDetailsService));
-        handler.setClientDetailsService(clientDetailsService);
-        return handler;
-    }
-
-    @Bean
-    @Autowired
-    public ApprovalStore approvalStore(TokenStore tokenStore) throws Exception {
-        TokenApprovalStore store = new TokenApprovalStore();
-        store.setTokenStore(tokenStore);
-        return store;
-    }
-    */
 
     @Bean
     public Filter corsFilter() {

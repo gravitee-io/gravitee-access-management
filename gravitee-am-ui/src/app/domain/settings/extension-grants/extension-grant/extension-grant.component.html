@@ -39,10 +39,12 @@
       <mat-hint style="font-size: 75%;">Allow to store user information. Used for user account activity and OAuth 2.0 refresh token flow.</mat-hint>
 
       <h4 style="margin: 10px 0 20px 0;">Identity provider</h4>
-      <mat-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider">
-        <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
-      </mat-select>
-      <mat-hint align="end" style="font-size: 75%;">Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
+      <mat-form-field>
+        <mat-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider">
+          <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
+        </mat-select>
+        <mat-hint align="end" style="font-size: 75%;">Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
+      </mat-form-field>
 
       <h4 style="margin: 10px 0 10px 0;">Configuration</h4>
       <extension-grant-form *ngIf="extensionGrant" [extensionGrantConfiguration]="extensionGrantConfiguration" [extensionGrantSchema]="extensionGrantSchema" (configurationCompleted)="enableTokenGranterUpdate($event)"></extension-grant-form>

@@ -18,8 +18,10 @@ import { Subject } from "rxjs";
 
 @Injectable()
 export class SidenavService {
-  private currentResource = new Subject<any>()
-  notifyObservable$ = this.currentResource.asObservable();
+  private currentResource = new Subject<any>();
+  private resizeSidenav = new Subject<boolean>();
+  public notifyObservable$ = this.currentResource.asObservable();
+  public resizeSidenavObservable = this.resizeSidenav.asObservable();
 
   constructor() { }
 
@@ -27,5 +29,9 @@ export class SidenavService {
     if (data) {
       this.currentResource.next(data);
     }
+  }
+
+  resize(reducedMode) {
+    this.resizeSidenav.next(reducedMode);
   }
 }

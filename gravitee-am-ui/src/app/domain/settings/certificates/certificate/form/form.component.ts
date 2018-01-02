@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { MaterialFileComponent } from "../../../../../components/json-schema-form/material-file.component";
 
 @Component({
   selector: 'certificate-form',
@@ -26,6 +27,9 @@ export class CertificateFormComponent implements OnInit, OnChanges {
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm: boolean = false;
   data: any = {};
+  customWidgets = {
+    file: MaterialFileComponent
+  };
 
   constructor() { }
 
