@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.security.web;
 import io.gravitee.common.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.oauth2.common.util.OAuth2Utils;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,6 +26,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -58,6 +63,10 @@ public class XForwardedAwareRedirectStrategy implements RedirectStrategy {
                 builder.host(host);
             }
         }
+
+        // decode redirect_uri query param
+        Map<String, String> parameters = getParameterMap(redirectUrl);
+        builder.replaceQueryParam(OAuth2Utils.REDIRECT_URI, parameters.get(OAuth2Utils.REDIRECT_URI));
 
         redirectUrl = response.encodeRedirectURL(builder.toUriString());
 
@@ -101,5 +110,15 @@ public class XForwardedAwareRedirectStrategy implements RedirectStrategy {
      */
     public void setContextRelative(boolean useRelativeContext) {
         this.contextRelative = useRelativeContext;
+    }
+
+    private Map<String, String> getParameterMap(String url) throws UnsupportedEncodingException {
+        Map<String, String> queryPairs = new LinkedHashMap<>();
+        String[] pairs = url.split("&");
+        for (String pair : pairs) {
+            int idx = pair.indexOf("=");
+            queryPairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+        }
+        return queryPairs;
     }
 }
