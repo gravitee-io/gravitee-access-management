@@ -34,6 +34,8 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
+import java.util.Map;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -62,6 +64,11 @@ public class LdapAuthenticationProviderTest {
             @Override
             public Object getPrincipal() {
                 return "slashguy";
+            }
+
+            @Override
+            public Map<String, Object> getAdditionalInformation() {
+                return null;
             }
         });
 

@@ -24,6 +24,7 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -49,8 +50,8 @@ public class IdentityProvidersPluginResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List identity providers")
-    public Collection<IdentityProviderPlugin> listPolicies() {
-        return identityProviderPluginService.findAll()
+    public Collection<IdentityProviderPlugin> listIdentityProviders(@QueryParam("external") Boolean oauth2Provider) {
+        return identityProviderPluginService.findAll(oauth2Provider)
                 .stream()
                 .sorted(Comparator.comparing(IdentityProviderPlugin::getName))
                 .collect(Collectors.toList());
@@ -61,17 +62,4 @@ public class IdentityProvidersPluginResource {
         return resourceContext.getResource(IdentityProviderPluginResource.class);
     }
 
-    /*
-    private PolicyListItem convert(PolicyEntity policy) {
-        PolicyListItem item = new PolicyListItem();
-
-        item.setId(policy.getId());
-        item.setName(policy.getName());
-        item.setDescription(policy.getDescription());
-        item.setVersion(policy.getVersion());
-        item.setType(policy.getType());
-
-        return item;
-    }
-    */
 }

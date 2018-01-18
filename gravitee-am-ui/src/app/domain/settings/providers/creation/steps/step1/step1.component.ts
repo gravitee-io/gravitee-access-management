@@ -26,6 +26,7 @@ export class ProviderCreationStep1Component implements OnInit, OnChanges {
   @Output() providerTypeSelected = new EventEmitter<string>();
   @Output() nextStepTriggered = new EventEmitter<boolean>();
   providers: any[];
+  oauth2Providers: any[];
   selectedProviderTypeId : string;
 
   constructor(private platformService: PlatformService) {
@@ -33,6 +34,7 @@ export class ProviderCreationStep1Component implements OnInit, OnChanges {
 
   ngOnInit() {
     this.platformService.identities().map(res => res.json()).subscribe(data => this.providers = data);
+    this.platformService.oauth2Identities().map(res => res.json()).subscribe(data => this.oauth2Providers = data);
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -42,7 +44,8 @@ export class ProviderCreationStep1Component implements OnInit, OnChanges {
     }
   }
 
-  selectProviderType() {
+  selectProviderType(isExternal: boolean) {
+    this.provider.external = isExternal;
     this.providerTypeSelected.emit(this.selectedProviderTypeId);
   }
 

@@ -23,6 +23,13 @@
     </mat-select>
   </mat-form-field>
 
+  <h4 style="margin-top: 0px;">Social providers</h4>
+  <mat-form-field>
+    <mat-select placeholder="Social providers" multiple name="oauth2Identities" [(ngModel)]="client.oauth2Identities">
+      <mat-option *ngFor="let identityProvider of oauth2IdentityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+
   <div fxLayout="row" class="client-idp-form-actions">
     <button mat-raised-button [disabled]="(!clientForm.valid || clientForm.pristine)" type="submit">SAVE</button>
   </div>

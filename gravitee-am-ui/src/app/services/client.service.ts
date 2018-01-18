@@ -48,6 +48,7 @@ export class ClientService {
       'idTokenCustomClaims': client.idTokenCustomClaims,
       'enabled': client.enabled,
       'identities': client.identities,
+      'oauth2Identities': client.oauth2Identities,
       'certificate': client.certificate,
       'enhanceScopesWithUserPermissions' : client.enhanceScopesWithUserPermissions,
       'generateNewTokenPerRequest' : client.generateNewTokenPerRequest

@@ -1,3 +1,10 @@
+.provider-settings-contextual-help {
+  border-radius: 2px;
+  border: 1px solid rgb(226, 229, 231);
+  padding: 20px;
+  margin-bottom: 10px;
+}
+
 form {
   padding: 20px;
   background: #fafafa;
@@ -20,6 +27,12 @@ form {
       font-size: 14px;
     }
     small {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.38);
+    }
+  }
+  .oauth2-provider-settings-description {
+    .oauth2-provider-settings-description-contextual-help {
       font-size: 12px;
       color: rgba(0, 0, 0, 0.38);
     }

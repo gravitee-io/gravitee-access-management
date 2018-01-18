@@ -1,0 +1,56 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:github:GithubIdentityProviderConfiguration",
+  "description": "GitHub identity provider, let you register and set up permissions and authorization options for OAuth 2.0 protocol.\n\nhttps://developer.github.com/apps/building-oauth-apps/ ",
+  "properties" : {
+    "clientId" : {
+      "type" : "string",
+      "title": "Client ID",
+      "description": "Required. The client ID you received from GitHub when you registered."
+    },
+    "clientSecret" : {
+      "type" : "string",
+      "title": "Client Secret",
+      "description": "Required. The client secret you received from GitHub for your GitHub App."
+    },
+    "scopes":{
+      "type": "array",
+      "title": "Scopes",
+      "description": "Scopes let you specify exactly what type of access you need. Scopes limit access for OAuth tokens.",
+      "items":
+        {
+          "type": "string",
+          "enum": [
+            "repo",
+            "repo:status",
+            "repo_deployment",
+            "public_repo",
+            "repo:invite",
+            "admin:org",
+            "write:org",
+            "read:org",
+            "admin:public_key",
+            "write:public_key",
+            "read:public_key",
+            "admin:repo_hook",
+            "write:repo_hook",
+            "read:repo_hook",
+            "admin:org_hook",
+            "gist",
+            "notifications",
+            "user",
+            "read:user",
+            "user:email",
+            "user:follow",
+            "delete_repo",
+            "admin:gpg_key",
+            "write:gpg_key",
+            "read:gpg_key"]
+        }
+    }
+  },
+  "required": [
+    "clientId",
+    "clientSecret"
+  ]
+}

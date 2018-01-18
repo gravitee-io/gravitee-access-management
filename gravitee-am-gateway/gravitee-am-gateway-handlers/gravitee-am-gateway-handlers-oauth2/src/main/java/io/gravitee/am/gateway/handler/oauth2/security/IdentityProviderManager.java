@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.security;
 
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.model.IdentityProvider;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -24,4 +25,6 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 public interface IdentityProviderManager {
 
     AuthenticationProvider get(String id);
+
+    IdentityProvider getIdentityProvider(String id);
 }

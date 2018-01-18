@@ -28,6 +28,7 @@ export class ClientIdPComponent implements OnInit {
   private domainId: string;
   client: any;
   identityProviders: any[] = [];
+  oauth2IdentityProviders: any[] = [];
 
   constructor(private route: ActivatedRoute, private clientService: ClientService, private snackbarService: SnackbarService,
               private providerService: ProviderService) { }
@@ -35,7 +36,10 @@ export class ClientIdPComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.client = this.route.snapshot.parent.data['client'];
-    this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.identityProviders = data);
+    this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => {
+      this.identityProviders = data.filter(idp => !idp.external);
+      this.oauth2IdentityProviders = data.filter(idp => idp.external);
+    });
   }
 
   update() {

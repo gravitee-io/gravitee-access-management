@@ -295,6 +295,7 @@ public class ClientServiceImpl implements ClientService {
             client.setRedirectUris(updateClient.getRedirectUris());
             client.setEnabled(updateClient.isEnabled());
             client.setIdentities(updateClient.getIdentities());
+            client.setOauth2Identities(updateClient.getOauth2Identities());
             client.setIdTokenValiditySeconds(updateClient.getIdTokenValiditySeconds());
             client.setIdTokenCustomClaims(updateClient.getIdTokenCustomClaims());
             client.setCertificate(updateClient.getCertificate());

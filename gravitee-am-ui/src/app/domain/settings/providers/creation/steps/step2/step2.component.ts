@@ -35,6 +35,7 @@ export class ProviderCreationStep2Component implements OnInit {
               private snackbarService: SnackbarService, private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
+    console.log(this.provider);
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.platformService.identitySchema(this.provider.type).map(resp => resp.json()).subscribe(data => this.providerSchema = data);
   }

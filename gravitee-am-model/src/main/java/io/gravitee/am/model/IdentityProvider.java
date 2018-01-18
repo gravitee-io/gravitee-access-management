@@ -38,6 +38,8 @@ public class IdentityProvider {
 
     private String domain;
 
+    private boolean external;
+
     private Date createdAt;
 
     private Date updatedAt;
@@ -96,6 +98,14 @@ public class IdentityProvider {
 
     public void setDomain(String domain) {
         this.domain = domain;
+    }
+
+    public boolean isExternal() {
+        return external;
+    }
+
+    public void setExternal(boolean external) {
+        this.external = external;
     }
 
     public Date getCreatedAt() {

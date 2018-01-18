@@ -63,24 +63,17 @@
                     </div>
                 </div>
             </div>
-            <!--
-            <div class="row">
+            <div class="row" th:if="${oauth2Providers}">
                 <div class="col-sm-6 col-sm-offset-3 social-login">
                     <h3>...or login with:</h3>
-                    <div class="social-login-buttons">
-                        <a class="btn btn-link-1 btn-link-1-facebook" href="#">
-                            <i class="fa fa-facebook"></i> Facebook
-                        </a>
-                        <a class="btn btn-link-1 btn-link-1-twitter" href="#">
-                            <i class="fa fa-twitter"></i> Twitter
-                        </a>
-                        <a class="btn btn-link-1 btn-link-1-google-plus" href="#">
-                            <i class="fa fa-google-plus"></i> Google Plus
+                    <div th:each="oauth2Provider : ${oauth2Providers}" class="social-login-buttons">
+                        <a th:class="'btn btn-link-1 btn-link-1-' + ${oauth2Provider.getType()}" th:each="oauth2Provider : ${oauth2Providers}"
+                           th:href="${authorizeUrls.get(oauth2Provider.getId())}">
+                            <i th:class="'fa fa-' + ${oauth2Provider.getType()}"></i> <span th:text="${oauth2Provider.getName()}"></span>
                         </a>
                     </div>
                 </div>
             </div>
-            -->
         </div>
     </div>
 

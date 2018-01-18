@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.idp.core.impl;
 
 import io.gravitee.am.gateway.idp.core.*;
 import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProvider;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
@@ -24,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Import;
@@ -33,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -46,6 +49,7 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
 
     private final Map<String, IdentityProvider> identityProviders = new HashMap<>();
     private final Map<IdentityProvider, Plugin> identityProviderPlugins = new HashMap<>();
+    private final Map<IdentityProvider, Plugin> oauth2IdentityProviderPlugins = new HashMap<>();
 
     @Autowired
     private PluginContextFactory pluginContextFactory;
@@ -59,24 +63,42 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     @Autowired
     private IdentityProviderRoleMapperFactory identityProviderRoleMapperFactory;
 
+    @Autowired
+    @Qualifier("graviteeProperties")
+    private Properties properties;
+
     @Override
-    public void register(IdentityProviderDefinition identityProviderPluginDefinition) {
+    public void register(IdentityProviderDefinition identityProviderPluginDefinition, boolean oauth2Provider) {
         identityProviders.putIfAbsent(identityProviderPluginDefinition.getPlugin().id(),
                 identityProviderPluginDefinition.getIdentityProvider());
 
         identityProviderPlugins.putIfAbsent(identityProviderPluginDefinition.getIdentityProvider(),
                 identityProviderPluginDefinition.getPlugin());
+
+        if (oauth2Provider) {
+            oauth2IdentityProviderPlugins.putIfAbsent(identityProviderPluginDefinition.getIdentityProvider(),
+                    identityProviderPluginDefinition.getPlugin());
+        }
     }
 
     @Override
     public Collection<Plugin> getAll() {
-        return identityProviderPlugins.values();
+        Set<String> oauth2ProviderIds = getOAuth2Providers().stream().map(plugin -> plugin.id()).collect(Collectors.toSet());
+        return identityProviderPlugins.values().stream().filter(plugin -> !oauth2ProviderIds.contains(plugin.id())).collect(Collectors.toSet());
+    }
+
+    @Override
+    public Collection<Plugin> getOAuth2Providers() {
+        return oauth2IdentityProviderPlugins.values();
     }
 
     @Override
     public Plugin findById(String identityProviderId) {
         IdentityProvider identityProvider = identityProviders.get(identityProviderId);
-        return (identityProvider != null) ? identityProviderPlugins.get(identityProvider) : null;
+        if (identityProvider != null) {
+            return (identityProvider instanceof OAuth2IdentityProvider) ? oauth2IdentityProviderPlugins.get(identityProvider) : identityProviderPlugins.get(identityProvider);
+        }
+        return null;
     }
 
     @Override
@@ -144,6 +166,10 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
                 @Override
                 public ConfigurableApplicationContext applicationContext() {
                     ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
+
+                    // Add gravitee properties
+                    configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new PropertiesBeanFactoryPostProcessor(properties));
 
                     // Add identity provider configuration bean
                     configurableApplicationContext.addBeanFactoryPostProcessor(

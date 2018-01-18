@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2;
 
 import io.gravitee.am.gateway.handler.oauth2.authentication.OAuth2LoginUrlAuthenticationEntryPoint;
 import io.gravitee.am.gateway.handler.oauth2.filter.CORSFilter;
+import io.gravitee.am.gateway.handler.oauth2.filter.OAuth2ClientAuthenticationFilter;
 import io.gravitee.am.gateway.handler.oauth2.handler.CustomLogoutSuccessHandler;
 import io.gravitee.am.gateway.handler.oauth2.provider.code.RepositoryAuthorizationCodeServices;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.ClientBasedAuthenticationProvider;
@@ -42,6 +43,13 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
+import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
+import org.springframework.security.oauth2.common.AuthenticationScheme;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
+import org.springframework.security.oauth2.provider.approval.ApprovalStore;
+import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
+import org.springframework.security.oauth2.provider.approval.TokenStoreUserApprovalHandler;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -81,7 +89,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.
             requestMatchers()
-                .antMatchers("/oauth/**", "/authorize", "/login", "/logout")
+                .antMatchers("/oauth/**", "/login", "/login/callback", "/logout")
                 .and()
             .authorizeRequests()
                 .antMatchers(HttpMethod.OPTIONS, "**").permitAll()
@@ -101,7 +109,8 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .exceptionHandling()
                 .authenticationEntryPoint(new OAuth2LoginUrlAuthenticationEntryPoint("/login"))
                 .and()
-            .addFilterAfter(corsFilter(), AbstractPreAuthenticatedProcessingFilter.class);
+            .addFilterAfter(corsFilter(), AbstractPreAuthenticatedProcessingFilter.class)
+            .addFilterBefore(clientOAuth2Filter(), AbstractPreAuthenticatedProcessingFilter.class);
 
     }
 
@@ -142,6 +151,13 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public Filter corsFilter() {
         return new CORSFilter();
+    }
+
+    @Bean
+    public Filter clientOAuth2Filter() {
+        OAuth2ClientAuthenticationFilter oAuth2ClientAuthenticationFilter = new OAuth2ClientAuthenticationFilter("/login/callback");
+        oAuth2ClientAuthenticationFilter.setApplicationEventPublisher(applicationEventPublisher);
+        return oAuth2ClientAuthenticationFilter;
     }
 
     @Bean

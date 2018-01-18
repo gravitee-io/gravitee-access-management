@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.idp.plugin;
 import io.gravitee.am.gateway.idp.core.IdentityProviderDefinition;
 import io.gravitee.am.gateway.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
+import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProvider;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginHandler;
@@ -57,7 +58,12 @@ public class IdentityProviderPluginHandler implements PluginHandler {
             Assert.isAssignable(IdentityProvider.class, identityProviderClass);
 
             IdentityProvider identityIdentityProvider = createInstance((Class<IdentityProvider>) identityProviderClass);
-            identityProviderPluginManager.register(new IdentityProviderDefinition(identityIdentityProvider, plugin));
+
+            if (identityIdentityProvider instanceof OAuth2IdentityProvider) {
+
+            }
+
+            identityProviderPluginManager.register(new IdentityProviderDefinition(identityIdentityProvider, plugin), identityIdentityProvider instanceof OAuth2IdentityProvider);
         } catch (Exception iae) {
             LOGGER.error("Unexpected error while create identity provider instance", iae);
         }

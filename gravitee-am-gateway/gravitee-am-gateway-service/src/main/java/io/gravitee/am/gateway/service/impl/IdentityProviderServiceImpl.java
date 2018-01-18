@@ -109,10 +109,16 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
             identityProvider.setName(newIdentityProvider.getName());
             identityProvider.setType(newIdentityProvider.getType());
             identityProvider.setConfiguration(newIdentityProvider.getConfiguration());
+            identityProvider.setExternal(newIdentityProvider.isExternal());
             identityProvider.setCreatedAt(new Date());
             identityProvider.setUpdatedAt(identityProvider.getCreatedAt());
 
-            return identityProviderRepository.create(identityProvider);
+            IdentityProvider provider = identityProviderRepository.create(identityProvider);
+
+            // Reload domain to take care about identity provider creation
+            domainService.reload(domain);
+
+            return provider;
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to create an identity provider", ex);
             throw new TechnicalManagementException("An error occurs while trying to create an identity provider", ex);

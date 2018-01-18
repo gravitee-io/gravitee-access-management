@@ -45,6 +45,8 @@ public class UpdateClient {
 
     private Set<String> identities;
 
+    private Set<String> oauth2Identities;
+
     private String certificate;
 
     private boolean enhanceScopesWithUserPermissions;
@@ -113,6 +115,14 @@ public class UpdateClient {
 
     public void setIdentities(Set<String> identities) {
         this.identities = identities;
+    }
+
+    public Set<String> getOauth2Identities() {
+        return oauth2Identities;
+    }
+
+    public void setOauth2Identities(Set<String> oauth2Identities) {
+        this.oauth2Identities = oauth2Identities;
     }
 
     public int getIdTokenValiditySeconds() {

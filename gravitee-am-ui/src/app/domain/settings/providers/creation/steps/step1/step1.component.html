@@ -25,7 +25,7 @@
   <div fxLayout="row" fxLayoutWrap fxLayoutAlign="center center" class="provider-creation-step1-content">
     <mat-card *ngFor="let provider of providers" fxFlex="40">
       <mat-card-header fxLayoutAlign="end end" fxLayout="row">
-        <mat-radio-group [(ngModel)]="selectedProviderTypeId" (ngModelChange)="selectProviderType()">
+        <mat-radio-group [(ngModel)]="selectedProviderTypeId" (ngModelChange)="selectProviderType(false)">
           <mat-radio-button [value]="provider.id"></mat-radio-button>
         </mat-radio-group>
       </mat-card-header>
@@ -33,6 +33,22 @@
         {{provider.name}}
       </mat-card-content>
     </mat-card>
+  </div>
+
+  <div *ngIf="oauth2Providers">
+    <h4>Social</h4>
+    <div fxLayout="row" fxLayoutWrap fxLayoutAlign="center center" class="provider-creation-step1-content">
+      <mat-card *ngFor="let provider of oauth2Providers" fxFlex="40">
+        <mat-card-header fxLayoutAlign="end end" fxLayout="row">
+          <mat-radio-group [(ngModel)]="selectedProviderTypeId" (ngModelChange)="selectProviderType(true)">
+            <mat-radio-button [value]="provider.id"></mat-radio-button>
+          </mat-radio-group>
+        </mat-card-header>
+        <mat-card-content>
+          {{provider.name}}
+        </mat-card-content>
+      </mat-card>
+    </div>
   </div>
 
   <div fxLayout="row" fxLayoutAlign="end end" class="next-button">
