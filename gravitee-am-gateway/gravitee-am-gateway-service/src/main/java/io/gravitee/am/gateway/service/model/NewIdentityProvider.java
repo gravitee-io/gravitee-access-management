@@ -32,6 +32,8 @@ public class NewIdentityProvider {
     @NotNull
     private String configuration;
 
+    private boolean external;
+
     public String getType() {
         return type;
     }
@@ -54,6 +56,14 @@ public class NewIdentityProvider {
 
     public void setConfiguration(String configuration) {
         this.configuration = configuration;
+    }
+
+    public boolean isExternal() {
+        return external;
+    }
+
+    public void setExternal(boolean external) {
+        this.external = external;
     }
 
     @Override

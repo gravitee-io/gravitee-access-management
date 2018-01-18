@@ -42,6 +42,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_CLIENT_ID = "clientId";
     private static final String FIELD_IDENTITIES = "identities";
+    private static final String FIELD_OAUTH2_IDENTITIES = "oauth2Identities";
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_GRANT_TYPES= "authorizedGrantTypes";
 
@@ -111,8 +112,9 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Set<Client> findByIdentityProvider(String identityProvider) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_IDENTITIES).is(identityProvider));
+        Criteria criteria = new Criteria();
+        criteria.orOperator(Criteria.where(FIELD_IDENTITIES).is(identityProvider), Criteria.where(FIELD_OAUTH2_IDENTITIES).is(identityProvider));
+        Query query = new Query(criteria);
 
         return mongoOperations
                 .find(query, ClientMongo.class)
@@ -223,6 +225,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setAutoApproveScopes(clientMongo.getAutoApproveScopes());
         client.setEnabled(clientMongo.isEnabled());
         client.setIdentities(clientMongo.getIdentities());
+        client.setOauth2Identities(clientMongo.getOauth2Identities());
         client.setDomain(clientMongo.getDomain());
         client.setAuthorizedGrantTypes(clientMongo.getAuthorizedGrantTypes());
         client.setIdTokenValiditySeconds(clientMongo.getIdTokenValiditySeconds());
@@ -252,6 +255,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setAutoApproveScopes(client.getAutoApproveScopes());
         clientMongo.setEnabled(client.isEnabled());
         clientMongo.setIdentities(client.getIdentities());
+        clientMongo.setOauth2Identities(client.getOauth2Identities());
         clientMongo.setDomain(client.getDomain());
         clientMongo.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
         clientMongo.setIdTokenCustomClaims(client.getIdTokenCustomClaims());

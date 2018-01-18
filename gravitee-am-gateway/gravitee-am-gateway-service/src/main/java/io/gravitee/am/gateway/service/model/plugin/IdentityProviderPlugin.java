@@ -22,22 +22,22 @@ package io.gravitee.am.gateway.service.model.plugin;
 public class IdentityProviderPlugin {
 
     /**
-     * The policy identifier
+     * The identity provider identifier
      */
     private String id;
 
     /**
-     * The policy name
+     * The identity provider name
      */
     private String name;
 
     /**
-     * The policy description
+     * The identity provider description
      */
     private String description;
 
     /**
-     * The policy version
+     * The identity provider version
      */
     private String version;
 
@@ -72,4 +72,5 @@ public class IdentityProviderPlugin {
     public void setVersion(String version) {
         this.version = version;
     }
+
 }

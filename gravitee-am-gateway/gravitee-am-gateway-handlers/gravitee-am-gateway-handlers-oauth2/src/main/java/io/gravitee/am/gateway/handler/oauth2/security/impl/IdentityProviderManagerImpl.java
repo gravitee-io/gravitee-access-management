@@ -51,10 +51,15 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     private IdentityProviderService identityProviderService;
 
     private Map<String, AuthenticationProvider> providers = new HashMap<>();
+    private Map<String, IdentityProvider> identities = new HashMap<>();
 
     @Override
     public AuthenticationProvider get(String id) {
         return providers.get(id);
+    }
+
+    public IdentityProvider getIdentityProvider(String id) {
+        return identities.get(id);
     }
 
     @Override
@@ -69,6 +74,7 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
                     identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
                             identityProvider.getMappers(), identityProvider.getRoleMapper());
             providers.put(identityProvider.getId(), authenticationProvider);
+            identities.put(identityProvider.getId(), identityProvider);
         });
     }
 }

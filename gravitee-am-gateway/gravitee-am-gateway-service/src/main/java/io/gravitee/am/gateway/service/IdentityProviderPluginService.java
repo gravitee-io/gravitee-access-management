@@ -25,7 +25,7 @@ import java.util.Set;
  */
 public interface IdentityProviderPluginService {
 
-    Set<IdentityProviderPlugin> findAll();
+    Set<IdentityProviderPlugin> findAll(Boolean oauth2Provider);
 
     IdentityProviderPlugin findById(String identityProviderPlugin);
 

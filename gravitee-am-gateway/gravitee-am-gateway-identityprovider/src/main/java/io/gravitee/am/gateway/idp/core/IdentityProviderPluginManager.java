@@ -28,9 +28,11 @@ import java.util.Map;
  */
 public interface IdentityProviderPluginManager {
 
-    void register(IdentityProviderDefinition identityProviderPluginDefinition);
+    void register(IdentityProviderDefinition identityProviderPluginDefinition, boolean oauth2Provider);
 
     Collection<Plugin> getAll();
+
+    Collection<Plugin> getOAuth2Providers();
 
     Plugin findById(String identityProviderId);
 

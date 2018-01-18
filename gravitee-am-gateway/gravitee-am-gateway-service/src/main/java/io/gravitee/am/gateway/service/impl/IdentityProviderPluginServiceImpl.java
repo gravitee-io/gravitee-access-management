@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,10 +47,11 @@ public class IdentityProviderPluginServiceImpl implements IdentityProviderPlugin
     private IdentityProviderPluginManager identityProviderPluginManager;
 
     @Override
-    public Set<IdentityProviderPlugin> findAll() {
+    public Set<IdentityProviderPlugin> findAll(Boolean oauth2Provider) {
         try {
             LOGGER.debug("List all identity providers");
-            return identityProviderPluginManager.getAll()
+            Collection<Plugin> plugins = (oauth2Provider != null && oauth2Provider) ? identityProviderPluginManager.getOAuth2Providers() : identityProviderPluginManager.getAll();
+            return plugins
                     .stream()
                     .map(this::convert)
                     .collect(Collectors.toSet());

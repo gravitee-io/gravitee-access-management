@@ -43,6 +43,8 @@ public class IdentityProviderMongo extends Auditable {
 
     private String domain;
 
+    private boolean external;
+
     public String getId() {
         return id;
     }
@@ -97,6 +99,14 @@ public class IdentityProviderMongo extends Auditable {
 
     public void setDomain(String domain) {
         this.domain = domain;
+    }
+
+    public boolean isExternal() {
+        return external;
+    }
+
+    public void setExternal(boolean external) {
+        this.external = external;
     }
 
     @Override

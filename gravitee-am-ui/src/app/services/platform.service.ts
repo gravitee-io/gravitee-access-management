@@ -28,6 +28,10 @@ export class PlatformService {
     return this.http.get(this.platformURL + 'plugins/identities');
   }
 
+  oauth2Identities(): Observable<Response> {
+    return this.http.get(this.platformURL + 'plugins/identities?external=true')
+  }
+
   identitySchema(id): Observable<Response> {
     return this.http.get(this.platformURL + 'plugins/identities/' + id + '/schema');
   }
