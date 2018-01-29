@@ -95,30 +95,13 @@
                #chipInput>
       </mat-chip-list>
 
-      <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="addScope($event)">
+      <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addScope($event)">
         <mat-option *ngFor="let scope of scopes" [value]="scope.key">
           <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
           <span>{{ scope.key }}</span> | <small>{{scope.name}}</small>
         </mat-option>
       </mat-autocomplete>
     </mat-form-field>
-
-    <!--
-    <mat-card *ngFor="let scope of scopes" style="margin-bottom: 3px;">
-      <mat-card-header>
-        <div mat-card-avatar>
-          <mat-checkbox
-            name="scopes"
-            value="{{scope.key}}"
-            [checked]="scope.checked"
-            (change)="selectedScope($event)">
-          </mat-checkbox>
-        </div>
-        <mat-card-title>{{scope.key}} ({{ scope.name }})</mat-card-title>
-        <mat-card-subtitle>{{ scope.description }}</mat-card-subtitle>
-      </mat-card-header>
-    </mat-card>
-    -->
 
     <h4>Auto approval</h4>
     <mat-slide-toggle

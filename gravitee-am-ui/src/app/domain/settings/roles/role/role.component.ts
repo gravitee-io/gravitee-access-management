@@ -36,9 +36,9 @@ export class RoleComponent implements OnInit {
 
   @ViewChild('chipInput') chipInput: MatInput;
 
-  private scopes: Scope[];
-  private selectedPermissions: Scope[];
   private domainId: string;
+  scopes: Scope[];
+  selectedPermissions: Scope[];
   role: any;
   formChanged: boolean = false;
 

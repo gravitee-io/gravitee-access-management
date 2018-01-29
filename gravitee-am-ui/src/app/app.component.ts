@@ -25,7 +25,7 @@ import { SidenavService } from "./components/sidenav/sidenav.service";
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  private reducedMode: boolean = false;
+  reducedMode: boolean = false;
 
   constructor(public router : Router, private http: Http, private sidenavService: SidenavService) {}
 

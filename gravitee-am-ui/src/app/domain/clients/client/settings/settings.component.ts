@@ -39,7 +39,7 @@ export class ClientSettingsComponent implements OnInit {
   @ViewChild('chipInput') chipInput: MatInput;
 
   private domainId: string;
-  private selectedScopes: Scope[];
+  selectedScopes: Scope[];
   client: any;
   formChanged: boolean = false;
   identityProviders: any[] = [];

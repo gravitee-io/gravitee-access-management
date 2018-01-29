@@ -44,7 +44,7 @@
                  #chipInput>
         </mat-chip-list>
 
-        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="addPermission($event)">
+        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addPermission($event)">
           <mat-option *ngFor="let scope of scopes" [value]="scope.key">
             <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
             <span>{{ scope.key }}</span> | <small>{{scope.name}}</small>
