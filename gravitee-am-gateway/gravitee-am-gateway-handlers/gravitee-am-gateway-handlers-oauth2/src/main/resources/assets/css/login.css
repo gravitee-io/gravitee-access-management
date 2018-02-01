@@ -1,0 +1,240 @@
+.mdl-layout.mdl-js-layout {
+    display: block;
+    background-color: #2d323e;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #333;
+    font-size: 12px;
+}
+
+.login-container {
+    max-width: 360px;
+    margin: auto;
+    padding: 8% 0 0;
+}
+
+.login-form {
+    background: #FFFFFF;
+    padding: 45px;
+    box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24);
+}
+
+.login-form-title {
+    text-align:center;
+}
+
+.login-form-title > label {
+    font-size: 28px;
+    font-weight: 400;
+    margin: 0 auto;
+}
+
+.mdl-textfield__label.mdl-required:after {
+    content: ' *';
+    visibility: visible;
+    position: initial;
+    background-color: transparent;
+}
+
+.mdl-textfield.is-invalid .mdl-textfield__label:after {
+    background-color: transparent;
+}
+
+.mdl-textfield__icon {
+    width: 32px;
+    text-align: center;
+    position: absolute;
+    color: #555;
+    line-height: 1.5;
+}
+
+.mdl-textfield__icon ~ * {
+    margin-left: 32px;
+    width: calc(100% - 48px);
+}
+
+.error {
+    font-weight: bold;
+    color: #EF3B3A;
+    text-align: center;
+}
+
+a, a:hover, a:focus {
+    text-decoration: none;
+    -o-transition: all .3s; -moz-transition: all .3s; -webkit-transition: all .3s; -ms-transition: all .3s; transition: all .3s;
+}
+
+.social-login-buttons {
+    margin-top: 10px;
+}
+
+.social-login-buttons a {
+    margin-bottom: 10px;
+}
+
+.mdl-button {
+    width: 100%;
+    padding: 0;
+}
+
+.signup-or-separator {
+    position: relative;
+    height: 34px;
+    text-align: center;
+    background: none;
+    margin-bottom: 10px;
+}
+
+.signup-or-separator hr {
+    width: 90%;
+    margin: -16px auto 10px auto;
+    border-top: 1px solid #dce0e0;
+}
+
+.signup-or-separator .text {
+    display: inline-block;
+    padding: 8px;
+    margin: 0;
+    background-color: #fff;
+}
+
+/*********************
+* Social Buttons
+*********************/
+
+.btn-google-plus {
+    color: #fff;
+    background-color: #dd4b39;
+    border: 1px solid #d54331;
+}
+
+.btn-google-plus:hover,
+.btn-google-plus:focus {
+    color: #fff;
+    background-color: #cb3927;
+}
+
+.btn-facebook {
+    color: #fff;
+    background-color: #3b5998;
+    border: 1px solid #335190;
+}
+
+.btn-facebook:hover,
+.btn-facebook:focus {
+    color: #fff;
+    background-color: #294786;
+}
+
+.btn-linkedin {
+    color: #fff;
+    background-color: #007bb6;
+    border: 1px solid #0073ae;
+}
+
+.btn-linkedin:hover,
+.btn-linkedin:focus {
+    color: #fff;
+    background-color: #0069a4;
+}
+
+.btn-twitter {
+    color: #fff;
+    background-color: #00aced;
+    border: 1px solid #009fdb;
+}
+
+.btn-twitter:hover,
+.btn-twitter:focus {
+    color: #fff;
+    background-color: #0090c7;
+}
+
+.btn-foursquare {
+    color: #fff;
+    background-color: #f94877;
+    border: 1px solid #f8215a;
+}
+
+.btn-foursquare:hover,
+.btn-foursquare:focus {
+    color: #fff;
+    background-color: #f71752;
+}
+
+.btn-github {
+    color: #fff;
+    background-color: #444;
+    border: 1px solid #3b3b3b;
+}
+
+.btn-github:hover,
+.btn-github:focus {
+    color: #fff;
+    background-color: #303030 !important;
+}
+
+.btn-instagram {
+    color: #fff;
+    background-color: #3f729b;
+}
+
+.btn-instagram:hover,
+.btn-instagram:focus {
+    color: #fff;
+    background-color: #305777 !important;
+}
+
+.btn-yahoo {
+    color: #fff;
+    background-color: #720e9e;
+}
+
+.btn-yahoo:hover,
+.btn-yahoo:focus {
+    color: #fff;
+    background-color: #600e85 !important;
+}
+
+.btn-live {
+    color: #fff;
+    background-color: #2672ec
+}
+
+.btn-live:hover,
+.btn-live:focus {
+    color: #fff;
+    background-color: #125acd !important;
+}
+
+.btn-twitch {
+    color: #fff;
+    background-color: #6441a5;
+}
+
+.btn-twitch:hover,
+.btn-twitch:focus {
+    color: #fff;
+    background-color: #7550ba !important;
+}
+
+.btn-bitbucket {
+    color: #fff;
+    background-color: #10375e;
+}
+
+.btn-bitbucket:hover,
+.btn-bitbucket:focus {
+    color: #fff;
+    background-color: #0d2c4a !important;
+}
+
+.btn-spotify {
+    color: #fff;
+    background-color: #2ebd59;
+}
+
+.btn-spotify:hover,
+.btn-spotify:focus {
+    color: #fff;
+    background-color: #29a34e !important;;
+}

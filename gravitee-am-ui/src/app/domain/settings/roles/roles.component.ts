@@ -51,7 +51,7 @@ export class DomainSettingsRolesComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.roleService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open("Certificate deleted");
+            this.snackbarService.open("Role deleted");
             this.loadRoles();
           });
         }
