@@ -20,11 +20,12 @@
   <div class="domain-general-content">
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column">
-        <div fxLayout="row" fxLayoutAlign="end">
-          <mat-slide-toggle matTooltip="{{domain.enabled ? 'Disable domain ?' : 'Enable domain ?'}}"
-                           (change)="enableDomain($event)"
-                           [checked]="domain.enabled">
+        <div class="domain-enable-state" fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableDomain($event)"
+            [checked]="domain.enabled">
           </mat-slide-toggle>
+          <mat-hint>Enable domain to handle incoming clients requests.</mat-hint>
         </div>
         <mat-form-field fxFlex style="margin-top: -20px;">
           <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required>

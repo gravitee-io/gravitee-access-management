@@ -32,13 +32,14 @@
         <span>{{user}}</span>
       </div>
     </div>
-    <div class="userAccountActions" style="background-color: #f5f5f5">
+    <div class="userAccountActions first">
       <mat-list>
-        <h3 matSubheader style="color: #006CAB;">Domains</h3>
+        <h3 matSubheader>Domains</h3>
         <a (click)="goTo(['/domains', domain.id])" *ngFor="let domain of domains" mat-menu-item>
-          <mat-list-item>
+          <mat-list-item [ngClass]="{'domain-disabled':!domain.enabled}">
               <mat-icon mat-list-icon>domain</mat-icon>
               <h4 matLine >{{domain.name}}</h4>
+              <span *ngIf="!domain.enabled"><mat-icon class="domain-disabled-icon"><i class="material-icons">priority_high</i></mat-icon> domain disabled</span>
           </mat-list-item>
         </a>
       </mat-list>

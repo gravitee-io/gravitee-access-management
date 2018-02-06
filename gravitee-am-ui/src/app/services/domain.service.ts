@@ -17,10 +17,13 @@ import { Injectable } from '@angular/core';
 import { Observable } from "rxjs";
 import { Http, Response } from "@angular/http";
 import { AppConfig } from "../../config/app.config";
+import { Subject } from "rxjs/Subject";
 
 @Injectable()
 export class DomainService {
   private domainsURL: string = AppConfig.settings.baseURL + '/domains/';
+  private domainUpdatedSource = new Subject<any>();
+  domainUpdated$ = this.domainUpdatedSource.asObservable();
 
   constructor(private http: Http) {}
 
@@ -58,5 +61,9 @@ export class DomainService {
 
   deleteLoginForm(domainId): Observable<Response> {
     return this.http.delete(this.domainsURL + domainId + '/login');
+  }
+
+  notify(domain): void {
+    this.domainUpdatedSource.next(domain);
   }
 }
