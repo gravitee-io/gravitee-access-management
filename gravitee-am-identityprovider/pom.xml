@@ -37,6 +37,7 @@
         <module>gravitee-am-identityprovider-inline</module>
         <module>gravitee-am-identityprovider-ldap</module>
         <module>gravitee-am-identityprovider-github</module>
+        <module>gravitee-am-identityprovider-mongo</module>
     </modules>
 
     <dependencies>
