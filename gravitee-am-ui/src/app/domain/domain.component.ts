@@ -17,6 +17,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
 import { SidenavService } from "../components/sidenav/sidenav.service";
 import { BreadcrumbService } from "../../libraries/ng2-breadcrumb/components/breadcrumbService";
+import { DomainService } from "../services/domain.service";
+import { SnackbarService } from "../services/snackbar.service";
 
 @Component({
   selector: 'app-domain',
@@ -26,11 +28,13 @@ import { BreadcrumbService } from "../../libraries/ng2-breadcrumb/components/bre
 export class DomainComponent implements OnInit {
   domain: any = {};
 
-  constructor(private route: ActivatedRoute, private sidenavService: SidenavService, private breadcrumbService: BreadcrumbService) {
+  constructor(private route: ActivatedRoute, private sidenavService: SidenavService, private snackbarService: SnackbarService,
+              private breadcrumbService: BreadcrumbService, private domainService: DomainService) {
   }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
+    this.domainService.domainUpdated$.subscribe(domain => this.domain = domain);
     setTimeout(() => {
       this.sidenavService.notify(this.domain);
     });
@@ -44,6 +48,14 @@ export class DomainComponent implements OnInit {
     this.breadcrumbService.hideRoute('/domains');
     this.breadcrumbService.hideRouteRegex('/domains/'+this.domain.id+'/settings/providers/.*/settings$');
     this.breadcrumbService.hideRouteRegex('/domains/'+this.domain.id+'/clients/.*/settings$');
+  }
+
+  enable() {
+    this.domain.enabled = true;
+    this.domainService.update(this.domain.id, this.domain).subscribe(response => {
+      this.domain = response.json();
+      this.snackbarService.open("Domain " + this.domain.name + " enabled");
+    });
   }
 
 }
