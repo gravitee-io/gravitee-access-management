@@ -155,10 +155,10 @@ public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter imple
                 // retrieve user attributes
                 User user = (User) authentication.getUserAuthentication().getPrincipal();
                 if (user.getAdditionalInformation() != null && !user.getAdditionalInformation().isEmpty()) {
-                    Map<String, Object> userAdditionalInformation = user.getAdditionalInformation();
+                    final Map<String, Object> userAdditionalInformation = user.getAdditionalInformation();
                     client.getIdTokenCustomClaims().forEach((key, value) -> {
-                        if (userAdditionalInformation.get(key) != null) {
-                            IDToken.put(key, user.getAdditionalInformation().get(key));
+                        if (userAdditionalInformation.get(value) != null) {
+                            IDToken.put(key, userAdditionalInformation.get(value));
                         }
                     });
                 }
