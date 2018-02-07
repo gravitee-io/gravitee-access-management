@@ -205,8 +205,13 @@ public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter imple
                 User user = (User) authentication.getUserAuthentication().getPrincipal();
                 if (user.getRoles() != null && !user.getRoles().isEmpty()) {
                     Set<Role> roles = roleService.findByIdIn(user.getRoles());
+                    Set<String> requestedScopes = authentication.getOAuth2Request().getScope();
                     Set<String> enhanceScopes = new HashSet<>(accessToken.getScope());
-                    enhanceScopes.addAll(roles.stream().map(r -> r.getPermissions()).flatMap(List::stream).collect(Collectors.toList()));
+                    enhanceScopes.addAll(roles.stream()
+                            .map(r -> r.getPermissions())
+                            .flatMap(List::stream)
+                            .filter(permission -> requestedScopes.contains(permission))
+                            .collect(Collectors.toList()));
                     ((DefaultOAuth2AccessToken) accessToken).setScope(enhanceScopes);
                 }
             }
