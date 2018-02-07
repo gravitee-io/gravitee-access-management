@@ -55,6 +55,8 @@ public class LoginController {
     private final static Logger logger = LoggerFactory.getLogger(LoginController.class);
     private final static String LOGIN_VIEW = "login";
     private final static List<String> socialProviders = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket");
+    private final static String errorPage = "forward:/oauth/error";
+
 
     @Autowired
     private ClientService clientService;
@@ -70,10 +72,16 @@ public class LoginController {
             @RequestParam(value = OAuth2Utils.CLIENT_ID) String clientId, HttpServletRequest request) {
         if (clientId == null || clientId.isEmpty()) {
             logger.error(OAuth2Utils.CLIENT_ID + " parameter is required");
-            return new ModelAndView("access_error");
+            return new ModelAndView(errorPage, Collections.singletonMap("error", OAuth2Utils.CLIENT_ID + " parameter is required"));
         }
 
-        Client client = clientService.findByDomainAndClientId(domain.getId(), clientId);
+        Client client;
+        try {
+            client = clientService.findByDomainAndClientId(domain.getId(), clientId);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return new ModelAndView(errorPage, Collections.singletonMap("error", e.getMessage()));
+        }
 
         Map<String, Object> params = new HashMap<>();
         params.put(OAuth2Utils.CLIENT_ID, client.getClientId());
