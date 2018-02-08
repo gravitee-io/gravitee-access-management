@@ -1,0 +1,48 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:github:GithubIdentityProviderConfiguration",
+  "description": "OAuth 2.0 Auhtorization Server identity provider, let you register and set up permissions and authorization options for OAuth 2.0 protocol.\n\nhttps://tools.ietf.org/html/rfc6749",
+  "properties" : {
+    "clientId" : {
+      "type" : "string",
+      "title": "Client ID",
+      "description": "OAuth2 client id"
+    },
+    "clientSecret" : {
+      "type" : "string",
+      "title": "Client Secret",
+      "description": "OAuth2 client secret"
+    },
+    "userAuthorizationUri" : {
+      "type" : "string",
+      "title": "User Authorization URI",
+      "description": "User authorization uri"
+    },
+    "accessTokenUri" : {
+      "type" : "string",
+      "title": "Access Token URI",
+      "description": "Access token uri"
+    },
+    "userProfileUri": {
+      "type" : "string",
+      "title": "User Profile URI",
+      "description": "OpenID Connect endpoint '/userinfo' that returns claims about the authenticated End-User, http://openid.net/specs/openid-connect-core-1_0.html#UserInfo"
+    },
+    "scopes": {
+      "type": "array",
+      "title": "Scopes",
+      "description": "Scopes let you specify exactly what type of access you need. Scopes limit access for OAuth tokens.",
+      "items":
+      {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "clientId",
+    "clientSecret",
+    "userAuthorizationUri",
+    "accessTokenUri",
+    "userProfileUri"
+  ]
+}

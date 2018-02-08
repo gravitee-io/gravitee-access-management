@@ -103,6 +103,7 @@ public class LoginController {
                     UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(configuration.getUserAuthorizationUri());
                     builder.queryParam(OAuth2Utils.CLIENT_ID, configuration.getClientId());
                     builder.queryParam(OAuth2Utils.REDIRECT_URI, buildRedirectUri(request, identity));
+                    builder.queryParam(OAuth2Utils.RESPONSE_TYPE, "code");
                     if (configuration.getScopes() != null && !configuration.getScopes().isEmpty()) {
                         builder.queryParam(OAuth2Utils.SCOPE, String.join(" ", configuration.getScopes()));
                     }
