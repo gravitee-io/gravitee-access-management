@@ -32,14 +32,15 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.common.util.OAuth2Utils;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -55,6 +56,7 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
     private static final String OAUTH2_IDENTIFIER = "_oauth2_";
     private static final String PROVIDER_PARAMETER = "provider";
     private static final String SAVED_REQUEST = "GRAVITEEIO_AM_SAVED_REQUEST";
+    private static final String errorPage = "/oauth/error";
     private AuthenticationEventPublisher authenticationEventPublisher;
 
     @Autowired
@@ -63,6 +65,7 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
     public OAuth2ClientAuthenticationFilter(String defaultFilterProcessesUrl) {
         super(defaultFilterProcessesUrl);
         setAuthenticationManager(new NoopAuthenticationManager());
+        setAuthenticationFailureHandler(new SimpleUrlAuthenticationFailureHandler(errorPage));
     }
 
     @Override
@@ -81,7 +84,7 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
 
         String password = request.getParameter(((OAuth2AuthenticationProvider) authenticationProvider).configuration().getCodeParameter());
         io.gravitee.am.identityprovider.api.Authentication provAuthentication = new EndUserAuthentication(OAUTH2_IDENTIFIER, password);
-        ((EndUserAuthentication) provAuthentication).setAdditionalInformation(Collections.singletonMap(OAuth2Utils.REDIRECT_URI, request.getRequestURL().toString()));
+        ((EndUserAuthentication) provAuthentication).setAdditionalInformation(Collections.singletonMap(OAuth2Utils.REDIRECT_URI, buildRedirectUri(request)));
         try {
             User user = authenticationProvider.loadUserByUsername(provAuthentication);
             if (user == null) {
@@ -149,6 +152,15 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
         return authentication != null && authentication.isAuthenticated()
                 && !(authentication instanceof AnonymousAuthenticationToken);
     }
+
+    private String buildRedirectUri(HttpServletRequest request) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(request.getRequestURL().toString());
+        // append provider query param to avoid redirect mismatch exception
+        builder.queryParam("provider", request.getParameter("provider"));
+
+        return builder.build(false).toUriString();
+    }
+
 
     private static class NoopAuthenticationManager implements AuthenticationManager {
 
