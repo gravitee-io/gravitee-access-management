@@ -17,19 +17,15 @@ package io.gravitee.am.gateway.handler.oauth2.controller;
 
 import io.gravitee.am.gateway.handler.oauth2.security.IdentityProviderManager;
 import io.gravitee.am.gateway.service.ClientService;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProvider;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProviderConfiguration;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.common.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.common.exceptions.InvalidRequestException;
 import org.springframework.security.oauth2.common.util.OAuth2Utils;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Controller;
@@ -56,7 +52,7 @@ public class LoginController {
     private final static String LOGIN_VIEW = "login";
     private final static List<String> socialProviders = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket");
     private final static String errorPage = "forward:/oauth/error";
-
+    private static final String SAVED_REQUEST = "GRAVITEEIO_AM_SAVED_REQUEST";
 
     @Autowired
     private ClientService clientService;
@@ -121,8 +117,8 @@ public class LoginController {
 
     @RequestMapping(value = "/login/callback")
     public void loginCallback(HttpServletResponse response, HttpSession session) throws IOException {
-        if (session != null && session.getAttribute("GRAVITEEIO_AM_SAVED_REQUEST") != null) {
-            final SavedRequest savedRequest = (SavedRequest) session.getAttribute("GRAVITEEIO_AM_SAVED_REQUEST");
+        if (session != null && session.getAttribute(SAVED_REQUEST) != null) {
+            final SavedRequest savedRequest = (SavedRequest) session.getAttribute(SAVED_REQUEST);
             response.sendRedirect(savedRequest.getRedirectUrl());
         } else {
             response.sendRedirect("/login");

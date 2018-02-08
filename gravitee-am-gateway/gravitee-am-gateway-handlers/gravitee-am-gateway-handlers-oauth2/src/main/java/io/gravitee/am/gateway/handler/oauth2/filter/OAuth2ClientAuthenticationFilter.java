@@ -54,6 +54,7 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
     private final Logger logger = LoggerFactory.getLogger(OAuth2ClientAuthenticationFilter.class);
     private static final String OAUTH2_IDENTIFIER = "_oauth2_";
     private static final String PROVIDER_PARAMETER = "provider";
+    private static final String SAVED_REQUEST = "GRAVITEEIO_AM_SAVED_REQUEST";
     private AuthenticationEventPublisher authenticationEventPublisher;
 
     @Autowired
@@ -121,7 +122,7 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
         // for redirection after successful authentication
         SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
         if (savedRequest != null && request.getSession(false) != null) {
-            request.getSession(false).setAttribute("GRAVITEEIO_AM_SAVED_REQUEST", savedRequest);
+            request.getSession(false).setAttribute(SAVED_REQUEST, savedRequest);
         }
 
         chain.doFilter(request, response);

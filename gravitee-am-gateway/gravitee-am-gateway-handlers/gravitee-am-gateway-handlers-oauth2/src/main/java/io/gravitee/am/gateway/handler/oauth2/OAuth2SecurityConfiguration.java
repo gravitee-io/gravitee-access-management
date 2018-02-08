@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2;
 
+import io.gravitee.am.gateway.handler.oauth2.authentication.CustomSavedRequestAwareAuthenticationSuccessHandler;
 import io.gravitee.am.gateway.handler.oauth2.authentication.OAuth2LoginUrlAuthenticationEntryPoint;
 import io.gravitee.am.gateway.handler.oauth2.filter.CORSFilter;
 import io.gravitee.am.gateway.handler.oauth2.filter.OAuth2ClientAuthenticationFilter;
@@ -171,7 +172,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     private AuthenticationSuccessHandler authenticationSuccessHandler() {
-        SavedRequestAwareAuthenticationSuccessHandler successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
+        SavedRequestAwareAuthenticationSuccessHandler successHandler = new CustomSavedRequestAwareAuthenticationSuccessHandler();
         successHandler.setRedirectStrategy(new XForwardedAwareRedirectStrategy());
         return successHandler;
     }
