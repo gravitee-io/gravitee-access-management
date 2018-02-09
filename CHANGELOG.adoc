@@ -1,0 +1,260 @@
+# Change Log
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/11?closed=1[1.5.3 (2018-01-12)]
+
+=== Bug fixes
+
+*_Oauth2_*
+
+- Encoded redirect uri mistmatch https://github.com/gravitee-io/graviteeio-access-management/issues/186[#186]
+
+=== Improvements
+
+*_Oauth2_*
+
+- Extension grants allow to save user in database https://github.com/gravitee-io/graviteeio-access-management/issues/184[#184]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/12?closed=1[1.5.2 (2017-12-20)]
+
+=== Improvements
+
+*_Docker_*
+
+- Allow to configure nginx port https://github.com/gravitee-io/graviteeio-access-management/issues/179[#179]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/10?closed=1[1.5.1 (2017-11-14)]
+
+=== Bug fixes
+
+*_General_*
+
+- LDAP userSearchBase field must not be null https://github.com/gravitee-io/graviteeio-access-management/issues/177[#177]
+
+*_Oauth2_*
+
+- Fix token generation since extension grants feature https://github.com/gravitee-io/graviteeio-access-management/issues/175[#175]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/8?closed=1[1.5.0 (2017-11-13)]
+
+=== Features
+
+*_Oauth2_*
+
+- Add possibility to generate access token per request https://github.com/gravitee-io/graviteeio-access-management/issues/169[#169]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/9?closed=1[1.4.2 (2017-10-09)]
+
+=== Bug fixes
+
+*_Oauth2_*
+
+- Set default user for refresh token grant type https://github.com/gravitee-io/graviteeio-access-management/issues/167[#167]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/6?closed=1[1.4.0 (2017-09-05)]
+
+=== Bug fixes
+
+*_Management-api_*
+
+-  delete all data related to a security domain https://github.com/gravitee-io/graviteeio-access-management/issues/148[#148]
+
+*_Webui_*
+
+- Not able to create a new certificate https://github.com/gravitee-io/graviteeio-access-management/issues/151[#151]
+
+=== Features
+
+*_Global_*
+
+- Create AM docker images https://github.com/gravitee-io/graviteeio-access-management/issues/124[#124]
+- Create PID file for Gravitee.AM Gateway process https://github.com/gravitee-io/graviteeio-access-management/issues/121[#121]
+
+*_Oauth2_*
+
+- Better handle Refresh token grant flow https://github.com/gravitee-io/graviteeio-access-management/issues/120[#120]
+
+=== Improvements
+
+*_Management-api_*
+
+-  do not display top clients without access tokens https://github.com/gravitee-io/graviteeio-access-management/issues/159[#159]
+
+*_Management-ui_*
+
+- Re-order administration pages https://github.com/gravitee-io/graviteeio-access-management/issues/156[#156]
+- Update angular2-json-schema-form https://github.com/gravitee-io/graviteeio-access-management/issues/146[#146]
+
+*_Portal_*
+
+- Upgrade dependencies https://github.com/gravitee-io/graviteeio-access-management/issues/126[#126]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/7?closed=1[1.3.1 (2017-08-17)]
+
+=== Bug fixes
+
+*_Oauth2_*
+
+- Access/Refresh token created/updated date not set https://github.com/gravitee-io/graviteeio-access-management/issues/128[#128]
+
+*_Openid-connect_*
+
+- Set a default ID token expiry time  https://github.com/gravitee-io/graviteeio-access-management/issues/134[#134]
+
+*_Portal_*
+
+- Fail to update identity provider definition https://github.com/gravitee-io/graviteeio-access-management/issues/130[#130]
+
+=== Features
+
+*_Global_*
+
+- Role mapper for in-line identity provider https://github.com/gravitee-io/graviteeio-access-management/issues/140[#140]
+
+=== Improvements
+
+*_Management-ui_*
+
+- New design for administration screens https://github.com/gravitee-io/graviteeio-access-management/issues/141[#141]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/4?closed=1[1.3.0 (2017-07-12)]
+
+=== Features
+
+*_Global_*
+
+- Role management https://github.com/gravitee-io/graviteeio-access-management/issues/116[#116]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/5?closed=1[1.2.1 (2017-06-22)]
+
+=== Bug fixes
+
+*_Admin_*
+
+- No logo top-left corner if behind a reverse-proxy https://github.com/gravitee-io/graviteeio-access-management/issues/108[#108]
+
+*_Oauth2_*
+
+- Approval page behind a reverse-proxy https://github.com/gravitee-io/graviteeio-access-management/issues/114[#114]
+- Default scopes for the admin client https://github.com/gravitee-io/graviteeio-access-management/issues/105[#105]
+- Do not fetch remote icon fonts for default login page https://github.com/gravitee-io/graviteeio-access-management/issues/112[#112]
+- Refresh token is null at second call https://github.com/gravitee-io/graviteeio-access-management/issues/107[#107]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/3?closed=1[1.2.0 (2017-06-19)]
+
+=== Bug fixes
+
+*_Management-ui_*
+
+- Sandbox login preview page https://github.com/gravitee-io/graviteeio-access-management/issues/95[#95]
+
+*_Oauth2_*
+
+- Ensure backward compatibility https://github.com/gravitee-io/graviteeio-access-management/issues/90[#90]
+- Login form action is relative https://github.com/gravitee-io/graviteeio-access-management/issues/101[#101]
+
+=== Features
+
+*_Identity-provider_*
+
+-  override default identity provider user attributes https://github.com/gravitee-io/graviteeio-access-management/issues/75[#75]
+
+*_Management-ui_*
+
+-  map user attributes from identity provider https://github.com/gravitee-io/graviteeio-access-management/issues/74[#74]
+- Self hosting material design icons  https://github.com/gravitee-io/graviteeio-access-management/issues/82[#82]
+
+*_Oauth2_*
+
+-  Signing JWTs with Domain cryptographic algorithms https://github.com/gravitee-io/graviteeio-access-management/issues/94[#94]
+
+=== Improvements
+
+*_Management-ui_*
+
+- Create breadcrumb https://github.com/gravitee-io/graviteeio-access-management/issues/84[#84]
+
+*_Openid_*
+
+- Remove default openid scope registered with the client https://github.com/gravitee-io/graviteeio-access-management/issues/92[#92]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/2?closed=1[1.1.0 (2017-05-29)]
+
+=== Bug fixes
+
+*_Management-api_*
+
+- Update domain when modify identity provider https://github.com/gravitee-io/graviteeio-access-management/issues/72[#72]
+
+=== Features
+
+*_Global_*
+
+-  add mongodb repository configuration https://github.com/gravitee-io/graviteeio-access-management/issues/73[#73]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/1?closed=1[1.0.0 (2017-05-15)]
+
+=== Bug fixes
+
+*_Management-api_*
+
+- Browser error when a client has no grant types https://github.com/gravitee-io/graviteeio-access-management/issues/14[#14]
+
+*_Management-ui_*
+
+- Fix splash screen image flickering https://github.com/gravitee-io/graviteeio-access-management/issues/44[#44]
+
+*_Oauth2_*
+
+- Access token collision https://github.com/gravitee-io/graviteeio-access-management/issues/8[#8]
+- CORS header not settled for /oauth/token https://github.com/gravitee-io/graviteeio-access-management/issues/9[#9]
+- Display authenticated user during token validation https://github.com/gravitee-io/graviteeio-access-management/issues/32[#32]
+- Error when generating an access token using application/xml https://github.com/gravitee-io/graviteeio-access-management/issues/25[#25]
+- HTTP Error 500 when client_id does not exist https://github.com/gravitee-io/graviteeio-access-management/issues/36[#36]
+- Not able to authenticate user using inline identity provider  https://github.com/gravitee-io/graviteeio-access-management/issues/29[#29]
+- Refresh token does not work as expected https://github.com/gravitee-io/graviteeio-access-management/issues/7[#7]
+
+=== Features
+
+*_General_*
+
+- JWT support https://github.com/gravitee-io/graviteeio-access-management/issues/3[#3]
+
+*_Management-api_*
+
+- Delete a client https://github.com/gravitee-io/graviteeio-access-management/issues/38[#38]
+- Delete identity provider https://github.com/gravitee-io/graviteeio-access-management/issues/46[#46]
+- Initial implementation of rest-api https://github.com/gravitee-io/graviteeio-access-management/issues/2[#2]
+- Secure the management rest-api https://github.com/gravitee-io/graviteeio-access-management/issues/18[#18]
+
+*_Management-ui_*
+
+-  initial implementation of the web-ui https://github.com/gravitee-io/graviteeio-access-management/issues/10[#10]
+- Custom login page per domain https://github.com/gravitee-io/graviteeio-access-management/issues/20[#20]
+- Handle oauth2 client logout https://github.com/gravitee-io/graviteeio-access-management/issues/50[#50]
+- Secure the management UI https://github.com/gravitee-io/graviteeio-access-management/issues/22[#22]
+
+*_Oauth2_*
+
+- Token revocationaccess_token and refresh_token https://github.com/gravitee-io/graviteeio-access-management/issues/27[#27]
+
+=== Improvements
+
+*_Global_*
+
+- Initialize the repository to be able to connect to AM after first start. https://github.com/gravitee-io/graviteeio-access-management/issues/51[#51]
+
+*_Oauth2_*
+
+- Custom global login form https://github.com/gravitee-io/graviteeio-access-management/issues/34[#34]
+- Default content-type to JSON https://github.com/gravitee-io/graviteeio-access-management/issues/23[#23]
