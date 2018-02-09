@@ -22,6 +22,9 @@
       line-height: 1.66666666666667;
       text-transform: uppercase;
     }
+    mat-list-item {
+      height: 32px;
+    }
     /deep/ .mat-list-item-content {
       padding: 0;
       height: 32px;
