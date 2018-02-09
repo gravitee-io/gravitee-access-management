@@ -25,7 +25,6 @@ import {
   MatGridListModule, MatIconModule, MatListModule, MatNativeDateModule, MatProgressBarModule, MatProgressSpinnerModule,
   MatRadioModule, MatRippleModule, MatSelectModule, MatSliderModule, MatSnackBarModule, MatSortModule, MatTableModule,
   MatTabsModule, MatToolbarModule, MatTooltipModule } from '@angular/material';
-import { MATERIAL_COMPATIBILITY_MODE } from '@angular/material';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -37,8 +36,8 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { JsonSchemaFormModule } from 'angular2-json-schema-form';
 import { CodemirrorModule } from 'ng2-codemirror';
+import { JsonSchemaFormModule } from "./components/json-schema-form/json-schema-form.module";
 import 'hammerjs';
 import 'codemirror';
 import "codemirror/mode/htmlmixed/htmlmixed";
@@ -230,8 +229,7 @@ import { MaterialFileComponent } from "./components/json-schema-form/material-fi
     JsonSchemaFormModule,
     CodemirrorModule,
     Ng2BreadcrumbModule.forRoot(),
-    ClipboardModule,
-    JsonSchemaFormModule
+    ClipboardModule
   ],
   providers: [
     DomainService,
@@ -266,7 +264,6 @@ import { MaterialFileComponent } from "./components/json-schema-form/material-fi
     ScopesResolver,
     ScopeResolver,
     ScopeService,
-    { provide: MATERIAL_COMPATIBILITY_MODE, useValue: true},
     { provide: Http, useClass: HttpService }
   ],
   entryComponents: [
