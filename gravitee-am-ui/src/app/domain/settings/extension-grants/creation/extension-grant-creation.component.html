@@ -20,7 +20,7 @@
   <div fxLayout="row">
     <mat-horizontal-stepper linear fxFlex="70" #stepper="matHorizontalStepper">
       <mat-step label="Extension grant type" [completed]="extensionGrant.type">
-        <extension-grant-creation-step1 [extensionGrant]="extensionGrant" (nextStepTriggered)="nextStep()"></extension-grant-creation-step1>
+        <extension-grant-creation-step1 [extensionGrant]="extensionGrant"></extension-grant-creation-step1>
         <div fxLayout="row" fxLayoutAlign="end end">
           <button mat-button matStepperNext type="button"[disabled]="!extensionGrant.type">NEXT</button>
         </div>
