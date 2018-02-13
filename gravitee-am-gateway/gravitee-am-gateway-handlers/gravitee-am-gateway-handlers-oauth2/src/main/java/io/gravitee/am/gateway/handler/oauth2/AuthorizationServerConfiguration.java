@@ -17,10 +17,11 @@ package io.gravitee.am.gateway.handler.oauth2;
 
 import io.gravitee.am.gateway.handler.oauth2.provider.approval.DefaultApprovalStore;
 import io.gravitee.am.gateway.handler.oauth2.provider.approval.DefaultApprovalStoreUserApprovalHandler;
-import io.gravitee.am.gateway.handler.oauth2.provider.jwt.CustomJwtAccessTokenConverter;
+import io.gravitee.am.gateway.handler.oauth2.provider.jwt.CustomTokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.provider.request.CustomOAuth2RequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.provider.security.web.authentication.ClientAwareAuthenticationDetailsSource;
 import io.gravitee.am.gateway.handler.oauth2.provider.token.CustomTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.provider.token.DefaultIntrospectionAccessTokenConverter;
 import io.gravitee.am.gateway.handler.oauth2.security.ExtensionGrantManager;
 import io.gravitee.am.model.Domain;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +48,9 @@ import org.springframework.security.oauth2.provider.client.ClientDetailsUserDeta
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
+import org.springframework.security.oauth2.provider.token.AccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.security.oauth2.provider.token.TokenStore;
-import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
@@ -112,15 +114,19 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     }
 
     @Bean
-    public JwtAccessTokenConverter accessTokenConverter() {
-        return new CustomJwtAccessTokenConverter();
+    public AccessTokenConverter accessTokenConverter() {
+        return new DefaultIntrospectionAccessTokenConverter();
     }
+
+    @Bean
+    public TokenEnhancer tokenEnhancer() { return new CustomTokenEnhancer(); }
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints
             .tokenStore(tokenStore)
             .accessTokenConverter(accessTokenConverter())
+            .tokenEnhancer(tokenEnhancer())
             .reuseRefreshTokens(false)
             .userDetailsService(userDetailsService)
             .authorizationCodeServices(authorizationCodeServices)
