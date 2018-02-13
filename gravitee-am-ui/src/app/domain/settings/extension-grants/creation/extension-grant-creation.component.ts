@@ -13,33 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { MatStepper } from "@angular/material";
 
 @Component({
   selector: 'app-extension-grant-creation',
   templateUrl: './extension-grant-creation.component.html',
   styleUrls: ['./extension-grant-creation.component.scss']
 })
-export class ExtensionGrantCreationComponent implements OnInit {
-  private extensionGrant: any = {};
-  currentStep: number;
+export class ExtensionGrantCreationComponent {
+  public extensionGrant: any = {};
+  @ViewChild ('stepper') stepper: MatStepper;
 
   constructor() { }
-
-  ngOnInit() {
-    this.currentStep = 1;
-  }
-
-  selectExtensionGrantType(event) {
-    this.extensionGrant.type = event;
-  }
-
-  nextStep() {
-    this.currentStep += 1;
-  }
-
-  previousStep() {
-    this.currentStep -= 1;
-  }
-
 }

@@ -15,18 +15,47 @@
     limitations under the License.
 
 -->
-<div class="new-certificate-container">
+<div class="new-certificate-container" fxLayout="column">
   <h1>New certificate</h1>
-  <div class="new-certificate-content">
-    <div *ngIf="currentStep == 1">
-      <certificate-creation-step1 [certificate]="certificate" (certificateTypeSelected)="selectCertificateType($event)" (nextStepTriggered)="nextStep()"></certificate-creation-step1>
-    </div>
-
-    <div *ngIf="currentStep > 1">
-      <certificate-creation-step2 [certificate]="certificate"></certificate-creation-step2>
-    </div>
-    <div fxLayout="row" style="margin-top: 20px;">
-      <button *ngIf="currentStep > 1" mat-button (click)="previousStep()">PREVIOUS</button>
+  <div fxLayout="row">
+    <mat-horizontal-stepper linear fxFlex="70" #stepper="matHorizontalStepper">
+      <mat-step label="Certificate type" [completed]="certificate.type">
+        <certificate-creation-step1 [certificate]="certificate"></certificate-creation-step1>
+        <div fxLayout="row" fxLayoutAlign="end end">
+          <button mat-button matStepperNext type="button"[disabled]="!certificate.type">NEXT</button>
+        </div>
+      </mat-step>
+      <mat-step>
+        <certificate-creation-step2 *ngIf="stepper.selectedIndex == 1" [certificate]="certificate"></certificate-creation-step2>
+        <div>
+          <button mat-button matStepperPrevious type="button">BACK</button>
+        </div>
+      </mat-step>
+    </mat-horizontal-stepper>
+    <div fxFlex fxLayout="column" class="new-certificate-steps-info">
+      <div class="new-certificate-steps-info-header">
+        <h4>Create your certificate</h4>
+        <mat-divider></mat-divider>
+      </div>
+      <mat-vertical-stepper>
+        <mat-step [editable]="false">
+          <ng-template matStepLabel>
+            <h5>
+              <span *ngIf="stepper.selectedIndex == 0; else step1Completed;">General</span>
+              <ng-template #step1Completed>
+                <span class="certificate-selected">{{certificate.type}}</span>
+              </ng-template>
+            </h5>
+            <small>Certificate type</small>
+          </ng-template>
+        </mat-step>
+        <mat-step *ngIf="stepper.selectedIndex == 1" [editable]="false">
+          <ng-template matStepLabel>
+            <h5>Configuration</h5>
+            <small>Certificate configuration</small>
+          </ng-template>
+        </mat-step>
+      </mat-vertical-stepper>
     </div>
   </div>
 </div>

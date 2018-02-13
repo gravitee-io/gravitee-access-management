@@ -15,18 +15,47 @@
     limitations under the License.
 
 -->
-<div class="new-provider-container">
+<div class="new-provider-container" fxLayout="column">
   <h1>New provider</h1>
-  <div class="new-provider-content">
-    <div *ngIf="currentStep == 1">
-      <provider-creation-step1 [provider]="provider" (providerTypeSelected)="selectProviderType($event)" (nextStepTriggered)="nextStep()"></provider-creation-step1>
-    </div>
-
-    <div *ngIf="currentStep > 1">
-      <provider-creation-step2 [provider]="provider"></provider-creation-step2>
-    </div>
-    <div fxLayout="row" style="margin-top: 20px;">
-      <button *ngIf="currentStep > 1" mat-button (click)="previousStep()">PREVIOUS</button>
+  <div fxLayout="row">
+    <mat-horizontal-stepper linear fxFlex="70" #stepper="matHorizontalStepper">
+      <mat-step label="Identity Provider type" [completed]="provider.type">
+        <provider-creation-step1 [provider]="provider"></provider-creation-step1>
+        <div fxLayout="row" fxLayoutAlign="end end">
+          <button mat-button matStepperNext type="button"[disabled]="!provider.type">NEXT</button>
+        </div>
+      </mat-step>
+      <mat-step label="Identity Provider configuration">
+        <provider-creation-step2 *ngIf="stepper.selectedIndex == 1" [provider]="provider"></provider-creation-step2>
+        <div>
+          <button mat-button matStepperPrevious type="button">BACK</button>
+        </div>
+      </mat-step>
+    </mat-horizontal-stepper>
+    <div fxFlex fxLayout="column" class="new-provider-steps-info">
+      <div class="new-provider-steps-info-header">
+        <h4>Create your provider</h4>
+        <mat-divider></mat-divider>
+      </div>
+      <mat-vertical-stepper>
+        <mat-step [editable]="false">
+          <ng-template matStepLabel>
+            <h5>
+              <span *ngIf="stepper.selectedIndex == 0; else step1Completed;">General</span>
+              <ng-template #step1Completed>
+                <span class="provider-selected">{{provider.type}}</span>
+              </ng-template>
+            </h5>
+            <small>Identity provider type</small>
+          </ng-template>
+        </mat-step>
+        <mat-step *ngIf="stepper.selectedIndex == 1" [editable]="false">
+          <ng-template matStepLabel>
+            <h5>Configuration</h5>
+            <small>Identity provider configuration</small>
+          </ng-template>
+        </mat-step>
+      </mat-vertical-stepper>
     </div>
   </div>
 </div>

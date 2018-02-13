@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input } from '@angular/core';
+import {Component, OnInit, Input, OnChanges, SimpleChanges, ViewChild} from '@angular/core';
 import { PlatformService } from "../../../../../../services/platform.service";
 import { ProviderService } from "../../../../../../services/provider.service";
 import { SnackbarService } from "../../../../../../services/snackbar.service";
@@ -24,7 +24,7 @@ import { Router, ActivatedRoute } from "@angular/router";
   templateUrl: './step2.component.html',
   styleUrls: ['./step2.component.scss']
 })
-export class ProviderCreationStep2Component implements OnInit {
+export class ProviderCreationStep2Component implements OnInit, OnChanges {
   @Input('provider') provider: any;
   configuration: any;
   configurationIsValid: boolean = false;
@@ -35,9 +35,13 @@ export class ProviderCreationStep2Component implements OnInit {
               private snackbarService: SnackbarService, private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
-    console.log(this.provider);
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.platformService.identitySchema(this.provider.type).map(resp => resp.json()).subscribe(data => this.providerSchema = data);
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.provider) {
+      this.platformService.identitySchema(changes.provider.currentValue.type).map(resp => resp.json()).subscribe(data => this.providerSchema = data);
+    }
   }
 
   enableProviderCreation(configurationWrapper) {
