@@ -13,33 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { MatStepper } from "@angular/material";
 
 @Component({
   selector: 'app-certificate-creation',
   templateUrl: './certificate-creation.component.html',
   styleUrls: ['./certificate-creation.component.scss']
 })
-export class CertificateCreationComponent implements OnInit {
-  private certificate: any = {};
-  currentStep: number;
+export class CertificateCreationComponent {
+  public certificate: any = {};
+  @ViewChild ('stepper') stepper: MatStepper;
 
   constructor() { }
-
-  ngOnInit() {
-    this.currentStep = 1;
-  }
-
-  selectCertificateType(event) {
-    this.certificate.type = event;
-  }
-
-  nextStep() {
-    this.currentStep += 1;
-  }
-
-  previousStep() {
-    this.currentStep -= 1;
-  }
-
 }

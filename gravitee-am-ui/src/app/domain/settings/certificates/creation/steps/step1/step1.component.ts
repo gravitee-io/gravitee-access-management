@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Output, EventEmitter, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { PlatformService } from "../../../../../../services/platform.service";
 
 @Component({
@@ -21,10 +21,8 @@ import { PlatformService } from "../../../../../../services/platform.service";
   templateUrl: './step1.component.html',
   styleUrls: ['./step1.component.scss']
 })
-export class CertificateCreationStep1Component implements OnInit, OnChanges {
-  @Input() certificate: any = {};
-  @Output() certificateTypeSelected = new EventEmitter<string>();
-  @Output() nextStepTriggered = new EventEmitter<boolean>();
+export class CertificateCreationStep1Component implements OnInit {
+  @Input() certificate: any;
   certificates: any[];
   selectedCertificateTypeId : string;
 
@@ -35,18 +33,7 @@ export class CertificateCreationStep1Component implements OnInit, OnChanges {
     this.platformService.certificates().map(res => res.json()).subscribe(data => this.certificates = data);
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    let _certificate = changes.certificate.currentValue;
-    if (_certificate.type) {
-      this.selectedCertificateTypeId = _certificate.type;
-    }
-  }
-
   selectCertificateType() {
-    this.certificateTypeSelected.emit(this.selectedCertificateTypeId);
-  }
-
-  nextStep() {
-    this.nextStepTriggered.emit(true);
+    this.certificate.type = this.selectedCertificateTypeId;
   }
 }

@@ -13,32 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import {Component, ViewChild} from '@angular/core';
+import {MatStepper} from "@angular/material";
 
 @Component({
   selector: 'app-creation',
   templateUrl: './provider-creation.component.html',
   styleUrls: ['./provider-creation.component.scss']
 })
-export class ProviderCreationComponent implements OnInit {
-  private provider: any = {};
-  currentStep: number;
+export class ProviderCreationComponent {
+  public provider: any = {};
+  @ViewChild ('stepper') stepper: MatStepper;
 
   constructor() { }
-
-  ngOnInit() {
-    this.currentStep = 1;
-  }
-
-  selectProviderType(event) {
-    this.provider.type = event;
-  }
-
-  nextStep() {
-    this.currentStep += 1;
-  }
-
-  previousStep() {
-    this.currentStep -= 1;
-  }
 }

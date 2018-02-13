@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Output, EventEmitter, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { PlatformService } from "../../../../../../services/platform.service";
 
 @Component({
@@ -21,10 +21,8 @@ import { PlatformService } from "../../../../../../services/platform.service";
   templateUrl: './step1.component.html',
   styleUrls: ['./step1.component.scss']
 })
-export class ExtensionGrantCreationStep1Component implements OnInit, OnChanges {
-  @Input() extensionGrant: any = {};
-  @Output() extensionGrantTypeSelected = new EventEmitter<string>();
-  @Output() nextStepTriggered = new EventEmitter<boolean>();
+export class ExtensionGrantCreationStep1Component implements OnInit {
+  @Input() extensionGrant: any;
   extensionGrants: any[];
   selectedExtensionGrantTypeId : string;
 
@@ -35,18 +33,7 @@ export class ExtensionGrantCreationStep1Component implements OnInit, OnChanges {
     this.platformService.extensionGrants().map(res => res.json()).subscribe(data => this.extensionGrants = data);
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    let _extensionGrant = changes.extensionGrant.currentValue;
-    if (_extensionGrant && _extensionGrant.type) {
-      this.selectedExtensionGrantTypeId = _extensionGrant.type;
-    }
-  }
-
   selectExtensionGrantType() {
-    this.extensionGrantTypeSelected.emit(this.selectedExtensionGrantTypeId);
-  }
-
-  nextStep() {
-    this.nextStepTriggered.emit(true);
+    this.extensionGrant.type = this.selectedExtensionGrantTypeId;
   }
 }

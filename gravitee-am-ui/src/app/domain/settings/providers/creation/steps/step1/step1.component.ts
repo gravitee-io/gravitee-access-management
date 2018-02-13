@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Output, EventEmitter, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { PlatformService } from "../../../../../../services/platform.service";
 
 @Component({
@@ -21,10 +21,8 @@ import { PlatformService } from "../../../../../../services/platform.service";
   templateUrl: './step1.component.html',
   styleUrls: ['./step1.component.scss']
 })
-export class ProviderCreationStep1Component implements OnInit, OnChanges {
-  @Input() provider: any = {};
-  @Output() providerTypeSelected = new EventEmitter<string>();
-  @Output() nextStepTriggered = new EventEmitter<boolean>();
+export class ProviderCreationStep1Component implements OnInit {
+  @Input() provider;
   providers: any[];
   oauth2Providers: any[];
   selectedProviderTypeId : string;
@@ -37,19 +35,8 @@ export class ProviderCreationStep1Component implements OnInit, OnChanges {
     this.platformService.oauth2Identities().map(res => res.json()).subscribe(data => this.oauth2Providers = data);
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    let _provider = changes.provider.currentValue;
-    if (_provider.type) {
-      this.selectedProviderTypeId = _provider.type;
-    }
-  }
-
   selectProviderType(isExternal: boolean) {
     this.provider.external = isExternal;
-    this.providerTypeSelected.emit(this.selectedProviderTypeId);
-  }
-
-  nextStep() {
-    this.nextStepTriggered.emit(true);
+    this.provider.type = this.selectedProviderTypeId;
   }
 }

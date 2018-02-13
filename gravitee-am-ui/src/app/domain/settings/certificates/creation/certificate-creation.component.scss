@@ -3,7 +3,34 @@
   h1 {
     font-weight: 400;
   }
-  .new-certificate-content {
-    padding: 20px 0 20px;
+  mat-horizontal-stepper {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 2px 1px -1px rgba(0, 0, 0, 0.12);
+    margin: 5px;
+    /deep/ .mat-horizontal-stepper-header-container {
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 2px 1px -1px rgba(0, 0, 0, 0.12);
+    }
+    /deep/ .mat-horizontal-content-container {
+      padding: 24px;
+    }
+  }
+  .new-certificate-steps-info {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 2px 1px -1px rgba(0, 0, 0, 0.12);
+    margin: 5px;
+    .new-certificate-steps-info-header {
+      padding: 8px;
+      h4 {
+        margin-left: 8px;
+        font-weight: 500;
+      }
+    }
+    mat-vertical-stepper {
+      pointer-events: none;
+      h5 {
+        margin: 0;
+      }
+      .certificate-selected {
+        color: #2196f3;
+      }
+    }
   }
 }

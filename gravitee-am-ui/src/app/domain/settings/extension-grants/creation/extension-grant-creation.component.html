@@ -15,18 +15,47 @@
     limitations under the License.
 
 -->
-<div class="new-token-granter-container">
-  <h1>New token granter</h1>
-  <div class="new-token-granter-content">
-    <div *ngIf="currentStep == 1">
-      <extension-grant-creation-step1 [extensionGrant]="extensionGrant" (extensionGrantTypeSelected)="selectExtensionGrantType($event)" (nextStepTriggered)="nextStep()"></extension-grant-creation-step1>
-    </div>
-
-    <div *ngIf="currentStep > 1">
-      <extension-grant-creation-step2 [extensionGrant]="extensionGrant"></extension-grant-creation-step2>
-    </div>
-    <div fxLayout="row" style="margin-top: 20px;">
-      <button *ngIf="currentStep > 1" mat-button (click)="previousStep()">PREVIOUS</button>
+<div class="new-token-granter-container" fxLayout="column">
+  <h1>New extension grant</h1>
+  <div fxLayout="row">
+    <mat-horizontal-stepper linear fxFlex="70" #stepper="matHorizontalStepper">
+      <mat-step label="Extension grant type" [completed]="extensionGrant.type">
+        <extension-grant-creation-step1 [extensionGrant]="extensionGrant" (nextStepTriggered)="nextStep()"></extension-grant-creation-step1>
+        <div fxLayout="row" fxLayoutAlign="end end">
+          <button mat-button matStepperNext type="button"[disabled]="!extensionGrant.type">NEXT</button>
+        </div>
+      </mat-step>
+      <mat-step label="Extension grant configuration">
+        <extension-grant-creation-step2 *ngIf="stepper.selectedIndex == 1" [extensionGrant]="extensionGrant"></extension-grant-creation-step2>
+        <div>
+          <button mat-button matStepperPrevious type="button">BACK</button>
+        </div>
+      </mat-step>
+    </mat-horizontal-stepper>
+    <div fxFlex fxLayout="column" class="new-extension-grant-steps-info">
+      <div class="new-extension-grant-steps-info-header">
+        <h4>Create your extension grant</h4>
+        <mat-divider></mat-divider>
+      </div>
+      <mat-vertical-stepper>
+        <mat-step [editable]="false">
+          <ng-template matStepLabel>
+            <h5>
+              <span *ngIf="stepper.selectedIndex == 0; else step1Completed;">General</span>
+              <ng-template #step1Completed>
+                <span class="extension-grant-selected">{{extensionGrant.type}}</span>
+              </ng-template>
+            </h5>
+            <small>Extension grant type</small>
+          </ng-template>
+        </mat-step>
+        <mat-step *ngIf="stepper.selectedIndex == 1" [editable]="false">
+          <ng-template matStepLabel>
+            <h5>Configuration</h5>
+            <small>Extension grant configuration</small>
+          </ng-template>
+        </mat-step>
+      </mat-vertical-stepper>
     </div>
   </div>
 </div>
