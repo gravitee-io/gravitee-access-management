@@ -37,6 +37,7 @@ import org.springframework.security.oauth2.common.util.JsonParserFactory;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 
 import java.security.KeyPair;
@@ -47,9 +48,10 @@ import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter implements InitializingBean {
+public class CustomTokenEnhancer implements InitializingBean, TokenEnhancer {
 
     @Value("${oidc.iss:http://gravitee.am}")
     private String iss;
@@ -80,10 +82,8 @@ public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter imple
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.setKeyPair(keyPair);
         PrivateKey privateKey = keyPair.getPrivate();
         signer = new RsaSigner((RSAPrivateKey) privateKey);
-        this.setAccessTokenConverter(new DefaultIntrospectionAccessTokenConverter());
     }
 
     @Override
@@ -96,41 +96,13 @@ public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter imple
 
         // enhance token with ID token
         if (authentication.getOAuth2Request().getScope() != null && authentication.getOAuth2Request().getScope().contains(OPEN_ID)) {
-            return enhance0(accessToken, authentication);
+            enhance0(accessToken, authentication);
         }
 
-        return super.enhance(accessToken, authentication);
-    }
-
-    @Override
-    protected String encode(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
-        if (clientDetails == null || !(clientDetails instanceof DelegateClientDetails)) {
-            return super.encode(accessToken, authentication);
-        }
-
-        // encode token with client certificate
-        String content;
-        try {
-            content = objectMapper.formatMap(getAccessTokenConverter().convertAccessToken(accessToken, authentication));
-        }
-        catch (Exception e) {
-            throw new IllegalStateException("Cannot convert access token to JSON", e);
-        }
-
-        Client client = ((DelegateClientDetails) clientDetails).getClient();
-        if (client.getCertificate() != null) {
-            CertificateProvider certificateProvider = certificateManager.get(client.getCertificate());
-            if (certificateProvider != null) {
-                return certificateProvider.sign(content);
-            }
-        }
-
-        // default encoding
-        return super.encode(accessToken, authentication);
+        return accessToken;
     }
 
     private OAuth2AccessToken enhance0(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
-
         // create ID token
         Map<String, Object> IDToken = new HashMap<>();
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
