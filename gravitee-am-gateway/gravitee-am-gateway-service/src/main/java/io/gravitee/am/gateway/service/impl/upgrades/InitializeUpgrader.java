@@ -18,12 +18,14 @@ package io.gravitee.am.gateway.service.impl.upgrades;
 import io.gravitee.am.gateway.service.ClientService;
 import io.gravitee.am.gateway.service.DomainService;
 import io.gravitee.am.gateway.service.IdentityProviderService;
+import io.gravitee.am.gateway.service.ScopeService;
 import io.gravitee.am.gateway.service.exception.DomainNotFoundException;
 import io.gravitee.am.gateway.service.model.*;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.GrantType;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.oauth2.Scope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +34,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -51,7 +52,7 @@ public class InitializeUpgrader implements Upgrader {
 
     private final static String ADMIN_CLIENT_ID = "admin";
     private final static String ADMIN_CLIENT_SECRET = "admin-secret";
-    private final static List<String> DEFAULT_SCOPES = Collections.singletonList("openid");
+    private final static String DEFAULT_SCOPE = "openid";
 
     @Autowired
     private DomainService domainService;
@@ -61,6 +62,9 @@ public class InitializeUpgrader implements Upgrader {
 
     @Autowired
     private IdentityProviderService identityProviderService;
+
+    @Autowired
+    private ScopeService scopeService;
 
     @Override
     public boolean upgrade() {
@@ -84,6 +88,13 @@ public class InitializeUpgrader implements Upgrader {
             adminDomain.setDescription("AM Admin domain");
             Domain createdDomain = domainService.create(adminDomain);
 
+            // Create default scope
+            NewScope scope = new NewScope();
+            scope.setKey(DEFAULT_SCOPE);
+            scope.setName(Character.toUpperCase(DEFAULT_SCOPE.charAt(0)) + DEFAULT_SCOPE.substring(1));
+            scope.setDescription("Default description for scope " + DEFAULT_SCOPE);
+            Scope createdScope = scopeService.create(createdDomain.getId(), scope);
+
             // Create a new admin client
             logger.info("Create an initial {} client", ADMIN_CLIENT_ID);
             NewClient adminClient = new NewClient();
@@ -105,7 +116,7 @@ public class InitializeUpgrader implements Upgrader {
             updateClient.setAccessTokenValiditySeconds(createdClient.getAccessTokenValiditySeconds());
             updateClient.setRefreshTokenValiditySeconds(createdClient.getRefreshTokenValiditySeconds());
             updateClient.setAuthorizedGrantTypes(Collections.singletonList(GrantType.IMPLICIT.type()));
-            updateClient.setScopes(DEFAULT_SCOPES);
+            updateClient.setScopes(Collections.singletonList(createdScope.getKey()));
             updateClient.setAutoApproveScopes(updateClient.getScopes());
             updateClient.setIdentities(Collections.singleton(createdIdentityProvider.getId()));
             updateClient.setEnabled(true);
