@@ -1,5 +1,59 @@
 # Change Log
 
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/15?closed=1[1.6.1 (2018-02-14)]
+
+=== Bug fixes
+
+*_Oauth2_*
+
+- Fix assets paths for login and oauth confirmation/error pages https://github.com/gravitee-io/graviteeio-access-management/issues/225[#225]
+
+=== Features
+
+*_Oauth2_*
+
+- Update InitializeUpgrader to be consistent with the new scopes management system https://github.com/gravitee-io/graviteeio-access-management/issues/227[#227]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/13?closed=1[1.6.0 (2018-02-14)]
+
+=== Bug fixes
+
+*_Oauth2_*
+
+- Error redirect after login process https://github.com/gravitee-io/graviteeio-access-management/issues/212[#212]
+- Internal server error when doing authorization_code https://github.com/gravitee-io/graviteeio-access-management/issues/183[#183]
+- Scope not take in account while asking for an access_token https://github.com/gravitee-io/graviteeio-access-management/issues/189[#189]
+
+*_Openid_*
+
+- Fix ID token custom claims user mapping https://github.com/gravitee-io/graviteeio-access-management/issues/208[#208]
+
+=== Features
+
+*_Identity-provider_*
+
+- Handle external oauth2/social provider https://github.com/gravitee-io/graviteeio-access-management/issues/198[#198]
+- MongoDB support https://github.com/gravitee-io/graviteeio-access-management/issues/193[#193]
+- OAuth 2.0 generic server support https://github.com/gravitee-io/graviteeio-access-management/issues/216[#216]
+
+*_Oauth2_*
+
+- Default user approval page https://github.com/gravitee-io/graviteeio-access-management/issues/106[#106]
+- Remove jwt format for access and refresh tokens https://github.com/gravitee-io/graviteeio-access-management/issues/222[#222]
+
+=== Improvements
+
+*_Management-ui_*
+
+- The settings menu is difficult to understand https://github.com/gravitee-io/graviteeio-access-management/issues/201[#201]
+- The way to activate a domain is totally hidden https://github.com/gravitee-io/graviteeio-access-management/issues/202[#202]
+
+*_Portal_*
+
+- Add stepper for providers/certificates/extension grants creation components https://github.com/gravitee-io/graviteeio-access-management/issues/220[#220]
+
+
 == https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/11?closed=1[1.5.3 (2018-01-12)]
 
 === Bug fixes
