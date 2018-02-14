@@ -83,9 +83,11 @@ public class ScopeUpgrader implements Upgrader {
         Set<Client> clients = clientService.findByDomain(domain.getId());
 
         if (clients != null) {
-            clients.forEach(client -> client.getScopes().forEach(scope -> {
-                createScope(domain.getId(), scope);
-            }));
+            clients.forEach(client -> {
+                if (client.getScopes() != null) {
+                    client.getScopes().forEach(scope -> createScope(domain.getId(), scope));
+                }
+            });
         }
     }
 
@@ -93,9 +95,11 @@ public class ScopeUpgrader implements Upgrader {
         Set<Role> roles = roleService.findByDomain(domain.getId());
 
         if (roles != null) {
-            roles.forEach(role -> role.getPermissions().forEach(scope -> {
-                createScope(domain.getId(), scope);
-            }));
+            roles.forEach(role -> {
+                if (role.getPermissions() != null) {
+                    role.getPermissions().forEach(scope -> createScope(domain.getId(), scope));
+                }
+            });
         }
     }
 
