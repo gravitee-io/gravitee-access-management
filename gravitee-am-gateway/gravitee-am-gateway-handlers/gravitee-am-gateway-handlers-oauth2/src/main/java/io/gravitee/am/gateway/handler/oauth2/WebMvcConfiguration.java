@@ -62,11 +62,11 @@ public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
         LoginForm loginForm = domain.getLoginForm();
         if (loginForm != null && loginForm.isEnabled() && loginForm.getAssets() != null) {
             registry
-                    .addResourceHandler("/assets/**")
+                    .addResourceHandler("/oauth/assets/**", "/assets/**")
                     .addResourceLocations("file:" + loginForm.getAssets());
         } else {
             registry
-                    .addResourceHandler("/assets/**")
+                    .addResourceHandler("/oauth/assets/**", "/assets/**")
                     .addResourceLocations("classpath:/assets/");
         }
     }
