@@ -34,6 +34,7 @@ import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.common.util.JsonParser;
 import org.springframework.security.oauth2.common.util.JsonParserFactory;
+import org.springframework.security.oauth2.common.util.OAuth2Utils;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -177,12 +178,18 @@ public class CustomTokenEnhancer implements InitializingBean, TokenEnhancer {
                 User user = (User) authentication.getUserAuthentication().getPrincipal();
                 if (user.getRoles() != null && !user.getRoles().isEmpty()) {
                     Set<Role> roles = roleService.findByIdIn(user.getRoles());
-                    Set<String> requestedScopes = authentication.getOAuth2Request().getScope();
+                    Set<String> requestedScopes = OAuth2Utils.parseParameterList(authentication.getOAuth2Request().getRequestParameters().get(OAuth2Utils.SCOPE));
                     Set<String> enhanceScopes = new HashSet<>(accessToken.getScope());
                     enhanceScopes.addAll(roles.stream()
                             .map(r -> r.getPermissions())
                             .flatMap(List::stream)
-                            .filter(permission -> requestedScopes.contains(permission))
+                            .filter(permission -> {
+                                if (requestedScopes != null && !requestedScopes.isEmpty()) {
+                                    return requestedScopes.contains(permission);
+                                }
+                                // if no query param scope, accept all enhance scopes
+                                return true;
+                            })
                             .collect(Collectors.toList()));
                     ((DefaultOAuth2AccessToken) accessToken).setScope(enhanceScopes);
                 }
