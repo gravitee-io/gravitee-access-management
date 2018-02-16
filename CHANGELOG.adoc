@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/16?closed=1[1.6.2 (2018-02-16)]
+
+=== Bug fixes
+
+*_Oauth2_*
+
+- Enhance scopes are missing https://github.com/gravitee-io/graviteeio-access-management/issues/229[#229]
+
+
 == https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/15?closed=1[1.6.1 (2018-02-14)]
 
 === Bug fixes
