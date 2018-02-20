@@ -1,0 +1,2 @@
+io.gravitee.am.management.core.http.HttpServer=\
+  io.gravitee.am.management.jetty.JettyHttpServer

@@ -64,7 +64,9 @@
         <module>gravitee-am-repository</module>
         <module>gravitee-am-certificate</module>
         <module>gravitee-am-extensiongrant</module>
+        <module>gravitee-am-management-api</module>
         <module>gravitee-am-ui</module>
+        <module>gravitee-am-service</module>
     </modules>
 
     <dependencyManagement>
