@@ -33,16 +33,16 @@ public class MongoRepository implements Repository {
 
     @Override
     public Scope[] scopes() {
-        return new Scope [] { Scope.OAUTH2, Scope.MANAGEMENT};
+        return new Scope [] {Scope.MANAGEMENT, Scope.OAUTH2};
     }
 
     @Override
     public Class<?> configuration(Scope scope) {
         switch (scope) {
-            case OAUTH2:
-                return OAuth2RepositoryConfiguration.class;
             case MANAGEMENT:
                 return ManagementRepositoryConfiguration.class;
+            case OAUTH2:
+                return OAuth2RepositoryConfiguration.class;
         }
 
         return null;

@@ -21,6 +21,9 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.exception.DomainDeleteMasterException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.impl.DomainServiceImpl;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -29,7 +32,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.mockito.Matchers.anyString;
@@ -86,7 +88,7 @@ public class DomainService_DeleteTest {
 
     @Test(expected = DomainNotFoundException.class)
     public void shouldNotDeleteBecauseDoesntExist() throws TechnicalException {
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Optional.empty());
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.empty());
         domainService.delete(DOMAIN_ID);
     }
 
@@ -104,7 +106,8 @@ public class DomainService_DeleteTest {
         mockClients.add(mockClient1);
         mockClients.add(mockClient2);
 
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Optional.of(domain));
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+        when(domainRepository.delete(DOMAIN_ID)).thenReturn(Single.just(Irrelevant.DOMAIN));
         when(clientService.findByDomain(DOMAIN_ID)).thenReturn(mockClients);
         when(certificate.getId()).thenReturn(CERTIFICATE_ID);
         when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Collections.singletonList(certificate));
@@ -125,7 +128,8 @@ public class DomainService_DeleteTest {
 
     @Test
     public void shouldDeleteWithoutRelatedData() throws TechnicalException {
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Optional.of(domain));
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+        when(domainRepository.delete(DOMAIN_ID)).thenReturn(Single.just(Irrelevant.DOMAIN));
         when(clientService.findByDomain(DOMAIN_ID)).thenReturn(Collections.emptySet());
         when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Collections.emptyList());
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Collections.emptyList());
@@ -143,7 +147,7 @@ public class DomainService_DeleteTest {
     @Test(expected = DomainDeleteMasterException.class)
     public void shouldNotDeleteMasterDomain() throws TechnicalException {
         when(domain.isMaster()).thenReturn(true);
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Optional.of(domain));
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
 
         domainService.delete(DOMAIN_ID);
     }

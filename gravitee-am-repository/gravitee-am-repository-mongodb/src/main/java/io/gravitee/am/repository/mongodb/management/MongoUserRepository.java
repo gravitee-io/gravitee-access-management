@@ -15,22 +15,29 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.index.Index;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.subscribers.DefaultSubscriber;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Optional;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -39,82 +46,65 @@ import java.util.stream.Collectors;
 @Component
 public class MongoUserRepository extends AbstractManagementMongoRepository implements UserRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(MongoUserRepository.class);
+    private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_USERNAME = "username";
 
+    private MongoCollection<UserMongo> usersCollection;
+
+    @Autowired
+    private IdGenerator idGenerator;
+
     @PostConstruct
-    public void ensureIndexes() {
-        mongoOperations.indexOps(UserMongo.class)
-                .ensureIndex(new Index()
-                        .on(FIELD_DOMAIN, Sort.Direction.ASC));
-
-        mongoOperations.indexOps(UserMongo.class)
-                .ensureIndex(new Index()
-                        .on(FIELD_DOMAIN, Sort.Direction.ASC)
-                        .on(FIELD_USERNAME, Sort.Direction.ASC));
+    public void init() {
+        usersCollection = mongoOperations.getCollection("users", UserMongo.class);
+        usersCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new IndexSubscriber());
+        usersCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_USERNAME, 1)).subscribe(new IndexSubscriber());
     }
 
     @Override
-    public Set<User> findByDomain(String domain) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain));
-
-        return mongoOperations
-                .find(query, UserMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    public Single<Set<User>> findByDomain(String domain) {
+        return Observable.fromPublisher(usersCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Page<User> findByDomain(String domain, int page, int size) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain));
-        query.with(new PageRequest(page, size));
-
-        long totalCount = mongoOperations.count(query, UserMongo.class);
-
-        Set<User> users = mongoOperations
-                .find(query, UserMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
-
-        return new Page(users, page, totalCount);
+    public Single<Page<User>> findByDomain(String domain, int page, int size) {
+        Single<Long> countOperation = Observable.fromPublisher(usersCollection.count(eq(FIELD_DOMAIN, domain))).first(0l);
+        Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(eq(FIELD_DOMAIN, domain)).skip(size * (page - 1)).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, page, count));
     }
 
     @Override
-    public Optional<User> findByUsernameAndDomain(String username, String domain) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain).and(FIELD_USERNAME).is(username));
-
-        return Optional.ofNullable(convert(mongoOperations.findOne(query, UserMongo.class)));
+    public Maybe<User> findByUsernameAndDomain(String username, String domain) {
+        return Single.fromPublisher(usersCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USERNAME, username))).first()).map(this::convert).toMaybe();
     }
 
     @Override
-    public Optional<User> findById(String userId) throws TechnicalException {
-        return Optional.ofNullable(convert(mongoOperations.findById(userId, UserMongo.class)));
+    public Maybe<User> findById(String userId) {
+        return _findById(userId).toMaybe();
     }
 
     @Override
-    public User create(User item) throws TechnicalException {
+    public Single<User> create(User item) {
         UserMongo user = convert(item);
-        mongoOperations.save(user);
-        return convert(user);
+        user.setId(user.getId() == null ? (String) idGenerator.generate() : user.getId());
+        return Single.fromPublisher(usersCollection.insertOne(user)).flatMap(success -> _findById(user.getId()));
     }
 
     @Override
-    public User update(User item) throws TechnicalException {
+    public Single<User> update(User item) {
         UserMongo user = convert(item);
-        mongoOperations.save(user);
-        return convert(user);
+        return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, user.getId()), user)).flatMap(updateResult -> _findById(user.getId()));
     }
 
     @Override
-    public void delete(String id) throws TechnicalException {
-        UserMongo user = mongoOperations.findById(id, UserMongo.class);
-        mongoOperations.remove(user);
+    public Single<Irrelevant> delete(String id) {
+        return Single.fromPublisher(usersCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.USER);
+    }
 
+    private Single<User> _findById(String id) {
+        return Single.fromPublisher(usersCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private User convert(UserMongo userMongo) {
@@ -165,9 +155,26 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         userMongo.setClient(user.getClient());
         userMongo.setLoginsCount(user.getLoginsCount());
         userMongo.setLoggedAt(user.getLoggedAt());
-        userMongo.setAdditionalInformation(user.getAdditionalInformation());
+        userMongo.setAdditionalInformation(user.getAdditionalInformation() != null ? new Document(user.getAdditionalInformation()) : new Document());
         userMongo.setCreatedAt(user.getCreatedAt());
         userMongo.setUpdatedAt(user.getUpdatedAt());
         return userMongo;
+    }
+
+    private class IndexSubscriber extends DefaultSubscriber<String> {
+        @Override
+        public void onNext(String value) {
+            logger.debug("Created an index named : " + value);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            logger.error("Error occurs during indexing", throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            logger.debug("Index creation complete");
+        }
     }
 }

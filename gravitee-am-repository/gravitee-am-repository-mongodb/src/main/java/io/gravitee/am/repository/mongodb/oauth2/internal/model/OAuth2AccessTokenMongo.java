@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.oauth2.token.internal.model;
+package io.gravitee.am.repository.mongodb.oauth2.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import io.gravitee.am.repository.oauth2.model.OAuth2AccessToken;
+import org.bson.Document;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.*;
 
@@ -26,6 +28,7 @@ import java.util.*;
  */
 public class OAuth2AccessTokenMongo extends Auditable {
 
+    @BsonId
     private String value;
 
     private Date expiration;
@@ -36,7 +39,7 @@ public class OAuth2AccessTokenMongo extends Auditable {
 
     private Set<String> scope;
 
-    private Map<String, Object> additionalInformation = Collections.emptyMap();
+    private Document additionalInformation = new Document();
 
     private byte[] authentication;
 
@@ -86,12 +89,12 @@ public class OAuth2AccessTokenMongo extends Auditable {
         this.scope = scope;
     }
 
-    public Map<String, Object> getAdditionalInformation() {
+    public Document getAdditionalInformation() {
         return additionalInformation;
     }
 
-    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
-        this.additionalInformation = new LinkedHashMap<String, Object>(additionalInformation);
+    public void setAdditionalInformation(Document additionalInformation) {
+        this.additionalInformation = additionalInformation;
     }
 
     public byte[] getAuthentication() {

@@ -15,89 +15,88 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.oauth2.Scope;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
+import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.management.internal.model.ScopeMongo;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.index.Index;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.subscribers.DefaultSubscriber;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Optional;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
 public class MongoScopeRepository extends AbstractManagementMongoRepository implements ScopeRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(MongoScopeRepository.class);
+    private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_KEY = "key";
+    private MongoCollection<ScopeMongo> scopesCollection;
+
+    @Autowired
+    private IdGenerator idGenerator;
 
     @PostConstruct
-    public void ensureIndexes() {
-        mongoOperations.indexOps(ScopeMongo.class)
-                .ensureIndex(new Index()
-                        .on(FIELD_DOMAIN, Sort.Direction.ASC));
-
-        mongoOperations.indexOps(ScopeMongo.class)
-                .ensureIndex(new Index()
-                        .on(FIELD_DOMAIN, Sort.Direction.ASC)
-                        .on(FIELD_KEY, Sort.Direction.ASC));
+    public void init() {
+        scopesCollection = mongoOperations.getCollection("scopes", ScopeMongo.class);
+        scopesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new IndexSubscriber());
+        scopesCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_KEY, 1)).subscribe(new IndexSubscriber());
     }
 
     @Override
-    public Optional<Scope> findById(String id) throws TechnicalException {
-        return Optional.ofNullable(convert(mongoOperations.findById(id, ScopeMongo.class)));
+    public Maybe<Scope> findById(String id) {
+        return _findById(id).toMaybe();
     }
 
     @Override
-    public Scope create(Scope scope) throws TechnicalException {
-        ScopeMongo domain = convert(scope);
-        mongoOperations.save(domain);
-        return convert(domain);
+    public Single<Scope> create(Scope item) {
+        ScopeMongo scope = convert(item);
+        scope.setId(scope.getId() == null ? (String) idGenerator.generate() : scope.getId());
+        return Single.fromPublisher(scopesCollection.insertOne(scope)).flatMap(success -> _findById(scope.getId()));
     }
 
     @Override
-    public Scope update(Scope scope) throws TechnicalException {
-        ScopeMongo domain = convert(scope);
-        mongoOperations.save(domain);
-        return convert(domain);
+    public Single<Scope> update(Scope item) {
+        ScopeMongo scope = convert(item);
+        return Single.fromPublisher(scopesCollection.replaceOne(eq(FIELD_ID, scope.getId()), scope)).flatMap(updateResult -> _findById(scope.getId()));
     }
 
     @Override
-    public void delete(String id) throws TechnicalException {
-        ScopeMongo scope = mongoOperations.findById(id, ScopeMongo.class);
-        mongoOperations.remove(scope);
+    public Single<Irrelevant> delete(String id) {
+        return Single.fromPublisher(scopesCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.SCOPE);
     }
 
     @Override
-    public Set<Scope> findByDomain(String domain) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain));
-
-        return mongoOperations
-                .find(query, ScopeMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    public Single<Set<Scope>> findByDomain(String domain) {
+        return Observable.fromPublisher(scopesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Optional<Scope> findByDomainAndKey(String domain, String key) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(
-                Criteria.where(FIELD_DOMAIN).is(domain)
-                        .andOperator(Criteria.where(FIELD_KEY).is(key)));
+    public Maybe<Scope> findByDomainAndKey(String domain, String key) {
+        return Single.fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_KEY, key))).first()).map(this::convert).toMaybe();
+    }
 
-        ScopeMongo scope = mongoOperations.findOne(query, ScopeMongo.class);
-        return Optional.ofNullable(convert(scope));
+    private Single<Scope> _findById(String id) {
+        return Single.fromPublisher(scopesCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private Scope convert(ScopeMongo scopeMongo) {
@@ -136,5 +135,22 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         scopeMongo.setUpdatedAt(scope.getUpdatedAt());
 
         return scopeMongo;
+    }
+
+    private class IndexSubscriber extends DefaultSubscriber<String> {
+        @Override
+        public void onNext(String value) {
+            logger.debug("Created an index named : " + value);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            logger.error("Error occurs during indexing", throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            logger.debug("Index creation complete");
+        }
     }
 }

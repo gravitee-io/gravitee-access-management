@@ -16,11 +16,13 @@
 package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.ExtensionGrant;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -30,32 +32,32 @@ import java.util.Set;
 @Component
 public class ExtensionGrantRepositoryProxy extends AbstractProxy<ExtensionGrantRepository> implements ExtensionGrantRepository {
 
-    public Set<ExtensionGrant> findByDomain(String domain) throws TechnicalException {
+    public Single<Set<ExtensionGrant>> findByDomain(String domain) throws TechnicalException {
         return target.findByDomain(domain);
     }
 
     @Override
-    public Optional<ExtensionGrant> findById(String id) throws TechnicalException {
+    public Maybe<ExtensionGrant> findById(String id) throws TechnicalException {
         return target.findById(id);
     }
 
     @Override
-    public Optional<ExtensionGrant> findByDomainAndGrantType(String domain, String grantType) throws TechnicalException {
+    public Maybe<ExtensionGrant> findByDomainAndGrantType(String domain, String grantType) throws TechnicalException {
         return target.findByDomainAndGrantType(domain, grantType);
     }
 
     @Override
-    public ExtensionGrant create(ExtensionGrant extensionGrant) throws TechnicalException {
+    public Single<ExtensionGrant> create(ExtensionGrant extensionGrant) throws TechnicalException {
         return target.create(extensionGrant);
     }
 
     @Override
-    public ExtensionGrant update(ExtensionGrant extensionGrant) throws TechnicalException {
+    public Single<ExtensionGrant> update(ExtensionGrant extensionGrant) throws TechnicalException {
         return target.update(extensionGrant);
     }
 
     @Override
-    public void delete(String id) throws TechnicalException {
-        target.delete(id);
+    public Single<Irrelevant> delete(String id) throws TechnicalException {
+        return target.delete(id);
     }
 }

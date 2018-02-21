@@ -52,7 +52,8 @@ public class RoleServiceImpl implements RoleService {
     public Set<Role> findByDomain(String domain) {
         try {
             LOGGER.debug("Find roles by domain: {}", domain);
-            return roleRepository.findByDomain(domain);
+            // TODO move to async call
+            return roleRepository.findByDomain(domain).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find roles by domain", ex);
             throw new TechnicalManagementException("An error occurs while trying to find roles by domain", ex);
@@ -63,7 +64,8 @@ public class RoleServiceImpl implements RoleService {
     public Role findById(String id) {
         try {
             LOGGER.debug("Find role by ID: {}", id);
-            Optional<Role> roleOpt = roleRepository.findById(id);
+            // TODO move to async call
+            Optional<Role> roleOpt = Optional.ofNullable(roleRepository.findById(id).blockingGet());
 
             if (!roleOpt.isPresent()) {
                 throw new RoleNotFoundException(id);
@@ -81,7 +83,8 @@ public class RoleServiceImpl implements RoleService {
     public Set<Role> findByIdIn(List<String> ids) {
         try {
             LOGGER.debug("Find roles by ids: {}", ids);
-            return roleRepository.findByIdIn(ids);
+            // TODO move to async call
+            return roleRepository.findByIdIn(ids).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find roles by ids", ex);
             throw new TechnicalManagementException("An error occurs while trying to find roles by ids", ex);
@@ -106,7 +109,8 @@ public class RoleServiceImpl implements RoleService {
             role.setDescription(newRole.getDescription());
             role.setCreatedAt(new Date());
             role.setUpdatedAt(role.getCreatedAt());
-            return roleRepository.create(role);
+            // TODO move to async call
+            return roleRepository.create(role).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to create a role", ex);
             throw new TechnicalManagementException("An error occurs while trying to create a role", ex);
@@ -118,7 +122,8 @@ public class RoleServiceImpl implements RoleService {
         try {
             LOGGER.debug("Update a role {} for domain {}", id, domain);
 
-            Optional<Role> roleOpt = roleRepository.findById(id);
+            // TODO move to async call
+            Optional<Role> roleOpt = Optional.ofNullable(roleRepository.findById(id).blockingGet());
             if (!roleOpt.isPresent()) {
                 throw new RoleNotFoundException(id);
             }
@@ -133,7 +138,8 @@ public class RoleServiceImpl implements RoleService {
             oldRole.setPermissions(updateRole.getPermissions());
             oldRole.setUpdatedAt(new Date());
 
-            Role role = roleRepository.update(oldRole);
+            // TODO move to async call
+            Role role = roleRepository.update(oldRole).blockingGet();
 
             return role;
         } catch (TechnicalException ex) {
@@ -147,12 +153,14 @@ public class RoleServiceImpl implements RoleService {
         try {
             LOGGER.debug("Delete role {}", roleId);
 
-            Optional<Role> optRole = roleRepository.findById(roleId);
+            // TODO move to async call
+            Optional<Role> optRole = Optional.ofNullable(roleRepository.findById(roleId).blockingGet());
             if (! optRole.isPresent()) {
                 throw new CertificateNotFoundException(roleId);
             }
 
-            roleRepository.delete(roleId);
+            // TODO move to async call
+            roleRepository.delete(roleId).subscribe();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to delete role: {}", roleId, ex);
             throw new TechnicalManagementException(
@@ -162,7 +170,8 @@ public class RoleServiceImpl implements RoleService {
 
     private void checkRoleUniqueness(String roleName, String roleId, String domain) throws TechnicalException {
 
-        if (roleRepository.findByDomain(domain).stream()
+        // TODO move to async call
+        if (roleRepository.findByDomain(domain).blockingGet().stream()
                 .filter(role -> !role.getId().equals(roleId))
                 .anyMatch(role -> role.getName().equals(roleName))) {
             throw new RoleAlreadyExistsException(roleName);

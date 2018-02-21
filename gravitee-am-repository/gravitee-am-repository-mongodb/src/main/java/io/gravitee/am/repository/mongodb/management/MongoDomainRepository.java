@@ -15,74 +15,83 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.login.LoginForm;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
+import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginFormMongo;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Collection;
-import java.util.Optional;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
 public class MongoDomainRepository extends AbstractManagementMongoRepository implements DomainRepository {
 
-    private static final String ID_FIELD = "_id";
+    private static final String FIELD_ID = "_id";
+    private MongoCollection<DomainMongo> domainsCollection;
 
-    @Override
-    public Set<Domain> findAll() throws TechnicalException {
-        return mongoOperations.findAll(DomainMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    @Autowired
+    private IdGenerator idGenerator;
+
+    @PostConstruct
+    public void init() {
+        domainsCollection = mongoOperations.getCollection("domains", DomainMongo.class);
     }
 
     @Override
-    public Optional<Domain> findById(String id) throws TechnicalException {
-        return Optional.ofNullable(convert(mongoOperations.findById(id, DomainMongo.class)));
+    public Single<Set<Domain>> findAll() {
+        return Observable.fromPublisher(domainsCollection.find()).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Set<Domain> findByIdIn(Collection<String> ids) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(ID_FIELD).in(ids));
-
-        return mongoOperations.find(query, DomainMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    public Maybe<Domain> findById(String id) {
+        return _findById(id).toMaybe();
     }
 
     @Override
-    public Domain create(Domain item) throws TechnicalException {
+    public Single<Set<Domain>> findByIdIn(Collection<String> ids) {
+        return Observable.fromPublisher(domainsCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
+    public Single<Domain> create(Domain item) {
         DomainMongo domain = convert(item);
-        mongoOperations.save(domain);
-        return convert(domain);
+        domain.setId(domain.getId() == null ? (String) idGenerator.generate() : domain.getId());
+        return Single.fromPublisher(domainsCollection.insertOne(domain)).flatMap(success -> _findById(domain.getId()));
     }
 
     @Override
-    public Domain update(Domain item) throws TechnicalException {
+    public Single<Domain> update(Domain item) {
         DomainMongo domain = convert(item);
-        mongoOperations.save(domain);
-        return convert(domain);
+        return Single.fromPublisher(domainsCollection.replaceOne(eq(FIELD_ID, domain.getId()), domain)).flatMap(updateResult -> _findById(domain.getId()));
     }
 
     @Override
-    public void delete(String id) throws TechnicalException {
-        DomainMongo domain = mongoOperations.findById(id, DomainMongo.class);
-        mongoOperations.remove(domain);
+    public Single<Irrelevant> delete(String id) {
+        return Single.fromPublisher(domainsCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.DOMAIN);
     }
 
+    private Single<Domain> _findById(String id) {
+        return Single.fromPublisher(domainsCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
+    }
 
     private Domain convert(DomainMongo domainMongo) {
         if (domainMongo == null) {

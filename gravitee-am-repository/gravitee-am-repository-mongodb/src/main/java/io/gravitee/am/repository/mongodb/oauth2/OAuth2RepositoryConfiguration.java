@@ -15,33 +15,31 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
-import com.mongodb.Mongo;
+import com.mongodb.reactivestreams.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.common.AbstractRepositoryConfiguration;
+import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.common.MongoFactory;
+import io.gravitee.am.repository.mongodb.common.UUIDIdGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
-import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.data.mongodb.core.MongoTemplate;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
 @ComponentScan("io.gravitee.am.repository.mongodb.oauth2")
-public class OAuth2RepositoryConfiguration {
-
-    @Autowired
-    private Environment environment;
+public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfiguration {
 
     @Autowired
     @Qualifier("oauth2Mongo")
-    private Mongo mongo;
+    private MongoClient mongo;
 
     @Bean(name = "oauth2Mongo")
     public static MongoFactory mongoFactory() {
@@ -49,11 +47,12 @@ public class OAuth2RepositoryConfiguration {
     }
 
     @Bean(name = "oauth2MongoTemplate")
-    public MongoOperations mongoOperations() {
-        return new MongoTemplate(mongo, getDatabaseName());
+    public MongoDatabase mongoOperations() {
+        return mongo.getDatabase(getDatabaseName());
     }
 
-    protected String getDatabaseName() {
-        return environment.getProperty("oauth2.mongodb.dbname", "gravitee-am");
+    @Bean
+    public IdGenerator idGenerator() {
+        return new UUIDIdGenerator();
     }
 }

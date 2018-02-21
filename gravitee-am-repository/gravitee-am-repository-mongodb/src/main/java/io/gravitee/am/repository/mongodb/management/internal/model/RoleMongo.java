@@ -16,8 +16,7 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.List;
 
@@ -25,10 +24,9 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Document(collection = "roles")
 public class RoleMongo extends Auditable {
 
-    @Id
+    @BsonId
     private String id;
 
     private String name;

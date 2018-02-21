@@ -63,7 +63,8 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     public ExtensionGrant findById(String id) {
         try {
             LOGGER.debug("Find extension grant by ID: {}", id);
-            Optional<ExtensionGrant> tokenGranterOpt = extensionGrantRepository.findById(id);
+            // TODO move to async call
+            Optional<ExtensionGrant> tokenGranterOpt = Optional.ofNullable(extensionGrantRepository.findById(id).blockingGet());
 
             if (!tokenGranterOpt.isPresent()) {
                 throw new ExtensionGrantNotFoundException(id);
@@ -81,7 +82,8 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     public List<ExtensionGrant> findByDomain(String domain) {
         try {
             LOGGER.debug("Find extension grants by domain: {}", domain);
-            return new ArrayList<>(extensionGrantRepository.findByDomain(domain));
+            // TODO move to async call
+            return new ArrayList<>(extensionGrantRepository.findByDomain(domain).blockingGet());
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find extension grants by domain", ex);
             throw new TechnicalManagementException("An error occurs while trying to find extension grants by domain", ex);
@@ -93,7 +95,8 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
         try {
             LOGGER.debug("Create a new extension grant {} for domain {}", newExtensionGrant, domain);
 
-            Optional<ExtensionGrant> existingTokenGranter = extensionGrantRepository.findByDomainAndGrantType(domain, newExtensionGrant.getGrantType());
+            // TODO move to async call
+            Optional<ExtensionGrant> existingTokenGranter = Optional.ofNullable(extensionGrantRepository.findByDomainAndGrantType(domain, newExtensionGrant.getGrantType()).blockingGet());
             if (existingTokenGranter.isPresent()) {
                 throw new ExtensionGrantAlreadyExistsException(newExtensionGrant.getGrantType());
             }
@@ -111,7 +114,8 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
             extensionGrant.setCreatedAt(new Date());
             extensionGrant.setUpdatedAt(extensionGrant.getCreatedAt());
 
-            ExtensionGrant extensionGrant1 = extensionGrantRepository.create(extensionGrant);
+            // TODO move to async call
+            ExtensionGrant extensionGrant1 = extensionGrantRepository.create(extensionGrant).blockingGet();
 
             // Reload domain to take care about extension grant update
             domainService.reload(domain);
@@ -128,12 +132,14 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
         try {
             LOGGER.debug("Update a extension grant {} for domain {}", id, domain);
 
-            Optional<ExtensionGrant> tokenGranterOpt = extensionGrantRepository.findById(id);
+            // TODO move to async call
+            Optional<ExtensionGrant> tokenGranterOpt = Optional.ofNullable(extensionGrantRepository.findById(id).blockingGet());
             if (!tokenGranterOpt.isPresent()) {
                 throw new ExtensionGrantNotFoundException(id);
             }
 
-            Optional<ExtensionGrant> existingTokenGranter = extensionGrantRepository.findByDomainAndGrantType(domain, updateExtensionGrant.getGrantType());
+            // TODO move to async call
+            Optional<ExtensionGrant> existingTokenGranter = Optional.ofNullable(extensionGrantRepository.findByDomainAndGrantType(domain, updateExtensionGrant.getGrantType()).blockingGet());
             if (existingTokenGranter.isPresent() && !existingTokenGranter.get().getId().equals(id)) {
                 throw new ExtensionGrantAlreadyExistsException(updateExtensionGrant.getGrantType());
             }
@@ -146,7 +152,8 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
             oldExtensionGrant.setConfiguration(updateExtensionGrant.getConfiguration());
             oldExtensionGrant.setUpdatedAt(new Date());
 
-            ExtensionGrant extensionGrant = extensionGrantRepository.update(oldExtensionGrant);
+            // TODO move to async call
+            ExtensionGrant extensionGrant = extensionGrantRepository.update(oldExtensionGrant).blockingGet();
 
             // Reload domain to take care about extension grant update
             domainService.reload(domain);
@@ -163,17 +170,20 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
         try {
             LOGGER.debug("Delete extension grant {}", extensionGrantId);
 
-            Optional<ExtensionGrant> optTokenGranter = extensionGrantRepository.findById(extensionGrantId);
+            // TODO move to async call
+            Optional<ExtensionGrant> optTokenGranter = Optional.ofNullable(extensionGrantRepository.findById(extensionGrantId).blockingGet());
             if (! optTokenGranter.isPresent()) {
                 throw new ExtensionGrantNotFoundException(extensionGrantId);
             }
+
 
             int clients = clientService.findByExtensionGrant(optTokenGranter.get().getGrantType()).size();
             if (clients > 0) {
                 throw new ExtensionGrantWithClientsException();
             }
 
-            extensionGrantRepository.delete(extensionGrantId);
+            // TODO move to async call
+            extensionGrantRepository.delete(extensionGrantId).subscribe();
 
             // Reload domain to take care about extension grant update
             domainService.reload(domain);

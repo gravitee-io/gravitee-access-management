@@ -16,11 +16,13 @@
 package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -30,27 +32,27 @@ import java.util.Set;
 @Component
 public class CertificateRepositoryProxy extends AbstractProxy<CertificateRepository> implements CertificateRepository {
 
-    public Set<Certificate> findByDomain(String domain) throws TechnicalException {
+    public Single<Set<Certificate>> findByDomain(String domain) throws TechnicalException {
         return target.findByDomain(domain);
     }
 
     @Override
-    public Optional<Certificate> findById(String id) throws TechnicalException {
+    public Maybe<Certificate> findById(String id) throws TechnicalException {
         return target.findById(id);
     }
 
     @Override
-    public Certificate create(Certificate certificate) throws TechnicalException {
+    public Single<Certificate> create(Certificate certificate) throws TechnicalException {
         return target.create(certificate);
     }
 
     @Override
-    public Certificate update(Certificate certificate) throws TechnicalException {
+    public Single<Certificate> update(Certificate certificate) throws TechnicalException {
         return target.update(certificate);
     }
 
     @Override
-    public void delete(String id) throws TechnicalException {
-        target.delete(id);
+    public Single<Irrelevant> delete(String id) throws TechnicalException {
+        return target.delete(id);
     }
 }

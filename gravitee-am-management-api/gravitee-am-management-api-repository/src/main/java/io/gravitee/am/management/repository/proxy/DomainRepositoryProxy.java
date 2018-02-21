@@ -16,12 +16,14 @@
 package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -32,32 +34,32 @@ import java.util.Set;
 public class DomainRepositoryProxy extends AbstractProxy<DomainRepository> implements DomainRepository {
 
     @Override
-    public Set<Domain> findAll() throws TechnicalException {
+    public Single<Set<Domain>> findAll() throws TechnicalException {
         return target.findAll();
     }
 
     @Override
-    public Set<Domain> findByIdIn(Collection<String> ids) throws TechnicalException {
+    public Single<Set<Domain>> findByIdIn(Collection<String> ids) throws TechnicalException {
         return target.findByIdIn(ids);
     }
 
     @Override
-    public Optional<Domain> findById(String id) throws TechnicalException {
+    public Maybe<Domain> findById(String id) throws TechnicalException {
         return target.findById(id);
     }
 
     @Override
-    public Domain create(Domain domain) throws TechnicalException {
+    public Single<Domain> create(Domain domain) throws TechnicalException {
         return this.target.create(domain);
     }
 
     @Override
-    public Domain update(Domain domain) throws TechnicalException {
+    public Single<Domain> update(Domain domain) throws TechnicalException {
         return target.update(domain);
     }
 
     @Override
-    public void delete(String id) throws TechnicalException {
-        target.delete(id);
+    public Single<Irrelevant> delete(String id) throws TechnicalException {
+        return target.delete(id);
     }
 }

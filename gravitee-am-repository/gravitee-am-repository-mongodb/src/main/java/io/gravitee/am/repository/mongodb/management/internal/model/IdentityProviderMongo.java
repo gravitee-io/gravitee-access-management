@@ -16,8 +16,8 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.bson.Document;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.Map;
 
@@ -25,10 +25,9 @@ import java.util.Map;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Document(collection = "identities")
 public class IdentityProviderMongo extends Auditable {
 
-    @Id
+    @BsonId
     private String id;
 
     private String name;
@@ -37,9 +36,15 @@ public class IdentityProviderMongo extends Auditable {
 
     private String configuration;
 
-    private Map<String, String> mappers;
+    /**
+     * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
+     */
+    private Document mappers;
 
-    private Map<String, String[]> roleMapper;
+    /**
+     * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
+     */
+    private Document roleMapper;
 
     private String domain;
 
@@ -77,19 +82,19 @@ public class IdentityProviderMongo extends Auditable {
         this.configuration = configuration;
     }
 
-    public Map<String, String> getMappers() {
+    public Document getMappers() {
         return mappers;
     }
 
-    public void setMappers(Map<String, String> mappers) {
+    public void setMappers(Document mappers) {
         this.mappers = mappers;
     }
 
-    public Map<String, String[]> getRoleMapper() {
+    public Document getRoleMapper() {
         return roleMapper;
     }
 
-    public void setRoleMapper(Map<String, String[]> roleMapper) {
+    public void setRoleMapper(Document roleMapper) {
         this.roleMapper = roleMapper;
     }
 

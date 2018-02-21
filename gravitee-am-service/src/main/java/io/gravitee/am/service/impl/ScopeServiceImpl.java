@@ -63,7 +63,8 @@ public class ScopeServiceImpl implements ScopeService {
     public Scope findById(String id) {
         try {
             LOGGER.debug("Find scope by ID: {}", id);
-            Optional<Scope> scopeOpt = scopeRepository.findById(id);
+            // TODO move to async call
+            Optional<Scope> scopeOpt = Optional.ofNullable(scopeRepository.findById(id).blockingGet());
 
             if (!scopeOpt.isPresent()) {
                 throw new ScopeNotFoundException(id);
@@ -83,7 +84,8 @@ public class ScopeServiceImpl implements ScopeService {
             LOGGER.debug("Create a new scope {} for domain {}", newScope, domain);
 
             String scopeKey = newScope.getKey().toLowerCase();
-            Optional<Scope> scopeOpt = scopeRepository.findByDomainAndKey(domain, scopeKey);
+            // TODO move to async call
+            Optional<Scope> scopeOpt = Optional.ofNullable(scopeRepository.findByDomainAndKey(domain, scopeKey).blockingGet());
 
             if (scopeOpt.isPresent()) {
                 throw new ScopeAlreadyExistsException(scopeKey, domain);
@@ -98,9 +100,8 @@ public class ScopeServiceImpl implements ScopeService {
             scope.setCreatedAt(new Date());
             scope.setUpdatedAt(new Date());
 
-            scopeRepository.create(scope);
-
-            return scope;
+            // TODO move to async call
+            return scopeRepository.create(scope).blockingGet();
         } catch (Exception ex) {
             LOGGER.error("An error occurs while trying to create a scope", ex);
             throw new TechnicalManagementException("An error occurs while trying to create a scope", ex);
@@ -112,7 +113,8 @@ public class ScopeServiceImpl implements ScopeService {
         try {
             LOGGER.debug("Update a scope {} for domain {}", id, domain);
 
-            Optional<Scope> scopeOpt = scopeRepository.findById(id);
+            // TODO move to async call
+            Optional<Scope> scopeOpt = Optional.ofNullable(scopeRepository.findById(id).blockingGet());
             if (!scopeOpt.isPresent()) {
                 throw new ScopeNotFoundException(id);
             }
@@ -124,7 +126,8 @@ public class ScopeServiceImpl implements ScopeService {
             scope.setDescriptions(updateScope.getDescriptions());
             scope.setUpdatedAt(new Date());
 
-            return scopeRepository.update(scope);
+            // TODO move to async call
+            return scopeRepository.update(scope).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to update a scope", ex);
             throw new TechnicalManagementException("An error occurs while trying to update a scope", ex);
@@ -136,7 +139,8 @@ public class ScopeServiceImpl implements ScopeService {
         try {
             LOGGER.debug("Delete scope {}", scopeId);
 
-            Optional<Scope> optScope = scopeRepository.findById(scopeId);
+            // TODO move to async call
+            Optional<Scope> optScope = Optional.ofNullable(scopeRepository.findById(scopeId).blockingGet());
             if (! optScope.isPresent()) {
                 throw new ScopeNotFoundException(scopeId);
             }
@@ -185,7 +189,8 @@ public class ScopeServiceImpl implements ScopeService {
                         // Save client
                         clientService.update(scope.getDomain(), client.getId(), updateClient);
                     });
-            scopeRepository.delete(scopeId);
+            // TODO move to async call
+            scopeRepository.delete(scopeId).subscribe();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to delete scope: {}", scopeId, ex);
             throw new TechnicalManagementException(
@@ -197,7 +202,8 @@ public class ScopeServiceImpl implements ScopeService {
     public Set<Scope> findByDomain(String domain) {
         try {
             LOGGER.debug("Find scopes by domain", domain);
-            return scopeRepository.findByDomain(domain);
+            // TODO move to async call
+            return scopeRepository.findByDomain(domain).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find scopes by domain: {}", domain, ex);
             throw new TechnicalManagementException(

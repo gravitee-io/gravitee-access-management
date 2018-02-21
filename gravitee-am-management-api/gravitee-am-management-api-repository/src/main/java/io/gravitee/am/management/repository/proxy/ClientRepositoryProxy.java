@@ -16,12 +16,14 @@
 package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -32,72 +34,72 @@ import java.util.Set;
 public class ClientRepositoryProxy extends AbstractProxy<ClientRepository> implements ClientRepository {
 
     @Override
-    public Set<Client> findByDomain(String domain) throws TechnicalException {
+    public Single<Set<Client>> findByDomain(String domain) throws TechnicalException {
         return target.findByDomain(domain);
     }
 
     @Override
-    public Page<Client> findByDomain(String domain, int page, int size) throws TechnicalException {
+    public Single<Page<Client>> findByDomain(String domain, int page, int size) throws TechnicalException {
         return target.findByDomain(domain, page, size);
     }
 
     @Override
-    public Optional<Client> findByClientIdAndDomain(String clientId, String domain) throws TechnicalException {
+    public Maybe<Client> findByClientIdAndDomain(String clientId, String domain) throws TechnicalException {
         return target.findByClientIdAndDomain(clientId, domain);
     }
 
     @Override
-    public Set<Client> findByIdentityProvider(String identityProvider) throws TechnicalException {
+    public Single<Set<Client>> findByIdentityProvider(String identityProvider) throws TechnicalException {
         return target.findByIdentityProvider(identityProvider);
     }
 
     @Override
-    public Set<Client> findByCertificate(String certificate) throws TechnicalException {
+    public Single<Set<Client>> findByCertificate(String certificate) throws TechnicalException {
         return target.findByCertificate(certificate);
     }
 
     @Override
-    public Set<Client> findByExtensionGrant(String tokenGranter) throws TechnicalException {
+    public Single<Set<Client>> findByExtensionGrant(String tokenGranter) throws TechnicalException {
         return target.findByExtensionGrant(tokenGranter);
     }
 
     @Override
-    public Set<Client> findAll() throws TechnicalException {
+    public Single<Set<Client>> findAll() throws TechnicalException {
         return target.findAll();
     }
 
     @Override
-    public Page<Client> findAll(int page, int size) throws TechnicalException {
+    public Single<Page<Client>> findAll(int page, int size) throws TechnicalException {
         return target.findAll(page, size);
     }
 
     @Override
-    public Optional<Client> findById(String id) throws TechnicalException {
+    public Maybe<Client> findById(String id) throws TechnicalException {
         return target.findById(id);
     }
 
     @Override
-    public Client create(Client client) throws TechnicalException {
+    public Single<Client> create(Client client) throws TechnicalException {
         return target.create(client);
     }
 
     @Override
-    public Client update(Client client) throws TechnicalException {
+    public Single<Client> update(Client client) throws TechnicalException {
         return target.update(client);
     }
 
     @Override
-    public void delete(String id) throws TechnicalException {
-        target.delete(id);
+    public Single<Irrelevant> delete(String id) throws TechnicalException {
+        return target.delete(id);
     }
 
     @Override
-    public long countByDomain(String domain) throws TechnicalException {
+    public Single<Long> countByDomain(String domain) throws TechnicalException {
         return target.countByDomain(domain);
     }
 
     @Override
-    public long count() throws TechnicalException {
+    public Single<Long> count() throws TechnicalException {
         return target.count();
     }
 }

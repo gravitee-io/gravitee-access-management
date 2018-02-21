@@ -15,17 +15,18 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.mongodb.core.MongoOperations;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public abstract class AbstractManagementMongoRepository {
 
     @Autowired
     @Qualifier("managementMongoTemplate")
-    protected MongoOperations mongoOperations;
+    protected MongoDatabase mongoOperations;
 }

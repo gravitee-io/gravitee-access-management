@@ -16,8 +16,8 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.bson.Document;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.List;
 import java.util.Map;
@@ -27,10 +27,9 @@ import java.util.Set;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Document(collection = "clients")
 public class ClientMongo extends Auditable {
 
-    @Id
+    @BsonId
     private String id;
 
     private String clientId;
@@ -51,7 +50,10 @@ public class ClientMongo extends Auditable {
 
     private int idTokenValiditySeconds;
 
-    private Map<String, Object> idTokenCustomClaims;
+    /**
+     * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
+     */
+    private Document idTokenCustomClaims;
 
     /**
      * Security domain associated to the client
@@ -185,11 +187,11 @@ public class ClientMongo extends Auditable {
         this.idTokenValiditySeconds = idTokenValiditySeconds;
     }
 
-    public Map<String, Object> getIdTokenCustomClaims() {
+    public Document getIdTokenCustomClaims() {
         return idTokenCustomClaims;
     }
 
-    public void setIdTokenCustomClaims(Map<String, Object> idTokenCustomClaims) {
+    public void setIdTokenCustomClaims(Document idTokenCustomClaims) {
         this.idTokenCustomClaims = idTokenCustomClaims;
     }
 

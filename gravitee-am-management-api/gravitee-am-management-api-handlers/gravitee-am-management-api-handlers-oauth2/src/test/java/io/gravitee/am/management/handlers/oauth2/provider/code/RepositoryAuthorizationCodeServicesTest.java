@@ -18,7 +18,10 @@ package io.gravitee.am.management.handlers.oauth2.provider.code;
 import io.gravitee.am.management.handlers.oauth2.provider.RepositoryProviderUtils;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
+import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
 import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -60,6 +63,7 @@ public class RepositoryAuthorizationCodeServicesTest {
         final String clientId = "test-client";
         when(oAuth2Request.getClientId()).thenReturn(clientId);
         when(oAuth2Authentication.getOAuth2Request()).thenReturn(oAuth2Request);
+        when(authorizationCodeRepository.store(any(OAuth2AuthorizationCode.class))).thenReturn(Single.just(new OAuth2AuthorizationCode()));
 
         // Run
         authorizationCodeServices.store(codeId, RepositoryProviderUtils.convert(oAuth2Authentication));
@@ -77,7 +81,7 @@ public class RepositoryAuthorizationCodeServicesTest {
         final String clientId = "test-client";
         when(oAuth2Request.getClientId()).thenReturn(clientId);
         when(oAuth2Authentication.getOAuth2Request()).thenReturn(oAuth2Request);
-        when(authorizationCodeRepository.remove(codeId)).thenReturn(Optional.ofNullable(oAuth2Authentication));
+        when(authorizationCodeRepository.remove(codeId)).thenReturn(Maybe.just(oAuth2Authentication));
 
         // Run
         final org.springframework.security.oauth2.provider.OAuth2Authentication oAuth2Authentication =
@@ -92,13 +96,16 @@ public class RepositoryAuthorizationCodeServicesTest {
     public void shouldNotConsumeNonExistingCode() {
         // prepare OAuth2Authentication
         final String clientId = "test-client";
+        OAuth2AuthorizationCode oAuth2AuthorizationCode = new OAuth2AuthorizationCode();
+        oAuth2AuthorizationCode.setCode("test-code");
         when(oAuth2Request.getClientId()).thenReturn(clientId);
         when(oAuth2Authentication.getOAuth2Request()).thenReturn(oAuth2Request);
+        when(authorizationCodeRepository.store(any())).thenReturn(Single.just(oAuth2AuthorizationCode));
 
         // Run
         String code = authorizationCodeServices.createAuthorizationCode(RepositoryProviderUtils.convert(oAuth2Authentication));
         assertNotNull(code);
-        when(authorizationCodeRepository.remove(code)).thenReturn(Optional.ofNullable(null));
+        when(authorizationCodeRepository.remove(code)).thenReturn(Maybe.empty());
         authorizationCodeServices.consumeAuthorizationCode(code);
     }
 }

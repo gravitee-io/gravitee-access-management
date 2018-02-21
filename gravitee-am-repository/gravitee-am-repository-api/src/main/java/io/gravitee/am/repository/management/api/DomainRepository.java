@@ -18,8 +18,10 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.reactivex.Single;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -34,7 +36,7 @@ public interface DomainRepository extends CrudRepository<Domain, String> {
      * @return All {@link Domain}
      * @throws TechnicalException
      */
-    Set<Domain> findAll() throws TechnicalException;
+    Single<Set<Domain>> findAll() throws TechnicalException;
 
-    Set<Domain> findByIdIn(Collection<String> ids) throws TechnicalException;
+    Single<Set<Domain>> findByIdIn(Collection<String> ids) throws TechnicalException;
 }

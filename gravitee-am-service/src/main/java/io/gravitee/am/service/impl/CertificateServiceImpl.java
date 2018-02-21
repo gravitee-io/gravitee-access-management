@@ -79,7 +79,8 @@ public class CertificateServiceImpl implements CertificateService {
     public Certificate findById(String id) {
         try {
             LOGGER.debug("Find certificate by ID: {}", id);
-            Optional<Certificate> certificateOpt = certificateRepository.findById(id);
+            // TODO move to async call
+            Optional<Certificate> certificateOpt = Optional.ofNullable(certificateRepository.findById(id).blockingGet());
 
             if (!certificateOpt.isPresent()) {
                 throw new CertificateNotFoundException(id);
@@ -97,7 +98,8 @@ public class CertificateServiceImpl implements CertificateService {
     public List<Certificate> findByDomain(String domain) {
         try {
             LOGGER.debug("Find certificates by domain: {}", domain);
-            return new ArrayList<>(certificateRepository.findByDomain(domain));
+            // TODO move to async call
+            return new ArrayList<>(certificateRepository.findByDomain(domain).blockingGet());
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find certificates by domain", ex);
             throw new TechnicalManagementException("An error occurs while trying to find certificates by domain", ex);
@@ -155,7 +157,8 @@ public class CertificateServiceImpl implements CertificateService {
             certificate.setUpdatedAt(certificate.getCreatedAt());
 
 
-            Certificate certificateCreated = certificateRepository.create(certificate);
+            // TODO move to async call
+            Certificate certificateCreated = certificateRepository.create(certificate).blockingGet();
 
             // Reload domain to take care about certificate create
             domainService.reload(domain);
@@ -172,7 +175,8 @@ public class CertificateServiceImpl implements CertificateService {
         try {
             LOGGER.debug("Update a certificate {} for domain {}", id, domain);
 
-            Optional<Certificate> certificateOpt = certificateRepository.findById(id);
+            // TODO move to async call
+            Optional<Certificate> certificateOpt = Optional.ofNullable(certificateRepository.findById(id).blockingGet());
             if (!certificateOpt.isPresent()) {
                 throw new CertificateNotFoundException(id);
             }
@@ -224,7 +228,8 @@ public class CertificateServiceImpl implements CertificateService {
             oldCertificate.setConfiguration(updateCertificate.getConfiguration());
             oldCertificate.setUpdatedAt(new Date());
 
-            Certificate certificate = certificateRepository.update(oldCertificate);
+            // TODO move to async call
+            Certificate certificate = certificateRepository.update(oldCertificate).blockingGet();
 
             // Reload domain to take care about certificate update
             domainService.reload(domain);
@@ -241,7 +246,8 @@ public class CertificateServiceImpl implements CertificateService {
         try {
             LOGGER.debug("Delete certificate {}", certificateId);
 
-            Optional<Certificate> optCertificate = certificateRepository.findById(certificateId);
+            // TODO move to async call
+            Optional<Certificate> optCertificate = Optional.ofNullable(certificateRepository.findById(certificateId).blockingGet());
             if (! optCertificate.isPresent()) {
                 throw new CertificateNotFoundException(certificateId);
             }
@@ -258,7 +264,8 @@ public class CertificateServiceImpl implements CertificateService {
                     .map(Path::toFile)
                     .forEach(File::delete);
 
-            certificateRepository.delete(certificateId);
+            // TODO move to async call
+            certificateRepository.delete(certificateId).subscribe();
         } catch (TechnicalException | IOException ex) {
             LOGGER.error("An error occurs while trying to delete certificate: {}", certificateId, ex);
             throw new TechnicalManagementException(

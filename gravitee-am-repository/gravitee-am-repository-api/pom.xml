@@ -31,11 +31,29 @@
 
     <name>Gravitee IO - Access Management - Repository API</name>
 
+    <properties>
+        <org.reactivestreams.version>1.0.2</org.reactivestreams.version>
+        <rxjava.version>2.1.9</rxjava.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.gravitee.am.model</groupId>
             <artifactId>gravitee-am-model</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <!-- reactive dependencies -->
+        <dependency>
+            <groupId>io.reactivex.rxjava2</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>${rxjava.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.reactivestreams</groupId>
+            <artifactId>reactive-streams</artifactId>
+            <version>${org.reactivestreams.version}</version>
         </dependency>
     </dependencies>
 </project>

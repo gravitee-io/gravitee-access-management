@@ -16,13 +16,14 @@
 package io.gravitee.am.management.handlers.oauth2.provider.token;
 
 import io.gravitee.am.management.handlers.oauth2.provider.RepositoryProviderUtils;
-import io.gravitee.am.management.handlers.oauth2.provider.token.AuthenticationKeyGenerator;
-import io.gravitee.am.management.handlers.oauth2.provider.token.RepositoryTokenStore;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.OAuth2AccessToken;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.am.repository.oauth2.model.OAuth2RefreshToken;
 import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -31,7 +32,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -85,7 +85,7 @@ public class RepositoryTokenStoreTest {
         final String clientId = "test-client";
         when(oAuth2Request.getClientId()).thenReturn(clientId);
         when(oAuth2Authentication.getOAuth2Request()).thenReturn(oAuth2Request);
-        when(tokenRepository.readAuthentication(any(OAuth2AccessToken.class))).thenReturn(Optional.ofNullable(oAuth2Authentication));
+        when(tokenRepository.readAuthentication(any(OAuth2AccessToken.class))).thenReturn(Maybe.just(oAuth2Authentication));
 
         // Run
         final org.springframework.security.oauth2.provider.OAuth2Authentication oAuth2Authentication =
@@ -109,6 +109,7 @@ public class RepositoryTokenStoreTest {
 
         // prepare authentication key
         when(authenticationKeyGenerator.extractKey(oAuth2Authentication)).thenReturn("test-key");
+        when(tokenRepository.storeAccessToken(any(OAuth2AccessToken.class), any(OAuth2Authentication.class), anyString())).thenReturn(Single.just(new OAuth2AccessToken(tokenId)));
 
         // Run
         tokenStore.storeAccessToken(springOAuth2AccessToken, RepositoryProviderUtils.convert(oAuth2Authentication));
@@ -122,7 +123,7 @@ public class RepositoryTokenStoreTest {
         // prepare OAuth2AccessToken
         final String tokenId = "test-token";
         when(oAuth2AccessToken.getValue()).thenReturn(tokenId);
-        when(tokenRepository.readAccessToken(tokenId)).thenReturn(Optional.ofNullable(oAuth2AccessToken));
+        when(tokenRepository.readAccessToken(tokenId)).thenReturn(Maybe.just(oAuth2AccessToken));
 
         // Run
         final org.springframework.security.oauth2.common.OAuth2AccessToken oAuth2AccessToken =
@@ -138,6 +139,7 @@ public class RepositoryTokenStoreTest {
         // prepare OAuth2AccessToken
         final String tokenId = "test-token";
         when(springOAuth2AccessToken.getValue()).thenReturn(tokenId);
+        when(tokenRepository.removeAccessToken(any(OAuth2AccessToken.class))).thenReturn(Single.just(Irrelevant.OAUTH2_ACCESS_TOKEN));
 
         // Run
         tokenStore.removeAccessToken(springOAuth2AccessToken);
@@ -156,6 +158,7 @@ public class RepositoryTokenStoreTest {
         final String clientId = "test-client";
         when(oAuth2Request.getClientId()).thenReturn(clientId);
         when(oAuth2Authentication.getOAuth2Request()).thenReturn(oAuth2Request);
+        when(tokenRepository.storeRefreshToken(any(OAuth2RefreshToken.class), any())).thenReturn(Single.just(new OAuth2RefreshToken(tokenId)));
 
         // Run
         tokenStore.storeRefreshToken(springOAuth2RefreshToken, RepositoryProviderUtils.convert(oAuth2Authentication));
@@ -169,7 +172,7 @@ public class RepositoryTokenStoreTest {
         // prepare OAuth2RefreshToken
         final String tokenId = "test-token";
         when(oAuth2RefreshToken.getValue()).thenReturn(tokenId);
-        when(tokenRepository.readRefreshToken(tokenId)).thenReturn(Optional.ofNullable(oAuth2RefreshToken));
+        when(tokenRepository.readRefreshToken(tokenId)).thenReturn(Maybe.just(oAuth2RefreshToken));
 
         // Run
         final org.springframework.security.oauth2.common.OAuth2RefreshToken oAuth2RefreshToken =
@@ -190,7 +193,7 @@ public class RepositoryTokenStoreTest {
         final String clientId = "test-client";
         when(oAuth2Request.getClientId()).thenReturn(clientId);
         when(oAuth2Authentication.getOAuth2Request()).thenReturn(oAuth2Request);
-        when(tokenRepository.readAuthenticationForRefreshToken(any(OAuth2RefreshToken.class))).thenReturn(Optional.ofNullable(oAuth2Authentication));
+        when(tokenRepository.readAuthenticationForRefreshToken(any(OAuth2RefreshToken.class))).thenReturn(Maybe.just(oAuth2Authentication));
 
         // Run
         final org.springframework.security.oauth2.provider.OAuth2Authentication oAuth2Authentication =
@@ -206,6 +209,7 @@ public class RepositoryTokenStoreTest {
         // prepare OAuth2RefreshToken
         final String tokenId = "test-token";
         when(springOAuth2RefreshToken.getValue()).thenReturn(tokenId);
+        when(tokenRepository.removeRefreshToken(any())).thenReturn(Single.just(Irrelevant.OAUTH2_REFRESH_TOKEN));
 
         // Run
         tokenStore.removeRefreshToken(springOAuth2RefreshToken);
@@ -237,8 +241,8 @@ public class RepositoryTokenStoreTest {
         final String clientId = "test-client";
         when(oAuth2Request.getClientId()).thenReturn(clientId);
         when(oAuth2Authentication.getOAuth2Request()).thenReturn(oAuth2Request);
-        when(tokenRepository.getAccessToken(any())).thenReturn(Optional.ofNullable(oAuth2AccessToken));
-        when(tokenRepository.readAuthentication(tokenId)).thenReturn(Optional.ofNullable(extractedOAuth2Authentication));
+        when(tokenRepository.getAccessToken(any())).thenReturn(Maybe.just(oAuth2AccessToken));
+        when(tokenRepository.readAuthentication(tokenId)).thenReturn(Maybe.just(extractedOAuth2Authentication));
 
         // prepare authentication key
         when(authenticationKeyGenerator.extractKey(any())).thenReturn("test-key");
@@ -267,8 +271,10 @@ public class RepositoryTokenStoreTest {
         final String clientId = "test-client";
         when(oAuth2Request.getClientId()).thenReturn(clientId);
         when(oAuth2Authentication.getOAuth2Request()).thenReturn(oAuth2Request);
-        when(tokenRepository.getAccessToken(any())).thenReturn(Optional.ofNullable(oAuth2AccessToken));
-        when(tokenRepository.readAuthentication(tokenId)).thenReturn(Optional.ofNullable(extractedOAuth2Authentication));
+        when(tokenRepository.getAccessToken(any())).thenReturn(Maybe.just(oAuth2AccessToken));
+        when(tokenRepository.readAuthentication(tokenId)).thenReturn(Maybe.just(extractedOAuth2Authentication));
+        when(tokenRepository.removeAccessToken(tokenId)).thenReturn(Single.just(Irrelevant.OAUTH2_ACCESS_TOKEN));
+        when(tokenRepository.storeAccessToken(any(), any(), eq("test-key-new"))).thenReturn(Single.just(new OAuth2AccessToken(tokenId)));
 
         // Run
         final org.springframework.security.oauth2.common.OAuth2AccessToken oAuth2AccessToken =
@@ -288,7 +294,7 @@ public class RepositoryTokenStoreTest {
         final String clientId = "test-client";
         final String username = "test-username";
         when(oAuth2AccessToken.getValue()).thenReturn(tokenId);
-        when(tokenRepository.findTokensByClientIdAndUserName(clientId, username)).thenReturn(Collections.singletonList(oAuth2AccessToken));
+        when(tokenRepository.findTokensByClientIdAndUserName(clientId, username)).thenReturn(Single.just(Collections.singletonList(oAuth2AccessToken)));
 
         // Run
         final List<org.springframework.security.oauth2.common.OAuth2AccessToken> oAuth2AccessTokens =
@@ -306,7 +312,7 @@ public class RepositoryTokenStoreTest {
         final String tokenId = "test-token";
         final String clientId = "test-client";
         when(oAuth2AccessToken.getValue()).thenReturn(tokenId);
-        when(tokenRepository.findTokensByClientId(clientId)).thenReturn(Collections.singletonList(oAuth2AccessToken));
+        when(tokenRepository.findTokensByClientId(clientId)).thenReturn(Single.just(Collections.singletonList(oAuth2AccessToken)));
 
         // Run
         final List<org.springframework.security.oauth2.common.OAuth2AccessToken> oAuth2AccessTokens =

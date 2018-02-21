@@ -59,7 +59,8 @@ public class UserServiceImpl implements UserService {
     public Set<User> findByDomain(String domain) {
         try {
             LOGGER.debug("Find users by domain: {}", domain);
-            return userRepository.findByDomain(domain);
+            // TODO move to async call
+            return userRepository.findByDomain(domain).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find users by domain", ex);
             throw new TechnicalManagementException("An error occurs while trying to find users by domain", ex);
@@ -70,7 +71,8 @@ public class UserServiceImpl implements UserService {
     public Page<User> findByDomain(String domain, int page, int size) {
         try {
             LOGGER.debug("Find users by domain: {}", domain);
-            return userRepository.findByDomain(domain, page, size);
+            // TODO move to async call
+            return userRepository.findByDomain(domain, page, size).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find users by domain", ex);
             throw new TechnicalManagementException("An error occurs while trying to find users by domain", ex);
@@ -81,7 +83,8 @@ public class UserServiceImpl implements UserService {
     public User findById(String id) {
         try {
             LOGGER.debug("Find user by id : {}", id);
-            Optional<User> userOpt = userRepository.findById(id);
+            // TODO move to async call
+            Optional<User> userOpt = Optional.ofNullable(userRepository.findById(id).blockingGet());
 
             if (!userOpt.isPresent()) {
                 throw new UserNotFoundException(id);
@@ -100,7 +103,8 @@ public class UserServiceImpl implements UserService {
     public User loadUserByUsernameAndDomain(String domain, String username) {
         try {
             LOGGER.debug("Find user by username and domain: {} {}", username, domain);
-            Optional<User> userOpt = userRepository.findByUsernameAndDomain(username, domain);
+            // TODO move to async call
+            Optional<User> userOpt = Optional.ofNullable(userRepository.findByUsernameAndDomain(username, domain).blockingGet());
 
             if (!userOpt.isPresent()) {
                 throw new UserNotFoundException(domain, username);
@@ -140,7 +144,8 @@ public class UserServiceImpl implements UserService {
             user.setAdditionalInformation(newUser.getAdditionalInformation());
             user.setCreatedAt(new Date());
             user.setUpdatedAt(user.getCreatedAt());
-            return userRepository.create(user);
+            // TODO move to async call
+            return userRepository.create(user).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to create a user", ex);
             throw new TechnicalManagementException("An error occurs while trying to create a user", ex);
@@ -152,7 +157,8 @@ public class UserServiceImpl implements UserService {
         try {
             LOGGER.debug("Update a user {} for domain {}", id, domain);
 
-            Optional<User> userOpt = userRepository.findById(id);
+            // TODO move to async call
+            Optional<User> userOpt = Optional.ofNullable(userRepository.findById(id).blockingGet());
             if (!userOpt.isPresent()) {
                 throw new UserNotFoundException(id);
             }
@@ -173,7 +179,8 @@ public class UserServiceImpl implements UserService {
             oldUser.setUpdatedAt(new Date());
             oldUser.setAdditionalInformation(updateUser.getAdditionalInformation());
 
-            User user = userRepository.update(oldUser);
+            // TODO move to async call
+            User user = userRepository.update(oldUser).blockingGet();
 
             return user;
         } catch (TechnicalException ex) {
@@ -187,12 +194,14 @@ public class UserServiceImpl implements UserService {
         try {
             LOGGER.debug("Delete user {}", userId);
 
-            Optional<User> optUser = userRepository.findById(userId);
+            // TODO move to async call
+            Optional<User> optUser = Optional.ofNullable(userRepository.findById(userId).blockingGet());
             if (! optUser.isPresent()) {
                 throw new UserNotFoundException(userId);
             }
 
-            userRepository.delete(userId);
+            // TODO move to async call
+            userRepository.delete(userId).subscribe();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to delete user: {}", userId, ex);
             throw new TechnicalManagementException(

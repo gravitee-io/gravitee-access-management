@@ -46,7 +46,8 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
             LOGGER.debug("Create a new scope approval client[{}] user[{}] scope[{}]", approval.getUserId(),
                     approval.getClientId(), approval.getScope());
 
-            return scopeApprovalRepository.create(approval);
+            // TODO move to async call
+            return scopeApprovalRepository.create(approval).blockingGet();
             /*
             String scopeKey = newScope.getKey().toLowerCase();
             Optional<Scope> scopeOpt = scopeRepository.findByDomainAndKey(domain, scopeKey);
@@ -84,7 +85,8 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
         try {
             LOGGER.debug("Find scope approvals by domain[{}] client[{}] user[{}]", domain);
 
-            return scopeApprovalRepository.findByDomainAndUserAndClient(domain, userId, clientId);
+            // TODO move to async call
+            return scopeApprovalRepository.findByDomainAndUserAndClient(domain, userId, clientId).blockingGet();
         } catch (Exception ex) {
             LOGGER.error("An error occurs while trying to find scope approval", ex);
             throw new TechnicalManagementException("An error occurs while trying to find scope approval", ex);

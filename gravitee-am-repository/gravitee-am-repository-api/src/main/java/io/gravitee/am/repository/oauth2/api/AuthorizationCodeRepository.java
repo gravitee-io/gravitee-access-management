@@ -17,8 +17,8 @@ package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
-
-import java.util.Optional;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -31,14 +31,13 @@ public interface AuthorizationCodeRepository {
      *
      * @param oAuth2AuthorizationCode The code with its associated authentication.
      */
-    void store(OAuth2AuthorizationCode oAuth2AuthorizationCode);
+    Single<OAuth2AuthorizationCode> store(OAuth2AuthorizationCode oAuth2AuthorizationCode);
 
     /**
      * Consume an authorization code and get the associated authentication
      *
      * @param code The code to consume.
      */
-    Optional<OAuth2Authentication> remove(String code);
-
+    Maybe<OAuth2Authentication> remove(String code);
 
 }

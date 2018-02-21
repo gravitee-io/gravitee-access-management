@@ -15,198 +15,139 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
+import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.management.internal.model.ClientMongo;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.index.Index;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.subscribers.DefaultSubscriber;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Optional;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
 public class MongoClientRepository extends AbstractManagementMongoRepository implements ClientRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(MongoClientRepository.class);
+    private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_CLIENT_ID = "clientId";
     private static final String FIELD_IDENTITIES = "identities";
     private static final String FIELD_OAUTH2_IDENTITIES = "oauth2Identities";
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_GRANT_TYPES= "authorizedGrantTypes";
+    private MongoCollection<ClientMongo> clientsCollection;
+
+    @Autowired
+    private IdGenerator idGenerator;
 
     @PostConstruct
-    public void ensureIndexes() {
-        mongoOperations.indexOps(ClientMongo.class)
-                .ensureIndex(new Index()
-                        .on(FIELD_DOMAIN, Sort.Direction.ASC));
-
-        mongoOperations.indexOps(ClientMongo.class)
-                .ensureIndex(new Index()
-                        .on(FIELD_DOMAIN, Sort.Direction.ASC)
-                        .on(FIELD_CLIENT_ID, Sort.Direction.ASC));
-
-        mongoOperations.indexOps(ClientMongo.class)
-                .ensureIndex(new Index()
-                        .on(FIELD_IDENTITIES, Sort.Direction.ASC));
-
-        mongoOperations.indexOps(ClientMongo.class)
-                .ensureIndex(new Index()
-                        .on(FIELD_CERTIFICATE, Sort.Direction.ASC));
-
-        mongoOperations.indexOps(ClientMongo.class)
-                .ensureIndex(new Index()
-                        .on(FIELD_GRANT_TYPES, Sort.Direction.ASC));
+    public void init() {
+        clientsCollection = mongoOperations.getCollection("clients", ClientMongo.class);
+        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new IndexSubscriber());
+        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1)).subscribe(new IndexSubscriber());
+        clientsCollection.createIndex(new Document(FIELD_IDENTITIES, 1)).subscribe(new IndexSubscriber());
+        clientsCollection.createIndex(new Document(FIELD_CERTIFICATE, 1)).subscribe(new IndexSubscriber());
+        clientsCollection.createIndex(new Document(FIELD_GRANT_TYPES, 1)).subscribe(new IndexSubscriber());
     }
 
     @Override
-    public Set<Client> findByDomain(String domain) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain));
-
-        return mongoOperations
-                .find(query, ClientMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    public Single<Set<Client>> findByDomain(String domain) {
+        return Observable.fromPublisher(clientsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Page<Client> findByDomain(String domain, int page, int size) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain));
-        query.with(new PageRequest(page, size));
-
-        long totalCount = mongoOperations.count(query, ClientMongo.class);
-
-        Set<Client> clients = mongoOperations
-                .find(query, ClientMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
-
-        return new Page(clients, page, totalCount);
+    public Single<Page<Client>> findByDomain(String domain, int page, int size) {
+        Single<Long> countOperation = Observable.fromPublisher(clientsCollection.count(eq(FIELD_DOMAIN, domain))).first(0l);
+        Single<Set<Client>> clientsOperation = Observable.fromPublisher(clientsCollection.find(eq(FIELD_DOMAIN, domain)).skip(size * (page - 1)).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        return Single.zip(countOperation, clientsOperation, (count, clients) -> new Page<>(clients, page, count));
     }
 
     @Override
-    public Optional<Client> findByClientIdAndDomain(String clientId, String domain) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(
-                Criteria.where(FIELD_DOMAIN).is(domain)
-                        .andOperator(Criteria.where(FIELD_CLIENT_ID).is(clientId)));
-
-        ClientMongo client = mongoOperations.findOne(query, ClientMongo.class);
-        return Optional.ofNullable(convert(client));
+    public Maybe<Client> findByClientIdAndDomain(String clientId, String domain) {
+        return Single.fromPublisher(clientsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId))).first()).map(this::convert).toMaybe();
     }
 
     @Override
-    public Set<Client> findByIdentityProvider(String identityProvider) {
-        Criteria criteria = new Criteria();
-        criteria.orOperator(Criteria.where(FIELD_IDENTITIES).is(identityProvider), Criteria.where(FIELD_OAUTH2_IDENTITIES).is(identityProvider));
-        Query query = new Query(criteria);
-
-        return mongoOperations
-                .find(query, ClientMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    public Single<Set<Client>> findByIdentityProvider(String identityProvider) {
+        return Observable.fromPublisher(clientsCollection.find(or(eq(FIELD_IDENTITIES, identityProvider), eq(FIELD_OAUTH2_IDENTITIES, identityProvider)))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Set<Client> findByCertificate(String certificate) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_CERTIFICATE).is(certificate));
-
-        return mongoOperations
-                .find(query, ClientMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    public Single<Set<Client>> findByCertificate(String certificate) {
+        return Observable.fromPublisher(clientsCollection.find(eq(FIELD_CERTIFICATE, certificate))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Set<Client> findByExtensionGrant(String tokenGranter) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_GRANT_TYPES).is(tokenGranter));
-
-        return mongoOperations
-                .find(query, ClientMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    public Single<Set<Client>> findByExtensionGrant(String tokenGranter) {
+        return Observable.fromPublisher(clientsCollection.find(eq(FIELD_GRANT_TYPES, tokenGranter))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Set<Client> findAll() throws TechnicalException {
-        return mongoOperations
-                .findAll(ClientMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    public Single<Set<Client>> findAll() {
+        return Observable.fromPublisher(clientsCollection.find()).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Page<Client> findAll(int page, int size) throws TechnicalException {
-        Query query = new Query();
-        query.with(new PageRequest(page, size));
-
-        long totalCount = mongoOperations.count(query, ClientMongo.class);
-
-        Set<Client> clients = mongoOperations
-                .find(query, ClientMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
-
-        return new Page(clients, page, totalCount);
+    public Single<Page<Client>> findAll(int page, int size) {
+        Single<Long> countOperation = Observable.fromPublisher(clientsCollection.count()).first(0l);
+        Single<Set<Client>> clientsOperation = Observable.fromPublisher(clientsCollection.find().skip(size * (page - 1)).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        return Single.zip(countOperation, clientsOperation, (count, clients) -> new Page<>(clients, page, count));
     }
 
     @Override
-    public Optional<Client> findById(String client) throws TechnicalException {
-        return Optional.ofNullable(convert(mongoOperations.findById(client, ClientMongo.class)));
+    public Maybe<Client> findById(String client) {
+        return _findById(client).toMaybe();
     }
 
     @Override
-    public Client create(Client item) throws TechnicalException {
-        ClientMongo domain = convert(item);
-        mongoOperations.save(domain);
-        return convert(domain);
-    }
-
-    @Override
-    public Client update(Client item) throws TechnicalException {
+    public Single<Client> create(Client item) {
         ClientMongo client = convert(item);
-        mongoOperations.save(client);
-        return convert(client);
+        client.setId(client.getId() == null ? (String) idGenerator.generate() : client.getId());
+        return Single.fromPublisher(clientsCollection.insertOne(client)).flatMap(success -> _findById(client.getId()));
     }
 
     @Override
-    public void delete(String id) throws TechnicalException {
-        ClientMongo client = mongoOperations.findById(id, ClientMongo.class);
-        mongoOperations.remove(client);
+    public Single<Client> update(Client item) {
+        ClientMongo client = convert(item);
+        return Single.fromPublisher(clientsCollection.replaceOne(eq(FIELD_ID, client.getId()), client)).flatMap(success -> _findById(client.getId()));
     }
 
     @Override
-    public long countByDomain(String domain) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain));
-
-        return mongoOperations.count(query, ClientMongo.class);
+    public Single<Irrelevant> delete(String id) {
+        return Single.fromPublisher(clientsCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.CLIENT);
     }
 
-    public long count() {
-        return mongoOperations.getCollection( "clients").count();
+    @Override
+    public Single<Long> countByDomain(String domain) {
+        return Observable.fromPublisher(clientsCollection.count(eq(FIELD_DOMAIN, domain))).first(0l);
+    }
+
+    @Override
+    public Single<Long> count() {
+        return Observable.fromPublisher(clientsCollection.count()).first(0l);
+    }
+
+    private Single<Client> _findById(String id) {
+        return Single.fromPublisher(clientsCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private Client convert(ClientMongo clientMongo) {
@@ -258,12 +199,29 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setOauth2Identities(client.getOauth2Identities());
         clientMongo.setDomain(client.getDomain());
         clientMongo.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
-        clientMongo.setIdTokenCustomClaims(client.getIdTokenCustomClaims());
+        clientMongo.setIdTokenCustomClaims(client.getIdTokenCustomClaims() != null ? new Document(client.getIdTokenCustomClaims()) : new Document());
         clientMongo.setCertificate(client.getCertificate());
         clientMongo.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
         clientMongo.setGenerateNewTokenPerRequest(client.isGenerateNewTokenPerRequest());
         clientMongo.setCreatedAt(client.getCreatedAt());
         clientMongo.setUpdatedAt(client.getUpdatedAt());
         return clientMongo;
+    }
+
+    private class IndexSubscriber extends DefaultSubscriber<String> {
+        @Override
+        public void onNext(String value) {
+            logger.debug("Created an index named : " + value);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            logger.error("Error occurs during indexing", throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            logger.debug("Index creation complete");
+        }
     }
 }

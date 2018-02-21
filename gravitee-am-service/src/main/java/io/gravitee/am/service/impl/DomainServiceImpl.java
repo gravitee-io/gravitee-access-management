@@ -70,7 +70,8 @@ public class DomainServiceImpl implements DomainService {
     public Domain findById(String id) {
         try {
             LOGGER.debug("Find domain by ID: {}", id);
-            Optional<Domain> domainOpt = domainRepository.findById(id);
+            // TODO move to async call
+            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(id).blockingGet());
 
             if (!domainOpt.isPresent()) {
                 throw new DomainNotFoundException(id);
@@ -88,7 +89,8 @@ public class DomainServiceImpl implements DomainService {
     public Set<Domain> findAll() {
         try {
             LOGGER.debug("Find all domains");
-            return domainRepository.findAll();
+            // TODO move to async call
+            return domainRepository.findAll().blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find all domains", ex);
             throw new TechnicalManagementException("An error occurs while trying to find all domains", ex);
@@ -99,7 +101,8 @@ public class DomainServiceImpl implements DomainService {
     public Set<Domain> findByIdIn(Collection<String> ids) {
         try {
             LOGGER.debug("Find domains by id in {}", ids);
-            return domainRepository.findByIdIn(ids);
+            // TODO move to async call
+            return domainRepository.findByIdIn(ids).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find domains by id in {}", ids, ex);
             throw new TechnicalManagementException("An error occurs while trying to find domains by id in", ex);
@@ -112,7 +115,8 @@ public class DomainServiceImpl implements DomainService {
             LOGGER.debug("Create a new domain: {}", newDomain);
             String id = generateContextPath(newDomain.getName());
 
-            Optional<Domain> domainOpt = domainRepository.findById(id);
+            // TODO move to async call
+            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(id).blockingGet());
             if (domainOpt.isPresent()) {
                 throw new DomainAlreadyExistsException(newDomain.getName());
             }
@@ -126,7 +130,8 @@ public class DomainServiceImpl implements DomainService {
             domain.setCreatedAt(new Date());
             domain.setUpdatedAt(domain.getCreatedAt());
 
-            return domainRepository.create(domain);
+            // TODO move to async call
+            return domainRepository.create(domain).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to create a domain", ex);
             throw new TechnicalManagementException("An error occurs while trying to create a domain", ex);
@@ -138,7 +143,8 @@ public class DomainServiceImpl implements DomainService {
         try {
             LOGGER.debug("Update an existing domain: {}", updateDomain);
 
-            Optional<Domain> domainOpt = domainRepository.findById(domainId);
+            // TODO move to async call
+            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(domainId).blockingGet());
             if (!domainOpt.isPresent()) {
                 throw new DomainNotFoundException(domainId);
             }
@@ -156,7 +162,8 @@ public class DomainServiceImpl implements DomainService {
             domain.setCreatedAt(oldDomain.getCreatedAt());
             domain.setUpdatedAt(new Date());
             domain.setLoginForm(oldDomain.getLoginForm());
-            return domainRepository.update(domain);
+            // TODO move to async call
+            return domainRepository.update(domain).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to update a domain", ex);
             throw new TechnicalManagementException("An error occurs while trying to update a domain", ex);
@@ -167,8 +174,8 @@ public class DomainServiceImpl implements DomainService {
     public Domain reload(String domainId) {
         try {
             LOGGER.debug("Reload a domain: {}", domainId);
-
-            Optional<Domain> domainOpt = domainRepository.findById(domainId);
+            // TODO move to async call
+            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(domainId).blockingGet());
             if (!domainOpt.isPresent()) {
                 throw new DomainNotFoundException(domainId);
             }
@@ -185,7 +192,8 @@ public class DomainServiceImpl implements DomainService {
             domain.setCreatedAt(oldDomain.getCreatedAt());
             domain.setUpdatedAt(new Date());
             domain.setLoginForm(oldDomain.getLoginForm());
-            return domainRepository.update(domain);
+            // TODO move to async call
+            return domainRepository.update(domain).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to reload a domain", ex);
             throw new TechnicalManagementException("An error occurs while trying to reload a domain", ex);
@@ -197,7 +205,8 @@ public class DomainServiceImpl implements DomainService {
         try {
             LOGGER.debug("Set master flag for domain: {}", domainId);
 
-            Optional<Domain> domainOpt = domainRepository.findById(domainId);
+            // TODO move to async call
+            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(domainId).blockingGet());
             if (!domainOpt.isPresent()) {
                 throw new DomainNotFoundException(domainId);
             }
@@ -214,7 +223,8 @@ public class DomainServiceImpl implements DomainService {
             domain.setCreatedAt(oldDomain.getCreatedAt());
             domain.setUpdatedAt(new Date());
             domain.setLoginForm(oldDomain.getLoginForm());
-            return domainRepository.update(domain);
+            // TODO move to async call
+            return domainRepository.update(domain).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to set master flag for domain {}", domainId, ex);
             throw new TechnicalManagementException("An error occurs while trying to set master flag for a domain", ex);
@@ -226,7 +236,8 @@ public class DomainServiceImpl implements DomainService {
         try {
             LOGGER.debug("Delete security domain {}", domain);
 
-            Optional<Domain> optApi = domainRepository.findById(domain);
+            // TODO move to async call
+            Optional<Domain> optApi = Optional.ofNullable(domainRepository.findById(domain).blockingGet());
             if (! optApi.isPresent()) {
                 throw new DomainNotFoundException(domain);
             }
@@ -250,7 +261,8 @@ public class DomainServiceImpl implements DomainService {
             // delete users
             userService.findByDomain(domain).forEach(u -> userService.delete(u.getId()));
 
-            domainRepository.delete(domain);
+            // TODO move to async call
+            domainRepository.delete(domain).subscribe();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to delete security domain {}", domain, ex);
             throw new TechnicalManagementException("An error occurs while trying to delete security domain " + domain, ex);
@@ -262,7 +274,8 @@ public class DomainServiceImpl implements DomainService {
         try {
             LOGGER.debug("Update login form of an existing domain: {}", domainId);
 
-            Optional<Domain> domainOpt = domainRepository.findById(domainId);
+            // TODO move to async call
+            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(domainId).blockingGet());
             if (!domainOpt.isPresent()) {
                 throw new DomainNotFoundException(domainId);
             }
@@ -275,7 +288,8 @@ public class DomainServiceImpl implements DomainService {
             Domain domain = domainOpt.get();
             domain.setLoginForm(form);
             domain.setUpdatedAt(new Date());
-            domainRepository.update(domain);
+            // TODO move to async call
+            domainRepository.update(domain).subscribe();
 
             return form;
         } catch (TechnicalException ex) {
@@ -289,7 +303,8 @@ public class DomainServiceImpl implements DomainService {
         try {
             LOGGER.debug("Delete login form of an existing domain: {}", domainId);
 
-            Optional<Domain> domainOpt = domainRepository.findById(domainId);
+            // TODO move to async call
+            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(domainId).blockingGet());
             if (!domainOpt.isPresent()) {
                 throw new DomainNotFoundException(domainId);
             }
@@ -297,7 +312,8 @@ public class DomainServiceImpl implements DomainService {
             Domain domain = domainOpt.get();
             domain.setLoginForm(null);
             domain.setUpdatedAt(new Date());
-            domainRepository.update(domain);
+            // TODO move to async call
+            domainRepository.update(domain).subscribe();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to update login form domain", ex);
             throw new TechnicalManagementException("An error occurs while trying to update a domain", ex);

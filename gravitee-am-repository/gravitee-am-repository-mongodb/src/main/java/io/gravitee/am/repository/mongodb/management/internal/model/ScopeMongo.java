@@ -16,7 +16,7 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.Map;
 
@@ -24,12 +24,12 @@ import java.util.Map;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Document(collection = "scopes")
 public class ScopeMongo extends Auditable {
 
     /**
      * Technical identifier
      */
+    @BsonId
     private String id;
 
     /**

@@ -16,11 +16,13 @@
 package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -31,27 +33,27 @@ import java.util.Set;
 public class IdentityProviderRepositoryProxy extends AbstractProxy<IdentityProviderRepository> implements IdentityProviderRepository {
 
     @Override
-    public Set<IdentityProvider> findByDomain(String domain) throws TechnicalException {
+    public Single<Set<IdentityProvider>> findByDomain(String domain) throws TechnicalException {
         return target.findByDomain(domain);
     }
 
     @Override
-    public Optional<IdentityProvider> findById(String id) throws TechnicalException {
+    public Maybe<IdentityProvider> findById(String id) throws TechnicalException {
         return target.findById(id);
     }
 
     @Override
-    public IdentityProvider create(IdentityProvider identityProvider) throws TechnicalException {
+    public Single<IdentityProvider> create(IdentityProvider identityProvider) throws TechnicalException {
         return target.create(identityProvider);
     }
 
     @Override
-    public IdentityProvider update(IdentityProvider identityProvider) throws TechnicalException {
+    public Single<IdentityProvider> update(IdentityProvider identityProvider) throws TechnicalException {
         return target.update(identityProvider);
     }
 
     @Override
-    public void delete(String id) throws TechnicalException {
-        target.delete(id);
+    public Single<Irrelevant> delete(String id) throws TechnicalException {
+        return target.delete(id);
     }
 }

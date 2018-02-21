@@ -47,8 +47,9 @@ public class RepositoryTokenStore implements TokenStore {
 
     @Override
     public OAuth2Authentication readAuthentication(OAuth2AccessToken token) {
+        // TODO move to async call
         Optional<io.gravitee.am.repository.oauth2.model.OAuth2Authentication> oAuth2Authentication
-                = tokenRepository.readAuthentication(convert(token));
+                = Optional.ofNullable(tokenRepository.readAuthentication(convert(token)).blockingGet());
 
         if (oAuth2Authentication.isPresent()) {
             return RepositoryProviderUtils.convert(oAuth2Authentication.get());
@@ -59,8 +60,9 @@ public class RepositoryTokenStore implements TokenStore {
 
     @Override
     public OAuth2Authentication readAuthentication(String token) {
+        // TODO move to async call
         Optional<io.gravitee.am.repository.oauth2.model.OAuth2Authentication> oAuth2Authentication
-                = tokenRepository.readAuthentication(token);
+                = Optional.ofNullable(tokenRepository.readAuthentication(token).blockingGet());
 
         if (oAuth2Authentication.isPresent()) {
             return RepositoryProviderUtils.convert(oAuth2Authentication.get());
@@ -81,12 +83,14 @@ public class RepositoryTokenStore implements TokenStore {
         accessToken.setCreatedAt(new Date());
         accessToken.setUpdatedAt(accessToken.getCreatedAt());
 
-        tokenRepository.storeAccessToken(accessToken, oAuth2Authentication, authenticationKey);
+        // TODO move to async call
+        tokenRepository.storeAccessToken(accessToken, oAuth2Authentication, authenticationKey).subscribe();
     }
 
     @Override
     public OAuth2AccessToken readAccessToken(String tokenValue) {
-        Optional<io.gravitee.am.repository.oauth2.model.OAuth2AccessToken> oAuth2AccessToken = tokenRepository.readAccessToken(tokenValue);
+        // TODO move to async call
+        Optional<io.gravitee.am.repository.oauth2.model.OAuth2AccessToken> oAuth2AccessToken = Optional.ofNullable(tokenRepository.readAccessToken(tokenValue).blockingGet());
 
         if (oAuth2AccessToken.isPresent()) {
             return convert(oAuth2AccessToken.get());
@@ -97,7 +101,8 @@ public class RepositoryTokenStore implements TokenStore {
 
     @Override
     public void removeAccessToken(OAuth2AccessToken token) {
-        tokenRepository.removeAccessToken(convert(token));
+        // TODO move to async call
+        tokenRepository.removeAccessToken(convert(token)).subscribe();
     }
 
     @Override
@@ -108,13 +113,15 @@ public class RepositoryTokenStore implements TokenStore {
         refreshToken.setCreatedAt(new Date());
         refreshToken.setUpdatedAt(refreshToken.getCreatedAt());
 
-        tokenRepository.storeRefreshToken(refreshToken, RepositoryProviderUtils.convert(authentication));
+        // TODO move to async call
+        tokenRepository.storeRefreshToken(refreshToken, RepositoryProviderUtils.convert(authentication)).subscribe();
     }
 
     @Override
     public OAuth2RefreshToken readRefreshToken(String tokenValue) {
+        // TODO move to async call
         Optional<io.gravitee.am.repository.oauth2.model.OAuth2RefreshToken> oAuth2RefreshToken
-                = tokenRepository.readRefreshToken(tokenValue);
+                = Optional.ofNullable(tokenRepository.readRefreshToken(tokenValue).blockingGet());
 
         if(oAuth2RefreshToken.isPresent()) {
             return convert(oAuth2RefreshToken.get());
@@ -125,8 +132,9 @@ public class RepositoryTokenStore implements TokenStore {
 
     @Override
     public OAuth2Authentication readAuthenticationForRefreshToken(OAuth2RefreshToken token) {
+        // TODO move to async call
         Optional<io.gravitee.am.repository.oauth2.model.OAuth2Authentication> oAuth2Authentication
-                = tokenRepository.readAuthenticationForRefreshToken(convert(token));
+                = Optional.ofNullable(tokenRepository.readAuthenticationForRefreshToken(convert(token)).blockingGet());
 
         if (oAuth2Authentication.isPresent()) {
             return RepositoryProviderUtils.convert(oAuth2Authentication.get());
@@ -137,7 +145,8 @@ public class RepositoryTokenStore implements TokenStore {
 
     @Override
     public void removeRefreshToken(OAuth2RefreshToken token) {
-        tokenRepository.removeRefreshToken(convert(token));
+        // TODO move to async call
+        tokenRepository.removeRefreshToken(convert(token)).subscribe();
     }
 
     @Override
@@ -152,21 +161,25 @@ public class RepositoryTokenStore implements TokenStore {
         String authenticationKey = authenticationKeyGenerator.extractKey(oAuth2Authentication);
 
         // get access token
-        Optional<io.gravitee.am.repository.oauth2.model.OAuth2AccessToken> oAuth2AccessToken = tokenRepository.getAccessToken(authenticationKey);
+        // TODO move to async call
+        Optional<io.gravitee.am.repository.oauth2.model.OAuth2AccessToken> oAuth2AccessToken = Optional.ofNullable(tokenRepository.getAccessToken(authenticationKey).blockingGet());
 
         if (oAuth2AccessToken.isPresent()) {
             io.gravitee.am.repository.oauth2.model.OAuth2AccessToken accessToken = oAuth2AccessToken.get();
-            Optional<io.gravitee.am.repository.oauth2.model.OAuth2Authentication> optExtractedAuthentication = tokenRepository.readAuthentication(accessToken.getValue());
+            Optional<io.gravitee.am.repository.oauth2.model.OAuth2Authentication> optExtractedAuthentication = Optional.ofNullable(tokenRepository.readAuthentication(accessToken.getValue()).blockingGet());
             if ((!optExtractedAuthentication.isPresent() || !authenticationKey.equals(authenticationKeyGenerator.extractKey(optExtractedAuthentication.get())))) {
-                tokenRepository.removeAccessToken(accessToken.getValue());
+                // TODO move to async call
+                tokenRepository.removeAccessToken(accessToken.getValue()).subscribe();
                 // Keep the store consistent (maybe the same user is represented by this authentication but the details have
                 // changed)
-                tokenRepository.storeAccessToken(accessToken, oAuth2Authentication, authenticationKey);
+                // TODO move to async call
+                tokenRepository.storeAccessToken(accessToken, oAuth2Authentication, authenticationKey).subscribe();
 
                 // something happens with authentication (different serialization object)
                 // Keep the refresh token consistent
                 if (!optExtractedAuthentication.isPresent() && accessToken.getRefreshToken() != null) {
-                    tokenRepository.storeRefreshToken(accessToken.getRefreshToken(), oAuth2Authentication);
+                    // TODO move to async call
+                    tokenRepository.storeRefreshToken(accessToken.getRefreshToken(), oAuth2Authentication).subscribe();
                 }
             }
             return convert(accessToken);
@@ -177,8 +190,9 @@ public class RepositoryTokenStore implements TokenStore {
 
     @Override
     public Collection<OAuth2AccessToken> findTokensByClientIdAndUserName(String clientId, String userName) {
+        // TODO move to async call
         Collection<io.gravitee.am.repository.oauth2.model.OAuth2AccessToken> accessTokens =
-                tokenRepository.findTokensByClientIdAndUserName(clientId, userName);
+                tokenRepository.findTokensByClientIdAndUserName(clientId, userName).blockingGet();
 
         if (accessTokens != null) {
             return accessTokens.stream().map(this::convert).collect(Collectors.toList());
@@ -189,8 +203,9 @@ public class RepositoryTokenStore implements TokenStore {
 
     @Override
     public Collection<OAuth2AccessToken> findTokensByClientId(String clientId) {
+        // TODO move to async call
         Collection<io.gravitee.am.repository.oauth2.model.OAuth2AccessToken> accessTokens =
-                tokenRepository.findTokensByClientId(clientId);
+                tokenRepository.findTokensByClientId(clientId).blockingGet();
 
         if (accessTokens != null) {
             return accessTokens.stream().map(this::convert).collect(Collectors.toList());

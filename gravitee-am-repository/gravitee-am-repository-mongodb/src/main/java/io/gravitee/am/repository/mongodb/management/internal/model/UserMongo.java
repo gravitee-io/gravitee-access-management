@@ -16,8 +16,8 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.bson.Document;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.Date;
 import java.util.Map;
@@ -26,10 +26,9 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Document(collection = "users")
 public class UserMongo extends Auditable {
 
-    @Id
+    @BsonId
     private String id;
     private String username;
     private String password;
@@ -45,7 +44,10 @@ public class UserMongo extends Auditable {
     private String client;
     private long loginsCount;
     private Date loggedAt;
-    private Map<String, Object> additionalInformation;
+    /**
+     * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
+     */
+    private Document additionalInformation;
 
     public String getId() {
         return id;
@@ -167,11 +169,11 @@ public class UserMongo extends Auditable {
         this.loggedAt = loggedAt;
     }
 
-    public Map<String, Object> getAdditionalInformation() {
+    public Document getAdditionalInformation() {
         return additionalInformation;
     }
 
-    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
+    public void setAdditionalInformation(Document additionalInformation) {
         this.additionalInformation = additionalInformation;
     }
 

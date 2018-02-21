@@ -15,105 +15,87 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.oauth2.ScopeApproval;
-import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.repository.mongodb.management.internal.model.ScopeMongo;
+import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.ScopeApprovalMongo;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.subscribers.DefaultSubscriber;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.data.mongodb.core.index.Index;
-import org.springframework.data.mongodb.core.index.IndexDefinition;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Optional;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
-public class MongoScopeApprovalRepository implements ScopeApprovalRepository {
+public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository implements ScopeApprovalRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(MongoScopeApprovalRepository.class);
+    private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_USER_ID = "userId";
     private static final String FIELD_CLIENT_ID = "clientId";
-    private final static String FIELD_EXPIRES_AT = "expiresAt";
-
+    private static final String FIELD_EXPIRES_AT = "expiresAt";
+    private MongoCollection<ScopeApprovalMongo> scopeApprovalsCollection;
 
     @Autowired
-    @Qualifier("oauth2MongoTemplate")
-    private MongoOperations mongoOperations;
+    private IdGenerator idGenerator;
 
     @PostConstruct
-    public void ensureIndexes() {
-        mongoOperations.indexOps(ScopeApprovalMongo.class).ensureIndex(new IndexDefinition() {
-            @Override
-            public DBObject getIndexKeys() {
-                return new BasicDBObject(FIELD_EXPIRES_AT, 1);
-            }
-
-            @Override
-            public DBObject getIndexOptions() {
-                // To expire Documents at a Specific Clock Time we have to specify an expireAfterSeconds value of 0.
-                return new BasicDBObject("expireAfterSeconds", 0);
-            }
-        });
-
-        mongoOperations.indexOps(ScopeApprovalMongo.class)
-                .ensureIndex(new Index()
-                        .on(FIELD_DOMAIN, Sort.Direction.ASC)
-                        .on(FIELD_CLIENT_ID, Sort.Direction.ASC)
-                        .on(FIELD_USER_ID, Sort.Direction.ASC));
+    public void init() {
+        scopeApprovalsCollection = mongoOperations.getCollection("scope_approvals", ScopeApprovalMongo.class);
+        scopeApprovalsCollection.createIndex(new Document(FIELD_EXPIRES_AT, 1),  new IndexOptions().expireAfter(0l, TimeUnit.SECONDS)).subscribe(new IndexSubscriber());
+        scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1)).subscribe(new IndexSubscriber());
     }
 
     @Override
-    public Optional<ScopeApproval> findById(String s) throws TechnicalException {
+    public Maybe<ScopeApproval> findById(String s) {
         throw new IllegalStateException();
     }
 
     @Override
-    public ScopeApproval create(ScopeApproval scopeApproval) throws TechnicalException {
+    public Single<ScopeApproval> create(ScopeApproval scopeApproval) {
         ScopeApprovalMongo scopeApprovalMongo = convert(scopeApproval);
-        mongoOperations.save(scopeApprovalMongo);
-        return convert(scopeApprovalMongo);
+        scopeApprovalMongo.setId(scopeApprovalMongo.getId() == null ? (String) idGenerator.generate() : scopeApprovalMongo.getId());
+        return Single.fromPublisher(scopeApprovalsCollection.insertOne(scopeApprovalMongo)).flatMap(success -> _findById(scopeApprovalMongo.getId()));
     }
 
     @Override
-    public ScopeApproval update(ScopeApproval scopeApproval) throws TechnicalException {
+    public Single<ScopeApproval> update(ScopeApproval scopeApproval) {
         ScopeApprovalMongo scopeApprovalMongo = convert(scopeApproval);
-        mongoOperations.save(scopeApprovalMongo);
-        return convert(scopeApprovalMongo);
+        return Single.fromPublisher(scopeApprovalsCollection.replaceOne(eq(FIELD_ID, scopeApprovalMongo.getId()), scopeApprovalMongo)).flatMap(updateResult -> _findById(scopeApprovalMongo.getId()));
     }
 
     @Override
-    public void delete(String id) throws TechnicalException {
-        ScopeMongo scope = mongoOperations.findById(id, ScopeMongo.class);
-        mongoOperations.remove(scope);
+    public Single<Irrelevant> delete(String id) {
+        return Single.fromPublisher(scopeApprovalsCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.SCOPE_APPROVAL);
     }
 
     @Override
-    public Set<ScopeApproval> findByDomainAndUserAndClient(String domain, String userId, String clientId) throws TechnicalException {
-        Query query = new Query();
-        query
-                .addCriteria(Criteria.where(FIELD_DOMAIN).is(domain))
-                .addCriteria(Criteria.where(FIELD_CLIENT_ID).is(clientId))
-                .addCriteria(Criteria.where(FIELD_USER_ID).is(userId));
+    public Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId) {
+        return Observable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId), eq(FIELD_USER_ID, userId)))).map(this::convert).collect(HashSet::new, Set::add);
+    }
 
-        return mongoOperations
-                .find(query, ScopeApprovalMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    private Single<ScopeApproval> _findById(String id) {
+        return Single.fromPublisher(scopeApprovalsCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private ScopeApproval convert(ScopeApprovalMongo scopeApprovalMongo) {
@@ -148,5 +130,22 @@ public class MongoScopeApprovalRepository implements ScopeApprovalRepository {
         scopeApprovalMongo.setUpdatedAt(scopeApproval.getUpdatedAt());
 
         return scopeApprovalMongo;
+    }
+
+    private class IndexSubscriber extends DefaultSubscriber<String> {
+        @Override
+        public void onNext(String value) {
+            logger.debug("Created an index named : " + value);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            logger.error("Error occurs during indexing", throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            logger.debug("Index creation complete");
+        }
     }
 }

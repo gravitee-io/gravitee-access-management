@@ -18,6 +18,7 @@ package io.gravitee.am.repository.oauth2.api;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.reactivex.Single;
 
 import java.util.Set;
 
@@ -27,5 +28,5 @@ import java.util.Set;
  */
 public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, String> {
 
-    Set<ScopeApproval> findByDomainAndUserAndClient(String domain, String userId, String clientId) throws TechnicalException;
+    Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId) throws TechnicalException;
 }

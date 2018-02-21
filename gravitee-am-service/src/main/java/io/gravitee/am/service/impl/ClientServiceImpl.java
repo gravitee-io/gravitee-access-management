@@ -67,7 +67,8 @@ public class ClientServiceImpl implements ClientService {
     public Client findById(String id) {
         try {
             LOGGER.debug("Find client by ID: {}", id);
-            Optional<Client> clientOpt = clientRepository.findById(id);
+            // TODO move to async call
+            Optional<Client> clientOpt = Optional.ofNullable(clientRepository.findById(id).blockingGet());
 
             if (!clientOpt.isPresent()) {
                 throw new ClientNotFoundException(id);
@@ -90,7 +91,8 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Client findByDomainAndClientId(String domain, String clientId) {
         try {
-            Optional<Client> clientOpt = clientRepository.findByClientIdAndDomain(clientId, domain);
+            // TODO move to async call
+            Optional<Client> clientOpt = Optional.ofNullable(clientRepository.findByClientIdAndDomain(clientId, domain).blockingGet());
             if (!clientOpt.isPresent()) {
                 throw new ClientNotFoundException(clientId);
             }
@@ -107,7 +109,8 @@ public class ClientServiceImpl implements ClientService {
     public Set<Client> findByDomain(String domain) {
         try {
             LOGGER.debug("Find clients by domain", domain);
-            return clientRepository.findByDomain(domain);
+            // TODO move to async call
+            return clientRepository.findByDomain(domain).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find clients by domain: {}", domain, ex);
             throw new TechnicalManagementException(
@@ -119,7 +122,8 @@ public class ClientServiceImpl implements ClientService {
     public Page<Client> findByDomain(String domain, int page, int size) {
         try {
             LOGGER.debug("Find clients by domain", domain);
-            return clientRepository.findByDomain(domain, page, size);
+            // TODO move to async call
+            return clientRepository.findByDomain(domain, page, size).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find clients by domain: {}", domain, ex);
             throw new TechnicalManagementException(
@@ -131,7 +135,8 @@ public class ClientServiceImpl implements ClientService {
     public Set<Client> findByIdentityProvider(String identityProvider) {
         try {
             LOGGER.debug("Find clients by identity provider : {}", identityProvider);
-            return clientRepository.findByIdentityProvider(identityProvider);
+            // TODO move to async call
+            return clientRepository.findByIdentityProvider(identityProvider).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find clients by identity provider", ex);
             throw new TechnicalManagementException("An error occurs while trying to find clients by identity provider", ex);
@@ -142,7 +147,8 @@ public class ClientServiceImpl implements ClientService {
     public Set<Client> findByCertificate(String certificate) {
         try {
             LOGGER.debug("Find clients by certificate : {}", certificate);
-            return clientRepository.findByCertificate(certificate);
+            // TODO move to async call
+            return clientRepository.findByCertificate(certificate).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find clients by certificate", ex);
             throw new TechnicalManagementException("An error occurs while trying to find clients by certificate", ex);
@@ -153,7 +159,8 @@ public class ClientServiceImpl implements ClientService {
     public Set<Client> findByExtensionGrant(String extensionGrant) {
         try {
             LOGGER.debug("Find clients by extension grant : {}", extensionGrant);
-            return clientRepository.findByExtensionGrant(extensionGrant);
+            // TODO move to async call
+            return clientRepository.findByExtensionGrant(extensionGrant).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find clients by extension grant", ex);
             throw new TechnicalManagementException("An error occurs while trying to find clients by extension grant", ex);
@@ -164,7 +171,8 @@ public class ClientServiceImpl implements ClientService {
     public Set<Client> findAll() {
         try {
             LOGGER.debug("Find clients");
-            return clientRepository.findAll();
+            // TODO move to async call
+            return clientRepository.findAll().blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find clients", ex);
             throw new TechnicalManagementException("An error occurs while trying to find clients", ex);
@@ -175,7 +183,8 @@ public class ClientServiceImpl implements ClientService {
     public Page<Client> findAll(int page, int size) {
         try {
             LOGGER.debug("Find clients");
-            return clientRepository.findAll(page, size);
+            // TODO move to async call
+            return clientRepository.findAll(page, size).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find clients", ex);
             throw new TechnicalManagementException("An error occurs while trying to find clients", ex);
@@ -186,11 +195,13 @@ public class ClientServiceImpl implements ClientService {
     public Set<TopClient> findTopClients() {
         try {
             LOGGER.debug("Find top clients");
-            Set<Client> clients = clientRepository.findAll();
+            // TODO move to async call
+            Set<Client> clients = clientRepository.findAll().blockingGet();
             return clients.parallelStream().map(c -> {
                 TopClient client = new TopClient();
                 client.setClient(c);
-                client.setAccessTokens(tokenRepository.findTokensByClientId(c.getClientId()).size());
+                // TODO move to async call
+                client.setAccessTokens(tokenRepository.findTokensByClientId(c.getClientId()).blockingGet().size());
                 return client;
             }).filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet());
         } catch (TechnicalException ex) {
@@ -203,11 +214,13 @@ public class ClientServiceImpl implements ClientService {
     public Set<TopClient> findTopClientsByDomain(String domain) {
         try {
             LOGGER.debug("Find top clients by domain: {}", domain);
-            Set<Client> clients = clientRepository.findByDomain(domain);
+            // TODO move to async call
+            Set<Client> clients = clientRepository.findByDomain(domain).blockingGet();
             return clients.parallelStream().map(c -> {
                 TopClient client = new TopClient();
                 client.setClient(c);
-                client.setAccessTokens(tokenRepository.findTokensByClientId(c.getClientId()).size());
+                // TODO move to async call
+                client.setAccessTokens(tokenRepository.findTokensByClientId(c.getClientId()).blockingGet().size());
                 return client;
             }).filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet());
         } catch (TechnicalException ex) {
@@ -221,7 +234,8 @@ public class ClientServiceImpl implements ClientService {
         try {
             LOGGER.debug("Find total clients by domain: {}", domain);
             TotalClient totalClient = new TotalClient();
-            totalClient.setTotalClients(clientRepository.countByDomain(domain));
+            // TODO move to async call
+            totalClient.setTotalClients(clientRepository.countByDomain(domain).blockingGet());
             return totalClient;
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find total clients by domain: {}", domain, ex);
@@ -235,7 +249,8 @@ public class ClientServiceImpl implements ClientService {
         try {
             LOGGER.debug("Find total client");
             TotalClient totalClient = new TotalClient();
-            totalClient.setTotalClients(clientRepository.count());
+            // TODO move to async call
+            totalClient.setTotalClients(clientRepository.count().blockingGet());
             return totalClient;
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find total clients", ex);
@@ -248,7 +263,8 @@ public class ClientServiceImpl implements ClientService {
         try {
             LOGGER.debug("Create a new client {} for domain {}", newClient, domain);
 
-            Optional<Client> clientOpt = clientRepository.findByClientIdAndDomain(newClient.getClientId(), domain);
+            // TODO move to async call
+            Optional<Client> clientOpt = Optional.ofNullable(clientRepository.findByClientIdAndDomain(newClient.getClientId(), domain).blockingGet());
             if (clientOpt.isPresent()) {
                 throw new ClientAlreadyExistsException(newClient.getClientId(), domain);
             }
@@ -270,7 +286,8 @@ public class ClientServiceImpl implements ClientService {
             client.setCreatedAt(new Date());
             client.setUpdatedAt(client.getCreatedAt());
 
-            return clientRepository.create(client);
+            // TODO move to async call
+            return clientRepository.create(client).blockingGet();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to create a client", ex);
             throw new TechnicalManagementException("An error occurs while trying to create a client", ex);
@@ -282,7 +299,8 @@ public class ClientServiceImpl implements ClientService {
         try {
             LOGGER.debug("Update a client {} for domain {}", id, domain);
 
-            Optional<Client> clientOpt = clientRepository.findById(id);
+            // TODO move to async call
+            Optional<Client> clientOpt = Optional.ofNullable(clientRepository.findById(id).blockingGet());
             if (!clientOpt.isPresent()) {
                 throw new ClientNotFoundException(id);
             }
@@ -310,7 +328,8 @@ public class ClientServiceImpl implements ClientService {
             client.setGenerateNewTokenPerRequest(updateClient.isGenerateNewTokenPerRequest());
             client.setUpdatedAt(new Date());
 
-            Client clientUpdated = clientRepository.update(client);
+            // TODO move to async call
+            Client clientUpdated = clientRepository.update(client).blockingGet();
 
             // Reload domain to take care about client update
             domainService.reload(domain);
@@ -327,12 +346,14 @@ public class ClientServiceImpl implements ClientService {
         try {
             LOGGER.debug("Delete client {}", clientId);
 
-            Optional<Client> optClient = clientRepository.findById(clientId);
+            // TODO move to async call
+            Optional<Client> optClient = Optional.ofNullable(clientRepository.findById(clientId).blockingGet());
             if (! optClient.isPresent()) {
                 throw new ClientNotFoundException(clientId);
             }
 
-            clientRepository.delete(clientId);
+            // TODO move to async call
+            clientRepository.delete(clientId).subscribe();
 
             // Reload domain to take care about client delete
             domainService.reload(optClient.get().getDomain());

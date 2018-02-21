@@ -19,8 +19,9 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -29,10 +30,10 @@ import java.util.Set;
  */
 public interface UserRepository extends CrudRepository<User, String> {
 
-    Set<User> findByDomain(String domain) throws TechnicalException;
+    Single<Set<User>> findByDomain(String domain) throws TechnicalException;
 
-    Page<User> findByDomain(String domain, int page, int size) throws TechnicalException;
+    Single<Page<User>> findByDomain(String domain, int page, int size) throws TechnicalException;
 
-    Optional<User> findByUsernameAndDomain(String username, String domain) throws TechnicalException;
+    Maybe<User> findByUsernameAndDomain(String username, String domain) throws TechnicalException;
 
 }

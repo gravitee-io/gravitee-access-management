@@ -19,8 +19,9 @@ import io.gravitee.am.model.Client;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -35,23 +36,23 @@ public interface ClientRepository extends CrudRepository<Client, String> {
      * @return All {@link Client}
      * @throws TechnicalException
      */
-    Set<Client> findByDomain(String domain) throws TechnicalException;
+    Single<Set<Client>> findByDomain(String domain) throws TechnicalException;
 
-    Page<Client> findByDomain(String domain, int page, int size) throws TechnicalException;
+    Single<Page<Client>> findByDomain(String domain, int page, int size) throws TechnicalException;
 
-    Optional<Client> findByClientIdAndDomain(String clientId, String domain) throws TechnicalException;
+    Maybe<Client> findByClientIdAndDomain(String clientId, String domain) throws TechnicalException;
 
-    Set<Client> findByIdentityProvider(String identityProvider) throws TechnicalException;
+    Single<Set<Client>> findByIdentityProvider(String identityProvider) throws TechnicalException;
 
-    Set<Client> findByCertificate(String certificate) throws TechnicalException;
+    Single<Set<Client>> findByCertificate(String certificate) throws TechnicalException;
 
-    Set<Client> findByExtensionGrant(String tokenGranter) throws TechnicalException;
+    Single<Set<Client>> findByExtensionGrant(String tokenGranter) throws TechnicalException;
 
-    Set<Client> findAll() throws TechnicalException;
+    Single<Set<Client>> findAll() throws TechnicalException;
 
-    Page<Client> findAll(int page, int size) throws TechnicalException;
+    Single<Page<Client>> findAll(int page, int size) throws TechnicalException;
 
-    long countByDomain(String domain) throws TechnicalException;
+    Single<Long> countByDomain(String domain) throws TechnicalException;
 
-    long count() throws TechnicalException;
+    Single<Long> count() throws TechnicalException;
 }

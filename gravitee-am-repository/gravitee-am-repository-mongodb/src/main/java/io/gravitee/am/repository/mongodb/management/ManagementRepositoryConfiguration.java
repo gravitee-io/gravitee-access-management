@@ -15,20 +15,22 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.Mongo;
+import com.mongodb.reactivestreams.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.common.AbstractRepositoryConfiguration;
+import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.common.MongoFactory;
+import io.gravitee.am.repository.mongodb.common.UUIDIdGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.data.mongodb.core.MongoTemplate;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
@@ -37,7 +39,7 @@ public class ManagementRepositoryConfiguration extends AbstractRepositoryConfigu
 
     @Autowired
     @Qualifier("managementMongo")
-    private Mongo mongo;
+    private MongoClient mongo;
 
     @Bean(name = "managementMongo")
     public static MongoFactory mongoFactory() {
@@ -45,12 +47,12 @@ public class ManagementRepositoryConfiguration extends AbstractRepositoryConfigu
     }
 
     @Bean(name = "managementMongoTemplate")
-    public MongoOperations mongoOperations() {
-        return new MongoTemplate(mongo, getDatabaseName());
+    public MongoDatabase mongoOperations() {
+        return mongo.getDatabase(getDatabaseName());
     }
 
-    @Override
-    public Mongo mongo() throws Exception {
-        return mongo;
+    @Bean
+    public IdGenerator idGenerator() {
+        return new UUIDIdGenerator();
     }
 }

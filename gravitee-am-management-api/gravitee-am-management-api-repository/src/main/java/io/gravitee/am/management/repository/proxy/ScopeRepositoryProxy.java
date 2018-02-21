@@ -15,12 +15,14 @@
  */
 package io.gravitee.am.management.repository.proxy;
 
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -30,27 +32,27 @@ import java.util.Set;
 @Component
 public class ScopeRepositoryProxy extends AbstractProxy<ScopeRepository> implements ScopeRepository {
 
-    public Set<Scope> findByDomain(String domain) throws TechnicalException {
+    public Single<Set<Scope>> findByDomain(String domain) throws TechnicalException {
         return target.findByDomain(domain);
     }
 
-    public Optional<Scope> findByDomainAndKey(String domain, String key) throws TechnicalException {
+    public Maybe<Scope> findByDomainAndKey(String domain, String key) throws TechnicalException {
         return target.findByDomainAndKey(domain, key);
     }
 
-    public Optional<Scope> findById(String s) throws TechnicalException {
+    public Maybe<Scope> findById(String s) throws TechnicalException {
         return target.findById(s);
     }
 
-    public Scope create(Scope item) throws TechnicalException {
+    public Single<Scope> create(Scope item) throws TechnicalException {
         return target.create(item);
     }
 
-    public Scope update(Scope item) throws TechnicalException {
+    public Single<Scope> update(Scope item) throws TechnicalException {
         return target.update(item);
     }
 
-    public void delete(String s) throws TechnicalException {
-        target.delete(s);
+    public Single<Irrelevant> delete(String s) throws TechnicalException {
+        return target.delete(s);
     }
 }

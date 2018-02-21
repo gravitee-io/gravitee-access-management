@@ -62,7 +62,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     public IdentityProvider findById(String id) {
         try {
             LOGGER.debug("Find identity provider by ID: {}", id);
-            Optional<IdentityProvider> identityProviderOpt = identityProviderRepository.findById(id);
+            // TODO move to async call
+            Optional<IdentityProvider> identityProviderOpt = Optional.ofNullable(identityProviderRepository.findById(id).blockingGet());
 
             if (!identityProviderOpt.isPresent()) {
                 throw new IdentityProviderNotFoundException(id);
@@ -80,7 +81,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     public List<IdentityProvider> findByClient(String id) {
         try {
             LOGGER.debug("Find identity providers by client: {}", id);
-            return new ArrayList<>(identityProviderRepository.findByDomain(id));
+            // TODO move to async call
+            return new ArrayList<>(identityProviderRepository.findByDomain(id).blockingGet());
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find identity providers by client", ex);
             throw new TechnicalManagementException("An error occurs while trying to find identity providers by client", ex);
@@ -91,7 +93,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     public List<IdentityProvider> findByDomain(String domain) {
         try {
             LOGGER.debug("Find identity providers by domain: {}", domain);
-            return new ArrayList<>(identityProviderRepository.findByDomain(domain));
+            // TODO move to async call
+            return new ArrayList<>(identityProviderRepository.findByDomain(domain).blockingGet());
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to find identity providers by domain", ex);
             throw new TechnicalManagementException("An error occurs while trying to find identity providers by domain", ex);
@@ -113,7 +116,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
             identityProvider.setCreatedAt(new Date());
             identityProvider.setUpdatedAt(identityProvider.getCreatedAt());
 
-            IdentityProvider provider = identityProviderRepository.create(identityProvider);
+            // TODO move to async call
+            IdentityProvider provider = identityProviderRepository.create(identityProvider).blockingGet();
 
             // Reload domain to take care about identity provider creation
             domainService.reload(domain);
@@ -130,7 +134,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         try {
             LOGGER.debug("Update an identity provider {} for domain {}", id, domain);
 
-            Optional<IdentityProvider> identityProviderOpt = identityProviderRepository.findById(id);
+            // TODO move to async call
+            Optional<IdentityProvider> identityProviderOpt = Optional.ofNullable(identityProviderRepository.findById(id).blockingGet());
             if (!identityProviderOpt.isPresent()) {
                 throw new IdentityProviderNotFoundException(id);
             }
@@ -142,7 +147,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
             identityProvider.setRoleMapper(updateIdentityProvider.getRoleMapper());
             identityProvider.setUpdatedAt(new Date());
 
-            IdentityProvider provider = identityProviderRepository.update(identityProvider);
+            // TODO move to async call
+            IdentityProvider provider = identityProviderRepository.update(identityProvider).blockingGet();
 
             // Reload domain to take care about identity provider update
             domainService.reload(domain);
@@ -159,7 +165,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         try {
             LOGGER.debug("Delete identity provider {}", identityProviderId);
 
-            Optional<IdentityProvider> optIdentityProvider = identityProviderRepository.findById(identityProviderId);
+            // TODO move to async call
+            Optional<IdentityProvider> optIdentityProvider = Optional.ofNullable(identityProviderRepository.findById(identityProviderId).blockingGet());
             if (! optIdentityProvider.isPresent()) {
                 throw new IdentityProviderNotFoundException(identityProviderId);
             }
@@ -169,7 +176,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                 throw new IdentityProviderWithClientsException();
             }
 
-            identityProviderRepository.delete(identityProviderId);
+            // TODO move to async call
+            identityProviderRepository.delete(identityProviderId).subscribe();
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to delete identity provider: {}", identityProviderId, ex);
             throw new TechnicalManagementException(

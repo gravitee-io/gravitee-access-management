@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.reactivex.Single;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,7 @@ import java.util.Set;
  */
 public interface RoleRepository extends CrudRepository<Role, String> {
 
-    Set<Role> findByDomain(String domain) throws TechnicalException;
+    Single<Set<Role>> findByDomain(String domain) throws TechnicalException;
 
-    Set<Role> findByIdIn(List<String> ids) throws TechnicalException;
+    Single<Set<Role>> findByIdIn(List<String> ids) throws TechnicalException;
 }

@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.reactivex.Single;
 
 import java.util.Set;
 
@@ -33,5 +34,5 @@ public interface CertificateRepository extends CrudRepository<Certificate, Strin
      * @return All {@link Certificate}
      * @throws TechnicalException
      */
-    Set<Certificate> findByDomain(String domain) throws TechnicalException;
+    Single<Set<Certificate>> findByDomain(String domain) throws TechnicalException;
 }

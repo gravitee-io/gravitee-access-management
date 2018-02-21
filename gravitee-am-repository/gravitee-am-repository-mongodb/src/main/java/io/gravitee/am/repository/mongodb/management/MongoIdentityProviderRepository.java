@@ -15,72 +15,82 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
+import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.management.internal.model.IdentityProviderMongo;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.index.Index;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.subscribers.DefaultSubscriber;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Optional;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static com.mongodb.client.model.Filters.eq;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
 public class MongoIdentityProviderRepository extends AbstractManagementMongoRepository implements IdentityProviderRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(MongoIdentityProviderRepository.class);
+    private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
+    private MongoCollection<IdentityProviderMongo> identitiesCollection;
+
+    @Autowired
+    private IdGenerator idGenerator;
 
     @PostConstruct
-    public void ensureIndexes() {
-        mongoOperations.indexOps(IdentityProviderMongo.class)
-                .ensureIndex(new Index()
-                        .on(FIELD_DOMAIN, Sort.Direction.ASC));
+    public void init() {
+        identitiesCollection = mongoOperations.getCollection("identities", IdentityProviderMongo.class);
+        identitiesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new IndexSubscriber());
     }
 
     @Override
-    public Set<IdentityProvider> findByDomain(String domain) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain));
-
-        return mongoOperations
-                .find(query, IdentityProviderMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    public Single<Set<IdentityProvider>> findByDomain(String domain) {
+        return Observable.fromPublisher(identitiesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Optional<IdentityProvider> findById(String identityProviderId) throws TechnicalException {
-        return Optional.ofNullable(convert(mongoOperations.findById(identityProviderId, IdentityProviderMongo.class)));
+    public Maybe<IdentityProvider> findById(String identityProviderId) {
+        return _findById(identityProviderId).toMaybe();
     }
 
     @Override
-    public IdentityProvider create(IdentityProvider item) throws TechnicalException {
+    public Single<IdentityProvider> create(IdentityProvider item) {
         IdentityProviderMongo identityProvider = convert(item);
-        mongoOperations.save(identityProvider);
-        return convert(identityProvider);
+        identityProvider.setId(identityProvider.getId() == null ? (String) idGenerator.generate() : identityProvider.getId());
+        return Single.fromPublisher(identitiesCollection.insertOne(identityProvider)).flatMap(success -> _findById(identityProvider.getId()));
     }
 
     @Override
-    public IdentityProvider update(IdentityProvider item) throws TechnicalException {
+    public Single<IdentityProvider> update(IdentityProvider item) {
         IdentityProviderMongo identityProvider = convert(item);
-        mongoOperations.save(identityProvider);
-        return convert(identityProvider);
+        return Single.fromPublisher(identitiesCollection.replaceOne(eq(FIELD_ID, identityProvider.getId()), identityProvider)).flatMap(updateResult -> _findById(identityProvider.getId()));
     }
 
     @Override
-    public void delete(String id) throws TechnicalException {
-        IdentityProviderMongo identityProvider = mongoOperations.findById(id, IdentityProviderMongo.class);
-        mongoOperations.remove(identityProvider);
+    public Single<Irrelevant> delete(String id) {
+        return Single.fromPublisher(identitiesCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.IDENTITY_PROVIDER);
+    }
+
+    private Single<IdentityProvider> _findById(String id) {
+        return Single.fromPublisher(identitiesCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private IdentityProvider convert(IdentityProviderMongo identityProviderMongo) {
@@ -93,8 +103,8 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProvider.setName(identityProviderMongo.getName());
         identityProvider.setType(identityProviderMongo.getType());
         identityProvider.setConfiguration(identityProviderMongo.getConfiguration());
-        identityProvider.setMappers(identityProviderMongo.getMappers());
-        identityProvider.setRoleMapper(identityProviderMongo.getRoleMapper());
+        identityProvider.setMappers((Map) identityProviderMongo.getMappers());
+        identityProvider.setRoleMapper((Map) identityProviderMongo.getRoleMapper());
         identityProvider.setDomain(identityProviderMongo.getDomain());
         identityProvider.setExternal(identityProviderMongo.isExternal());
         identityProvider.setCreatedAt(identityProviderMongo.getCreatedAt());
@@ -112,12 +122,36 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProviderMongo.setName(identityProvider.getName());
         identityProviderMongo.setType(identityProvider.getType());
         identityProviderMongo.setConfiguration(identityProvider.getConfiguration());
-        identityProviderMongo.setMappers(identityProvider.getMappers());
-        identityProviderMongo.setRoleMapper(identityProvider.getRoleMapper());
+        identityProviderMongo.setMappers(identityProvider.getMappers() != null ? new Document((Map) identityProvider.getMappers()) : new Document());
+        identityProviderMongo.setRoleMapper(identityProvider.getMappers() != null ? convert(identityProvider.getRoleMapper()) : new Document());
         identityProviderMongo.setDomain(identityProvider.getDomain());
         identityProviderMongo.setExternal(identityProvider.isExternal());
         identityProviderMongo.setCreatedAt(identityProvider.getCreatedAt());
         identityProviderMongo.setUpdatedAt(identityProvider.getUpdatedAt());
         return identityProviderMongo;
     }
+
+    private Document convert(Map<String, String[]> map) {
+        Document document = new Document();
+        map.forEach((k, v) -> document.append(k, Arrays.asList(v)));
+        return document;
+    }
+
+    private class IndexSubscriber extends DefaultSubscriber<String> {
+        @Override
+        public void onNext(String value) {
+            logger.debug("Created an index named : " + value);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            logger.error("Error occurs during indexing", throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            logger.debug("Index creation complete");
+        }
+    }
+
 }

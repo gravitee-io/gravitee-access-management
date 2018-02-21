@@ -15,9 +15,10 @@
  */
 package io.gravitee.am.repository.common;
 
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-
-import java.util.Optional;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -25,11 +26,11 @@ import java.util.Optional;
  */
 public interface CrudRepository<T, ID> {
 
-    Optional<T> findById(ID id) throws TechnicalException;
+    Maybe<T> findById(ID id) throws TechnicalException;
 
-    T create(T item) throws TechnicalException;
+    Single<T> create(T item) throws TechnicalException;
 
-    T update(T item) throws TechnicalException;
+    Single<T> update(T item) throws TechnicalException;
 
-    void delete(ID id) throws TechnicalException;
+    Single<Irrelevant> delete(ID id) throws TechnicalException;
 }

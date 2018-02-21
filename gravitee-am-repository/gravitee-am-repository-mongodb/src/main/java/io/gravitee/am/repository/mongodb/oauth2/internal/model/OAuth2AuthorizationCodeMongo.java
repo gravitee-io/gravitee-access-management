@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.oauth2.code.model;
+package io.gravitee.am.repository.mongodb.oauth2.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.Date;
 
@@ -25,6 +26,7 @@ import java.util.Date;
  */
 public class OAuth2AuthorizationCodeMongo extends Auditable {
 
+    @BsonId
     private String code;
 
     private byte[] oAuth2Authentication;

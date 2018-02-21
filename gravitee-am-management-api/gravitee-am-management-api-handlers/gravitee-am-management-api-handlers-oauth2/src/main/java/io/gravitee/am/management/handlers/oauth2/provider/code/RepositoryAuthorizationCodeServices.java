@@ -49,12 +49,14 @@ public class RepositoryAuthorizationCodeServices extends RandomValueAuthorizatio
         oAuth2AuthorizationCode.setCreatedAt(new Date());
         oAuth2AuthorizationCode.setUpdatedAt(oAuth2AuthorizationCode.getCreatedAt());
 
-        authorizationCodeRepository.store(oAuth2AuthorizationCode);
+        // TODO move to async call
+        authorizationCodeRepository.store(oAuth2AuthorizationCode).subscribe();
     }
 
     @Override
     protected OAuth2Authentication remove(String code) {
-        Optional<io.gravitee.am.repository.oauth2.model.OAuth2Authentication> oAuth2Authentication = authorizationCodeRepository.remove(code);
+        // TODO move to async call
+        Optional<io.gravitee.am.repository.oauth2.model.OAuth2Authentication> oAuth2Authentication = Optional.ofNullable(authorizationCodeRepository.remove(code).blockingGet());
 
         if (oAuth2Authentication.isPresent()) {
             return RepositoryProviderUtils.convert(oAuth2Authentication.get());

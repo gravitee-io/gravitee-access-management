@@ -18,9 +18,9 @@ package io.gravitee.am.management.repository.proxy;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -29,11 +29,11 @@ import java.util.Optional;
 @Component
 public class AuthorizationCodeRepositoryProxy extends AbstractProxy<AuthorizationCodeRepository> implements AuthorizationCodeRepository {
 
-    public void store(OAuth2AuthorizationCode oAuth2AuthorizationCode) {
-        target.store(oAuth2AuthorizationCode);
+    public Single<OAuth2AuthorizationCode> store(OAuth2AuthorizationCode oAuth2AuthorizationCode) {
+        return target.store(oAuth2AuthorizationCode);
     }
 
-    public Optional<OAuth2Authentication> remove(String code) {
+    public Maybe<OAuth2Authentication> remove(String code) {
         return target.remove(code);
     }
 

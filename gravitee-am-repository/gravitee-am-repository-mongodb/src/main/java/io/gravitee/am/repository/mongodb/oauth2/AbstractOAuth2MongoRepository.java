@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.management.internal;
+package io.gravitee.am.repository.mongodb.oauth2;
 
-import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+import com.mongodb.reactivestreams.client.MongoDatabase;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Repository
-public interface DomainMongoRepository extends MongoRepository<DomainMongo, String> {
+public abstract class AbstractOAuth2MongoRepository {
 
+    @Autowired
+    @Qualifier("oauth2MongoTemplate")
+    protected MongoDatabase mongoOperations;
 }
-
-

@@ -15,14 +15,16 @@
  */
 package io.gravitee.am.management.repository.proxy;
 
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.OAuth2AccessToken;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.am.repository.oauth2.model.OAuth2RefreshToken;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
-import java.util.Optional;
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -32,72 +34,72 @@ import java.util.Optional;
 public class TokenRepositoryProxy extends AbstractProxy<TokenRepository> implements TokenRepository {
 
     @Override
-    public Optional<OAuth2Authentication> readAuthentication(OAuth2AccessToken token) {
+    public Maybe<OAuth2Authentication> readAuthentication(OAuth2AccessToken token) {
         return target.readAuthentication(token);
     }
 
     @Override
-    public Optional<OAuth2Authentication> readAuthentication(String token) {
+    public Maybe<OAuth2Authentication> readAuthentication(String token) {
         return target.readAuthentication(token);
     }
 
     @Override
-    public void storeAccessToken(OAuth2AccessToken token, OAuth2Authentication authentication, String authenticationKey) {
-        target.storeAccessToken(token, authentication, authenticationKey);
+    public Single<OAuth2AccessToken> storeAccessToken(OAuth2AccessToken token, OAuth2Authentication authentication, String authenticationKey) {
+        return target.storeAccessToken(token, authentication, authenticationKey);
     }
 
     @Override
-    public Optional<OAuth2AccessToken> readAccessToken(String tokenValue) {
+    public Maybe<OAuth2AccessToken> readAccessToken(String tokenValue) {
         return target.readAccessToken(tokenValue);
     }
 
     @Override
-    public void removeAccessToken(OAuth2AccessToken token) {
-        target.removeAccessToken(token);
+    public Single<Irrelevant> removeAccessToken(OAuth2AccessToken token) {
+        return target.removeAccessToken(token);
     }
 
     @Override
-    public void removeAccessToken(String token) {
-        target.removeAccessToken(token);
+    public Single<Irrelevant> removeAccessToken(String token) {
+        return target.removeAccessToken(token);
     }
 
     @Override
-    public void storeRefreshToken(OAuth2RefreshToken refreshToken, OAuth2Authentication authentication) {
-        target.storeRefreshToken(refreshToken, authentication);
+    public Single<OAuth2RefreshToken> storeRefreshToken(OAuth2RefreshToken refreshToken, OAuth2Authentication authentication) {
+        return target.storeRefreshToken(refreshToken, authentication);
     }
 
     @Override
-    public Optional<OAuth2RefreshToken> readRefreshToken(String tokenValue) {
+    public Maybe<OAuth2RefreshToken> readRefreshToken(String tokenValue) {
         return target.readRefreshToken(tokenValue);
     }
 
     @Override
-    public Optional<OAuth2Authentication> readAuthenticationForRefreshToken(OAuth2RefreshToken token) {
+    public Maybe<OAuth2Authentication> readAuthenticationForRefreshToken(OAuth2RefreshToken token) {
         return target.readAuthenticationForRefreshToken(token);
     }
 
     @Override
-    public void removeRefreshToken(OAuth2RefreshToken token) {
-        target.removeRefreshToken(token);
+    public Single<Irrelevant> removeRefreshToken(OAuth2RefreshToken token) {
+        return target.removeRefreshToken(token);
     }
 
     @Override
-    public void removeAccessTokenUsingRefreshToken(OAuth2RefreshToken refreshToken) {
-        target.removeAccessTokenUsingRefreshToken(refreshToken);
+    public Single<Irrelevant> removeAccessTokenUsingRefreshToken(OAuth2RefreshToken refreshToken) {
+        return target.removeAccessTokenUsingRefreshToken(refreshToken);
     }
 
     @Override
-    public Optional<OAuth2AccessToken> getAccessToken(String authenticationKey) {
+    public Maybe<OAuth2AccessToken> getAccessToken(String authenticationKey) {
         return target.getAccessToken(authenticationKey);
     }
 
     @Override
-    public Collection<OAuth2AccessToken> findTokensByClientIdAndUserName(String clientId, String userName) {
+    public Single<List<OAuth2AccessToken>> findTokensByClientIdAndUserName(String clientId, String userName) {
         return target.findTokensByClientIdAndUserName(clientId, userName);
     }
 
     @Override
-    public Collection<OAuth2AccessToken> findTokensByClientId(String clientId) {
+    public Single<List<OAuth2AccessToken>> findTokensByClientId(String clientId) {
         return target.findTokensByClientId(clientId);
     }
 }

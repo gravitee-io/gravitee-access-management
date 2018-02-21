@@ -31,20 +31,13 @@
     <name>Gravitee IO - Access Management - Repository MongoDB</name>
 
     <properties>
-        <spring.data.mongodb.version>1.9.8.RELEASE</spring.data.mongodb.version>
-        <org.mongodb.version>3.4.2</org.mongodb.version>
-        <embed.mongo.version>1.50.2</embed.mongo.version>
+        <org.mongodb.version>3.6.3</org.mongodb.version>
+        <org.mongodb.mongodb.driver.reactivestreams.version>1.7.1</org.mongodb.mongodb.driver.reactivestreams.version>
+        <embed.mongo.version>2.0.3</embed.mongo.version>
         <junit.version>4.12</junit.version>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- Gravitee dependencies -->
         <dependency>
             <groupId>io.gravitee.am.model</groupId>
@@ -62,20 +55,22 @@
 
         <!-- Spring dependencies -->
         <dependency>
-            <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-mongodb</artifactId>
-            <version>${spring.data.mongodb.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>${spring.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
+            <artifactId>spring-beans</artifactId>
+            <version>${spring.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
             <version>${spring.version}</version>
             <scope>provided</scope>
         </dependency>
@@ -83,8 +78,35 @@
         <!-- MongoDB driver -->
         <dependency>
             <groupId>org.mongodb</groupId>
-            <artifactId>mongo-java-driver</artifactId>
+            <artifactId>mongodb-driver-core</artifactId>
             <version>${org.mongodb.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-async</artifactId>
+            <version>${org.mongodb.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-reactivestreams</artifactId>
+            <version>${org.mongodb.mongodb.driver.reactivestreams.version}</version>
+        </dependency>
+
+        <!-- Bson -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>bson</artifactId>
+            <version>${org.mongodb.version}</version>
+        </dependency>
+
+        <!-- Slf4j -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Test dependencies -->

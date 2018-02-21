@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
@@ -22,7 +23,10 @@ import io.gravitee.am.service.exception.ScopeNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ScopeServiceImpl;
 import io.gravitee.am.service.model.NewScope;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
@@ -30,8 +34,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Optional;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -47,19 +49,19 @@ public class ScopeServiceTest {
     private ScopeService scopeService = new ScopeServiceImpl();
 
     @Mock
-    private ScopeRepository scopeRepository;
-
-    @Mock
     private RoleService roleService;
 
     @Mock
     private ClientService clientService;
 
+    @Mock
+    private ScopeRepository scopeRepository;
+
     private final static String DOMAIN = "domain1";
 
     @Test
     public void shouldFindById() throws TechnicalException {
-        when(scopeRepository.findById("my-scope")).thenReturn(Optional.of(new Scope()));
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
 
         Scope scope = scopeService.findById("my-scope");
         Assert.assertNotNull(scope);
@@ -67,7 +69,7 @@ public class ScopeServiceTest {
 
     @Test(expected = ScopeNotFoundException.class)
     public void shouldFindById_notExistingScope() throws TechnicalException {
-        when(scopeRepository.findById("my-scope")).thenReturn(Optional.empty());
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.empty());
 
         scopeService.findById("my-scope");
     }
@@ -83,7 +85,8 @@ public class ScopeServiceTest {
     public void shouldCreateScope() throws TechnicalException {
         NewScope newScope = Mockito.mock(NewScope.class);
         when(newScope.getKey()).thenReturn("my-scope");
-        when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Optional.empty());
+        when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.empty());
+        when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
 
         scopeService.create(DOMAIN, newScope);
 
@@ -94,7 +97,8 @@ public class ScopeServiceTest {
     public void shouldCreateScope_keyLowerCase() throws TechnicalException {
         NewScope newScope = Mockito.mock(NewScope.class);
         when(newScope.getKey()).thenReturn("MY-SCOPE");
-        when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Optional.empty());
+        when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.empty());
+        when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
 
         scopeService.create(DOMAIN, newScope);
 
@@ -114,6 +118,7 @@ public class ScopeServiceTest {
         when(newScope.getKey()).thenReturn("my-scope");
         when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenThrow(TechnicalException.class);
 
+
         scopeService.create(DOMAIN, newScope);
 
         verify(scopeRepository, never()).create(any(Scope.class));
@@ -123,7 +128,7 @@ public class ScopeServiceTest {
     public void shouldNotCreateScope_existingScope() throws TechnicalException {
         NewScope newScope = Mockito.mock(NewScope.class);
         when(newScope.getKey()).thenReturn("my-scope");
-        when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Optional.of(new Scope()));
+        when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.just(new Scope()));
 
         scopeService.create(DOMAIN, newScope);
 
@@ -132,14 +137,14 @@ public class ScopeServiceTest {
 
     @Test(expected = ScopeNotFoundException.class)
     public void shouldDeleteScope_notExistingScope() throws TechnicalException {
-        when(scopeRepository.findById("my-scope")).thenReturn(Optional.empty());
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.empty());
 
         scopeService.delete("my-scope");
     }
 
     @Test(expected = TechnicalManagementException.class)
     public void shouldDeleteScope_technicalException() throws TechnicalException {
-        when(scopeRepository.findById("my-scope")).thenReturn(Optional.of(new Scope()));
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
         doThrow(TechnicalException.class).when(scopeRepository).delete("my-scope");
 
         scopeService.delete("my-scope");
@@ -147,7 +152,8 @@ public class ScopeServiceTest {
 
     @Test
     public void shouldDeleteScope() throws TechnicalException {
-        when(scopeRepository.findById("my-scope")).thenReturn(Optional.of(new Scope()));
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
+        when(scopeRepository.delete("my-scope")).thenReturn(Single.just(Irrelevant.SCOPE));
 
         scopeService.delete("my-scope");
 

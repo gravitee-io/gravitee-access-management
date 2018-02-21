@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.management.internal;
+package io.gravitee.am.repository.mongodb.common;
 
-import io.gravitee.am.repository.mongodb.management.internal.model.ClientMongo;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+import java.util.UUID;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Repository
-public interface ClientMongoRepository extends MongoRepository<ClientMongo, String> {
+public class UUIDIdGenerator implements IdGenerator {
 
+    @Override
+    public Object generate() {
+        return UUID.randomUUID().toString();
+    }
 }
-
-

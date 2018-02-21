@@ -13,46 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.oauth2.code;
+package io.gravitee.am.repository.mongodb.oauth2;
 
 import io.gravitee.am.repository.mongodb.oauth2.utils.RequestTokenFactory;
 import io.gravitee.am.repository.mongodb.oauth2.utils.TestAuthentication;
+import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
-import org.junit.After;
+import io.reactivex.observers.TestObserver;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.support.AnnotationConfigContextLoader;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
- *
- * TODO : check OAuth2Authentication equality
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = MongoAuthorizationCodeRepositoryTestContextConfiguration.class, loader = AnnotationConfigContextLoader.class)
-public class MongoAuthorizationCodeRepositoryTest {
+public class MongoAuthorizationCodeRepositoryTest extends AbstractOAuth2RepositoryTest {
 
     @Autowired
-    private MongoAuthorizationCodeRepository mongoAuthorizationCodeRepository;
-
-    @Autowired
-    @Qualifier("oauth2MongoTemplate")
-    private MongoTemplate mongoTemplate;
-
-    @After
-    public void tearDown() {
-        mongoTemplate.getDb().dropDatabase();
-    }
+    private AuthorizationCodeRepository authorizationCodeRepository;
 
     @Test
     public void testStoreCode() {
@@ -61,12 +40,16 @@ public class MongoAuthorizationCodeRepositoryTest {
         OAuth2AuthorizationCode oAuth2AuthorizationCode = new OAuth2AuthorizationCode();
         oAuth2AuthorizationCode.setCode(code);
         oAuth2AuthorizationCode.setOAuth2Authentication(expectedAuthentication);
-        mongoAuthorizationCodeRepository.store(oAuth2AuthorizationCode);
+        authorizationCodeRepository.store(oAuth2AuthorizationCode).blockingGet();
 
-        OAuth2Authentication oAuth2Authentication = mongoAuthorizationCodeRepository.remove(code).get();
-        assertNotNull(oAuth2Authentication);
-        //assertEquals(expectedAuthentication, oAuth2Authentication);
-        assertFalse(mongoAuthorizationCodeRepository.remove(code).isPresent());
+        TestObserver<OAuth2Authentication> testObserver = authorizationCodeRepository.remove(code).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(oAuth2Authentication -> oAuth2Authentication.getOAuth2Request().getClientId().equals("id"));
+
+        authorizationCodeRepository.remove(code).test().assertEmpty();
     }
 
     @Test
@@ -76,17 +59,22 @@ public class MongoAuthorizationCodeRepositoryTest {
         OAuth2AuthorizationCode oAuth2AuthorizationCode = new OAuth2AuthorizationCode();
         oAuth2AuthorizationCode.setCode(code);
         oAuth2AuthorizationCode.setOAuth2Authentication(expectedAuthentication);
-        mongoAuthorizationCodeRepository.store(oAuth2AuthorizationCode);
-        mongoAuthorizationCodeRepository.store(oAuth2AuthorizationCode);
-        OAuth2Authentication oAuth2Authentication = mongoAuthorizationCodeRepository.remove(code).get();
-        assertNotNull(oAuth2Authentication);
-        //assertEquals(expectedAuthentication, oAuth2Authentication);
-        assertFalse(mongoAuthorizationCodeRepository.remove(code).isPresent());
+        authorizationCodeRepository.store(oAuth2AuthorizationCode).blockingGet();
+        authorizationCodeRepository.store(oAuth2AuthorizationCode).blockingGet();
+
+        TestObserver<OAuth2Authentication> testObserver = authorizationCodeRepository.remove(code).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(oAuth2Authentication -> oAuth2Authentication.getOAuth2Request().getClientId().equals("id"));
+
+        authorizationCodeRepository.remove(code).test().assertEmpty();
     }
 
     @Test
     public void testReadingCodeThatDoesNotExist() {
-        assertFalse(mongoAuthorizationCodeRepository.remove("codeThatDoesNotExist").isPresent());
+        authorizationCodeRepository.remove("codeThatDoesNotExist").test().assertEmpty();
     }
 
 }

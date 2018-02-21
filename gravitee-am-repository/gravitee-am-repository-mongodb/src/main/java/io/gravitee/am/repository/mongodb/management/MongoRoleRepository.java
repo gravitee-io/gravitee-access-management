@@ -15,21 +15,29 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.Role;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
+import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.index.Index;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.subscribers.DefaultSubscriber;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -38,63 +46,55 @@ import java.util.stream.Collectors;
 @Component
 public class MongoRoleRepository extends AbstractManagementMongoRepository implements RoleRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(MongoRoleRepository.class);
+    private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
-    private static final String ID_FIELD = "_id";
+    private MongoCollection<RoleMongo> rolesCollection;
+
+    @Autowired
+    private IdGenerator idGenerator;
 
     @PostConstruct
-    public void ensureIndexes() {
-        mongoOperations.indexOps(RoleMongo.class)
-                .ensureIndex(new Index()
-                        .on(FIELD_DOMAIN, Sort.Direction.ASC));
+    public void init() {
+        rolesCollection = mongoOperations.getCollection("roles", RoleMongo.class);
+        rolesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new IndexSubscriber());
     }
 
     @Override
-    public Set<Role> findByDomain(String domain) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(FIELD_DOMAIN).is(domain));
-
-        return mongoOperations
-                .find(query, RoleMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    public Single<Set<Role>> findByDomain(String domain) {
+        return Observable.fromPublisher(rolesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Set<Role> findByIdIn(List<String> ids) throws TechnicalException {
-        Query query = new Query();
-        query.addCriteria(Criteria.where(ID_FIELD).in(ids));
-
-        return mongoOperations
-                .find(query, RoleMongo.class)
-                .stream()
-                .map(this::convert)
-                .collect(Collectors.toSet());
+    public Single<Set<Role>> findByIdIn(List<String> ids) {
+        return Observable.fromPublisher(rolesCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Optional<Role> findById(String role) throws TechnicalException {
-        return Optional.ofNullable(convert(mongoOperations.findById(role, RoleMongo.class)));
+    public Maybe<Role> findById(String role) {
+        return _findById(role).toMaybe();
     }
 
     @Override
-    public Role create(Role item) throws TechnicalException {
+    public Single<Role> create(Role item) {
         RoleMongo role = convert(item);
-        mongoOperations.save(role);
-        return convert(role);
+        role.setId(role.getId() == null ? (String) idGenerator.generate() : role.getId());
+        return Single.fromPublisher(rolesCollection.insertOne(role)).flatMap(success -> _findById(role.getId()));
     }
 
     @Override
-    public Role update(Role item) throws TechnicalException {
+    public Single<Role> update(Role item) {
         RoleMongo role = convert(item);
-        mongoOperations.save(role);
-        return convert(role);
+        return Single.fromPublisher(rolesCollection.replaceOne(eq(FIELD_ID, role.getId()), role)).flatMap(updateResult -> _findById(role.getId()));
     }
 
     @Override
-    public void delete(String id) throws TechnicalException {
-        RoleMongo role = mongoOperations.findById(id, RoleMongo.class);
-        mongoOperations.remove(role);
+    public Single<Irrelevant> delete(String id) {
+        return Single.fromPublisher(rolesCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.ROLE);
+    }
+
+    private Single<Role> _findById(String id) {
+        return Single.fromPublisher(rolesCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private Role convert(RoleMongo roleMongo) {
@@ -127,5 +127,22 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         roleMongo.setCreatedAt(role.getCreatedAt());
         roleMongo.setUpdatedAt(role.getUpdatedAt());
         return roleMongo;
+    }
+
+    private class IndexSubscriber extends DefaultSubscriber<String> {
+        @Override
+        public void onNext(String value) {
+            logger.debug("Created an index named : " + value);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            logger.error("Error occurs during indexing", throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            logger.debug("Index creation complete");
+        }
     }
 }
