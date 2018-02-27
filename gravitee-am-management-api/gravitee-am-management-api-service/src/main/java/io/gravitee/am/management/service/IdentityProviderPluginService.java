@@ -16,6 +16,8 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 import java.util.Set;
 
@@ -25,9 +27,9 @@ import java.util.Set;
  */
 public interface IdentityProviderPluginService {
 
-    Set<IdentityProviderPlugin> findAll(Boolean oauth2Provider);
+    Single<Set<IdentityProviderPlugin>> findAll(Boolean oauth2Provider);
 
-    IdentityProviderPlugin findById(String identityProviderPlugin);
+    Maybe<IdentityProviderPlugin> findById(String identityProviderPlugin);
 
-    String getSchema(String identityProviderPlugin);
+    Maybe<String> getSchema(String identityProviderPlugin);
 }

@@ -46,7 +46,8 @@ public class DeployAdminDomainUpgrader implements Upgrader, Ordered {
     public boolean upgrade() {
         logger.info("Deploying registered {} domain", ADMIN_DOMAIN);
         try {
-            Domain adminDomain = domainService.findById(ADMIN_DOMAIN);
+            // TODO Async call
+            Domain adminDomain = domainService.findById(ADMIN_DOMAIN).blockingGet();
             eventManager.publishEvent(DomainEvent.DEPLOY, adminDomain);
             return true;
         } catch (DomainNotFoundException dnfe) {

@@ -17,7 +17,6 @@ package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.Irrelevant;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -32,32 +31,32 @@ import java.util.Set;
 @Component
 public class ExtensionGrantRepositoryProxy extends AbstractProxy<ExtensionGrantRepository> implements ExtensionGrantRepository {
 
-    public Single<Set<ExtensionGrant>> findByDomain(String domain) throws TechnicalException {
+    public Single<Set<ExtensionGrant>> findByDomain(String domain) {
         return target.findByDomain(domain);
     }
 
     @Override
-    public Maybe<ExtensionGrant> findById(String id) throws TechnicalException {
+    public Maybe<ExtensionGrant> findById(String id) {
         return target.findById(id);
     }
 
     @Override
-    public Maybe<ExtensionGrant> findByDomainAndGrantType(String domain, String grantType) throws TechnicalException {
+    public Maybe<ExtensionGrant> findByDomainAndGrantType(String domain, String grantType) {
         return target.findByDomainAndGrantType(domain, grantType);
     }
 
     @Override
-    public Single<ExtensionGrant> create(ExtensionGrant extensionGrant) throws TechnicalException {
+    public Single<ExtensionGrant> create(ExtensionGrant extensionGrant) {
         return target.create(extensionGrant);
     }
 
     @Override
-    public Single<ExtensionGrant> update(ExtensionGrant extensionGrant) throws TechnicalException {
+    public Single<ExtensionGrant> update(ExtensionGrant extensionGrant) {
         return target.update(extensionGrant);
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) throws TechnicalException {
+    public Single<Irrelevant> delete(String id) {
         return target.delete(id);
     }
 }

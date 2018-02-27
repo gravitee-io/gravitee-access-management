@@ -17,22 +17,23 @@ package io.gravitee.am.management.service.impl.plugins;
 
 import io.gravitee.am.management.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
-import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
 import io.gravitee.plugin.core.api.Plugin;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
@@ -47,41 +48,57 @@ public class IdentityProviderPluginServiceImpl implements IdentityProviderPlugin
     private IdentityProviderPluginManager identityProviderPluginManager;
 
     @Override
-    public Set<IdentityProviderPlugin> findAll(Boolean oauth2Provider) {
-        try {
-            LOGGER.debug("List all identity providers");
-            Collection<Plugin> plugins = (oauth2Provider != null && oauth2Provider) ? identityProviderPluginManager.getOAuth2Providers() : identityProviderPluginManager.getAll();
-            return plugins
-                    .stream()
-                    .map(this::convert)
-                    .collect(Collectors.toSet());
-        } catch (Exception ex) {
-            LOGGER.error("An error occurs while trying to list all identity providers", ex);
-            throw new TechnicalManagementException("An error occurs while trying to list all identity providers", ex);
-        }
+    public Single<Set<IdentityProviderPlugin>> findAll(Boolean oauth2Provider) {
+        LOGGER.debug("List all identity provider plugins");
+        return Single.create(emitter -> {
+            try {
+                Collection<Plugin> plugins = (oauth2Provider != null && oauth2Provider) ? identityProviderPluginManager.getOAuth2Providers() : identityProviderPluginManager.getAll();
+                emitter.onSuccess(plugins
+                        .stream()
+                        .map(this::convert)
+                        .collect(Collectors.toSet()));
+            } catch (Exception ex) {
+                LOGGER.error("An error occurs while trying to list all identity provider plugins", ex);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to list all identity provider plugins", ex));
+            }
+        });
+
     }
 
     @Override
-    public IdentityProviderPlugin findById(String identityProviderId) {
-        LOGGER.debug("Find identity provider by ID: {}", identityProviderId);
-        Plugin identityProvider = identityProviderPluginManager.findById(identityProviderId);
-
-        if (identityProvider == null) {
-            throw new IdentityProviderNotFoundException(identityProviderId);
-        }
-
-        return convert(identityProvider);
+    public Maybe<IdentityProviderPlugin> findById(String identityProviderId) {
+        LOGGER.debug("Find identity provider plugin by ID: {}", identityProviderId);
+        return Maybe.create(emitter -> {
+            try {
+                Plugin identityProvider = identityProviderPluginManager.findById(identityProviderId);
+                if (identityProvider != null) {
+                    emitter.onSuccess(convert(identityProvider));
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception ex) {
+                LOGGER.error("An error occurs while trying to get identity provider plugin : {}", identityProviderId, ex);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to get identity provider plugin : " + identityProviderId, ex));
+            }
+        });
     }
 
     @Override
-    public String getSchema(String identityProviderId) {
-        try {
-            LOGGER.debug("Find identity provider schema by ID: {}", identityProviderId);
-            return identityProviderPluginManager.getSchema(identityProviderId);
-        } catch (IOException ioex) {
-            LOGGER.error("An error occurs while trying to get schema for identity providers {}", identityProviderId, ioex);
-            throw new TechnicalManagementException("An error occurs while trying to get schema for identity providers " + identityProviderId, ioex);
-        }
+    public Maybe<String> getSchema(String identityProviderId) {
+        LOGGER.debug("Find identity provider plugin schema by ID: {}", identityProviderId);
+        return Maybe.create(emitter -> {
+            try {
+                String schema = identityProviderPluginManager.getSchema(identityProviderId);
+                if (schema != null) {
+                    emitter.onSuccess(schema);
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception e) {
+                LOGGER.error("An error occurs while trying to get schema for identity provider plugin {}", identityProviderId, e);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for identity provider plugin " + identityProviderId, e));
+            }
+        });
     }
 
     private IdentityProviderPlugin convert(Plugin identityProviderPlugin) {

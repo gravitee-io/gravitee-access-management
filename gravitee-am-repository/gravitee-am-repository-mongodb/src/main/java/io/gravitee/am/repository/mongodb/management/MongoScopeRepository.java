@@ -64,20 +64,20 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Maybe<Scope> findById(String id) {
-        return _findById(id).toMaybe();
+        return Observable.fromPublisher(scopesCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Single<Scope> create(Scope item) {
         ScopeMongo scope = convert(item);
         scope.setId(scope.getId() == null ? (String) idGenerator.generate() : scope.getId());
-        return Single.fromPublisher(scopesCollection.insertOne(scope)).flatMap(success -> _findById(scope.getId()));
+        return Single.fromPublisher(scopesCollection.insertOne(scope)).flatMap(success -> findById(scope.getId()).toSingle());
     }
 
     @Override
     public Single<Scope> update(Scope item) {
         ScopeMongo scope = convert(item);
-        return Single.fromPublisher(scopesCollection.replaceOne(eq(FIELD_ID, scope.getId()), scope)).flatMap(updateResult -> _findById(scope.getId()));
+        return Single.fromPublisher(scopesCollection.replaceOne(eq(FIELD_ID, scope.getId()), scope)).flatMap(updateResult -> findById(scope.getId()).toSingle());
     }
 
     @Override
@@ -92,11 +92,7 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Maybe<Scope> findByDomainAndKey(String domain, String key) {
-        return Single.fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_KEY, key))).first()).map(this::convert).toMaybe();
-    }
-
-    private Single<Scope> _findById(String id) {
-        return Single.fromPublisher(scopesCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
+        return Observable.fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_KEY, key))).first()).firstElement().map(this::convert);
     }
 
     private Scope convert(ScopeMongo scopeMongo) {

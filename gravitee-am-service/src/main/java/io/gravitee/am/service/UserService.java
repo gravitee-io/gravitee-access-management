@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 import java.util.Set;
 
@@ -29,18 +32,18 @@ import java.util.Set;
  */
 public interface UserService {
 
-    Set<User> findByDomain(String domain);
+    Single<Set<User>> findByDomain(String domain);
 
-    Page<User> findByDomain(String domain, int page, int size);
+    Single<Page<User>> findByDomain(String domain, int page, int size);
 
-    User findById(String id);
+    Maybe<User> findById(String id);
 
-    User loadUserByUsernameAndDomain(String domain, String username);
+    Maybe<User> loadUserByUsernameAndDomain(String domain, String username);
 
-    User create(String domain, NewUser newUser);
+    Single<User> create(String domain, NewUser newUser);
 
-    User update(String domain, String id, UpdateUser updateUser);
+    Single<User> update(String domain, String id, UpdateUser updateUser);
 
-    void delete(String userId);
+    Single<Irrelevant> delete(String userId);
 
 }

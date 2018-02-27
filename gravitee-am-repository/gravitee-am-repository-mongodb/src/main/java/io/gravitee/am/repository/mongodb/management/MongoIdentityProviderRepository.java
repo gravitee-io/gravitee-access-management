@@ -68,29 +68,25 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
 
     @Override
     public Maybe<IdentityProvider> findById(String identityProviderId) {
-        return _findById(identityProviderId).toMaybe();
+        return Observable.fromPublisher(identitiesCollection.find(eq(FIELD_ID, identityProviderId)).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Single<IdentityProvider> create(IdentityProvider item) {
         IdentityProviderMongo identityProvider = convert(item);
         identityProvider.setId(identityProvider.getId() == null ? (String) idGenerator.generate() : identityProvider.getId());
-        return Single.fromPublisher(identitiesCollection.insertOne(identityProvider)).flatMap(success -> _findById(identityProvider.getId()));
+        return Single.fromPublisher(identitiesCollection.insertOne(identityProvider)).flatMap(success -> findById(identityProvider.getId()).toSingle());
     }
 
     @Override
     public Single<IdentityProvider> update(IdentityProvider item) {
         IdentityProviderMongo identityProvider = convert(item);
-        return Single.fromPublisher(identitiesCollection.replaceOne(eq(FIELD_ID, identityProvider.getId()), identityProvider)).flatMap(updateResult -> _findById(identityProvider.getId()));
+        return Single.fromPublisher(identitiesCollection.replaceOne(eq(FIELD_ID, identityProvider.getId()), identityProvider)).flatMap(updateResult -> findById(identityProvider.getId()).toSingle());
     }
 
     @Override
     public Single<Irrelevant> delete(String id) {
         return Single.fromPublisher(identitiesCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.IDENTITY_PROVIDER);
-    }
-
-    private Single<IdentityProvider> _findById(String id) {
-        return Single.fromPublisher(identitiesCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private IdentityProvider convert(IdentityProviderMongo identityProviderMongo) {

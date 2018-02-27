@@ -15,20 +15,25 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.resources.enhancer.UserEnhancer;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
@@ -52,7 +57,7 @@ public class UsersResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private UserEnhancer userEnhancer;
+    private IdentityProviderService identityProviderService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -60,16 +65,40 @@ public class UsersResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "List users for a security domain", response = User.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Page<User> listUsers(@PathParam("domain") String domain,
+    public void list(@PathParam("domain") String domain,
                                 @QueryParam("page") @DefaultValue("0") int page,
-                                @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size) {
-        domainService.findById(domain);
-
-        Page<User> pagedUsers = userService.findByDomain(domain, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
-        // enhance users
-        pagedUsers.getData().stream().forEach(u -> userEnhancer.enhance().apply(u));
-
-        return pagedUsers;
+                                @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
+                                @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return userService.findByDomain(domain, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE))
+                                .flatMap(pagedUsers ->
+                                        Observable.fromIterable(pagedUsers.getData())
+                                            .flatMapSingle(user -> {
+                                                if (user.getSource() != null) {
+                                                    return identityProviderService.findById(user.getSource())
+                                                            .map(idP -> {
+                                                                user.setSource(idP.getName());
+                                                                return user;
+                                                            })
+                                                            .defaultIfEmpty(user)
+                                                            .toSingle();
+                                                }
+                                                return Single.just(user);
+                                            })
+                                            .toList()
+                                            .map(users -> new Page(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))
+                                )
+                                .map(users -> Response.ok(users).build());
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @POST
@@ -79,7 +108,7 @@ public class UsersResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "User successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response createUser(
+    public Response create(
             @PathParam("domain") String domain,
             @ApiParam(name = "user", required = true)
             @Valid @NotNull final NewUser newUser) {

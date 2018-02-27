@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
@@ -27,7 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
@@ -53,19 +56,36 @@ public class RoleResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Role successfully fetched", response = Role.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response get(
+    public void get(
             @PathParam("domain") String domain,
-            @PathParam("role") String role) throws DomainNotFoundException {
-        domainService.findById(domain);
-
-        Role role1 = roleService.findById(role);
-        if (!role1.getDomain().equalsIgnoreCase(domain)) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Role does not belong to domain")
-                    .build();
-        }
-        return Response.ok(role1).build();
+            @PathParam("role") String role,
+            @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMapMaybe(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return roleService.findById(role)
+                                .map(role1 -> {
+                                    if (!role1.getDomain().equalsIgnoreCase(domain)) {
+                                        return Response
+                                                .status(Response.Status.BAD_REQUEST)
+                                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                                                .entity(new ErrorEntity("Role does not belong to domain", Response.Status.BAD_REQUEST.getStatusCode()))
+                                                .build();
+                                    }
+                                    return Response.ok(role1).build();
+                                })
+                                .defaultIfEmpty(Response.status(Response.Status.NOT_FOUND)
+                                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                                        .entity(new ErrorEntity("Role [" + role + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
+                                        .build());
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @PUT
@@ -75,13 +95,24 @@ public class RoleResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Role successfully updated", response = Role.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Role updateRole(
+    public void update(
             @PathParam("domain") String domain,
             @PathParam("role") String role,
-            @ApiParam(name = "certificate", required = true) @Valid @NotNull UpdateRole updateRole) {
-        domainService.findById(domain);
-
-        return roleService.update(domain, role, updateRole);
+            @ApiParam(name = "certificate", required = true) @Valid @NotNull UpdateRole updateRole,
+            @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return roleService.update(domain, role, updateRole);
+                    }
+                })
+                .map(role1 -> Response.ok(role1).build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @DELETE
@@ -90,9 +121,13 @@ public class RoleResource {
             @ApiResponse(code = 204, message = "Role successfully deleted"),
             @ApiResponse(code = 400, message = "Role is bind to existing users"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response delete(@PathParam("domain") String domain, @PathParam("role") String role) {
-        roleService.delete(role);
-
-        return Response.noContent().build();
+    public void delete(@PathParam("domain") String domain,
+                           @PathParam("role") String role,
+                           @Suspended final AsyncResponse response) {
+        roleService.delete(role)
+                .map(irrelevant -> Response.noContent().build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 }

@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
+import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.*;
@@ -26,7 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
@@ -55,13 +58,26 @@ public class ExtensionGrantsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered extension grants for a security domain", response = ExtensionGrant.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public List<ExtensionGrant> listTokenGranters(@PathParam("domain") String domain) {
-        domainService.findById(domain);
-
-        return extensionGrantService.findByDomain(domain)
-                .stream()
-                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                .collect(Collectors.toList());
+    public void list(@PathParam("domain") String domain,
+                     @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return extensionGrantService.findByDomain(domain)
+                                .map(extensionGrants -> {
+                                    List<ExtensionGrant> sortedExtensionGrants = extensionGrants.stream()
+                                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                                            .collect(Collectors.toList());
+                                    return Response.ok(sortedExtensionGrants).build();
+                                });
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @POST
@@ -71,21 +87,27 @@ public class ExtensionGrantsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Extension grant successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response createCertificate(
+    public void create(
             @PathParam("domain") String domain,
             @ApiParam(name = "extension grant", required = true)
-            @Valid @NotNull final NewExtensionGrant newExtensionGrant) {
-        domainService.findById(domain);
-
-        ExtensionGrant extensionGrant = extensionGrantService.create(domain, newExtensionGrant);
-        if (extensionGrant != null) {
-            return Response
-                    .created(URI.create("/domains/" + domain + "/extensionGrants/" + extensionGrant.getId()))
-                    .entity(extensionGrant)
-                    .build();
-        }
-
-        return Response.serverError().build();
+            @Valid @NotNull final NewExtensionGrant newExtensionGrant,
+            @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return extensionGrantService.create(domain, newExtensionGrant)
+                                .map(extensionGrant -> Response
+                                        .created(URI.create("/domains/" + domain + "/extensionGrants/" + extensionGrant.getId()))
+                                        .entity(extensionGrant)
+                                        .build());
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @Path("{extensionGrant}")

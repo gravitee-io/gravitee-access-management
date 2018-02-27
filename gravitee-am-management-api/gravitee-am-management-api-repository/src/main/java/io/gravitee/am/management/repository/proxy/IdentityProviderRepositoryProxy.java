@@ -17,7 +17,6 @@ package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Irrelevant;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -33,27 +32,27 @@ import java.util.Set;
 public class IdentityProviderRepositoryProxy extends AbstractProxy<IdentityProviderRepository> implements IdentityProviderRepository {
 
     @Override
-    public Single<Set<IdentityProvider>> findByDomain(String domain) throws TechnicalException {
+    public Single<Set<IdentityProvider>> findByDomain(String domain) {
         return target.findByDomain(domain);
     }
 
     @Override
-    public Maybe<IdentityProvider> findById(String id) throws TechnicalException {
+    public Maybe<IdentityProvider> findById(String id) {
         return target.findById(id);
     }
 
     @Override
-    public Single<IdentityProvider> create(IdentityProvider identityProvider) throws TechnicalException {
+    public Single<IdentityProvider> create(IdentityProvider identityProvider) {
         return target.create(identityProvider);
     }
 
     @Override
-    public Single<IdentityProvider> update(IdentityProvider identityProvider) throws TechnicalException {
+    public Single<IdentityProvider> update(IdentityProvider identityProvider) {
         return target.update(identityProvider);
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) throws TechnicalException {
+    public Single<Irrelevant> delete(String id) {
         return target.delete(id);
     }
 }

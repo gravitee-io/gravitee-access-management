@@ -17,7 +17,6 @@ package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.Role;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -34,32 +33,32 @@ import java.util.Set;
 public class RoleRepositoryProxy extends AbstractProxy<RoleRepository> implements RoleRepository {
 
     @Override
-    public Single<Set<Role>> findByDomain(String domain) throws TechnicalException {
+    public Single<Set<Role>> findByDomain(String domain) {
         return target.findByDomain(domain);
     }
 
     @Override
-    public Single<Set<Role>> findByIdIn(List<String> ids) throws TechnicalException {
+    public Single<Set<Role>> findByIdIn(List<String> ids) {
         return target.findByIdIn(ids);
     }
 
     @Override
-    public Maybe<Role> findById(String id) throws TechnicalException {
+    public Maybe<Role> findById(String id) {
         return target.findById(id);
     }
 
     @Override
-    public Single<Role> create(Role role) throws TechnicalException {
+    public Single<Role> create(Role role) {
         return target.create(role);
     }
 
     @Override
-    public Single<Role> update(Role role) throws TechnicalException {
+    public Single<Role> update(Role role) {
         return target.update(role);
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) throws TechnicalException {
+    public Single<Irrelevant> delete(String id) {
         return target.delete(id);
     }
 }

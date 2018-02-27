@@ -17,8 +17,11 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 import java.util.List;
 import java.util.Map;
@@ -29,17 +32,17 @@ import java.util.Map;
  */
 public interface CertificateService {
 
-    Certificate findById(String id);
+    Maybe<Certificate> findById(String id);
 
-    List<Certificate> findByDomain(String domain);
+    Single<List<Certificate>> findByDomain(String domain);
 
-    Certificate create(String domain, NewCertificate newCertificate, String schema);
+    Single<Certificate> create(String domain, NewCertificate newCertificate, String schema);
 
-    Certificate update(String domain, String id, UpdateCertificate updateCertificate, String schema);
+    Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema);
 
-    void delete(String certificateId);
+    Single<Irrelevant> delete(String certificateId);
 
     void setCertificateProviders(String domainId, Map<String, CertificateProvider> certificateProviders);
 
-    CertificateProvider getCertificateProvider(String domainId, String certificateId);
+    Maybe<CertificateProvider> getCertificateProvider(String domainId, String certificateId);
 }

@@ -15,25 +15,29 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.model.NewScope;
 import io.gravitee.am.service.model.UpdateScope;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface ScopeService {
 
-    Scope findById(String id);
+    Maybe<Scope> findById(String id);
 
-    Scope create(String domain, NewScope scope);
+    Single<Scope> create(String domain, NewScope scope);
 
-    Set<Scope> findByDomain(String domain);
+    Single<Set<Scope>> findByDomain(String domain);
 
-    Scope update(String domain, String id, UpdateScope updateScope);
+    Single<Scope> update(String domain, String id, UpdateScope updateScope);
 
-    void delete(String scopeId);
+    Single<Irrelevant> delete(String scopeId);
 }

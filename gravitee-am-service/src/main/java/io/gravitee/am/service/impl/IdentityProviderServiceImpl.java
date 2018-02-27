@@ -16,17 +16,20 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderWithClientsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.common.utils.UUID;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +42,7 @@ import java.util.Optional;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
@@ -59,129 +63,130 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     private DomainService domainService;
 
     @Override
-    public IdentityProvider findById(String id) {
-        try {
-            LOGGER.debug("Find identity provider by ID: {}", id);
-            // TODO move to async call
-            Optional<IdentityProvider> identityProviderOpt = Optional.ofNullable(identityProviderRepository.findById(id).blockingGet());
-
-            if (!identityProviderOpt.isPresent()) {
-                throw new IdentityProviderNotFoundException(id);
-            }
-
-            return identityProviderOpt.get();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find an identity provider using its ID: {}", id, ex);
-            throw new TechnicalManagementException(
-                    String.format("An error occurs while trying to find an identity provider using its ID: %s", id), ex);
-        }
+    public Maybe<IdentityProvider> findById(String id) {
+        LOGGER.debug("Find identity provider by ID: {}", id);
+        return identityProviderRepository.findById(id)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find an identity provider using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find an identity provider using its ID: %s", id), ex));
+                });
     }
 
     @Override
-    public List<IdentityProvider> findByClient(String id) {
-        try {
-            LOGGER.debug("Find identity providers by client: {}", id);
-            // TODO move to async call
-            return new ArrayList<>(identityProviderRepository.findByDomain(id).blockingGet());
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find identity providers by client", ex);
-            throw new TechnicalManagementException("An error occurs while trying to find identity providers by client", ex);
-        }
+    public Single<List<IdentityProvider>> findByClient(String id) {
+        LOGGER.debug("Find identity providers by client: {}", id);
+        return identityProviderRepository.findByDomain(id)
+                .map(identityProviders -> (List<IdentityProvider>) new ArrayList<>(identityProviders))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find identity providers by client", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find identity providers by client", ex));
+                });
     }
 
     @Override
-    public List<IdentityProvider> findByDomain(String domain) {
-        try {
-            LOGGER.debug("Find identity providers by domain: {}", domain);
-            // TODO move to async call
-            return new ArrayList<>(identityProviderRepository.findByDomain(domain).blockingGet());
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find identity providers by domain", ex);
-            throw new TechnicalManagementException("An error occurs while trying to find identity providers by domain", ex);
-        }
+    public Single<List<IdentityProvider>> findByDomain(String domain) {
+        LOGGER.debug("Find identity providers by domain: {}", domain);
+        return identityProviderRepository.findByDomain(domain)
+                .map(identityProviders -> (List<IdentityProvider>) new ArrayList<>(identityProviders))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find identity providers by domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find identity providers by domain", ex));
+                });
     }
 
     @Override
-    public IdentityProvider create(String domain, NewIdentityProvider newIdentityProvider) {
-        try {
-            LOGGER.debug("Create a new identity provider {} for domain {}", newIdentityProvider, domain);
+    public Single<IdentityProvider> create(String domain, NewIdentityProvider newIdentityProvider) {
+        LOGGER.debug("Create a new identity provider {} for domain {}", newIdentityProvider, domain);
 
-            IdentityProvider identityProvider = new IdentityProvider();
-            identityProvider.setId(UUID.toString(UUID.random()));
-            identityProvider.setDomain(domain);
-            identityProvider.setName(newIdentityProvider.getName());
-            identityProvider.setType(newIdentityProvider.getType());
-            identityProvider.setConfiguration(newIdentityProvider.getConfiguration());
-            identityProvider.setExternal(newIdentityProvider.isExternal());
-            identityProvider.setCreatedAt(new Date());
-            identityProvider.setUpdatedAt(identityProvider.getCreatedAt());
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId(UUID.toString(UUID.random()));
+        identityProvider.setDomain(domain);
+        identityProvider.setName(newIdentityProvider.getName());
+        identityProvider.setType(newIdentityProvider.getType());
+        identityProvider.setConfiguration(newIdentityProvider.getConfiguration());
+        identityProvider.setExternal(newIdentityProvider.isExternal());
+        identityProvider.setCreatedAt(new Date());
+        identityProvider.setUpdatedAt(identityProvider.getCreatedAt());
 
-            // TODO move to async call
-            IdentityProvider provider = identityProviderRepository.create(identityProvider).blockingGet();
-
-            // Reload domain to take care about identity provider creation
-            domainService.reload(domain);
-
-            return provider;
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to create an identity provider", ex);
-            throw new TechnicalManagementException("An error occurs while trying to create an identity provider", ex);
-        }
+        return identityProviderRepository.create(identityProvider)
+                .doAfterSuccess(identityProvider1 -> {
+                    // Reload domain to take care about identity provider creation
+                    domainService.reload(domain);
+                })
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to create an identity provider", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create an identity provider", ex));
+                });
     }
 
     @Override
-    public IdentityProvider update(String domain, String id, UpdateIdentityProvider updateIdentityProvider) {
-        try {
-            LOGGER.debug("Update an identity provider {} for domain {}", id, domain);
+    public Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider) {
+        LOGGER.debug("Update an identity provider {} for domain {}", id, domain);
 
-            // TODO move to async call
-            Optional<IdentityProvider> identityProviderOpt = Optional.ofNullable(identityProviderRepository.findById(id).blockingGet());
-            if (!identityProviderOpt.isPresent()) {
-                throw new IdentityProviderNotFoundException(id);
-            }
+        return identityProviderRepository.findById(id)
+                .map(identityProvider -> Optional.of(identityProvider))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(identityProviderOpt -> {
+                    if (!identityProviderOpt.isPresent()) {
+                        throw new IdentityProviderNotFoundException(id);
+                    }
 
-            IdentityProvider identityProvider = identityProviderOpt.get();
-            identityProvider.setName(updateIdentityProvider.getName());
-            identityProvider.setConfiguration(updateIdentityProvider.getConfiguration());
-            identityProvider.setMappers(updateIdentityProvider.getMappers());
-            identityProvider.setRoleMapper(updateIdentityProvider.getRoleMapper());
-            identityProvider.setUpdatedAt(new Date());
+                    IdentityProvider identityProvider = identityProviderOpt.get();
+                    identityProvider.setName(updateIdentityProvider.getName());
+                    identityProvider.setConfiguration(updateIdentityProvider.getConfiguration());
+                    identityProvider.setMappers(updateIdentityProvider.getMappers());
+                    identityProvider.setRoleMapper(updateIdentityProvider.getRoleMapper());
+                    identityProvider.setUpdatedAt(new Date());
 
-            // TODO move to async call
-            IdentityProvider provider = identityProviderRepository.update(identityProvider).blockingGet();
+                    return identityProviderRepository.update(identityProvider)
+                            .doAfterSuccess(identityProvider1 -> {
+                                // Reload domain to take care about identity provider update
+                                domainService.reload(domain);
+                            });
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
 
-            // Reload domain to take care about identity provider update
-            domainService.reload(domain);
-
-            return provider;
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to update an identity provider", ex);
-            throw new TechnicalManagementException("An error occurs while trying to update an identity provider", ex);
-        }
+                    LOGGER.error("An error occurs while trying to update an identity provider", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update an identity provider", ex));
+                });
     }
 
     @Override
-    public void delete(String identityProviderId) {
-        try {
-            LOGGER.debug("Delete identity provider {}", identityProviderId);
+    public Single<Irrelevant> delete(String identityProviderId) {
+        LOGGER.debug("Delete identity provider {}", identityProviderId);
 
-            // TODO move to async call
-            Optional<IdentityProvider> optIdentityProvider = Optional.ofNullable(identityProviderRepository.findById(identityProviderId).blockingGet());
-            if (! optIdentityProvider.isPresent()) {
-                throw new IdentityProviderNotFoundException(identityProviderId);
-            }
+        return identityProviderRepository.findById(identityProviderId)
+                .map(identityProvider -> Optional.of(identityProvider))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(optIdentityProvider -> {
+                    if (! optIdentityProvider.isPresent()) {
+                        throw new IdentityProviderNotFoundException(identityProviderId);
+                    }
 
-            int clients = clientService.findByIdentityProvider(identityProviderId).size();
-            if (clients > 0) {
-                throw new IdentityProviderWithClientsException();
-            }
+                    return clientService.findByIdentityProvider(identityProviderId)
+                            .flatMap(clients -> {
+                                if (clients.size() > 0) {
+                                    throw new IdentityProviderWithClientsException();
+                                }
+                                return Single.just(Irrelevant.CLIENT);
+                            });
 
-            // TODO move to async call
-            identityProviderRepository.delete(identityProviderId).subscribe();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to delete identity provider: {}", identityProviderId, ex);
-            throw new TechnicalManagementException(
-                    String.format("An error occurs while trying to delete identity provider: %s", identityProviderId), ex);
-        }
+                })
+                .flatMap(irrelevant -> identityProviderRepository.delete(identityProviderId))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+
+                    LOGGER.error("An error occurs while trying to delete identity provider: {}", identityProviderId, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete identity provider: %s", identityProviderId), ex));
+                });
     }
 }

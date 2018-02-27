@@ -15,9 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.resources.enhancer.UserEnhancer;
+import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateUser;
@@ -28,7 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
@@ -49,7 +52,7 @@ public class UserResource {
     private DomainService domainService;
 
     @Autowired
-    private UserEnhancer userEnhancer;
+    private IdentityProviderService identityProviderService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -57,19 +60,44 @@ public class UserResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "User successfully fetched", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response get(
+    public void get(
             @PathParam("domain") String domain,
-            @PathParam("user") String user) throws DomainNotFoundException {
-        domainService.findById(domain);
-
-        User user1 = userEnhancer.enhance().apply(userService.findById(user));
-        if (!user1.getDomain().equalsIgnoreCase(domain)) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("User does not belong to domain")
-                    .build();
-        }
-        return Response.ok(user1).build();
+            @PathParam("user") String user,
+            @Suspended final AsyncResponse response) throws DomainNotFoundException {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMapMaybe(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return userService.findById(user)
+                                .map(user1 -> {
+                                    if (!user1.getDomain().equalsIgnoreCase(domain)) {
+                                        return Response
+                                                .status(Response.Status.BAD_REQUEST)
+                                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                                                .entity(new ErrorEntity("User does not belong to domain", Response.Status.BAD_REQUEST.getStatusCode()))
+                                                .build();
+                                    }
+                                    // TODO
+                                    /*if (user1.getSource() != null){
+                                        return identityProviderService.findById(user1.getSource())
+                                                .map(idP -> {
+                                                    user1.setSource(idP.getName());
+                                                    return Response.ok(user1).build();
+                                                });
+                                    }*/
+                                    return Response.ok(user1).build();
+                                })
+                                .defaultIfEmpty(Response.status(Response.Status.NOT_FOUND)
+                                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                                        .entity(new ErrorEntity("User[" + user + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
+                                        .build());
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @PUT

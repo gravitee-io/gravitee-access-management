@@ -30,13 +30,7 @@ import java.util.Set;
  */
 public interface DomainRepository extends CrudRepository<Domain, String> {
 
-    /**
-     * The full list of {@link Domain}.
-     *
-     * @return All {@link Domain}
-     * @throws TechnicalException
-     */
-    Single<Set<Domain>> findAll() throws TechnicalException;
+    Single<Set<Domain>> findAll();
 
-    Single<Set<Domain>> findByIdIn(Collection<String> ids) throws TechnicalException;
+    Single<Set<Domain>> findByIdIn(Collection<String> ids);
 }

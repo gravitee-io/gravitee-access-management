@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Irrelevant;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.oauth2.Scope;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ScopeAlreadyExistsException;
 import io.gravitee.am.service.exception.ScopeNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -29,17 +32,23 @@ import io.gravitee.am.service.model.UpdateClient;
 import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.am.service.model.UpdateScope;
 import io.gravitee.common.utils.UUID;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
@@ -60,154 +69,156 @@ public class ScopeServiceImpl implements ScopeService {
     private ClientService clientService;
 
     @Override
-    public Scope findById(String id) {
-        try {
-            LOGGER.debug("Find scope by ID: {}", id);
-            // TODO move to async call
-            Optional<Scope> scopeOpt = Optional.ofNullable(scopeRepository.findById(id).blockingGet());
-
-            if (!scopeOpt.isPresent()) {
-                throw new ScopeNotFoundException(id);
-            }
-
-            return scopeOpt.get();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find a scope using its ID: {}", id, ex);
-            throw new TechnicalManagementException(
-                    String.format("An error occurs while trying to find a scope using its ID: %s", id), ex);
-        }
+    public Maybe<Scope> findById(String id) {
+        LOGGER.debug("Find scope by ID: {}", id);
+        return scopeRepository.findById(id)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a scope using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a scope using its ID: %s", id), ex));
+                });
     }
 
     @Override
-    public Scope create(String domain, NewScope newScope) {
-        try {
-            LOGGER.debug("Create a new scope {} for domain {}", newScope, domain);
+    public Single<Scope> create(String domain, NewScope newScope) {
+        LOGGER.debug("Create a new scope {} for domain {}", newScope, domain);
+        String scopeKey = newScope.getKey().toLowerCase();
+        return scopeRepository.findByDomainAndKey(domain, scopeKey)
+                .isEmpty()
+                    .flatMap(empty -> {
+                        if (!empty) {
+                            throw new ScopeAlreadyExistsException(scopeKey, domain);
+                        }
+                        Scope scope = new Scope();
+                        scope.setId(UUID.toString(UUID.random()));
+                        scope.setDomain(domain);
+                        scope.setKey(scopeKey);
+                        scope.setName(newScope.getName());
+                        scope.setDescription(newScope.getDescription());
+                        scope.setCreatedAt(new Date());
+                        scope.setUpdatedAt(new Date());
 
-            String scopeKey = newScope.getKey().toLowerCase();
-            // TODO move to async call
-            Optional<Scope> scopeOpt = Optional.ofNullable(scopeRepository.findByDomainAndKey(domain, scopeKey).blockingGet());
+                        return scopeRepository.create(scope);
+                    })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
 
-            if (scopeOpt.isPresent()) {
-                throw new ScopeAlreadyExistsException(scopeKey, domain);
-            }
-
-            Scope scope = new Scope();
-            scope.setId(UUID.toString(UUID.random()));
-            scope.setDomain(domain);
-            scope.setKey(scopeKey);
-            scope.setName(newScope.getName());
-            scope.setDescription(newScope.getDescription());
-            scope.setCreatedAt(new Date());
-            scope.setUpdatedAt(new Date());
-
-            // TODO move to async call
-            return scopeRepository.create(scope).blockingGet();
-        } catch (Exception ex) {
-            LOGGER.error("An error occurs while trying to create a scope", ex);
-            throw new TechnicalManagementException("An error occurs while trying to create a scope", ex);
-        }
+                    LOGGER.error("An error occurs while trying to create a scope", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a scope", ex));
+                });
     }
 
     @Override
-    public Scope update(String domain, String id, UpdateScope updateScope) {
-        try {
-            LOGGER.debug("Update a scope {} for domain {}", id, domain);
+    public Single<Scope> update(String domain, String id, UpdateScope updateScope) {
+        LOGGER.debug("Update a scope {} for domain {}", id, domain);
+        return scopeRepository.findById(id)
+                .map(scope -> Optional.of(scope))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(scopeOpt -> {
+                    if (!scopeOpt.isPresent()) {
+                        throw new ScopeNotFoundException(id);
+                    }
 
-            // TODO move to async call
-            Optional<Scope> scopeOpt = Optional.ofNullable(scopeRepository.findById(id).blockingGet());
-            if (!scopeOpt.isPresent()) {
-                throw new ScopeNotFoundException(id);
-            }
+                    Scope scope = scopeOpt.get();
+                    scope.setName(updateScope.getName());
+                    scope.setDescription(updateScope.getDescription());
+                    scope.setNames(updateScope.getNames());
+                    scope.setDescriptions(updateScope.getDescriptions());
+                    scope.setUpdatedAt(new Date());
 
-            Scope scope = scopeOpt.get();
-            scope.setName(updateScope.getName());
-            scope.setDescription(updateScope.getDescription());
-            scope.setNames(updateScope.getNames());
-            scope.setDescriptions(updateScope.getDescriptions());
-            scope.setUpdatedAt(new Date());
-
-            // TODO move to async call
-            return scopeRepository.update(scope).blockingGet();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to update a scope", ex);
-            throw new TechnicalManagementException("An error occurs while trying to update a scope", ex);
-        }
+                    return scopeRepository.update(scope);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to update a scope", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a scope", ex));
+                });
     }
 
     @Override
-    public void delete(String scopeId) {
-        try {
-            LOGGER.debug("Delete scope {}", scopeId);
+    public Single<Irrelevant> delete(String scopeId) {
+        LOGGER.debug("Delete scope {}", scopeId);
+        return scopeRepository.findById(scopeId)
+                .map(client -> Optional.of(client))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(scopeOpt -> {
+                    if(!scopeOpt.isPresent()) {
+                        throw new ScopeNotFoundException(scopeId);
+                    }
+                    return Single.just(scopeOpt.get());
+                })
+                .flatMap(scope -> {
+                    // 1_ Remove permissions from role
+                    Single<List<Role>> removePermissionsFromRole = roleService.findByDomain(scope.getDomain())
+                            .flatMapObservable(roles -> Observable.fromIterable(roles.stream()
+                                    .filter(role -> role.getPermissions().contains(scope.getKey()))
+                                    .collect(Collectors.toList())))
+                            .flatMapSingle(role -> {
+                                role.getPermissions().remove(scope.getKey());
+                                UpdateRole updatedRole = new UpdateRole();
+                                updatedRole.setName(role.getName());
+                                updatedRole.setDescription(role.getDescription());
+                                updatedRole.setPermissions(role.getPermissions());
+                                // Save role
+                                return roleService.update(scope.getDomain(), role.getId(), updatedRole);
+                            }).toList();
 
-            // TODO move to async call
-            Optional<Scope> optScope = Optional.ofNullable(scopeRepository.findById(scopeId).blockingGet());
-            if (! optScope.isPresent()) {
-                throw new ScopeNotFoundException(scopeId);
-            }
+                    // 2_ Remove scopes from client
+                    Single<List<Client>> removeScopesFromClient = clientService.findByDomain(scope.getDomain())
+                            .flatMapObservable(clients -> Observable.fromIterable(clients.stream()
+                                    .filter(client -> client.getScopes().contains(scope.getKey()))
+                                    .collect(Collectors.toList())))
+                            .flatMapSingle(client -> {
+                                // Remove scope from client
+                                client.getScopes().remove(scope.getKey());
 
-            Scope scope = optScope.get();
+                                UpdateClient updateClient = new UpdateClient();
+                                updateClient.setAutoApproveScopes(client.getAutoApproveScopes());
+                                updateClient.setScopes(client.getScopes());
+                                updateClient.setRefreshTokenValiditySeconds(client.getRefreshTokenValiditySeconds());
+                                updateClient.setRedirectUris(client.getRedirectUris());
+                                updateClient.setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());
+                                updateClient.setAuthorizedGrantTypes(client.getAuthorizedGrantTypes());
+                                updateClient.setCertificate(client.getCertificate());
+                                updateClient.setEnabled(client.isEnabled());
+                                updateClient.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
+                                updateClient.setGenerateNewTokenPerRequest(client.isGenerateNewTokenPerRequest());
+                                updateClient.setIdentities(client.getIdentities());
+                                updateClient.setIdTokenCustomClaims(client.getIdTokenCustomClaims());
+                                updateClient.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
 
-            // 1_ Remove permissions from role
-            roleService.findByDomain(scope.getDomain())
-                    .stream()
-                    .filter(role -> role.getPermissions().contains(scope.getKey()))
-                    .forEach(role -> {
-                        // Remove permission from role
-                        role.getPermissions().remove(scope.getKey());
-                        UpdateRole updatedRole = new UpdateRole();
-                        updatedRole.setName(role.getName());
-                        updatedRole.setDescription(role.getDescription());
-                        updatedRole.setPermissions(role.getPermissions());
+                                // Save client
+                                return clientService.update(scope.getDomain(), client.getId(), updateClient);
+                            }).toList();
 
-                        // Save role
-                        roleService.update(scope.getDomain(), role.getId(), updatedRole);
-                    });
+                    return Single.merge(removePermissionsFromRole, removeScopesFromClient).toList();
+                })
+                .flatMap(irrelevant -> scopeRepository.delete(scopeId))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
 
-            // 2_ Remove scopes from client
-            clientService.findByDomain(scope.getDomain())
-                    .stream()
-                    .filter(client -> client.getScopes().contains(scope.getKey()))
-                    .forEach(client -> {
-                        // Remove scope from client
-                        client.getScopes().remove(scope.getKey());
-
-                        UpdateClient updateClient = new UpdateClient();
-                        updateClient.setAutoApproveScopes(client.getAutoApproveScopes());
-                        updateClient.setScopes(client.getScopes());
-                        updateClient.setRefreshTokenValiditySeconds(client.getRefreshTokenValiditySeconds());
-                        updateClient.setRedirectUris(client.getRedirectUris());
-                        updateClient.setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());
-                        updateClient.setAuthorizedGrantTypes(client.getAuthorizedGrantTypes());
-                        updateClient.setCertificate(client.getCertificate());
-                        updateClient.setEnabled(client.isEnabled());
-                        updateClient.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
-                        updateClient.setGenerateNewTokenPerRequest(client.isGenerateNewTokenPerRequest());
-                        updateClient.setIdentities(client.getIdentities());
-                        updateClient.setIdTokenCustomClaims(client.getIdTokenCustomClaims());
-                        updateClient.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
-
-                        // Save client
-                        clientService.update(scope.getDomain(), client.getId(), updateClient);
-                    });
-            // TODO move to async call
-            scopeRepository.delete(scopeId).subscribe();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to delete scope: {}", scopeId, ex);
-            throw new TechnicalManagementException(
-                    String.format("An error occurs while trying to delete scope: %s", scopeId), ex);
-        }
+                    LOGGER.error("An error occurs while trying to delete scope: {}", scopeId, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete scope: %s", scopeId), ex));
+                });
     }
 
     @Override
-    public Set<Scope> findByDomain(String domain) {
-        try {
-            LOGGER.debug("Find scopes by domain", domain);
-            // TODO move to async call
-            return scopeRepository.findByDomain(domain).blockingGet();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find scopes by domain: {}", domain, ex);
-            throw new TechnicalManagementException(
-                    String.format("An error occurs while trying to find scopes by domain: %s", domain), ex);
-        }
+    public Single<Set<Scope>> findByDomain(String domain) {
+        LOGGER.debug("Find scopes by domain", domain);
+        return scopeRepository.findByDomain(domain)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find scopes by domain: {}", domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find scopes by domain: %s", domain), ex));
+                });
     }
 }

@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.service.model.TotalToken;
+import io.reactivex.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -23,7 +24,7 @@ import io.gravitee.am.service.model.TotalToken;
  */
 public interface TokenService {
 
-    TotalToken findTotalTokensByDomain(String domain);
+    Single<TotalToken> findTotalTokensByDomain(String domain);
 
-    TotalToken findTotalTokens();
+    Single<TotalToken> findTotalTokens();
 }

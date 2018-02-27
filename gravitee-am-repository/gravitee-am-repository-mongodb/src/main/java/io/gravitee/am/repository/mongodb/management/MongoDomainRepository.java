@@ -63,7 +63,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Maybe<Domain> findById(String id) {
-        return _findById(id).toMaybe();
+        return Observable.fromPublisher(domainsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -75,22 +75,18 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     public Single<Domain> create(Domain item) {
         DomainMongo domain = convert(item);
         domain.setId(domain.getId() == null ? (String) idGenerator.generate() : domain.getId());
-        return Single.fromPublisher(domainsCollection.insertOne(domain)).flatMap(success -> _findById(domain.getId()));
+        return Single.fromPublisher(domainsCollection.insertOne(domain)).flatMap(success -> findById(domain.getId()).toSingle());
     }
 
     @Override
     public Single<Domain> update(Domain item) {
         DomainMongo domain = convert(item);
-        return Single.fromPublisher(domainsCollection.replaceOne(eq(FIELD_ID, domain.getId()), domain)).flatMap(updateResult -> _findById(domain.getId()));
+        return Single.fromPublisher(domainsCollection.replaceOne(eq(FIELD_ID, domain.getId()), domain)).flatMap(updateResult -> findById(domain.getId()).toSingle());
     }
 
     @Override
     public Single<Irrelevant> delete(String id) {
         return Single.fromPublisher(domainsCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.DOMAIN);
-    }
-
-    private Single<Domain> _findById(String id) {
-        return Single.fromPublisher(domainsCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private Domain convert(DomainMongo domainMongo) {

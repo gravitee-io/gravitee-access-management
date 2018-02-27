@@ -30,10 +30,10 @@ import java.util.Set;
  */
 public interface UserRepository extends CrudRepository<User, String> {
 
-    Single<Set<User>> findByDomain(String domain) throws TechnicalException;
+    Single<Set<User>> findByDomain(String domain);
 
-    Single<Page<User>> findByDomain(String domain, int page, int size) throws TechnicalException;
+    Single<Page<User>> findByDomain(String domain, int page, int size);
 
-    Maybe<User> findByUsernameAndDomain(String username, String domain) throws TechnicalException;
+    Maybe<User> findByUsernameAndDomain(String username, String domain);
 
 }

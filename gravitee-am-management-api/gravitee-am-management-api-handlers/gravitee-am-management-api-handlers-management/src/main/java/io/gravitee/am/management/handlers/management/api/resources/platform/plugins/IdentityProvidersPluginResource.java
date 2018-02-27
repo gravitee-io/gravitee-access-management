@@ -25,17 +25,17 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
 /**
- * Defines the REST resources to manage {@link io.gravitee.am.model.IdentityProvider}.
- *
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Api(tags = {"Platform", "Plugin", "Identity Provider"})
@@ -49,12 +49,17 @@ public class IdentityProvidersPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List identity providers")
-    public Collection<IdentityProviderPlugin> listIdentityProviders(@QueryParam("external") Boolean oauth2Provider) {
-        return identityProviderPluginService.findAll(oauth2Provider)
-                .stream()
-                .sorted(Comparator.comparing(IdentityProviderPlugin::getName))
-                .collect(Collectors.toList());
+    @ApiOperation(value = "List identity provider plugins")
+    public void list(@QueryParam("external") Boolean oauth2Provider,
+                                      @Suspended final AsyncResponse response) {
+        identityProviderPluginService.findAll(oauth2Provider)
+                .map(identityProviderPlugins -> identityProviderPlugins.stream()
+                        .sorted(Comparator.comparing(IdentityProviderPlugin::getName))
+                        .collect(Collectors.toList()))
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error)
+                );
     }
 
     @Path("{identity}")

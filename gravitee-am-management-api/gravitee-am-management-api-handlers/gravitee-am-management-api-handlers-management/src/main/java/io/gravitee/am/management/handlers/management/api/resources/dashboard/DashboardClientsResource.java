@@ -20,13 +20,14 @@ import io.gravitee.am.management.handlers.management.api.resources.enhancer.Clie
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.ClientListItem;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.TopClientListItem;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.TopClient;
 import io.gravitee.am.service.model.TotalClient;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -34,10 +35,9 @@ import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -66,29 +66,46 @@ public class DashboardClientsResource extends AbstractResource {
             @ApiResponse(code = 200, message = "List last updated clients",
                     response = ClientListItem.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public List<ClientListItem> listClients(@QueryParam("page") @DefaultValue("0") int page,
-                                            @QueryParam("size") @DefaultValue("10") int size,
-                                            @QueryParam("domainId") String domainId) {
-
+    public void listClients(@QueryParam("page") @DefaultValue("0") int page,
+                            @QueryParam("size") @DefaultValue("10") int size,
+                            @QueryParam("domainId") String domainId,
+                            @Suspended final AsyncResponse response) {
         int selectedSize = Math.min(size, MAX_CLIENTS_FOR_DASHBOARD);
+        Single<AbstractMap.SimpleEntry<Page<Client>, Map<String, Domain>>> singleDashboardClients;
 
-        Page<Client> pagedClients;
-        Map<String, Domain> domains = new HashMap<>();
         if (domainId != null) {
-            Domain domain = domainService.findById(domainId);
-            pagedClients = clientService.findByDomain(domainId, page, selectedSize);
-            domains.put(domainId, domain);
+            singleDashboardClients = domainService.findById(domainId)
+                    .map(domain -> Optional.of(domain))
+                    .defaultIfEmpty(Optional.empty())
+                    .flatMapSingle(optionalDomain -> {
+                        if (!optionalDomain.isPresent()) {
+                            throw new DomainNotFoundException(domainId);
+                        }
+                        Map<String, Domain> domains = new HashMap<>();
+                        domains.put(domainId, optionalDomain.get());
+                        return clientService.findByDomain(domainId, page, selectedSize)
+                                .map(pagedClients -> new AbstractMap.SimpleEntry<>(pagedClients, domains));
+                    });
         } else {
-            pagedClients = clientService.findAll(page, selectedSize);
-            List<String> domainIds = pagedClients.getData().stream().map(c -> c.getDomain()).collect(Collectors.toList());
-            domains.putAll(domainService.findByIdIn(domainIds).stream().collect(Collectors.toMap(Domain::getId, Function.identity())));
+            singleDashboardClients = clientService.findAll(page, selectedSize)
+                   .flatMap(pagedClients -> {
+                       List<String> domainIds = pagedClients.getData().stream().map(c -> c.getDomain()).collect(Collectors.toList());
+                       return domainService.findByIdIn(domainIds)
+                               .map(domains -> domains.stream().collect(Collectors.toMap(Domain::getId, Function.identity())))
+                               .map(domainsMap -> new AbstractMap.SimpleEntry<>(pagedClients, domainsMap));
+                   });
         }
 
-        return pagedClients.getData()
-                .stream()
-                .map(clientEnhancer.enhanceClient(domains))
-                .sorted((c1, c2) -> c2.getUpdatedAt().compareTo(c1.getUpdatedAt()))
-                .collect(Collectors.toList());
+        singleDashboardClients
+                .map(entry -> entry.getKey().getData()
+                        .stream()
+                        .map(clientEnhancer.enhanceClient(entry.getValue()))
+                        .sorted((c1, c2) -> c2.getUpdatedAt().compareTo(c1.getUpdatedAt()))
+                        .collect(Collectors.toList()))
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error)
+                );
     }
 
     @Path("top")
@@ -99,29 +116,45 @@ public class DashboardClientsResource extends AbstractResource {
             @ApiResponse(code = 200, message = "List top clients by access tokens count",
                     response = TopClient.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public List<TopClientListItem> listTopClients(@QueryParam("size") @DefaultValue("10") int size,
-                                                  @QueryParam("domainId") String domainId) {
-
+    public void listTopClients(@QueryParam("size") @DefaultValue("10") int size,
+                               @QueryParam("domainId") String domainId,
+                               @Suspended final AsyncResponse response) {
         int selectedSize = Math.min(size, MAX_CLIENTS_FOR_DASHBOARD);
-
-        Set<TopClient> clients;
-        Map<String, Domain> domains = new HashMap<>();
+        Single<AbstractMap.SimpleEntry<Set<TopClient>, Map<String, Domain>>> singleDashboardTopClients;
         if (domainId != null) {
-            Domain domain = domainService.findById(domainId);
-            clients = clientService.findTopClientsByDomain(domainId);
-            domains.put(domainId, domain);
+            singleDashboardTopClients = domainService.findById(domainId)
+                    .map(domain -> Optional.of(domain))
+                    .defaultIfEmpty(Optional.empty())
+                    .flatMapSingle(optionalDomain -> {
+                        if (!optionalDomain.isPresent()) {
+                            throw new DomainNotFoundException(domainId);
+                        }
+                        Map<String, Domain> domains = new HashMap<>();
+                        domains.put(domainId, optionalDomain.get());
+                        return clientService.findTopClientsByDomain(domainId)
+                                .map(topClients -> new AbstractMap.SimpleEntry<>(topClients, domains));
+                    });
         } else {
-            clients = clientService.findTopClients();
-            List<String> domainIds = clients.stream().map(c -> c.getClient().getDomain()).collect(Collectors.toList());
-            domains.putAll(domainService.findByIdIn(domainIds).stream().collect(Collectors.toMap(Domain::getId, Function.identity())));
+            singleDashboardTopClients = clientService.findTopClients()
+                    .flatMap(topClients -> {
+                        List<String> domainIds = topClients.stream().map(c -> c.getClient().getDomain()).collect(Collectors.toList());
+                        return domainService.findByIdIn(domainIds)
+                                .map(domains -> domains.stream().collect(Collectors.toMap(Domain::getId, Function.identity())))
+                                .map(domainsMap -> new AbstractMap.SimpleEntry<>(topClients, domainsMap));
+                    });
         }
 
-        return clients
-                .stream()
-                .map(clientEnhancer.enhanceTopClient(domains))
-                .sorted((c1, c2) -> Long.compare(c2.getAccessTokens(), c1.getAccessTokens()))
-                .limit(selectedSize)
-                .collect(Collectors.toList());
+        singleDashboardTopClients
+                .map(entry -> entry.getKey()
+                        .stream()
+                        .map(clientEnhancer.enhanceTopClient(entry.getValue()))
+                        .sorted((c1, c2) -> Long.compare(c2.getAccessTokens(), c1.getAccessTokens()))
+                        .limit(selectedSize)
+                        .collect(Collectors.toList()))
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error)
+                );
     }
 
     @Path("total")
@@ -132,16 +165,17 @@ public class DashboardClientsResource extends AbstractResource {
             @ApiResponse(code = 200, message = "List clients count",
                     response = TotalClient.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public TotalClient listTotalClients(@QueryParam("domainId") String domainId) {
-
-        TotalClient totalClient;
+    public void listTotalClients(@QueryParam("domainId") String domainId,
+                                 @Suspended final AsyncResponse response) {
+        Single<TotalClient> totalClientSingle;
         if (domainId != null) {
-            totalClient = clientService.findTotalClientsByDomain(domainId);
+            totalClientSingle = clientService.findTotalClientsByDomain(domainId);
         } else {
-            totalClient = clientService.findTotalClients();
+            totalClientSingle = clientService.findTotalClients();
         }
-
-        return totalClient;
+        totalClientSingle.subscribe(
+                result -> response.resume(result),
+                error -> response.resume(error));
     }
 
 }

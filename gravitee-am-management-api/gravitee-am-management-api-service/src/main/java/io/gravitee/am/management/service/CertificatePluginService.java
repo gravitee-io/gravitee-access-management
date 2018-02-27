@@ -16,6 +16,8 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.service.model.plugin.CertificatePlugin;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 import java.util.Set;
 
@@ -25,9 +27,9 @@ import java.util.Set;
  */
 public interface CertificatePluginService {
 
-    Set<CertificatePlugin> findAll();
+    Single<Set<CertificatePlugin>> findAll();
 
-    CertificatePlugin findById(String id);
+    Maybe<CertificatePlugin> findById(String id);
 
-    String getSchema(String id);
+    Maybe<String> getSchema(String id);
 }

@@ -17,7 +17,6 @@ package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.oauth2.Scope;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -32,27 +31,27 @@ import java.util.Set;
 @Component
 public class ScopeRepositoryProxy extends AbstractProxy<ScopeRepository> implements ScopeRepository {
 
-    public Single<Set<Scope>> findByDomain(String domain) throws TechnicalException {
+    public Single<Set<Scope>> findByDomain(String domain) {
         return target.findByDomain(domain);
     }
 
-    public Maybe<Scope> findByDomainAndKey(String domain, String key) throws TechnicalException {
+    public Maybe<Scope> findByDomainAndKey(String domain, String key) {
         return target.findByDomainAndKey(domain, key);
     }
 
-    public Maybe<Scope> findById(String s) throws TechnicalException {
+    public Maybe<Scope> findById(String s) {
         return target.findById(s);
     }
 
-    public Single<Scope> create(Scope item) throws TechnicalException {
+    public Single<Scope> create(Scope item) {
         return target.create(item);
     }
 
-    public Single<Scope> update(Scope item) throws TechnicalException {
+    public Single<Scope> update(Scope item) {
         return target.update(item);
     }
 
-    public Single<Irrelevant> delete(String s) throws TechnicalException {
+    public Single<Irrelevant> delete(String s) {
         return target.delete(s);
     }
 }

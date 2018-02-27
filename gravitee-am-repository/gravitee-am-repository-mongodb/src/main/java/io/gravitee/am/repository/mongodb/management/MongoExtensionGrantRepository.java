@@ -68,35 +68,31 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
     }
 
     @Override
-    public Maybe<ExtensionGrant> findByDomainAndGrantType(String domain, String grantType) throws TechnicalException {
-        return Single.fromPublisher(extensionGrantsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPE, grantType))).first()).map(this::convert).toMaybe();
+    public Maybe<ExtensionGrant> findByDomainAndGrantType(String domain, String grantType) {
+        return Observable.fromPublisher(extensionGrantsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPE, grantType))).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Maybe<ExtensionGrant> findById(String tokenGranterId) {
-        return _findById(tokenGranterId).toMaybe();
+        return Observable.fromPublisher(extensionGrantsCollection.find(eq(FIELD_ID, tokenGranterId)).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Single<ExtensionGrant> create(ExtensionGrant item) {
         ExtensionGrantMongo extensionGrant = convert(item);
         extensionGrant.setId(extensionGrant.getId() == null ? (String) idGenerator.generate() : extensionGrant.getId());
-        return Single.fromPublisher(extensionGrantsCollection.insertOne(extensionGrant)).flatMap(success -> _findById(extensionGrant.getId()));
+        return Single.fromPublisher(extensionGrantsCollection.insertOne(extensionGrant)).flatMap(success -> findById(extensionGrant.getId()).toSingle());
     }
 
     @Override
     public Single<ExtensionGrant> update(ExtensionGrant item) {
         ExtensionGrantMongo extensionGrant = convert(item);
-        return Single.fromPublisher(extensionGrantsCollection.replaceOne(eq(FIELD_ID, extensionGrant.getId()), extensionGrant)).flatMap(updateResult -> _findById(extensionGrant.getId()));
+        return Single.fromPublisher(extensionGrantsCollection.replaceOne(eq(FIELD_ID, extensionGrant.getId()), extensionGrant)).flatMap(updateResult -> findById(extensionGrant.getId()).toSingle());
     }
 
     @Override
     public Single<Irrelevant> delete(String id) {
         return Single.fromPublisher(extensionGrantsCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.EXTENSION_GRANT);
-    }
-
-    private Single<ExtensionGrant> _findById(String id) {
-        return Single.fromPublisher(extensionGrantsCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private ExtensionGrant convert(ExtensionGrantMongo extensionGrantMongo) {

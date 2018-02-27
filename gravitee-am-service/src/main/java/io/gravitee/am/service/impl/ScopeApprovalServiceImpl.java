@@ -19,6 +19,7 @@ import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ import java.util.Collection;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
@@ -41,38 +43,14 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     private ScopeApprovalRepository scopeApprovalRepository;
 
     @Override
-    public ScopeApproval create(ScopeApproval approval) {
-        try {
-            LOGGER.debug("Create a new scope approval client[{}] user[{}] scope[{}]", approval.getUserId(),
-                    approval.getClientId(), approval.getScope());
-
-            // TODO move to async call
-            return scopeApprovalRepository.create(approval).blockingGet();
-            /*
-            String scopeKey = newScope.getKey().toLowerCase();
-            Optional<Scope> scopeOpt = scopeRepository.findByDomainAndKey(domain, scopeKey);
-
-            if (scopeOpt.isPresent()) {
-                throw new ScopeAlreadyExistsException(scopeKey, domain);
-            }
-
-            Scope scope = new Scope();
-            scope.setId(UUID.toString(UUID.random()));
-            scope.setDomain(domain);
-            scope.setKey(scopeKey);
-            scope.setName(newScope.getName());
-            scope.setDescription(newScope.getDescription());
-            scope.setCreatedAt(new Date());
-            scope.setUpdatedAt(new Date());
-
-            scopeRepository.create(scope);
-
-            return scope;
-            */
-        } catch (Exception ex) {
-            LOGGER.error("An error occurs while trying to create a scope approval", ex);
-            throw new TechnicalManagementException("An error occurs while trying to create a scope approval", ex);
-        }
+    public Single<ScopeApproval> create(ScopeApproval approval) {
+        LOGGER.debug("Create a new scope approval client[{}] user[{}] scope[{}]", approval.getUserId(),
+                approval.getClientId(), approval.getScope());
+        return scopeApprovalRepository.create(approval)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to create a scope approval", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a scope approval", ex));
+                });
     }
 
     @Override
@@ -81,15 +59,13 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     }
 
     @Override
-    public Collection<ScopeApproval> findByUserAndClient(String domain, String userId, String clientId) {
-        try {
-            LOGGER.debug("Find scope approvals by domain[{}] client[{}] user[{}]", domain);
-
-            // TODO move to async call
-            return scopeApprovalRepository.findByDomainAndUserAndClient(domain, userId, clientId).blockingGet();
-        } catch (Exception ex) {
-            LOGGER.error("An error occurs while trying to find scope approval", ex);
-            throw new TechnicalManagementException("An error occurs while trying to find scope approval", ex);
-        }
+    public Single<Collection<ScopeApproval>> findByUserAndClient(String domain, String userId, String clientId) {
+        LOGGER.debug("Find scope approvals by domain[{}] client[{}] user[{}]", domain);
+        return scopeApprovalRepository.findByDomainAndUserAndClient(domain, userId, clientId)
+                .map(scopeApprovals -> (Collection<ScopeApproval>) scopeApprovals)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find scope approval", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find scope approval", ex));
+                });
     }
 }

@@ -65,7 +65,8 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     @Override
     public void afterPropertiesSet() throws Exception {
         logger.info("Initializing identity providers for domain {}", domain.getName());
-        List<IdentityProvider> identityProviders = identityProviderService.findByDomain(domain.getId());
+        // TODO async call
+        List<IdentityProvider> identityProviders = identityProviderService.findByDomain(domain.getId()).blockingGet();
 
         identityProviders.forEach(identityProvider -> {
             logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());

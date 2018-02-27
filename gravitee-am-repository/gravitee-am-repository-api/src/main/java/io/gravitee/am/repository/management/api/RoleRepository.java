@@ -29,7 +29,7 @@ import java.util.Set;
  */
 public interface RoleRepository extends CrudRepository<Role, String> {
 
-    Single<Set<Role>> findByDomain(String domain) throws TechnicalException;
+    Single<Set<Role>> findByDomain(String domain);
 
-    Single<Set<Role>> findByIdIn(List<String> ids) throws TechnicalException;
+    Single<Set<Role>> findByIdIn(List<String> ids);
 }

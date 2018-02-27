@@ -17,7 +17,6 @@ package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.oauth2.ScopeApproval;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -32,23 +31,23 @@ import java.util.Set;
 @Component
 public class ScopeApprovalRepositoryProxy extends AbstractProxy<ScopeApprovalRepository> implements ScopeApprovalRepository {
 
-    public Maybe<ScopeApproval> findById(String s) throws TechnicalException {
+    public Maybe<ScopeApproval> findById(String s) {
         return target.findById(s);
     }
 
-    public Single<ScopeApproval> create(ScopeApproval item) throws TechnicalException {
+    public Single<ScopeApproval> create(ScopeApproval item) {
         return target.create(item);
     }
 
-    public Single<ScopeApproval> update(ScopeApproval item) throws TechnicalException {
+    public Single<ScopeApproval> update(ScopeApproval item) {
         return target.update(item);
     }
 
-    public Single<Irrelevant> delete(String s) throws TechnicalException {
+    public Single<Irrelevant> delete(String s) {
         return target.delete(s);
     }
 
-    public Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId) throws TechnicalException {
+    public Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId) {
         return target.findByDomainAndUserAndClient(domain, userId, clientId);
     }
 

@@ -26,11 +26,11 @@ import io.reactivex.Single;
  */
 public interface CrudRepository<T, ID> {
 
-    Maybe<T> findById(ID id) throws TechnicalException;
+    Maybe<T> findById(ID id);
 
-    Single<T> create(T item) throws TechnicalException;
+    Single<T> create(T item);
 
-    Single<T> update(T item) throws TechnicalException;
+    Single<T> update(T item);
 
-    Single<Irrelevant> delete(ID id) throws TechnicalException;
+    Single<Irrelevant> delete(ID id);
 }

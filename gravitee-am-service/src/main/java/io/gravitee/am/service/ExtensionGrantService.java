@@ -16,8 +16,11 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.ExtensionGrant;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 import java.util.List;
 
@@ -27,14 +30,14 @@ import java.util.List;
  */
 public interface ExtensionGrantService {
 
-    ExtensionGrant findById(String id);
+    Maybe<ExtensionGrant> findById(String id);
 
-    List<ExtensionGrant> findByDomain(String tokenGranter);
+    Single<List<ExtensionGrant>> findByDomain(String tokenGranter);
 
-    ExtensionGrant create(String domain, NewExtensionGrant newExtensionGrant);
+    Single<ExtensionGrant> create(String domain, NewExtensionGrant newExtensionGrant);
 
-    ExtensionGrant update(String domain, String id, UpdateExtensionGrant updateExtensionGrant);
+    Single<ExtensionGrant> update(String domain, String id, UpdateExtensionGrant updateExtensionGrant);
 
-    void delete(String domain, String certificateId);
+    Single<Irrelevant> delete(String domain, String certificateId);
 
 }

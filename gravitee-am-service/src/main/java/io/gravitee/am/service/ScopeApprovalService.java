@@ -16,18 +16,20 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.oauth2.ScopeApproval;
+import io.reactivex.Single;
 
 import java.util.Collection;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface ScopeApprovalService {
 
-    ScopeApproval create(ScopeApproval approval);
+    Single<ScopeApproval> create(ScopeApproval approval);
 
     ScopeApproval revoke(ScopeApproval approval);
 
-    Collection<ScopeApproval> findByUserAndClient(String domain, String userId, String clientId);
+    Single<Collection<ScopeApproval>> findByUserAndClient(String domain, String userId, String clientId);
 }

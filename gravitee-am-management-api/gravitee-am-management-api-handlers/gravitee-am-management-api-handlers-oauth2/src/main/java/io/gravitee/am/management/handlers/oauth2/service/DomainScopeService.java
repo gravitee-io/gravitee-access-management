@@ -42,7 +42,7 @@ public class DomainScopeService {
 
     public Set<Scope> getAll() {
         logger.debug("Loading scopes for domain id[{}] name[{}]", domain.getId(), domain.getName());
-
-        return scopeService.findByDomain(domain.getId());
+        // TODO async call
+        return scopeService.findByDomain(domain.getId()).blockingGet();
     }
 }

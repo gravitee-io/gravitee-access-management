@@ -18,7 +18,6 @@ package io.gravitee.am.management.repository.proxy;
 import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -34,37 +33,37 @@ import java.util.Set;
 public class UserRepositoryProxy extends AbstractProxy<UserRepository> implements UserRepository {
 
     @Override
-    public Single<Set<User>> findByDomain(String domain) throws TechnicalException {
+    public Single<Set<User>> findByDomain(String domain) {
         return target.findByDomain(domain);
     }
 
     @Override
-    public Single<Page<User>> findByDomain(String domain, int page, int size) throws TechnicalException {
+    public Single<Page<User>> findByDomain(String domain, int page, int size) {
         return target.findByDomain(domain, page, size);
     }
 
     @Override
-    public Maybe<User> findByUsernameAndDomain(String username, String domain) throws TechnicalException {
+    public Maybe<User> findByUsernameAndDomain(String username, String domain) {
         return target.findByUsernameAndDomain(username, domain);
     }
 
     @Override
-    public Maybe<User> findById(String id) throws TechnicalException {
+    public Maybe<User> findById(String id) {
         return target.findById(id);
     }
 
     @Override
-    public Single<User> create(User item) throws TechnicalException {
+    public Single<User> create(User item) {
         return target.create(item);
     }
 
     @Override
-    public Single<User> update(User item) throws TechnicalException {
+    public Single<User> update(User item) {
         return target.update(item);
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) throws TechnicalException {
+    public Single<Irrelevant> delete(String id) {
         return target.delete(id);
     }
 }

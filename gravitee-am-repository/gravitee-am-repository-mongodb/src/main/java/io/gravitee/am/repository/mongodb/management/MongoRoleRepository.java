@@ -72,29 +72,25 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Maybe<Role> findById(String role) {
-        return _findById(role).toMaybe();
+        return Observable.fromPublisher(rolesCollection.find(eq(FIELD_ID, role)).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Single<Role> create(Role item) {
         RoleMongo role = convert(item);
         role.setId(role.getId() == null ? (String) idGenerator.generate() : role.getId());
-        return Single.fromPublisher(rolesCollection.insertOne(role)).flatMap(success -> _findById(role.getId()));
+        return Single.fromPublisher(rolesCollection.insertOne(role)).flatMap(success -> findById(role.getId()).toSingle());
     }
 
     @Override
     public Single<Role> update(Role item) {
         RoleMongo role = convert(item);
-        return Single.fromPublisher(rolesCollection.replaceOne(eq(FIELD_ID, role.getId()), role)).flatMap(updateResult -> _findById(role.getId()));
+        return Single.fromPublisher(rolesCollection.replaceOne(eq(FIELD_ID, role.getId()), role)).flatMap(updateResult -> findById(role.getId()).toSingle());
     }
 
     @Override
     public Single<Irrelevant> delete(String id) {
         return Single.fromPublisher(rolesCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.ROLE);
-    }
-
-    private Single<Role> _findById(String id) {
-        return Single.fromPublisher(rolesCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private Role convert(RoleMongo roleMongo) {

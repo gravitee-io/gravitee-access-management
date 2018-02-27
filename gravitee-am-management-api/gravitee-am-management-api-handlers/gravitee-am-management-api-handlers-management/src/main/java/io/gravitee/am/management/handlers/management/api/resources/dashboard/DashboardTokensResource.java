@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.model.TotalToken;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -28,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,16 +49,17 @@ public class DashboardTokensResource extends AbstractResource {
             @ApiResponse(code = 200, message = "Get access tokens count",
                     response = TotalToken.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public TotalToken listTokensCount(@QueryParam("domainId") String domainId) {
-
-        TotalToken totalToken;
+    public void listTokensCount(@QueryParam("domainId") String domainId,
+                                @Suspended final AsyncResponse response) {
+        Single<TotalToken> totalTokenSingle;
         if (domainId != null) {
-            totalToken = tokenService.findTotalTokensByDomain(domainId);
+            totalTokenSingle = tokenService.findTotalTokensByDomain(domainId);
         } else {
-            totalToken = tokenService.findTotalTokens();
+            totalTokenSingle = tokenService.findTotalTokens();
         }
-
-        return totalToken;
+        totalTokenSingle.subscribe(
+                result -> response.resume(result),
+                error -> response.resume(error));
     }
 
 }

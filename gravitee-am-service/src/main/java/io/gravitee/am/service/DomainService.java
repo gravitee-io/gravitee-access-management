@@ -16,38 +16,42 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.am.service.model.UpdateLoginForm;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 import java.util.Collection;
 import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface DomainService {
 
-    Domain findById(String id);
+    Maybe<Domain> findById(String id);
 
-    Set<Domain> findAll();
+    Single<Set<Domain>> findAll();
 
-    Set<Domain> findByIdIn(Collection<String> ids);
+    Single<Set<Domain>> findByIdIn(Collection<String> ids);
 
-    Domain create(NewDomain domain);
+    Single<Domain> create(NewDomain domain);
 
-    Domain update(String domainId, UpdateDomain domain);
+    Single<Domain> update(String domainId, UpdateDomain domain);
 
-    Domain reload(String domainId);
+    Single<Domain> reload(String domainId);
 
-    Domain setMasterDomain(String domainId, boolean isMaster);
+    Single<Domain> setMasterDomain(String domainId, boolean isMaster);
 
-    LoginForm updateLoginForm(String domainId, UpdateLoginForm loginForm);
+    Single<LoginForm> updateLoginForm(String domainId, UpdateLoginForm loginForm);
 
-    void deleteLoginForm(String domainId);
+    Single<Domain> deleteLoginForm(String domainId);
 
-    void delete(String domain);
+    Single<Irrelevant> delete(String domain);
 
 }

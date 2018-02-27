@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.*;
@@ -26,7 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
@@ -55,13 +58,26 @@ public class RolesResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered roles for a security domain", response = Role.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public List<Role> listRoles(@PathParam("domain") String domain) {
-        domainService.findById(domain);
-
-        return roleService.findByDomain(domain)
-                .stream()
-                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                .collect(Collectors.toList());
+    public void list(@PathParam("domain") String domain,
+                     @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return roleService.findByDomain(domain)
+                                .map(roles -> {
+                                    List<Role> sortedRoles = roles.stream()
+                                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                                            .collect(Collectors.toList());
+                                    return Response.ok(sortedRoles).build();
+                                });
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @POST
@@ -71,21 +87,27 @@ public class RolesResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Role successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response createRole(
+    public void create(
             @PathParam("domain") String domain,
-            @ApiParam(name = "certificate", required = true)
-            @Valid @NotNull final NewRole newRole) {
-        domainService.findById(domain);
-
-        Role role = roleService.create(domain, newRole);
-        if (role != null) {
-            return Response
-                    .created(URI.create("/domains/" + domain + "/roles/" + role.getId()))
-                    .entity(role)
-                    .build();
-        }
-
-        return Response.serverError().build();
+            @ApiParam(name = "role", required = true)
+            @Valid @NotNull final NewRole newRole,
+            @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return roleService.create(domain, newRole)
+                                .map(role -> Response
+                                        .created(URI.create("/domains/" + domain + "/roles/" + role.getId()))
+                                        .entity(role)
+                                        .build());
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @Path("{role}")

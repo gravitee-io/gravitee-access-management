@@ -56,7 +56,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         try {
             User user;
             try {
-                user = userService.loadUserByUsernameAndDomain(domain.getId(), username);
+                // TODO async call
+                user = userService.loadUserByUsernameAndDomain(domain.getId(), username).blockingGet();
             } catch (UserNotFoundException e) {
                 LOGGER.info("User with username : {} and for domain : {} not found", username, domain.getId(), e);
                 throw new UsernameNotFoundException(username);

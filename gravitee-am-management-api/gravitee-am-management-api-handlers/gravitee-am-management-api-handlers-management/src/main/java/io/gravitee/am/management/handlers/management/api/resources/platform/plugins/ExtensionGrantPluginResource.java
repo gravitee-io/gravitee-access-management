@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
+import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
-import io.gravitee.am.service.model.plugin.ExtensionGrantPlugin;
+import io.gravitee.am.model.Irrelevant;
+import io.gravitee.am.service.exception.ExtensionGrantNotFoundException;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -26,8 +29,11 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,19 +51,46 @@ public class ExtensionGrantPluginResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get an extension grant plugin")
-    public ExtensionGrantPlugin getTokenGranterPlugin(
-            @PathParam("extensionGrant") String extensionGrantId) {
-        return extensionGrantPluginService.findById(extensionGrantId);
+    public void get(
+            @PathParam("extensionGrant") String extensionGrantId,
+            @Suspended final AsyncResponse response) {
+        extensionGrantPluginService.findById(extensionGrantId)
+                .map(extensionGrantPlugin -> Response.ok(extensionGrantPlugin).build())
+                .defaultIfEmpty(Response
+                        .status(Response.Status.NOT_FOUND)
+                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                        .entity(new ErrorEntity("Extension grant Plugin [" + extensionGrantId + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
+                        .build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an extension grant's schema")
-    public String getTokenGranterSchema(@PathParam("extensionGrant") String extensionGrantId) {
+    @ApiOperation(value = "Get an extension grant plugin's schema")
+    public void getSchema(@PathParam("extensionGrant") String extensionGrantId,
+                            @Suspended final AsyncResponse response) {
         // Check that the extension grant exists
-        extensionGrantPluginService.findById(extensionGrantId);
-
-        return extensionGrantPluginService.getSchema(extensionGrantId);
+        extensionGrantPluginService.findById(extensionGrantId)
+                .isEmpty()
+                .map(isEmpty -> {
+                    if (isEmpty) {
+                        throw new ExtensionGrantNotFoundException(extensionGrantId);
+                    }
+                    return Single.just(Irrelevant.EXTENSION_GRANT);
+                })
+                .flatMapMaybe(irrelevant -> extensionGrantPluginService.getSchema(extensionGrantId)
+                        .map(extensionGrantPluginSchema -> Response.ok(extensionGrantPluginSchema).build())
+                        .defaultIfEmpty(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                                .entity(new ErrorEntity("Extension grant Plugin Schema [" + extensionGrantId + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
+                                .build()))
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error)
+                );
     }
 }

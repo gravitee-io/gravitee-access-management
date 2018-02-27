@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -27,10 +26,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Api(tags = {"domain", "login"})
@@ -45,13 +47,18 @@ public class DomainLoginFormResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Custom login form", response = LoginForm.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response getDomainLoginForm(@PathParam("domain") String domainId) throws DomainNotFoundException {
-        Domain domain = domainService.findById(domainId);
-        if (domain.getLoginForm() == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-
-        return Response.ok(domain.getLoginForm()).build();
+    public void getDomainLoginForm(@PathParam("domain") String domainId, @Suspended final AsyncResponse response) throws DomainNotFoundException {
+        domainService.findById(domainId)
+                .map(domain -> {
+                    if (domain.getLoginForm() == null) {
+                        return Response.status(Response.Status.NOT_FOUND).build();
+                    } else {
+                        return Response.ok(domain.getLoginForm()).build();
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @PUT
@@ -61,10 +68,14 @@ public class DomainLoginFormResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Custom login form successfully updated", response = LoginForm.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public LoginForm updateDomainLoginForm(
+    public void updateDomainLoginForm(
             @PathParam("domain") String domain,
-            @ApiParam(name = "loginForm", required = true) @Valid @NotNull final UpdateLoginForm loginForm) {
-        return domainService.updateLoginForm(domain, loginForm);
+            @ApiParam(name = "loginForm", required = true) @Valid @NotNull final UpdateLoginForm loginForm,
+            @Suspended final AsyncResponse response) {
+        domainService.updateLoginForm(domain, loginForm)
+                .subscribe(
+                        result -> response.resume(Response.ok(result).build()),
+                        error -> response.resume(error));
     }
 
     @DELETE
@@ -74,10 +85,12 @@ public class DomainLoginFormResource {
     @ApiResponses({
             @ApiResponse(code = 204, message = "Custom login form successfully deleted", response = LoginForm.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response deleteDomainLoginForm(
-            @PathParam("domain") String domain) {
-        domainService.deleteLoginForm(domain);
-
-        return Response.noContent().build();
+    public void deleteDomainLoginForm(
+            @PathParam("domain") String domain,
+            @Suspended final AsyncResponse response) {
+        domainService.deleteLoginForm(domain)
+            .subscribe(
+                    success -> response.resume(Response.noContent().build()),
+                    error -> response.resume(error));
     }
 }

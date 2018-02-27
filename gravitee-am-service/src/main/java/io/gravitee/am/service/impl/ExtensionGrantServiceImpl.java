@@ -16,18 +16,17 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.ExtensionGrant;
-import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
-import io.gravitee.am.service.exception.ExtensionGrantAlreadyExistsException;
-import io.gravitee.am.service.exception.ExtensionGrantNotFoundException;
-import io.gravitee.am.service.exception.ExtensionGrantWithClientsException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
 import io.gravitee.common.utils.UUID;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,138 +59,151 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     private DomainService domainService;
 
     @Override
-    public ExtensionGrant findById(String id) {
-        try {
-            LOGGER.debug("Find extension grant by ID: {}", id);
-            // TODO move to async call
-            Optional<ExtensionGrant> tokenGranterOpt = Optional.ofNullable(extensionGrantRepository.findById(id).blockingGet());
-
-            if (!tokenGranterOpt.isPresent()) {
-                throw new ExtensionGrantNotFoundException(id);
-            }
-
-            return tokenGranterOpt.get();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find an extension grant using its ID: {}", id, ex);
-            throw new TechnicalManagementException(
-                    String.format("An error occurs while trying to find an extension grant using its ID: %s", id), ex);
-        }
+    public Maybe<ExtensionGrant> findById(String id) {
+        LOGGER.debug("Find extension grant by ID: {}", id);
+        return extensionGrantRepository.findById(id)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find an extension grant using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find an extension grant using its ID: %s", id), ex));
+                });
     }
 
     @Override
-    public List<ExtensionGrant> findByDomain(String domain) {
-        try {
-            LOGGER.debug("Find extension grants by domain: {}", domain);
-            // TODO move to async call
-            return new ArrayList<>(extensionGrantRepository.findByDomain(domain).blockingGet());
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find extension grants by domain", ex);
-            throw new TechnicalManagementException("An error occurs while trying to find extension grants by domain", ex);
-        }
+    public Single<List<ExtensionGrant>> findByDomain(String domain) {
+        LOGGER.debug("Find extension grants by domain: {}", domain);
+        return extensionGrantRepository.findByDomain(domain)
+                .map(extensionGrants -> (List<ExtensionGrant>) new ArrayList<>(extensionGrants))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find extension grants by domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find extension grants by domain", ex));
+                });
     }
 
     @Override
-    public ExtensionGrant create(String domain, NewExtensionGrant newExtensionGrant) {
-        try {
-            LOGGER.debug("Create a new extension grant {} for domain {}", newExtensionGrant, domain);
+    public Single<ExtensionGrant> create(String domain, NewExtensionGrant newExtensionGrant) {
+        LOGGER.debug("Create a new extension grant {} for domain {}", newExtensionGrant, domain);
 
-            // TODO move to async call
-            Optional<ExtensionGrant> existingTokenGranter = Optional.ofNullable(extensionGrantRepository.findByDomainAndGrantType(domain, newExtensionGrant.getGrantType()).blockingGet());
-            if (existingTokenGranter.isPresent()) {
-                throw new ExtensionGrantAlreadyExistsException(newExtensionGrant.getGrantType());
-            }
+        return extensionGrantRepository.findByDomainAndGrantType(domain, newExtensionGrant.getGrantType())
+                .isEmpty()
+                    .flatMap(empty -> {
+                        if (!empty) {
+                            throw new ExtensionGrantAlreadyExistsException(newExtensionGrant.getGrantType());
+                        } else {
+                            String certificateId = UUID.toString(UUID.random());
+                            ExtensionGrant extensionGrant = new ExtensionGrant();
+                            extensionGrant.setId(certificateId);
+                            extensionGrant.setDomain(domain);
+                            extensionGrant.setName(newExtensionGrant.getName());
+                            extensionGrant.setGrantType(newExtensionGrant.getGrantType());
+                            extensionGrant.setIdentityProvider(newExtensionGrant.getIdentityProvider());
+                            extensionGrant.setCreateUser(newExtensionGrant.isCreateUser());
+                            extensionGrant.setType(newExtensionGrant.getType());
+                            extensionGrant.setConfiguration(newExtensionGrant.getConfiguration());
+                            extensionGrant.setCreatedAt(new Date());
+                            extensionGrant.setUpdatedAt(extensionGrant.getCreatedAt());
 
-            String certificateId = UUID.toString(UUID.random());
-            ExtensionGrant extensionGrant = new ExtensionGrant();
-            extensionGrant.setId(certificateId);
-            extensionGrant.setDomain(domain);
-            extensionGrant.setName(newExtensionGrant.getName());
-            extensionGrant.setGrantType(newExtensionGrant.getGrantType());
-            extensionGrant.setIdentityProvider(newExtensionGrant.getIdentityProvider());
-            extensionGrant.setCreateUser(newExtensionGrant.isCreateUser());
-            extensionGrant.setType(newExtensionGrant.getType());
-            extensionGrant.setConfiguration(newExtensionGrant.getConfiguration());
-            extensionGrant.setCreatedAt(new Date());
-            extensionGrant.setUpdatedAt(extensionGrant.getCreatedAt());
+                            return extensionGrantRepository.create(extensionGrant)
+                                    .doAfterSuccess(extensionGrant1 -> {
+                                        // Reload domain to take care about extension grant update
+                                        domainService.reload(domain);
+                                    });
 
-            // TODO move to async call
-            ExtensionGrant extensionGrant1 = extensionGrantRepository.create(extensionGrant).blockingGet();
+                        }
+                    })
+                    .onErrorResumeNext(ex -> {
+                        if (ex instanceof AbstractManagementException) {
+                            return Single.error(ex);
+                        }
 
-            // Reload domain to take care about extension grant update
-            domainService.reload(domain);
-
-            return extensionGrant1;
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to create a extension grant", ex);
-            throw new TechnicalManagementException("An error occurs while trying to create a extension grant", ex);
-        }
+                        LOGGER.error("An error occurs while trying to create a extension grant", ex);
+                        return Single.error(new TechnicalManagementException("An error occurs while trying to create a extension grant", ex));
+                    });
     }
 
     @Override
-    public ExtensionGrant update(String domain, String id, UpdateExtensionGrant updateExtensionGrant) {
-        try {
-            LOGGER.debug("Update a extension grant {} for domain {}", id, domain);
+    public Single<ExtensionGrant> update(String domain, String id, UpdateExtensionGrant updateExtensionGrant) {
+        LOGGER.debug("Update a extension grant {} for domain {}", id, domain);
 
-            // TODO move to async call
-            Optional<ExtensionGrant> tokenGranterOpt = Optional.ofNullable(extensionGrantRepository.findById(id).blockingGet());
-            if (!tokenGranterOpt.isPresent()) {
-                throw new ExtensionGrantNotFoundException(id);
-            }
+        return extensionGrantRepository.findById(id)
+                .map(extensionGrant -> Optional.of(extensionGrant))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(tokenGranterOpt -> {
+                    if (!tokenGranterOpt.isPresent()) {
+                        throw new ExtensionGrantNotFoundException(id);
+                    }
+                    return Single.just(tokenGranterOpt);
+                })
+                .flatMap(tokenGranterOpt1 -> extensionGrantRepository.findByDomainAndGrantType(domain, updateExtensionGrant.getGrantType())
+                        .map(extensionGrant -> Optional.of(extensionGrant))
+                        .defaultIfEmpty(Optional.empty())
+                        .toSingle()
+                        .flatMap(existingTokenGranter -> {
+                           if (existingTokenGranter.isPresent() && !existingTokenGranter.get().getId().equals(id)) {
+                               throw new ExtensionGrantNotFoundException(id);
+                           }
+                           return Single.just(tokenGranterOpt1);
+                       }))
+                .flatMap(tokenGranterOpt2 -> {
+                    ExtensionGrant oldExtensionGrant = tokenGranterOpt2.get();
+                    oldExtensionGrant.setName(updateExtensionGrant.getName());
+                    oldExtensionGrant.setGrantType(updateExtensionGrant.getGrantType());
+                    oldExtensionGrant.setIdentityProvider(updateExtensionGrant.getIdentityProvider());
+                    oldExtensionGrant.setCreateUser(updateExtensionGrant.isCreateUser());
+                    oldExtensionGrant.setConfiguration(updateExtensionGrant.getConfiguration());
+                    oldExtensionGrant.setUpdatedAt(new Date());
 
-            // TODO move to async call
-            Optional<ExtensionGrant> existingTokenGranter = Optional.ofNullable(extensionGrantRepository.findByDomainAndGrantType(domain, updateExtensionGrant.getGrantType()).blockingGet());
-            if (existingTokenGranter.isPresent() && !existingTokenGranter.get().getId().equals(id)) {
-                throw new ExtensionGrantAlreadyExistsException(updateExtensionGrant.getGrantType());
-            }
+                    return extensionGrantRepository.update(oldExtensionGrant)
+                            .doOnSuccess(extensionGrant -> {
+                                // Reload domain to take care about extension grant update
+                                domainService.reload(domain);
+                            });
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
 
-            ExtensionGrant oldExtensionGrant = tokenGranterOpt.get();
-            oldExtensionGrant.setName(updateExtensionGrant.getName());
-            oldExtensionGrant.setGrantType(updateExtensionGrant.getGrantType());
-            oldExtensionGrant.setIdentityProvider(updateExtensionGrant.getIdentityProvider());
-            oldExtensionGrant.setCreateUser(updateExtensionGrant.isCreateUser());
-            oldExtensionGrant.setConfiguration(updateExtensionGrant.getConfiguration());
-            oldExtensionGrant.setUpdatedAt(new Date());
-
-            // TODO move to async call
-            ExtensionGrant extensionGrant = extensionGrantRepository.update(oldExtensionGrant).blockingGet();
-
-            // Reload domain to take care about extension grant update
-            domainService.reload(domain);
-
-            return extensionGrant;
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to update a extension grant", ex);
-            throw new TechnicalManagementException("An error occurs while trying to update a extension grant", ex);
-        }
+                    LOGGER.error("An error occurs while trying to update a extension grant", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a extension grant", ex));
+                });
     }
 
     @Override
-    public void delete(String domain, String extensionGrantId) {
-        try {
-            LOGGER.debug("Delete extension grant {}", extensionGrantId);
+    public Single<Irrelevant> delete(String domain, String extensionGrantId) {
+        LOGGER.debug("Delete extension grant {}", extensionGrantId);
+        return extensionGrantRepository.findById(extensionGrantId)
+                .map(extensionGrant -> Optional.of(extensionGrant))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(optTokenGranter -> {
+                    if (! optTokenGranter.isPresent()) {
+                        throw new ExtensionGrantNotFoundException(extensionGrantId);
+                    }
 
-            // TODO move to async call
-            Optional<ExtensionGrant> optTokenGranter = Optional.ofNullable(extensionGrantRepository.findById(extensionGrantId).blockingGet());
-            if (! optTokenGranter.isPresent()) {
-                throw new ExtensionGrantNotFoundException(extensionGrantId);
-            }
+                    return clientService.findByExtensionGrant(optTokenGranter.get().getGrantType())
+                            .flatMap(clients -> {
+                                if (clients.size() > 0) {
+                                    throw new ExtensionGrantWithClientsException();
+                                }
+                                return Single.just(Irrelevant.CLIENT);
+                            });
+                })
+                .flatMap(irrelevant -> extensionGrantRepository.delete(extensionGrantId)
+                        .doOnSuccess(irrelevant1 -> {
+                            // Reload domain to take care about extension grant update
+                            domainService.reload(domain);
+                        }))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
 
-
-            int clients = clientService.findByExtensionGrant(optTokenGranter.get().getGrantType()).size();
-            if (clients > 0) {
-                throw new ExtensionGrantWithClientsException();
-            }
-
-            // TODO move to async call
-            extensionGrantRepository.delete(extensionGrantId).subscribe();
-
-            // Reload domain to take care about extension grant update
-            domainService.reload(domain);
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to extension grant: {}", extensionGrantId, ex);
-            throw new TechnicalManagementException(
-                    String.format("An error occurs while trying to delete extension grant: %s", extensionGrantId), ex);
-        }
+                    LOGGER.error("An error occurs while trying to extension grant: {}", extensionGrantId, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete extension grant: %s", extensionGrantId), ex));
+                });
     }
 
 }

@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 import java.util.List;
 import java.util.Set;
@@ -28,16 +31,16 @@ import java.util.Set;
  */
 public interface RoleService {
 
-    Set<Role> findByDomain(String domain);
+    Single<Set<Role>> findByDomain(String domain);
 
-    Role findById(String id);
+    Maybe<Role> findById(String id);
 
-    Set<Role> findByIdIn(List<String> ids);
+    Single<Set<Role>> findByIdIn(List<String> ids);
 
-    Role create(String domain, NewRole role);
+    Single<Role> create(String domain, NewRole role);
 
-    Role update(String domain, String id, UpdateRole role);
+    Single<Role> update(String domain, String id, UpdateRole role);
 
-    void delete(String roleId);
+    Single<Irrelevant> delete(String roleId);
 
 }

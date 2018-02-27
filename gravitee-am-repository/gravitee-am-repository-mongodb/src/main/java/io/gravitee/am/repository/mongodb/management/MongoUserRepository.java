@@ -77,34 +77,30 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Maybe<User> findByUsernameAndDomain(String username, String domain) {
-        return Single.fromPublisher(usersCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USERNAME, username))).first()).map(this::convert).toMaybe();
+        return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USERNAME, username))).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Maybe<User> findById(String userId) {
-        return _findById(userId).toMaybe();
+        return Observable.fromPublisher(usersCollection.find(eq(FIELD_ID, userId)).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Single<User> create(User item) {
         UserMongo user = convert(item);
         user.setId(user.getId() == null ? (String) idGenerator.generate() : user.getId());
-        return Single.fromPublisher(usersCollection.insertOne(user)).flatMap(success -> _findById(user.getId()));
+        return Single.fromPublisher(usersCollection.insertOne(user)).flatMap(success -> findById(user.getId()).toSingle());
     }
 
     @Override
     public Single<User> update(User item) {
         UserMongo user = convert(item);
-        return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, user.getId()), user)).flatMap(updateResult -> _findById(user.getId()));
+        return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, user.getId()), user)).flatMap(updateResult -> findById(user.getId()).toSingle());
     }
 
     @Override
     public Single<Irrelevant> delete(String id) {
         return Single.fromPublisher(usersCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.USER);
-    }
-
-    private Single<User> _findById(String id) {
-        return Single.fromPublisher(usersCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private User convert(UserMongo userMongo) {

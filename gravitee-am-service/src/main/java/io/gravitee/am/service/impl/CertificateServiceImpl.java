@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.management.certificate.core.CertificateSchema;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.CertificateService;
@@ -32,6 +33,8 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.common.utils.UUID;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,134 +79,53 @@ public class CertificateServiceImpl implements CertificateService {
     private Map<String, Map<String, CertificateProvider>> certificateProviders = new HashMap<>();
 
     @Override
-    public Certificate findById(String id) {
-        try {
-            LOGGER.debug("Find certificate by ID: {}", id);
-            // TODO move to async call
-            Optional<Certificate> certificateOpt = Optional.ofNullable(certificateRepository.findById(id).blockingGet());
-
-            if (!certificateOpt.isPresent()) {
-                throw new CertificateNotFoundException(id);
-            }
-
-            return certificateOpt.get();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find a certificate using its ID: {}", id, ex);
-            throw new TechnicalManagementException(
-                    String.format("An error occurs while trying to find a certificate using its ID: %s", id), ex);
-        }
+    public Maybe<Certificate> findById(String id) {
+        LOGGER.debug("Find certificate by ID: {}", id);
+        return certificateRepository.findById(id)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a certificate using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a certificate using its ID: %s", id), ex));
+                });
     }
 
     @Override
-    public List<Certificate> findByDomain(String domain) {
-        try {
-            LOGGER.debug("Find certificates by domain: {}", domain);
-            // TODO move to async call
-            return new ArrayList<>(certificateRepository.findByDomain(domain).blockingGet());
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find certificates by domain", ex);
-            throw new TechnicalManagementException("An error occurs while trying to find certificates by domain", ex);
-        }
+    public Single<List<Certificate>> findByDomain(String domain) {
+        LOGGER.debug("Find certificates by domain: {}", domain);
+        return certificateRepository.findByDomain(domain)
+                .flatMap(certificates -> Single.just((List<Certificate>) new ArrayList<>(certificates)))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find certificates by domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find certificates by domain", ex));
+                });
     }
 
     @Override
-    public Certificate create(String domain, NewCertificate newCertificate, String schema) {
-        try {
-            LOGGER.debug("Create a new certificate {} for domain {}", newCertificate, domain);
+    public Single<Certificate> create(String domain, NewCertificate newCertificate, String schema) {
+        LOGGER.debug("Create a new certificate {} for domain {}", newCertificate, domain);
 
+        Single<Certificate> certificateSingle = Single.create(emitter -> {
             String certificateId = UUID.toString(UUID.random());
             Certificate certificate = new Certificate();
             certificate.setId(certificateId);
             certificate.setDomain(domain);
             certificate.setName(newCertificate.getName());
             certificate.setType(newCertificate.getType());
-
             // handle file
-            // String schema = certificatePluginService.getSchema(newCertificate.getType());
-            CertificateSchema certificateSchema = objectMapper.readValue(schema, CertificateSchema.class);
-            JsonNode certificateConfiguration = objectMapper.readTree(newCertificate.getConfiguration());
+            try {
+                CertificateSchema certificateSchema = objectMapper.readValue(schema, CertificateSchema.class);
+                JsonNode certificateConfiguration = objectMapper.readTree(newCertificate.getConfiguration());
 
-            certificateSchema.getProperties()
-                    .entrySet()
-                    .stream()
-                    .filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget()))
-                    .map(map -> map.getKey())
-                    .forEach(key -> {
-                        try {
-                            JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
-                            byte[] data = Base64.getDecoder().decode(file.get("content").asText());
-                            File certificateFile = new File(certificatesPath + '/' + domain + '/' + certificateId + '/' + file.get("name").asText());
-                            if (!certificateFile.exists()) {
-                                certificateFile.getParentFile().mkdirs();
-                                certificateFile.createNewFile();
-                            }
-                            try (FileOutputStream fop = new FileOutputStream(certificateFile)) {
-                                fop.write(data);
-                                fop.flush();
-                                fop.close();
-
-                                // update configuration to set the file path
-                                ((ObjectNode) certificateConfiguration).put(key, certificateFile.getAbsolutePath());
-                                newCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
-                            }
-                        } catch (IOException ex) {
-                            LOGGER.error("An error occurs while trying to create certificate binaries", ex);
-                            throw new TechnicalManagementException("An error occurs while trying to create certificate binaries", ex);
-                        }
-                    });
-
-            certificate.setConfiguration(newCertificate.getConfiguration());
-            certificate.setCreatedAt(new Date());
-            certificate.setUpdatedAt(certificate.getCreatedAt());
-
-
-            // TODO move to async call
-            Certificate certificateCreated = certificateRepository.create(certificate).blockingGet();
-
-            // Reload domain to take care about certificate create
-            domainService.reload(domain);
-
-            return certificateCreated;
-        } catch (TechnicalException | IOException ex) {
-            LOGGER.error("An error occurs while trying to create a certificate", ex);
-            throw new TechnicalManagementException("An error occurs while trying to create a certificate", ex);
-        }
-    }
-
-    @Override
-    public Certificate update(String domain, String id, UpdateCertificate updateCertificate, String schema) {
-        try {
-            LOGGER.debug("Update a certificate {} for domain {}", id, domain);
-
-            // TODO move to async call
-            Optional<Certificate> certificateOpt = Optional.ofNullable(certificateRepository.findById(id).blockingGet());
-            if (!certificateOpt.isPresent()) {
-                throw new CertificateNotFoundException(id);
-            }
-
-            Certificate oldCertificate = certificateOpt.get();
-            oldCertificate.setName(updateCertificate.getName());
-
-            // handle file
-            // String schema = certificatePluginService.getSchema(oldCertificate.getType());
-            CertificateSchema certificateSchema = objectMapper.readValue(schema, CertificateSchema.class);
-            JsonNode oldCertificateConfiguration = objectMapper.readTree(oldCertificate.getConfiguration());
-            JsonNode certificateConfiguration = objectMapper.readTree(updateCertificate.getConfiguration());
-
-            certificateSchema.getProperties()
-                    .entrySet()
-                    .stream()
-                    .filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget()))
-                    .map(map -> map.getKey())
-                    .forEach(key -> {
-                        try {
-                            String oldFileInformation = oldCertificateConfiguration.get(key).asText();
-                            String fileInformation = certificateConfiguration.get(key).asText();
-                            // file has changed, let's update it
-                            if (!oldFileInformation.equals(fileInformation)) {
+                certificateSchema.getProperties()
+                        .entrySet()
+                        .stream()
+                        .filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget()))
+                        .map(map -> map.getKey())
+                        .forEach(key -> {
+                            try {
                                 JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
                                 byte[] data = Base64.getDecoder().decode(file.get("content").asText());
-                                File certificateFile = new File(certificatesPath + '/' + domain + '/' + oldCertificate.getId() + '/' + file.get("name").asText());
+                                File certificateFile = new File(certificatesPath + '/' + domain + '/' + certificateId + '/' + file.get("name").asText());
                                 if (!certificateFile.exists()) {
                                     certificateFile.getParentFile().mkdirs();
                                     certificateFile.createNewFile();
@@ -215,62 +137,158 @@ public class CertificateServiceImpl implements CertificateService {
 
                                     // update configuration to set the file path
                                     ((ObjectNode) certificateConfiguration).put(key, certificateFile.getAbsolutePath());
-                                    updateCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
+                                    newCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
                                 }
+                            } catch (IOException ex) {
+                                LOGGER.error("An error occurs while trying to create certificate binaries", ex);
+                                emitter.onError(ex);
                             }
-                        } catch (IOException ex) {
-                            LOGGER.error("An error occurs while trying to update certificate binaries", ex);
-                            throw new TechnicalManagementException("An error occurs while trying to update certificate binaries", ex);
-                        }
-                    });
+                        });
+
+                certificate.setConfiguration(newCertificate.getConfiguration());
+                certificate.setCreatedAt(new Date());
+                certificate.setUpdatedAt(certificate.getCreatedAt());
+            } catch (Exception ex) {
+                LOGGER.error("An error occurs while trying to create certificate configuration", ex);
+                emitter.onError(ex);
+            }
+            emitter.onSuccess(certificate);
+        });
 
 
-            oldCertificate.setConfiguration(updateCertificate.getConfiguration());
-            oldCertificate.setUpdatedAt(new Date());
-
-            // TODO move to async call
-            Certificate certificate = certificateRepository.update(oldCertificate).blockingGet();
-
-            // Reload domain to take care about certificate update
-            domainService.reload(domain);
-
-            return certificate;
-        } catch (TechnicalException | IOException ex) {
-            LOGGER.error("An error occurs while trying to update a certificate", ex);
-            throw new TechnicalManagementException("An error occurs while trying to update a certificate", ex);
-        }
+        return certificateSingle
+                .flatMap(certificate -> certificateRepository.create(certificate)
+                        .doOnSuccess(certificate1 -> {
+                            // Reload domain to take care about certificate create
+                            domainService.reload(domain);
+                        }))
+                .doOnError(ex -> {
+                    LOGGER.error("An error occurs while trying to create a certificate", ex);
+                    throw new TechnicalManagementException("An error occurs while trying to create a certificate", ex);
+                });
     }
 
     @Override
-    public void delete(String certificateId) {
-        try {
-            LOGGER.debug("Delete certificate {}", certificateId);
+    public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema) {
+        LOGGER.debug("Update a certificate {} for domain {}", id, domain);
 
-            // TODO move to async call
-            Optional<Certificate> optCertificate = Optional.ofNullable(certificateRepository.findById(certificateId).blockingGet());
-            if (! optCertificate.isPresent()) {
-                throw new CertificateNotFoundException(certificateId);
-            }
+        return certificateRepository.findById(id)
+                .map(certificate -> Optional.of(certificate))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(certificateOpt -> {
+                    if (!certificateOpt.isPresent()) {
+                        throw new CertificateNotFoundException(id);
+                    }
 
-            int clients = clientService.findByCertificate(certificateId).size();
-            if (clients > 0) {
-                throw new CertificateWithClientsException();
-            }
+                    Single<Certificate> certificateSingle = Single.create(emitter -> {
+                        Certificate oldCertificate = certificateOpt.get();
+                        oldCertificate.setName(updateCertificate.getName());
 
-            // delete certificate files
-            Path certificatePath = Paths.get(certificatesPath + '/' + optCertificate.get().getDomain() + '/' + certificateId);
-            Files.walk(certificatePath, FileVisitOption.FOLLOW_LINKS)
-                    .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
+                        try {
 
-            // TODO move to async call
-            certificateRepository.delete(certificateId).subscribe();
-        } catch (TechnicalException | IOException ex) {
-            LOGGER.error("An error occurs while trying to delete certificate: {}", certificateId, ex);
-            throw new TechnicalManagementException(
-                    String.format("An error occurs while trying to delete certificate: %s", certificateId), ex);
-        }
+                            CertificateSchema certificateSchema = objectMapper.readValue(schema, CertificateSchema.class);
+                            JsonNode oldCertificateConfiguration = objectMapper.readTree(oldCertificate.getConfiguration());
+                            JsonNode certificateConfiguration = objectMapper.readTree(updateCertificate.getConfiguration());
+
+                            certificateSchema.getProperties()
+                                    .entrySet()
+                                    .stream()
+                                    .filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget()))
+                                    .map(map -> map.getKey())
+                                    .forEach(key -> {
+                                        try {
+                                            String oldFileInformation = oldCertificateConfiguration.get(key).asText();
+                                            String fileInformation = certificateConfiguration.get(key).asText();
+                                            // file has changed, let's update it
+                                            if (!oldFileInformation.equals(fileInformation)) {
+                                                JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
+                                                byte[] data = Base64.getDecoder().decode(file.get("content").asText());
+                                                File certificateFile = new File(certificatesPath + '/' + domain + '/' + oldCertificate.getId() + '/' + file.get("name").asText());
+                                                if (!certificateFile.exists()) {
+                                                    certificateFile.getParentFile().mkdirs();
+                                                    certificateFile.createNewFile();
+                                                }
+                                                try (FileOutputStream fop = new FileOutputStream(certificateFile)) {
+                                                    fop.write(data);
+                                                    fop.flush();
+                                                    fop.close();
+
+                                                    // update configuration to set the file path
+                                                    ((ObjectNode) certificateConfiguration).put(key, certificateFile.getAbsolutePath());
+                                                    updateCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
+                                                }
+                                            }
+                                        } catch (IOException ex) {
+                                            LOGGER.error("An error occurs while trying to update certificate binaries", ex);
+                                            emitter.onError(ex);
+                                        }
+                                    });
+
+
+                            oldCertificate.setConfiguration(updateCertificate.getConfiguration());
+                            oldCertificate.setUpdatedAt(new Date());
+
+                        } catch (Exception ex) {
+                            LOGGER.error("An error occurs while trying to update certificate configuration", ex);
+                            emitter.onError(ex);
+                        }
+                        emitter.onSuccess(oldCertificate);
+                    });
+
+                    return certificateSingle
+                            .flatMap(certificate -> certificateRepository.update(certificate)
+                                    .doOnSuccess(certificate1 -> {
+                                        // Reload domain to take care about certificate update
+                                        domainService.reload(domain);
+                                    }))
+                            .doOnError(ex -> {
+                                LOGGER.error("An error occurs while trying to update a certificate", ex);
+                                throw new TechnicalManagementException("An error occurs while trying to update a certificate", ex);
+                            });
+                });
+    }
+
+    @Override
+    public Single<Irrelevant> delete(String certificateId) {
+        LOGGER.debug("Delete certificate {}", certificateId);
+        return certificateRepository.findById(certificateId)
+                .map(certificate -> Optional.of(certificate))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(optCertificate -> {
+                    if (!optCertificate.isPresent()) {
+                        throw new CertificateNotFoundException(certificateId);
+                    }
+                    return Single.just(optCertificate.get());
+                })
+                .flatMap(certificate1 -> clientService.findByCertificate(certificateId)
+                        .flatMap(clients -> {
+                            if (clients.size() > 0) {
+                                throw new CertificateWithClientsException();
+                            }
+                            return Single.just(certificate1);
+                        })
+                )
+                .flatMap(certificate2 -> {
+                    // delete certificate files
+                    try {
+                        Path certificatePath = Paths.get(certificatesPath + '/' + certificate2.getDomain() + '/' + certificateId);
+                        Files.walk(certificatePath, FileVisitOption.FOLLOW_LINKS)
+                                .sorted(Comparator.reverseOrder())
+                                .map(Path::toFile)
+                                .forEach(File::delete);
+                    } catch (IOException ex) {
+                        throw new TechnicalException(ex);
+                    }
+                    return Single.just(certificate2);
+                })
+                .flatMap(certificate3 -> certificateRepository.delete(certificateId))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to delete certificate: {}", certificateId, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete certificate: %s", certificateId), ex));
+                });
     }
 
     @Override
@@ -279,9 +297,23 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public CertificateProvider getCertificateProvider(String domainId, String certificateId) {
-        return this.certificateProviders.get(domainId).get(certificateId);
+    public Maybe<CertificateProvider> getCertificateProvider(String domainId, String certificateId) {
+        return Maybe.create(emitter -> {
+            try {
+                CertificateProvider certificateProvider = this.certificateProviders.get(domainId).get(certificateId);
+                if (certificateProvider != null) {
+                    emitter.onSuccess(certificateProvider);
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception e) {
+                emitter.onError(e);
+            }
+        });
     }
 
+    public void setCertificatesPath(String certificatesPath) {
+        this.certificatesPath = certificatesPath;
+    }
 
 }

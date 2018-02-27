@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
@@ -27,7 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
@@ -53,19 +56,36 @@ public class ExtensionGrantResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Extension grant successfully fetched", response = ExtensionGrant.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response get(
+    public void get(
             @PathParam("domain") String domain,
-            @PathParam("extensionGrant") String extensionGrant) throws DomainNotFoundException {
-        domainService.findById(domain);
-
-        ExtensionGrant extensionGrant1 = extensionGrantService.findById(extensionGrant);
-        if (!extensionGrant1.getDomain().equalsIgnoreCase(domain)) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Extension grant does not belong to domain")
-                    .build();
-        }
-        return Response.ok(extensionGrant1).build();
+            @PathParam("extensionGrant") String extensionGrant,
+            @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMapMaybe(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return extensionGrantService.findById(extensionGrant)
+                                .map(extensionGrant1 -> {
+                                    if (!extensionGrant1.getDomain().equalsIgnoreCase(domain)) {
+                                        return Response
+                                                .status(Response.Status.BAD_REQUEST)
+                                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                                                .entity(new ErrorEntity("Extension grant does not belong to domain", Response.Status.BAD_REQUEST.getStatusCode()))
+                                                .build();
+                                    }
+                                    return Response.ok(extensionGrant1).build();
+                                })
+                                .defaultIfEmpty(Response.status(Response.Status.NOT_FOUND)
+                                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                                        .entity(new ErrorEntity("Extension grant [" + extensionGrant + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
+                                        .build());
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @PUT
@@ -75,13 +95,24 @@ public class ExtensionGrantResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Extension grant successfully updated", response = ExtensionGrant.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public ExtensionGrant update(
+    public void update(
             @PathParam("domain") String domain,
             @PathParam("extensionGrant") String extensionGrant,
-            @ApiParam(name = "tokenGranter", required = true) @Valid @NotNull UpdateExtensionGrant updateExtensionGrant) {
-        domainService.findById(domain);
-
-        return extensionGrantService.update(domain, extensionGrant, updateExtensionGrant);
+            @ApiParam(name = "tokenGranter", required = true) @Valid @NotNull UpdateExtensionGrant updateExtensionGrant,
+            @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return extensionGrantService.update(domain, extensionGrant, updateExtensionGrant);
+                    }
+                })
+                .map(extensionGrant1 -> Response.ok(extensionGrant1).build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @DELETE
@@ -90,9 +121,13 @@ public class ExtensionGrantResource {
             @ApiResponse(code = 204, message = "Extension grant successfully deleted"),
             @ApiResponse(code = 400, message = "Extension grant is bind to existing clients"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response delete(@PathParam("domain") String domain, @PathParam("extensionGrant") String extensionGrant) {
-        extensionGrantService.delete(domain, extensionGrant);
-
-        return Response.noContent().build();
+    public void delete(@PathParam("domain") String domain,
+                       @PathParam("extensionGrant") String extensionGrant,
+                       @Suspended final AsyncResponse response) {
+        extensionGrantService.delete(domain, extensionGrant)
+                .map(irrelevant -> Response.noContent().build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 }

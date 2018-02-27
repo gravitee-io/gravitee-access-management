@@ -79,7 +79,7 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
 
     @Override
     public Maybe<OAuth2Authentication> readAuthentication(String tokenValue) {
-        return Single.fromPublisher(oAuth2AccessTokensCollection.find(eq(FIELD_ID, tokenValue)).first()).map(oAuth2AccessTokenMongo -> deserializeAuthentication(oAuth2AccessTokenMongo.getAuthentication())).toMaybe();
+        return Observable.fromPublisher(oAuth2AccessTokensCollection.find(eq(FIELD_ID, tokenValue)).first()).map(oAuth2AccessTokenMongo -> deserializeAuthentication(oAuth2AccessTokenMongo.getAuthentication())).firstElement();
     }
 
     @Override

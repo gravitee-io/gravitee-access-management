@@ -16,6 +16,8 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.service.model.plugin.ExtensionGrantPlugin;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 import java.util.Set;
 
@@ -25,9 +27,9 @@ import java.util.Set;
  */
 public interface ExtensionGrantPluginService {
 
-    Set<ExtensionGrantPlugin> findAll();
+    Single<Set<ExtensionGrantPlugin>> findAll();
 
-    ExtensionGrantPlugin findById(String id);
+    Maybe<ExtensionGrantPlugin> findById(String id);
 
-    String getSchema(String id);
+    Maybe<String> getSchema(String id);
 }

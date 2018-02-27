@@ -24,16 +24,15 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
 /**
- * Defines the REST resources to manage {@link io.gravitee.am.model.Certificate}.
- *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
@@ -48,12 +47,16 @@ public class CertificatesPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List certificates")
-    public Collection<CertificatePlugin> listCertificatePlugins() {
-        return certificatePluginService.findAll()
-                .stream()
-                .sorted(Comparator.comparing(CertificatePlugin::getName))
-                .collect(Collectors.toList());
+    @ApiOperation(value = "List certificate plugins")
+    public void list(@Suspended final AsyncResponse response) {
+        certificatePluginService.findAll()
+                .map(extensionGrantPlugins -> extensionGrantPlugins.stream()
+                        .sorted(Comparator.comparing(CertificatePlugin::getName))
+                        .collect(Collectors.toList()))
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error)
+                );
     }
 
     @Path("{certificate}")

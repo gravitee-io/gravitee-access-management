@@ -16,17 +16,17 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.login.LoginForm;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.DomainAlreadyExistsException;
-import io.gravitee.am.service.exception.DomainDeleteMasterException;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.am.service.model.UpdateLoginForm;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
@@ -67,257 +68,295 @@ public class DomainServiceImpl implements DomainService {
     private UserService userService;
 
     @Override
-    public Domain findById(String id) {
-        try {
-            LOGGER.debug("Find domain by ID: {}", id);
-            // TODO move to async call
-            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(id).blockingGet());
-
-            if (!domainOpt.isPresent()) {
-                throw new DomainNotFoundException(id);
-            }
-
-            return domainOpt.get();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find a domain using its ID: {}", id, ex);
-            throw new TechnicalManagementException(
-                    String.format("An error occurs while trying to find a domain using its ID: %s", id), ex);
-        }
+    public Maybe<Domain> findById(String id) {
+        LOGGER.debug("Find domain by ID: {}", id);
+        return domainRepository.findById(id)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a domain using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a domain using its ID: %s", id), ex));
+                });
     }
 
     @Override
-    public Set<Domain> findAll() {
-        try {
-            LOGGER.debug("Find all domains");
-            // TODO move to async call
-            return domainRepository.findAll().blockingGet();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find all domains", ex);
-            throw new TechnicalManagementException("An error occurs while trying to find all domains", ex);
-        }
+    public Single<Set<Domain>> findAll() {
+        LOGGER.debug("Find all domains");
+        return domainRepository.findAll()
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find all domains", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find all domains", ex));
+                });
     }
 
     @Override
-    public Set<Domain> findByIdIn(Collection<String> ids) {
-        try {
-            LOGGER.debug("Find domains by id in {}", ids);
-            // TODO move to async call
-            return domainRepository.findByIdIn(ids).blockingGet();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to find domains by id in {}", ids, ex);
-            throw new TechnicalManagementException("An error occurs while trying to find domains by id in", ex);
-        }
+    public Single<Set<Domain>> findByIdIn(Collection<String> ids) {
+        LOGGER.debug("Find domains by id in {}", ids);
+        return domainRepository.findByIdIn(ids)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find domains by id in {}", ids, ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find domains by id in", ex));
+                });
     }
 
     @Override
-    public Domain create(NewDomain newDomain) {
-        try {
-            LOGGER.debug("Create a new domain: {}", newDomain);
-            String id = generateContextPath(newDomain.getName());
+    public Single<Domain> create(NewDomain newDomain) {
+        LOGGER.debug("Create a new domain: {}", newDomain);
+        String id = generateContextPath(newDomain.getName());
 
-            // TODO move to async call
-            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(id).blockingGet());
-            if (domainOpt.isPresent()) {
-                throw new DomainAlreadyExistsException(newDomain.getName());
-            }
+        return domainRepository.findById(id)
+                .isEmpty()
+                .flatMap(empty -> {
+                    if (!empty) {
+                        throw new DomainAlreadyExistsException(newDomain.getName());
+                    } else {
+                        Domain domain = new Domain();
+                        domain.setId(id);
+                        domain.setPath(id);
+                        domain.setName(newDomain.getName());
+                        domain.setDescription(newDomain.getDescription());
+                        domain.setEnabled(false);
+                        domain.setCreatedAt(new Date());
+                        domain.setUpdatedAt(domain.getCreatedAt());
+                        return domainRepository.create(domain);
+                    }
+                })
+            .onErrorResumeNext(ex -> {
+                if (ex instanceof AbstractManagementException) {
+                    return Single.error(ex);
+                }
 
-            Domain domain = new Domain();
-            domain.setId(id);
-            domain.setPath(id);
-            domain.setName(newDomain.getName());
-            domain.setDescription(newDomain.getDescription());
-            domain.setEnabled(false);
-            domain.setCreatedAt(new Date());
-            domain.setUpdatedAt(domain.getCreatedAt());
-
-            // TODO move to async call
-            return domainRepository.create(domain).blockingGet();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to create a domain", ex);
-            throw new TechnicalManagementException("An error occurs while trying to create a domain", ex);
-        }
+                LOGGER.error("An error occurs while trying to create a domain", ex);
+                return Single.error(new TechnicalManagementException("An error occurs while trying to create a domain", ex));
+            });
     }
 
     @Override
-    public Domain update(String domainId, UpdateDomain updateDomain) {
-        try {
-            LOGGER.debug("Update an existing domain: {}", updateDomain);
+    public Single<Domain> update(String domainId, UpdateDomain updateDomain) {
+        LOGGER.debug("Update an existing domain: {}", updateDomain);
+        return domainRepository.findById(domainId)
+                .map(domain -> Optional.of(domain))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(domainOpt -> {
+                    if(!domainOpt.isPresent()) {
+                        throw new DomainNotFoundException(domainId);
+                    } else {
+                        Domain oldDomain = domainOpt.get();
 
-            // TODO move to async call
-            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(domainId).blockingGet());
-            if (!domainOpt.isPresent()) {
-                throw new DomainNotFoundException(domainId);
-            }
+                        Domain domain = new Domain();
+                        domain.setId(domainId);
+                        domain.setPath(updateDomain.getPath());
+                        domain.setName(updateDomain.getName());
+                        domain.setDescription(updateDomain.getDescription());
+                        domain.setEnabled(updateDomain.isEnabled());
+                        // master flag is set programmatically (keep old value)
+                        domain.setMaster(oldDomain.isMaster());
+                        domain.setCreatedAt(oldDomain.getCreatedAt());
+                        domain.setUpdatedAt(new Date());
+                        domain.setLoginForm(oldDomain.getLoginForm());
 
-            Domain oldDomain = domainOpt.get();
+                        return domainRepository.update(domain);
+                    }
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
 
-            Domain domain = new Domain();
-            domain.setId(domainId);
-            domain.setPath(updateDomain.getPath());
-            domain.setName(updateDomain.getName());
-            domain.setDescription(updateDomain.getDescription());
-            domain.setEnabled(updateDomain.isEnabled());
-            // master flag is set programmatically (keep old value)
-            domain.setMaster(oldDomain.isMaster());
-            domain.setCreatedAt(oldDomain.getCreatedAt());
-            domain.setUpdatedAt(new Date());
-            domain.setLoginForm(oldDomain.getLoginForm());
-            // TODO move to async call
-            return domainRepository.update(domain).blockingGet();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to update a domain", ex);
-            throw new TechnicalManagementException("An error occurs while trying to update a domain", ex);
-        }
+                    LOGGER.error("An error occurs while trying to update a domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a domain", ex));
+                });
     }
 
     @Override
-    public Domain reload(String domainId) {
-        try {
-            LOGGER.debug("Reload a domain: {}", domainId);
-            // TODO move to async call
-            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(domainId).blockingGet());
-            if (!domainOpt.isPresent()) {
-                throw new DomainNotFoundException(domainId);
-            }
+    public Single<Domain> reload(String domainId) {
+        LOGGER.debug("Reload a domain: {}", domainId);
+        return domainRepository.findById(domainId)
+                .map(domain -> Optional.of(domain))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(domainOpt -> {
+                    if(!domainOpt.isPresent()) {
+                        throw new DomainNotFoundException(domainId);
+                    } else {
+                        Domain oldDomain = domainOpt.get();
 
-            Domain oldDomain = domainOpt.get();
+                        Domain domain = new Domain();
+                        domain.setId(domainId);
+                        domain.setPath(oldDomain.getPath());
+                        domain.setName(oldDomain.getName());
+                        domain.setDescription(oldDomain.getDescription());
+                        domain.setEnabled(oldDomain.isEnabled());
+                        domain.setMaster(oldDomain.isMaster());
+                        domain.setCreatedAt(oldDomain.getCreatedAt());
+                        domain.setUpdatedAt(new Date());
+                        domain.setLoginForm(oldDomain.getLoginForm());
 
-            Domain domain = new Domain();
-            domain.setId(domainId);
-            domain.setPath(oldDomain.getPath());
-            domain.setName(oldDomain.getName());
-            domain.setDescription(oldDomain.getDescription());
-            domain.setEnabled(oldDomain.isEnabled());
-            domain.setMaster(oldDomain.isMaster());
-            domain.setCreatedAt(oldDomain.getCreatedAt());
-            domain.setUpdatedAt(new Date());
-            domain.setLoginForm(oldDomain.getLoginForm());
-            // TODO move to async call
-            return domainRepository.update(domain).blockingGet();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to reload a domain", ex);
-            throw new TechnicalManagementException("An error occurs while trying to reload a domain", ex);
-        }
+                        return domainRepository.update(domain);
+                    }
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+
+                    LOGGER.error("An error occurs while trying to reload a domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to reload a domain", ex));
+                });
     }
 
     @Override
-    public Domain setMasterDomain(String domainId, boolean isMaster) {
-        try {
-            LOGGER.debug("Set master flag for domain: {}", domainId);
+    public Single<Domain> setMasterDomain(String domainId, boolean isMaster) {
+        LOGGER.debug("Set master flag for domain: {}", domainId);
+        return domainRepository.findById(domainId)
+                .map(domain -> Optional.of(domain))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(domainOpt -> {
+                    if(!domainOpt.isPresent()) {
+                        throw new DomainNotFoundException(domainId);
+                    } else {
+                        Domain oldDomain = domainOpt.get();
 
-            // TODO move to async call
-            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(domainId).blockingGet());
-            if (!domainOpt.isPresent()) {
-                throw new DomainNotFoundException(domainId);
-            }
+                        Domain domain = new Domain();
+                        domain.setId(domainId);
+                        domain.setPath(oldDomain.getPath());
+                        domain.setName(oldDomain.getName());
+                        domain.setDescription(oldDomain.getDescription());
+                        domain.setEnabled(oldDomain.isEnabled());
+                        domain.setMaster(isMaster);
+                        domain.setCreatedAt(oldDomain.getCreatedAt());
+                        domain.setUpdatedAt(new Date());
+                        domain.setLoginForm(oldDomain.getLoginForm());
+                        return domainRepository.update(domain);
+                    }
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
 
-            Domain oldDomain = domainOpt.get();
-
-            Domain domain = new Domain();
-            domain.setId(domainId);
-            domain.setPath(oldDomain.getPath());
-            domain.setName(oldDomain.getName());
-            domain.setDescription(oldDomain.getDescription());
-            domain.setEnabled(oldDomain.isEnabled());
-            domain.setMaster(isMaster);
-            domain.setCreatedAt(oldDomain.getCreatedAt());
-            domain.setUpdatedAt(new Date());
-            domain.setLoginForm(oldDomain.getLoginForm());
-            // TODO move to async call
-            return domainRepository.update(domain).blockingGet();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to set master flag for domain {}", domainId, ex);
-            throw new TechnicalManagementException("An error occurs while trying to set master flag for a domain", ex);
-        }
+                    LOGGER.error("An error occurs while trying to set master flag for domain {}", domainId, ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to set master flag for a domain", ex));
+                });
     }
 
     @Override
-    public void delete(String domain) {
-        try {
-            LOGGER.debug("Delete security domain {}", domain);
+    public Single<Irrelevant> delete(String domainId) {
+        LOGGER.debug("Delete security domain {}", domainId);
+        return domainRepository.findById(domainId)
+                .map(domain -> Optional.of(domain))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(optDomain -> {
+                    if (!optDomain.isPresent()) {
+                        throw new DomainNotFoundException(domainId);
+                    }
+                    if (optDomain.get().isMaster()) {
+                        throw new DomainDeleteMasterException(domainId);
+                    }
+                    return Single.just(optDomain.get());
+                })
+                .flatMap(domain -> {
+                    // delete clients
+                    return clientService.findByDomain(domainId)
+                            .flatMap(clients -> Observable.fromIterable(clients)
+                                    .flatMapSingle(c -> clientService.delete(c.getId())).toList());
+                })
+                .flatMap(irrelevant -> {
+                    // delete certificates
+                    return certificateService.findByDomain(domainId)
+                            .flatMap(certificates -> Observable.fromIterable(certificates)
+                                    .flatMapSingle(c -> certificateService.delete(c.getId())).toList());
+                })
+                .flatMap(irrelevant -> {
+                    // delete identity providers
+                    return identityProviderService.findByDomain(domainId)
+                            .flatMap(idps -> Observable.fromIterable(idps)
+                                    .flatMapSingle(i -> identityProviderService.delete(i.getId())).toList());
+                })
+                .flatMap(irrelevant -> {
+                    // delete roles
+                    return roleService.findByDomain(domainId)
+                            .flatMap(roles -> Observable.fromIterable(roles)
+                                    .flatMapSingle(r -> roleService.delete(r.getId())).toList());
+                })
+                .flatMap(irrelevant -> {
+                    // delete users
+                    return userService.findByDomain(domainId)
+                            .flatMap(users -> Observable.fromIterable(users)
+                                    .flatMapSingle(u -> userService.delete(u.getId())).toList());
+                })
+                .flatMap(irrelevant -> domainRepository.delete(domainId))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
 
-            // TODO move to async call
-            Optional<Domain> optApi = Optional.ofNullable(domainRepository.findById(domain).blockingGet());
-            if (! optApi.isPresent()) {
-                throw new DomainNotFoundException(domain);
-            }
-
-            if (optApi.get().isMaster()) {
-                throw new DomainDeleteMasterException(domain);
-            }
-
-            // delete clients
-            clientService.findByDomain(domain).forEach(c -> clientService.delete(c.getId()));
-
-            // delete certificates
-            certificateService.findByDomain(domain).forEach(c -> certificateService.delete(c.getId()));
-
-            // delete identity providers
-            identityProviderService.findByDomain(domain).forEach(i -> identityProviderService.delete(i.getId()));
-
-            // delete roles
-            roleService.findByDomain(domain).forEach(r -> roleService.delete(r.getId()));
-
-            // delete users
-            userService.findByDomain(domain).forEach(u -> userService.delete(u.getId()));
-
-            // TODO move to async call
-            domainRepository.delete(domain).subscribe();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to delete security domain {}", domain, ex);
-            throw new TechnicalManagementException("An error occurs while trying to delete security domain " + domain, ex);
-        }
+                    LOGGER.error("An error occurs while trying to delete security domain {}", domainId, ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to delete security domain " + domainId, ex));
+                });
     }
 
     @Override
-    public LoginForm updateLoginForm(String domainId, UpdateLoginForm loginForm) {
-        try {
-            LOGGER.debug("Update login form of an existing domain: {}", domainId);
+    public Single<LoginForm> updateLoginForm(String domainId, UpdateLoginForm loginForm) {
+        LOGGER.debug("Update login form of an existing domain: {}", domainId);
+        return domainRepository.findById(domainId)
+                .map(domain -> Optional.of(domain))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(domainOpt -> {
+                    if(!domainOpt.isPresent()) {
+                        throw new DomainNotFoundException(domainId);
+                    } else {
+                        LoginForm form = new LoginForm();
+                        form.setEnabled(loginForm.isEnabled());
+                        form.setContent(loginForm.getContent());
+                        form.setAssets(loginForm.getAssets());
 
-            // TODO move to async call
-            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(domainId).blockingGet());
-            if (!domainOpt.isPresent()) {
-                throw new DomainNotFoundException(domainId);
-            }
+                        Domain domain = domainOpt.get();
+                        domain.setLoginForm(form);
+                        domain.setUpdatedAt(new Date());
 
-            LoginForm form = new LoginForm();
-            form.setEnabled(loginForm.isEnabled());
-            form.setContent(loginForm.getContent());
-            form.setAssets(loginForm.getAssets());
+                        return domainRepository.update(domain).map(domain1 -> form);
+                    }
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
 
-            Domain domain = domainOpt.get();
-            domain.setLoginForm(form);
-            domain.setUpdatedAt(new Date());
-            // TODO move to async call
-            domainRepository.update(domain).subscribe();
-
-            return form;
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to update login form domain", ex);
-            throw new TechnicalManagementException("An error occurs while trying to update a domain", ex);
-        }
+                    LOGGER.error("An error occurs while trying to update login form domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a domain", ex));
+                });
     }
 
     @Override
-    public void deleteLoginForm(String domainId) {
-        try {
-            LOGGER.debug("Delete login form of an existing domain: {}", domainId);
+    public Single<Domain> deleteLoginForm(String domainId) {
+        LOGGER.debug("Delete login form of an existing domain: {}", domainId);
+        return domainRepository.findById(domainId)
+                .map(domain -> Optional.of(domain))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(domainOpt -> {
+                    if(!domainOpt.isPresent()) {
+                        throw new DomainNotFoundException(domainId);
+                    } else {
+                        Domain domain = domainOpt.get();
+                        domain.setLoginForm(null);
+                        domain.setUpdatedAt(new Date());
 
-            // TODO move to async call
-            Optional<Domain> domainOpt = Optional.ofNullable(domainRepository.findById(domainId).blockingGet());
-            if (!domainOpt.isPresent()) {
-                throw new DomainNotFoundException(domainId);
-            }
+                        return domainRepository.update(domain);
+                    }
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
 
-            Domain domain = domainOpt.get();
-            domain.setLoginForm(null);
-            domain.setUpdatedAt(new Date());
-            // TODO move to async call
-            domainRepository.update(domain).subscribe();
-        } catch (TechnicalException ex) {
-            LOGGER.error("An error occurs while trying to update login form domain", ex);
-            throw new TechnicalManagementException("An error occurs while trying to update a domain", ex);
-        }
+                    LOGGER.error("An error occurs while trying to update login form domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update login form domain", ex));
+                });
     }
 
     private String generateContextPath(String domainName) {

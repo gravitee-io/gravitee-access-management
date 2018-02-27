@@ -16,12 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.resources.enhancer.ClientEnhancer;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.ClientListItem;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.exception.DomainAlreadyExistsException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.*;
@@ -30,16 +28,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Api(tags = {"domain", "oauth2"})
@@ -64,14 +66,29 @@ public class ClientsResource extends AbstractResource {
             @ApiResponse(code = 200, message = "List registered clients for a security domain",
                     response = ClientListItem.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public List<ClientListItem> listClients(@PathParam("domain") String _domain) {
-        Domain domain = domainService.findById(_domain);
-
-        return clientService.findByDomain(_domain)
-                .stream()
-                .map(clientEnhancer.enhanceClient(Collections.singletonMap(domain.getId(), domain)))
-                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getClientId(), o2.getClientId()))
-                .collect(Collectors.toList());
+    public void list(@PathParam("domain") String _domain,
+                            @Suspended final AsyncResponse response) {
+        domainService.findById(_domain)
+                .map(domain -> Optional.of(domain))
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
+                .flatMap(optionalDomain -> {
+                    if (!optionalDomain.isPresent()) {
+                        throw new DomainNotFoundException(_domain);
+                    } else {
+                        return clientService.findByDomain(_domain)
+                                .map(clients -> {
+                                    List<ClientListItem> sortedClients = clients.stream()
+                                            .map(clientEnhancer.enhanceClient(Collections.singletonMap(_domain, optionalDomain.get())))
+                                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getClientId(), o2.getClientId()))
+                                            .collect(Collectors.toList());
+                                    return Response.ok(sortedClients).build();
+                                });
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @POST
@@ -81,21 +98,27 @@ public class ClientsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Client successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response createClient(
+    public void createClient(
             @PathParam("domain") String domain,
             @ApiParam(name = "client", required = true)
-            @Valid @NotNull final NewClient newClient) throws DomainAlreadyExistsException {
-        domainService.findById(domain);
-
-        Client client = clientService.create(domain, newClient);
-        if (client != null) {
-            return Response
-                    .created(URI.create("/domains/" + domain + "/clients/" + client.getId()))
-                    .entity(client)
-                    .build();
-        }
-
-        return Response.serverError().build();
+            @Valid @NotNull final NewClient newClient,
+            @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return clientService.create(domain, newClient)
+                                .map(client -> Response
+                                        .created(URI.create("/domains/" + domain + "/clients/" + client.getId()))
+                                        .entity(client)
+                                        .build());
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @Path("{client}")

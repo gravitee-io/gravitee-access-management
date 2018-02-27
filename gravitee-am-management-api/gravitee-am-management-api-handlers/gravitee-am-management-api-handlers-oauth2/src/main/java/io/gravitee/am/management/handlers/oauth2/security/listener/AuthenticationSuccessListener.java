@@ -48,7 +48,8 @@ public class AuthenticationSuccessListener implements ApplicationListener<Authen
         Map<String, String> details = (Map<String, String>) event.getAuthentication().getDetails();
 
         try {
-            io.gravitee.am.model.User user = userService.loadUserByUsernameAndDomain(domain.getId(), principal.getUsername());
+            // TODO async call
+            io.gravitee.am.model.User user = userService.loadUserByUsernameAndDomain(domain.getId(), principal.getUsername()).blockingGet();
             UpdateUser updateUser = new UpdateUser();
             if (details != null) {
                 updateUser.setSource(details.get(RepositoryProviderUtils.SOURCE));

@@ -57,7 +57,8 @@ public class DefaultApprovalStore implements ApprovalStore {
 
     @Override
     public Collection<Approval> getApprovals(String userId, String clientId) {
-        return scopeApprovalService.findByUserAndClient(domain.getId(), userId, clientId)
+        // TODO async call
+        return scopeApprovalService.findByUserAndClient(domain.getId(), userId, clientId).blockingGet()
                 .stream()
                 .map(this::map)
                 .collect(Collectors.toList());

@@ -18,7 +18,6 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -30,29 +29,23 @@ import java.util.Set;
  */
 public interface ClientRepository extends CrudRepository<Client, String> {
 
-    /**
-     * The full list of {@link Client} for a domain.
-     *
-     * @return All {@link Client}
-     * @throws TechnicalException
-     */
-    Single<Set<Client>> findByDomain(String domain) throws TechnicalException;
+    Single<Set<Client>> findByDomain(String domain);
 
-    Single<Page<Client>> findByDomain(String domain, int page, int size) throws TechnicalException;
+    Single<Page<Client>> findByDomain(String domain, int page, int size);
 
-    Maybe<Client> findByClientIdAndDomain(String clientId, String domain) throws TechnicalException;
+    Maybe<Client> findByClientIdAndDomain(String clientId, String domain);
 
-    Single<Set<Client>> findByIdentityProvider(String identityProvider) throws TechnicalException;
+    Single<Set<Client>> findByIdentityProvider(String identityProvider);
 
-    Single<Set<Client>> findByCertificate(String certificate) throws TechnicalException;
+    Single<Set<Client>> findByCertificate(String certificate);
 
-    Single<Set<Client>> findByExtensionGrant(String tokenGranter) throws TechnicalException;
+    Single<Set<Client>> findByExtensionGrant(String tokenGranter);
 
-    Single<Set<Client>> findAll() throws TechnicalException;
+    Single<Set<Client>> findAll();
 
-    Single<Page<Client>> findAll(int page, int size) throws TechnicalException;
+    Single<Page<Client>> findAll(int page, int size);
 
-    Single<Long> countByDomain(String domain) throws TechnicalException;
+    Single<Long> countByDomain(String domain);
 
-    Single<Long> count() throws TechnicalException;
+    Single<Long> count();
 }

@@ -175,7 +175,8 @@ public class CustomTokenEnhancer implements InitializingBean, TokenEnhancer {
                     && authentication.getUserAuthentication().getPrincipal() instanceof User) {
                 User user = (User) authentication.getUserAuthentication().getPrincipal();
                 if (user.getRoles() != null && !user.getRoles().isEmpty()) {
-                    Set<Role> roles = roleService.findByIdIn(user.getRoles());
+                    // TODO async call
+                    Set<Role> roles = roleService.findByIdIn(user.getRoles()).blockingGet();
                     Set<String> requestedScopes = OAuth2Utils.parseParameterList(authentication.getOAuth2Request().getRequestParameters().get(OAuth2Utils.SCOPE));
                     Set<String> enhanceScopes = new HashSet<>(accessToken.getScope());
                     enhanceScopes.addAll(roles.stream()

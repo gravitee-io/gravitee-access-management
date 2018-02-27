@@ -17,16 +17,16 @@ package io.gravitee.am.management.service.impl.plugins;
 
 import io.gravitee.am.management.extensiongrant.core.ExtensionGrantPluginManager;
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
-import io.gravitee.am.service.exception.ExtensionGrantNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.ExtensionGrantPlugin;
 import io.gravitee.plugin.core.api.Plugin;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,40 +46,55 @@ public class ExtensionGrantPluginServiceImpl implements ExtensionGrantPluginServ
     private ExtensionGrantPluginManager extensionGrantPluginManager;
 
     @Override
-    public Set<ExtensionGrantPlugin> findAll() {
-        try {
-            LOGGER.debug("List all extension grants");
-            return extensionGrantPluginManager.getAll()
-                    .stream()
-                    .map(this::convert)
-                    .collect(Collectors.toSet());
-        } catch (Exception ex) {
-            LOGGER.error("An error occurs while trying to list all extension grants", ex);
-            throw new TechnicalManagementException("An error occurs while trying to list all extension grants", ex);
-        }
+    public Single<Set<ExtensionGrantPlugin>> findAll() {
+        LOGGER.debug("List all extension grant plugins");
+        return Single.create(emitter -> {
+            try {
+                emitter.onSuccess(extensionGrantPluginManager.getAll()
+                        .stream()
+                        .map(this::convert)
+                        .collect(Collectors.toSet()));
+            } catch (Exception ex) {
+                LOGGER.error("An error occurs while trying to list all extension grant plugins", ex);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to list all extension grant plugins", ex));
+            }
+        });
     }
 
     @Override
-    public ExtensionGrantPlugin findById(String extensionGrantPluginId) {
-        LOGGER.debug("Find extension grant by ID: {}", extensionGrantPluginId);
-        Plugin extensionGrant = extensionGrantPluginManager.findById(extensionGrantPluginId);
-
-        if (extensionGrant == null) {
-            throw new ExtensionGrantNotFoundException(extensionGrantPluginId);
-        }
-
-        return convert(extensionGrant);
+    public Maybe<ExtensionGrantPlugin> findById(String extensionGrantPluginId) {
+        LOGGER.debug("Find extension grant plugin by ID: {}", extensionGrantPluginId);
+        return Maybe.create(emitter -> {
+            try {
+                Plugin extensionGrant = extensionGrantPluginManager.findById(extensionGrantPluginId);
+                if (extensionGrant != null) {
+                    emitter.onSuccess(convert(extensionGrant));
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception ex) {
+                LOGGER.error("An error occurs while trying to get extension grant plugin : {}", extensionGrantPluginId, ex);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to get extension grant plugin : " + extensionGrantPluginId, ex));
+            }
+        });
     }
 
     @Override
-    public String getSchema(String tokenGranterPluginId) {
-        try {
-            LOGGER.debug("Find extension grant schema by ID: {}", tokenGranterPluginId);
-            return extensionGrantPluginManager.getSchema(tokenGranterPluginId);
-        } catch (IOException ioex) {
-            LOGGER.error("An error occurs while trying to get schema for extension grant {}", tokenGranterPluginId, ioex);
-            throw new TechnicalManagementException("An error occurs while trying to get schema for extension grant " + tokenGranterPluginId, ioex);
-        }
+    public Maybe<String> getSchema(String extensionGrantPluginId) {
+        LOGGER.debug("Find extension grant plugin schema by ID: {}", extensionGrantPluginId);
+        return Maybe.create(emitter -> {
+            try {
+                String schema = extensionGrantPluginManager.getSchema(extensionGrantPluginId);
+                if (schema != null) {
+                    emitter.onSuccess(schema);
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception e) {
+                LOGGER.error("An error occurs while trying to get schema for extension grant plugin {}", extensionGrantPluginId, e);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for extension grant plugin " + extensionGrantPluginId, e));
+            }
+        });
     }
 
     private ExtensionGrantPlugin convert(Plugin extensionGrantPlugin) {

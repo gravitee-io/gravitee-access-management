@@ -65,31 +65,26 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Maybe<Certificate> findById(String certificateId) {
-        return _findById(certificateId).toMaybe();
+        return Observable.fromPublisher(certificatesCollection.find(eq(FIELD_ID, certificateId)).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Single<Certificate> create(Certificate item) {
         CertificateMongo certificate = convert(item);
         certificate.setId(certificate.getId() == null ? (String) idGenerator.generate() : certificate.getId());
-        return Single.fromPublisher(certificatesCollection.insertOne(certificate)).flatMap(success -> _findById(certificate.getId()));
+        return Single.fromPublisher(certificatesCollection.insertOne(certificate)).flatMap(success -> findById(certificate.getId()).toSingle());
     }
 
     @Override
     public Single<Certificate> update(Certificate item) {
         CertificateMongo certificate = convert(item);
-        return Single.fromPublisher(certificatesCollection.replaceOne(eq(FIELD_ID, certificate.getId()), certificate)).flatMap(updateResult -> _findById(certificate.getId()));
+        return Single.fromPublisher(certificatesCollection.replaceOne(eq(FIELD_ID, certificate.getId()), certificate)).flatMap(updateResult -> findById(certificate.getId()).toSingle());
     }
 
     @Override
     public Single<Irrelevant> delete(String id) {
         return Single.fromPublisher(certificatesCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.CERTIFICATE);
     }
-
-    private Single<Certificate> _findById(String id) {
-        return Single.fromPublisher(certificatesCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
-    }
-
     private Certificate convert(CertificateMongo certificateMongo) {
         if (certificateMongo == null) {
             return null;

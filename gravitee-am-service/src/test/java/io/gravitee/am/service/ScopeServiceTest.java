@@ -15,18 +15,22 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Irrelevant;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
+import io.gravitee.am.service.exception.ScopeAlreadyExistsException;
 import io.gravitee.am.service.exception.ScopeNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ScopeServiceImpl;
 import io.gravitee.am.service.model.NewScope;
+import io.gravitee.am.service.model.UpdateClient;
+import io.gravitee.am.service.model.UpdateRole;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Assert;
-import org.junit.Ignore;
+import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
@@ -35,11 +39,17 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.Set;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
@@ -60,47 +70,86 @@ public class ScopeServiceTest {
     private final static String DOMAIN = "domain1";
 
     @Test
-    public void shouldFindById() throws TechnicalException {
+    public void shouldFindById() {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
+        TestObserver testObserver = scopeService.findById("my-scope").test();
 
-        Scope scope = scopeService.findById("my-scope");
-        Assert.assertNotNull(scope);
-    }
-
-    @Test(expected = ScopeNotFoundException.class)
-    public void shouldFindById_notExistingScope() throws TechnicalException {
-        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.empty());
-
-        scopeService.findById("my-scope");
-    }
-
-    @Test(expected = TechnicalManagementException.class)
-    public void shouldFindById_technicalException() throws TechnicalException {
-        when(scopeRepository.findById("my-scope")).thenThrow(TechnicalException.class);
-
-        scopeService.findById("my-scope");
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(1);
     }
 
     @Test
-    public void shouldCreateScope() throws TechnicalException {
+    public void shouldFindById_notExistingScope() {
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.empty());
+        TestObserver testObserver = scopeService.findById("my-scope").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNoValues();
+    }
+
+    @Test
+    public void shouldFindById_technicalException() {
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.error(TechnicalException::new));
+        TestObserver testObserver = new TestObserver();
+        scopeService.findById("my-scope").subscribe(testObserver);
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldFindByDomain() {
+        when(scopeRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(new Scope())));
+        TestObserver<Set<Scope>> testObserver = scopeService.findByDomain(DOMAIN).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(scopes -> scopes.size() == 1);
+    }
+
+    @Test
+    public void shouldFindByDomain_technicalException() {
+        when(scopeRepository.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+
+        TestObserver testObserver = new TestObserver();
+        scopeService.findByDomain(DOMAIN).subscribe(testObserver);
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldCreate() {
         NewScope newScope = Mockito.mock(NewScope.class);
         when(newScope.getKey()).thenReturn("my-scope");
         when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.empty());
         when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
 
-        scopeService.create(DOMAIN, newScope);
+        TestObserver testObserver = scopeService.create(DOMAIN, newScope).test();
+        testObserver.awaitTerminalEvent();
 
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(scopeRepository, times(1)).findByDomainAndKey(anyString(), anyString());
         verify(scopeRepository, times(1)).create(any(Scope.class));
     }
 
     @Test
-    public void shouldCreateScope_keyLowerCase() throws TechnicalException {
+    public void shouldCreate_keyLowerCase() {
         NewScope newScope = Mockito.mock(NewScope.class);
         when(newScope.getKey()).thenReturn("MY-SCOPE");
         when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.empty());
         when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
 
-        scopeService.create(DOMAIN, newScope);
+        TestObserver testObserver = scopeService.create(DOMAIN, newScope).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
 
         verify(scopeRepository, times(1)).create(any(Scope.class));
         verify(scopeRepository, times(1)).create(argThat(new ArgumentMatcher<Scope>() {
@@ -112,51 +161,135 @@ public class ScopeServiceTest {
         }));
     }
 
-    @Test(expected = TechnicalManagementException.class)
-    public void shouldNotCreateScope_technicalException() throws TechnicalException {
+    @Test
+    public void shouldNotCreate_technicalException() {
         NewScope newScope = Mockito.mock(NewScope.class);
         when(newScope.getKey()).thenReturn("my-scope");
-        when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenThrow(TechnicalException.class);
+        when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.error(TechnicalException::new));
 
+        TestObserver testObserver = new TestObserver();
+        scopeService.create(DOMAIN, newScope).subscribe(testObserver);
 
-        scopeService.create(DOMAIN, newScope);
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
 
         verify(scopeRepository, never()).create(any(Scope.class));
     }
 
-    @Test(expected = TechnicalManagementException.class)
-    public void shouldNotCreateScope_existingScope() throws TechnicalException {
+    @Test
+    public void shouldNotCreate_existingScope() {
         NewScope newScope = Mockito.mock(NewScope.class);
         when(newScope.getKey()).thenReturn("my-scope");
         when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.just(new Scope()));
 
-        scopeService.create(DOMAIN, newScope);
+        TestObserver testObserver = new TestObserver();
+        scopeService.create(DOMAIN, newScope).subscribe(testObserver);
+
+        testObserver.assertError(ScopeAlreadyExistsException.class);
+        testObserver.assertNotComplete();
 
         verify(scopeRepository, never()).create(any(Scope.class));
     }
 
-    @Test(expected = ScopeNotFoundException.class)
-    public void shouldDeleteScope_notExistingScope() throws TechnicalException {
+    @Test
+    public void shouldDelete_notExistingScope() {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.empty());
 
-        scopeService.delete("my-scope");
-    }
+        TestObserver testObserver = new TestObserver();
+        scopeService.delete("my-scope").subscribe(testObserver);
 
-    @Test(expected = TechnicalManagementException.class)
-    public void shouldDeleteScope_technicalException() throws TechnicalException {
-        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
-        doThrow(TechnicalException.class).when(scopeRepository).delete("my-scope");
-
-        scopeService.delete("my-scope");
+        testObserver.assertError(ScopeNotFoundException.class);
+        testObserver.assertNotComplete();
     }
 
     @Test
-    public void shouldDeleteScope() throws TechnicalException {
+    public void shouldDelete_technicalException() {
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.error(TechnicalException::new));
+
+        TestObserver testObserver = new TestObserver();
+        scopeService.delete("my-scope").subscribe(testObserver);
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldDelete2_technicalException() {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
+        when(roleService.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+
+        TestObserver testObserver = new TestObserver();
+        scopeService.delete("my-scope").subscribe(testObserver);
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldDelete3_technicalException() {
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
+        when(roleService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
+        when(clientService.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+
+        TestObserver testObserver = new TestObserver();
+        scopeService.delete("my-scope").subscribe(testObserver);
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldDelete_light() {
+        Scope scope = mock(Scope.class);
+        when(scope.getDomain()).thenReturn(DOMAIN);
+        when(roleService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
+        when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(scope));
         when(scopeRepository.delete("my-scope")).thenReturn(Single.just(Irrelevant.SCOPE));
 
-        scopeService.delete("my-scope");
+        TestObserver testObserver = scopeService.delete("my-scope").test();
+        testObserver.awaitTerminalEvent();
 
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(roleService, times(1)).findByDomain(DOMAIN);
+        verify(clientService, times(1)).findByDomain(DOMAIN);
         verify(scopeRepository, times(1)).delete("my-scope");
     }
+
+    @Test
+    public void shouldDelete_full() {
+        Scope scope = mock(Scope.class);
+        when(scope.getDomain()).thenReturn(DOMAIN);
+        when(scope.getKey()).thenReturn("my-scope");
+
+        Role role = mock(Role.class);
+        when(role.getId()).thenReturn("role-1");
+        when(role.getPermissions()).thenReturn(new LinkedList<>(Arrays.asList("my-scope")));
+
+        Client client = mock(Client.class);
+        when(client.getId()).thenReturn("client-1");
+        when(client.getScopes()).thenReturn(new LinkedList<>(Arrays.asList("my-scope")));
+
+        when(roleService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(role)));
+        when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(client)));
+        when(roleService.update(anyString(), anyString(), any(UpdateRole.class))).thenReturn(Single.just(new Role()));
+        when(clientService.update(anyString(), anyString(), any(UpdateClient.class))).thenReturn(Single.just(new Client()));
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(scope));
+        when(scopeRepository.delete("my-scope")).thenReturn(Single.just(Irrelevant.SCOPE));
+
+        TestObserver testObserver = scopeService.delete("my-scope").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(roleService, times(1)).findByDomain(DOMAIN);
+        verify(clientService, times(1)).findByDomain(DOMAIN);
+        verify(roleService, times(1)).update(anyString(), anyString(), any(UpdateRole.class));
+        verify(clientService, times(1)).update(anyString(), anyString(), any(UpdateClient.class));
+        verify(scopeRepository, times(1)).delete("my-scope");
+    }
+
 }

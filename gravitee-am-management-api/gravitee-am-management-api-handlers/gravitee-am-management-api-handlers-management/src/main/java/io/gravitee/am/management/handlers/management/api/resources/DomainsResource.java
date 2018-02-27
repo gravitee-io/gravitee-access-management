@@ -26,15 +26,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Path("/domains")
@@ -55,15 +57,18 @@ public class DomainsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "List accessible security domains for current user", response = Domain.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public List<Domain> listDomains() {
-        return domainService.findAll()
-                .stream()
-                .map(domain -> {
-                    domain.setLoginForm(null);
-                    return domain;
-                })
-                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                .collect(Collectors.toList());
+    public void listDomains(@Suspended final AsyncResponse response) {
+         domainService.findAll()
+                 .map(domains ->
+                        domains.stream().map(domain -> {
+                            domain.setLoginForm(null);
+                            return domain;
+                        })
+                        .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                        .collect(Collectors.toList()))
+                .subscribe(
+                        result -> response.resume(Response.ok(result).build()),
+                        error -> response.resume(error));
     }
 
     @POST
@@ -73,18 +78,17 @@ public class DomainsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Domain successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response createApi(
+    public void createApi(
             @ApiParam(name = "domain", required = true)
-            @Valid @NotNull final NewDomain newDomain) throws DomainAlreadyExistsException {
-        Domain domain = domainService.create(newDomain);
-        if (domain != null) {
-            return Response
-                    .created(URI.create("/domains/" + domain.getId()))
-                    .entity(domain)
-                    .build();
-        }
-
-        return Response.serverError().build();
+            @Valid @NotNull final NewDomain newDomain,
+            @Suspended final AsyncResponse response) throws DomainAlreadyExistsException {
+        domainService.create(newDomain)
+                .subscribe(
+                        domain -> response.resume(Response
+                                                    .created(URI.create("/domains/" + domain.getId()))
+                                                    .entity(domain)
+                                                    .build()),
+                        error -> response.resume(error));
     }
 
     @Path("{domain}")

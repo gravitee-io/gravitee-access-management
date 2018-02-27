@@ -69,12 +69,14 @@ public class InitializeUpgrader implements Upgrader, Ordered {
         logger.info("Looking for a registered {} domain", ADMIN_DOMAIN);
 
         try {
-            Domain adminDomain = domainService.findById(ADMIN_DOMAIN);
+            // TODO async call
+            Domain adminDomain = domainService.findById(ADMIN_DOMAIN).blockingGet();
             // update master flag
             // TODO: keep history in database to avoid this call
             if (!adminDomain.isMaster()) {
                 logger.info("Set master flag for security domain {}", ADMIN_DOMAIN);
-                domainService.setMasterDomain(adminDomain.getId(), true);
+                // TODO async call
+                domainService.setMasterDomain(adminDomain.getId(), true).subscribe();
             }
             logger.info("{} domain already exists. Skipping.", ADMIN_DOMAIN);
         } catch (DomainNotFoundException dnfe) {
@@ -84,21 +86,24 @@ public class InitializeUpgrader implements Upgrader, Ordered {
             NewDomain adminDomain = new NewDomain();
             adminDomain.setName("admin");
             adminDomain.setDescription("AM Admin domain");
-            Domain createdDomain = domainService.create(adminDomain);
+            // TODO async call
+            Domain createdDomain = domainService.create(adminDomain).blockingGet();
 
             // Create default scope
             NewScope scope = new NewScope();
             scope.setKey(DEFAULT_SCOPE);
             scope.setName(Character.toUpperCase(DEFAULT_SCOPE.charAt(0)) + DEFAULT_SCOPE.substring(1));
             scope.setDescription("Default description for scope " + DEFAULT_SCOPE);
-            Scope createdScope = scopeService.create(createdDomain.getId(), scope);
+            // TODO async call
+            Scope createdScope = scopeService.create(createdDomain.getId(), scope).blockingGet();
 
             // Create a new admin client
             logger.info("Create an initial {} client", ADMIN_CLIENT_ID);
             NewClient adminClient = new NewClient();
             adminClient.setClientId(ADMIN_CLIENT_ID);
             adminClient.setClientSecret(ADMIN_CLIENT_SECRET);
-            Client createdClient = clientService.create(createdDomain.getId(), adminClient);
+            // TODO async call
+            Client createdClient = clientService.create(createdDomain.getId(), adminClient).blockingGet();
 
             // Create an inline identity provider
             logger.info("Create an user-inline provider");
@@ -106,7 +111,8 @@ public class InitializeUpgrader implements Upgrader, Ordered {
             adminIdentityProvider.setType("inline-am-idp");
             adminIdentityProvider.setName("Inline users");
             adminIdentityProvider.setConfiguration("{\"users\":[{\"firstname\":\"Administrator\",\"lastname\":\"\",\"username\":\"admin\",\"password\":\"adminadmin\"}]}");
-            IdentityProvider createdIdentityProvider = identityProviderService.create(createdDomain.getId(), adminIdentityProvider);
+            // TODO async call
+            IdentityProvider createdIdentityProvider = identityProviderService.create(createdDomain.getId(), adminIdentityProvider).blockingGet();
 
             // Associate the identity provider to the client and enabled it
             logger.info("Associate user-inline provider to previously created client");
@@ -118,7 +124,8 @@ public class InitializeUpgrader implements Upgrader, Ordered {
             updateClient.setAutoApproveScopes(updateClient.getScopes());
             updateClient.setIdentities(Collections.singleton(createdIdentityProvider.getId()));
             updateClient.setEnabled(true);
-            clientService.update(createdDomain.getId(), createdClient.getId(), updateClient);
+            // TODO async call
+            clientService.update(createdDomain.getId(), createdClient.getId(), updateClient).blockingGet();
 
             // Enabled the domain
             logger.info("Start {} security domain", ADMIN_DOMAIN);
@@ -127,11 +134,13 @@ public class InitializeUpgrader implements Upgrader, Ordered {
             updateDomain.setDescription(createdDomain.getDescription());
             updateDomain.setEnabled(true);
             updateDomain.setPath(createdDomain.getPath());
-            domainService.update(createdDomain.getId(), updateDomain);
+            // TODO async call
+            domainService.update(createdDomain.getId(), updateDomain).blockingGet();
 
             // Set master flag
             logger.info("Set master flag for security domain {}", ADMIN_DOMAIN);
-            domainService.setMasterDomain(createdDomain.getId(), true);
+            // TODO async call
+            domainService.setMasterDomain(createdDomain.getId(), true).subscribe();
         }
 
         return true;

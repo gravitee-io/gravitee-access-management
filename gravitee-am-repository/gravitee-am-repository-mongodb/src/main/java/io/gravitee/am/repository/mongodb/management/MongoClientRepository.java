@@ -83,7 +83,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Maybe<Client> findByClientIdAndDomain(String clientId, String domain) {
-        return Single.fromPublisher(clientsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId))).first()).map(this::convert).toMaybe();
+        return Observable.fromPublisher(clientsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId))).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -115,20 +115,20 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Maybe<Client> findById(String client) {
-        return _findById(client).toMaybe();
+        return Observable.fromPublisher(clientsCollection.find(eq(FIELD_ID, client)).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Single<Client> create(Client item) {
         ClientMongo client = convert(item);
         client.setId(client.getId() == null ? (String) idGenerator.generate() : client.getId());
-        return Single.fromPublisher(clientsCollection.insertOne(client)).flatMap(success -> _findById(client.getId()));
+        return Single.fromPublisher(clientsCollection.insertOne(client)).flatMap(success -> findById(client.getId()).toSingle());
     }
 
     @Override
     public Single<Client> update(Client item) {
         ClientMongo client = convert(item);
-        return Single.fromPublisher(clientsCollection.replaceOne(eq(FIELD_ID, client.getId()), client)).flatMap(success -> _findById(client.getId()));
+        return Single.fromPublisher(clientsCollection.replaceOne(eq(FIELD_ID, client.getId()), client)).flatMap(success -> findById(client.getId()).toSingle());
     }
 
     @Override
@@ -144,10 +144,6 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     @Override
     public Single<Long> count() {
         return Observable.fromPublisher(clientsCollection.count()).first(0l);
-    }
-
-    private Single<Client> _findById(String id) {
-        return Single.fromPublisher(clientsCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
     }
 
     private Client convert(ClientMongo clientMongo) {

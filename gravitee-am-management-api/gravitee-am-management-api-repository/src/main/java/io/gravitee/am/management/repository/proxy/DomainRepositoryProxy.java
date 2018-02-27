@@ -17,7 +17,6 @@ package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Irrelevant;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -34,32 +33,32 @@ import java.util.Set;
 public class DomainRepositoryProxy extends AbstractProxy<DomainRepository> implements DomainRepository {
 
     @Override
-    public Single<Set<Domain>> findAll() throws TechnicalException {
+    public Single<Set<Domain>> findAll() {
         return target.findAll();
     }
 
     @Override
-    public Single<Set<Domain>> findByIdIn(Collection<String> ids) throws TechnicalException {
+    public Single<Set<Domain>> findByIdIn(Collection<String> ids) {
         return target.findByIdIn(ids);
     }
 
     @Override
-    public Maybe<Domain> findById(String id) throws TechnicalException {
+    public Maybe<Domain> findById(String id) {
         return target.findById(id);
     }
 
     @Override
-    public Single<Domain> create(Domain domain) throws TechnicalException {
+    public Single<Domain> create(Domain domain) {
         return this.target.create(domain);
     }
 
     @Override
-    public Single<Domain> update(Domain domain) throws TechnicalException {
+    public Single<Domain> update(Domain domain) {
         return target.update(domain);
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) throws TechnicalException {
+    public Single<Irrelevant> delete(String id) {
         return target.delete(id);
     }
 }

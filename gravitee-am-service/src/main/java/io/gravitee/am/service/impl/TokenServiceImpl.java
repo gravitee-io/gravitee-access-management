@@ -20,6 +20,8 @@ import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.TotalToken;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,35 +43,39 @@ public class TokenServiceImpl implements TokenService {
     private TokenRepository tokenRepository;
 
     @Override
-    public TotalToken findTotalTokensByDomain(String domain) {
-        try {
-            LOGGER.debug("Find total tokens by domain: {}", domain);
-            TotalToken totalToken = new TotalToken();
-            totalToken.setTotalAccessTokens(clientService.findByDomain(domain)
-                    .parallelStream()
-                    // TODO move to async call
-                    .mapToLong(c -> tokenRepository.findTokensByClientId(c.getClientId()).blockingGet().size()).sum());
-            return totalToken;
-        } catch (Exception ex) {
-            LOGGER.error("An error occurs while trying to find total tokens by domain: {}", domain, ex);
-            throw new TechnicalManagementException(
-                    String.format("An error occurs while trying to find total tokens by domain: %s", domain), ex);
-        }
+    public Single<TotalToken> findTotalTokensByDomain(String domain) {
+        LOGGER.debug("Find total tokens by domain: {}", domain);
+        return clientService.findByDomain(domain)
+                .flatMapObservable(clients -> Observable.fromIterable(clients))
+                .flatMapSingle(client -> tokenRepository.findTokensByClientId(client.getClientId()).flatMap(oAuth2AccessTokens -> Single.just(oAuth2AccessTokens.size())))
+                .toList()
+                .flatMap(totalAccessTokens -> {
+                    TotalToken totalToken = new TotalToken();
+                    totalToken.setTotalAccessTokens(totalAccessTokens.stream().mapToLong(Integer::intValue).sum());
+                    return Single.just(totalToken);
+                })
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find total tokens by domain: {}", domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find total tokens by domain: %s", domain), ex));
+                });
     }
 
     @Override
-    public TotalToken findTotalTokens() {
-        try {
-            LOGGER.debug("Find total tokens");
-            TotalToken totalToken = new TotalToken();
-            totalToken.setTotalAccessTokens(clientService.findAll()
-                    .parallelStream()
-                    // TODO move to async call
-                    .mapToLong(c -> tokenRepository.findTokensByClientId(c.getClientId()).blockingGet().size()).sum());
-            return totalToken;
-        } catch (Exception ex) {
-            LOGGER.error("An error occurs while trying to find total tokens", ex);
-            throw new TechnicalManagementException("An error occurs while trying to find total tokens", ex);
-        }
+    public Single<TotalToken> findTotalTokens() {
+        LOGGER.debug("Find total tokens");
+        return clientService.findAll()
+                .flatMapObservable(clients -> Observable.fromIterable(clients))
+                .flatMapSingle(client -> tokenRepository.findTokensByClientId(client.getClientId()).flatMap(oAuth2AccessTokens -> Single.just(oAuth2AccessTokens.size())))
+                .toList()
+                .flatMap(totalAccessTokens -> {
+                    TotalToken totalToken = new TotalToken();
+                    totalToken.setTotalAccessTokens(totalAccessTokens.stream().mapToLong(Integer::intValue).sum());
+                    return Single.just(totalToken);
+                })
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find total tokens", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find total tokens", ex));
+                });
     }
 }

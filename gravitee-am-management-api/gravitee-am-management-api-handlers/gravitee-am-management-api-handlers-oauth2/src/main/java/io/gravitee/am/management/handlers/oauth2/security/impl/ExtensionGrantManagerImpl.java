@@ -74,7 +74,8 @@ public class ExtensionGrantManagerImpl implements ExtensionGrantManager, Initial
     @Override
     public void afterPropertiesSet() throws Exception {
         logger.info("Initializing extension grants for domain {}", domain.getName());
-        List<ExtensionGrant> extensionGrants = extensionGrantService.findByDomain(domain.getId());
+        // TODO async call
+        List<ExtensionGrant> extensionGrants = extensionGrantService.findByDomain(domain.getId()).blockingGet();
 
         extensionGrants.forEach(extensionGrant -> {
             logger.info("\tInitializing extension grant : {} [{}]", extensionGrant.getName(), extensionGrant.getType());

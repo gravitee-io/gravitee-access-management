@@ -73,7 +73,8 @@ public class LoginController {
 
         Client client;
         try {
-            client = clientService.findByDomainAndClientId(domain.getId(), clientId);
+            // TODO async call
+            client = clientService.findByDomainAndClientId(domain.getId(), clientId).blockingGet();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             return new ModelAndView(errorPage, Collections.singletonMap("error", e.getMessage()));

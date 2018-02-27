@@ -15,23 +15,27 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.*;
+import org.glassfish.jersey.server.ManagedAsync;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Api(tags = {"domain"})
@@ -44,13 +48,22 @@ public class DomainResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @GET
+    @ManagedAsync
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a security domain")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Domain", response = Domain.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Domain get(@PathParam("domain") String domain) throws DomainNotFoundException {
-        return domainService.findById(domain);
+    public void get(@PathParam("domain") String domainId, @Suspended final AsyncResponse response) {
+        domainService.findById(domainId)
+                .map(domain -> Response.ok(domain).build())
+                .defaultIfEmpty(Response.status(404)
+                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                        .entity(new ErrorEntity("Domain [" + domainId + "] can not be found.", 404))
+                        .build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @PUT
@@ -60,10 +73,14 @@ public class DomainResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Domain successfully updated", response = Domain.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Domain update(
+    public void update(
             @ApiParam(name = "domain", required = true) @Valid @NotNull final UpdateDomain domainToUpdate,
-            @PathParam("domain") String domain) {
-        return domainService.update(domain, domainToUpdate);
+            @PathParam("domain") String domainId,
+            @Suspended final AsyncResponse response) {
+         domainService.update(domainId, domainToUpdate)
+                .subscribe(
+                        domain -> response.resume(Response.ok(domain).build()),
+                        error -> response.resume(error));
     }
 
     @DELETE
@@ -71,10 +88,13 @@ public class DomainResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 204, message = "Domain successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response delete(@PathParam("domain") String domain) {
-        domainService.delete(domain);
-
-        return Response.noContent().build();
+    public void delete(@PathParam("domain") String domain,
+                       @Suspended final AsyncResponse response) {
+        domainService.delete(domain)
+                .map(irrelevant -> Response.noContent().build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @Path("clients")

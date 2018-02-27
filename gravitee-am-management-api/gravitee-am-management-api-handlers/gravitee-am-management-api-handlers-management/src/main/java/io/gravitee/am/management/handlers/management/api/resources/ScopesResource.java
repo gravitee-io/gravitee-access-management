@@ -19,7 +19,7 @@ import io.gravitee.am.model.ClientListItem;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.exception.DomainAlreadyExistsException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewScope;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.*;
@@ -28,7 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
@@ -37,6 +39,7 @@ import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Api(tags = {"domain", "oauth2"})
@@ -58,11 +61,19 @@ public class ScopesResource extends AbstractResource {
             @ApiResponse(code = 200, message = "List scopes for a security domain",
                     response = ClientListItem.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public List<Scope> listScopes(@PathParam("domain") String _domain) {
-        return scopeService.findByDomain(_domain)
-                .stream()
-                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getKey(), o2.getKey()))
-                .collect(Collectors.toList());
+    public void list(@PathParam("domain") String _domain,
+                     @Suspended final AsyncResponse response) {
+        scopeService.findByDomain(_domain)
+                .map(scopes -> {
+                    List<Scope> sortedScopes = scopes.stream()
+                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getKey(), o2.getKey()))
+                            .collect(Collectors.toList());
+                    return Response.ok(sortedScopes).build();
+                })
+                .subscribe(
+                    result -> response.resume(result),
+                    error -> response.resume(error)
+                );
     }
 
     @POST
@@ -72,21 +83,27 @@ public class ScopesResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Scope successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response createClient(
+    public void create(
             @PathParam("domain") String domain,
             @ApiParam(name = "scope", required = true)
-            @Valid @NotNull final NewScope newScope) throws DomainAlreadyExistsException {
-        domainService.findById(domain);
-
-        io.gravitee.am.model.oauth2.Scope scope = scopeService.create(domain, newScope);
-        if (scope != null) {
-            return Response
-                    .created(URI.create("/domains/" + domain + "/scopes/" + scope.getId()))
-                    .entity(scope)
-                    .build();
-        }
-
-        return Response.serverError().build();
+            @Valid @NotNull final NewScope newScope,
+            @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return scopeService.create(domain, newScope)
+                                .map(scope -> Response
+                                        .created(URI.create("/domains/" + domain + "/scopes/" + scope.getId()))
+                                        .entity(scope)
+                                        .build());
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @Path("{scope}")

@@ -60,7 +60,8 @@ public class ScopeUpgrader implements Upgrader, Ordered {
     @Override
     public boolean upgrade() {
         logger.info("Applying scope upgrade");
-        Set<Domain> domains = domainService.findAll();
+        // TODO async call
+        Set<Domain> domains = domainService.findAll().blockingGet();
 
         domains.forEach(this::upgradeDomain);
 
@@ -69,7 +70,8 @@ public class ScopeUpgrader implements Upgrader, Ordered {
 
     private void upgradeDomain(Domain domain) {
         logger.info("Looking for scopes for domain id[{}] name[{}]", domain.getId(), domain.getName());
-        Set<Scope> scopes = scopeService.findByDomain(domain.getId());
+        // TODO async call
+        Set<Scope> scopes = scopeService.findByDomain(domain.getId()).blockingGet();
         if (scopes.isEmpty()) {
             logger.info("No scope found for domain id[{}] name[{}]. Upgrading...", domain.getId(), domain.getName());
 
@@ -79,7 +81,8 @@ public class ScopeUpgrader implements Upgrader, Ordered {
     }
 
     private void createClientScopes(Domain domain) {
-        Set<Client> clients = clientService.findByDomain(domain.getId());
+        // TODO async call
+        Set<Client> clients = clientService.findByDomain(domain.getId()).blockingGet();
 
         if (clients != null) {
             clients.forEach(client -> {
@@ -91,7 +94,8 @@ public class ScopeUpgrader implements Upgrader, Ordered {
     }
 
     private void createRoleScopes(Domain domain) {
-        Set<Role> roles = roleService.findByDomain(domain.getId());
+        // TODO async call
+        Set<Role> roles = roleService.findByDomain(domain.getId()).blockingGet();
 
         if (roles != null) {
             roles.forEach(role -> {
@@ -103,7 +107,8 @@ public class ScopeUpgrader implements Upgrader, Ordered {
     }
 
     private void createScope(String domain, String scopeKey) {
-        Set<Scope> scopes = scopeService.findByDomain(domain);
+        // TODO async call
+        Set<Scope> scopes = scopeService.findByDomain(domain).blockingGet();
         Optional<Scope> optScope = scopes.stream().filter(scope -> scope.getKey().equalsIgnoreCase(scopeKey)).findFirst();
         if (!optScope.isPresent()) {
             logger.info("Create a new scope key[{}] for domain[{}]", scopeKey, domain);

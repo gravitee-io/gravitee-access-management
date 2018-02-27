@@ -17,7 +17,6 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -29,13 +28,7 @@ import java.util.Set;
  */
 public interface ScopeRepository extends CrudRepository<Scope, String> {
 
-    /**
-     * The full list of {@link Scope} for a domain.
-     *
-     * @return All {@link Scope}
-     * @throws TechnicalException
-     */
-    Single<Set<Scope>> findByDomain(String domain) throws TechnicalException;
+    Single<Set<Scope>> findByDomain(String domain);
 
-    Maybe<Scope> findByDomainAndKey(String domain, String key) throws TechnicalException;
+    Maybe<Scope> findByDomainAndKey(String domain, String key);
 }

@@ -25,6 +25,7 @@ import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.subscribers.DefaultSubscriber;
 import org.bson.Document;
@@ -64,8 +65,8 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
     @Override
     public Maybe<OAuth2Authentication> remove(String code) {
-        return Single.fromPublisher(oAuth2AuthorizationCodesCollection.findOneAndDelete(eq(FIELD_ID, code)))
-                .map(oAuth2AuthorizationCodeMongo -> deserializeAuthentication(oAuth2AuthorizationCodeMongo.getOAuth2Authentication())).toMaybe();
+        return Observable.fromPublisher(oAuth2AuthorizationCodesCollection.findOneAndDelete(eq(FIELD_ID, code)))
+                .map(oAuth2AuthorizationCodeMongo -> deserializeAuthentication(oAuth2AuthorizationCodeMongo.getOAuth2Authentication())).firstElement();
     }
 
     private Single<OAuth2AuthorizationCode> _findById(String id) {

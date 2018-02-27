@@ -16,49 +16,53 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.am.service.model.TopClient;
 import io.gravitee.am.service.model.TotalClient;
 import io.gravitee.am.service.model.UpdateClient;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface ClientService {
 
-    Client findById(String id);
+    Maybe<Client> findById(String id);
 
-    Client findByDomainAndClientId(String domain, String clientId);
+    Maybe<Client> findByDomainAndClientId(String domain, String clientId);
 
-    Page<Client> findByDomain(String domain, int page, int size);
+    Single<Page<Client>> findByDomain(String domain, int page, int size);
 
-    Set<Client> findByDomain(String domain);
+    Single<Set<Client>> findByDomain(String domain);
 
-    Client create(String domain, NewClient newClient);
+    Single<Client> create(String domain, NewClient newClient);
 
-    Client update(String domain, String id, UpdateClient updateClient);
+    Single<Client> update(String domain, String id, UpdateClient updateClient);
 
-    Set<Client> findByIdentityProvider(String identityProvider);
+    Single<Set<Client>> findByIdentityProvider(String identityProvider);
 
-    Set<Client> findByCertificate(String certificate);
+    Single<Set<Client>> findByCertificate(String certificate);
 
-    Set<Client> findByExtensionGrant(String tokenGranter);
+    Single<Set<Client>> findByExtensionGrant(String tokenGranter);
 
-    Set<Client> findAll();
+    Single<Set<Client>> findAll();
 
-    Page<Client> findAll(int page, int size);
+    Single<Page<Client>> findAll(int page, int size);
 
-    Set<TopClient> findTopClients();
+    Single<Set<TopClient>> findTopClients();
 
-    Set<TopClient> findTopClientsByDomain(String domain);
+    Single<Set<TopClient>> findTopClientsByDomain(String domain);
 
-    TotalClient findTotalClientsByDomain(String domain);
+    Single<TotalClient> findTotalClientsByDomain(String domain);
 
-    TotalClient findTotalClients();
+    Single<TotalClient> findTotalClients();
 
-    void delete(String clientId);
+    Single<Irrelevant> delete(String clientId);
 }

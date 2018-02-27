@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
-import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.service.model.plugin.ExtensionGrantPlugin;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -25,16 +24,15 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
 /**
- * Defines the REST resources to manage {@link ExtensionGrant}.
- *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
@@ -49,12 +47,16 @@ public class ExtensionGrantsPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List extension grants")
-    public Collection<ExtensionGrantPlugin> listTokenGranterPlugins() {
-        return extensionGrantPluginService.findAll()
-                .stream()
-                .sorted(Comparator.comparing(ExtensionGrantPlugin::getName))
-                .collect(Collectors.toList());
+    @ApiOperation(value = "List extension grant plugins")
+    public void list(@Suspended final AsyncResponse response) {
+        extensionGrantPluginService.findAll()
+                .map(extensionGrantPlugins -> extensionGrantPlugins.stream()
+                        .sorted(Comparator.comparing(ExtensionGrantPlugin::getName))
+                        .collect(Collectors.toList()))
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error)
+                );
     }
 
     @Path("{extensionGrant}")

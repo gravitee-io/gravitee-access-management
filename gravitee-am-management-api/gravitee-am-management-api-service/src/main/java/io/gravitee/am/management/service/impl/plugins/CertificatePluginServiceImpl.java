@@ -17,16 +17,16 @@ package io.gravitee.am.management.service.impl.plugins;
 
 import io.gravitee.am.management.certificate.core.CertificatePluginManager;
 import io.gravitee.am.management.service.CertificatePluginService;
-import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.CertificatePlugin;
 import io.gravitee.plugin.core.api.Plugin;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,40 +46,55 @@ public class CertificatePluginServiceImpl implements CertificatePluginService {
     private CertificatePluginManager certificatePluginManager;
 
     @Override
-    public Set<CertificatePlugin> findAll() {
-        try {
-            LOGGER.debug("List all certificates");
-            return certificatePluginManager.getAll()
-                    .stream()
-                    .map(this::convert)
-                    .collect(Collectors.toSet());
-        } catch (Exception ex) {
-            LOGGER.error("An error occurs while trying to list all certificates", ex);
-            throw new TechnicalManagementException("An error occurs while trying to list all certificates", ex);
-        }
+    public Single<Set<CertificatePlugin>> findAll() {
+        LOGGER.debug("List all certificate plugins");
+        return Single.create(emitter -> {
+            try {
+                emitter.onSuccess(certificatePluginManager.getAll()
+                        .stream()
+                        .map(this::convert)
+                        .collect(Collectors.toSet()));
+            } catch (Exception ex) {
+                LOGGER.error("An error occurs while trying to list all certificate plugins", ex);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to list all certificate plugins", ex));
+            }
+        });
     }
 
     @Override
-    public CertificatePlugin findById(String certificatePluginId) {
-        LOGGER.debug("Find certificate by ID: {}", certificatePluginId);
-        Plugin certificate = certificatePluginManager.findById(certificatePluginId);
-
-        if (certificate == null) {
-            throw new CertificateNotFoundException(certificatePluginId);
-        }
-
-        return convert(certificate);
+    public Maybe<CertificatePlugin> findById(String certificatePluginId) {
+        LOGGER.debug("Find certificate plugin by ID: {}", certificatePluginId);
+        return Maybe.create(emitter -> {
+            try {
+                Plugin certificate = certificatePluginManager.findById(certificatePluginId);
+                if (certificate != null) {
+                    emitter.onSuccess(convert(certificate));
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception ex) {
+                LOGGER.error("An error occurs while trying to get certificate plugin : {}", certificatePluginId, ex);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to get certificate plugin : " + certificatePluginId, ex));
+            }
+        });
     }
 
     @Override
-    public String getSchema(String certificatePluginId) {
-        try {
-            LOGGER.debug("Find certificate schema by ID: {}", certificatePluginId);
-            return certificatePluginManager.getSchema(certificatePluginId);
-        } catch (IOException ioex) {
-            LOGGER.error("An error occurs while trying to get schema for certificate {}", certificatePluginId, ioex);
-            throw new TechnicalManagementException("An error occurs while trying to get schema for certificate " + certificatePluginId, ioex);
-        }
+    public Maybe<String> getSchema(String certificatePluginId) {
+        LOGGER.debug("Find certificate plugin schema by ID: {}", certificatePluginId);
+        return Maybe.create(emitter -> {
+            try {
+                String schema = certificatePluginManager.getSchema(certificatePluginId);
+                if (schema != null) {
+                    emitter.onSuccess(schema);
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception e) {
+                LOGGER.error("An error occurs while trying to get schema for certificate plugin {}", certificatePluginId, e);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for certificate plugin " + certificatePluginId, e));
+            }
+        });
     }
 
     private CertificatePlugin convert(Plugin certificatePlugin) {

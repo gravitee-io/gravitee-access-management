@@ -16,26 +16,30 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface IdentityProviderService {
 
-    IdentityProvider findById(String id);
+    Maybe<IdentityProvider> findById(String id);
 
-    List<IdentityProvider> findByClient(String id);
+    Single<List<IdentityProvider>> findByClient(String id);
 
-    List<IdentityProvider> findByDomain(String domain);
+    Single<List<IdentityProvider>> findByDomain(String domain);
 
-    IdentityProvider create(String domain, NewIdentityProvider identityProvider);
+    Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider);
 
-    IdentityProvider update(String domain, String id, UpdateIdentityProvider updateIdentityProvider);
+    Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider);
 
-    void delete(String identityProviderId);
+    Single<Irrelevant> delete(String identityProviderId);
 }

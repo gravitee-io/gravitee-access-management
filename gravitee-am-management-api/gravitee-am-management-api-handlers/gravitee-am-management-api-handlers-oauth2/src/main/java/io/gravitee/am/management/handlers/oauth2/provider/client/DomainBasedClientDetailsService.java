@@ -39,7 +39,8 @@ public class DomainBasedClientDetailsService implements ClientDetailsService {
     @Override
     public org.springframework.security.oauth2.provider.ClientDetails loadClientByClientId(String clientId) throws ClientRegistrationException {
         try {
-            Client client = clientService.findByDomainAndClientId(domain.getId(), clientId);
+            // TODO async call
+            Client client = clientService.findByDomainAndClientId(domain.getId(), clientId).blockingGet();
 
             if (client != null && client.isEnabled()) {
                 return new DelegateClientDetails(client);

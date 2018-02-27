@@ -78,7 +78,7 @@ public class AuthenticationSuccessListenerTest {
     public void shouldUpdatedUser() {
         when(eventMock.getAuthentication()).thenReturn(authenticationMock);
         when(authenticationMock.getPrincipal()).thenReturn(userDetailsMock);
-        when(userServiceMock.loadUserByUsernameAndDomain(domainMock.getId(), userDetailsMock.getUsername())).thenReturn(repositoryUserMock);
+        //when(userServiceMock.loadUserByUsernameAndDomain(domainMock.getId(), userDetailsMock.getUsername())).thenReturn(repositoryUserMock);
 
         listener.onApplicationEvent(eventMock);
 

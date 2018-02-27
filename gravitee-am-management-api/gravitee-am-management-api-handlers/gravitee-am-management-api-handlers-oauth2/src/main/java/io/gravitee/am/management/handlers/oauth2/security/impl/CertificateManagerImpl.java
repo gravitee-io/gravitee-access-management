@@ -60,7 +60,8 @@ public class CertificateManagerImpl implements CertificateManager, InitializingB
     @Override
     public void afterPropertiesSet() throws Exception {
         logger.info("Initializing certificates for domain {}", domain.getName());
-        List<Certificate> certificates = certificateService.findByDomain(domain.getId());
+        // TODO async call
+        List<Certificate> certificates = certificateService.findByDomain(domain.getId()).blockingGet();
 
         certificates.forEach(certificate -> {
             logger.info("\tInitializing certificate: {} [{}]", certificate.getName(), certificate.getType());

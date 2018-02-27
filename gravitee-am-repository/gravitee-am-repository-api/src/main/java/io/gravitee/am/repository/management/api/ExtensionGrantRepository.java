@@ -17,11 +17,9 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -30,13 +28,7 @@ import java.util.Set;
  */
 public interface ExtensionGrantRepository extends CrudRepository<ExtensionGrant, String> {
 
-    /**
-     * The full list of {@link ExtensionGrant} for a domain.
-     *
-     * @return All {@link ExtensionGrant}
-     * @throws TechnicalException
-     */
-    Single<Set<ExtensionGrant>> findByDomain(String domain) throws TechnicalException;
+    Single<Set<ExtensionGrant>> findByDomain(String domain);
 
-    Maybe<ExtensionGrant> findByDomainAndGrantType(String domain, String grantType) throws TechnicalException;
+    Maybe<ExtensionGrant> findByDomainAndGrantType(String domain, String grantType);
 }

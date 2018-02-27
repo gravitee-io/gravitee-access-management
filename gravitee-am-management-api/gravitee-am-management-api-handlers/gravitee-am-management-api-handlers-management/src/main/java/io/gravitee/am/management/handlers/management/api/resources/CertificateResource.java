@@ -15,24 +15,30 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.management.service.CertificatePluginService;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Single;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -59,19 +65,36 @@ public class CertificateResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Certificate successfully fetched", response = Certificate.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response get(
+    public void get(
             @PathParam("domain") String domain,
-            @PathParam("certificate") String certificate) throws DomainNotFoundException {
-        domainService.findById(domain);
-
-        Certificate certificate1 = certificateService.findById(certificate);
-        if (!certificate1.getDomain().equalsIgnoreCase(domain)) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Certificate does not belong to domain")
-                    .build();
-        }
-        return Response.ok(certificate1).build();
+            @PathParam("certificate") String certificate,
+            @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .flatMapMaybe(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    } else {
+                        return certificateService.findById(certificate)
+                                .map(certificate1 -> {
+                                    if (!certificate1.getDomain().equalsIgnoreCase(domain)) {
+                                        return Response
+                                                .status(Response.Status.BAD_REQUEST)
+                                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                                                .entity(new ErrorEntity("Certificate does not belong to domain", Response.Status.BAD_REQUEST.getStatusCode()))
+                                                .build();
+                                    }
+                                    return Response.ok(certificate1).build();
+                                })
+                                .defaultIfEmpty(Response.status(Response.Status.NOT_FOUND)
+                                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                                        .entity(new ErrorEntity("Certificate [" + certificate + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
+                                        .build());
+                    }
+                })
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @GET
@@ -80,17 +103,19 @@ public class CertificateResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Certificate key successfully fetched", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response getPublicKey(@PathParam("domain") String domain, @PathParam("certificate") String certificate) {
-        CertificateProvider certificateProvider = certificateService.getCertificateProvider(domain, certificate);
-
-        if (certificateProvider == null) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("No certificate provider found for the certificate " + certificate)
-                    .build();
-        }
-
-        return Response.ok(certificateProvider.publicKey()).build();
+    public void getPublicKey(@PathParam("domain") String domain,
+                             @PathParam("certificate") String certificate,
+                             @Suspended final AsyncResponse response) {
+        certificateService.getCertificateProvider(domain, certificate)
+                .map(certificateProvider -> Response.ok(certificateProvider.publicKey()).build())
+                .defaultIfEmpty(Response
+                        .status(Response.Status.BAD_REQUEST)
+                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                        .entity(new ErrorEntity("No certificate provider found for the certificate " + certificate, Response.Status.BAD_REQUEST.getStatusCode()))
+                        .build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @PUT
@@ -100,16 +125,33 @@ public class CertificateResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Certificate successfully updated", response = Client.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Certificate updateCertificate(
+    public void updateCertificate(
             @PathParam("domain") String domain,
             @PathParam("certificate") String certificate,
-            @ApiParam(name = "certificate", required = true) @Valid @NotNull UpdateCertificate updateCertificate) {
-        domainService.findById(domain);
-
-        Certificate oldCertificate = certificateService.findById(certificate);
-        String schema = certificatePluginService.getSchema(oldCertificate.getType());
-
-        return certificateService.update(domain, certificate, updateCertificate, schema);
+            @ApiParam(name = "certificate", required = true) @Valid @NotNull UpdateCertificate updateCertificate,
+            @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .isEmpty()
+                .map(isEmpty -> {
+                    if (isEmpty) {
+                        throw new DomainNotFoundException(domain);
+                    }
+                    return Single.just(Irrelevant.DOMAIN);
+                })
+                .flatMap(irrelevant -> certificateService.findById(certificate)
+                        .map(certificate1 -> Optional.of(certificate1))
+                        .defaultIfEmpty(Optional.empty())
+                        .flatMapSingle(optionalCertificate -> {
+                            if (!optionalCertificate.isPresent()) {
+                                throw new CertificateNotFoundException(certificate);
+                            }
+                            return certificatePluginService.getSchema(optionalCertificate.get().getType()).toSingle();
+                        })
+                )
+                .flatMap(schema -> certificateService.update(domain, certificate, updateCertificate, schema))
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @DELETE
@@ -118,9 +160,13 @@ public class CertificateResource {
             @ApiResponse(code = 204, message = "Certificate successfully deleted"),
             @ApiResponse(code = 400, message = "Certificate is bind to existing clients"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response delete(@PathParam("domain") String domain, @PathParam("certificate") String certificate) {
-        certificateService.delete(certificate);
-
-        return Response.noContent().build();
+    public void delete(@PathParam("domain") String domain,
+                       @PathParam("certificate") String certificate,
+                       @Suspended final AsyncResponse response) {
+        certificateService.delete(certificate)
+                .map(irrelevant -> Response.noContent().build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 }

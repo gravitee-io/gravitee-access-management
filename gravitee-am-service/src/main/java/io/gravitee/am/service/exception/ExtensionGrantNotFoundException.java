@@ -21,14 +21,14 @@ package io.gravitee.am.service.exception;
  */
 public class ExtensionGrantNotFoundException extends AbstractNotFoundException {
 
-    private final String certificate;
+    private final String extensionGrant;
 
-    public ExtensionGrantNotFoundException(String certificate) {
-        this.certificate = certificate;
+    public ExtensionGrantNotFoundException(String extensionGrant) {
+        this.extensionGrant = extensionGrant;
     }
 
     @Override
     public String getMessage() {
-        return "Extension grant [" + certificate + "] can not be found.";
+        return "Extension grant [" + extensionGrant + "] can not be found.";
     }
 }
