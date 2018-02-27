@@ -30,4 +30,9 @@
     <packaging>pom</packaging>
 
     <name>Gravitee IO - Access Management - Gateway</name>
+
+    <modules>
+        <module>gravitee-am-gateway-handler</module>
+        <module>gravitee-am-gateway-standalone</module>
+    </modules>
 </project>
