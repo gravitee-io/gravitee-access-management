@@ -1,5 +1,6 @@
 package io.gravitee.am.gateway.handler.oauth2.token;
 
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 /**
@@ -8,7 +9,7 @@ import io.reactivex.Single;
  */
 public interface AccessTokenService {
 
-    Single<AccessToken> get();
+    Maybe<AccessToken> get();
 
     Single<AccessToken> create();
 
