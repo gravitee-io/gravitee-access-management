@@ -1,15 +1,16 @@
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
-import io.gravitee.am.gateway.handler.oauth2.OAuth2ErrorResponse;
+import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
-import io.gravitee.common.http.HttpHeaders;
-import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.vertx.request.TokenRequestFactory;
+import io.reactivex.functions.Consumer;
 import io.vertx.core.Handler;
-import io.vertx.core.json.Json;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
-
-import java.util.List;
 
 /**
  *
@@ -22,21 +23,35 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
 
     private TokenGranter tokenGranter;
 
+    private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
+
     @Override
     public void handle(RoutingContext context) {
-        // Check if a grant_type is defined
-        List<String> grantTypeQueryParameters = context.queryParam("grant_type");
-        if (grantTypeQueryParameters == null || grantTypeQueryParameters.isEmpty()) {
-            throw new InvalidRequestException();
-            /*
-            context.response()
-                    .setStatusCode(HttpStatusCode.BAD_REQUEST_400)
-                    .putHeader(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
-                    .end(Json.encodePrettily(new OAuth2ErrorResponse("invalid_request")));
-                    */
-        } else {
-            context.next();
+        TokenRequest tokenRequest = tokenRequestFactory.create(context.request());
+
+        User authenticatedUser = context.user();
+        if (authenticatedUser == null || ! (authenticatedUser instanceof Client)) {
+            throw new InvalidClientException();
         }
+
+        // Check if a grant_type is defined
+        if (tokenRequest.getGrantType() == null) {
+            throw new InvalidRequestException();
+        }
+
+        Client client = (Client) authenticatedUser;
+
+        // Check that authenticated user is matching the client_id
+        if (! client.getClientId().equals(tokenRequest.getClientId())) {
+            throw new InvalidClientException();
+        }
+
+        tokenGranter.grant(tokenRequest).subscribe(new Consumer<AccessToken>() {
+            @Override
+            public void accept(AccessToken accessToken) throws Exception {
+                context.response().end(accessToken.toString());
+            }
+        });
     }
 
     public TokenGranter getTokenGranter() {

@@ -1,6 +1,6 @@
-package io.gravitee.am.gateway.handler.oauth2.auth;
+package io.gravitee.am.gateway.handler.vertx.auth.handler;
 
-import io.gravitee.am.gateway.handler.oauth2.auth.impl.ClientAuthHandlerImpl;
+import io.gravitee.am.gateway.handler.vertx.auth.handler.impl.ClientCredentialsAuthHandlerImpl;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.web.handler.AuthHandler;
 
@@ -8,15 +8,15 @@ import io.vertx.ext.web.handler.AuthHandler;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ClientAuthHandler extends AuthHandler {
+public interface ClientCredentialsAuthHandler extends AuthHandler {
 
     /**
-     * Create an oauth2 client auth handler
+     * Create an oauth2 client auth handler based on request parameters.
      *
      * @param authProvider  the auth provider to use
      * @return the auth handler
      */
     static AuthHandler create(AuthProvider authProvider) {
-        return new ClientAuthHandlerImpl(authProvider);
+        return new ClientCredentialsAuthHandlerImpl(authProvider);
     }
 }
