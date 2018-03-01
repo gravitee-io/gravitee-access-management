@@ -3,9 +3,7 @@ package io.gravitee.am.gateway.handler.oauth2.granter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
 import io.reactivex.Single;
-import io.reactivex.functions.Function;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,18 +24,18 @@ public class CompositeTokenGranter implements TokenGranter {
     public Single<AccessToken> grant(TokenRequest tokenRequest) {
         return Observable
                 .fromIterable(tokenGranters)
-                .flatMap(new Function<TokenGranter, ObservableSource<? extends AccessToken>>() {
-                            @Override
-                            public ObservableSource<? extends AccessToken> apply(TokenGranter tokenGranter) throws Exception {
-                                return null; //tokenGranter.grant(tokenRequest);
-                            }
-                        })
-                .singleOrError();
+                .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType()))
+                .flatMapSingle(tokenGranter -> tokenGranter.grant(tokenRequest)).singleOrError();
     }
 
     public void addTokenGranter(TokenGranter tokenGranter) {
         Objects.requireNonNull(tokenGranter);
 
         tokenGranters.add(tokenGranter);
+    }
+
+    @Override
+    public boolean handle(String grantType) {
+        return true;
     }
 }

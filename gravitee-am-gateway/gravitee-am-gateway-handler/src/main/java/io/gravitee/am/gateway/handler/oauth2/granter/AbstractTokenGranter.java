@@ -8,6 +8,8 @@ import io.gravitee.am.model.Client;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
 
+import java.util.Objects;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -19,13 +21,19 @@ public class AbstractTokenGranter implements TokenGranter {
     private ClientService clientService;
 
     public AbstractTokenGranter(final String grantType) {
+        Objects.requireNonNull(grantType);
         this.grantType = grantType;
     }
 
     @Override
+    public boolean handle(String grantType) {
+        return this.grantType.equals(grantType);
+    }
+
+    @Override
     public Single<AccessToken> grant(TokenRequest tokenRequest) {
-        if (!this.grantType.equals(tokenRequest.getGrantType())) {
-            return null;
+        if (! this.grantType.equals(tokenRequest.getGrantType())) {
+            return Single.just(null);
         }
 
         return clientService.findByClientId(tokenRequest.getClientId())

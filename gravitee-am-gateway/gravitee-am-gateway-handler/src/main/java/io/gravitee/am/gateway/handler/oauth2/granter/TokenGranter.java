@@ -11,5 +11,7 @@ import io.reactivex.Single;
  */
 public interface TokenGranter {
 
+    boolean handle(String grantType);
+
     Single<AccessToken> grant(TokenRequest tokenRequest);
 }
