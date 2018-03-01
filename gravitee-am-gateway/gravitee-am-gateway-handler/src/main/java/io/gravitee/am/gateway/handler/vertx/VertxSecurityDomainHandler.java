@@ -1,9 +1,8 @@
 package io.gravitee.am.gateway.handler.vertx;
 
+import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
-import io.gravitee.am.gateway.handler.authentication.InMemoryAuthenticationProvider;
-import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.endpoint.AuthorizeEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.endpoint.TokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
@@ -28,14 +27,13 @@ public class VertxSecurityDomainHandler {
 
     public Router oauth2(Router router) {
         // Create the handlers
-        final AuthProvider authProvider = createAuthProvider();
 
         final AuthProvider clientAuthProvider = new ClientAuthenticationProvider();
         final AuthHandler clientAuthHandler = ChainAuthHandler.create()
                 .append(ClientCredentialsAuthHandler.create(clientAuthProvider))
                 .append(ClientBasicAuthHandler.create(clientAuthProvider));
 
-        setupCoreWebHandlers(router, authProvider);
+        setupCoreWebHandlers(router);
 
 //        final AuthHandler authHandler = RedirectAuthHandler.create(authProvider, loginURL);
 
@@ -67,15 +65,11 @@ public class VertxSecurityDomainHandler {
         return router;
     }
 
-    private void setupCoreWebHandlers(Router router, AuthProvider authProvider) {
+    private void setupCoreWebHandlers(Router router) {
         router.route().handler(CookieHandler.create());
         router.route().handler(BodyHandler.create());
         router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
-        router.route().handler(UserSessionHandler.create(authProvider));
-    }
-
-    private AuthProvider createAuthProvider() {
-        return InMemoryAuthenticationProvider.create();
+        //router.route().handler(UserSessionHandler.create(authProvider));
     }
 
     public void setVertx(Vertx vertx) {

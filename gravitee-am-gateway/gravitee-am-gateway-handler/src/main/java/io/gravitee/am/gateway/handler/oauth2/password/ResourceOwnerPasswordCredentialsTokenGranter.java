@@ -1,6 +1,7 @@
 package io.gravitee.am.gateway.handler.oauth2.password;
 
-import io.gravitee.am.gateway.handler.authentication.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
+import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
@@ -33,7 +34,8 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
         String username = parameters.getFirst("username");
         String password = parameters.getFirst("password");
 
-        userAuthenticationManager.authenticate(username, password).subscribe(new SingleObserver<Object>() {
+        userAuthenticationManager.authenticate(tokenRequest.getClientId(), new EndUserAuthentication(username, password))
+                .subscribe(new SingleObserver<Object>() {
             @Override
             public void onSubscribe(Disposable disposable) {
 
