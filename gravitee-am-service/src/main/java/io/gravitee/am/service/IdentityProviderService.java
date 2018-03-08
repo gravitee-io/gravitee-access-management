@@ -33,8 +33,6 @@ public interface IdentityProviderService {
 
     Maybe<IdentityProvider> findById(String id);
 
-    Single<List<IdentityProvider>> findByClient(String id);
-
     Single<List<IdentityProvider>> findByDomain(String domain);
 
     Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider);

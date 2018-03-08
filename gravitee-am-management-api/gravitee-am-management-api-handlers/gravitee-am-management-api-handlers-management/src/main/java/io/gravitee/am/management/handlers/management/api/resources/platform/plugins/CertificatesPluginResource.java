@@ -50,7 +50,7 @@ public class CertificatesPluginResource {
     @ApiOperation(value = "List certificate plugins")
     public void list(@Suspended final AsyncResponse response) {
         certificatePluginService.findAll()
-                .map(extensionGrantPlugins -> extensionGrantPlugins.stream()
+                .map(certificatePlugins -> certificatePlugins.stream()
                         .sorted(Comparator.comparing(CertificatePlugin::getName))
                         .collect(Collectors.toList()))
                 .subscribe(

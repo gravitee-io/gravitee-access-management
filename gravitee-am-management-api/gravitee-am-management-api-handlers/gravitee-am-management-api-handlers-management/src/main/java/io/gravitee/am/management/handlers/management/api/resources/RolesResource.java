@@ -21,6 +21,7 @@ import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -61,20 +62,15 @@ public class RolesResource extends AbstractResource {
     public void list(@PathParam("domain") String domain,
                      @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return roleService.findByDomain(domain)
-                                .map(roles -> {
-                                    List<Role> sortedRoles = roles.stream()
-                                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                                            .collect(Collectors.toList());
-                                    return Response.ok(sortedRoles).build();
-                                });
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> roleService.findByDomain(domain)
+                        .map(roles -> {
+                            List<Role> sortedRoles = roles.stream()
+                                    .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                                    .collect(Collectors.toList());
+                            return Response.ok(sortedRoles).build();
+                        })
+                )
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
@@ -93,18 +89,13 @@ public class RolesResource extends AbstractResource {
             @Valid @NotNull final NewRole newRole,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return roleService.create(domain, newRole)
-                                .map(role -> Response
-                                        .created(URI.create("/domains/" + domain + "/roles/" + role.getId()))
-                                        .entity(role)
-                                        .build());
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> roleService.create(domain, newRole)
+                            .map(role -> Response
+                                    .created(URI.create("/domains/" + domain + "/roles/" + role.getId()))
+                                    .entity(role)
+                                    .build())
+                )
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

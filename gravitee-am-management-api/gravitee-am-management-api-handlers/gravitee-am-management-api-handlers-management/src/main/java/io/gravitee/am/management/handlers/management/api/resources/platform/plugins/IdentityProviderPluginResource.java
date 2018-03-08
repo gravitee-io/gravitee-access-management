@@ -15,12 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
-import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
-import io.gravitee.am.model.Irrelevant;
-import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
+import io.gravitee.am.management.service.exception.IdentityProviderPluginNotFoundException;
+import io.gravitee.am.management.service.exception.IdentityProviderPluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
+import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -56,12 +55,8 @@ public class IdentityProviderPluginResource {
             @PathParam("identity") String identityProviderId,
             @Suspended final AsyncResponse response) {
         identityProviderPluginService.findById(identityProviderId)
+                .switchIfEmpty(Maybe.error(new IdentityProviderPluginNotFoundException(identityProviderId)))
                 .map(identityProviderPlugin -> Response.ok(identityProviderPlugin).build())
-                .defaultIfEmpty(Response
-                        .status(Response.Status.NOT_FOUND)
-                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                        .entity(new ErrorEntity("Identity Provider Plugin [" + identityProviderId + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
-                        .build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
@@ -76,20 +71,10 @@ public class IdentityProviderPluginResource {
             @Suspended final AsyncResponse response) {
         // Check that the identity provider exists
         identityProviderPluginService.findById(identityProviderId)
-                .isEmpty()
-                .map(isEmpty -> {
-                    if (isEmpty) {
-                        throw new IdentityProviderNotFoundException(identityProviderId);
-                    }
-                    return Single.just(Irrelevant.IDENTITY_PROVIDER);
-                })
-                .flatMapMaybe(irrelevant -> identityProviderPluginService.getSchema(identityProviderId)
-                        .map(identityProviderPluginSchema -> Response.ok(identityProviderPluginSchema).build())
-                        .defaultIfEmpty(Response
-                                .status(Response.Status.NOT_FOUND)
-                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                .entity(new ErrorEntity("Identity Provider Plugin Schema [" + identityProviderId + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
-                                .build()))
+                .switchIfEmpty(Maybe.error(new IdentityProviderPluginNotFoundException(identityProviderId)))
+                .flatMap(irrelevant -> identityProviderPluginService.getSchema(identityProviderId))
+                .switchIfEmpty(Maybe.error(new IdentityProviderPluginSchemaNotFoundException(identityProviderId)))
+                .map(identityProviderPluginSchema -> Response.ok(identityProviderPluginSchema).build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error)

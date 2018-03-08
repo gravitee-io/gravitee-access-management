@@ -22,6 +22,7 @@ import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewScope;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -89,18 +90,13 @@ public class ScopesResource extends AbstractResource {
             @Valid @NotNull final NewScope newScope,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return scopeService.create(domain, newScope)
-                                .map(scope -> Response
-                                        .created(URI.create("/domains/" + domain + "/scopes/" + scope.getId()))
-                                        .entity(scope)
-                                        .build());
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> scopeService.create(domain, newScope)
+                        .map(scope -> Response
+                                .created(URI.create("/domains/" + domain + "/scopes/" + scope.getId()))
+                                .entity(scope)
+                                .build())
+                )
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

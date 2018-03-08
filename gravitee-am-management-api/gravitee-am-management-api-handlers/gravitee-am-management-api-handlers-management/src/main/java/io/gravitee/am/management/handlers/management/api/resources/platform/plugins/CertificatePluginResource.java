@@ -15,12 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
-import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.management.service.CertificatePluginService;
-import io.gravitee.am.model.Irrelevant;
-import io.gravitee.am.service.exception.ExtensionGrantNotFoundException;
+import io.gravitee.am.management.service.exception.CertificatePluginNotFoundException;
+import io.gravitee.am.management.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
+import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -51,16 +50,12 @@ public class CertificatePluginResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get an certificate plugin")
-    public void getCertificatePlugin(
+    public void get(
             @PathParam("certificate") String certificateId,
             @Suspended final AsyncResponse response) {
         certificatePluginService.findById(certificateId)
                 .map(extensionGrantPlugin -> Response.ok(certificateId).build())
-                .defaultIfEmpty(Response
-                        .status(Response.Status.NOT_FOUND)
-                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                        .entity(new ErrorEntity("Certificate Plugin [" + certificateId + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
-                        .build())
+                .switchIfEmpty(Maybe.error(new CertificatePluginNotFoundException(certificateId)))
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
@@ -70,25 +65,15 @@ public class CertificatePluginResource {
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get an certificate's schema")
-    public void getCertificateSchema(
+    public void getSchema(
             @PathParam("certificate") String certificateId,
             @Suspended final AsyncResponse response) {
         // Check that the certificate exists
         certificatePluginService.findById(certificateId)
-                .isEmpty()
-                .map(isEmpty -> {
-                    if (isEmpty) {
-                        throw new ExtensionGrantNotFoundException(certificateId);
-                    }
-                    return Single.just(Irrelevant.EXTENSION_GRANT);
-                })
-                .flatMapMaybe(irrelevant -> certificatePluginService.getSchema(certificateId)
-                        .map(certificatePluginSchema -> Response.ok(certificatePluginSchema).build())
-                        .defaultIfEmpty(Response
-                                .status(Response.Status.NOT_FOUND)
-                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                .entity(new ErrorEntity("Certificate Plugin Schema [" + certificateId + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
-                                .build()))
+                .switchIfEmpty(Maybe.error(new CertificatePluginNotFoundException(certificateId)))
+                .flatMap(irrelevant -> certificatePluginService.getSchema(certificateId))
+                .switchIfEmpty(Maybe.error(new CertificatePluginSchemaNotFoundException(certificateId)))
+                .map(certificatePluginSchema -> Response.ok(certificatePluginSchema).build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error)

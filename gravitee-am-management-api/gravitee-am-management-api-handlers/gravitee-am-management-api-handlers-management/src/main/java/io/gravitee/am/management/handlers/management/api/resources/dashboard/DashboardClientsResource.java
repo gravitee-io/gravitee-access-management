@@ -27,6 +27,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.TopClient;
 import io.gravitee.am.service.model.TotalClient;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -37,7 +38,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -75,21 +79,17 @@ public class DashboardClientsResource extends AbstractResource {
 
         if (domainId != null) {
             singleDashboardClients = domainService.findById(domainId)
-                    .map(domain -> Optional.of(domain))
-                    .defaultIfEmpty(Optional.empty())
-                    .flatMapSingle(optionalDomain -> {
-                        if (!optionalDomain.isPresent()) {
-                            throw new DomainNotFoundException(domainId);
-                        }
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                    .flatMapSingle(domain -> {
                         Map<String, Domain> domains = new HashMap<>();
-                        domains.put(domainId, optionalDomain.get());
+                        domains.put(domainId, domain);
                         return clientService.findByDomain(domainId, page, selectedSize)
                                 .map(pagedClients -> new AbstractMap.SimpleEntry<>(pagedClients, domains));
                     });
         } else {
             singleDashboardClients = clientService.findAll(page, selectedSize)
                    .flatMap(pagedClients -> {
-                       List<String> domainIds = pagedClients.getData().stream().map(c -> c.getDomain()).collect(Collectors.toList());
+                       Set<String> domainIds = pagedClients.getData().stream().map(c -> c.getDomain()).collect(Collectors.toSet());
                        return domainService.findByIdIn(domainIds)
                                .map(domains -> domains.stream().collect(Collectors.toMap(Domain::getId, Function.identity())))
                                .map(domainsMap -> new AbstractMap.SimpleEntry<>(pagedClients, domainsMap));
@@ -123,21 +123,17 @@ public class DashboardClientsResource extends AbstractResource {
         Single<AbstractMap.SimpleEntry<Set<TopClient>, Map<String, Domain>>> singleDashboardTopClients;
         if (domainId != null) {
             singleDashboardTopClients = domainService.findById(domainId)
-                    .map(domain -> Optional.of(domain))
-                    .defaultIfEmpty(Optional.empty())
-                    .flatMapSingle(optionalDomain -> {
-                        if (!optionalDomain.isPresent()) {
-                            throw new DomainNotFoundException(domainId);
-                        }
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                    .flatMapSingle(domain -> {
                         Map<String, Domain> domains = new HashMap<>();
-                        domains.put(domainId, optionalDomain.get());
+                        domains.put(domainId, domain);
                         return clientService.findTopClientsByDomain(domainId)
                                 .map(topClients -> new AbstractMap.SimpleEntry<>(topClients, domains));
                     });
         } else {
             singleDashboardTopClients = clientService.findTopClients()
                     .flatMap(topClients -> {
-                        List<String> domainIds = topClients.stream().map(c -> c.getClient().getDomain()).collect(Collectors.toList());
+                        Set<String> domainIds = topClients.stream().map(c -> c.getClient().getDomain()).collect(Collectors.toSet());
                         return domainService.findByIdIn(domainIds)
                                 .map(domains -> domains.stream().collect(Collectors.toMap(Domain::getId, Function.identity())))
                                 .map(domainsMap -> new AbstractMap.SimpleEntry<>(topClients, domainsMap));

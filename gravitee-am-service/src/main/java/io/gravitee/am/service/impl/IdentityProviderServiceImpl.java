@@ -74,17 +74,6 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Single<List<IdentityProvider>> findByClient(String id) {
-        LOGGER.debug("Find identity providers by client: {}", id);
-        return identityProviderRepository.findByDomain(id)
-                .map(identityProviders -> (List<IdentityProvider>) new ArrayList<>(identityProviders))
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find identity providers by client", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find identity providers by client", ex));
-                });
-    }
-
-    @Override
     public Single<List<IdentityProvider>> findByDomain(String domain) {
         LOGGER.debug("Find identity providers by domain: {}", domain);
         return identityProviderRepository.findByDomain(domain)

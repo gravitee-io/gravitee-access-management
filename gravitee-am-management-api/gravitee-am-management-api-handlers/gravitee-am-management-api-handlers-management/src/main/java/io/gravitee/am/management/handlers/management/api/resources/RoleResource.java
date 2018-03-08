@@ -15,13 +15,14 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -61,27 +62,14 @@ public class RoleResource {
             @PathParam("role") String role,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMapMaybe(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return roleService.findById(role)
-                                .map(role1 -> {
-                                    if (!role1.getDomain().equalsIgnoreCase(domain)) {
-                                        return Response
-                                                .status(Response.Status.BAD_REQUEST)
-                                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                                .entity(new ErrorEntity("Role does not belong to domain", Response.Status.BAD_REQUEST.getStatusCode()))
-                                                .build();
-                                    }
-                                    return Response.ok(role1).build();
-                                })
-                                .defaultIfEmpty(Response.status(Response.Status.NOT_FOUND)
-                                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                        .entity(new ErrorEntity("Role [" + role + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
-                                        .build());
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMap(irrelevant -> roleService.findById(role))
+                .switchIfEmpty(Maybe.error(new RoleNotFoundException(role)))
+                .map(role1 -> {
+                    if (!role1.getDomain().equalsIgnoreCase(domain)) {
+                        throw new BadRequestException("Role does not belong to domain");
                     }
+                    return Response.ok(role1).build();
                 })
                 .subscribe(
                         result -> response.resume(result),
@@ -101,14 +89,8 @@ public class RoleResource {
             @ApiParam(name = "certificate", required = true) @Valid @NotNull UpdateRole updateRole,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return roleService.update(domain, role, updateRole);
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> roleService.update(domain, role, updateRole))
                 .map(role1 -> Response.ok(role1).build())
                 .subscribe(
                         result -> response.resume(result),

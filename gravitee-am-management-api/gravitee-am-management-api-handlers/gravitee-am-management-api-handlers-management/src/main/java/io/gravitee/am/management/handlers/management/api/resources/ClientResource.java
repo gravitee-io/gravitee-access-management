@@ -15,13 +15,14 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateClient;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -29,9 +30,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 /**
@@ -48,9 +47,6 @@ public class ClientResource extends AbstractResource {
     @Autowired
     private DomainService domainService;
 
-    @Context
-    private ResourceContext resourceContext;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a client")
@@ -62,27 +58,14 @@ public class ClientResource extends AbstractResource {
             @PathParam("client") String client,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMapMaybe(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return clientService.findById(client)
-                                .map(client1 -> {
-                                    if (!client1.getDomain().equalsIgnoreCase(domain)) {
-                                        return Response
-                                                .status(Response.Status.BAD_REQUEST)
-                                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                                .entity(new ErrorEntity("Client does not belong to domain", Response.Status.BAD_REQUEST.getStatusCode()))
-                                                .build();
-                                    }
-                                    return Response.ok(client1).build();
-                                })
-                                .defaultIfEmpty(Response.status(Response.Status.NOT_FOUND)
-                                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                        .entity(new ErrorEntity("Client [" + client + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
-                                        .build());
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMap(irrelevant -> clientService.findById(client))
+                .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
+                .map(client1 -> {
+                    if (!client1.getDomain().equalsIgnoreCase(domain)) {
+                        throw new BadRequestException("Client does not belong to domain");
                     }
+                    return Response.ok(client1).build();
                 })
                 .subscribe(
                         result -> response.resume(result),
@@ -102,15 +85,9 @@ public class ClientResource extends AbstractResource {
             @ApiParam(name = "client", required = true) @Valid @NotNull UpdateClient updateClient,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return clientService.update(domain, client, updateClient);
-                    }
-                })
-                .map(extensionGrant1 -> Response.ok(extensionGrant1).build())
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> clientService.update(domain, client, updateClient))
+                .map(client1 -> Response.ok(client1).build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
@@ -129,11 +106,5 @@ public class ClientResource extends AbstractResource {
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
-    }
-
-    @GET
-    @Path("identities")
-    public ClientIdentityProvidersResource getClientIdentityProvidersResource() {
-        return resourceContext.getResource(ClientIdentityProvidersResource.class);
     }
 }

@@ -15,18 +15,17 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.management.service.CertificatePluginService;
+import io.gravitee.am.management.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -38,7 +37,6 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -70,27 +68,14 @@ public class CertificateResource {
             @PathParam("certificate") String certificate,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMapMaybe(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return certificateService.findById(certificate)
-                                .map(certificate1 -> {
-                                    if (!certificate1.getDomain().equalsIgnoreCase(domain)) {
-                                        return Response
-                                                .status(Response.Status.BAD_REQUEST)
-                                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                                .entity(new ErrorEntity("Certificate does not belong to domain", Response.Status.BAD_REQUEST.getStatusCode()))
-                                                .build();
-                                    }
-                                    return Response.ok(certificate1).build();
-                                })
-                                .defaultIfEmpty(Response.status(Response.Status.NOT_FOUND)
-                                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                        .entity(new ErrorEntity("Certificate [" + certificate + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
-                                        .build());
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMap(irrelevant -> certificateService.findById(certificate))
+                .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificate)))
+                .map(certificate1 -> {
+                    if (!certificate1.getDomain().equalsIgnoreCase(domain)) {
+                        throw new BadRequestException("Certificate does not belong to domain");
                     }
+                    return Response.ok(certificate1).build();
                 })
                 .subscribe(
                         result -> response.resume(result),
@@ -108,11 +93,7 @@ public class CertificateResource {
                              @Suspended final AsyncResponse response) {
         certificateService.getCertificateProvider(domain, certificate)
                 .map(certificateProvider -> Response.ok(certificateProvider.publicKey()).build())
-                .defaultIfEmpty(Response
-                        .status(Response.Status.BAD_REQUEST)
-                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                        .entity(new ErrorEntity("No certificate provider found for the certificate " + certificate, Response.Status.BAD_REQUEST.getStatusCode()))
-                        .build())
+                .switchIfEmpty(Maybe.error(new BadRequestException("No certificate provider found for the certificate " + certificate)))
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
@@ -131,24 +112,13 @@ public class CertificateResource {
             @ApiParam(name = "certificate", required = true) @Valid @NotNull UpdateCertificate updateCertificate,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .map(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    }
-                    return Single.just(Irrelevant.DOMAIN);
-                })
-                .flatMap(irrelevant -> certificateService.findById(certificate)
-                        .map(certificate1 -> Optional.of(certificate1))
-                        .defaultIfEmpty(Optional.empty())
-                        .flatMapSingle(optionalCertificate -> {
-                            if (!optionalCertificate.isPresent()) {
-                                throw new CertificateNotFoundException(certificate);
-                            }
-                            return certificatePluginService.getSchema(optionalCertificate.get().getType()).toSingle();
-                        })
-                )
-                .flatMap(schema -> certificateService.update(domain, certificate, updateCertificate, schema))
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMap(irrelevant -> certificateService.findById(certificate))
+                .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificate)))
+                .flatMap(certificate1 ->  certificatePluginService.getSchema(certificate1.getType()))
+                .switchIfEmpty(Maybe.error(new CertificatePluginSchemaNotFoundException(certificate)))
+                .flatMapSingle(schema -> certificateService.update(domain, certificate, updateCertificate, schema))
+                .map(certificate1 -> Response.ok(certificate1).build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

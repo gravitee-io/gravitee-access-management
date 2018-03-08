@@ -40,9 +40,9 @@ public class UserNotFoundException extends AbstractNotFoundException {
     @Override
     public String getMessage() {
         if (id != null) {
-            return "User[" + id + "] can not be found.";
+            return "User [" + id + "] can not be found.";
         } else {
-            return "User[" + username + "] can not be found for domain[" + domain + "].";
+            return "User [" + username + "] can not be found for domain[" + domain + "].";
         }
     }
 }

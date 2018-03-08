@@ -15,13 +15,14 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.ExtensionGrantNotFoundException;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -61,27 +62,14 @@ public class ExtensionGrantResource {
             @PathParam("extensionGrant") String extensionGrant,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMapMaybe(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return extensionGrantService.findById(extensionGrant)
-                                .map(extensionGrant1 -> {
-                                    if (!extensionGrant1.getDomain().equalsIgnoreCase(domain)) {
-                                        return Response
-                                                .status(Response.Status.BAD_REQUEST)
-                                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                                .entity(new ErrorEntity("Extension grant does not belong to domain", Response.Status.BAD_REQUEST.getStatusCode()))
-                                                .build();
-                                    }
-                                    return Response.ok(extensionGrant1).build();
-                                })
-                                .defaultIfEmpty(Response.status(Response.Status.NOT_FOUND)
-                                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                        .entity(new ErrorEntity("Extension grant [" + extensionGrant + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
-                                        .build());
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMap(irrelevant -> extensionGrantService.findById(extensionGrant))
+                .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrant)))
+                .map(extensionGrant1 -> {
+                    if (!extensionGrant1.getDomain().equalsIgnoreCase(domain)) {
+                        throw new BadRequestException("Extension grant does not belong to domain");
                     }
+                    return Response.ok(extensionGrant1).build();
                 })
                 .subscribe(
                         result -> response.resume(result),
@@ -101,14 +89,8 @@ public class ExtensionGrantResource {
             @ApiParam(name = "tokenGranter", required = true) @Valid @NotNull UpdateExtensionGrant updateExtensionGrant,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return extensionGrantService.update(domain, extensionGrant, updateExtensionGrant);
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> extensionGrantService.update(domain, extensionGrant, updateExtensionGrant))
                 .map(extensionGrant1 -> Response.ok(extensionGrant1).build())
                 .subscribe(
                         result -> response.resume(result),

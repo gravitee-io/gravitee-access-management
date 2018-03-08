@@ -16,12 +16,14 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.service.CertificatePluginService;
+import io.gravitee.am.management.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -65,20 +67,15 @@ public class CertificatesResource extends AbstractResource {
     public void list(@PathParam("domain") String domain,
                      @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return certificateService.findByDomain(domain)
-                                .map(certificates -> {
-                                    List<Certificate> sortedCertificates = certificates.stream()
-                                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                                            .collect(Collectors.toList());
-                                    return Response.ok(sortedCertificates).build();
-                                });
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> certificateService.findByDomain(domain)
+                        .map(certificates -> {
+                            List<Certificate> sortedCertificates = certificates.stream()
+                                    .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                                    .collect(Collectors.toList());
+                            return Response.ok(sortedCertificates).build();
+                        })
+                )
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
@@ -97,19 +94,15 @@ public class CertificatesResource extends AbstractResource {
             @Valid @NotNull final NewCertificate newCertificate,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return certificatePluginService.getSchema(newCertificate.getType())
-                                .flatMapSingle(schema -> certificateService.create(domain, newCertificate, schema)
-                                .map(certificate -> Response
-                                        .created(URI.create("/domains/" + domain + "/certificates/" + certificate.getId()))
-                                        .entity(certificate)
-                                        .build()));
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMap(irrelevant -> certificatePluginService.getSchema(newCertificate.getType()))
+                .switchIfEmpty(Maybe.error(new CertificatePluginSchemaNotFoundException(newCertificate.getType())))
+                .flatMapSingle(schema -> certificateService.create(domain, newCertificate, schema))
+                .map(certificate -> Response
+                                .created(URI.create("/domains/" + domain + "/certificates/" + certificate.getId()))
+                                .entity(certificate)
+                                .build()
+                )
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

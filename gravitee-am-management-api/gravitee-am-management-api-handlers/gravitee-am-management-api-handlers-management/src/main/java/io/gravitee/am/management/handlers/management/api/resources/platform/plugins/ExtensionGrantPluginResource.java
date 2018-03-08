@@ -15,12 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
-import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
-import io.gravitee.am.model.Irrelevant;
-import io.gravitee.am.service.exception.ExtensionGrantNotFoundException;
+import io.gravitee.am.management.service.exception.ExtensionGrantPluginNotFoundException;
+import io.gravitee.am.management.service.exception.ExtensionGrantPluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
+import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -55,12 +54,8 @@ public class ExtensionGrantPluginResource {
             @PathParam("extensionGrant") String extensionGrantId,
             @Suspended final AsyncResponse response) {
         extensionGrantPluginService.findById(extensionGrantId)
+                .switchIfEmpty(Maybe.error(new ExtensionGrantPluginNotFoundException(extensionGrantId)))
                 .map(extensionGrantPlugin -> Response.ok(extensionGrantPlugin).build())
-                .defaultIfEmpty(Response
-                        .status(Response.Status.NOT_FOUND)
-                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                        .entity(new ErrorEntity("Extension grant Plugin [" + extensionGrantId + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
-                        .build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
@@ -74,20 +69,10 @@ public class ExtensionGrantPluginResource {
                             @Suspended final AsyncResponse response) {
         // Check that the extension grant exists
         extensionGrantPluginService.findById(extensionGrantId)
-                .isEmpty()
-                .map(isEmpty -> {
-                    if (isEmpty) {
-                        throw new ExtensionGrantNotFoundException(extensionGrantId);
-                    }
-                    return Single.just(Irrelevant.EXTENSION_GRANT);
-                })
-                .flatMapMaybe(irrelevant -> extensionGrantPluginService.getSchema(extensionGrantId)
-                        .map(extensionGrantPluginSchema -> Response.ok(extensionGrantPluginSchema).build())
-                        .defaultIfEmpty(Response
-                                .status(Response.Status.NOT_FOUND)
-                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                .entity(new ErrorEntity("Extension grant Plugin Schema [" + extensionGrantId + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
-                                .build()))
+                .switchIfEmpty(Maybe.error(new ExtensionGrantPluginNotFoundException(extensionGrantId)))
+                .flatMap(irrelevant -> extensionGrantPluginService.getSchema(extensionGrantId))
+                .switchIfEmpty(Maybe.error(new ExtensionGrantPluginSchemaNotFoundException(extensionGrantId)))
+                .map(extensionGrantPluginSchema -> Response.ok(extensionGrantPluginSchema).build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error)

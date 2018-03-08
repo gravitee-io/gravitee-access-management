@@ -15,14 +15,15 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -63,38 +64,29 @@ public class UserResource {
     public void get(
             @PathParam("domain") String domain,
             @PathParam("user") String user,
-            @Suspended final AsyncResponse response) throws DomainNotFoundException {
+            @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMapMaybe(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return userService.findById(user)
-                                .map(user1 -> {
-                                    if (!user1.getDomain().equalsIgnoreCase(domain)) {
-                                        return Response
-                                                .status(Response.Status.BAD_REQUEST)
-                                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                                .entity(new ErrorEntity("User does not belong to domain", Response.Status.BAD_REQUEST.getStatusCode()))
-                                                .build();
-                                    }
-                                    // TODO
-                                    /*if (user1.getSource() != null){
-                                        return identityProviderService.findById(user1.getSource())
-                                                .map(idP -> {
-                                                    user1.setSource(idP.getName());
-                                                    return Response.ok(user1).build();
-                                                });
-                                    }*/
-                                    return Response.ok(user1).build();
-                                })
-                                .defaultIfEmpty(Response.status(Response.Status.NOT_FOUND)
-                                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                        .entity(new ErrorEntity("User[" + user + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
-                                        .build());
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMap(irrelevant -> userService.findById(user))
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
+                .flatMap(user1 -> {
+                    if (!user1.getDomain().equalsIgnoreCase(domain)) {
+                        throw new BadRequestException("User does not belong to domain");
                     }
+                    return Maybe.just(user1);
                 })
+                .flatMap(user1 -> {
+                    if (user1.getSource() != null){
+                        return identityProviderService.findById(user1.getSource())
+                                .map(idP -> {
+                                    user1.setSource(idP.getName());
+                                    return user1;
+                                })
+                                .defaultIfEmpty(user1);
+                    }
+                    return Maybe.just(user1);
+                })
+                .map(user1 -> Response.ok(user1).build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

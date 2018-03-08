@@ -15,14 +15,15 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.ScopeNotFoundException;
 import io.gravitee.am.service.model.UpdateScope;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -63,27 +64,14 @@ public class ScopeResource extends AbstractResource {
             @PathParam("scope") String scopeId,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMapMaybe(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return scopeService.findById(scopeId)
-                                .map(scope -> {
-                                    if (!scope.getDomain().equalsIgnoreCase(domain)) {
-                                        return Response
-                                                .status(Response.Status.BAD_REQUEST)
-                                                .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                                .entity(new ErrorEntity("Scope does not belong to domain", Response.Status.BAD_REQUEST.getStatusCode()))
-                                                .build();
-                                    }
-                                    return Response.ok(scope).build();
-                                })
-                                .defaultIfEmpty(Response.status(Response.Status.NOT_FOUND)
-                                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                                        .entity(new ErrorEntity("Scope [" + scopeId + "] can not be found.", Response.Status.NOT_FOUND.getStatusCode()))
-                                        .build());
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMap(irrelevant -> scopeService.findById(scopeId))
+                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
+                .map(scope -> {
+                    if (!scope.getDomain().equalsIgnoreCase(domain)) {
+                        throw new BadRequestException("Scope does not belong to domain");
                     }
+                    return Response.ok(scope).build();
                 })
                 .subscribe(
                         result -> response.resume(result),
@@ -103,14 +91,8 @@ public class ScopeResource extends AbstractResource {
             @ApiParam(name = "scope", required = true) @Valid @NotNull UpdateScope updateScope,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return scopeService.update(domain, scope, updateScope);
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> scopeService.update(domain, scope, updateScope))
                 .map(scope1 -> Response.ok(scope1).build())
                 .subscribe(
                         result -> response.resume(result),

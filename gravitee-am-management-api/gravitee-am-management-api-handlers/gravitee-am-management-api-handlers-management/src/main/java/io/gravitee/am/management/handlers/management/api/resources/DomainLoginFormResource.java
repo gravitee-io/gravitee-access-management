@@ -19,7 +19,9 @@ import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateLoginForm;
+import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -49,9 +51,10 @@ public class DomainLoginFormResource {
             @ApiResponse(code = 500, message = "Internal server error")})
     public void getDomainLoginForm(@PathParam("domain") String domainId, @Suspended final AsyncResponse response) throws DomainNotFoundException {
         domainService.findById(domainId)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .map(domain -> {
                     if (domain.getLoginForm() == null) {
-                        return Response.status(Response.Status.NOT_FOUND).build();
+                        return Response.status(HttpStatusCode.NOT_FOUND_404).build();
                     } else {
                         return Response.ok(domain.getLoginForm()).build();
                     }

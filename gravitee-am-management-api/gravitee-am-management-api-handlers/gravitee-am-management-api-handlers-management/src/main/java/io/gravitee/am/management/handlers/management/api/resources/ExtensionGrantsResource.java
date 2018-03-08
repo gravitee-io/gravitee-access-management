@@ -21,6 +21,7 @@ import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -61,20 +62,15 @@ public class ExtensionGrantsResource extends AbstractResource {
     public void list(@PathParam("domain") String domain,
                      @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return extensionGrantService.findByDomain(domain)
-                                .map(extensionGrants -> {
-                                    List<ExtensionGrant> sortedExtensionGrants = extensionGrants.stream()
-                                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                                            .collect(Collectors.toList());
-                                    return Response.ok(sortedExtensionGrants).build();
-                                });
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> extensionGrantService.findByDomain(domain)
+                            .map(extensionGrants -> {
+                                List<ExtensionGrant> sortedExtensionGrants = extensionGrants.stream()
+                                        .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                                        .collect(Collectors.toList());
+                                return Response.ok(sortedExtensionGrants).build();
+                            })
+                )
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
@@ -93,18 +89,13 @@ public class ExtensionGrantsResource extends AbstractResource {
             @Valid @NotNull final NewExtensionGrant newExtensionGrant,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return extensionGrantService.create(domain, newExtensionGrant)
-                                .map(extensionGrant -> Response
-                                        .created(URI.create("/domains/" + domain + "/extensionGrants/" + extensionGrant.getId()))
-                                        .entity(extensionGrant)
-                                        .build());
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> extensionGrantService.create(domain, newExtensionGrant)
+                            .map(extensionGrant -> Response
+                                    .created(URI.create("/domains/" + domain + "/extensionGrants/" + extensionGrant.getId()))
+                                    .entity(extensionGrant)
+                                    .build())
+                )
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

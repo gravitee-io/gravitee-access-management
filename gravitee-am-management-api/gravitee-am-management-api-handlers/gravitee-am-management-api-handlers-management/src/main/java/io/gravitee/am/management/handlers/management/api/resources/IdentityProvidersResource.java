@@ -21,6 +21,7 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -62,20 +63,15 @@ public class IdentityProvidersResource extends AbstractResource {
     public void list(@PathParam("domain") String domain,
                      @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return identityProviderService.findByDomain(domain)
-                                .map(identities -> {
-                                    List<IdentityProvider> sortedIdentityProviders = identities.stream()
-                                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                                            .collect(Collectors.toList());
-                                    return Response.ok(sortedIdentityProviders).build();
-                                });
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> identityProviderService.findByDomain(domain)
+                        .map(identities -> {
+                            List<IdentityProvider> sortedIdentityProviders = identities.stream()
+                                    .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                                    .collect(Collectors.toList());
+                            return Response.ok(sortedIdentityProviders).build();
+                        })
+                )
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
@@ -94,18 +90,13 @@ public class IdentityProvidersResource extends AbstractResource {
             @Valid @NotNull final NewIdentityProvider newIdentityProvider,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return identityProviderService.create(domain, newIdentityProvider)
-                                .map(identityProvider -> Response
-                                        .created(URI.create("/domains/" + domain + "/identities/" + identityProvider.getId()))
-                                        .entity(identityProvider)
-                                        .build());
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> identityProviderService.create(domain, newIdentityProvider)
+                        .map(identityProvider -> Response
+                                .created(URI.create("/domains/" + domain + "/identities/" + identityProvider.getId()))
+                                .entity(identityProvider)
+                                .build())
+                )
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

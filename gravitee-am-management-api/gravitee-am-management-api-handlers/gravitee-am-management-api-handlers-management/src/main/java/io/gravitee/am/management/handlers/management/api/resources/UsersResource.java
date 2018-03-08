@@ -23,6 +23,7 @@ import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.swagger.annotations.*;
@@ -70,32 +71,27 @@ public class UsersResource extends AbstractResource {
                                 @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
                                 @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return userService.findByDomain(domain, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE))
-                                .flatMap(pagedUsers ->
-                                        Observable.fromIterable(pagedUsers.getData())
-                                            .flatMapSingle(user -> {
-                                                if (user.getSource() != null) {
-                                                    return identityProviderService.findById(user.getSource())
-                                                            .map(idP -> {
-                                                                user.setSource(idP.getName());
-                                                                return user;
-                                                            })
-                                                            .defaultIfEmpty(user)
-                                                            .toSingle();
-                                                }
-                                                return Single.just(user);
-                                            })
-                                            .toList()
-                                            .map(users -> new Page(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))
-                                )
-                                .map(users -> Response.ok(users).build());
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> userService.findByDomain(domain, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE))
+                        .flatMap(pagedUsers ->
+                                Observable.fromIterable(pagedUsers.getData())
+                                    .flatMapSingle(user -> {
+                                        if (user.getSource() != null) {
+                                            return identityProviderService.findById(user.getSource())
+                                                    .map(idP -> {
+                                                        user.setSource(idP.getName());
+                                                        return user;
+                                                    })
+                                                    .defaultIfEmpty(user)
+                                                    .toSingle();
+                                        }
+                                        return Single.just(user);
+                                    })
+                                    .toList()
+                                    .map(users -> new Page(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))
+                        )
+                        .map(users -> Response.ok(users).build())
+                )
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

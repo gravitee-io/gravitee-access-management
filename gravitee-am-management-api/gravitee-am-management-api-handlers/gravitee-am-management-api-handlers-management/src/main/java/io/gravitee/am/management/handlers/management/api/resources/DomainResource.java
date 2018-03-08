@@ -15,11 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.glassfish.jersey.server.ManagedAsync;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,11 +57,8 @@ public class DomainResource extends AbstractResource {
             @ApiResponse(code = 500, message = "Internal server error")})
     public void get(@PathParam("domain") String domainId, @Suspended final AsyncResponse response) {
         domainService.findById(domainId)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .map(domain -> Response.ok(domain).build())
-                .defaultIfEmpty(Response.status(404)
-                        .type(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                        .entity(new ErrorEntity("Domain [" + domainId + "] can not be found.", 404))
-                        .build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

@@ -22,6 +22,7 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -36,7 +37,6 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -69,23 +69,16 @@ public class ClientsResource extends AbstractResource {
     public void list(@PathParam("domain") String _domain,
                             @Suspended final AsyncResponse response) {
         domainService.findById(_domain)
-                .map(domain -> Optional.of(domain))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(optionalDomain -> {
-                    if (!optionalDomain.isPresent()) {
-                        throw new DomainNotFoundException(_domain);
-                    } else {
-                        return clientService.findByDomain(_domain)
-                                .map(clients -> {
-                                    List<ClientListItem> sortedClients = clients.stream()
-                                            .map(clientEnhancer.enhanceClient(Collections.singletonMap(_domain, optionalDomain.get())))
-                                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getClientId(), o2.getClientId()))
-                                            .collect(Collectors.toList());
-                                    return Response.ok(sortedClients).build();
-                                });
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(_domain)))
+                .flatMapSingle(domain -> clientService.findByDomain(_domain)
+                        .map(clients -> {
+                            List<ClientListItem> sortedClients = clients.stream()
+                                    .map(clientEnhancer.enhanceClient(Collections.singletonMap(_domain, domain)))
+                                    .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getClientId(), o2.getClientId()))
+                                    .collect(Collectors.toList());
+                            return Response.ok(sortedClients).build();
+                        })
+                )
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
@@ -104,18 +97,13 @@ public class ClientsResource extends AbstractResource {
             @Valid @NotNull final NewClient newClient,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
-                        throw new DomainNotFoundException(domain);
-                    } else {
-                        return clientService.create(domain, newClient)
-                                .map(client -> Response
-                                        .created(URI.create("/domains/" + domain + "/clients/" + client.getId()))
-                                        .entity(client)
-                                        .build());
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> clientService.create(domain, newClient)
+                        .map(client -> Response
+                                .created(URI.create("/domains/" + domain + "/clients/" + client.getId()))
+                                .entity(client)
+                                .build())
+                )
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

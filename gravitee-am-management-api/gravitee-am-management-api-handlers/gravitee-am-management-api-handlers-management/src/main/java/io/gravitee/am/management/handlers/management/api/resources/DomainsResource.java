@@ -57,7 +57,7 @@ public class DomainsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "List accessible security domains for current user", response = Domain.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public void listDomains(@Suspended final AsyncResponse response) {
+    public void list(@Suspended final AsyncResponse response) {
          domainService.findAll()
                  .map(domains ->
                         domains.stream().map(domain -> {
@@ -78,10 +78,10 @@ public class DomainsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Domain successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public void createApi(
+    public void create(
             @ApiParam(name = "domain", required = true)
             @Valid @NotNull final NewDomain newDomain,
-            @Suspended final AsyncResponse response) throws DomainAlreadyExistsException {
+            @Suspended final AsyncResponse response) {
         domainService.create(newDomain)
                 .subscribe(
                         domain -> response.resume(Response
