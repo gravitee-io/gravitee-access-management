@@ -16,10 +16,10 @@
 package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.management.core.event.DomainEvent;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.event.EventManager;
+import io.reactivex.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,15 +45,16 @@ public class DeployAdminDomainUpgrader implements Upgrader, Ordered {
     @Override
     public boolean upgrade() {
         logger.info("Deploying registered {} domain", ADMIN_DOMAIN);
-        try {
-            // TODO Async call
-            Domain adminDomain = domainService.findById(ADMIN_DOMAIN).blockingGet();
-            eventManager.publishEvent(DomainEvent.DEPLOY, adminDomain);
-            return true;
-        } catch (DomainNotFoundException dnfe) {
-            logger.error("Failed to find admin domain", dnfe);
-            throw new IllegalStateException("Failed to deploy admin domain", dnfe);
-        }
+        domainService.findById(ADMIN_DOMAIN)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(ADMIN_DOMAIN)))
+                .subscribe(
+                        adminDomain -> eventManager.publishEvent(DomainEvent.DEPLOY, adminDomain),
+                        error -> {
+                            logger.error("Failed to find admin domain", error);
+                            throw new IllegalStateException("Failed to deploy admin domain", error);
+                        }
+                );
+        return true;
     }
 
     @Override

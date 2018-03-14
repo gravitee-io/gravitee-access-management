@@ -37,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.oauth2.common.util.OAuth2Utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -53,6 +52,8 @@ import java.util.*;
 public class GithubAuthenticationProvider implements OAuth2AuthenticationProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(GithubAuthenticationProvider.class);
+    private static final String CLIENT_ID = "client_id";
+    private static final String REDIRECT_URI = "redirect_uri";
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
@@ -66,9 +67,9 @@ public class GithubAuthenticationProvider implements OAuth2AuthenticationProvide
         try {
             HttpPost post = new HttpPost(configuration.getAccessTokenUri());
             List<NameValuePair> urlParameters = new ArrayList<>();
-            urlParameters.add(new BasicNameValuePair(OAuth2Utils.CLIENT_ID, configuration.getClientId()));
+            urlParameters.add(new BasicNameValuePair(CLIENT_ID, configuration.getClientId()));
             urlParameters.add(new BasicNameValuePair("client_secret", configuration.getClientSecret()));
-            urlParameters.add(new BasicNameValuePair(OAuth2Utils.REDIRECT_URI, (String) authentication.getAdditionalInformation().get(OAuth2Utils.REDIRECT_URI)));
+            urlParameters.add(new BasicNameValuePair(REDIRECT_URI, (String) authentication.getAdditionalInformation().get(REDIRECT_URI)));
             urlParameters.add(new BasicNameValuePair("code", (String) authentication.getCredentials()));
             post.setEntity(new UrlEncodedFormEntity(urlParameters));
 

@@ -60,7 +60,7 @@
 
         <dependency>
             <groupId>io.gravitee.am.management</groupId>
-            <artifactId>gravitee-am-management-api-handlers-oauth2</artifactId>
+            <artifactId>gravitee-am-management-api-handlers-admin</artifactId>
             <version>${project.version}</version>
         </dependency>
 

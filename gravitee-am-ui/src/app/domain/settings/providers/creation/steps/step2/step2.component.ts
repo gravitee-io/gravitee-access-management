@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, Input, OnChanges, SimpleChanges, ViewChild} from '@angular/core';
-import { PlatformService } from "../../../../../../services/platform.service";
-import { ProviderService } from "../../../../../../services/provider.service";
-import { SnackbarService } from "../../../../../../services/snackbar.service";
-import { Router, ActivatedRoute } from "@angular/router";
+import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
+import {PlatformService} from "../../../../../../services/platform.service";
+import {ProviderService} from "../../../../../../services/provider.service";
+import {SnackbarService} from "../../../../../../services/snackbar.service";
+import {ActivatedRoute, Router, RouterStateSnapshot} from "@angular/router";
+import {AppConfig} from "../../../../../../../config/app.config";
 
 @Component({
   selector: 'provider-creation-step2',
@@ -30,12 +31,17 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
   configurationIsValid: boolean = false;
   providerSchema: any = {};
   private domainId: string;
+  private adminContext: boolean;
 
   constructor(private platformService: PlatformService, private providerService: ProviderService,
               private snackbarService: SnackbarService, private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.domainId = AppConfig.settings.authentication.domainId;
+      this.adminContext = true;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -53,7 +59,11 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
     this.provider.configuration = JSON.stringify(this.provider.configuration);
     this.providerService.create(this.domainId, this.provider).map(res => res.json()).subscribe(data => {
       this.snackbarService.open("Provider " + data.name + " created");
-      this.router.navigate(['/domains', this.domainId, 'settings', 'providers', data.id]);
+      if (this.adminContext) {
+        this.router.navigate(['/settings', 'security', 'providers', data.id]);
+      } else {
+        this.router.navigate(['/domains', this.domainId, 'settings', 'providers', data.id]);
+      }
     })
   }
 

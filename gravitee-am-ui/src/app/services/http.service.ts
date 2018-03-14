@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Http, XHRBackend, RequestOptions, RequestOptionsArgs, Request, Response, Headers } from '@angular/http';
+import { Http, XHRBackend, RequestOptions, RequestOptionsArgs, Request, Response } from '@angular/http';
 import { Observable, Subject } from "rxjs";
 import { SnackbarService } from "./snackbar.service";
 
@@ -28,17 +28,14 @@ export class HttpService extends Http {
   }
 
   request(url: string | Request, options?: RequestOptionsArgs): Observable<Response> {
-    // set access token for every request
-    let accessToken = sessionStorage.getItem('access_token');
-    if (accessToken) {
-      if (typeof url === 'string') {
-        if (!options) {
-          options = { headers: new Headers() };
-        }
-        options.headers.set('Authorization', `Bearer ${accessToken}`);
-      } else {
-        url.headers.set('Authorization', `Bearer ${accessToken}`);
+    // set withCredentials option for every request
+    if (typeof url === 'string') {
+      if (!options) {
+        options = { withCredentials: true };
       }
+      options.withCredentials = true;
+    } else {
+      url.withCredentials = true;
     }
     return super.request(url, options).catch((error: Response) => {
       if (error.status === 401 || error.status === 403) {

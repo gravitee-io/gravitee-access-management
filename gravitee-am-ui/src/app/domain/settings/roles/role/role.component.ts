@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 import { Component, OnInit, ViewChild } from "@angular/core";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { RoleService } from "../../../../services/role.service";
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { MatInput } from "@angular/material/input";
 import * as _ from "lodash";
+import { AppConfig } from "../../../../../config/app.config";
 
 export interface Scope {
   id: string;
@@ -43,10 +44,13 @@ export class RoleComponent implements OnInit {
   formChanged: boolean = false;
 
   constructor(private roleService: RoleService, private snackbarService: SnackbarService, private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService) { }
+              private router: Router, private breadcrumbService: BreadcrumbService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.domainId = AppConfig.settings.authentication.domainId;
+    }
     this.role = this.route.snapshot.data['role'];
     this.scopes = this.route.snapshot.data['scopes'];
 

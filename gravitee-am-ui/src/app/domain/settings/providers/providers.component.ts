@@ -17,7 +17,8 @@ import { Component, OnInit } from '@angular/core';
 import { ProviderService } from "../../../services/provider.service";
 import { SnackbarService } from "../../../services/snackbar.service";
 import { DialogService } from "../../../services/dialog.service";
-import { ActivatedRoute } from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
+import { AppConfig } from "../../../../config/app.config";
 
 @Component({
   selector: 'app-providers',
@@ -29,11 +30,14 @@ export class DomainSettingsProvidersComponent implements OnInit {
   domainId: string;
 
   constructor(private providerService: ProviderService, private dialogService: DialogService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute) {
+              private snackbarService: SnackbarService, private route: ActivatedRoute, private router: Router) {
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.domainId = AppConfig.settings.authentication.domainId;
+    }
     this.providers = this.route.snapshot.data['providers'];
   }
 

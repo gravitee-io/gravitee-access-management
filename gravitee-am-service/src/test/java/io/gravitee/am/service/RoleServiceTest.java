@@ -182,7 +182,7 @@ public class RoleServiceTest {
         TestObserver testObserver = new TestObserver();
         roleService.create(DOMAIN, newRole).subscribe(testObserver);
 
-        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertError(RoleAlreadyExistsException.class);
         testObserver.assertNotComplete();
 
         verify(roleRepository, never()).create(any(Role.class));

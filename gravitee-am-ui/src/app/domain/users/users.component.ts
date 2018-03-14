@@ -17,7 +17,8 @@ import { Component, OnInit } from '@angular/core';
 import { UserService} from "../../services/user.service";
 import { SnackbarService } from "../../services/snackbar.service";
 import { DialogService } from "../../services/dialog.service";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
+import { AppConfig } from "../../../config/app.config";
 
 @Component({
   selector: 'app-users',
@@ -31,13 +32,16 @@ export class UsersComponent implements OnInit {
   page: any = {};
 
   constructor(private userService: UserService, private dialogService: DialogService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute) {
+              private snackbarService: SnackbarService, private route: ActivatedRoute, private router: Router) {
     this.page.pageNumber = 0;
     this.page.size = 25;
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.domainId = AppConfig.settings.authentication.domainId;
+    }
     this.pagedUsers = this.route.snapshot.data['users'];
     this.users = this.pagedUsers.data;
     this.page.totalElements = this.pagedUsers.totalCount;

@@ -16,8 +16,9 @@
 import { Component, OnInit } from '@angular/core';
 import { RoleService } from "../../../services/role.service";
 import { DialogService } from "../../../services/dialog.service";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../services/snackbar.service";
+import { AppConfig } from "../../../../config/app.config";
 
 @Component({
   selector: 'app-roles',
@@ -29,10 +30,13 @@ export class DomainSettingsRolesComponent implements OnInit {
   domainId: string;
 
   constructor(private roleService: RoleService, private dialogService: DialogService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute) { }
+              private snackbarService: SnackbarService, private route: ActivatedRoute, private router: Router) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.domainId = AppConfig.settings.authentication.domainId;
+    }
     this.roles = this.route.snapshot.data['roles'];
   }
 

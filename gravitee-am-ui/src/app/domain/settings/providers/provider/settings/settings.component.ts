@@ -16,10 +16,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ProviderService } from "../../../../../services/provider.service";
 import { SnackbarService } from "../../../../../services/snackbar.service";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { PlatformService } from "../../../../../services/platform.service";
 import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { DomainService } from "../../../../../services/domain.service";
+import { AppConfig } from "../../../../../../config/app.config";
 
 @Component({
   selector: 'provider-settings',
@@ -37,11 +38,14 @@ export class ProviderSettingsComponent implements OnInit {
   updateProviderConfiguration: any;
 
   constructor(private providerService: ProviderService, private platformService: PlatformService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute, private breadcrumbService: BreadcrumbService,
+              private snackbarService: SnackbarService, private route: ActivatedRoute, private router: Router, private breadcrumbService: BreadcrumbService,
               private domainService: DomainService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.domainId = AppConfig.settings.authentication.domainId;
+    }
     this.domainService.get(this.domainId).map(res => res.json()).subscribe(data => this.domain = data);
     this.provider = this.route.snapshot.parent.data['provider'];
     this.providerConfiguration = JSON.parse(this.provider.configuration);

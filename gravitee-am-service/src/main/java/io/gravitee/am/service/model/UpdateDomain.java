@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import javax.validation.constraints.NotNull;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -44,6 +45,10 @@ public class UpdateDomain {
      * Domain HTTP path.
      */
     private String path;
+
+    private Set<String> identities;
+
+    private Set<String> oauth2Identities;
 
     public String getName() {
         return name;
@@ -75,5 +80,21 @@ public class UpdateDomain {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public Set<String> getIdentities() {
+        return identities;
+    }
+
+    public void setIdentities(Set<String> identities) {
+        this.identities = identities;
+    }
+
+    public Set<String> getOauth2Identities() {
+        return oauth2Identities;
+    }
+
+    public void setOauth2Identities(Set<String> oauth2Identities) {
+        this.oauth2Identities = oauth2Identities;
     }
 }

@@ -149,6 +149,8 @@ public class DomainServiceImpl implements DomainService {
                         domain.setName(updateDomain.getName());
                         domain.setDescription(updateDomain.getDescription());
                         domain.setEnabled(updateDomain.isEnabled());
+                        domain.setIdentities(updateDomain.getIdentities());
+                        domain.setOauth2Identities(updateDomain.getOauth2Identities());
                         // master flag is set programmatically (keep old value)
                         domain.setMaster(oldDomain.isMaster());
                         domain.setCreatedAt(oldDomain.getCreatedAt());
@@ -191,6 +193,8 @@ public class DomainServiceImpl implements DomainService {
                         domain.setCreatedAt(oldDomain.getCreatedAt());
                         domain.setUpdatedAt(new Date());
                         domain.setLoginForm(oldDomain.getLoginForm());
+                        domain.setIdentities(oldDomain.getIdentities());
+                        domain.setOauth2Identities(oldDomain.getOauth2Identities());
 
                         return domainRepository.update(domain);
                     }
@@ -228,6 +232,9 @@ public class DomainServiceImpl implements DomainService {
                         domain.setCreatedAt(oldDomain.getCreatedAt());
                         domain.setUpdatedAt(new Date());
                         domain.setLoginForm(oldDomain.getLoginForm());
+                        domain.setIdentities(oldDomain.getIdentities());
+                        domain.setOauth2Identities(oldDomain.getOauth2Identities());
+
                         return domainRepository.update(domain);
                     }
                 })

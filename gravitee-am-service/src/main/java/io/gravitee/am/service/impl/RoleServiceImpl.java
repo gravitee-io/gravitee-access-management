@@ -101,6 +101,10 @@ public class RoleServiceImpl implements RoleService {
                     return roleRepository.create(role);
                 })
                 .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+
                     LOGGER.error("An error occurs while trying to create a role", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a role", ex));
                 });

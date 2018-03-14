@@ -44,6 +44,18 @@
 #    enabled: true
 #    path: ${gravitee.home}/logs/gravitee_accesslog_yyyy_mm_dd.log
 
+#http:
+#  cors:
+#      Allows to configure the header Access-Control-Allow-Origin (default value: *)
+#      '*' is a valid value but is considered as a security risk as it will be opened to cross origin requests from anywhere.
+#    allow-origin: http://developer.mycompany.com
+#      Allows to define how long the result of the preflight request should be cached for (default value; 1728000 [20 days])
+#    max-age: 864000
+#      Which methods to allow (default value: OPTIONS, GET, POST, PUT, DELETE)
+#    allow-methods: 'OPTIONS, GET, POST, PUT, DELETE'
+#      Which headers to allow (default values: Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match)
+#    allow-headers: 'X-Requested-With'
+
 # Path to plugins repository
 #plugins:
 #  path: ${gravitee.home}/plugins
@@ -126,6 +138,19 @@ identities:
       pool:
         maxTotalConnection: 200 # The maximum total number of connections in the pool
         maxPerRoute: 100 # The maximum number of connections to a particular host
+
+jwt:
+  secret: myJWT4Gr4v1t33_S3cr3t
+  # Allows to define the end of validity of the token in seconds (default 604800 = a week)
+  #expire-after: 604800
+  # Allows to define issuer (default gravitee-am-management-auth)
+  #issuer: gravitee-am-management-auth
+  # Allows to define cookie context path (default /)
+  #cookie-path: /
+  # Allows to define cookie domain (default "")
+  #cookie-domain: .gravitee.io
+  # Allows to define if cookie secure only (default false)
+  #cookie-secure: true
 
 # Referenced properties
 ds:

@@ -18,6 +18,8 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.codecs.pojo.annotations.BsonId;
 
+import java.util.Set;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -38,6 +40,10 @@ public class DomainMongo extends Auditable {
     private String path;
 
     private LoginFormMongo loginForm;
+
+    private Set<String> identities;
+
+    private Set<String> oauth2Identities;
 
     public String getId() {
         return id;
@@ -93,6 +99,22 @@ public class DomainMongo extends Auditable {
 
     public void setLoginForm(LoginFormMongo loginForm) {
         this.loginForm = loginForm;
+    }
+
+    public Set<String> getIdentities() {
+        return identities;
+    }
+
+    public void setIdentities(Set<String> identities) {
+        this.identities = identities;
+    }
+
+    public Set<String> getOauth2Identities() {
+        return oauth2Identities;
+    }
+
+    public void setOauth2Identities(Set<String> oauth2Identities) {
+        this.oauth2Identities = oauth2Identities;
     }
 
     @Override

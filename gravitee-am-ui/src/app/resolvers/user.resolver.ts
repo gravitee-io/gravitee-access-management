@@ -17,6 +17,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { UserService } from "../services/user.service";
+import { AppConfig } from "../../config/app.config";
 
 @Injectable()
 export class UserResolver implements Resolve<any> {
@@ -24,7 +25,10 @@ export class UserResolver implements Resolve<any> {
   constructor(private userService: UserService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId: string = route.parent.paramMap.get('domainId');
+    let domainId: string = AppConfig.settings.authentication.domainId;
+    if (!state.url.startsWith('/settings')) {
+      domainId = route.parent.paramMap.get('domainId');
+    }
     let userId: string = route.paramMap.get('userId');
     return this.userService.get(domainId, userId).map(res => res.json());
   }

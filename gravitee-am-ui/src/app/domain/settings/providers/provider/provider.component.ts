@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
+import { AppConfig } from "../../../../../config/app.config";
 
 @Component({
   selector: 'app-provider',
@@ -29,10 +30,13 @@ export class ProviderComponent implements OnInit {
     {'href': 'mappers' , 'label': 'User mappers'},
     {'href': 'roles' , 'label': 'Role mappers'}];
 
-  constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) { }
+  constructor(private route: ActivatedRoute, private router: Router, private breadcrumbService: BreadcrumbService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.domainId = AppConfig.settings.authentication.domainId;
+    }
     this.provider = this.route.snapshot.data['provider'];
     this.initBreadcrumb();
   }

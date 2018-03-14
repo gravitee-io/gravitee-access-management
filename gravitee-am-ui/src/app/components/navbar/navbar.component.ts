@@ -16,8 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from "../../services/auth.service";
 import { DomainService } from "../../services/domain.service";
-import {SidenavService} from "../sidenav/sidenav.service";
-import {Router} from "@angular/router";
+import { Router } from "@angular/router";
 
 @Component({
   selector: 'gs-navbar',
@@ -30,6 +29,9 @@ export class NavbarComponent implements OnInit {
   constructor(private authService: AuthService, private domainService: DomainService, private router:Router) { }
 
   ngOnInit() {
+    if (!this.authService.user()) {
+      this.authService.userInfo().subscribe();
+    }
   }
 
   get user() {

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from "@angular/core";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { DomainService } from "../../../services/domain.service";
 import { SnackbarService } from "../../../services/snackbar.service";
 import { DialogService } from "../../../services/dialog.service";
 import { MatDialog, MatDialogRef } from "@angular/material/dialog";
+import { AppConfig } from "../../../../config/app.config";
 
 @Component({
   selector: 'app-login',
@@ -36,11 +37,14 @@ export class DomainSettingsLoginComponent implements OnInit, AfterViewInit {
   @ViewChild('editor') editor: any;
   @ViewChild('preview') preview: ElementRef;
 
-  constructor(private route: ActivatedRoute, private domainService: DomainService, private snackbarService: SnackbarService,
+  constructor(private route: ActivatedRoute, private router: Router, private domainService: DomainService, private snackbarService: SnackbarService,
               private dialogService: DialogService, public dialog: MatDialog) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.domainId = AppConfig.settings.authentication.domainId;
+    }
     this.domainLoginForm = this.route.snapshot.data['domainLoginForm'];
     if (this.domainLoginForm && this.domainLoginForm.content) {
       this.loginFormContent = this.domainLoginForm.content;

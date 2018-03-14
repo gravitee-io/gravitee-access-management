@@ -15,7 +15,8 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { BreadcrumbService } from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
+import { AppConfig } from "../../../../config/app.config";
 
 @Component({
   selector: 'app-user',
@@ -26,10 +27,13 @@ export class UserComponent implements OnInit {
   private domainId: string;
   user: any;
 
-  constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) { }
+  constructor(private route: ActivatedRoute, private router: Router, private breadcrumbService: BreadcrumbService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.domainId = AppConfig.settings.authentication.domainId;
+    }
     this.user = this.route.snapshot.data['user'];
     this.initBreadcrumb();
   }

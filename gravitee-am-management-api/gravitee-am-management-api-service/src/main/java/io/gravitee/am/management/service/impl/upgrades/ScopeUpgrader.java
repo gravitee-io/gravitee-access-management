@@ -15,26 +15,28 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.model.NewScope;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
@@ -60,64 +62,60 @@ public class ScopeUpgrader implements Upgrader, Ordered {
     @Override
     public boolean upgrade() {
         logger.info("Applying scope upgrade");
-        // TODO async call
-        Set<Domain> domains = domainService.findAll().blockingGet();
-
-        domains.forEach(this::upgradeDomain);
-
+        domainService.findAll()
+                .flatMapObservable(domains -> Observable.fromIterable(domains))
+                .flatMapSingle(domain -> upgradeDomain(domain))
+                .subscribe();
         return true;
     }
 
-    private void upgradeDomain(Domain domain) {
+    private Single<List<Scope>> upgradeDomain(Domain domain) {
         logger.info("Looking for scopes for domain id[{}] name[{}]", domain.getId(), domain.getName());
-        // TODO async call
-        Set<Scope> scopes = scopeService.findByDomain(domain.getId()).blockingGet();
-        if (scopes.isEmpty()) {
-            logger.info("No scope found for domain id[{}] name[{}]. Upgrading...", domain.getId(), domain.getName());
-
-            createClientScopes(domain);
-            createRoleScopes(domain);
-        }
+        return scopeService.findByDomain(domain.getId())
+                .flatMap(scopes -> {
+                    if (scopes.isEmpty()) {
+                        logger.info("No scope found for domain id[{}] name[{}]. Upgrading...", domain.getId(), domain.getName());
+                        return createClientScopes(domain)
+                                .flatMap(irrelevant -> createRoleScopes(domain));
+                    }
+                    return Single.just(new ArrayList<>(scopes));
+                });
     }
 
-    private void createClientScopes(Domain domain) {
-        // TODO async call
-        Set<Client> clients = clientService.findByDomain(domain.getId()).blockingGet();
-
-        if (clients != null) {
-            clients.forEach(client -> {
-                if (client.getScopes() != null) {
-                    client.getScopes().forEach(scope -> createScope(domain.getId(), scope));
-                }
-            });
-        }
+    private Single<List<Scope>> createClientScopes(Domain domain) {
+        return clientService.findByDomain(domain.getId())
+                .filter(clients -> clients != null)
+                .flatMapObservable(clients -> Observable.fromIterable(clients))
+                .filter(client -> client.getScopes() != null)
+                .flatMap(client -> Observable.fromIterable(client.getScopes()))
+                .flatMapSingle(scope -> createScope(domain.getId(), scope))
+                .toList();
     }
 
-    private void createRoleScopes(Domain domain) {
-        // TODO async call
-        Set<Role> roles = roleService.findByDomain(domain.getId()).blockingGet();
-
-        if (roles != null) {
-            roles.forEach(role -> {
-                if (role.getPermissions() != null) {
-                    role.getPermissions().forEach(scope -> createScope(domain.getId(), scope));
-                }
-            });
-        }
+    private Single<List<Scope>> createRoleScopes(Domain domain) {
+        return roleService.findByDomain(domain.getId())
+                .filter(roles -> roles != null)
+                .flatMapObservable(roles -> Observable.fromIterable(roles))
+                .filter(role -> role.getPermissions() != null)
+                .flatMap(role -> Observable.fromIterable(role.getPermissions()))
+                .flatMapSingle(scope -> createScope(domain.getId(), scope))
+                .toList();
     }
 
-    private void createScope(String domain, String scopeKey) {
-        // TODO async call
-        Set<Scope> scopes = scopeService.findByDomain(domain).blockingGet();
-        Optional<Scope> optScope = scopes.stream().filter(scope -> scope.getKey().equalsIgnoreCase(scopeKey)).findFirst();
-        if (!optScope.isPresent()) {
-            logger.info("Create a new scope key[{}] for domain[{}]", scopeKey, domain);
-            NewScope scope = new NewScope();
-            scope.setKey(scopeKey);
-            scope.setName(Character.toUpperCase(scopeKey.charAt(0)) + scopeKey.substring(1));
-            scope.setDescription("Default description for scope " + scopeKey);
-            scopeService.create(domain, scope);
-        }
+    private Single<Scope> createScope(String domain, String scopeKey) {
+        return scopeService.findByDomain(domain)
+                .flatMap(scopes -> {
+                    Optional<Scope> optScope = scopes.stream().filter(scope -> scope.getKey().equalsIgnoreCase(scopeKey)).findFirst();
+                    if (!optScope.isPresent()) {
+                        logger.info("Create a new scope key[{}] for domain[{}]", scopeKey, domain);
+                        NewScope scope = new NewScope();
+                        scope.setKey(scopeKey);
+                        scope.setName(Character.toUpperCase(scopeKey.charAt(0)) + scopeKey.substring(1));
+                        scope.setDescription("Default description for scope " + scopeKey);
+                        return scopeService.create(domain, scope);
+                    }
+                    return Single.just(optScope.get());
+                });
     }
 
     @Override

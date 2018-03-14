@@ -46,7 +46,9 @@ import "codemirror/addon/selection/mark-selection";
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { SidenavComponent } from './components/sidenav/sidenav.component';
+import { SidenavSettingsComponent } from "./components/sidenav-settings/sidenav-settings.component";
 import { LoginComponent } from './login/login.component';
+import { LoginCallbackComponent } from './login/callback/callback.component';
 import { DomainsComponent } from './settings/domains/domains.component';
 import { DomainService } from './services/domain.service';
 import { DomainComponent } from './domain/domain.component';
@@ -71,7 +73,6 @@ import { ClientService } from "./services/client.service";
 import { ProviderService } from "./services/provider.service";
 import { PlatformService } from "./services/platform.service";
 import { HttpService } from "./services/http.service";
-import { OAuthCallbackComponent } from './oauth/callback/callback.component';
 import { AuthService } from "./services/auth.service";
 import { AppConfig } from "../config/app.config";
 import { LogoutComponent } from './logout/logout.component';
@@ -80,7 +81,6 @@ import { DomainsResolver } from "./resolvers/domains.resolver";
 import { DomainResolver } from "./resolvers/domain.resolver";
 import { DomainDashboardComponent } from "./domain/dashboard/dashboard.component";
 import { DomainSettingsComponent } from './domain/settings/settings.component';
-import { DomainSettingsSidenavComponent } from "./domain/settings/sidenav/sidenav.component";
 import { DomainSettingsGeneralComponent } from "./domain/settings/general/general.component";
 import { DomainSettingsLoginComponent, DomainSettingsLoginInfoDialog } from "./domain/settings/login/login.component";
 import { DomainSettingsRolesComponent } from "./domain/settings/roles/roles.component";
@@ -143,18 +143,21 @@ import { ExtensionGrantFormComponent } from "./domain/settings/extension-grants/
 import { ExtensionGrantCreationStep1Component } from "./domain/settings/extension-grants/creation/steps/step1/step1.component";
 import { ExtensionGrantCreationStep2Component } from "./domain/settings/extension-grants/creation/steps/step2/step2.component";
 import { MaterialFileComponent } from "./components/json-schema-form/material-file.component";
+import { ManagementComponent } from "./settings/management/management.component";
+import { ManagementGeneralComponent } from "./settings/management/general/general.component";
 
 @NgModule({
   declarations: [
     AppComponent,
     SidenavComponent,
+    SidenavSettingsComponent,
     LoginComponent,
+    LoginCallbackComponent,
     DomainsComponent,
     DomainComponent,
     DomainDashboardComponent,
     DomainSettingsComponent,
     DomainSettingsLoginComponent,
-    DomainSettingsSidenavComponent,
     DomainSettingsGeneralComponent,
     DomainSettingsProvidersComponent,
     DomainSettingsScopesComponent,
@@ -180,7 +183,6 @@ import { MaterialFileComponent } from "./components/json-schema-form/material-fi
     ProviderMappersComponent,
     ProviderRolesComponent,
     CreateMapperComponent,
-    OAuthCallbackComponent,
     LogoutComponent,
     LogoutCallbackComponent,
     BreadcrumbComponent,
@@ -214,7 +216,9 @@ import { MaterialFileComponent } from "./components/json-schema-form/material-fi
     UserComponent,
     ScopeCreationComponent,
     ScopeComponent,
-    MaterialFileComponent
+    MaterialFileComponent,
+    ManagementComponent,
+    ManagementGeneralComponent
   ],
   imports: [
     BrowserModule,

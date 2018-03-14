@@ -17,6 +17,7 @@ import { Injectable } from '@angular/core';
 import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { DomainService } from "../services/domain.service";
+import {AppConfig} from "../../config/app.config";
 
 @Injectable()
 export class DomainLoginFormResolver implements Resolve<any> {
@@ -24,7 +25,10 @@ export class DomainLoginFormResolver implements Resolve<any> {
   constructor(private domainService: DomainService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
+    let domainId = AppConfig.settings.authentication.domainId;
+    if (!state.url.startsWith('/settings')) {
+      domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
+    }
     return this.domainService.getLoginForm(domainId)
       .map(res => res.json())
       .catch(res => {

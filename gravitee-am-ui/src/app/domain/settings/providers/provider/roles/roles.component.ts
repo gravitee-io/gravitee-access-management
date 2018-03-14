@@ -16,9 +16,10 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { SnackbarService } from "../../../../../services/snackbar.service";
-import { ActivatedRoute } from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import { ProviderService } from "../../../../../services/provider.service";
 import { DialogService } from "../../../../../services/dialog.service";
+import {AppConfig} from "../../../../../../config/app.config";
 
 @Component({
   selector: 'app-roles',
@@ -32,11 +33,14 @@ export class ProviderRolesComponent implements OnInit {
   providerRoleMapper: any = {};
 
   constructor(private snackbarService: SnackbarService, private providerService: ProviderService,
-              private dialogService: DialogService, private dialog: MatDialog, private route: ActivatedRoute) {
+              private dialogService: DialogService, private dialog: MatDialog, private route: ActivatedRoute, private router: Router) {
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.domainId = AppConfig.settings.authentication.domainId;
+    }
     this.provider = this.route.snapshot.parent.data['provider'];
     this.roles = this.route.snapshot.data['roles'];
     if (this.provider.roleMapper) {

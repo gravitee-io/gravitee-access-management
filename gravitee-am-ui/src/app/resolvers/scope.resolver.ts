@@ -17,6 +17,7 @@ import { Injectable } from '@angular/core';
 import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { ScopeService } from "../services/scope.service";
+import {AppConfig} from "../../config/app.config";
 
 @Injectable()
 export class ScopeResolver implements Resolve<any> {
@@ -24,7 +25,10 @@ export class ScopeResolver implements Resolve<any> {
   constructor(private scopeService: ScopeService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId: string = route.parent.parent.paramMap.get('domainId');
+    let domainId: string = AppConfig.settings.authentication.domainId;
+    if (!state.url.startsWith('/settings')) {
+      domainId = route.parent.parent.paramMap.get('domainId');
+    }
     let scopeId: string = route.paramMap.get('scopeId');
     return this.scopeService.get(domainId, scopeId).map(res => res.json());
   }

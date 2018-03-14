@@ -17,18 +17,18 @@ package io.gravitee.am.certificate.javakeystore.provider;
 
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.javakeystore.JavaKeyStoreConfiguration;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.security.jwt.JwtHelper;
-import org.springframework.security.jwt.crypto.sign.RsaSigner;
-import org.springframework.security.jwt.crypto.sign.Signer;
-import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.interfaces.RSAPrivateKey;
+import java.security.*;
+import java.security.cert.Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 
@@ -39,21 +39,31 @@ import java.util.Base64;
 public class JavaKeyStoreProvider implements CertificateProvider, InitializingBean {
 
     private KeyPair keyPair;
-    private Signer signer;
 
     @Autowired
     private JavaKeyStoreConfiguration configuration;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        keyPair = new KeyStoreKeyFactory(new InputStreamResource(new FileInputStream(new File(configuration.getJks()))),
-                configuration.getStorepass().toCharArray()).getKeyPair(configuration.getAlias(), configuration.getKeypass().toCharArray());
-        signer = new RsaSigner((RSAPrivateKey) keyPair.getPrivate());
+        FileInputStream is = new FileInputStream(configuration.getJks());
+        KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keystore.load(is, configuration.getStorepass().toCharArray());
+        Key key = keystore.getKey(configuration.getAlias(), configuration.getKeypass().toCharArray());
+        if (key instanceof PrivateKey) {
+            // Get certificate of public key
+            Certificate cert = keystore.getCertificate(configuration.getAlias());
+            // Get public key
+            PublicKey publicKey = cert.getPublicKey();
+            // Return a key pair
+            keyPair = new KeyPair(publicKey, (PrivateKey) key);
+        } else {
+            throw new IllegalArgumentException("A RSA Signer must be supplied");
+        }
     }
 
     @Override
     public String sign(String payload) {
-        return JwtHelper.encode(payload, signer).getEncoded();
+        return Jwts.builder().setPayload(payload).signWith(SignatureAlgorithm.RS512, keyPair.getPrivate()).compact();
     }
 
     @Override

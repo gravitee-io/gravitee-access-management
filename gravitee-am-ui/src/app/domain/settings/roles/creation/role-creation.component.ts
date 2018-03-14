@@ -17,6 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { RoleService } from "../../../../services/role.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../../services/snackbar.service";
+import { AppConfig } from "../../../../../config/app.config";
 
 @Component({
   selector: 'app-creation',
@@ -26,6 +27,7 @@ import { SnackbarService } from "../../../../services/snackbar.service";
 export class RoleCreationComponent implements OnInit {
   private scopes: any[];
   private domainId: string;
+  private adminContext: boolean;
   role: any = {};
 
 
@@ -34,13 +36,21 @@ export class RoleCreationComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.domainId = AppConfig.settings.authentication.domainId;
+      this.adminContext = true;
+    }
     this.scopes = this.route.snapshot.data['scopes'];
   }
 
   create() {
     this.roleService.create(this.domainId, this.role).map(res => res.json()).subscribe(data => {
       this.snackbarService.open("Role " + data.name + " created");
-      this.router.navigate(['/domains', this.domainId, 'settings', 'roles', data.id]);
+      if (this.adminContext) {
+        this.router.navigate(['/settings', 'security', 'roles', data.id]);
+      } else {
+        this.router.navigate(['/domains', this.domainId, 'settings', 'roles', data.id]);
+      }
     });
   }
 

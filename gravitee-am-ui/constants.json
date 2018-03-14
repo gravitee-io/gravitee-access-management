@@ -2,12 +2,9 @@
   "portalTitle": "Access Management",
   "baseURL": "http://localhost:8092/management",
   "authentication": {
-    "oauth2": {
-      "authorize": "http://localhost:8092/admin/oauth/authorize",
-      "userInfo": "http://localhost:8092/admin/userinfo",
-      "clientId": "admin",
-      "redirectUri": "http://localhost:4200/oauth/callback",
-      "logoutUri": "http://localhost:8092/admin/logout?target_url=http://localhost:4200/logout/callback"
-    }
+    "domainId": "admin",
+    "authorize": "http://localhost:8092/admin/authorize",
+    "redirectUri": "http://localhost:4200/login/callback",
+    "logoutUri": "http://localhost:8092/admin/logout?target_url=http://localhost:4200/logout/callback"
   }
 }

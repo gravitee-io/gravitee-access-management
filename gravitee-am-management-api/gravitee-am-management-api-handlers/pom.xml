@@ -31,8 +31,8 @@
     <packaging>pom</packaging>
     <modules>
         <module>gravitee-am-management-api-handlers-management</module>
+        <module>gravitee-am-management-api-handlers-admin</module>
         <module>gravitee-am-management-api-handlers-spring</module>
-        <module>gravitee-am-management-api-handlers-oauth2</module>
     </modules>
 
     <dependencies>

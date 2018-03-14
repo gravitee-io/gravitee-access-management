@@ -60,12 +60,14 @@ public class DomainsResource extends AbstractResource {
     public void list(@Suspended final AsyncResponse response) {
          domainService.findAll()
                  .map(domains ->
-                        domains.stream().map(domain -> {
-                            domain.setLoginForm(null);
-                            return domain;
-                        })
-                        .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                        .collect(Collectors.toList()))
+                        domains.stream()
+                                .filter(domain -> !domain.isMaster())
+                                .map(domain -> {
+                                    domain.setLoginForm(null);
+                                    return domain;
+                                })
+                                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                                .collect(Collectors.toList()))
                 .subscribe(
                         result -> response.resume(Response.ok(result).build()),
                         error -> response.resume(error));
