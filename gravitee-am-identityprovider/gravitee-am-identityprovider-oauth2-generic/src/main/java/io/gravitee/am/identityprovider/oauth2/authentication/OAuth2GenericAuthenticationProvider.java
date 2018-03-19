@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -24,25 +22,27 @@ import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderMapper;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.message.BasicNameValuePair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.am.identityprovider.oauth2.utils.URLEncodedUtils;
+import io.gravitee.am.model.http.BasicNameValuePair;
+import io.gravitee.am.model.http.NameValuePair;
+import io.gravitee.am.service.exception.authentication.BadCredentialsException;
+import io.gravitee.common.http.HttpHeaders;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.vertx.core.http.RequestOptions;
+import io.vertx.core.json.JsonObject;
+import io.vertx.reactivex.core.buffer.Buffer;
+import io.vertx.reactivex.core.http.HttpClient;
+import io.vertx.reactivex.core.http.HttpClientRequest;
+import io.vertx.reactivex.core.http.HttpClientResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.*;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -51,12 +51,14 @@ import java.util.*;
 @Import(OAuth2GenericAuthenticationProviderConfiguration.class)
 public class OAuth2GenericAuthenticationProvider implements OAuth2AuthenticationProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(OAuth2GenericAuthenticationProvider.class);
     private static final String CLIENT_ID = "client_id";
+    private static final String CLIENT_SECRET = "client_secret";
     private static final String REDIRECT_URI = "redirect_uri";
+    private static final String CODE = "code";
     private static final String GRANT_TYPE = "grant_type";
+    private static final String HTTPS_SCHEME = "https";
+    private static final String DEFAULT_USER_AGENT = "Vert.x-WebClient/3.5.1";
     private static final String CLAIMS_SUB = "sub";
-    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private HttpClient client;
@@ -68,43 +70,13 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
     private OAuth2GenericIdentityProviderMapper mapper;
 
     @Override
-    public User loadUserByUsername(Authentication authentication) {
-        try {
-            HttpPost post = new HttpPost(configuration.getAccessTokenUri());
-            List<NameValuePair> urlParameters = new ArrayList<>();
-            urlParameters.add(new BasicNameValuePair(CLIENT_ID, configuration.getClientId()));
-            urlParameters.add(new BasicNameValuePair("client_secret", configuration.getClientSecret()));
-            urlParameters.add(new BasicNameValuePair(REDIRECT_URI, (String) authentication.getAdditionalInformation().get(REDIRECT_URI)));
-            urlParameters.add(new BasicNameValuePair("code", (String) authentication.getCredentials()));
-            urlParameters.add(new BasicNameValuePair(GRANT_TYPE, "authorization_code"));
-            post.setEntity(new UrlEncodedFormEntity(urlParameters));
-
-            // authenticate user
-            HttpResponse response = client.execute(post);
-            BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-            String content = read(rd);
-            if (response.getStatusLine().getStatusCode() != 200) {
-                throw new BadCredentialsException(content);
-            }
-            JsonNode params = objectMapper.readTree(content);
-            String accessToken = params.get("access_token").asText();
-
-            // get user profile
-            HttpGet request = new HttpGet(configuration.getUserProfileUri());
-            request.addHeader("Authorization", "Bearer " + accessToken);
-            response = client.execute(request);
-            rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-            content = read(rd);
-            JsonNode jsonNode = objectMapper.readTree(content);
-            return createUser(jsonNode);
-        } catch (Exception e) {
-            logger.error("Fail to authenticate OAuth 2.0 generic user account", e);
-            throw new InternalAuthenticationServiceException(e.getMessage());
-        }
+    public Maybe<User> loadUserByUsername(Authentication authentication) {
+        return authenticate(authentication)
+                .flatMap(accessToken -> profile(accessToken));
     }
 
     @Override
-    public User loadUserByUsername(String username) {
+    public Maybe<User> loadUserByUsername(String username) {
         return null;
     }
 
@@ -113,15 +85,81 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
         return configuration;
     }
 
-    private User createUser(JsonNode jsonNode) {
-        User user = new DefaultUser(jsonNode.get(CLAIMS_SUB).asText());
+    private Maybe<String> authenticate(Authentication authentication) {
+        return io.reactivex.Maybe.create(emitter -> {
+            // prepare body request parameters
+            List<NameValuePair> urlParameters = new ArrayList<>();
+            urlParameters.add(new BasicNameValuePair(CLIENT_ID, configuration.getClientId()));
+            urlParameters.add(new BasicNameValuePair(CLIENT_SECRET, configuration.getClientSecret()));
+            urlParameters.add(new BasicNameValuePair(REDIRECT_URI, (String) authentication.getAdditionalInformation().get(REDIRECT_URI)));
+            urlParameters.add(new BasicNameValuePair(CODE, (String) authentication.getCredentials()));
+            urlParameters.add(new BasicNameValuePair(GRANT_TYPE, "authorization_code"));
+            String bodyRequest = URLEncodedUtils.format(urlParameters);
+
+            URI requestUri = URI.create(configuration.getAccessTokenUri());
+            final int port = requestUri.getPort() != -1 ? requestUri.getPort() : (HTTPS_SCHEME.equals(requestUri.getScheme()) ? 443 : 80);
+            boolean ssl = HTTPS_SCHEME.equalsIgnoreCase(requestUri.getScheme());
+
+            HttpClientRequest request = client.post(
+                    new RequestOptions()
+                            .setHost(requestUri.getHost())
+                            .setPort(port)
+                            .setSsl(ssl)
+                            .setURI(requestUri.toString()), response -> {
+                        if (response.statusCode() != 200) {
+                            emitter.onError(new BadCredentialsException(response.statusMessage()));
+                        } else {
+                            response.bodyHandler(body -> {
+                                JsonObject bodyResponse = body.toJsonObject();
+                                emitter.onSuccess(bodyResponse.getString("access_token"));
+                            });
+                        }
+                    }).setChunked(true).putHeader(HttpHeaders.CONTENT_TYPE, URLEncodedUtils.CONTENT_TYPE);
+
+            request.write(bodyRequest);
+            request.end();
+        });
+    }
+
+    private Maybe<User> profile(String accessToken) {
+        URI requestUri = URI.create(configuration.getUserProfileUri());
+        final int port = requestUri.getPort() != -1 ? requestUri.getPort() : (HTTPS_SCHEME.equals(requestUri.getScheme()) ? 443 : 80);
+        boolean ssl = HTTPS_SCHEME.equalsIgnoreCase(requestUri.getScheme());
+        HttpClientRequest request = client.get(
+                new RequestOptions()
+                        .setHost(requestUri.getHost())
+                        .setPort(port)
+                        .setSsl(ssl)
+                        .setURI(requestUri.toString()))
+                .putHeader(HttpHeaders.USER_AGENT, DEFAULT_USER_AGENT)
+                .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+
+        return request
+                .toObservable()
+                .flatMap(httpClientResponse -> {
+                    if (httpClientResponse.statusCode() != 200) {
+                        throw new BadCredentialsException(httpClientResponse.statusMessage());
+                    }
+                    return Observable.just(httpClientResponse);
+                })
+                .flatMap(HttpClientResponse::toObservable)
+                // we reduce the response chunks into a single one to have access to the full JSON object
+                .reduce(Buffer.buffer(), Buffer::appendBuffer)
+                .map(buffer -> createUser(buffer.toJsonObject()))
+                .toMaybe()
+                // Vert.x requires the HttpClientRequest.end() method to be invoked to signaling that the request can be sent
+                .doOnSubscribe(subscription -> request.end());
+    }
+
+    private User createUser(JsonObject jsonNode) {
+        User user = new DefaultUser(jsonNode.getString(CLAIMS_SUB));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
-        additionalInformation.put("sub", jsonNode.get(CLAIMS_SUB).asText());
+        additionalInformation.put(CLAIMS_SUB, jsonNode.getValue(CLAIMS_SUB));
         if (this.mapper.getMappers() != null) {
             this.mapper.getMappers().forEach((k, v) -> {
-                if (jsonNode.get(v) != null) {
-                    additionalInformation.put(k, jsonNode.get(v).asText());
+                if (jsonNode.getValue(v) != null) {
+                    additionalInformation.put(k, jsonNode.getValue(v));
                 }
             });
         }
@@ -129,23 +167,4 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
         return user;
     }
 
-    private String read(Reader rd) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        int cp;
-        while ((cp = rd.read()) != -1) {
-            sb.append((char) cp);
-        }
-        return sb.toString();
-    }
-
-    private Map<String, String> extractMap(String param) {
-        Map<String, String> query_pairs = new LinkedHashMap<>();
-        String[] pairs = param.split("&");
-        for (String pair : pairs) {
-            int idx = pair.indexOf("=");
-            query_pairs.put(pair.substring(0, idx), pair.substring(idx + 1));
-        }
-        return query_pairs;
-
-    }
 }

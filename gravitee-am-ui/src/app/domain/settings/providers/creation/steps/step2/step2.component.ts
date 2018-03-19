@@ -60,7 +60,7 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
     this.providerService.create(this.domainId, this.provider).map(res => res.json()).subscribe(data => {
       this.snackbarService.open("Provider " + data.name + " created");
       if (this.adminContext) {
-        this.router.navigate(['/settings', 'security', 'providers', data.id]);
+        this.router.navigate(['/settings', 'management', 'providers', data.id]);
       } else {
         this.router.navigate(['/domains', this.domainId, 'settings', 'providers', data.id]);
       }

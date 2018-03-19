@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -120,6 +121,7 @@ public class IdentityProviderServiceTest {
     public void shouldCreate() {
         NewIdentityProvider newIdentityProvider = Mockito.mock(NewIdentityProvider.class);
         when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(new IdentityProvider()));
+        when(domainService.reload(DOMAIN)).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = identityProviderService.create(DOMAIN, newIdentityProvider).test();
         testObserver.awaitTerminalEvent();
@@ -147,6 +149,7 @@ public class IdentityProviderServiceTest {
         UpdateIdentityProvider updateIdentityProvider = Mockito.mock(UpdateIdentityProvider.class);
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(new IdentityProvider()));
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(new IdentityProvider()));
+        when(domainService.reload(DOMAIN)).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider).test();
         testObserver.awaitTerminalEvent();

@@ -41,11 +41,10 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Spring -->
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-core</artifactId>
-            <version>${spring-security.version}</version>
+            <groupId>io.gravitee.am.service</groupId>
+            <artifactId>gravitee-am-service</artifactId>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

@@ -15,14 +15,17 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import io.reactivex.Maybe;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface AuthenticationProvider {
 
-    User loadUserByUsername(Authentication authentication);
+    Maybe<User> loadUserByUsername(Authentication authentication);
 
-    User loadUserByUsername(String username);
+    Maybe<User> loadUserByUsername(String username);
 
 }

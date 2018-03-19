@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.common.Page;
@@ -402,6 +403,7 @@ public class ClientServiceTest {
         when(identityProviderService.findById("id1")).thenReturn(Maybe.just(new IdentityProvider()));
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(new IdentityProvider()));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
+        when(domainService.reload(DOMAIN)).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
         testObserver.awaitTerminalEvent();
@@ -473,8 +475,10 @@ public class ClientServiceTest {
     @Test
     public void shouldDelete() {
         Client existingClient = Mockito.mock(Client.class);
+        when(existingClient.getDomain()).thenReturn("my-domain");
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(existingClient));
         when(clientRepository.delete("my-client")).thenReturn(Single.just(Irrelevant.CLIENT));
+        when(domainService.reload("my-domain")).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = clientService.delete("my-client").test();
         testObserver.awaitTerminalEvent();

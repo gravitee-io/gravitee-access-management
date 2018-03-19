@@ -104,9 +104,9 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                             extensionGrant.setUpdatedAt(extensionGrant.getCreatedAt());
 
                             return extensionGrantRepository.create(extensionGrant)
-                                    .doAfterSuccess(extensionGrant1 -> {
-                                        // Reload domain to take care about extension grant update
-                                        domainService.reload(domain);
+                                    .flatMap(extensionGrant1 -> {
+                                        // Reload domain to take care about extension grant create
+                                        return domainService.reload(domain).flatMap(domain1 -> Single.just(extensionGrant1));
                                     });
 
                         }
@@ -126,27 +126,18 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
         LOGGER.debug("Update a extension grant {} for domain {}", id, domain);
 
         return extensionGrantRepository.findById(id)
-                .map(extensionGrant -> Optional.of(extensionGrant))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(tokenGranterOpt -> {
-                    if (!tokenGranterOpt.isPresent()) {
-                        throw new ExtensionGrantNotFoundException(id);
-                    }
-                    return Single.just(tokenGranterOpt);
-                })
-                .flatMap(tokenGranterOpt1 -> extensionGrantRepository.findByDomainAndGrantType(domain, updateExtensionGrant.getGrantType())
+                .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(id)))
+                .flatMapSingle(tokenGranter -> extensionGrantRepository.findByDomainAndGrantType(domain, updateExtensionGrant.getGrantType())
                         .map(extensionGrant -> Optional.of(extensionGrant))
                         .defaultIfEmpty(Optional.empty())
                         .toSingle()
                         .flatMap(existingTokenGranter -> {
                            if (existingTokenGranter.isPresent() && !existingTokenGranter.get().getId().equals(id)) {
-                               throw new ExtensionGrantNotFoundException(id);
+                               throw new ExtensionGrantAlreadyExistsException("Extension grant with the same grant type already exists");
                            }
-                           return Single.just(tokenGranterOpt1);
+                           return Single.just(tokenGranter);
                        }))
-                .flatMap(tokenGranterOpt2 -> {
-                    ExtensionGrant oldExtensionGrant = tokenGranterOpt2.get();
+                .flatMap(oldExtensionGrant -> {
                     oldExtensionGrant.setName(updateExtensionGrant.getName());
                     oldExtensionGrant.setGrantType(updateExtensionGrant.getGrantType());
                     oldExtensionGrant.setIdentityProvider(updateExtensionGrant.getIdentityProvider());
@@ -155,9 +146,9 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                     oldExtensionGrant.setUpdatedAt(new Date());
 
                     return extensionGrantRepository.update(oldExtensionGrant)
-                            .doOnSuccess(extensionGrant -> {
+                            .flatMap(extensionGrant -> {
                                 // Reload domain to take care about extension grant update
-                                domainService.reload(domain);
+                                return domainService.reload(domain).flatMap(domain1 -> Single.just(extensionGrant));
                             });
                 })
                 .onErrorResumeNext(ex -> {
@@ -174,27 +165,19 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     public Single<Irrelevant> delete(String domain, String extensionGrantId) {
         LOGGER.debug("Delete extension grant {}", extensionGrantId);
         return extensionGrantRepository.findById(extensionGrantId)
-                .map(extensionGrant -> Optional.of(extensionGrant))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(optTokenGranter -> {
-                    if (! optTokenGranter.isPresent()) {
-                        throw new ExtensionGrantNotFoundException(extensionGrantId);
-                    }
-
-                    return clientService.findByExtensionGrant(optTokenGranter.get().getGrantType())
-                            .flatMap(clients -> {
-                                if (clients.size() > 0) {
-                                    throw new ExtensionGrantWithClientsException();
-                                }
-                                return Single.just(Irrelevant.CLIENT);
-                            });
-                })
-                .flatMap(irrelevant -> extensionGrantRepository.delete(extensionGrantId)
-                        .doOnSuccess(irrelevant1 -> {
-                            // Reload domain to take care about extension grant update
-                            domainService.reload(domain);
+                .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrantId)))
+                .flatMapSingle(extensionGrant -> clientService.findByExtensionGrant(extensionGrant.getGrantType())
+                        .flatMap(clients -> {
+                            if (clients.size() > 0) {
+                                throw new ExtensionGrantWithClientsException();
+                            }
+                            return Single.just(Irrelevant.CLIENT);
                         }))
+                .flatMap(irrelevant -> extensionGrantRepository.delete(extensionGrantId))
+                .flatMap(irrelevant -> {
+                    // Reload domain to take care about extension grant update
+                    return domainService.reload(domain).flatMap(domain1 -> Single.just(irrelevant));
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);

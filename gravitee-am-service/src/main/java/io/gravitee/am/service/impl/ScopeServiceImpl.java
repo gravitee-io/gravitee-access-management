@@ -42,7 +42,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -114,15 +113,8 @@ public class ScopeServiceImpl implements ScopeService {
     public Single<Scope> update(String domain, String id, UpdateScope updateScope) {
         LOGGER.debug("Update a scope {} for domain {}", id, domain);
         return scopeRepository.findById(id)
-                .map(scope -> Optional.of(scope))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(scopeOpt -> {
-                    if (!scopeOpt.isPresent()) {
-                        throw new ScopeNotFoundException(id);
-                    }
-
-                    Scope scope = scopeOpt.get();
+                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
+                .flatMapSingle(scope -> {
                     scope.setName(updateScope.getName());
                     scope.setDescription(updateScope.getDescription());
                     scope.setNames(updateScope.getNames());
@@ -144,16 +136,8 @@ public class ScopeServiceImpl implements ScopeService {
     public Single<Irrelevant> delete(String scopeId) {
         LOGGER.debug("Delete scope {}", scopeId);
         return scopeRepository.findById(scopeId)
-                .map(client -> Optional.of(client))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(scopeOpt -> {
-                    if(!scopeOpt.isPresent()) {
-                        throw new ScopeNotFoundException(scopeId);
-                    }
-                    return Single.just(scopeOpt.get());
-                })
-                .flatMap(scope -> {
+                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
+                .flatMapSingle(scope -> {
                     // 1_ Remove permissions from role
                     Single<List<Role>> removePermissionsFromRole = roleService.findByDomain(scope.getDomain())
                             .flatMapObservable(roles -> Observable.fromIterable(roles.stream()

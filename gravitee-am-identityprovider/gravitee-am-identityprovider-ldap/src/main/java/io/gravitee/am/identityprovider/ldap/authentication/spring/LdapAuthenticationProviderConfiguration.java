@@ -16,68 +16,81 @@
 package io.gravitee.am.identityprovider.ldap.authentication.spring;
 
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
+import org.ldaptive.*;
+import org.ldaptive.auth.Authenticator;
+import org.ldaptive.auth.BindAuthenticationHandler;
+import org.ldaptive.auth.SearchDnResolver;
+import org.ldaptive.auth.ext.PasswordPolicyAuthenticationResponseHandler;
+import org.ldaptive.control.PasswordPolicyControl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.ldap.core.support.BaseLdapPathContextSource;
-import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
-import org.springframework.security.ldap.authentication.BindAuthenticator;
-import org.springframework.security.ldap.authentication.LdapAuthenticator;
-import org.springframework.security.ldap.search.FilterBasedLdapUserSearch;
-import org.springframework.security.ldap.search.LdapUserSearch;
-import org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator;
-import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator;
-import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper;
-import org.springframework.security.ldap.userdetails.UserDetailsContextMapper;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
 public class LdapAuthenticationProviderConfiguration {
 
+    private static final String LDAP_SEPARATOR = ",";
+
     @Autowired
     private LdapIdentityProviderConfiguration configuration;
 
     @Bean
-    public BaseLdapPathContextSource contextSource() {
-        DefaultSpringSecurityContextSource contextSource = new DefaultSpringSecurityContextSource(configuration.getContextSourceUrl());
-        contextSource.setBase(configuration.getContextSourceBase());
-        contextSource.setUserDn(configuration.getContextSourceUsername());
-        contextSource.setPassword(configuration.getContextSourcePassword());
-        contextSource.afterPropertiesSet();
-        return contextSource;
+    public ConnectionFactory connectionFactory() {
+        return new DefaultConnectionFactory(connectionConfig());
     }
 
     @Bean
-    public LdapAuthoritiesPopulator authoritiesPopulator() {
-        DefaultLdapAuthoritiesPopulator populator = new DefaultLdapAuthoritiesPopulator(
-                contextSource(),
-                configuration.getGroupSearchBase());
-        populator.setGroupSearchFilter(configuration.getGroupSearchFilter());
-        populator.setGroupRoleAttribute(configuration.getGroupRoleAttribute());
-        populator.setSearchSubtree(true);
-        populator.setRolePrefix("");
-        return populator;
+    public ConnectionConfig connectionConfig() {
+        ConnectionConfig connectionConfig = new ConnectionConfig();
+        connectionConfig.setLdapUrl(configuration.getContextSourceUrl());
+        BindConnectionInitializer connectionInitializer =
+                new BindConnectionInitializer(configuration.getContextSourceUsername(), new Credential(configuration.getContextSourcePassword()));
+        connectionConfig.setConnectionInitializer(connectionInitializer);
+        return connectionConfig;
+    }
+
+    @Bean("userSearchExecutor")
+    public SearchExecutor userSearchExecutor() {
+        SearchExecutor searchExecutor = new SearchExecutor();
+        searchExecutor.setBaseDn(configuration.getContextSourceBase());
+        String userSearchBase = configuration.getUserSearchBase();
+        if (userSearchBase != null && !userSearchBase.isEmpty()) {
+            searchExecutor.setBaseDn(userSearchBase + LDAP_SEPARATOR + searchExecutor.getBaseDn());
+        }
+        searchExecutor.setSearchFilter(new SearchFilter(configuration.getUserSearchFilter()));
+        return searchExecutor;
+    }
+
+    @Bean("groupSearchExecutor")
+    public SearchExecutor groupSearchExecutor() {
+        SearchExecutor searchExecutor = new SearchExecutor();
+        searchExecutor.setBaseDn(configuration.getContextSourceBase());
+        String groupSearchBase = configuration.getGroupSearchBase();
+        if (groupSearchBase != null && !groupSearchBase.isEmpty()) {
+            searchExecutor.setBaseDn(groupSearchBase + LDAP_SEPARATOR + searchExecutor.getBaseDn());
+        }
+        searchExecutor.setSearchFilter(new SearchFilter(configuration.getGroupSearchFilter()));
+        searchExecutor.setReturnAttributes(new String[] { configuration.getGroupRoleAttribute() });
+        searchExecutor.setSearchScope(SearchScope.SUBTREE);
+        return searchExecutor;
     }
 
     @Bean
-    public LdapUserSearch userSearch() {
-        return new FilterBasedLdapUserSearch(
-                configuration.getUserSearchBase(), configuration.getUserSearchFilter(),
-                contextSource());
-    }
+    public Authenticator authenticator() {
+        SearchDnResolver dnResolver = new SearchDnResolver(connectionFactory());
+        dnResolver.setBaseDn(configuration.getContextSourceBase());
+        dnResolver.setUserFilter(configuration.getUserSearchFilter());
+        dnResolver.setSubtreeSearch(true);
+        BindAuthenticationHandler authHandler = new BindAuthenticationHandler(connectionFactory());
+        authHandler.setAuthenticationControls(new PasswordPolicyControl());
 
-    @Bean
-    public UserDetailsContextMapper userDetailsContextMapper() {
-        return new LdapUserDetailsMapper();
-    }
-
-    @Bean
-    public LdapAuthenticator authenticator() {
-        BindAuthenticator authenticator = new BindAuthenticator(contextSource());
-        authenticator.setUserSearch(userSearch());
-        return authenticator;
+        Authenticator auth = new Authenticator(dnResolver, authHandler);
+        auth.setAuthenticationResponseHandlers(new PasswordPolicyAuthenticationResponseHandler());
+        return auth;
     }
 }

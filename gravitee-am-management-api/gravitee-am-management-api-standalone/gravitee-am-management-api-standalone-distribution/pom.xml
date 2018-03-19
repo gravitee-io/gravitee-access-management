@@ -120,6 +120,14 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.management</groupId>
+            <artifactId>gravitee-am-management-api-services-sync</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -191,6 +199,14 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.extensiongrant</groupId>
                                     <artifactId>gravitee-am-extensiongrant-jwtbearer</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- Services -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.management</groupId>
+                                    <artifactId>gravitee-am-management-api-services-sync</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

@@ -157,11 +157,11 @@ public class CertificateServiceImpl implements CertificateService {
 
 
         return certificateSingle
-                .flatMap(certificate -> certificateRepository.create(certificate)
-                        .doOnSuccess(certificate1 -> {
-                            // Reload domain to take care about certificate create
-                            domainService.reload(domain);
-                        }))
+                .flatMap(certificate -> certificateRepository.create(certificate))
+                .flatMap(certificate -> {
+                    // Reload domain to take care about certificate create
+                    return domainService.reload(domain).flatMap(domain1 -> Single.just(certificate));
+                })
                 .doOnError(ex -> {
                     LOGGER.error("An error occurs while trying to create a certificate", ex);
                     throw new TechnicalManagementException("An error occurs while trying to create a certificate", ex);
@@ -173,16 +173,9 @@ public class CertificateServiceImpl implements CertificateService {
         LOGGER.debug("Update a certificate {} for domain {}", id, domain);
 
         return certificateRepository.findById(id)
-                .map(certificate -> Optional.of(certificate))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(certificateOpt -> {
-                    if (!certificateOpt.isPresent()) {
-                        throw new CertificateNotFoundException(id);
-                    }
-
+                .switchIfEmpty(Maybe.error(new CertificateNotFoundException(id)))
+                .flatMapSingle(oldCertificate -> {
                     Single<Certificate> certificateSingle = Single.create(emitter -> {
-                        Certificate oldCertificate = certificateOpt.get();
                         oldCertificate.setName(updateCertificate.getName());
 
                         try {
@@ -237,11 +230,11 @@ public class CertificateServiceImpl implements CertificateService {
                     });
 
                     return certificateSingle
-                            .flatMap(certificate -> certificateRepository.update(certificate)
-                                    .doOnSuccess(certificate1 -> {
-                                        // Reload domain to take care about certificate update
-                                        domainService.reload(domain);
-                                    }))
+                            .flatMap(certificate -> certificateRepository.update(certificate))
+                            .flatMap(certificate1 -> {
+                                // Reload domain to take care about certificate update
+                                return domainService.reload(domain).flatMap(domain1 -> Single.just(certificate1));
+                            })
                             .doOnError(ex -> {
                                 LOGGER.error("An error occurs while trying to update a certificate", ex);
                                 throw new TechnicalManagementException("An error occurs while trying to update a certificate", ex);
@@ -253,16 +246,8 @@ public class CertificateServiceImpl implements CertificateService {
     public Single<Irrelevant> delete(String certificateId) {
         LOGGER.debug("Delete certificate {}", certificateId);
         return certificateRepository.findById(certificateId)
-                .map(certificate -> Optional.of(certificate))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(optCertificate -> {
-                    if (!optCertificate.isPresent()) {
-                        throw new CertificateNotFoundException(certificateId);
-                    }
-                    return Single.just(optCertificate.get());
-                })
-                .flatMap(certificate1 -> clientService.findByCertificate(certificateId)
+                .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificateId)))
+                .flatMapSingle(certificate1 -> clientService.findByCertificate(certificateId)
                         .flatMap(clients -> {
                             if (clients.size() > 0) {
                                 throw new CertificateWithClientsException();

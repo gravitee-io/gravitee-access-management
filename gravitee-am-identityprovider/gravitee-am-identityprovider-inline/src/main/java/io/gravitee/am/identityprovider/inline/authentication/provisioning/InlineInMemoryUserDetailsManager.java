@@ -15,53 +15,33 @@
  */
 package io.gravitee.am.identityprovider.inline.authentication.provisioning;
 
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.provisioning.UserDetailsManager;
-import org.springframework.util.Assert;
+import io.gravitee.am.identityprovider.inline.model.User;
+import io.gravitee.am.service.exception.authentication.UsernameNotFoundException;
+import io.reactivex.Maybe;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class InlineInMemoryUserDetailsManager implements UserDetailsManager {
+public class InlineInMemoryUserDetailsManager {
 
-    private final Map<String, UserDetails> users = new HashMap<>();
+    private final Map<String, User> users = new HashMap<>();
 
-    public void createUser(UserDetails user) {
-        Assert.isTrue(!userExists(user.getUsername()));
-
-        users.put(user.getUsername().toLowerCase(), user);
+    public void createUser(User user) {
+        users.putIfAbsent(user.getUsername().toLowerCase(), user);
     }
 
-    public void deleteUser(String username) {
-        users.remove(username.toLowerCase());
-    }
-
-    public void updateUser(UserDetails user) {
-        Assert.isTrue(userExists(user.getUsername()));
-
-        users.put(user.getUsername().toLowerCase(), user);
-    }
-
-    public boolean userExists(String username) {
-        return users.containsKey(username.toLowerCase());
-    }
-
-    public void changePassword(String oldPassword, String newPassword) {
-
-    }
-
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserDetails user = users.get(username.toLowerCase());
-
-        if (user == null) {
-            throw new UsernameNotFoundException(username);
-        }
-
-        return user;
+    public Maybe<User> loadUserByUsername(String username) {
+        return Maybe.create(emitter -> {
+            User user = users.get(username.toLowerCase());
+            if (user == null) {
+                emitter.onError(new UsernameNotFoundException(username));
+            }
+            emitter.onSuccess(user);
+        });
     }
 }

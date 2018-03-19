@@ -33,7 +33,6 @@
 
     <properties>
         <org.reactivestreams.version>1.0.2</org.reactivestreams.version>
-        <rxjava.version>2.1.9</rxjava.version>
     </properties>
 
     <dependencies>

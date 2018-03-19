@@ -15,13 +15,9 @@
  */
 package io.gravitee.am.identityprovider.github.authentication.spring;
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.config.ConnectionConfig;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.core.http.HttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -37,33 +33,22 @@ import java.util.Properties;
 public class GithubAuthenticationProviderConfiguration {
 
     private static final String DEFAULT_MAX_TOTAL_CONNECTION = "200";
-    private static final String DEFAULT_MAX_PER_ROUTE = "100";
     private static final String DEFAULT_CONNECTION_TIMEOUT = "10";
-    private static final String DEFAULT_CONNECTION_REQUEST_TIMEOUT = "10";
-    private static final String DEFAULT_SOCKET_TIMEOUT = "10";
 
     @Autowired
     @Qualifier("graviteeProperties")
     private Properties properties;
 
+    @Autowired
+    private Vertx vertx;
+
     @Bean
     public HttpClient httpClient() {
-        // pooling connection manager
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-            cm.setMaxTotal(Integer.valueOf(properties.getProperty("identities.github.http.pool.maxTotalConnection", DEFAULT_MAX_TOTAL_CONNECTION)));
-            cm.setDefaultMaxPerRoute(Integer.valueOf(properties.getProperty("identities.github.http.pool.maxPerRoute", DEFAULT_MAX_PER_ROUTE)));
-
-        // connection configuration
-        RequestConfig config = RequestConfig.custom()
+        HttpClientOptions httpClientOptions = new HttpClientOptions();
+        httpClientOptions
                 .setConnectTimeout(Integer.valueOf(properties.getProperty("identities.github.http.connectionTimeout", DEFAULT_CONNECTION_TIMEOUT)) * 1000)
-                .setConnectionRequestTimeout(Integer.valueOf(properties.getProperty("identities.github.http.connectionRequestTimeout", DEFAULT_CONNECTION_REQUEST_TIMEOUT)) * 1000)
-                .setSocketTimeout(Integer.valueOf(properties.getProperty("identities.github.http.socketTimeout", DEFAULT_SOCKET_TIMEOUT)) * 1000).build();
+                .setMaxPoolSize(Integer.valueOf(properties.getProperty("identities.github.http.pool.maxTotalConnection", DEFAULT_MAX_TOTAL_CONNECTION)));
 
-        CloseableHttpClient httpClient = HttpClients.custom()
-                .setConnectionManager(cm)
-                .setDefaultRequestConfig(config)
-                .build();
-
-        return httpClient;
+        return vertx.createHttpClient(httpClientOptions);
     }
 }

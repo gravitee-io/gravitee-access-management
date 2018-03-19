@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import io.reactivex.Maybe;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -22,12 +24,12 @@ package io.gravitee.am.identityprovider.api;
 public class NoAuthenticationProvider implements AuthenticationProvider {
 
     @Override
-    public User loadUserByUsername(Authentication authentication) {
+    public Maybe<User> loadUserByUsername(Authentication authentication) {
         return null;
     }
 
     @Override
-    public User loadUserByUsername(String username) {
+    public Maybe<User> loadUserByUsername(String username) {
         return null;
     }
 }

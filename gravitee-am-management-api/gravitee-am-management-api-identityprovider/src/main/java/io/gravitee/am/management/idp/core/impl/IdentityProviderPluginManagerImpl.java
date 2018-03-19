@@ -21,6 +21,7 @@ import io.gravitee.am.management.idp.core.*;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
+import io.vertx.reactivex.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -66,6 +67,9 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     @Autowired
     @Qualifier("graviteeProperties")
     private Properties properties;
+
+    @Autowired
+    private Vertx vertx;
 
     @Override
     public void register(IdentityProviderDefinition identityProviderPluginDefinition, boolean oauth2Provider) {
@@ -170,6 +174,10 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
                     // Add gravitee properties
                     configurableApplicationContext.addBeanFactoryPostProcessor(
                             new PropertiesBeanFactoryPostProcessor(properties));
+
+                    // Add Vert.x instance
+                    configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new VertxBeanFactoryPostProcessor(vertx));
 
                     // Add identity provider configuration bean
                     configurableApplicationContext.addBeanFactoryPostProcessor(

@@ -75,7 +75,7 @@ public class DomainBasedAuthenticationProvider implements AuthenticationProvider
             }
 
             try {
-                user = authenticationProvider.loadUserByUsername(provAuthentication);
+                user = authenticationProvider.loadUserByUsername(provAuthentication).blockingGet();
                 // set user identity provider source
                 details.put(SOURCE, provider);
             } catch (Exception ex) {

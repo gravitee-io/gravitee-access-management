@@ -41,6 +41,7 @@ import org.springframework.context.annotation.Import;
         PluginConfiguration.class,
         // TODO: Jetty configuration should be loaded implicitely (using plugin system ?)
         io.gravitee.am.service.spring.ServiceConfiguration.class,
+        io.gravitee.am.management.services.core.spring.ServiceConfiguration.class,
         JettyContainerConfiguration.class,
         ServiceConfiguration.class,
         RepositoryConfiguration.class,

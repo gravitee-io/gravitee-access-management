@@ -42,7 +42,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.Date;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -283,16 +282,8 @@ public class ClientServiceImpl implements ClientService {
     public Single<Client> update(String domain, String id, UpdateClient updateClient) {
         LOGGER.debug("Update a client {} for domain {}", id, domain);
         return clientRepository.findById(id)
-                .map(client -> Optional.of(client))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(clientOpt -> {
-                    if (!clientOpt.isPresent()) {
-                        throw new ClientNotFoundException(id);
-                    }
-                    return Single.just(clientOpt.get());
-                })
-                .flatMap(client -> {
+                .switchIfEmpty(Maybe.error(new ClientNotFoundException(id)))
+                .flatMapSingle(client -> {
                     Set<String> identities = updateClient.getIdentities();
                     if (identities == null) {
                         return Single.just(client);
@@ -321,9 +312,9 @@ public class ClientServiceImpl implements ClientService {
                     client.setUpdatedAt(new Date());
 
                     return clientRepository.update(client)
-                            .doAfterSuccess(irrelevant -> {
+                            .flatMap(irrelevant -> {
                                 // Reload domain to take care about client delete
-                                domainService.reload(domain);
+                                return domainService.reload(domain).flatMap(domain1 -> Single.just(irrelevant));
                             });
                 })
                 .onErrorResumeNext(ex -> {
@@ -340,20 +331,13 @@ public class ClientServiceImpl implements ClientService {
     public Single<Irrelevant> delete(String clientId) {
         LOGGER.debug("Delete client {}", clientId);
         return clientRepository.findById(clientId)
-                .map(client -> Optional.of(client))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(optClient -> {
-                    if(!optClient.isPresent()) {
-                        throw new ClientNotFoundException(clientId);
-                    } else {
-                        return clientRepository.delete(clientId)
-                                    .doAfterSuccess(irrelevant -> {
-                                        // Reload domain to take care about client delete
-                                        domainService.reload(optClient.get().getDomain());
-                                    });
-                    }
-                })
+                .switchIfEmpty(Maybe.error(new ClientNotFoundException(clientId)))
+                .flatMapSingle(client -> clientRepository.delete(clientId)
+                        .flatMap(irrelevant -> {
+                            // Reload domain to take care about client delete
+                            return domainService.reload(client.getDomain()).flatMap(domain -> Single.just(irrelevant));
+                        })
+                )
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);

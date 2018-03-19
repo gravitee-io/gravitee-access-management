@@ -61,7 +61,7 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
     private static final String OAUTH2_IDENTIFIER = "_oauth2_";
     private static final String PROVIDER_PARAMETER = "provider";
     private static final String SAVED_REQUEST = "GRAVITEEIO_AM_SAVED_REQUEST";
-    private static final String errorPage = "/oauth/error";
+    private static final String errorPage = "/access/error";
     private static final String REDIRECT_URI = "redirect_uri";
 
     private AuthenticationEventPublisher authenticationEventPublisher;
@@ -96,7 +96,7 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
         io.gravitee.am.identityprovider.api.Authentication provAuthentication = new EndUserAuthentication(OAUTH2_IDENTIFIER, password);
         ((EndUserAuthentication) provAuthentication).setAdditionalInformation(Collections.singletonMap(REDIRECT_URI, buildRedirectUri(request)));
         try {
-            User user = authenticationProvider.loadUserByUsername(provAuthentication);
+            User user = authenticationProvider.loadUserByUsername(provAuthentication).blockingGet();
             if (user == null) {
                 logger.error("User is null, fail to authenticate user");
                 throw new BadCredentialsException("User is null after authentication process");

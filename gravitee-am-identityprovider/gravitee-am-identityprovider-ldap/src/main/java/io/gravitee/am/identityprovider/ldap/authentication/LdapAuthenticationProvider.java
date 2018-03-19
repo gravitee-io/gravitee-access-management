@@ -23,25 +23,27 @@ import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderMapper;
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.ldap.authentication.spring.LdapAuthenticationProviderConfiguration;
+import io.gravitee.am.service.exception.authentication.BadCredentialsException;
+import io.gravitee.am.service.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.service.exception.authentication.UsernameNotFoundException;
+import io.reactivex.Maybe;
+import org.ldaptive.*;
+import org.ldaptive.auth.AuthenticationRequest;
+import org.ldaptive.auth.AuthenticationResponse;
+import org.ldaptive.auth.Authenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
-import org.springframework.ldap.NamingException;
-import org.springframework.ldap.core.DirContextOperations;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.ldap.authentication.LdapAuthenticator;
-import org.springframework.security.ldap.search.LdapUserSearch;
-import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import(LdapAuthenticationProviderConfiguration.class)
@@ -52,27 +54,32 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
     private static final String MEMBEROF_ATTRIBUTE = "memberOf";
 
     @Autowired
-    private LdapAuthenticator authenticator;
-
-    @Autowired
-    private LdapAuthoritiesPopulator authoritiesPopulator;
-
-    @Autowired
     private LdapIdentityProviderMapper mapper;
 
     @Autowired
     private LdapIdentityProviderRoleMapper roleMapper;
 
     @Autowired
-    private LdapUserSearch userSearch;
-
-    @Autowired
     private LdapIdentityProviderConfiguration configuration;
 
     private String identifierAttribute = "uid";
 
+    @Autowired
+    private Authenticator authenticator;
+
+    @Autowired
+    private ConnectionFactory connectionFactory;
+
+    @Autowired
+    @Qualifier("groupSearchExecutor")
+    private SearchExecutor groupSearchExecutor;
+
+    @Autowired
+    @Qualifier("userSearchExecutor")
+    private SearchExecutor userSearchExecutor;
+
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         String searchFilter = configuration.getUserSearchFilter();
         LOGGER.debug("Looking for a LDAP user's identifier using search filter [{}]", searchFilter);
 
@@ -89,100 +96,114 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
     }
 
     @Override
-    public User loadUserByUsername(Authentication authentication) {
-        try {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            DirContextOperations authenticate;
+    public Maybe<User> loadUserByUsername(Authentication authentication) {
+        Maybe<User> userSource = Maybe.create(emitter -> {
             try {
-                Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-
+                String username = (String) authentication.getPrincipal();
+                String password = (String) authentication.getCredentials();
                 // authenticate user
-                authenticate = authenticator.authenticate(new UsernamePasswordAuthenticationToken(
-                        authentication.getPrincipal(), authentication.getCredentials()));
-
-                // fetch user groups
-                try {
-                    List<String> groups = authoritiesPopulator
-                            .getGrantedAuthorities(authenticate, authenticate.getNameInNamespace()).stream()
-                            .map(a -> a.getAuthority())
-                            .collect(Collectors.toList());
-                    authenticate.setAttributeValue(MEMBEROF_ATTRIBUTE, groups);
-                } catch (Exception e) {
-                    LOGGER.warn("No group found for user {}", authenticate.getNameInNamespace(), e);
+                AuthenticationResponse response = authenticator.authenticate(
+                        new AuthenticationRequest(username, new Credential(password), ReturnAttributes.ALL_USER.value()));
+                if (response.getResult()) { // authentication succeeded
+                    LdapEntry userEntry = response.getLdapEntry();
+                    // fetch user groups
+                    try {
+                        groupSearchExecutor.getSearchFilter().setParameter(0, userEntry.getDn());
+                        SearchResult searchResult = groupSearchExecutor.search(connectionFactory).getResult();
+                        Collection<LdapEntry> groupEntries = searchResult.getEntries();
+                        String[] groups = groupEntries.stream()
+                                .map(groupEntry -> groupEntry.getAttributes()
+                                        .stream()
+                                        .map(ldapAttribute -> ldapAttribute.getStringValue())
+                                        .collect(Collectors.toList()))
+                                .flatMap(List::stream)
+                                .toArray(size -> new String[size]);
+                        userEntry.addAttribute(new LdapAttribute(MEMBEROF_ATTRIBUTE, groups));
+                    } catch (Exception e) {
+                        LOGGER.warn("No group found for user {}", userEntry.getDn(), e);
+                    }
+                    // return user
+                    emitter.onSuccess(createUser(userEntry));
+                } else { // authentication failed
+                    emitter.onError(new BadCredentialsException(response.getMessage()));
                 }
-            } finally {
-                Thread.currentThread().setContextClassLoader(classLoader);
+            } catch (LdapException e) {
+                emitter.onError(new InternalAuthenticationServiceException(e.getMessage(), e));
             }
+        });
 
-            return createUser(authenticate);
-        } catch (UsernameNotFoundException notFound) {
-            throw notFound;
-        } catch (NamingException ldapAccessFailure) {
-            throw new InternalAuthenticationServiceException(
-                    ldapAccessFailure.getMessage(), ldapAccessFailure);
-        }
+        return userSource;
     }
 
     @Override
-    public User loadUserByUsername(String username) {
-        try {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            DirContextOperations authenticate;
+    public Maybe<User> loadUserByUsername(String username) {
+        Maybe<User> userSource = Maybe.create(emitter -> {
             try {
-                Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-
                 // find user
-                authenticate = userSearch.searchForUser(username);
-
-                // fetch user groups
-                try {
-                    List<String> groups = authoritiesPopulator
-                            .getGrantedAuthorities(authenticate, authenticate.getNameInNamespace()).stream()
-                            .map(a -> a.getAuthority())
-                            .collect(Collectors.toList());
-                    authenticate.setAttributeValue(MEMBEROF_ATTRIBUTE, groups);
-                } catch (Exception e) {
-                    LOGGER.warn("No group found for user {}", authenticate.getNameInNamespace(), e);
+                userSearchExecutor.getSearchFilter().setParameter(0, username);
+                SearchResult userSearchResult = userSearchExecutor.search(connectionFactory).getResult();
+                LdapEntry userEntry = userSearchResult.getEntry();
+                if (userEntry != null) {
+                    // fetch user groups
+                    try {
+                        groupSearchExecutor.getSearchFilter().setParameter(0, userEntry.getDn());
+                        SearchResult searchResult = groupSearchExecutor.search(connectionFactory).getResult();
+                        Collection<LdapEntry> groupEntries = searchResult.getEntries();
+                        String[] groups = groupEntries.stream()
+                                .map(groupEntry -> groupEntry.getAttributes()
+                                        .stream()
+                                        .map(ldapAttribute -> ldapAttribute.getStringValue())
+                                        .collect(Collectors.toList()))
+                                .flatMap(List::stream)
+                                .toArray(size -> new String[size]);
+                        userEntry.addAttribute(new LdapAttribute(MEMBEROF_ATTRIBUTE, groups));
+                    } catch (Exception e) {
+                        LOGGER.warn("No group found for user {}", userEntry.getDn(), e);
+                    }
+                    // return user
+                    emitter.onSuccess(createUser(userEntry));
+                } else { // failed to find user
+                    emitter.onError(new UsernameNotFoundException(username));
                 }
-            } finally {
-                Thread.currentThread().setContextClassLoader(classLoader);
+            } catch (LdapException e) {
+                emitter.onError(new InternalAuthenticationServiceException(e.getMessage(), e));
             }
+        });
 
-            return createUser(authenticate);
-        } catch (UsernameNotFoundException notFound) {
-            throw notFound;
-        } catch (NamingException ldapAccessFailure) {
-            throw new InternalAuthenticationServiceException(
-                    ldapAccessFailure.getMessage(), ldapAccessFailure);
-        }
+        return userSource;
     }
 
-    private User createUser(DirContextOperations authenticate) {
-        DefaultUser user = new DefaultUser(authenticate.getStringAttribute(identifierAttribute));
+    private User createUser(LdapEntry ldapEntry) {
+        DefaultUser user = new DefaultUser(ldapEntry.getAttribute(identifierAttribute).getStringValue());
 
         // add additional information
         Map<String, Object> claims = new HashMap<>();
-        if (mapper.getMappers() != null) {
-            mapper.getMappers().forEach((k, v) -> {
-                claims.put(k, authenticate.getStringAttribute(v));
-            });
+        if (mapper.getMappers() != null && !mapper.getMappers().isEmpty()) {
+            mapper.getMappers().forEach((k, v) -> claims.put(k, ldapEntry.getAttribute(v).getStringValue()));
         } else {
             // default values
-            claims.put("sub", authenticate.getStringAttribute("uid"));
-            claims.put("email", authenticate.getStringAttribute("mail"));
-            claims.put("name", authenticate.getStringAttribute("displayname"));
-            claims.put("given_name", authenticate.getStringAttribute("givenname"));
-            claims.put("family_name", authenticate.getStringAttribute("sn"));
+            claims.put("sub", user.getUsername());
+            addClaim(claims, ldapEntry, "email", "mail");
+            addClaim(claims, ldapEntry, "name", "displayname");
+            addClaim(claims, ldapEntry, "given_name", "givenname");
+            addClaim(claims, ldapEntry, "family_name", "sn");
         }
         user.setAdditonalInformation(claims);
 
         // set user roles
-        user.setRoles(getUserRoles(authenticate));
+        user.setRoles(getUserRoles(ldapEntry));
 
         return user;
     }
 
-    private List<String> getUserRoles(DirContextOperations authenticate) {
+    private Map<String, Object> addClaim(Map<String, Object> claims, LdapEntry ldapEntry, String claimKey, String attributeKey) {
+        if (ldapEntry.getAttribute(attributeKey) != null) {
+            claims.put(claimKey, ldapEntry.getAttribute(attributeKey).getStringValue());
+        }
+        return claims;
+    }
+
+    private List<String> getUserRoles(LdapEntry ldapEntry) {
         Set<String> roles = new HashSet();
         if (roleMapper != null && roleMapper.getRoles() != null) {
             roleMapper.getRoles().forEach((role, users) -> {
@@ -193,14 +214,14 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
                     String userValue = attributes[1];
 
                     // group
-                    if (MEMBEROF_ATTRIBUTE.equals(userAttribute) && authenticate.attributeExists(MEMBEROF_ATTRIBUTE)) {
-                        if (((List) authenticate.getObjectAttribute(MEMBEROF_ATTRIBUTE)).contains(userValue)) {
+                    if (MEMBEROF_ATTRIBUTE.equals(userAttribute) && ldapEntry.getAttribute(MEMBEROF_ATTRIBUTE) != null) {
+                        if (((List) ldapEntry.getAttribute(MEMBEROF_ATTRIBUTE)).contains(userValue)) {
                             roles.add(role);
                         }
                     // user
                     } else {
-                        if (authenticate.attributeExists(userAttribute) &&
-                                authenticate.getStringAttribute(userAttribute).equals(userValue)) {
+                        if (ldapEntry.getAttribute(userAttribute) != null &&
+                                ldapEntry.getAttribute(userAttribute).getStringValue().equals(userValue)) {
                             roles.add(role);
                         }
                     }

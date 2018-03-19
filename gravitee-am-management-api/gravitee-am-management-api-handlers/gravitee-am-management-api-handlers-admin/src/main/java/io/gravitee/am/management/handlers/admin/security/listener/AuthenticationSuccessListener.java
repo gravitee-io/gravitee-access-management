@@ -21,6 +21,8 @@ import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
@@ -51,29 +53,34 @@ public class AuthenticationSuccessListener implements ApplicationListener<Authen
         final User principal = (User) event.getAuthentication().getPrincipal();
         Map<String, String> details = (Map<String, String>) event.getAuthentication().getDetails();
 
-        try {
-            // TODO async call
-            io.gravitee.am.model.User user = userService.loadUserByUsernameAndDomain(domain.getId(), principal.getUsername()).blockingGet();
-            UpdateUser updateUser = new UpdateUser();
-            if (details != null) {
-                updateUser.setSource(details.get(SOURCE));
-                updateUser.setClient(CLIENT_ID);
-            }
-            updateUser.setLoggedAt(new Date());
-            updateUser.setLoginsCount(user.getLoginsCount() + 1);
-            updateUser.setAdditionalInformation(principal.getAdditionalInformation());
-            userService.update(domain.getId(), user.getId(), updateUser);
-        } catch (UserNotFoundException unfe) {
-            final NewUser newUser = new NewUser();
-            newUser.setUsername(principal.getUsername());
-            if (details != null) {
-                newUser.setSource(details.get(SOURCE));
-                newUser.setClient(CLIENT_ID);
-            }
-            newUser.setLoggedAt(new Date());
-            newUser.setLoginsCount(1l);
-            newUser.setAdditionalInformation(principal.getAdditionalInformation());
-            userService.create(domain.getId(), newUser);
-        }
+        userService.loadUserByUsernameAndDomain(domain.getId(), principal.getUsername())
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
+                .flatMapSingle(user -> {
+                    UpdateUser updateUser = new UpdateUser();
+                    if (details != null) {
+                        updateUser.setSource(details.get(SOURCE));
+                        updateUser.setClient(CLIENT_ID);
+                    }
+                    updateUser.setLoggedAt(new Date());
+                    updateUser.setLoginsCount(user.getLoginsCount() + 1);
+                    updateUser.setAdditionalInformation(principal.getAdditionalInformation());
+                    return userService.update(domain.getId(), user.getId(), updateUser);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof UserNotFoundException) {
+                        final NewUser newUser = new NewUser();
+                        newUser.setUsername(principal.getUsername());
+                        if (details != null) {
+                            newUser.setSource(details.get(SOURCE));
+                            newUser.setClient(CLIENT_ID);
+                        }
+                        newUser.setLoggedAt(new Date());
+                        newUser.setLoginsCount(1l);
+                        newUser.setAdditionalInformation(principal.getAdditionalInformation());
+                        return userService.create(domain.getId(), newUser);
+                    }
+                    return Single.error(ex);
+                })
+                .subscribe();
     }
 }

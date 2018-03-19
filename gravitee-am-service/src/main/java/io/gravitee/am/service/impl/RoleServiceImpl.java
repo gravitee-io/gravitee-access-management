@@ -35,7 +35,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -115,16 +114,8 @@ public class RoleServiceImpl implements RoleService {
         LOGGER.debug("Update a role {} for domain {}", id, domain);
 
         return roleRepository.findById(id)
-                .map(role -> Optional.of(role))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(roleOpt -> {
-                    if (!roleOpt.isPresent()) {
-                        throw new RoleNotFoundException(id);
-                    }
-                    return Single.just(roleOpt.get());
-                })
-                .flatMap(oldRole -> {
+                .switchIfEmpty(Maybe.error(new RoleNotFoundException(id)))
+                .flatMapSingle(oldRole -> {
                     // check if role name is unique
                     return checkRoleUniqueness(updateRole.getName(), oldRole.getId(), domain)
                             .flatMap(irrelevant -> {
@@ -150,13 +141,8 @@ public class RoleServiceImpl implements RoleService {
     public Single<Irrelevant> delete(String roleId) {
         LOGGER.debug("Delete role {}", roleId);
         return roleRepository.findById(roleId)
-                .isEmpty()
-                    .flatMap(empty -> {
-                        if (empty) {
-                            throw new RoleNotFoundException(roleId);
-                        }
-                        return roleRepository.delete(roleId);
-                    })
+                .switchIfEmpty(Maybe.error(new RoleNotFoundException(roleId)))
+                .flatMapSingle(role -> roleRepository.delete(roleId))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);

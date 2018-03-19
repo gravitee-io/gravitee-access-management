@@ -35,7 +35,6 @@ import org.springframework.stereotype.Component;
 import java.text.Normalizer;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -134,31 +133,23 @@ public class DomainServiceImpl implements DomainService {
     public Single<Domain> update(String domainId, UpdateDomain updateDomain) {
         LOGGER.debug("Update an existing domain: {}", updateDomain);
         return domainRepository.findById(domainId)
-                .map(domain -> Optional.of(domain))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(domainOpt -> {
-                    if(!domainOpt.isPresent()) {
-                        throw new DomainNotFoundException(domainId);
-                    } else {
-                        Domain oldDomain = domainOpt.get();
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                .flatMapSingle(oldDomain -> {
+                    Domain domain = new Domain();
+                    domain.setId(domainId);
+                    domain.setPath(updateDomain.getPath());
+                    domain.setName(updateDomain.getName());
+                    domain.setDescription(updateDomain.getDescription());
+                    domain.setEnabled(updateDomain.isEnabled());
+                    domain.setIdentities(updateDomain.getIdentities());
+                    domain.setOauth2Identities(updateDomain.getOauth2Identities());
+                    // master flag is set programmatically (keep old value)
+                    domain.setMaster(oldDomain.isMaster());
+                    domain.setCreatedAt(oldDomain.getCreatedAt());
+                    domain.setUpdatedAt(new Date());
+                    domain.setLoginForm(oldDomain.getLoginForm());
 
-                        Domain domain = new Domain();
-                        domain.setId(domainId);
-                        domain.setPath(updateDomain.getPath());
-                        domain.setName(updateDomain.getName());
-                        domain.setDescription(updateDomain.getDescription());
-                        domain.setEnabled(updateDomain.isEnabled());
-                        domain.setIdentities(updateDomain.getIdentities());
-                        domain.setOauth2Identities(updateDomain.getOauth2Identities());
-                        // master flag is set programmatically (keep old value)
-                        domain.setMaster(oldDomain.isMaster());
-                        domain.setCreatedAt(oldDomain.getCreatedAt());
-                        domain.setUpdatedAt(new Date());
-                        domain.setLoginForm(oldDomain.getLoginForm());
-
-                        return domainRepository.update(domain);
-                    }
+                    return domainRepository.update(domain);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -174,30 +165,22 @@ public class DomainServiceImpl implements DomainService {
     public Single<Domain> reload(String domainId) {
         LOGGER.debug("Reload a domain: {}", domainId);
         return domainRepository.findById(domainId)
-                .map(domain -> Optional.of(domain))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(domainOpt -> {
-                    if(!domainOpt.isPresent()) {
-                        throw new DomainNotFoundException(domainId);
-                    } else {
-                        Domain oldDomain = domainOpt.get();
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                .flatMapSingle(oldDomain -> {
+                    Domain domain = new Domain();
+                    domain.setId(domainId);
+                    domain.setPath(oldDomain.getPath());
+                    domain.setName(oldDomain.getName());
+                    domain.setDescription(oldDomain.getDescription());
+                    domain.setEnabled(oldDomain.isEnabled());
+                    domain.setMaster(oldDomain.isMaster());
+                    domain.setCreatedAt(oldDomain.getCreatedAt());
+                    domain.setUpdatedAt(new Date());
+                    domain.setLoginForm(oldDomain.getLoginForm());
+                    domain.setIdentities(oldDomain.getIdentities());
+                    domain.setOauth2Identities(oldDomain.getOauth2Identities());
 
-                        Domain domain = new Domain();
-                        domain.setId(domainId);
-                        domain.setPath(oldDomain.getPath());
-                        domain.setName(oldDomain.getName());
-                        domain.setDescription(oldDomain.getDescription());
-                        domain.setEnabled(oldDomain.isEnabled());
-                        domain.setMaster(oldDomain.isMaster());
-                        domain.setCreatedAt(oldDomain.getCreatedAt());
-                        domain.setUpdatedAt(new Date());
-                        domain.setLoginForm(oldDomain.getLoginForm());
-                        domain.setIdentities(oldDomain.getIdentities());
-                        domain.setOauth2Identities(oldDomain.getOauth2Identities());
-
-                        return domainRepository.update(domain);
-                    }
+                    return domainRepository.update(domain);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -213,30 +196,21 @@ public class DomainServiceImpl implements DomainService {
     public Single<Domain> setMasterDomain(String domainId, boolean isMaster) {
         LOGGER.debug("Set master flag for domain: {}", domainId);
         return domainRepository.findById(domainId)
-                .map(domain -> Optional.of(domain))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(domainOpt -> {
-                    if(!domainOpt.isPresent()) {
-                        throw new DomainNotFoundException(domainId);
-                    } else {
-                        Domain oldDomain = domainOpt.get();
-
-                        Domain domain = new Domain();
-                        domain.setId(domainId);
-                        domain.setPath(oldDomain.getPath());
-                        domain.setName(oldDomain.getName());
-                        domain.setDescription(oldDomain.getDescription());
-                        domain.setEnabled(oldDomain.isEnabled());
-                        domain.setMaster(isMaster);
-                        domain.setCreatedAt(oldDomain.getCreatedAt());
-                        domain.setUpdatedAt(new Date());
-                        domain.setLoginForm(oldDomain.getLoginForm());
-                        domain.setIdentities(oldDomain.getIdentities());
-                        domain.setOauth2Identities(oldDomain.getOauth2Identities());
-
-                        return domainRepository.update(domain);
-                    }
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                .flatMapSingle(oldDomain -> {
+                    Domain domain = new Domain();
+                    domain.setId(domainId);
+                    domain.setPath(oldDomain.getPath());
+                    domain.setName(oldDomain.getName());
+                    domain.setDescription(oldDomain.getDescription());
+                    domain.setEnabled(oldDomain.isEnabled());
+                    domain.setMaster(isMaster);
+                    domain.setCreatedAt(oldDomain.getCreatedAt());
+                    domain.setUpdatedAt(new Date());
+                    domain.setLoginForm(oldDomain.getLoginForm());
+                    domain.setIdentities(oldDomain.getIdentities());
+                    domain.setOauth2Identities(oldDomain.getOauth2Identities());
+                    return domainRepository.update(domain);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -252,17 +226,12 @@ public class DomainServiceImpl implements DomainService {
     public Single<Irrelevant> delete(String domainId) {
         LOGGER.debug("Delete security domain {}", domainId);
         return domainRepository.findById(domainId)
-                .map(domain -> Optional.of(domain))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(optDomain -> {
-                    if (!optDomain.isPresent()) {
-                        throw new DomainNotFoundException(domainId);
-                    }
-                    if (optDomain.get().isMaster()) {
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                .flatMapSingle(domain -> {
+                    if (domain.isMaster()) {
                         throw new DomainDeleteMasterException(domainId);
                     }
-                    return Single.just(optDomain.get());
+                    return Single.just(domain);
                 })
                 .flatMap(domain -> {
                     // delete clients
@@ -309,24 +278,17 @@ public class DomainServiceImpl implements DomainService {
     public Single<LoginForm> updateLoginForm(String domainId, UpdateLoginForm loginForm) {
         LOGGER.debug("Update login form of an existing domain: {}", domainId);
         return domainRepository.findById(domainId)
-                .map(domain -> Optional.of(domain))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(domainOpt -> {
-                    if(!domainOpt.isPresent()) {
-                        throw new DomainNotFoundException(domainId);
-                    } else {
-                        LoginForm form = new LoginForm();
-                        form.setEnabled(loginForm.isEnabled());
-                        form.setContent(loginForm.getContent());
-                        form.setAssets(loginForm.getAssets());
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                .flatMapSingle(domain -> {
+                    LoginForm form = new LoginForm();
+                    form.setEnabled(loginForm.isEnabled());
+                    form.setContent(loginForm.getContent());
+                    form.setAssets(loginForm.getAssets());
 
-                        Domain domain = domainOpt.get();
-                        domain.setLoginForm(form);
-                        domain.setUpdatedAt(new Date());
+                    domain.setLoginForm(form);
+                    domain.setUpdatedAt(new Date());
 
-                        return domainRepository.update(domain).map(domain1 -> form);
-                    }
+                    return domainRepository.update(domain).map(domain1 -> form);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -342,19 +304,12 @@ public class DomainServiceImpl implements DomainService {
     public Single<Domain> deleteLoginForm(String domainId) {
         LOGGER.debug("Delete login form of an existing domain: {}", domainId);
         return domainRepository.findById(domainId)
-                .map(domain -> Optional.of(domain))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(domainOpt -> {
-                    if(!domainOpt.isPresent()) {
-                        throw new DomainNotFoundException(domainId);
-                    } else {
-                        Domain domain = domainOpt.get();
-                        domain.setLoginForm(null);
-                        domain.setUpdatedAt(new Date());
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                .flatMapSingle(domain -> {
+                    domain.setLoginForm(null);
+                    domain.setUpdatedAt(new Date());
 
-                        return domainRepository.update(domain);
-                    }
+                    return domainRepository.update(domain);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

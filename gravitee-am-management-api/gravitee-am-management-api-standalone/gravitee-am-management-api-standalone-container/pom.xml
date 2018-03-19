@@ -60,6 +60,12 @@
 
         <dependency>
             <groupId>io.gravitee.am.management</groupId>
+            <artifactId>gravitee-am-management-api-services-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.management</groupId>
             <artifactId>gravitee-am-management-api-handlers-admin</artifactId>
             <version>${project.version}</version>
         </dependency>

@@ -18,15 +18,17 @@
 <div class="user-container">
   <h1>{{user.username}}</h1>
   <div class="user-content">
-    <form fxFlex="70" fxLayout="column">
-      <mat-form-field fxFlex>
-        <input matInput placeholder="Username" disabled value="{{user.username}}">
-      </mat-form-field>
+    <div class="user-claims" fxFlex="70">
+      <form fxLayout="column">
+        <mat-form-field>
+          <input matInput placeholder="Username" disabled value="{{user.username}}">
+        </mat-form-field>
 
-      <mat-form-field fxFlex *ngFor="let keyValuePair of user.additionalInformation | mapToIterable">
-        <input matInput placeholder="{{keyValuePair.key}}" disabled value="{{keyValuePair.value}}">
-      </mat-form-field>
-    </form>
+        <mat-form-field *ngFor="let keyValuePair of user.additionalInformation | mapToIterable">
+          <input matInput placeholder="{{keyValuePair.key}}" disabled value="{{keyValuePair.value}}">
+        </mat-form-field>
+      </form>
+    </div>
     <div class="user-activities" fxFlex>
       <h3>User activities</h3>
       <div class="user-activities-content">

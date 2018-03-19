@@ -20,6 +20,8 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -31,12 +33,9 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -137,20 +136,11 @@ public class UserServiceImpl implements UserService {
         LOGGER.debug("Update a user {} for domain {}", id, domain);
 
         return userRepository.findById(id)
-                .map(user -> Optional.of(user))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(userOpt -> {
-                    if (!userOpt.isPresent()) {
-                        throw new UserNotFoundException(id);
-                    }
-
-                    User oldUser = userOpt.get();
-
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
+                .flatMapSingle(oldUser -> {
                     if (updateUser.getPassword() != null) {
                         oldUser.setPassword(passwordEncoder.encode(updateUser.getPassword()));
                     }
-
                     oldUser.setFirstName(updateUser.getFirstName());
                     oldUser.setLastName(updateUser.getLastName());
                     oldUser.setEmail(updateUser.getEmail());
@@ -178,14 +168,8 @@ public class UserServiceImpl implements UserService {
         LOGGER.debug("Delete user {}", userId);
 
         return userRepository.findById(userId)
-                .isEmpty()
-                    .flatMap(empty -> {
-                        if (empty) {
-                            throw new UserNotFoundException(userId);
-                        }
-
-                        return userRepository.delete(userId);
-                    })
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                .flatMapSingle(user -> userRepository.delete(userId))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);

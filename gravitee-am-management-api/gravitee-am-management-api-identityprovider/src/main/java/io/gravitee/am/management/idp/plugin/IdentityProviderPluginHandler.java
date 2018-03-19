@@ -59,10 +59,6 @@ public class IdentityProviderPluginHandler implements PluginHandler {
 
             IdentityProvider identityIdentityProvider = createInstance((Class<IdentityProvider>) identityProviderClass);
 
-            if (identityIdentityProvider instanceof OAuth2IdentityProvider) {
-
-            }
-
             identityProviderPluginManager.register(new IdentityProviderDefinition(identityIdentityProvider, plugin), identityIdentityProvider instanceof OAuth2IdentityProvider);
         } catch (Exception iae) {
             LOGGER.error("Unexpected error while create identity provider instance", iae);

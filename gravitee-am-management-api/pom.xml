@@ -33,6 +33,7 @@
     <modules>
         <module>gravitee-am-management-api-core</module>
         <module>gravitee-am-management-api-service</module>
+        <module>gravitee-am-management-api-services</module>
         <module>gravitee-am-management-api-jetty</module>
         <module>gravitee-am-management-api-handlers</module>
         <module>gravitee-am-management-api-standalone</module>

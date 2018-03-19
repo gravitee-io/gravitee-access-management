@@ -15,21 +15,20 @@
  */
 package io.gravitee.am.identityprovider.mongo.authentication.spring;
 
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.async.client.MongoClientSettings;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.reactivestreams.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoClients;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
-
-import java.util.Collections;
-import java.util.List;
-
-import org.jongo.Jongo;
+import io.gravitee.am.service.authentication.crypto.password.NoOpPasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
+import static java.util.Arrays.asList;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -37,32 +36,29 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  */
 @Configuration
 public class MongoAuthenticationProviderConfiguration {
+
     @Autowired
     private MongoIdentityProviderConfiguration configuration;
 
     @Bean
     public MongoClient mongoClient() {
-        MongoClient client;
+        MongoClient mongoClient;
         if ((this.configuration.getUri() != null) && (!this.configuration.getUri().isEmpty())) {
-            client = new MongoClient(new MongoClientURI(this.configuration.getUri()));
+            mongoClient = MongoClients.create(this.configuration.getUri());
         } else {
-            List<MongoCredential> credentials = null;
-
             ServerAddress serverAddress = new ServerAddress(this.configuration.getHost(), this.configuration.getPort());
+            ClusterSettings clusterSettings = ClusterSettings.builder().hosts(asList(serverAddress)).build();
+            MongoClientSettings.Builder settings = MongoClientSettings.builder().clusterSettings(clusterSettings);
             if (this.configuration.isEnableCredentials()) {
-                credentials = Collections.singletonList(MongoCredential.createCredential(this.configuration
+                MongoCredential credential = MongoCredential.createCredential(this.configuration
                         .getUsernameCredentials(), this.configuration
                         .getDatabaseCredentials(), this.configuration
-                        .getPasswordCredentials().toCharArray()));
+                        .getPasswordCredentials().toCharArray());
+                settings.credential(credential);
             }
-            client = new MongoClient(serverAddress, credentials);
+            mongoClient = MongoClients.create(settings.build());
         }
-        return client;
-    }
-
-    @Bean
-    public Jongo jongo(MongoClient client) {
-        return new Jongo(client.getDB(this.configuration.getDatabase()));
+        return mongoClient;
     }
 
     @Bean

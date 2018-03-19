@@ -17,6 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { ScopeService } from "../../../../services/scope.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../../services/snackbar.service";
+import {AppConfig} from "../../../../../config/app.config";
 
 @Component({
   selector: 'app-creation',
@@ -25,6 +26,7 @@ import { SnackbarService } from "../../../../services/snackbar.service";
 })
 export class ScopeCreationComponent implements OnInit {
   private domainId: string;
+  private adminContext: boolean;
   scope: any = {};
 
   constructor(private scopeService: ScopeService, private router: Router, private route: ActivatedRoute,
@@ -32,6 +34,10 @@ export class ScopeCreationComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.domainId = AppConfig.settings.authentication.domainId;
+      this.adminContext = true;
+    }
   }
 
   create() {
@@ -39,7 +45,11 @@ export class ScopeCreationComponent implements OnInit {
     this.scope.key = this.scope.key.toLowerCase();
     this.scopeService.create(this.domainId, this.scope).map(res => res.json()).subscribe(data => {
       this.snackbarService.open("Scope " + data.name + " created");
-      this.router.navigate(['/domains', this.domainId, 'settings', 'scopes', data.id]);
+      if (this.adminContext) {
+        this.router.navigate(['/settings', 'management', 'scopes', data.id]);
+      } else {
+        this.router.navigate(['/domains', this.domainId, 'settings', 'scopes', data.id]);
+      }
     });
   }
 

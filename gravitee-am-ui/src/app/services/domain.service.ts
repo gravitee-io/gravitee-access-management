@@ -44,7 +44,10 @@ export class DomainService {
       'name': domain.name,
       'description': domain.description,
       'path': domain.path,
-      'enabled': domain.enabled});
+      'enabled': domain.enabled,
+      'identities' : domain.identities,
+      'oauth2Identities': domain.oauth2Identities
+    });
   }
 
   delete(id): Observable<Response> {

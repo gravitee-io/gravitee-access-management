@@ -17,6 +17,8 @@ import { Component, OnInit } from '@angular/core';
 import { ProviderService } from "../../../services/provider.service";
 import { AppConfig } from "../../../../config/app.config";
 import { ActivatedRoute } from "@angular/router";
+import { DomainService } from "../../../services/domain.service";
+import { SnackbarService } from "../../../services/snackbar.service";
 
 @Component({
   selector: 'app-settings-management-general',
@@ -29,7 +31,8 @@ export class ManagementGeneralComponent implements OnInit {
   identityProviders: any[] = [];
   oauth2IdentityProviders: any[] = [];
 
-  constructor(private providerService: ProviderService, private route: ActivatedRoute) { }
+  constructor(private providerService: ProviderService, private domainService: DomainService,
+              private snackbarService: SnackbarService, private route: ActivatedRoute) { }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -40,7 +43,10 @@ export class ManagementGeneralComponent implements OnInit {
   }
 
   update() {
-
+    this.domainService.update(this.domain.id, this.domain).subscribe(response => {
+      this.domain = response.json();
+      this.snackbarService.open("Settings updated");
+    });
   }
 
 }

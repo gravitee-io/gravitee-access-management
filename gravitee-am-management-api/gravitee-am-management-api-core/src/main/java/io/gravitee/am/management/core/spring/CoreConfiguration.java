@@ -17,6 +17,7 @@ package io.gravitee.am.management.core.spring;
 
 import io.gravitee.am.management.core.context.ContextFactoryRegistry;
 import io.gravitee.am.management.core.http.HttpServerFactory;
+import io.vertx.reactivex.core.Vertx;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -35,5 +36,10 @@ public class CoreConfiguration {
     @Bean
     public ContextFactoryRegistry contextFactoryRegistry() {
         return new ContextFactoryRegistry();
+    }
+
+    @Bean
+    public Vertx vertx() {
+        return Vertx.vertx();
     }
 }

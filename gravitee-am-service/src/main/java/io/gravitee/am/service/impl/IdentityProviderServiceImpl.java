@@ -38,7 +38,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -99,9 +98,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         identityProvider.setUpdatedAt(identityProvider.getCreatedAt());
 
         return identityProviderRepository.create(identityProvider)
-                .doAfterSuccess(identityProvider1 -> {
+                .flatMap(identityProvider1 -> {
                     // Reload domain to take care about identity provider creation
-                    domainService.reload(domain);
+                    return domainService.reload(domain).flatMap(domain1 -> Single.just(identityProvider1));
                 })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to create an identity provider", ex);
@@ -114,15 +113,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         LOGGER.debug("Update an identity provider {} for domain {}", id, domain);
 
         return identityProviderRepository.findById(id)
-                .map(identityProvider -> Optional.of(identityProvider))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(identityProviderOpt -> {
-                    if (!identityProviderOpt.isPresent()) {
-                        throw new IdentityProviderNotFoundException(id);
-                    }
-
-                    IdentityProvider identityProvider = identityProviderOpt.get();
+                .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(id)))
+                .flatMapSingle(identityProvider -> {
                     identityProvider.setName(updateIdentityProvider.getName());
                     identityProvider.setConfiguration(updateIdentityProvider.getConfiguration());
                     identityProvider.setMappers(updateIdentityProvider.getMappers());
@@ -130,9 +122,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     identityProvider.setUpdatedAt(new Date());
 
                     return identityProviderRepository.update(identityProvider)
-                            .doAfterSuccess(identityProvider1 -> {
+                            .flatMap(identityProvider1 -> {
                                 // Reload domain to take care about identity provider update
-                                domainService.reload(domain);
+                                return domainService.reload(domain).flatMap(domain1 -> Single.just(identityProvider1));
                             });
                 })
                 .onErrorResumeNext(ex -> {
@@ -150,23 +142,14 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         LOGGER.debug("Delete identity provider {}", identityProviderId);
 
         return identityProviderRepository.findById(identityProviderId)
-                .map(identityProvider -> Optional.of(identityProvider))
-                .defaultIfEmpty(Optional.empty())
-                .toSingle()
-                .flatMap(optIdentityProvider -> {
-                    if (! optIdentityProvider.isPresent()) {
-                        throw new IdentityProviderNotFoundException(identityProviderId);
-                    }
-
-                    return clientService.findByIdentityProvider(identityProviderId)
-                            .flatMap(clients -> {
-                                if (clients.size() > 0) {
-                                    throw new IdentityProviderWithClientsException();
-                                }
-                                return Single.just(Irrelevant.CLIENT);
-                            });
-
-                })
+                .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identityProviderId)))
+                .flatMapSingle(identityProvider -> clientService.findByIdentityProvider(identityProviderId)
+                        .flatMap(clients -> {
+                            if (clients.size() > 0) {
+                                throw new IdentityProviderWithClientsException();
+                            }
+                            return Single.just(Irrelevant.CLIENT);
+                        }))
                 .flatMap(irrelevant -> identityProviderRepository.delete(identityProviderId))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

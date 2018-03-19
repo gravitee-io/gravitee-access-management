@@ -47,7 +47,7 @@ export class RoleCreationComponent implements OnInit {
     this.roleService.create(this.domainId, this.role).map(res => res.json()).subscribe(data => {
       this.snackbarService.open("Role " + data.name + " created");
       if (this.adminContext) {
-        this.router.navigate(['/settings', 'security', 'roles', data.id]);
+        this.router.navigate(['/settings', 'management', 'roles', data.id]);
       } else {
         this.router.navigate(['/domains', this.domainId, 'settings', 'roles', data.id]);
       }
