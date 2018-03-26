@@ -22,12 +22,15 @@ public class ClientAuthenticationProvider implements AuthProvider {
 
     private final Logger logger = LoggerFactory.getLogger(ClientAuthenticationProvider.class);
 
+    private final static String CREDENTIALS_PROPERTY_USERNAME = "username";
+    private final static String CREDENTIALS_PROPERTY_PASSWORD = "password";
+
     private ClientService clientService;
 
     @Override
     public void authenticate(JsonObject credentials, Handler<AsyncResult<User>> authHandler) {
-        String clientId = credentials.getString("username");
-        String clientSecret = credentials.getString("password");
+        String clientId = credentials.getString(CREDENTIALS_PROPERTY_USERNAME);
+        String clientSecret = credentials.getString(CREDENTIALS_PROPERTY_PASSWORD);
 
         logger.debug("Trying to authenticate a client: clientId[{}]", clientId);
 
