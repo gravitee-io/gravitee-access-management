@@ -8,7 +8,10 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.User;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
+import io.reactivex.Observer;
 import io.reactivex.Single;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,15 +34,14 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     public Single<User> authenticate(String clientId, Authentication authentication) {
         logger.debug("Trying to authenticate [{}]", authentication);
 
+        // TODO: look for a way to send a BadCredentialsException instead of a NoSuchElementException
+        // lastorError() always throw a NoSuchElementException without a way to switch for an other exception type
         // Get identity providers associated to a client
         // For each idp, try to authenticate a user
         // Try to authenticate while the user can not be authenticated
         // If user can't be authenticated, send an exception
         return clientService.findByClientId(clientId)
-                .flatMapObservable(client -> {
-                    System.out.println(client);
-                    return Observable.fromIterable(client.getIdentities());
-                })
+                .flatMapObservable(client -> Observable.fromIterable(client.getIdentities()))
                 .flatMapMaybe(authProvider -> identityProviderManager.get(authProvider))
                 .flatMapMaybe(authenticationProvider -> {
                     User user = authenticationProvider.loadUserByUsername(authentication);
