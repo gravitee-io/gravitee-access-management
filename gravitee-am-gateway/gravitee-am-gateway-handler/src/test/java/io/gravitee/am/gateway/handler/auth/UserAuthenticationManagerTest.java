@@ -1,3 +1,18 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.gravitee.am.gateway.handler.auth;
 
 import io.gravitee.am.gateway.handler.auth.exception.BadCredentialsException;
@@ -11,7 +26,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
 import io.reactivex.Maybe;
 import io.reactivex.observers.TestObserver;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -21,7 +35,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.*;
 
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -100,13 +113,13 @@ public class UserAuthenticationManagerTest {
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
-            public User loadUserByUsername(Authentication authentication) {
-                return new DefaultUser("username");
+            public Maybe<User> loadUserByUsername(Authentication authentication) {
+                return Maybe.just(new DefaultUser("username"));
             }
 
             @Override
-            public User loadUserByUsername(String username) {
-                return null;
+            public Maybe<User> loadUserByUsername(String username) {
+                return Maybe.empty();
             }
         }));
 
@@ -141,13 +154,13 @@ public class UserAuthenticationManagerTest {
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
-            public User loadUserByUsername(Authentication authentication) {
+            public Maybe<User> loadUserByUsername(Authentication authentication) {
                 throw new BadCredentialsException();
             }
 
             @Override
-            public User loadUserByUsername(String username) {
-                return null;
+            public Maybe<User> loadUserByUsername(String username) {
+                return Maybe.empty();
             }
         }));
 
@@ -180,25 +193,25 @@ public class UserAuthenticationManagerTest {
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(identityProviderManager.get("idp-2")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
-            public User loadUserByUsername(Authentication authentication) {
-                return null;
+            public Maybe<User> loadUserByUsername(Authentication authentication) {
+                return Maybe.empty();
             }
 
             @Override
-            public User loadUserByUsername(String username) {
-                return null;
+            public Maybe<User> loadUserByUsername(String username) {
+                return Maybe.empty();
             }
         }));
 
         when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
-            public User loadUserByUsername(Authentication authentication) {
-                return new DefaultUser("username");
+            public Maybe<User> loadUserByUsername(Authentication authentication) {
+                return Maybe.just(new DefaultUser("username"));
             }
 
             @Override
-            public User loadUserByUsername(String username) {
-                return null;
+            public Maybe<User> loadUserByUsername(String username) {
+                return Maybe.empty();
             }
         }));
 
