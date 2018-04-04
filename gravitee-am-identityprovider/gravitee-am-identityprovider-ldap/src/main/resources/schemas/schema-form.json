@@ -32,12 +32,13 @@
       "type" : "string",
       "default": "ou=users",
       "title": "User search base",
-      "description": "If user-search-base isn't supplied, the search will be performed from the root."
+      "description": "If user-search-base isn't supplied, the search will be performed from the root. It has to be relative to the Base DN."
     },
     "groupSearchBase" : {
       "type" : "string",
       "default": "ou=applications",
-      "title": "Group search base"
+      "title": "Group search base",
+      "description": "The search base has to be relative to the Base DN entered above."
     },
     "groupSearchFilter" : {
       "type" : "string",
