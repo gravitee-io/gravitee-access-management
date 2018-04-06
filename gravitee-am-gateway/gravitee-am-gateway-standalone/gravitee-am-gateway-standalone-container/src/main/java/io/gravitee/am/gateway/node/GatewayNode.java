@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.node;
 
+import io.gravitee.am.gateway.handler.reactor.Reactor;
+import io.gravitee.am.gateway.services.core.ServiceManager;
+import io.gravitee.am.gateway.vertx.VertxEmbeddedContainer;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.common.node.AbstractNode;
 import io.gravitee.plugin.core.api.PluginRegistry;
@@ -34,6 +37,9 @@ public class GatewayNode extends AbstractNode {
     static {
         LIFECYCLE_COMPONENTS.add(PluginEventListener.class);
         LIFECYCLE_COMPONENTS.add(PluginRegistry.class);
+        LIFECYCLE_COMPONENTS.add(Reactor.class);
+        LIFECYCLE_COMPONENTS.add(ServiceManager.class);
+        LIFECYCLE_COMPONENTS.add(VertxEmbeddedContainer.class);
     }
 
     @Override

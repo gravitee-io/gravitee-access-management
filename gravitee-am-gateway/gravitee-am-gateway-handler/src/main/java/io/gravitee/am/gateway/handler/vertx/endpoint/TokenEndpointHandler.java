@@ -25,10 +25,9 @@ import io.gravitee.am.gateway.handler.vertx.request.TokenRequestFactory;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
 import io.vertx.core.Handler;
-import io.vertx.ext.auth.User;
-import io.vertx.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.auth.User;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
  *
@@ -48,7 +47,7 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
         TokenRequest tokenRequest = tokenRequestFactory.create(context.request());
 
         User authenticatedUser = context.user();
-        if (authenticatedUser == null || ! (authenticatedUser instanceof Client)) {
+        if (authenticatedUser == null || ! (authenticatedUser.getDelegate() instanceof Client)) {
             throw new InvalidClientException();
         }
 
@@ -57,7 +56,7 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
             throw new InvalidRequestException();
         }
 
-        Client client = (Client) authenticatedUser;
+        Client client = (Client) authenticatedUser.getDelegate();
 
         // Check that authenticated user is matching the client_id
         if (! client.getClientId().equals(tokenRequest.getClientId())) {

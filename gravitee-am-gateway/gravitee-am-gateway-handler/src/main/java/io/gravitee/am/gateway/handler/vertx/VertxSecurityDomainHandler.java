@@ -21,14 +21,15 @@ import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationPr
 import io.gravitee.am.gateway.handler.vertx.endpoint.AuthorizeEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.endpoint.TokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
+import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.auth.AuthProvider;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.*;
-import io.vertx.ext.web.sstore.LocalSessionStore;
+import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.ext.auth.AuthProvider;
+import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.handler.*;
+import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -40,13 +41,17 @@ public class VertxSecurityDomainHandler {
     @Autowired
     private Vertx vertx;
 
-    public Router oauth2(Router router) {
-        // Create the handlers
+    @Autowired
+    private Domain domain;
 
-        final AuthProvider clientAuthProvider = new ClientAuthenticationProvider();
+    public Router oauth2() {
+        // Create the handlers
+        Router router = Router.router(vertx);
+
+        final AuthProvider clientAuthProvider = new AuthProvider(new ClientAuthenticationProvider());
         final AuthHandler clientAuthHandler = ChainAuthHandler.create()
-                .append(ClientCredentialsAuthHandler.create(clientAuthProvider))
-                .append(ClientBasicAuthHandler.create(clientAuthProvider));
+                .append(ClientCredentialsAuthHandler.create(clientAuthProvider.getDelegate()))
+                .append(ClientBasicAuthHandler.create(clientAuthProvider.getDelegate()));
 
         setupCoreWebHandlers(router);
 
@@ -57,16 +62,6 @@ public class VertxSecurityDomainHandler {
 
         Handler<RoutingContext> authorizeEndpoint = new AuthorizeEndpointHandler();
         Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler();
-
-        /*
-        router.exceptionHandler(new Handler<Throwable>() {
-            @Override
-            public void handle(Throwable throwable) {
-                System.out.println(throwable);
-            }
-        });
-        */
-
         router.route().failureHandler(new ExceptionHandler());
 
         // Bind OAuth2 endpoints
@@ -76,8 +71,11 @@ public class VertxSecurityDomainHandler {
         router.route(HttpMethod.POST, "/oauth/token").handler(clientAuthHandler).handler(tokenEndpoint);
 
 //        router.route("/oauth/tokeninfo").handler(authorizer::tokenInfo);
-
         return router;
+    }
+
+    public String contextPath() {
+        return "/" + domain.getPath();
     }
 
     private void setupCoreWebHandlers(Router router) {

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.endpoint;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.vertx.OAuth2TestBase;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
 import io.gravitee.common.http.HttpStatusCode;
@@ -28,8 +29,8 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AbstractUser;
 import io.vertx.ext.auth.AuthProvider;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.WebTestBase;
+import io.vertx.reactivex.ext.auth.User;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -45,7 +46,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class TokenEndpointHandlerTest extends WebTestBase {
+public class TokenEndpointHandlerTest extends OAuth2TestBase {
 
     @InjectMocks
     private TokenEndpointHandler tokenEndpointHandler = new TokenEndpointHandler();
@@ -56,7 +57,6 @@ public class TokenEndpointHandlerTest extends WebTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
         router.route(HttpMethod.POST, "/oauth/token").handler(tokenEndpointHandler);
         router.route().failureHandler(new ExceptionHandler());
     }
@@ -73,7 +73,7 @@ public class TokenEndpointHandlerTest extends WebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new AbstractUser() {
+                routingContext.setUser(new User(new AbstractUser() {
                     @Override
                     protected void doIsPermitted(String s, Handler<AsyncResult<Boolean>> handler) {
 
@@ -88,7 +88,7 @@ public class TokenEndpointHandlerTest extends WebTestBase {
                     public void setAuthProvider(AuthProvider authProvider) {
 
                     }
-                });
+                }));
                 routingContext.next();
             }
         });
@@ -103,7 +103,7 @@ public class TokenEndpointHandlerTest extends WebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new Client("my-client"));
+                routingContext.setUser(new User(new Client("my-client")));
                 routingContext.next();
             }
         });
@@ -118,7 +118,7 @@ public class TokenEndpointHandlerTest extends WebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new Client("other-client-id"));
+                routingContext.setUser(new User(new Client("other-client-id")));
                 routingContext.next();
             }
         });
@@ -133,7 +133,7 @@ public class TokenEndpointHandlerTest extends WebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new Client("my-client"));
+                routingContext.setUser(new User(new Client("my-client")));
                 routingContext.next();
             }
         });
@@ -151,7 +151,7 @@ public class TokenEndpointHandlerTest extends WebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new Client("my-client"));
+                routingContext.setUser(new User(new Client("my-client")));
                 routingContext.next();
             }
         });
