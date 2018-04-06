@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.vertx.request;
 
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.vertx.core.http.HttpServerRequest;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

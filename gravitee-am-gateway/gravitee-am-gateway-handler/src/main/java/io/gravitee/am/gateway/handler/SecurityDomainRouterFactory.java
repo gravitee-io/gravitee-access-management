@@ -15,8 +15,20 @@
  */
 package io.gravitee.am.gateway.handler;
 
+import io.gravitee.am.gateway.handler.spring.HandlerConfiguration;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.model.Domain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.core.env.ConfigurableEnvironment;
+
+import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -24,7 +36,44 @@ import io.gravitee.am.model.Domain;
  */
 public class SecurityDomainRouterFactory {
 
-    public static VertxSecurityDomainHandler create(Domain domain) {
-        return new VertxSecurityDomainHandler();
+    private final Logger logger = LoggerFactory.getLogger(SecurityDomainRouterFactory.class);
+
+    @Autowired
+    private ApplicationContext gatewayApplicationContext;
+
+    public VertxSecurityDomainHandler create(Domain domain) {
+        if (domain.isEnabled()) {
+            AbstractApplicationContext internalApplicationContext = createApplicationContext(domain);
+            VertxSecurityDomainHandler handler = internalApplicationContext.getBean(VertxSecurityDomainHandler.class);
+            return handler;
+        } else {
+            logger.warn("Domain is disabled !");
+            return null;
+        }
+    }
+
+    AbstractApplicationContext createApplicationContext(Domain domain) {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+        context.setParent(gatewayApplicationContext);
+        context.setClassLoader(new ReactorHandlerClassLoader(gatewayApplicationContext.getClassLoader()));
+        context.setEnvironment((ConfigurableEnvironment) gatewayApplicationContext.getEnvironment());
+
+        PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
+        configurer.setIgnoreUnresolvablePlaceholders(true);
+        configurer.setEnvironment(gatewayApplicationContext.getEnvironment());
+        context.addBeanFactoryPostProcessor(configurer);
+
+        context.getBeanFactory().registerSingleton("domain", domain);
+        context.register(HandlerConfiguration.class);
+        context.setId("context-domain-" + domain.getId());
+        context.refresh();
+
+        return context;
+    }
+
+    private static class ReactorHandlerClassLoader extends URLClassLoader {
+        public ReactorHandlerClassLoader(ClassLoader parent) {
+            super(new URL[]{}, parent);
+        }
     }
 }

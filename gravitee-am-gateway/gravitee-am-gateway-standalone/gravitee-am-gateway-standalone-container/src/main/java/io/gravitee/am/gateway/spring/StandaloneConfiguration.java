@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.gateway.spring;
 
+import io.gravitee.am.gateway.handler.reactor.spring.ReactorConfiguration;
 import io.gravitee.am.gateway.node.GatewayNode;
+import io.gravitee.am.gateway.vertx.VertxConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.common.node.Node;
@@ -31,7 +33,11 @@ import org.springframework.context.annotation.Import;
 @Configuration
 @Import({
         EnvironmentConfiguration.class,
-        PluginConfiguration.class,})
+        PluginConfiguration.class,
+        ReactorConfiguration.class,
+        VertxConfiguration.class,
+        io.gravitee.am.gateway.services.core.spring.ServiceConfiguration.class
+})
 public class StandaloneConfiguration {
 
     @Bean
