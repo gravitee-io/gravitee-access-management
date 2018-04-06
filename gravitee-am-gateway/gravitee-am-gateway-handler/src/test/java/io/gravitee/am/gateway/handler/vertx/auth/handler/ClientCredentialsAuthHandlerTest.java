@@ -44,7 +44,7 @@ public class ClientCredentialsAuthHandlerTest extends AuthHandlerTestBase {
         AuthProvider authProvider = ShiroAuth.create(vertx, ShiroAuthRealmType.PROPERTIES, authConfig);
 
         router.route("/token/*")
-                .handler(ClientCredentialsAuthHandler.create(authProvider))
+                .handler(ClientCredentialsAuthHandler.create(authProvider).getDelegate())
                 .handler(handler);
 
         testRequest(HttpMethod.GET, "/token/", 401, "Unauthorized");
@@ -58,6 +58,6 @@ public class ClientCredentialsAuthHandlerTest extends AuthHandlerTestBase {
 
     @Override
     protected AuthHandler createAuthHandler(AuthProvider authProvider) {
-        return ClientCredentialsAuthHandler.create(authProvider);
+        return ClientCredentialsAuthHandler.create(authProvider).getDelegate();
     }
 }

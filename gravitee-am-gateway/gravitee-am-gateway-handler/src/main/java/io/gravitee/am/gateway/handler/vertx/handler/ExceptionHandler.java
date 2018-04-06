@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.handler;
 import io.gravitee.am.gateway.handler.oauth2.exception.OAuth2Exception;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
-import io.vertx.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
