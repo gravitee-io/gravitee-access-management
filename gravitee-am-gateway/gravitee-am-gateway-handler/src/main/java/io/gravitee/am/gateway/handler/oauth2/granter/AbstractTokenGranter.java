@@ -17,16 +17,20 @@ package io.gravitee.am.gateway.handler.oauth2.granter;
 
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
+import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
 import io.reactivex.Single;
-import io.reactivex.functions.Function;
 
 import java.util.Objects;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class AbstractTokenGranter implements TokenGranter {
@@ -34,6 +38,8 @@ public class AbstractTokenGranter implements TokenGranter {
     private final String grantType;
 
     private ClientService clientService;
+
+    private TokenService tokenService;
 
     public AbstractTokenGranter(final String grantType) {
         Objects.requireNonNull(grantType);
@@ -48,31 +54,30 @@ public class AbstractTokenGranter implements TokenGranter {
     @Override
     public Single<AccessToken> grant(TokenRequest tokenRequest) {
         if (! this.grantType.equals(tokenRequest.getGrantType())) {
-            //TODO: Implement a way to generate access token
-            return Single.just(new AccessToken() {
-                @Override
-                public int hashCode() {
-                    return super.hashCode();
-                }
-            });
+            throw new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType());
         }
 
         return clientService.findByClientId(tokenRequest.getClientId())
-                .map(new Function<Client, AccessToken>() {
-            @Override
-            public AccessToken apply(Client client) throws Exception {
-                // Is client allowed to use such grant type ?
-                if (client.getAuthorizedGrantTypes() != null && !client.getAuthorizedGrantTypes().isEmpty()
-                        && !client.getAuthorizedGrantTypes().contains(grantType)) {
-                    throw new UnauthorizedClientException("Unauthorized grant type: " + grantType);
-                }
+                .flatMapSingle(client -> {
+                    // Is client allowed to use such grant type ?
+                    if (client.getAuthorizedGrantTypes() != null && !client.getAuthorizedGrantTypes().isEmpty()
+                            && !client.getAuthorizedGrantTypes().contains(grantType)) {
+                        throw new UnauthorizedClientException("Unauthorized grant type: " + grantType);
+                    }
+                    return tokenService.create(createOAuth2Authentication(tokenRequest, client));
+                });
+    }
 
-                return null;
-            }
-        }).toSingle();
+    protected OAuth2Authentication createOAuth2Authentication(TokenRequest tokenRequest, Client client) {
+        OAuth2Request storedRequest = tokenRequest.createOAuth2Request(client);
+        return new OAuth2Authentication(storedRequest, null);
     }
 
     public void setClientService(ClientService clientService) {
         this.clientService = clientService;
+    }
+
+    public void setTokenService(TokenService tokenService) {
+        this.tokenService = tokenService;
     }
 }

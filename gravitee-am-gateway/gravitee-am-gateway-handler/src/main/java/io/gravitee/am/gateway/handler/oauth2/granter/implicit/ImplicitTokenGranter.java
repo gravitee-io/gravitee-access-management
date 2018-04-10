@@ -13,20 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.granter;
+package io.gravitee.am.gateway.handler.oauth2.granter.implicit;
 
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.reactivex.Single;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * Implementation of the Implicit Grant Flow
+ * See <a href="https://tools.ietf.org/html/rfc6749#section-4.2"></a>
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface TokenGranter {
+public class ImplicitTokenGranter extends AbstractTokenGranter {
 
-    boolean handle(String grantType);
 
-    Single<AccessToken> grant(TokenRequest tokenRequest);
+    private final static String GRANT_TYPE = "implicit";
+
+    public ImplicitTokenGranter() {
+        super(GRANT_TYPE);
+    }
+
+    public ImplicitTokenGranter(ClientService clientService, TokenService tokenService) {
+        this();
+        setClientService(clientService);
+        setTokenService(tokenService);
+    }
+
+    @Override
+    public Single<AccessToken> grant(TokenRequest tokenRequest) {
+        return super.grant(tokenRequest);
+    }
 }

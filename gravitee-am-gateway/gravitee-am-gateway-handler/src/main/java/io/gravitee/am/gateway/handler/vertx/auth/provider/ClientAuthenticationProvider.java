@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.vertx.auth.provider;
 
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.BadClientCredentialsException;
+import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.reactivex.MaybeObserver;
 import io.reactivex.disposables.Disposable;
@@ -37,15 +38,12 @@ public class ClientAuthenticationProvider implements AuthProvider {
 
     private final Logger logger = LoggerFactory.getLogger(ClientAuthenticationProvider.class);
 
-    private final static String CREDENTIALS_PROPERTY_USERNAME = "username";
-    private final static String CREDENTIALS_PROPERTY_PASSWORD = "password";
-
     private ClientService clientService;
 
     @Override
     public void authenticate(JsonObject credentials, Handler<AsyncResult<User>> authHandler) {
-        String clientId = credentials.getString(CREDENTIALS_PROPERTY_USERNAME);
-        String clientSecret = credentials.getString(CREDENTIALS_PROPERTY_PASSWORD);
+        String clientId = credentials.getString(OAuth2Constants.CLIENT_ID);
+        String clientSecret = credentials.getString(OAuth2Constants.CLIENT_SECRET);
 
         logger.debug("Trying to authenticate a client: clientId[{}]", clientId);
 

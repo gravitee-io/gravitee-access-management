@@ -27,6 +27,7 @@ import io.vertx.ext.web.handler.impl.HttpStatusException;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ClientCredentialsAuthHandlerImpl extends AuthHandlerImpl {
@@ -39,14 +40,38 @@ public class ClientCredentialsAuthHandlerImpl extends AuthHandlerImpl {
 
     @Override
     public void parseCredentials(RoutingContext context, Handler<AsyncResult<JsonObject>> handler) {
+        parseAuthorization(context, parseAuthorization -> {
+            if (parseAuthorization.failed()) {
+                handler.handle(Future.failedFuture(parseAuthorization.cause()));
+                return;
+            }
+
+            JsonObject clientCredentials = parseAuthorization.result();
+            authProvider.authenticate(clientCredentials, authHandler -> {
+                if (authHandler.failed()) {
+                    handler.handle(Future.failedFuture(authHandler.cause()));
+                    return;
+                }
+
+                context.setUser(authHandler.result());
+                // continue
+                handler.handle(Future.succeededFuture());
+            });
+        });
+    }
+
+    protected final void parseAuthorization(RoutingContext context, Handler<AsyncResult<JsonObject>> handler) {
         String clientId = context.request().getParam(OAuth2Constants.CLIENT_ID);
         String clientSecret = context.request().getParam(OAuth2Constants.CLIENT_SECRET);
 
         if (clientId != null && clientSecret != null) {
-            handler.handle(Future.succeededFuture(
-                    new JsonObject().put("username", clientId).put("password", clientSecret)));
+            JsonObject clientCredentials = new JsonObject().put(OAuth2Constants.CLIENT_ID, clientId).put(OAuth2Constants.CLIENT_SECRET, clientSecret);
+            handler.handle(Future.succeededFuture(clientCredentials));
         } else {
             handler.handle(Future.failedFuture(UNAUTHORIZED));
         }
     }
+
+
+
 }

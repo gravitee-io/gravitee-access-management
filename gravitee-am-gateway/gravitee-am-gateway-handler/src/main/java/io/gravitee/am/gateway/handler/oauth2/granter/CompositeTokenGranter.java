@@ -15,10 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.granter;
 
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.granter.client.ClientCredentialsTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.granter.code.AuthorizationCodeTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.granter.implicit.ImplicitTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.granter.password.ResourceOwnerPasswordCredentialsTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +36,17 @@ import java.util.Objects;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CompositeTokenGranter implements TokenGranter {
+public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
-    private final List<TokenGranter> tokenGranters;
+    private List<TokenGranter> tokenGranters = new ArrayList<>();
+
+    @Autowired
+    private ClientService clientService;
+
+    @Autowired
+    private TokenService tokenService;
+
+    public CompositeTokenGranter() { }
 
     public CompositeTokenGranter(List<TokenGranter> tokenGranters) {
         this.tokenGranters = new ArrayList<>(tokenGranters);
@@ -52,5 +68,13 @@ public class CompositeTokenGranter implements TokenGranter {
     @Override
     public boolean handle(String grantType) {
         return true;
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+        addTokenGranter(new ClientCredentialsTokenGranter(clientService, tokenService));
+        addTokenGranter(new ResourceOwnerPasswordCredentialsTokenGranter(clientService, tokenService));
+        addTokenGranter(new ImplicitTokenGranter(clientService, tokenService));
+        addTokenGranter(new AuthorizationCodeTokenGranter(clientService, tokenService));
     }
 }

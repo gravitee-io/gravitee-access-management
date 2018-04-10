@@ -13,30 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.code;
+package io.gravitee.am.gateway.handler.oauth2.token;
 
-import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 /**
- * Implementation of the Authorization Code Grant Flow
- * See <a href="https://tools.ietf.org/html/rfc6749#page-24"></a>
- *
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
+public interface TokenService {
 
-    private final static String GRANT_TYPE = "authorization_code";
+    Maybe<AccessToken> get();
 
-    public AuthorizationCodeTokenGranter() {
-        super(GRANT_TYPE);
-    }
+    Single<AccessToken> create(OAuth2Authentication oAuth2Authentication);
 
-    @Override
-    public Single<AccessToken> grant(TokenRequest tokenRequest) {
-        return super.grant(tokenRequest);
-    }
+    Single<AccessToken> refresh();
 }

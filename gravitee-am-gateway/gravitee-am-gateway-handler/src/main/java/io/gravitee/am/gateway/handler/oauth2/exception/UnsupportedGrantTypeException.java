@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.token;
-
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+package io.gravitee.am.gateway.handler.oauth2.exception;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AccessTokenService {
+public class UnsupportedGrantTypeException extends OAuth2Exception {
 
-    Maybe<AccessToken> get();
-
-    Single<AccessToken> create();
-
-    Single<AccessToken> refresh();
+    public UnsupportedGrantTypeException(String message) {
+        super(message);
+    }
 }
