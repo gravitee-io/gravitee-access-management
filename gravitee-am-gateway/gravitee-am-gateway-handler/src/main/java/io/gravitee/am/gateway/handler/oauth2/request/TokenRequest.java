@@ -15,12 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.request;
 
+import io.gravitee.am.model.Client;
+import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
+import io.gravitee.common.util.MultiValueMap;
+
+import java.util.HashMap;
+import java.util.HashSet;
+
 /**
- *
- *
  * See <a href="https://tools.ietf.org/html/rfc6749#section-4.1.3"></a>
  *
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class TokenRequest extends BaseRequest {
@@ -51,6 +57,18 @@ public class TokenRequest extends BaseRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public OAuth2Request createOAuth2Request(Client client) {
+        MultiValueMap<String, String> requestParameters = getRequestParameters();
+        HashMap<String, String> modifiable = new HashMap<String, String>(requestParameters.toSingleValueMap());
+        // Remove password if present to prevent leaks
+        modifiable.remove("password");
+        modifiable.remove("client_secret");
+        // Add grant type so it can be retrieved from OAuth2Request
+        modifiable.put("grant_type", grantType);
+        return new OAuth2Request(modifiable, client.getClientId(), null, true, new HashSet<>(client.getScopes()),
+                null, null, null, null);
     }
 }
 

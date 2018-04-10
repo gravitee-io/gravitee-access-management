@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.vertx;
 
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
@@ -44,11 +46,19 @@ public class VertxSecurityDomainHandler {
     @Autowired
     private Domain domain;
 
+    @Autowired
+    private TokenGranter tokenGranter;
+
+    @Autowired
+    private ClientService clientService;
+
     public Router oauth2() {
         // Create the handlers
         Router router = Router.router(vertx);
 
-        final AuthProvider clientAuthProvider = new AuthProvider(new ClientAuthenticationProvider());
+        ClientAuthenticationProvider clientAuthenticationProvider = new ClientAuthenticationProvider();
+        clientAuthenticationProvider.setClientService(clientService);
+        final AuthProvider clientAuthProvider = new AuthProvider(clientAuthenticationProvider);
         final AuthHandler clientAuthHandler = ChainAuthHandler.create()
                 .append(ClientCredentialsAuthHandler.create(clientAuthProvider.getDelegate()))
                 .append(ClientBasicAuthHandler.create(clientAuthProvider.getDelegate()));
@@ -62,6 +72,7 @@ public class VertxSecurityDomainHandler {
 
         Handler<RoutingContext> authorizeEndpoint = new AuthorizeEndpointHandler();
         Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler();
+        ((TokenEndpointHandler) tokenEndpoint).setTokenGranter(tokenGranter);
         router.route().failureHandler(new ExceptionHandler());
 
         // Bind OAuth2 endpoints

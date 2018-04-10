@@ -15,6 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.spring;
 
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.impl.ClientServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.granter.CompositeTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.token.AuthenticationKeyGenerator;
+import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAuthenticationKeyGenerator;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenServiceImpl;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,5 +37,25 @@ public class HandlerConfiguration {
     @Bean
     public VertxSecurityDomainHandler securityDomainHandler() {
         return new VertxSecurityDomainHandler();
+    }
+
+    @Bean
+    public TokenGranter tokenGranter() {
+        return new CompositeTokenGranter();
+    }
+
+    @Bean
+    public ClientService clientService() {
+        return new ClientServiceImpl();
+    }
+
+    @Bean
+    public TokenService tokenService() {
+        return new TokenServiceImpl();
+    }
+
+    @Bean
+    public AuthenticationKeyGenerator authenticationKeyGenerator() {
+        return new DefaultAuthenticationKeyGenerator();
     }
 }

@@ -15,25 +15,29 @@
  */
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
-import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.request.TokenRequestFactory;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
 import io.vertx.core.Handler;
+import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
+ * The token endpoint is used by the client to obtain an access token by presenting its authorization grant or refresh token.
+ * The token endpoint is used with every authorization grant except for the implicit grant type (since an access token is issued directly).
  *
  * See <a href="https://tools.ietf.org/html/rfc6749#section-3.2"></a>
  *
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class TokenEndpointHandler implements Handler<RoutingContext> {
@@ -72,7 +76,11 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
 
                     @Override
                     public void onSuccess(AccessToken accessToken) {
-                        context.response().end(accessToken.toString());
+                        context.response()
+                                .putHeader("Cache-Control", "no-store")
+                                .putHeader("Pragma", "no-cache")
+                                .putHeader("Content-Type", "application/json;charset=utf-8")
+                                .end(Json.encodePrettily(accessToken));
                     }
 
                     @Override
