@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.password;
+package io.gravitee.am.gateway.handler.oauth2.granter.password;
 
 import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
@@ -43,6 +45,12 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
 
     public ResourceOwnerPasswordCredentialsTokenGranter() {
         super(GRANT_TYPE);
+    }
+
+    public ResourceOwnerPasswordCredentialsTokenGranter(ClientService clientService, TokenService tokenService) {
+        this();
+        setClientService(clientService);
+        setTokenService(tokenService);
     }
 
     @Override

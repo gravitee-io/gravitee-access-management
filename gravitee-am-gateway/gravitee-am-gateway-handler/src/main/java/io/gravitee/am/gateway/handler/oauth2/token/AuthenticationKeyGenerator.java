@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.granter;
+package io.gravitee.am.gateway.handler.oauth2.token;
 
-import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
-import io.reactivex.Single;
+import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface TokenGranter {
+public interface AuthenticationKeyGenerator {
 
-    boolean handle(String grantType);
-
-    Single<AccessToken> grant(TokenRequest tokenRequest);
+    String extractKey(OAuth2Authentication authentication);
 }

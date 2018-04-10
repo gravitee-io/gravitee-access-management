@@ -36,4 +36,9 @@ public abstract class OAuth2Exception extends RuntimeException {
     public String getOAuth2ErrorCode() {
         return "invalid_request";
     }
+
+    @Override
+    public String toString() {
+        return "{\"error\":\""+ getOAuth2ErrorCode() + "\"}";
+    }
 }
