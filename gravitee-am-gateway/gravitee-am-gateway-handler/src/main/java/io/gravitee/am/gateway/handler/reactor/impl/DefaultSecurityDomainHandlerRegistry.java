@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.reactor.impl;
 
 import io.gravitee.am.gateway.handler.SecurityDomainRouterFactory;
+import io.gravitee.am.gateway.handler.reactor.Reactor;
 import io.gravitee.am.gateway.handler.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.model.Domain;
@@ -37,9 +38,11 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
     private final ConcurrentMap<String, VertxSecurityDomainHandler> handlers = new ConcurrentHashMap<>();
     private final ConcurrentMap<Object, String> contextPaths = new ConcurrentHashMap<>();
 
-
     @Autowired
     private SecurityDomainRouterFactory securityDomainRouterFactory;
+
+    @Autowired
+    private Reactor reactor;
 
     @Override
     public void create(Domain domain) {
@@ -51,6 +54,7 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
                 //handler.start();
                 handlers.putIfAbsent(handler.contextPath(), handler);
                 contextPaths.putIfAbsent(domain, handler.contextPath());
+                reactor.mountSubRouter(handler.contextPath(), handler.oauth2());
             } catch (Exception ex) {
                 logger.error("Unable to register handler", ex);
             }
@@ -81,6 +85,7 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
                 try {
                     //handler.stop();
                     handlers.remove(handler.contextPath());
+                    reactor.unMountSubRouter(handler.contextPath());
                     logger.info("Security Domain has been unregistered");
                 } catch (Exception e) {
                     logger.error("Unable to un-register handler", e);

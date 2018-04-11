@@ -47,7 +47,7 @@ public class GraviteeVerticle extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> startFuture) {
-        httpServer.requestHandler(request -> reactor.route(request));
+        httpServer.requestHandler(request -> reactor.route().accept(request));
 
         httpServer.listen(res -> {
             if (res.succeeded()) {
