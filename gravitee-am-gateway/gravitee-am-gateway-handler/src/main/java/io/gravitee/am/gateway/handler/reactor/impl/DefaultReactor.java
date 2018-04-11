@@ -17,9 +17,7 @@ package io.gravitee.am.gateway.handler.reactor.impl;
 
 import io.gravitee.am.gateway.core.event.DomainEvent;
 import io.gravitee.am.gateway.handler.reactor.Reactor;
-import io.gravitee.am.gateway.handler.reactor.ReactorHandlerResolver;
 import io.gravitee.am.gateway.handler.reactor.SecurityDomainHandlerRegistry;
-import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -30,27 +28,21 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.core.buffer.Buffer;
-import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.Router;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DefaultReactor extends AbstractService implements Reactor, EventListener<DomainEvent, Domain> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultReactor.class);
+public class DefaultReactor extends AbstractService implements Reactor, EventListener<DomainEvent, Domain>, InitializingBean {
 
     @Autowired
     private Environment environment;
-
-    @Autowired
-    private ReactorHandlerResolver reactorHandlerResolver;
 
     @Autowired
     private SecurityDomainHandlerRegistry securityDomainHandlerRegistry;
@@ -61,16 +53,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     @Autowired
     private Vertx vertx;
 
-    @Override
-    public void route(HttpServerRequest request) {
-        VertxSecurityDomainHandler securityDomainHandler = reactorHandlerResolver.resolve(request);
-        if (securityDomainHandler != null) {
-            Router.router(vertx).mountSubRouter(securityDomainHandler.contextPath(), securityDomainHandler.oauth2()).accept(request);
-        } else {
-            LOGGER.debug("No handler can be found for request {}, returning NOT_FOUND (404)", request.path());
-            sendNotFound(request.response());
-        }
-    }
+    private Router router;
 
     @Override
     public void doStart() throws Exception {
@@ -101,6 +84,33 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
         }
     }
 
+    @Override
+    public Router route() {
+        return router;
+    }
+
+    @Override
+    public Router mountSubRouter(String contextPath, Router child) {
+        router.mountSubRouter(contextPath, child);
+
+        return router;
+    }
+
+    @Override
+    public Router unMountSubRouter(String contextPath) {
+        router.getRoutes().stream()
+                .filter(route -> route.getPath() != null && route.getPath().startsWith(contextPath))
+                .forEach(route -> route.remove());
+
+        return router;
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+        router = Router.router(vertx);
+        router.route().last().handler(context -> sendNotFound(context.response()));
+    }
+
     private void sendNotFound(HttpServerResponse serverResponse) {
         // Send a NOT_FOUND HTTP status code (404)
         serverResponse.setStatusCode(HttpStatusCode.NOT_FOUND_404);
@@ -113,4 +123,5 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
 
         serverResponse.end();
     }
+
 }

@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.reactor;
 
 import io.gravitee.common.service.Service;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.Router;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -24,5 +25,9 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
  */
 public interface Reactor extends Service {
 
-    void route(HttpServerRequest request);
+    Router route();
+
+    Router mountSubRouter(String contextPath, Router child);
+
+    Router unMountSubRouter(String contextPath);
 }
