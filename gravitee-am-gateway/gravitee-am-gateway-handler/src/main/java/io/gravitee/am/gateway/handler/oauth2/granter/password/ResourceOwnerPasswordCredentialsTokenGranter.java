@@ -18,26 +18,31 @@ package io.gravitee.am.gateway.handler.oauth2.granter.password;
 import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.am.model.Client;
+import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
+import io.gravitee.am.repository.oauth2.model.authentication.UsernamePasswordAuthenticationToken;
+import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
+import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.Single;
-import io.reactivex.SingleObserver;
-import io.reactivex.disposables.Disposable;
+
+import java.util.Collections;
 
 /**
- * Implementation of the Authorization Code Grant Flow
+ * Implementation of the Resource Owner Password Credentials Grant Flow
  * See <a href="https://tools.ietf.org/html/rfc6749#section-4.3"></a>
  *
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenGranter {
 
     private final static String GRANT_TYPE = "password";
-
     final static String USERNAME_PARAMETER = "username";
     final static String PASSWORD_PARAMETER = "password";
 
@@ -53,32 +58,29 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
         setTokenService(tokenService);
     }
 
+    public ResourceOwnerPasswordCredentialsTokenGranter(ClientService clientService, TokenService tokenService, UserAuthenticationManager userAuthenticationManager) {
+        this(clientService, tokenService);
+        setUserAuthenticationManager(userAuthenticationManager);
+    }
+
     @Override
     public Single<AccessToken> grant(TokenRequest tokenRequest) {
-        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>(tokenRequest.getRequestParameters());
+        return super.grant(tokenRequest);
+    }
 
+    protected Single<OAuth2Authentication> createOAuth2Authentication(TokenRequest tokenRequest, Client client) {
+        MultiValueMap<String, String> parameters = tokenRequest.getRequestParameters();
         String username = parameters.getFirst(USERNAME_PARAMETER);
         String password = parameters.getFirst(PASSWORD_PARAMETER);
 
-        userAuthenticationManager.authenticate(tokenRequest.getClientId(), new EndUserAuthentication(username, password))
-                .subscribe(new SingleObserver<Object>() {
-            @Override
-            public void onSubscribe(Disposable disposable) {
-
-            }
-
-            @Override
-            public void onSuccess(Object o) {
-
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-
-            }
-        });
-
-        return super.grant(tokenRequest);
+        return userAuthenticationManager.authenticate(tokenRequest.getClientId(), new EndUserAuthentication(username, password))
+                .map(user -> {
+                    OAuth2Request storedRequest = tokenRequest.createOAuth2Request(client);
+                    UsernamePasswordAuthenticationToken userAuthentication =
+                            new UsernamePasswordAuthenticationToken(user.getUsername(), user, "", Collections.emptySet());
+                    return new OAuth2Authentication(storedRequest, userAuthentication);
+                })
+                .onErrorResumeNext(ex -> Single.error(new InvalidGrantException()));
     }
 
     public void setUserAuthenticationManager(UserAuthenticationManager userAuthenticationManager) {

@@ -15,8 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.spring;
 
+import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.idp.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.client.impl.ClientServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
+import io.gravitee.am.gateway.handler.oauth2.code.impl.AuthorizationCodeServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.token.AuthenticationKeyGenerator;
@@ -57,5 +63,20 @@ public class HandlerConfiguration {
     @Bean
     public AuthenticationKeyGenerator authenticationKeyGenerator() {
         return new DefaultAuthenticationKeyGenerator();
+    }
+
+    @Bean
+    public IdentityProviderManager identityProviderManager() {
+        return new IdentityProviderManagerImpl();
+    }
+
+    @Bean
+    public UserAuthenticationManager userAuthenticationManager() {
+        return new UserAuthenticationManagerImpl();
+    }
+
+    @Bean
+    public AuthorizationCodeService authorizationCodeService() {
+        return new AuthorizationCodeServiceImpl();
     }
 }

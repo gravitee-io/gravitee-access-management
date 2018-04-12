@@ -17,24 +17,78 @@ package io.gravitee.am.gateway.handler.idp.impl;
 
 import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
+import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.reactivex.Maybe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IdentityProviderManagerImpl implements IdentityProviderManager {
+public class IdentityProviderManagerImpl implements IdentityProviderManager, InitializingBean {
+
+    private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
+
+    @Autowired
+    private Domain domain;
+
+    @Autowired
+    private IdentityProviderPluginManager identityProviderPluginManager;
+
+    @Autowired
+    private IdentityProviderRepository identityProviderRepository;
+
+    private Map<String, AuthenticationProvider> providers = new HashMap<>();
+    private Map<String, IdentityProvider> identities = new HashMap<>();
 
     @Override
     public Maybe<AuthenticationProvider> get(String id) {
-        //TODO: To implement
-        return Maybe.empty();
+        return Maybe.create(emitter -> {
+            AuthenticationProvider authenticationProvider = providers.get(id);
+            if (authenticationProvider != null) {
+                emitter.onSuccess(authenticationProvider);
+            }
+        });
     }
 
     @Override
     public Maybe<IdentityProvider> getIdentityProvider(String id) {
-        //TODO: To implement
-        return Maybe.empty();
+        return Maybe.create(emitter -> {
+            IdentityProvider identityProvider = identities.get(id);
+            if (identityProvider != null) {
+                emitter.onSuccess(identityProvider);
+            }
+        });
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+        logger.info("Initializing identity providers for domain {}", domain.getName());
+
+        identityProviderRepository.findByDomain(domain.getId())
+                .doOnSuccess(identityProviders -> {
+                    identityProviders.forEach(identityProvider -> {
+                        logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+                        AuthenticationProvider authenticationProvider =
+                                identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
+                                        identityProvider.getMappers(), identityProvider.getRoleMapper());
+                        providers.put(identityProvider.getId(), authenticationProvider);
+                        identities.put(identityProvider.getId(), identityProvider);
+                    });
+                })
+                .subscribe(
+                        result -> logger.info("Identity providers loaded for domain {}", domain.getName()),
+                        error -> logger.error("Failed to initializing identity providers for domain {}", domain.getName(), error)
+                );
     }
 }

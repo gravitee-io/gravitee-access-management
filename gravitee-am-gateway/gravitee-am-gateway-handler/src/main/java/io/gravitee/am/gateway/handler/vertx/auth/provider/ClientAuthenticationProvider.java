@@ -40,6 +40,12 @@ public class ClientAuthenticationProvider implements AuthProvider {
 
     private ClientService clientService;
 
+    public ClientAuthenticationProvider() {}
+
+    public ClientAuthenticationProvider(ClientService clientService) {
+        this.clientService = clientService;
+    }
+
     @Override
     public void authenticate(JsonObject credentials, Handler<AsyncResult<User>> authHandler) {
         String clientId = credentials.getString(OAuth2Constants.CLIENT_ID);
