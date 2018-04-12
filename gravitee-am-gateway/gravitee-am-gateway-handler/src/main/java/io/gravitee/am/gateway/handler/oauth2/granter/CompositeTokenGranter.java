@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.granter;
 
+import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.granter.client.ClientCredentialsTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.code.AuthorizationCodeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.implicit.ImplicitTokenGranter;
@@ -28,6 +30,7 @@ import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.jws.Oneway;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -45,6 +48,12 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private UserAuthenticationManager userAuthenticationManager;
+
+    @Autowired
+    private AuthorizationCodeService authorizationCodeService;
 
     public CompositeTokenGranter() { }
 
@@ -73,8 +82,8 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Override
     public void afterPropertiesSet() {
         addTokenGranter(new ClientCredentialsTokenGranter(clientService, tokenService));
-        addTokenGranter(new ResourceOwnerPasswordCredentialsTokenGranter(clientService, tokenService));
+        addTokenGranter(new ResourceOwnerPasswordCredentialsTokenGranter(clientService, tokenService, userAuthenticationManager));
         addTokenGranter(new ImplicitTokenGranter(clientService, tokenService));
-        addTokenGranter(new AuthorizationCodeTokenGranter(clientService, tokenService));
+        addTokenGranter(new AuthorizationCodeTokenGranter(clientService, tokenService, authorizationCodeService));
     }
 }

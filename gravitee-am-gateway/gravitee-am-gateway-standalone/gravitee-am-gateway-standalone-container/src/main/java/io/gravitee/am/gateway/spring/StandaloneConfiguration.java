@@ -36,7 +36,8 @@ import org.springframework.context.annotation.Import;
         PluginConfiguration.class,
         ReactorConfiguration.class,
         VertxConfiguration.class,
-        io.gravitee.am.gateway.services.core.spring.ServiceConfiguration.class
+        io.gravitee.am.gateway.services.core.spring.ServiceConfiguration.class,
+        io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration.class
 })
 public class StandaloneConfiguration {
 
