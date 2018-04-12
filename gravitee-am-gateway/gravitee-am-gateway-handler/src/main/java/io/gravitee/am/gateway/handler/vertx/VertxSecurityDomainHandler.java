@@ -20,7 +20,9 @@ import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
+import io.gravitee.am.gateway.handler.vertx.auth.provider.UserAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.endpoint.AuthorizeEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.endpoint.LoginEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.endpoint.TokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
 import io.gravitee.am.model.Domain;
@@ -53,35 +55,37 @@ public class VertxSecurityDomainHandler {
     private ClientService clientService;
 
     public Router oauth2() {
-        // Create the handlers
+        // Create the security domain router
         Router router = Router.router(vertx);
 
-        ClientAuthenticationProvider clientAuthenticationProvider = new ClientAuthenticationProvider();
-        clientAuthenticationProvider.setClientService(clientService);
-        final AuthProvider clientAuthProvider = new AuthProvider(clientAuthenticationProvider);
+        // create authentication handlers
+        final AuthProvider clientAuthProvider = new AuthProvider(new ClientAuthenticationProvider(clientService));
+        final AuthProvider userAuthProvider = new AuthProvider(new UserAuthenticationProvider());
+
         final AuthHandler clientAuthHandler = ChainAuthHandler.create()
                 .append(ClientCredentialsAuthHandler.create(clientAuthProvider.getDelegate()))
                 .append(ClientBasicAuthHandler.create(clientAuthProvider.getDelegate()));
+        final AuthHandler userAuthHandler = RedirectAuthHandler.create(userAuthProvider, contextPath() + "/login");
 
+        // create web handlers
         setupCoreWebHandlers(router);
 
-//        final AuthHandler authHandler = RedirectAuthHandler.create(authProvider, loginURL);
+        // bind login endpoints
+        router.get("/login").handler(new LoginEndpointHandler(domain));
+        router.post("/login").handler(FormLoginHandler.create(userAuthProvider));
 
-        // auth protected paths
-//        router.route("/oauth/authorize").handler(authHandler);
-
+        // bind OAuth2 endpoints
         Handler<RoutingContext> authorizeEndpoint = new AuthorizeEndpointHandler();
         Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler();
         ((TokenEndpointHandler) tokenEndpoint).setTokenGranter(tokenGranter);
-        router.route().failureHandler(new ExceptionHandler());
 
-        // Bind OAuth2 endpoints
-        router.route(HttpMethod.POST, "/oauth/authorize").handler(authorizeEndpoint);
-        router.route(HttpMethod.GET,"/oauth/authorize").handler(authorizeEndpoint);
-
+        router.route(HttpMethod.POST, "/oauth/authorize").handler(userAuthHandler).handler(authorizeEndpoint);
+        router.route(HttpMethod.GET,"/oauth/authorize").handler(userAuthHandler).handler(authorizeEndpoint);
         router.route(HttpMethod.POST, "/oauth/token").handler(clientAuthHandler).handler(tokenEndpoint);
 
-//        router.route("/oauth/tokeninfo").handler(authorizer::tokenInfo);
+        // bind failure handler
+        router.route().failureHandler(new ExceptionHandler());
+
         return router;
     }
 
@@ -93,6 +97,7 @@ public class VertxSecurityDomainHandler {
         router.route().handler(CookieHandler.create());
         router.route().handler(BodyHandler.create());
         router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+        router.route().handler(StaticHandler.create());
         //router.route().handler(UserSessionHandler.create(authProvider));
     }
 

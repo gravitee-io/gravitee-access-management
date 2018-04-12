@@ -25,6 +25,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -34,8 +35,10 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
     private final Logger logger = LoggerFactory.getLogger(UserAuthenticationManagerImpl.class);
 
+    @Autowired
     private ClientService clientService;
 
+    @Autowired
     private IdentityProviderManager identityProviderManager;
 
     @Override

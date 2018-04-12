@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{assets/material/material.blue_grey-blue.min.css}">
+    <link rel="stylesheet" th:href="@{assets/material/material.icons.css}">
+    <link rel="stylesheet" th:href="@{assets/font-awesome/css/font-awesome.min.css}">
+    <link rel="stylesheet" th:href="@{assets/css/login.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="@{assets/ico/favicon.ico}">
+</head>
+
+<body>
+    <div class="mdl-layout mdl-js-layout">
+        <div class="login-container">
+            <div class="login-form">
+                <div class="login-form-title">
+                    <label>Login to <span th:text="${context.get('domain').description}"></span></label>
+                </div>
+                <form role="form" th:action="@{login}" method="post" style="display: flex; flex-direction: column; margin-top: 30px;">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <i class="mdl-textfield__icon material-icons">person</i>
+                        <input class="mdl-textfield__input" type="text" id="username" name="username" autofocus="autofocus" />
+                        <label class="mdl-textfield__label mdl-required" for="username">Username</label>
+                    </div>
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <i class="mdl-textfield__icon material-icons">vpn_key</i>
+                        <input class="mdl-textfield__input" type="password" id="password" name="password" />
+                        <label class="mdl-textfield__label mdl-required" for="password">Password</label>
+                    </div>
+
+                    <p th:if="${context.request().params().get('error')}" class="error">Wrong user or password</p>
+                    <!-- TODO -->
+                    <!--<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>-->
+                    <input type="hidden" th:name="client_id" th:value="${context.request().params().get('client_id')}"/>
+                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary">Log in</button>
+                </form>
+
+                <!-- TODO -->
+               <!-- <div th:if="${oauth2Providers}" class="social-login-buttons">
+                    <div class="signup-or-separator">
+                        <h6 class="text">or Sign in with</h6>
+                        <hr>
+                    </div>
+                    <a th:href="${authorizeUrls.get(oauth2Provider.getId())}"
+                       th:class="'mdl-button mdl-js-button mdl-button&#45;&#45;raised mdl-js-ripple-effect btn-' + ${oauth2Provider.getType()}"
+                       th:each="oauth2Provider : ${oauth2Providers}">
+                        <i th:class="'fa fa-' + ${oauth2Provider.getType()}"></i> <span th:text="${oauth2Provider.getName()}"></span>
+                    </a>
+                </div>-->
+            </div>
+        </div>
+    </div>
+
+    <!--[if lt IE 10]>
+    <script th:src="@{assets/js/placeholder.js}"></script>
+    <![endif]-->
+    <script th:src="@{assets/material/material.min.js}"></script>
+    <script th:src="@{assets/js/jquery-1.11.1.min.js}"></script>
+    <script>
+        $(".mdl-textfield__input").focus(function (){
+            if( !this.value ){
+                $(this).prop('required', true);
+                $(this).parent().addClass('is-invalid');
+            }
+        });
+        $(".mdl-button[type='submit']").click(function (event){
+            $(this).siblings(".mdl-textfield").addClass('is-invalid');
+            $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
+        });
+    </script>
+</body>
+</html>

@@ -64,13 +64,14 @@ public class AbstractTokenGranter implements TokenGranter {
                             && !client.getAuthorizedGrantTypes().contains(grantType)) {
                         throw new UnauthorizedClientException("Unauthorized grant type: " + grantType);
                     }
-                    return tokenService.create(createOAuth2Authentication(tokenRequest, client));
-                });
+                    return createOAuth2Authentication(tokenRequest, client);
+                })
+                .flatMap(oauth2Authentication -> tokenService.create(oauth2Authentication));
     }
 
-    protected OAuth2Authentication createOAuth2Authentication(TokenRequest tokenRequest, Client client) {
+    protected Single<OAuth2Authentication> createOAuth2Authentication(TokenRequest tokenRequest, Client client) {
         OAuth2Request storedRequest = tokenRequest.createOAuth2Request(client);
-        return new OAuth2Authentication(storedRequest, null);
+        return Single.just(new OAuth2Authentication(storedRequest, null));
     }
 
     public void setClientService(ClientService clientService) {

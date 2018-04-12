@@ -34,4 +34,6 @@ public interface OAuth2Constants {
     String RESPONSE_TYPE = "response_type";
 
     String GRANT_TYPE = "grant_type";
+
+    String CODE = "code";
 }

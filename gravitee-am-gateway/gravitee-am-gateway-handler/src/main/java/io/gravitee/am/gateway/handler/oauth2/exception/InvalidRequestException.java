@@ -16,7 +16,13 @@
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
 /**
+ * The request is missing a required parameter, includes an unsupported parameter value (other than grant type),
+ * repeats a parameter, includes multiple credentials, utilizes more than one mechanism for authenticating the client, or is otherwise malformed.
+ *
+ * See <a href="https://tools.ietf.org/html/rfc6749#section-5.2">5.2. Error Response</a>
+ *
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class InvalidRequestException extends OAuth2Exception {
@@ -28,4 +34,10 @@ public class InvalidRequestException extends OAuth2Exception {
     public InvalidRequestException(String message) {
         super(message);
     }
+
+    @Override
+    public String getOAuth2ErrorCode() {
+        return "invalid_request";
+    }
+
 }
