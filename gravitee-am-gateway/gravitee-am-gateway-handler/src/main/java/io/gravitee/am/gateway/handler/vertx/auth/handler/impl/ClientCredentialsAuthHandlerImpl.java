@@ -65,7 +65,9 @@ public class ClientCredentialsAuthHandlerImpl extends AuthHandlerImpl {
         String clientSecret = context.request().getParam(OAuth2Constants.CLIENT_SECRET);
 
         if (clientId != null && clientSecret != null) {
-            JsonObject clientCredentials = new JsonObject().put(OAuth2Constants.CLIENT_ID, clientId).put(OAuth2Constants.CLIENT_SECRET, clientSecret);
+            JsonObject clientCredentials = new JsonObject()
+                    .put("username", clientId)
+                    .put("password", clientSecret);
             handler.handle(Future.succeededFuture(clientCredentials));
         } else {
             handler.handle(Future.failedFuture(UNAUTHORIZED));

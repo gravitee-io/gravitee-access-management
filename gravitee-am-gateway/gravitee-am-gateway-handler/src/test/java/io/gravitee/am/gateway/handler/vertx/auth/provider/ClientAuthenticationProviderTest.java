@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.vertx.auth.provider;
 
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.BadClientCredentialsException;
+import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
 import io.reactivex.Maybe;
 import io.vertx.core.json.JsonObject;
@@ -62,8 +63,8 @@ public class ClientAuthenticationProviderTest {
 
         when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(client));
         JsonObject credentials = new JsonObject();
-        credentials.put("username", "my-client-id");
-        credentials.put("password", "my-client-secret");
+        credentials.put(OAuth2Constants.CLIENT_ID, "my-client-id");
+        credentials.put(OAuth2Constants.CLIENT_SECRET, "my-client-secret");
 
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.authenticate(credentials, userAsyncResult -> {
@@ -83,8 +84,8 @@ public class ClientAuthenticationProviderTest {
 
         when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(client));
         JsonObject credentials = new JsonObject();
-        credentials.put("username", "my-client-id");
-        credentials.put("password", "my-other-client-secret");
+        credentials.put(OAuth2Constants.CLIENT_ID, "my-client-id");
+        credentials.put(OAuth2Constants.CLIENT_SECRET, "my-other-client-secret");
 
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.authenticate(credentials, userAsyncResult -> {
@@ -101,7 +102,7 @@ public class ClientAuthenticationProviderTest {
     public void shouldNotAuthenticateClient_unknownClient() throws Exception {
         when(clientService.findByClientId(anyString())).thenReturn(Maybe.empty());
         JsonObject credentials = new JsonObject();
-        credentials.put("username", "other-client-id");
+        credentials.put(OAuth2Constants.CLIENT_ID, "other-client-id");
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.authenticate(credentials, userAsyncResult -> {
             latch.countDown();
@@ -118,7 +119,7 @@ public class ClientAuthenticationProviderTest {
         Exception exception = new Exception();
         when(clientService.findByClientId(anyString())).thenReturn(Maybe.error(exception));
         JsonObject credentials = new JsonObject();
-        credentials.put("username", "other-client-id");
+        credentials.put(OAuth2Constants.CLIENT_ID, "other-client-id");
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.authenticate(credentials, userAsyncResult -> {
             latch.countDown();

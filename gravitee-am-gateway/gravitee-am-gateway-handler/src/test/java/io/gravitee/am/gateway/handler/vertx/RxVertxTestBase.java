@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ReactiveVertxTestBase extends AsyncTestBase {
+public class RxVertxTestBase extends AsyncTestBase {
 
     public static final boolean USE_NATIVE_TRANSPORT = Boolean.getBoolean("vertx.useNativeTransport");
     public static final boolean USE_DOMAIN_SOCKETS = Boolean.getBoolean("vertx.useDomainSockets");
