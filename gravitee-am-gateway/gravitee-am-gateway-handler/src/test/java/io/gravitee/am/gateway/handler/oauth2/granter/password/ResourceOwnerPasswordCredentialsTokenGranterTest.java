@@ -16,11 +16,15 @@
 package io.gravitee.am.gateway.handler.oauth2.granter.password;
 
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,13 +53,35 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
     @Mock
     private TokenRequest tokenRequest;
 
+    @Mock
+    private ClientService clientService;
+
     @Before
     public void setUp() {
         granter.setUserAuthenticationManager(userAuthenticationManager);
+        granter.setClientService(clientService);
     }
 
     @Test
     public void shouldGenerateAnAccessToken() {
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.set(ResourceOwnerPasswordCredentialsTokenGranter.USERNAME_PARAMETER, "my-username");
+        parameters.set(ResourceOwnerPasswordCredentialsTokenGranter.PASSWORD_PARAMETER, "my-password");
+
+        when(tokenRequest.getClientId()).thenReturn("my-client-id");
+        when(tokenRequest.getGrantType()).thenReturn("password");
+        when(tokenRequest.getRequestParameters()).thenReturn(parameters);
+
+        when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(new Client()));
+        when(userAuthenticationManager.authenticate(eq(tokenRequest.getClientId()), any(Authentication.class))).thenReturn(
+                Single.just(new DefaultUser("my-username")));
+
+        Single<AccessToken> accessToken = granter.grant(tokenRequest);
+
+    }
+
+    @Test (expected = UnsupportedGrantTypeException.class)
+    public void shouldThrowUnsupportedGrantTypeException() {
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.set(ResourceOwnerPasswordCredentialsTokenGranter.USERNAME_PARAMETER, "my-username");
         parameters.set(ResourceOwnerPasswordCredentialsTokenGranter.PASSWORD_PARAMETER, "my-password");

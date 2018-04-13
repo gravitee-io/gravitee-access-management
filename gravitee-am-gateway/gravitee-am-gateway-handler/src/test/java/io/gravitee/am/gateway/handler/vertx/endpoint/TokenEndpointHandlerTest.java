@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.endpoint;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
-import io.gravitee.am.gateway.handler.vertx.OAuth2TestBase;
+import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
 import io.gravitee.common.http.HttpStatusCode;
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class TokenEndpointHandlerTest extends OAuth2TestBase {
+public class TokenEndpointHandlerTest extends RxWebTestBase {
 
     @InjectMocks
     private TokenEndpointHandler tokenEndpointHandler = new TokenEndpointHandler();
@@ -57,6 +57,7 @@ public class TokenEndpointHandlerTest extends OAuth2TestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
         router.route(HttpMethod.POST, "/oauth/token").handler(tokenEndpointHandler);
         router.route().failureHandler(new ExceptionHandler());
     }
@@ -138,7 +139,34 @@ public class TokenEndpointHandlerTest extends OAuth2TestBase {
             }
         });
 
-        AccessToken accessToken = mock(AccessToken.class);
+        // Jackson is unable to generate a JSON from a mocked interface.
+        AccessToken accessToken = new AccessToken() {
+            @Override
+            public String getValue() {
+                return null;
+            }
+
+            @Override
+            public String getTokenType() {
+                return null;
+            }
+
+            @Override
+            public int getExpiresIn() {
+                return 0;
+            }
+
+            @Override
+            public String getRefreshToken() {
+                return null;
+            }
+
+            @Override
+            public String getScope() {
+                return null;
+            }
+        };
+
         when(tokenGranter.grant(any(TokenRequest.class))).thenReturn(Single.just(accessToken));
 
         testRequest(

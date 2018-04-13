@@ -104,4 +104,8 @@ public class VertxSecurityDomainHandler {
     public void setVertx(Vertx vertx) {
         this.vertx = vertx;
     }
+
+    public void setDomain(Domain domain) {
+        this.domain = domain;
+    }
 }
