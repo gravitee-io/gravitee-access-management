@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx;
 
 
+import io.gravitee.am.model.Domain;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerOptions;
@@ -41,7 +42,7 @@ import java.util.function.Consumer;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class OAuth2TestBase extends ReactiveVertxTestBase {
+public class RxWebTestBase extends RxVertxTestBase {
 
     protected static Set<HttpMethod> METHODS = new HashSet<>(Arrays.asList(HttpMethod.DELETE, HttpMethod.GET,
             HttpMethod.HEAD, HttpMethod.PATCH, HttpMethod.OPTIONS, HttpMethod.TRACE, HttpMethod.POST, HttpMethod.PUT));
@@ -49,21 +50,40 @@ public class OAuth2TestBase extends ReactiveVertxTestBase {
     protected HttpServer server;
     protected HttpClient client;
     protected Router router;
+    protected Domain domain;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        VertxSecurityDomainHandler handler = new VertxSecurityDomainHandler();
-        handler.setVertx(vertx);
-        router = Router.router(vertx);
+
+        // Set security domain handler
+        router = router();
+
         server = vertx.createHttpServer(getHttpServerOptions());
         client = vertx.createHttpClient(getHttpClientOptions());
         CountDownLatch latch = new CountDownLatch(1);
         server.requestHandler(router::accept).listen(onSuccess(res -> latch.countDown()));
         awaitLatch(latch);
+    }
 
-        // Set OAuth2 handler
-        router = handler.oauth2();
+    protected Router router() {
+        return Router.router(vertx);
+    }
+
+    protected VertxSecurityDomainHandler handler() {
+        VertxSecurityDomainHandler handler = new VertxSecurityDomainHandler();
+        handler.setVertx(vertx);
+
+        domain = createDomain();
+        handler.setDomain(domain);
+
+        return handler;
+    }
+
+    protected Domain createDomain() {
+        Domain domain = new Domain();
+        domain.setPath("default-domain");
+        return domain;
     }
 
     protected HttpServerOptions getHttpServerOptions() {
