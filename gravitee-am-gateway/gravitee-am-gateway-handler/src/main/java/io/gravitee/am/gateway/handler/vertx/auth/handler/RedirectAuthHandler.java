@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.exception;
+package io.gravitee.am.gateway.handler.vertx.auth.handler;
+
+import io.gravitee.am.gateway.handler.vertx.auth.handler.impl.RedirectAuthHandlerImpl;
+import io.vertx.ext.auth.AuthProvider;
+import io.vertx.reactivex.ext.web.handler.AuthHandler;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UnsupportedGrantTypeException extends OAuth2Exception {
+public interface RedirectAuthHandler {
 
-    public UnsupportedGrantTypeException() {
-        super();
+    String DEFAULT_RETURN_URL_PARAM = "return_url";
+
+    static AuthHandler create(AuthProvider authProvider, String loginRedirectURL) {
+        return AuthHandler.newInstance(new RedirectAuthHandlerImpl(authProvider, loginRedirectURL, DEFAULT_RETURN_URL_PARAM));
     }
 
-    public UnsupportedGrantTypeException(String message) {
-        super(message);
-    }
-
-    @Override
-    public String getOAuth2ErrorCode() {
-        return "unsupported_grant_type";
-    }
 }

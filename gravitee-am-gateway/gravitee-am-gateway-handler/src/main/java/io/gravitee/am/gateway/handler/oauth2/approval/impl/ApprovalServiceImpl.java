@@ -13,24 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.exception;
+package io.gravitee.am.gateway.handler.oauth2.approval.impl;
+
+import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
+import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
+import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
+import io.reactivex.Single;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UnsupportedGrantTypeException extends OAuth2Exception {
+public class ApprovalServiceImpl implements ApprovalService {
 
-    public UnsupportedGrantTypeException() {
-        super();
-    }
-
-    public UnsupportedGrantTypeException(String message) {
-        super(message);
-    }
+    @Autowired
+    private ScopeApprovalRepository scopeApprovalRepository;
 
     @Override
-    public String getOAuth2ErrorCode() {
-        return "unsupported_grant_type";
+    public Single<AuthorizationRequest> checkApproval(AuthorizationRequest authorizationRequest, String username) {
+        // TODO
+        authorizationRequest.setApproved(true);
+        return Single.just(authorizationRequest);
     }
 }

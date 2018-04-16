@@ -16,21 +16,26 @@
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
 /**
+ * The authorization server encountered an unexpected condition that prevented it from fulfilling the request.
+ * (This error code is needed because a 500 Internal Server Error HTTP status code cannot be returned to the client via an HTTP redirect.)
+ *
+ * See <a href="https://tools.ietf.org/html/rfc6749#section-4.1.2.1">4.1.2.1. Error Response</a>
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UnsupportedGrantTypeException extends OAuth2Exception {
+public class ServerErrorException extends OAuth2Exception {
 
-    public UnsupportedGrantTypeException() {
+    public ServerErrorException() {
         super();
     }
 
-    public UnsupportedGrantTypeException(String message) {
+    public ServerErrorException(String message) {
         super(message);
     }
 
     @Override
     public String getOAuth2ErrorCode() {
-        return "unsupported_grant_type";
+        return "server_error";
     }
 }
