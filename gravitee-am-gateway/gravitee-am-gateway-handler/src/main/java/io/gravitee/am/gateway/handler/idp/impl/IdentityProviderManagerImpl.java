@@ -53,22 +53,14 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
 
     @Override
     public Maybe<AuthenticationProvider> get(String id) {
-        return Maybe.create(emitter -> {
-            AuthenticationProvider authenticationProvider = providers.get(id);
-            if (authenticationProvider != null) {
-                emitter.onSuccess(authenticationProvider);
-            }
-        });
+        AuthenticationProvider authenticationProvider = providers.get(id);
+        return (authenticationProvider != null) ? Maybe.just(authenticationProvider) : Maybe.empty();
     }
 
     @Override
     public Maybe<IdentityProvider> getIdentityProvider(String id) {
-        return Maybe.create(emitter -> {
-            IdentityProvider identityProvider = identities.get(id);
-            if (identityProvider != null) {
-                emitter.onSuccess(identityProvider);
-            }
-        });
+        IdentityProvider identityProvider = identities.get(id);
+        return (identityProvider != null) ? Maybe.just(identityProvider) : Maybe.empty();
     }
 
     @Override
