@@ -32,10 +32,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.BiConsumer;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -100,7 +98,18 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProvider.setType(identityProviderMongo.getType());
         identityProvider.setConfiguration(identityProviderMongo.getConfiguration());
         identityProvider.setMappers((Map) identityProviderMongo.getMappers());
-        identityProvider.setRoleMapper((Map) identityProviderMongo.getRoleMapper());
+
+        if (identityProviderMongo.getRoleMapper() != null) {
+            Map<String, String[]> roleMapper = new HashMap<>(identityProviderMongo.getRoleMapper().size());
+            identityProviderMongo.getRoleMapper().forEach((key, value) -> {
+                List lstValue = (List) value;
+                String[] arr = new String[lstValue.size()];
+                lstValue.toArray(arr);
+                roleMapper.put(key, arr);
+            });
+            identityProvider.setRoleMapper(roleMapper);
+        }
+
         identityProvider.setDomain(identityProviderMongo.getDomain());
         identityProvider.setExternal(identityProviderMongo.isExternal());
         identityProvider.setCreatedAt(identityProviderMongo.getCreatedAt());
