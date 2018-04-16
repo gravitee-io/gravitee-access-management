@@ -13,22 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.token;
+package io.gravitee.am.gateway.handler.oauth2.exception;
 
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.gravitee.common.http.HttpStatusCode;
 
 /**
+ * There is no specification about an invalid token.
+ * We are assuming that this exception must end with a 401 response status.
+ *
  * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface TokenService {
+public class InvalidTokenException extends OAuth2Exception {
 
-    Maybe<AccessToken> get(String accessToken);
+    public InvalidTokenException() {
+    }
 
-    Single<AccessToken> create(OAuth2Authentication oAuth2Authentication);
+    @Override
+    public String getOAuth2ErrorCode() {
+        return "invalid_token";
+    }
 
-    Single<AccessToken> refresh();
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.UNAUTHORIZED_401;
+    }
 }

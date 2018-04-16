@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHa
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.UserAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.endpoint.AuthorizeEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.endpoint.CheckTokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.endpoint.LoginEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.endpoint.TokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
@@ -77,11 +78,13 @@ public class VertxSecurityDomainHandler {
         // bind OAuth2 endpoints
         Handler<RoutingContext> authorizeEndpoint = new AuthorizeEndpointHandler();
         Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler();
+        Handler<RoutingContext> checkTokenEndpoint = new CheckTokenEndpointHandler();
         ((TokenEndpointHandler) tokenEndpoint).setTokenGranter(tokenGranter);
 
         router.route(HttpMethod.POST, "/oauth/authorize").handler(userAuthHandler).handler(authorizeEndpoint);
         router.route(HttpMethod.GET,"/oauth/authorize").handler(userAuthHandler).handler(authorizeEndpoint);
         router.route(HttpMethod.POST, "/oauth/token").handler(clientAuthHandler).handler(tokenEndpoint);
+        router.route(HttpMethod.POST, "/oauth/check_token").handler(checkTokenEndpoint);
 
         // bind failure handler
         router.route().failureHandler(new ExceptionHandler());

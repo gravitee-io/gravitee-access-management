@@ -21,6 +21,9 @@ import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.request.TokenRequestFactory;
+import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpHeadersValues;
+import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.auth.User;
@@ -65,9 +68,9 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
 
         tokenGranter.grant(tokenRequest)
                 .doOnSuccess(accessToken -> context.response()
-                        .putHeader("Cache-Control", "no-store")
-                        .putHeader("Pragma", "no-cache")
-                        .putHeader("Content-Type", "application/json;charset=utf-8")
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                         .end(Json.encodePrettily(accessToken)))
                 .doOnError(e -> {
                     // Call global exception handler to display oauth2 exception error

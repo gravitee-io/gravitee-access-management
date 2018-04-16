@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.handler;
 
+import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.AbstractUser;
 import io.vertx.ext.auth.AuthProvider;
-import io.vertx.ext.auth.shiro.ShiroAuth;
-import io.vertx.ext.auth.shiro.ShiroAuthRealmType;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.AuthHandler;
 import io.vertx.ext.web.handler.AuthHandlerTestBase;
@@ -36,15 +39,12 @@ public class ClientCredentialsAuthHandlerTest extends AuthHandlerTestBase {
     public void shouldLoginSuccess() throws Exception {
         Handler<RoutingContext> handler = rc -> {
             assertNotNull(rc.user());
-            assertEquals("my-client", rc.user().principal().getString("username"));
+            assertEquals("my-client", rc.user().principal().getString(OAuth2Constants.CLIENT_ID));
             rc.response().end();
         };
 
-        JsonObject authConfig = new JsonObject().put("properties_path", "classpath:client/clientusers.properties");
-        AuthProvider authProvider = ShiroAuth.create(vertx, ShiroAuthRealmType.PROPERTIES, authConfig);
-
         router.route("/token/*")
-                .handler(ClientCredentialsAuthHandler.create(authProvider).getDelegate())
+                .handler(ClientCredentialsAuthHandler.create(new DummyAuthProvider()).getDelegate())
                 .handler(handler);
 
         testRequest(HttpMethod.GET, "/token/", 401, "Unauthorized");
@@ -59,5 +59,33 @@ public class ClientCredentialsAuthHandlerTest extends AuthHandlerTestBase {
     @Override
     protected AuthHandler createAuthHandler(AuthProvider authProvider) {
         return ClientCredentialsAuthHandler.create(authProvider).getDelegate();
+    }
+
+    class DummyAuthProvider implements AuthProvider {
+
+        @Override
+        public void authenticate(JsonObject jsonObject, Handler<AsyncResult<User>> handler) {
+            if (jsonObject.getString(OAuth2Constants.CLIENT_ID) == null) {
+                handler.handle(Future.failedFuture("no-client-id"));
+            } else {
+                handler.handle(Future.succeededFuture(new AbstractUser() {
+                    @Override
+                    protected void doIsPermitted(String s, Handler<AsyncResult<Boolean>> handler) {
+
+                    }
+
+                    @Override
+                    public JsonObject principal() {
+                        return new JsonObject().put(OAuth2Constants.CLIENT_ID,
+                                jsonObject.getString(OAuth2Constants.CLIENT_ID));
+                    }
+
+                    @Override
+                    public void setAuthProvider(AuthProvider authProvider) {
+
+                    }
+                }));
+            }
+        }
     }
 }
