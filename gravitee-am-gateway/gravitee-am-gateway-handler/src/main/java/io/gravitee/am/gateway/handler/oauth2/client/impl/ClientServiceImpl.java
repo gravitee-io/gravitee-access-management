@@ -20,7 +20,6 @@ import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.reactivex.Maybe;
-import io.reactivex.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -47,12 +46,8 @@ public class ClientServiceImpl implements ClientService, InitializingBean {
 
     @Override
     public Maybe<Client> findByClientId(String clientId) {
-        return Maybe.create(emitter -> {
-            Client client = clients.get(clientId);
-            if (client != null) {
-                emitter.onSuccess(client);
-            }
-        });
+        Client client = clients.get(clientId);
+        return (client != null) ? Maybe.just(client) : Maybe.empty();
     }
 
     @Override

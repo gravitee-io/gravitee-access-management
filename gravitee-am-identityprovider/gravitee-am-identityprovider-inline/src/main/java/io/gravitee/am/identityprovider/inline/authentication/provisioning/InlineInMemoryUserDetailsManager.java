@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.inline.authentication.provisioning;
 
 import io.gravitee.am.identityprovider.inline.model.User;
-import io.gravitee.am.service.exception.authentication.UsernameNotFoundException;
 import io.reactivex.Maybe;
 
 import java.util.HashMap;
@@ -36,12 +35,7 @@ public class InlineInMemoryUserDetailsManager {
     }
 
     public Maybe<User> loadUserByUsername(String username) {
-        return Maybe.create(emitter -> {
-            User user = users.get(username.toLowerCase());
-            if (user == null) {
-                emitter.onError(new UsernameNotFoundException(username));
-            }
-            emitter.onSuccess(user);
-        });
+        User user = users.get(username.toLowerCase());
+        return (user != null) ? Maybe.just(user) : Maybe.empty();
     }
 }
