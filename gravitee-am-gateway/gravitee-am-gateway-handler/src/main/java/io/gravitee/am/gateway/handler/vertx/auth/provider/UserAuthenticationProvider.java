@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.provider;
 
+import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
+import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.reactivex.SingleObserver;
+import io.reactivex.disposables.Disposable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -28,30 +33,42 @@ import io.vertx.ext.auth.User;
  */
 public class UserAuthenticationProvider implements AuthProvider {
 
-    // TODO
+    private final static String USERNAME_PARAMETER = "username";
+    private final static String PASSWORD_PARAMETER = "password";
+    private UserAuthenticationManager userAuthenticationManager;
+
+    public UserAuthenticationProvider() {}
+
+    public UserAuthenticationProvider(UserAuthenticationManager userAuthenticationManager) {
+        this.userAuthenticationManager = userAuthenticationManager;
+    }
+
     @Override
     public void authenticate(JsonObject authInfo, Handler<AsyncResult<User>> resultHandler) {
-        resultHandler.handle(Future.succeededFuture(new User() {
+        String username = authInfo.getString(USERNAME_PARAMETER);
+        String password = authInfo.getString(PASSWORD_PARAMETER);
+        String clientId = authInfo.getString(OAuth2Constants.CLIENT_ID);
 
-            @Override
-            public User isAuthorized(String authority, Handler<AsyncResult<Boolean>> resultHandler) {
-                return null;
-            }
+        userAuthenticationManager.authenticate(clientId, new EndUserAuthentication(username, password))
+                .subscribe(new SingleObserver<io.gravitee.am.identityprovider.api.User>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
 
-            @Override
-            public User clearCache() {
-                return null;
-            }
+                    }
 
-            @Override
-            public JsonObject principal() {
-                return null;
-            }
+                    @Override
+                    public void onSuccess(io.gravitee.am.identityprovider.api.User user) {
+                        resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.vertx.auth.user.User(user)));
+                    }
 
-            @Override
-            public void setAuthProvider(AuthProvider authProvider) {
+                    @Override
+                    public void onError(Throwable e) {
+                        resultHandler.handle(Future.failedFuture(e));
+                    }
+                });
+    }
 
-            }
-        }));
+    public void setUserAuthenticationManager(UserAuthenticationManager userAuthenticationManager) {
+        this.userAuthenticationManager = userAuthenticationManager;
     }
 }

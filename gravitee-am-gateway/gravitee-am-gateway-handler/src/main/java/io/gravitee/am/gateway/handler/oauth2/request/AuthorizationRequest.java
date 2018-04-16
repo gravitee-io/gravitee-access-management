@@ -15,6 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.request;
 
+import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationResponse;
+import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
+import io.gravitee.common.util.MultiValueMap;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -55,6 +63,10 @@ public class AuthorizationRequest extends BaseRequest {
      */
     private String state;
 
+    private boolean approved;
+
+    private AuthorizationResponse response;
+
     public String getResponseType() {
         return responseType;
     }
@@ -77,5 +89,36 @@ public class AuthorizationRequest extends BaseRequest {
 
     public void setState(String state) {
         this.state = state;
+    }
+
+    public boolean isApproved() {
+        return approved;
+    }
+
+    public void setApproved(boolean approved) {
+        this.approved = approved;
+    }
+
+    public AuthorizationResponse getResponse() {
+        return response;
+    }
+
+    public void setResponse(AuthorizationResponse response) {
+        this.response = response;
+    }
+
+    public OAuth2Request createOAuth2Request(AuthorizationRequest authorizationRequest) {
+        MultiValueMap<String, String> requestParameters = getRequestParameters();
+        HashMap<String, String> modifiable = new HashMap<String, String>(requestParameters.toSingleValueMap());
+        modifiable.put("response_type", responseType);
+        return new OAuth2Request(modifiable,
+                authorizationRequest.getClientId(),
+                null,
+                true,
+                authorizationRequest.getScopes() != null ? new HashSet<>(authorizationRequest.getScopes()) : Collections.emptySet(),
+                null,
+                null,
+                null,
+                null);
     }
 }

@@ -16,21 +16,25 @@
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
 /**
+ * The authorization server does not support obtaining an access token using this method.
+ *
+ * See <a href="https://tools.ietf.org/html/rfc6749#section-4.2.2.1">4.2.2.1. Error Response</a>
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UnsupportedGrantTypeException extends OAuth2Exception {
+public class UnsupportedResponseTypeException extends OAuth2Exception {
 
-    public UnsupportedGrantTypeException() {
+    public UnsupportedResponseTypeException() {
         super();
     }
 
-    public UnsupportedGrantTypeException(String message) {
+    public UnsupportedResponseTypeException(String message) {
         super(message);
     }
 
     @Override
     public String getOAuth2ErrorCode() {
-        return "unsupported_grant_type";
+        return "unsupported_response_type";
     }
 }

@@ -19,11 +19,14 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.request.TokenRequestFactory;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpHeadersValues;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.SingleObserver;
+import io.reactivex.disposables.Disposable;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.auth.User;
@@ -41,9 +44,14 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public class TokenEndpointHandler implements Handler<RoutingContext> {
 
+    private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
     private TokenGranter tokenGranter;
 
-    private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
+    public TokenEndpointHandler() { }
+
+    public TokenEndpointHandler(TokenGranter tokenGranter) {
+        this.tokenGranter = tokenGranter;
+    }
 
     @Override
     public void handle(RoutingContext context) {
@@ -67,17 +75,26 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
         }
 
         tokenGranter.grant(tokenRequest)
-                .doOnSuccess(accessToken -> context.response()
-                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                        .end(Json.encodePrettily(accessToken)))
-                .doOnError(e -> {
-                    // Call global exception handler to display oauth2 exception error
-                    // TODO trigger WARNING io.reactivex.exceptions.OnErrorNotImplementedException
-                    context.fail(e);
-                })
-                .subscribe();
+                .subscribe(new SingleObserver<AccessToken>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onSuccess(AccessToken accessToken) {
+                        context.response()
+                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                                .end(Json.encodePrettily(accessToken));
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        context.fail(e);
+                    }
+                });
     }
 
     public TokenGranter getTokenGranter() {

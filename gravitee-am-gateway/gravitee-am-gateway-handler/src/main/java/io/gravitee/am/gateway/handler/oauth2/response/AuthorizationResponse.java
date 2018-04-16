@@ -13,24 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.exception;
+package io.gravitee.am.gateway.handler.oauth2.response;
 
 /**
+ * Response after authorization code or implicit flow
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UnsupportedGrantTypeException extends OAuth2Exception {
+public abstract class AuthorizationResponse {
 
-    public UnsupportedGrantTypeException() {
-        super();
+    /**
+     *  REQUIRED if the "state" parameter was present in the client authorization request.
+     *  The exact value received from the client.
+     */
+    private String state;
+
+    public String getState() {
+        return state;
     }
 
-    public UnsupportedGrantTypeException(String message) {
-        super(message);
-    }
-
-    @Override
-    public String getOAuth2ErrorCode() {
-        return "unsupported_grant_type";
+    public void setState(String state) {
+        this.state = state;
     }
 }

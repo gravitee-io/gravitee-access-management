@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.utils;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface OAuth2Constants {
@@ -36,4 +37,10 @@ public interface OAuth2Constants {
     String GRANT_TYPE = "grant_type";
 
     String CODE = "code";
+
+    String TOKEN = "token";
+
+    String IMPLICIT = "implicit";
+
+    String AUTHORIZATION_CODE = "authorization_code";
 }

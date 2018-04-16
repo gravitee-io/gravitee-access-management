@@ -13,24 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.exception;
+package io.gravitee.am.gateway.handler.vertx.endpoint;
+
+import io.vertx.core.Handler;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UnsupportedGrantTypeException extends OAuth2Exception {
+public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
 
-    public UnsupportedGrantTypeException() {
-        super();
-    }
-
-    public UnsupportedGrantTypeException(String message) {
-        super(message);
-    }
+    final ThymeleafTemplateEngine engine = ThymeleafTemplateEngine.create();
 
     @Override
-    public String getOAuth2ErrorCode() {
-        return "unsupported_grant_type";
+    public void handle(RoutingContext routingContext) {
+        // TODO
+        engine.render(routingContext, "webroot/views/access_confirmation.html", res -> {
+            if (res.succeeded()) {
+                routingContext.response().end(res.result());
+            } else {
+                routingContext.fail(res.cause());
+            }
+        });
     }
 }

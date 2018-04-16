@@ -19,13 +19,13 @@ import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
+import io.gravitee.common.utils.UUID;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Date;
-import java.util.UUID;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,7 +43,7 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
     @Override
     public Single<OAuth2AuthorizationCode> create(OAuth2Authentication oAuth2Authentication) {
         OAuth2AuthorizationCode oAuth2AuthorizationCode = new OAuth2AuthorizationCode();
-        oAuth2AuthorizationCode.setCode(UUID.randomUUID().toString());
+        oAuth2AuthorizationCode.setCode(UUID.random().toString());
         oAuth2AuthorizationCode.setOAuth2Authentication(oAuth2Authentication);
         oAuth2AuthorizationCode.setExpiration(new Date(System.currentTimeMillis() + authorizationCodeValidity));
         oAuth2AuthorizationCode.setCreatedAt(new Date());
