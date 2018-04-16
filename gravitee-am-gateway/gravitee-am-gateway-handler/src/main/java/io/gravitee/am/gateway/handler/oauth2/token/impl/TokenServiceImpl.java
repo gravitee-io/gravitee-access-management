@@ -45,8 +45,9 @@ public class TokenServiceImpl implements TokenService {
     private AuthenticationKeyGenerator authenticationKeyGenerator;
 
     @Override
-    public Maybe<AccessToken> get() {
-        return tokenRepository.getAccessToken("authentication-key")
+    public Maybe<AccessToken> get(String accessToken) {
+        return tokenRepository
+                .getAccessToken(accessToken)
                 .map(this::convert);
     }
 

@@ -66,8 +66,8 @@ public class ClientCredentialsAuthHandlerImpl extends AuthHandlerImpl {
 
         if (clientId != null && clientSecret != null) {
             JsonObject clientCredentials = new JsonObject()
-                    .put("username", clientId)
-                    .put("password", clientSecret);
+                    .put(OAuth2Constants.CLIENT_ID, clientId)
+                    .put(OAuth2Constants.CLIENT_SECRET, clientSecret);
             handler.handle(Future.succeededFuture(clientCredentials));
         } else {
             handler.handle(Future.failedFuture(UNAUTHORIZED));
