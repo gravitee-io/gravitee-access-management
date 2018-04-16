@@ -15,9 +15,37 @@
  */
 package io.gravitee.am.gateway.handler.vertx.request;
 
+import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.common.util.MultiValueMap;
+import io.vertx.reactivex.core.http.HttpServerRequest;
+
+import java.util.Arrays;
+import java.util.HashSet;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public final class AuthorizationRequestFactory {
+
+    public AuthorizationRequest create(HttpServerRequest request) {
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setClientId(request.params().get(OAuth2Constants.CLIENT_ID));
+        authorizationRequest.setResponseType(request.params().get(OAuth2Constants.RESPONSE_TYPE));
+        authorizationRequest.setRedirectUri(request.params().get(OAuth2Constants.REDIRECT_URI));
+        String scope = request.params().get(OAuth2Constants.SCOPE);
+        authorizationRequest.setScopes(scope != null ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
+        authorizationRequest.setState(request.params().get(OAuth2Constants.STATE));
+        authorizationRequest.setRequestParameters(extractRequestParameters(request));
+        return authorizationRequest;
+    }
+
+    private MultiValueMap<String, String> extractRequestParameters(HttpServerRequest request) {
+        MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>(request.params().size());
+        request.params().getDelegate().entries().forEach(entry -> requestParameters.add(entry.getKey(), entry.getValue()));
+        return requestParameters;
+    }
 }

@@ -19,6 +19,8 @@ import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.idp.impl.IdentityProviderManagerImpl;
+import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
+import io.gravitee.am.gateway.handler.oauth2.approval.impl.ApprovalServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.client.impl.ClientServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
@@ -85,5 +87,10 @@ public class HandlerConfiguration {
     @Bean
     public AuthorizationCodeService authorizationCodeService() {
         return new AuthorizationCodeServiceImpl();
+    }
+
+    @Bean
+    public ApprovalService approvalService() {
+        return new ApprovalServiceImpl();
     }
 }
