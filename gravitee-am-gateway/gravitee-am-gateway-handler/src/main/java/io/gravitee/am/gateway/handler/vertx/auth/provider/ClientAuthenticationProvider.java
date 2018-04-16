@@ -53,7 +53,8 @@ public class ClientAuthenticationProvider implements AuthProvider {
 
         logger.debug("Trying to authenticate a client: clientId[{}]", clientId);
 
-        clientService.findByClientId(clientId)
+        clientService
+                .findByClientId(clientId)
                 .subscribe(new MaybeObserver<io.gravitee.am.model.Client>() {
                     @Override
                     public void onSubscribe(Disposable disposable) {
