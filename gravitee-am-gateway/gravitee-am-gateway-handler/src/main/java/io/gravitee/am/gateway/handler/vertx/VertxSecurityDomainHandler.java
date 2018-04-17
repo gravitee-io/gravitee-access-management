@@ -98,10 +98,14 @@ public class VertxSecurityDomainHandler {
         router.route(HttpMethod.GET,"/oauth/authorize").handler(userAuthHandler).handler(authorizeEndpoint);
         router.route(HttpMethod.POST, "/oauth/token").handler(clientAuthHandler).handler(tokenEndpoint);
 
-        router.route(HttpMethod.POST, "/oauth/check_token").handler(checkTokenEndpoint);
+        router.route(HttpMethod.POST, "/oauth/check_token")
+                .consumes(MediaType.APPLICATION_FORM_URLENCODED)
+                .handler(clientAuthHandler)
+                .handler(checkTokenEndpoint);
 
         router.route(HttpMethod.POST, "/oauth/introspect")
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
+                .handler(clientAuthHandler)
                 .handler(introspectionEndpoint);
 
         // bind failure handler
