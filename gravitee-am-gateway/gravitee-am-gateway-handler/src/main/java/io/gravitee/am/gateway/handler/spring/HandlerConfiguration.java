@@ -33,15 +33,18 @@ import io.gravitee.am.gateway.handler.oauth2.token.AuthenticationKeyGenerator;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAuthenticationKeyGenerator;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenServiceImpl;
+import io.gravitee.am.gateway.handler.openid.discovery.spring.OpenIDDiscoveryConfiguration;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
+@Import({OpenIDDiscoveryConfiguration.class})
 public class HandlerConfiguration {
 
     @Bean
