@@ -29,10 +29,10 @@ import io.gravitee.am.gateway.handler.vertx.auth.handler.FormLoginHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.UserAuthenticationProvider;
-import io.gravitee.am.gateway.handler.vertx.endpoint.*;
-import io.gravitee.am.gateway.handler.vertx.endpoint.introspection.IntrospectionEndpointHandler;
-import io.gravitee.am.gateway.handler.vertx.handler.AuthorizationRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.*;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection.IntrospectionEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.oauth2.handler.AuthorizationRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.openid.OpenIDProviderConfigurationEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.MediaType;
@@ -95,12 +95,19 @@ public class VertxSecurityDomainHandler {
         final AuthHandler userAuthHandler = RedirectAuthHandler.create(userAuthProvider.getDelegate(), contextPath() + "/login");
 
         // create web handlers
-        setupCoreWebHandlers(router, userAuthProvider);
+        router.route()
+                .handler(BodyHandler.create())
+                .handler(StaticHandler.create());
 
         // create other handlers
         final AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create();
 
         // bind login endpoints
+        router.route("/login")
+                .handler(CookieHandler.create())
+                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+                .handler(UserSessionHandler.create(userAuthProvider));
+
         router.get("/login").handler(new LoginEndpointHandler(domain));
         router.post("/login").handler(FormLoginHandler.create(userAuthProvider.getDelegate()));
 
@@ -115,6 +122,12 @@ public class VertxSecurityDomainHandler {
 
         Handler<RoutingContext> introspectionEndpoint = new IntrospectionEndpointHandler();
         ((IntrospectionEndpointHandler) introspectionEndpoint).setIntrospectionService(introspectionService);
+
+        router
+                .route("/oauth/authorize")
+                .handler(CookieHandler.create())
+                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+                .handler(UserSessionHandler.create(userAuthProvider));
 
         router.route(HttpMethod.POST, "/oauth/authorize")
                 .handler(authorizationRequestParseHandler)
@@ -150,15 +163,7 @@ public class VertxSecurityDomainHandler {
     }
 
     public String contextPath() {
-        return "/" + domain.getPath();
-    }
-
-    private void setupCoreWebHandlers(Router router, AuthProvider authProvider) {
-        router.route().handler(CookieHandler.create());
-        router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
-        router.route().handler(UserSessionHandler.create(authProvider));
-        router.route().handler(BodyHandler.create());
-        router.route().handler(StaticHandler.create());
+        return '/' + domain.getPath();
     }
 
     public void setVertx(Vertx vertx) {
