@@ -115,7 +115,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
         // Send a NOT_FOUND HTTP status code (404)
         serverResponse.setStatusCode(HttpStatusCode.NOT_FOUND_404);
 
-        String message = environment.getProperty("http.errors[404].message", "No context-path matches the request URI.");
+        String message = environment.getProperty("http.errors[404].message", "");
         serverResponse.headers().set(HttpHeaders.CONTENT_LENGTH, Integer.toString(message.length()));
         serverResponse.headers().set(HttpHeaders.CONTENT_TYPE, "text/plain");
         serverResponse.headers().set(HttpHeaders.CONNECTION, HttpHeadersValues.CONNECTION_CLOSE);
