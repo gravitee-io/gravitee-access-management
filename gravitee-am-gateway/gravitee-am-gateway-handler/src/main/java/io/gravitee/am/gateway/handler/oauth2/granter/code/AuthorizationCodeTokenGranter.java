@@ -71,7 +71,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
         String authorizationCode = parameters.getFirst(OAuth2Constants.CODE);
         String redirectUri = parameters.getFirst(OAuth2Constants.REDIRECT_URI);
 
-        if (authorizationCode == null) {
+        if (authorizationCode == null || authorizationCode.isEmpty()) {
             throw new InvalidRequestException("An authorization code must be supplied.");
         }
 

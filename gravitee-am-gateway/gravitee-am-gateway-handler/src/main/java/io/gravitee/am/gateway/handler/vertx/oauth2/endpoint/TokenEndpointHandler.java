@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.endpoint;
+package io.gravitee.am.gateway.handler.vertx.oauth2.endpoint;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
@@ -21,9 +21,8 @@ import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
-import io.gravitee.am.gateway.handler.vertx.request.TokenRequestFactory;
+import io.gravitee.am.gateway.handler.vertx.oauth2.request.request.TokenRequestFactory;
 import io.gravitee.common.http.HttpHeaders;
-import io.gravitee.common.http.HttpHeadersValues;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
