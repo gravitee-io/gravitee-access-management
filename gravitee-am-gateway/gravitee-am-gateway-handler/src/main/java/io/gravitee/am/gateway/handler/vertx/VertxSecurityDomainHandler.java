@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.openid.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.FormLoginHandler;
@@ -29,9 +30,10 @@ import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.UserAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.endpoint.*;
-import io.gravitee.am.gateway.handler.vertx.handler.AuthorizationRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.endpoint.introspection.IntrospectionEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.AuthorizationRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
+import io.gravitee.am.gateway.handler.vertx.openid.OpenIDProviderConfigurationEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -76,6 +78,8 @@ public class VertxSecurityDomainHandler {
 
     @Autowired
     private AuthorizationCodeService authorizationCodeService;
+
+    private OpenIDDiscoveryService discoveryService;
 
     public Router oauth2() {
         // Create the security domain router
@@ -133,6 +137,11 @@ public class VertxSecurityDomainHandler {
                 .handler(introspectionEndpoint);
         router.route(HttpMethod.GET, "/oauth/confirm_access")
                 .handler(userApprovalEndpoint);
+
+        // OpenID endpoints
+        Handler<RoutingContext> openIDProviderConfigurationEndpoint = new OpenIDProviderConfigurationEndpoint();
+        ((OpenIDProviderConfigurationEndpoint) openIDProviderConfigurationEndpoint).setDiscoveryService(discoveryService);
+        router.route(HttpMethod.GET, "/.well-known/openid-configuration").handler(openIDProviderConfigurationEndpoint);
 
         // bind failure handler
         router.route().failureHandler(new ExceptionHandler());
