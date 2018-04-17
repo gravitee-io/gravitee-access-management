@@ -104,7 +104,6 @@ public class MongoTokenRepositoryTest extends AbstractOAuth2RepositoryTest {
         mongoTokenRepository.getAccessToken("test2").test().assertEmpty();
     }
 
-
     @Test
     public void testFindAccessTokensByClientIdAndUserName() {
         String clientId = "id" + UUID.randomUUID();
@@ -122,8 +121,6 @@ public class MongoTokenRepositoryTest extends AbstractOAuth2RepositoryTest {
         testObserver.assertValueCount(1);
         testObserver.assertValue(l -> l.get(0).getValue().equals("testToken"));
     }
-
-
 
     @Test
     public void testFindAccessTokensByClientId() {

@@ -23,7 +23,11 @@ import io.gravitee.am.repository.oauth2.model.OAuth2AccessToken;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
 import io.reactivex.Maybe;
+import io.reactivex.MaybeObserver;
+import io.reactivex.MaybeSource;
 import io.reactivex.Single;
+import io.reactivex.functions.Action;
+import io.reactivex.functions.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
@@ -46,9 +50,11 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Maybe<AccessToken> get(String accessToken) {
+        final Maybe<OAuth2AccessToken> result = tokenRepository.readAccessToken(accessToken).cache();
         return tokenRepository
-                .getAccessToken(accessToken)
-                .map(this::convert);
+                .readAccessToken(accessToken)
+                .isEmpty()
+                .flatMapMaybe(empty -> (empty) ? Maybe.empty() : result.map(this::convert));
     }
 
     @Override
