@@ -82,8 +82,13 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                     OAuth2Request pendingOAuth2Request = storedAuth.getOAuth2Request();
                     // This might be null, if the authorization was done without the redirect_uri parameter
                     String redirectUriApprovalParameter = pendingOAuth2Request.getRequestParameters().get(OAuth2Constants.REDIRECT_URI);
-                    if ((redirectUri != null || redirectUriApprovalParameter != null) && !pendingOAuth2Request.getRedirectUri().equals(redirectUri)) {
-                        throw new InvalidGrantException("Redirect URI mismatch.");
+                    if (redirectUriApprovalParameter != null) {
+                        if (redirectUri == null) {
+                            throw new InvalidGrantException("Redirect URI is missing");
+                        }
+                        if (!redirectUriApprovalParameter.equals(redirectUri)) {
+                            throw new InvalidGrantException("Redirect URI mismatch.");
+                        }
                     }
                     return new OAuth2Authentication(pendingOAuth2Request, storedAuth.getUserAuthentication());
                 });
