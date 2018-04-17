@@ -28,13 +28,14 @@ import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationCodeResponse;
 import io.gravitee.am.gateway.handler.oauth2.response.ImplicitResponse;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.vertx.oauth2.request.request.AuthorizationRequestFactory;
-import io.gravitee.am.gateway.handler.vertx.oauth2.request.request.TokenRequestFactory;
-import io.gravitee.am.gateway.handler.vertx.util.URIBuilder;
+import io.gravitee.am.gateway.handler.vertx.oauth2.request.AuthorizationRequestFactory;
+import io.gravitee.am.gateway.handler.vertx.oauth2.request.TokenRequestFactory;
+import io.gravitee.am.gateway.handler.utils.URIBuilder;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.am.repository.oauth2.model.authentication.UsernamePasswordAuthenticationToken;
 import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
+import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
@@ -107,14 +108,14 @@ public class AuthorizeEndpointHandler implements Handler<RoutingContext> {
                     @Override
                     public void onSuccess(AuthorizationRequest authorizationRequest) {
                         if (!authorizationRequest.isApproved()) {
-                            context.response().putHeader("location", "/oauth/confirm_access").setStatusCode(302).end();
+                            context.response().putHeader(HttpHeaders.LOCATION, "/oauth/confirm_access").setStatusCode(302).end();
                         }
 
                         try {
                             if (OAuth2Constants.TOKEN.equals(authorizationRequest.getResponseType())) {
-                                context.response().putHeader("location", buildImplicitGrantRedirectUri(authorizationRequest)).setStatusCode(302).end();
+                                context.response().putHeader(HttpHeaders.LOCATION, buildImplicitGrantRedirectUri(authorizationRequest)).setStatusCode(302).end();
                             } else if (OAuth2Constants.CODE.equals(authorizationRequest.getResponseType())) {
-                                context.response().putHeader("location", buildAuthorizationCodeRedirectUri(authorizationRequest)).setStatusCode(302).end();
+                                context.response().putHeader(HttpHeaders.LOCATION, buildAuthorizationCodeRedirectUri(authorizationRequest)).setStatusCode(302).end();
                             } else {
                                 // TODO : handle correct error response (https://tools.ietf.org/html/rfc6749#section-4.2.2.1)
                                 context.fail(400);

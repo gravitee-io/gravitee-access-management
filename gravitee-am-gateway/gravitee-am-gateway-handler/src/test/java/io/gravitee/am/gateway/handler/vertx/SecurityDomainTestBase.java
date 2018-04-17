@@ -26,7 +26,7 @@ public class SecurityDomainTestBase extends RxWebTestBase {
 
     @Override
     protected Router router() {
-        return handler().oauth2();
+        return handler().create();
     }
 
     protected VertxSecurityDomainHandler handler() {

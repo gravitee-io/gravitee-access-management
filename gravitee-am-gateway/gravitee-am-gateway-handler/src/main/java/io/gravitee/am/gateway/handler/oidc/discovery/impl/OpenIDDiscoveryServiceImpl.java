@@ -1,7 +1,7 @@
-package io.gravitee.am.gateway.handler.openid.discovery.impl;
+package io.gravitee.am.gateway.handler.oidc.discovery.impl;
 
-import io.gravitee.am.gateway.handler.openid.discovery.OpenIDProviderMetadata;
-import io.gravitee.am.gateway.handler.openid.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDProviderMetadata;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx.auth.handler.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.vertx.util.URIBuilder;
+import io.gravitee.am.gateway.handler.utils.URIBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
