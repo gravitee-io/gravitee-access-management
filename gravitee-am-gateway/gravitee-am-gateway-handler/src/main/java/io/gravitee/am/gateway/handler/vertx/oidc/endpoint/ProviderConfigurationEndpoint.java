@@ -1,6 +1,6 @@
-package io.gravitee.am.gateway.handler.vertx.openid;
+package io.gravitee.am.gateway.handler.vertx.oidc.endpoint;
 
-import io.gravitee.am.gateway.handler.openid.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -11,7 +11,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class OpenIDProviderConfigurationEndpoint implements Handler<RoutingContext> {
+public class ProviderConfigurationEndpoint implements Handler<RoutingContext> {
 
     private OpenIDDiscoveryService discoveryService;
 

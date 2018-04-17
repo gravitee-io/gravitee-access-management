@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.introspection;
 
-import io.gravitee.am.gateway.handler.oauth2.token.TokenTypeHint;
+import io.gravitee.am.gateway.handler.oauth2.utils.TokenTypeHint;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

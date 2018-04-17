@@ -15,8 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.handler.impl;
 
+import com.google.common.net.HttpHeaders;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.vertx.util.URIBuilder;
+import io.gravitee.am.gateway.handler.utils.URIBuilder;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
@@ -26,7 +27,6 @@ import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,6 +123,6 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
     }
 
     private void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader("location", url).setStatusCode(302).end();
+        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 }

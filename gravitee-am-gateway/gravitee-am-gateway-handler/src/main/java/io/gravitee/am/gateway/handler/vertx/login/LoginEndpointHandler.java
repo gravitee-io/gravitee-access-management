@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.oauth2.endpoint;
+package io.gravitee.am.gateway.handler.vertx.login;
 
 import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
@@ -26,7 +26,7 @@ import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
  */
 public class LoginEndpointHandler implements Handler<RoutingContext> {
 
-    final ThymeleafTemplateEngine engine = ThymeleafTemplateEngine.create();
+    private final ThymeleafTemplateEngine engine = ThymeleafTemplateEngine.create();
 
     private Domain domain;
 

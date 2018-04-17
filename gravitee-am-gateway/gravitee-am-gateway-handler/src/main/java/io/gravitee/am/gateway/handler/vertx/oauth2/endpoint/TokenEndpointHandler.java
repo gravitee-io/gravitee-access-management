@@ -21,7 +21,7 @@ import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
-import io.gravitee.am.gateway.handler.vertx.oauth2.request.request.TokenRequestFactory;
+import io.gravitee.am.gateway.handler.vertx.oauth2.request.TokenRequestFactory;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.SingleObserver;
