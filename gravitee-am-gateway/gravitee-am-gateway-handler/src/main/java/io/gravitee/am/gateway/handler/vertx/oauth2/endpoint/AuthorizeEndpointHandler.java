@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.endpoint;
+package io.gravitee.am.gateway.handler.vertx.oauth2.endpoint;
 
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
@@ -28,8 +28,8 @@ import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationCodeResponse;
 import io.gravitee.am.gateway.handler.oauth2.response.ImplicitResponse;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.vertx.request.AuthorizationRequestFactory;
-import io.gravitee.am.gateway.handler.vertx.request.TokenRequestFactory;
+import io.gravitee.am.gateway.handler.vertx.oauth2.request.request.AuthorizationRequestFactory;
+import io.gravitee.am.gateway.handler.vertx.oauth2.request.request.TokenRequestFactory;
 import io.gravitee.am.gateway.handler.vertx.util.URIBuilder;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
