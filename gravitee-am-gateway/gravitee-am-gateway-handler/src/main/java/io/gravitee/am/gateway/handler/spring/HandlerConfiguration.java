@@ -25,6 +25,8 @@ import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.code.impl.AuthorizationCodeServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
+import io.gravitee.am.gateway.handler.oauth2.introspection.impl.IntrospectionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.token.AuthenticationKeyGenerator;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAuthenticationKeyGenerator;
@@ -58,6 +60,11 @@ public class HandlerConfiguration {
     @Bean
     public TokenService tokenService() {
         return new TokenServiceImpl();
+    }
+
+    @Bean
+    public IntrospectionService introspectionService() {
+        return new IntrospectionServiceImpl();
     }
 
     @Bean

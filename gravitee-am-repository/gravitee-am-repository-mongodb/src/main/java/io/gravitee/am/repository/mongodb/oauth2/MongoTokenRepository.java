@@ -27,8 +27,10 @@ import io.gravitee.am.repository.oauth2.model.OAuth2AccessToken;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.am.repository.oauth2.model.OAuth2RefreshToken;
 import io.reactivex.Maybe;
+import io.reactivex.MaybeSource;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.functions.Function;
 import io.reactivex.subscribers.DefaultSubscriber;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -104,14 +106,25 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
     public Maybe<OAuth2AccessToken> readAccessToken(String tokenValue) {
         return _findAccessTokenById(tokenValue)
                 .switchIfEmpty(Observable.just(new OAuth2AccessTokenMongo()))
-                .flatMap(accessTokenMongo -> {
-                    if (accessTokenMongo.getValue() == null) {
-                        return Observable.empty();
+                .flatMapMaybe(new Function<OAuth2AccessTokenMongo, MaybeSource<? extends OAuth2AccessToken>>() {
+                    @Override
+                    public MaybeSource<? extends OAuth2AccessToken> apply(OAuth2AccessTokenMongo accessTokenMongo) throws Exception {
+                            if (accessTokenMongo.getValue() == null) {
+                                return Maybe.empty();
+                            }
+                            if (accessTokenMongo.getRefreshToken() == null) {
+                                return Maybe.just(convert(accessTokenMongo));
+                            }
+                            return _findRefreshTokenById(accessTokenMongo.getRefreshToken())
+                                    .switchIfEmpty(Observable.just(new OAuth2RefreshTokenMongo()))
+                                    .map(new Function<OAuth2RefreshTokenMongo, OAuth2AccessToken>() {
+                                        @Override
+                                        public OAuth2AccessToken apply(OAuth2RefreshTokenMongo refreshTokenMongo) throws Exception {
+                                            return convert(accessTokenMongo, refreshTokenMongo);
+                                        }
+                                    })
+                                    .firstElement();
                     }
-                    if (accessTokenMongo.getRefreshToken() == null) {
-                        return Observable.just(convert(accessTokenMongo));
-                    }
-                    return _findRefreshTokenById(accessTokenMongo.getRefreshToken()).switchIfEmpty(Observable.just(new OAuth2RefreshTokenMongo())).map(refreshTokenMongo -> this.convert(accessTokenMongo, refreshTokenMongo));
                 }).firstElement();
     }
 
@@ -170,7 +183,9 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
 
     @Override
     public Maybe<OAuth2AccessToken> getAccessToken(String authenticationKey) {
-        return Observable.fromPublisher(oAuth2AccessTokensCollection.find(eq(FIELD_AUTHENTICATION_KEY, authenticationKey)).first())
+        return Observable
+                .fromPublisher(oAuth2AccessTokensCollection.find(eq(FIELD_AUTHENTICATION_KEY, authenticationKey)).first())
+                .switchIfEmpty(Observable.just(new OAuth2AccessTokenMongo()))
                 .flatMap(accessTokenMongo -> {
                     if (accessTokenMongo.getValue() == null) {
                         return Observable.empty();
@@ -211,11 +226,19 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
     }
 
     private Observable<OAuth2AccessTokenMongo> _findAccessTokenById(String id) {
-        return Observable.fromPublisher(oAuth2AccessTokensCollection.find(eq(FIELD_ID, id)).first());
+        return Observable.fromPublisher(
+                oAuth2AccessTokensCollection
+                        .find(eq(FIELD_ID, id))
+                        .limit(1)
+                        .first());
     }
 
     private Observable<OAuth2RefreshTokenMongo> _findRefreshTokenById(String id) {
-        return Observable.fromPublisher(oAuth2RefreshTokensCollection.find(eq(FIELD_ID, id)).first());
+        return Observable.fromPublisher(
+                oAuth2RefreshTokensCollection
+                        .find(eq(FIELD_ID, id))
+                        .limit(1)
+                        .first());
     }
 
     private Single<OAuth2AccessToken> _storeAccessToken(OAuth2AccessTokenMongo oAuth2AccessTokenMongo) {
