@@ -33,8 +33,9 @@ import io.gravitee.am.gateway.handler.oauth2.token.AuthenticationKeyGenerator;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAuthenticationKeyGenerator;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenServiceImpl;
-import io.gravitee.am.gateway.handler.openid.discovery.spring.OpenIDDiscoveryConfiguration;
+import io.gravitee.am.gateway.handler.oidc.discovery.spring.OpenIDDiscoveryConfiguration;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
+import io.gravitee.am.gateway.handler.vertx.spring.SecurityDomainRouterConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -44,13 +45,11 @@ import org.springframework.context.annotation.Import;
  * @author GraviteeSource Team
  */
 @Configuration
-@Import({OpenIDDiscoveryConfiguration.class})
+@Import({
+        OpenIDDiscoveryConfiguration.class,
+        SecurityDomainRouterConfiguration.class
+})
 public class HandlerConfiguration {
-
-    @Bean
-    public VertxSecurityDomainHandler securityDomainHandler() {
-        return new VertxSecurityDomainHandler();
-    }
 
     @Bean
     public TokenGranter tokenGranter() {

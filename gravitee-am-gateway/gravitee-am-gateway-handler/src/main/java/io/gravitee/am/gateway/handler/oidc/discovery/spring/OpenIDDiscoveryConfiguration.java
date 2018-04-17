@@ -1,7 +1,7 @@
-package io.gravitee.am.gateway.handler.openid.discovery.spring;
+package io.gravitee.am.gateway.handler.oidc.discovery.spring;
 
-import io.gravitee.am.gateway.handler.openid.discovery.OpenIDDiscoveryService;
-import io.gravitee.am.gateway.handler.openid.discovery.impl.OpenIDDiscoveryServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.discovery.impl.OpenIDDiscoveryServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

@@ -54,7 +54,7 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
                 //handler.start();
                 handlers.putIfAbsent(handler.contextPath(), handler);
                 contextPaths.putIfAbsent(domain, handler.contextPath());
-                reactor.mountSubRouter(handler.contextPath(), handler.oauth2());
+                reactor.mountSubRouter(handler.contextPath(), handler.create());
             } catch (Exception ex) {
                 logger.error("Unable to register handler", ex);
             }
