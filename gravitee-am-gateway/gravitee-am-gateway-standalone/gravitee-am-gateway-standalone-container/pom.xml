@@ -66,8 +66,8 @@
         </dependency>
 
         <dependency>
-            <groupId>io.gravitee.am.plugins</groupId>
-            <artifactId>gravitee-am-plugins-identityprovider</artifactId>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-identityprovider</artifactId>
             <version>${project.version}</version>
         </dependency>
 

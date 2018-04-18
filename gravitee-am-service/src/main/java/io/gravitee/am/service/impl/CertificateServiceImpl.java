@@ -19,9 +19,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.certificate.api.CertificateProvider;
-import io.gravitee.am.management.certificate.core.CertificateSchema;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Irrelevant;
+import io.gravitee.am.plugins.certificate.core.CertificateSchema;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.CertificateService;
@@ -101,6 +101,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
+    // TODO : refactor (remove file + add JWKS information)
     public Single<Certificate> create(String domain, NewCertificate newCertificate, String schema) {
         LOGGER.debug("Create a new certificate {} for domain {}", newCertificate, domain);
 
@@ -169,6 +170,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
+    // TODO : refactor (remove file + add JWKS information)
     public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema) {
         LOGGER.debug("Update a certificate {} for domain {}", id, domain);
 
