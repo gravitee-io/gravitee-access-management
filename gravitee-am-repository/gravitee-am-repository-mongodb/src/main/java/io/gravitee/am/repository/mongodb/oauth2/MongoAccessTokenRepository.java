@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
 /**
@@ -44,6 +45,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     private static final String FIELD_RESET_TIME = "expire_at";
     private static final String FIELD_CLIENT_ID = "client_id";
     private static final String FIELD_TOKEN = "token";
+    private static final String FIELD_SUBJECT = "subject";
     private static final String FIELD_ID = "_id";
 
     @PostConstruct
@@ -81,6 +83,20 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         return Completable.fromPublisher(accessTokenCollection.findOneAndDelete(eq(FIELD_TOKEN, token)));
     }
 
+    @Override
+    public Observable<AccessToken> findByClientIdAndSubject(String clientId, String subject) {
+        return Observable
+                .fromPublisher(accessTokenCollection.find(and(eq(FIELD_CLIENT_ID, clientId), eq(FIELD_SUBJECT, subject))))
+                .map(this::convert);
+    }
+
+    @Override
+    public Observable<AccessToken> findByClientId(String clientId) {
+        return Observable
+                .fromPublisher(accessTokenCollection.find(eq(FIELD_CLIENT_ID, clientId)))
+                .map(this::convert);
+    }
+
     private AccessTokenMongo convert(AccessToken accessToken) {
         if (accessToken == null) {
             return null;
@@ -93,6 +109,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessTokenMongo.setCreatedAt(accessToken.getCreatedAt());
         accessTokenMongo.setExpireAt(accessToken.getExpireAt());
         accessTokenMongo.setRefreshToken(accessToken.getRefreshToken());
+        accessTokenMongo.setSubject(accessToken.getSubject());
 
         return accessTokenMongo;
     }
@@ -109,6 +126,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessToken.setCreatedAt(accessTokenMongo.getCreatedAt());
         accessToken.setExpireAt(accessTokenMongo.getExpireAt());
         accessToken.setRefreshToken(accessTokenMongo.getRefreshToken());
+        accessToken.setSubject(accessTokenMongo.getSubject());
 
         return accessToken;
     }

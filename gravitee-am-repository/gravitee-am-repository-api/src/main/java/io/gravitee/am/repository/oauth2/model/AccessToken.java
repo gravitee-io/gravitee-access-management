@@ -59,6 +59,11 @@ public class AccessToken {
      */
     private String refreshToken;
 
+    /**
+     * Technical identifier of the end-user.
+     */
+    private String subject;
+
     public String getId() {
         return id;
     }
@@ -113,6 +118,14 @@ public class AccessToken {
 
     public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
     }
 
     @Override

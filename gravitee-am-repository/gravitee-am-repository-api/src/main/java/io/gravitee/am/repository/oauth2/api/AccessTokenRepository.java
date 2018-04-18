@@ -18,6 +18,7 @@ package io.gravitee.am.repository.oauth2.api;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 
 /**
@@ -31,4 +32,21 @@ public interface AccessTokenRepository {
     Single<AccessToken> create(AccessToken accessToken);
 
     Completable delete(String token);
+
+    /**
+     * Retrieve access tokens stored against the provided client id.
+     *
+     * @param clientId the client id to search
+     * @param subject the end-user technical identifier
+     * @return a collection of access tokens
+     */
+    Observable<AccessToken> findByClientIdAndSubject(String clientId, String subject);
+
+    /**
+     * Retrieve access tokens stored against the provided client id.
+     *
+     * @param clientId the client id to search
+     * @return a collection of access tokens
+     */
+    Observable<AccessToken> findByClientId(String clientId);
 }

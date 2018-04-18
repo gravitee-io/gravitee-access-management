@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.repository.oauth2.api.TokenRepository;
+import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -40,18 +40,18 @@ public class TokenServiceImpl implements TokenService {
     private ClientService clientService;
 
     @Autowired
-    private TokenRepository tokenRepository;
+    private AccessTokenRepository accessTokenRepository;
 
     @Override
     public Single<TotalToken> findTotalTokensByDomain(String domain) {
         LOGGER.debug("Find total tokens by domain: {}", domain);
         return clientService.findByDomain(domain)
-                .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .flatMapSingle(client -> tokenRepository.findTokensByClientId(client.getClientId()).flatMap(oAuth2AccessTokens -> Single.just(oAuth2AccessTokens.size())))
+                .flatMapObservable(Observable::fromIterable)
+                .flatMapSingle(client -> accessTokenRepository.findByClientId(client.getClientId()).count())
                 .toList()
                 .flatMap(totalAccessTokens -> {
                     TotalToken totalToken = new TotalToken();
-                    totalToken.setTotalAccessTokens(totalAccessTokens.stream().mapToLong(Integer::intValue).sum());
+                    totalToken.setTotalAccessTokens(totalAccessTokens.stream().mapToLong(value -> value).sum());
                     return Single.just(totalToken);
                 })
                 .onErrorResumeNext(ex -> {
@@ -65,12 +65,12 @@ public class TokenServiceImpl implements TokenService {
     public Single<TotalToken> findTotalTokens() {
         LOGGER.debug("Find total tokens");
         return clientService.findAll()
-                .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .flatMapSingle(client -> tokenRepository.findTokensByClientId(client.getClientId()).flatMap(oAuth2AccessTokens -> Single.just(oAuth2AccessTokens.size())))
+                .flatMapObservable(Observable::fromIterable)
+                .flatMapSingle(client -> accessTokenRepository.findByClientId(client.getClientId()).count())
                 .toList()
                 .flatMap(totalAccessTokens -> {
                     TotalToken totalToken = new TotalToken();
-                    totalToken.setTotalAccessTokens(totalAccessTokens.stream().mapToLong(Integer::intValue).sum());
+                    totalToken.setTotalAccessTokens(totalAccessTokens.stream().mapToLong(value -> value).sum());
                     return Single.just(totalToken);
                 })
                 .onErrorResumeNext(ex -> {

@@ -46,6 +46,8 @@ public class AccessTokenMongo {
     @BsonProperty("refresh_token")
     private String refreshToken;
 
+    private String subject;
+
     public String getId() {
         return id;
     }
@@ -100,6 +102,14 @@ public class AccessTokenMongo {
 
     public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
     }
 
     @Override
