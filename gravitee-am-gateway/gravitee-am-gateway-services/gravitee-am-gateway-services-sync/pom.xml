@@ -27,6 +27,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>gravitee-am-gateway-services-sync</artifactId>
+    <name>Gravitee IO - Access Management - Gateway - Services - Sync</name>
 
     <dependencies>
         <!-- Gravitee.io dependencies -->

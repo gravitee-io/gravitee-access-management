@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.node;
 
-import io.gravitee.am.gateway.handler.reactor.Reactor;
+import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.services.core.ServiceManager;
 import io.gravitee.am.gateway.vertx.VertxEmbeddedContainer;
 import io.gravitee.common.component.LifecycleComponent;
@@ -28,6 +28,7 @@ import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class GatewayNode extends AbstractNode {

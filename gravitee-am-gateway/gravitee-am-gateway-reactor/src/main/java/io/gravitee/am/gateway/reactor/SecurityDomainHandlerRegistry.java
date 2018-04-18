@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.reactor;
+package io.gravitee.am.gateway.reactor;
 
-import io.gravitee.common.service.Service;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.Router;
+import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
+import io.gravitee.am.model.Domain;
+
+import java.util.Collection;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface Reactor extends Service {
+public interface SecurityDomainHandlerRegistry {
 
-    Router route();
+    void create(Domain domain);
 
-    Router mountSubRouter(String contextPath, Router child);
+    void update(Domain domain);
 
-    Router unMountSubRouter(String contextPath);
+    void remove(Domain domain);
+
+    void clear();
+
+    Collection<VertxSecurityDomainHandler> getSecurityDomainHandlers();
 }
