@@ -17,9 +17,9 @@ package io.gravitee.am.management.handlers.admin.security.impl;
 
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager;
-import io.gravitee.am.management.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

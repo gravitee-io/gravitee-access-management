@@ -19,24 +19,21 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.gravitee.am</groupId>
         <artifactId>gravitee-am-parent</artifactId>
+        <groupId>io.gravitee.am</groupId>
         <version>1.7.0-SNAPSHOT</version>
     </parent>
-    <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.gravitee.am.management</groupId>
-    <artifactId>gravitee-am-management-api</artifactId>
-    <name>Gravitee IO - Access Management - Management API</name>
+    <groupId>io.gravitee.am.plugins.handlers</groupId>
+    <artifactId>gravitee-am-plugins-handlers</artifactId>
+    <name>Gravitee IO - Access Management - Plugins Handlers</name>
     <packaging>pom</packaging>
+
     <modules>
-        <module>gravitee-am-management-api-core</module>
-        <module>gravitee-am-management-api-service</module>
-        <module>gravitee-am-management-api-services</module>
-        <module>gravitee-am-management-api-jetty</module>
-        <module>gravitee-am-management-api-handlers</module>
-        <module>gravitee-am-management-api-standalone</module>
-        <module>gravitee-am-management-api-repository</module>
+        <module>gravitee-am-plugins-handlers-identityprovider</module>
+        <module>gravitee-am-plugins-handlers-extensiongrant</module>
+        <module>gravitee-am-plugins-handlers-certificate</module>
     </modules>
 </project>

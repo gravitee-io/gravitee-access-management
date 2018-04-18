@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.management.service.impl.plugins;
 
-import io.gravitee.am.management.extensiongrant.core.ExtensionGrantPluginManager;
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
+import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.ExtensionGrantPlugin;
 import io.gravitee.plugin.core.api.Plugin;

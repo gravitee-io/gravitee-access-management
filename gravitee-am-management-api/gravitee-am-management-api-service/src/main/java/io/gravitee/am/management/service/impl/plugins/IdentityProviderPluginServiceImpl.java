@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.management.service.impl.plugins;
 
-import io.gravitee.am.management.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
+import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
 import io.gravitee.plugin.core.api.Plugin;

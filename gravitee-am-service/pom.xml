@@ -50,8 +50,8 @@
 
         <!-- TODO remove this dependency, it's used to generate certificate file, should be replaced with well known endpoint -->
         <dependency>
-            <groupId>io.gravitee.am.management</groupId>
-            <artifactId>gravitee-am-management-api-certificate</artifactId>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-certificate</artifactId>
             <version>${project.version}</version>
         </dependency>
 
