@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.vertx;
 
-import io.gravitee.am.gateway.handler.reactor.Reactor;
+import io.gravitee.am.gateway.reactor.Reactor;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.reactivex.core.http.HttpServer;
@@ -25,7 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
- * @author David BRASSELY (david at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class GraviteeVerticle extends AbstractVerticle {

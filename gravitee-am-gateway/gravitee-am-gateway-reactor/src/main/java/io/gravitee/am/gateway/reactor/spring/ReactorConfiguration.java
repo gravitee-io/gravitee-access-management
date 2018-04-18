@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.reactor.spring;
+package io.gravitee.am.gateway.reactor.spring;
 
 import io.gravitee.am.gateway.handler.SecurityDomainRouterFactory;
-import io.gravitee.am.gateway.handler.reactor.Reactor;
-import io.gravitee.am.gateway.handler.reactor.SecurityDomainHandlerRegistry;
-import io.gravitee.am.gateway.handler.reactor.impl.DefaultReactor;
-import io.gravitee.am.gateway.handler.reactor.impl.DefaultSecurityDomainHandlerRegistry;
+import io.gravitee.am.gateway.reactor.Reactor;
+import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
+import io.gravitee.am.gateway.reactor.impl.DefaultReactor;
+import io.gravitee.am.gateway.reactor.impl.DefaultSecurityDomainHandlerRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

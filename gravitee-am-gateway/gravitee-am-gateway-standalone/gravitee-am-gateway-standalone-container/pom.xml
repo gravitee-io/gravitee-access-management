@@ -54,8 +54,8 @@
         </dependency>
 
         <dependency>
-            <groupId>io.gravitee.am.gateway.handlers</groupId>
-            <artifactId>gravitee-am-gateway-handler</artifactId>
+            <groupId>io.gravitee.am.gateway</groupId>
+            <artifactId>gravitee-am-gateway-reactor</artifactId>
             <version>${project.version}</version>
         </dependency>
 
