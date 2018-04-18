@@ -15,22 +15,16 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
-import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import io.gravitee.am.repository.mongodb.common.SerializationUtils;
-import io.gravitee.am.repository.mongodb.oauth2.internal.model.OAuth2AuthorizationCodeMongo;
+import io.gravitee.am.repository.mongodb.oauth2.internal.model.AuthorizationCodeMongo;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
+import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.subscribers.DefaultSubscriber;
 import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -45,34 +39,83 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoRepository implements AuthorizationCodeRepository {
 
-    private static final Logger logger = LoggerFactory.getLogger(MongoAuthorizationCodeRepository.class);
     private static final String FIELD_ID = "_id";
-    private static final String FIELD_RESET_TIME = "expiration";
-    private MongoCollection<OAuth2AuthorizationCodeMongo> oAuth2AuthorizationCodesCollection;
+    private static final String FIELD_CODE = "code";
+    private static final String FIELD_RESET_TIME = "expire_at";
+    private MongoCollection<AuthorizationCodeMongo> authorizationCodeCollection;
 
     @PostConstruct
     public void init() {
-        oAuth2AuthorizationCodesCollection = mongoOperations.getCollection("oauth2_authorization_codes", OAuth2AuthorizationCodeMongo.class);
-        oAuth2AuthorizationCodesCollection.createIndex(new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS)).subscribe(new IndexSubscriber());
+        authorizationCodeCollection = mongoOperations.getCollection("authorization_codes", AuthorizationCodeMongo.class);
+        authorizationCodeCollection.createIndex(new Document(FIELD_CODE, 1)).subscribe(new LoggableIndexSubscriber());
+        authorizationCodeCollection.createIndex(new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS)).subscribe(new LoggableIndexSubscriber());
+    }
+
+    private Maybe<AuthorizationCode> findById(String id) {
+        return Observable
+                .fromPublisher(authorizationCodeCollection.find(eq(FIELD_ID, id)).limit(1).first())
+                .firstElement()
+                .map(this::convert);
     }
 
     @Override
-    public Single<OAuth2AuthorizationCode> store(OAuth2AuthorizationCode oAuth2AuthorizationCode) {
-        return Single.fromPublisher(oAuth2AuthorizationCodesCollection
-                .findOneAndReplace(eq(FIELD_ID, oAuth2AuthorizationCode.getCode()), convert(oAuth2AuthorizationCode), new FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.AFTER)))
-                .flatMap(success -> _findById(oAuth2AuthorizationCode.getCode()));
+    public Single<AuthorizationCode> create(AuthorizationCode authorizationCode) {
+        return Single
+                .fromPublisher(authorizationCodeCollection.insertOne(convert(authorizationCode)))
+                .flatMap(success -> findById(authorizationCode.getId()).toSingle());
     }
 
     @Override
-    public Maybe<OAuth2Authentication> remove(String code) {
-        return Observable.fromPublisher(oAuth2AuthorizationCodesCollection.findOneAndDelete(eq(FIELD_ID, code)))
+    public Completable delete(String code) {
+        return Completable.fromPublisher(authorizationCodeCollection.findOneAndDelete(eq(FIELD_ID, code)));
+        /*
+        return Observable.fromPublisher(authorizationCodeCollection.findOneAndDelete(eq(FIELD_ID, code)))
                 .map(oAuth2AuthorizationCodeMongo -> deserializeAuthentication(oAuth2AuthorizationCodeMongo.getOAuth2Authentication())).firstElement();
+                */
     }
 
-    private Single<OAuth2AuthorizationCode> _findById(String id) {
-        return Single.fromPublisher(oAuth2AuthorizationCodesCollection.find(eq(FIELD_ID, id)).first()).map(this::convert);
+    @Override
+    public Maybe<AuthorizationCode> findByCode(String code) {
+        return Single.fromPublisher(authorizationCodeCollection.find(eq(FIELD_CODE, code)).limit(1).first())
+                .toMaybe()
+                .map(this::convert);
     }
 
+    private AuthorizationCode convert(AuthorizationCodeMongo authorizationCodeMongo) {
+        if (authorizationCodeMongo == null) {
+            return null;
+        }
+
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setId(authorizationCodeMongo.getId());
+        authorizationCode.setCode(authorizationCodeMongo.getCode());
+        authorizationCode.setClientId(authorizationCodeMongo.getClientId());
+        authorizationCode.setCreatedAt(authorizationCodeMongo.getCreatedAt());
+        authorizationCode.setExpireAt(authorizationCodeMongo.getExpireAt());
+        authorizationCode.setSubject(authorizationCodeMongo.getSubject());
+        authorizationCode.setRedirectUri(authorizationCodeMongo.getRedirectUri());
+
+        return authorizationCode;
+    }
+
+    private AuthorizationCodeMongo convert(AuthorizationCode authorizationCode) {
+        if (authorizationCode == null) {
+            return null;
+        }
+
+        AuthorizationCodeMongo authorizationCodeMongo = new AuthorizationCodeMongo();
+        authorizationCodeMongo.setId(authorizationCode.getId());
+        authorizationCodeMongo.setCode(authorizationCode.getCode());
+        authorizationCodeMongo.setClientId(authorizationCode.getClientId());
+        authorizationCodeMongo.setCreatedAt(authorizationCode.getCreatedAt());
+        authorizationCodeMongo.setExpireAt(authorizationCode.getExpireAt());
+        authorizationCodeMongo.setSubject(authorizationCode.getSubject());
+        authorizationCodeMongo.setRedirectUri(authorizationCode.getRedirectUri());
+
+        return authorizationCodeMongo;
+    }
+
+    /*
     private OAuth2Authentication deserializeAuthentication(byte[] authentication) {
         try {
             return SerializationUtils.deserialize(authentication);
@@ -111,20 +154,5 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         return oAuth2AuthorizationCode;
     }
 
-    private class IndexSubscriber extends DefaultSubscriber<String> {
-        @Override
-        public void onNext(String value) {
-            logger.debug("Created an index named : " + value);
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            logger.error("Error occurs during indexing", throwable);
-        }
-
-        @Override
-        public void onComplete() {
-            logger.debug("Index creation complete");
-        }
-    }
+    */
 }

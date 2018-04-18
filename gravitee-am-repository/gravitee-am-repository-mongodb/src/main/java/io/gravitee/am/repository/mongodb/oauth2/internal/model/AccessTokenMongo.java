@@ -13,50 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.oauth2.model;
+package io.gravitee.am.repository.mongodb.oauth2.internal.model;
+
+import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationCode {
+public class AccessTokenMongo {
 
-    /**
-     * Technical ID
-     */
+    @BsonId
     private String id;
 
-    /**
-     * Authorization code value
-     */
-    private String code;
+    private String token;
 
-    /**
-     * The authorization code creation date
-     */
+    @BsonProperty("created_at")
     private Date createdAt;
 
-    /**
-     * The authorization code expiration date
-     */
+    @BsonProperty("expire_at")
     private Date expireAt;
 
-    /**
-     * The client which asks for the authorization code
-     */
+    @BsonProperty("client_id")
     private String clientId;
 
-    /**
-     * Technical identifier for logged user
-     */
-    private String subject;
+    private Set<String> scope;
 
-    /**
-     * Redirect URI used while asking for an authorization code
-     */
-    private String redirectUri;
+    @BsonProperty("refresh_token")
+    private String refreshToken;
 
     public String getId() {
         return id;
@@ -66,12 +54,12 @@ public class AuthorizationCode {
         this.id = id;
     }
 
-    public String getCode() {
-        return code;
+    public String getToken() {
+        return token;
     }
 
-    public void setCode(String code) {
-        this.code = code;
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public Date getCreatedAt() {
@@ -98,20 +86,20 @@ public class AuthorizationCode {
         this.clientId = clientId;
     }
 
-    public String getSubject() {
-        return subject;
+    public Set<String> getScope() {
+        return scope;
     }
 
-    public void setSubject(String subject) {
-        this.subject = subject;
+    public void setScope(Set<String> scope) {
+        this.scope = scope;
     }
 
-    public String getRedirectUri() {
-        return redirectUri;
+    public String getRefreshToken() {
+        return refreshToken;
     }
 
-    public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
     @Override
@@ -119,7 +107,7 @@ public class AuthorizationCode {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        AuthorizationCode that = (AuthorizationCode) o;
+        AccessTokenMongo that = (AccessTokenMongo) o;
 
         return id.equals(that.id);
     }

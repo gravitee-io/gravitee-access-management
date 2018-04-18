@@ -15,37 +15,20 @@
  */
 package io.gravitee.am.repository.oauth2.api;
 
-import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
+import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuthorizationCodeRepository {
+public interface AccessTokenRepository {
 
-    /**
-     * Store an authorization code.
-     *
-     * @param authorizationCode The authorization code.
-     * @return
-     */
-    Single<AuthorizationCode> create(AuthorizationCode authorizationCode);
+    Maybe<AccessToken> findByToken(String token);
 
-    /**
-     * Look for an {@link AuthorizationCode} by code and delete it.
-     *
-     * @param code The code to consume.
-     */
-    Completable delete(String code);
+    Single<AccessToken> create(AccessToken accessToken);
 
-    /**
-     * Find an {@link AuthorizationCode} by its code.
-     *
-     * @param code The authorization code.
-     * @return
-     */
-    Maybe<AuthorizationCode> findByCode(String code);
+    Completable delete(String token);
 }

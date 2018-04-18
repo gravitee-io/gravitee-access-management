@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.oauth2.model;
+package io.gravitee.am.repository.mongodb.oauth2.internal.model;
+
+import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
 
@@ -21,41 +24,25 @@ import java.util.Date;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationCode {
+public class AuthorizationCodeMongo {
 
-    /**
-     * Technical ID
-     */
+    @BsonId
     private String id;
 
-    /**
-     * Authorization code value
-     */
     private String code;
 
-    /**
-     * The authorization code creation date
-     */
+    @BsonProperty("created_at")
     private Date createdAt;
 
-    /**
-     * The authorization code expiration date
-     */
+    @BsonProperty("expire_at")
     private Date expireAt;
 
-    /**
-     * The client which asks for the authorization code
-     */
+    @BsonProperty("client_id")
     private String clientId;
 
-    /**
-     * Technical identifier for logged user
-     */
     private String subject;
 
-    /**
-     * Redirect URI used while asking for an authorization code
-     */
+    @BsonProperty("redirect_uri")
     private String redirectUri;
 
     public String getId() {
@@ -119,7 +106,7 @@ public class AuthorizationCode {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        AuthorizationCode that = (AuthorizationCode) o;
+        AuthorizationCodeMongo that = (AuthorizationCodeMongo) o;
 
         return id.equals(that.id);
     }
