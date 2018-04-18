@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.spring;
 
-import io.gravitee.am.gateway.handler.reactor.spring.ReactorConfiguration;
 import io.gravitee.am.gateway.node.GatewayNode;
+import io.gravitee.am.gateway.reactor.spring.ReactorConfiguration;
 import io.gravitee.am.gateway.vertx.VertxConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;

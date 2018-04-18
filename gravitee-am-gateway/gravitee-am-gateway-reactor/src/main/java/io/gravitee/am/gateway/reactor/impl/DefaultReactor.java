@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.reactor.impl;
+package io.gravitee.am.gateway.reactor.impl;
 
 import io.gravitee.am.gateway.core.event.DomainEvent;
-import io.gravitee.am.gateway.handler.reactor.Reactor;
-import io.gravitee.am.gateway.handler.reactor.SecurityDomainHandlerRegistry;
+import io.gravitee.am.gateway.reactor.Reactor;
+import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
