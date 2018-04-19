@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.response;
+package io.gravitee.am.gateway.handler.oauth2.scope.impl;
 
-import java.io.Serializable;
+import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.repository.management.api.ScopeRepository;
+import io.reactivex.Single;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.Set;
 
 /**
- * Response after authorization code or implicit flow
- *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AuthorizationResponse implements Serializable {
+public class ScopeServiceImpl implements ScopeService {
 
-    /**
-     *  REQUIRED if the "state" parameter was present in the client authorization request.
-     *  The exact value received from the client.
-     */
-    private String state;
+    @Autowired
+    private ScopeRepository scopeRepository;
 
-    public String getState() {
-        return state;
-    }
+    @Autowired
+    private Domain domain;
 
-    public void setState(String state) {
-        this.state = state;
+    @Override
+    public Single<Set<Scope>> getAll() {
+        return scopeRepository.findByDomain(domain.getId());
     }
 }

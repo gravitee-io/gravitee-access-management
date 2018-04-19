@@ -51,4 +51,8 @@ public class ScopeApprovalRepositoryProxy extends AbstractProxy<ScopeApprovalRep
         return target.findByDomainAndUserAndClient(domain, userId, clientId);
     }
 
+    @Override
+    public Single<ScopeApproval> upsert(ScopeApproval scopeApproval) {
+        return target.upsert(scopeApproval);
+    }
 }

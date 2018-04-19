@@ -56,9 +56,12 @@ public class VertxSecurityDomainHandler {
         final Router router = Router.router(vertx);
 
         // create web handlers
+        StaticHandler staticHandler = StaticHandler.create();
         router.route()
                 .handler(BodyHandler.create())
-                .handler(StaticHandler.create());
+                .handler(staticHandler);
+        router.route("/oauth/*")
+                .handler(staticHandler);
 
         final AuthProvider userAuthProvider = new AuthProvider(new UserAuthenticationProvider(userAuthenticationManager));
 

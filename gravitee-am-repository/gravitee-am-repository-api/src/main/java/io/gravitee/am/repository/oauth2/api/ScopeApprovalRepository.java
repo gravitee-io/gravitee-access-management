@@ -28,4 +28,6 @@ import java.util.Set;
 public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, String> {
 
     Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId);
+
+    Single<ScopeApproval> upsert(ScopeApproval scopeApproval);
 }

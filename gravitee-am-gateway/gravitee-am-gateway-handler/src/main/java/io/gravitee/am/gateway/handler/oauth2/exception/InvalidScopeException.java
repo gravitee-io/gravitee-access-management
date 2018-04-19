@@ -13,29 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.oauth2.endpoint;
-
-import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
+package io.gravitee.am.gateway.handler.oauth2.exception;
 
 /**
+ * The requested scope is invalid, unknown, or malformed.
+ *
+ * See <a href="https://tools.ietf.org/html/rfc6749#section-5.2">5.2. Error Response</a>
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
+public class InvalidScopeException extends OAuth2Exception {
 
-    final ThymeleafTemplateEngine engine = ThymeleafTemplateEngine.create();
+    public InvalidScopeException() {
+        super();
+    }
+
+    public InvalidScopeException(String message) {
+        super(message);
+    }
 
     @Override
-    public void handle(RoutingContext routingContext) {
-        // TODO
-        engine.render(routingContext, "webroot/views/access_confirmation.html", res -> {
-            if (res.succeeded()) {
-                routingContext.response().end(res.result());
-            } else {
-                routingContext.fail(res.cause());
-            }
-        });
+    public String getOAuth2ErrorCode() {
+        return "invalid_scope";
     }
 }

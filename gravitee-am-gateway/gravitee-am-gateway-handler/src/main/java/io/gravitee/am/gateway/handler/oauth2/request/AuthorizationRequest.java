@@ -19,15 +19,18 @@ import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationResponse;
 import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
 import io.gravitee.common.util.MultiValueMap;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationRequest extends BaseRequest {
+public class AuthorizationRequest extends BaseRequest implements Serializable {
 
     /**
      * REQUIRED
@@ -67,6 +70,8 @@ public class AuthorizationRequest extends BaseRequest {
 
     private AuthorizationResponse response;
 
+    private Map<String, String> approvalParameters;
+
     public String getResponseType() {
         return responseType;
     }
@@ -105,6 +110,14 @@ public class AuthorizationRequest extends BaseRequest {
 
     public void setResponse(AuthorizationResponse response) {
         this.response = response;
+    }
+
+    public Map<String, String> getApprovalParameters() {
+        return approvalParameters;
+    }
+
+    public void setApprovalParameters(Map<String, String> approvalParameters) {
+        this.approvalParameters = approvalParameters;
     }
 
     public OAuth2Request createOAuth2Request(AuthorizationRequest authorizationRequest) {
