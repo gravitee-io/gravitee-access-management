@@ -58,7 +58,7 @@ public class TokenServiceImpl implements TokenService {
         accessToken.setId(UUID.random().toString());
         accessToken.setToken(UUID.random().toString());
         accessToken.setClientId(authentication.getOAuth2Request().getClientId());
-        accessToken.setSubject(((User) authentication.getUserAuthentication().getPrincipal()).getUsername());
+        accessToken.setSubject(((User) authentication.getUserAuthentication().getPrincipal()).getId());
         int validitySeconds = getAccessTokenValiditySeconds(authentication.getOAuth2Request());
         if (validitySeconds > 0) {
             accessToken.setExpireAt(new Date(System.currentTimeMillis() + (validitySeconds * 1000L)));
