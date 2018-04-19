@@ -16,11 +16,11 @@
 package io.gravitee.am.gateway.handler.auth.impl;
 
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.auth.exception.BadCredentialsException;
 import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.User;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -39,6 +39,9 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     private ClientService clientService;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private IdentityProviderManager identityProviderManager;
 
     @Override
@@ -51,18 +54,15 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         // For each idp, try to authenticate a user
         // Try to authenticate while the user can not be authenticated
         // If user can't be authenticated, send an exception
-        return clientService.findByClientId(clientId)
-                .flatMapObservable(client -> Observable.fromIterable(client.getIdentities()))
-                .flatMapMaybe(authProvider -> identityProviderManager.get(authProvider))
-                .flatMapMaybe(authenticationProvider -> authenticationProvider.loadUserByUsername(authentication))
-                .lastOrError()
-                .flatMap(user -> {
-                    if (user == null) {
-                        return Single.error(new BadCredentialsException());
-                    }
-                    return Single.just(user);
+        return Single.fromObservable(
+                clientService.findByClientId(clientId)
+                    .flatMapObservable(client -> Observable.fromIterable(client.getIdentities()))
+                    .flatMapMaybe(authProvider -> identityProviderManager.get(authProvider))
+                    .flatMapMaybe(authenticationProvider -> authenticationProvider.loadUserByUsername(authentication))
+                ).flatMap(user -> {
+                    // On authentication success, create the user
+                    return userService.findOrCreate(user);
                 });
-
     }
 
     public void setClientService(ClientService clientService) {

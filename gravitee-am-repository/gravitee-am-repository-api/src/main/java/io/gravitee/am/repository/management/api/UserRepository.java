@@ -34,6 +34,6 @@ public interface UserRepository extends CrudRepository<User, String> {
 
     Single<Page<User>> findByDomain(String domain, int page, int size);
 
-    Maybe<User> findByUsernameAndDomain(String username, String domain);
+    Maybe<User> findByUsernameAndDomain(String domain, String username);
 
 }

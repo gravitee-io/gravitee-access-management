@@ -91,7 +91,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Maybe<User> loadUserByUsernameAndDomain(String domain, String username) {
         LOGGER.debug("Find user by username and domain: {} {}", username, domain);
-        return userRepository.findByUsernameAndDomain(username, domain)
+        return userRepository.findByUsernameAndDomain(domain, username)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a user using its ID: {} for the domain {}", username, domain, ex);
                     return Maybe.error(new TechnicalManagementException(

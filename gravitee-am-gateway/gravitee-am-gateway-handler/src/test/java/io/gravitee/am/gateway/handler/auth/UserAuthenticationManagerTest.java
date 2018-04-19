@@ -19,21 +19,27 @@ import io.gravitee.am.gateway.handler.auth.exception.BadCredentialsException;
 import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 
 import java.util.*;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -48,6 +54,9 @@ public class UserAuthenticationManagerTest {
 
     @Mock
     private ClientService clientService;
+
+    @Mock
+    private UserService userService;
 
     @Mock
     private IdentityProviderManager identityProviderManager;
@@ -73,6 +82,7 @@ public class UserAuthenticationManagerTest {
             }
         }).test();
 
+        verifyZeroInteractions(userService);
         observer.assertError(NoSuchElementException.class);
     }
 
@@ -101,6 +111,8 @@ public class UserAuthenticationManagerTest {
             }
         }).test();
 
+
+        verifyZeroInteractions(userService);
         observer.assertError(NoSuchElementException.class);
     }
 
@@ -111,14 +123,21 @@ public class UserAuthenticationManagerTest {
         client.setIdentities(Collections.singleton("idp-1"));
 
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(userService.findOrCreate(any())).then(invocation -> {
+            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgumentAt(0, io.gravitee.am.identityprovider.api.User.class);
+            User user = new User();
+            user.setUsername(idpUser.getUsername());
+            return Single.just(user);
+        });
+
         when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
-            public Maybe<User> loadUserByUsername(Authentication authentication) {
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
                 return Maybe.just(new DefaultUser("username"));
             }
 
             @Override
-            public Maybe<User> loadUserByUsername(String username) {
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
                 return Maybe.empty();
             }
         }));
@@ -154,12 +173,12 @@ public class UserAuthenticationManagerTest {
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
-            public Maybe<User> loadUserByUsername(Authentication authentication) {
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
                 throw new BadCredentialsException();
             }
 
             @Override
-            public Maybe<User> loadUserByUsername(String username) {
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
                 return Maybe.empty();
             }
         }));
@@ -181,6 +200,7 @@ public class UserAuthenticationManagerTest {
             }
         }).test();
 
+        verifyZeroInteractions(userService);
         observer.assertError(BadCredentialsException.class);
     }
 
@@ -191,26 +211,32 @@ public class UserAuthenticationManagerTest {
         client.setIdentities(new HashSet<>(Arrays.asList("idp-1", "idp-2")));
 
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(userService.findOrCreate(any())).then(invocation -> {
+            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgumentAt(0, io.gravitee.am.identityprovider.api.User.class);
+            User user = new User();
+            user.setUsername(idpUser.getUsername());
+            return Single.just(user);
+        });
         when(identityProviderManager.get("idp-2")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
-            public Maybe<User> loadUserByUsername(Authentication authentication) {
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
                 return Maybe.empty();
             }
 
             @Override
-            public Maybe<User> loadUserByUsername(String username) {
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
                 return Maybe.empty();
             }
         }));
 
         when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
-            public Maybe<User> loadUserByUsername(Authentication authentication) {
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
                 return Maybe.just(new DefaultUser("username"));
             }
 
             @Override
-            public Maybe<User> loadUserByUsername(String username) {
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
                 return Maybe.empty();
             }
         }));

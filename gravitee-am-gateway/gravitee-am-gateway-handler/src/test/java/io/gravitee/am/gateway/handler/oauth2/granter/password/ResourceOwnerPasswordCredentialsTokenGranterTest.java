@@ -21,8 +21,8 @@ import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeExcep
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -74,7 +74,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
 
         when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(new Client()));
         when(userAuthenticationManager.authenticate(eq(tokenRequest.getClientId()), any(Authentication.class))).thenReturn(
-                Single.just(new DefaultUser("my-username")));
+                Single.just(new User()));
 
         Single<AccessToken> accessToken = granter.grant(tokenRequest);
 
@@ -91,7 +91,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
 
 
         when(userAuthenticationManager.authenticate(eq(tokenRequest.getClientId()), any(Authentication.class))).thenReturn(
-                Single.just(new DefaultUser("my-username")));
+                Single.just(new User()));
 
         Single<AccessToken> accessToken = granter.grant(tokenRequest);
 

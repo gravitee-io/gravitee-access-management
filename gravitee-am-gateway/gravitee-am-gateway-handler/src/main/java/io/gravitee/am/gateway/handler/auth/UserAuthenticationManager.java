@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.auth;
 
 import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.User;
 import io.reactivex.Single;
 
 /**

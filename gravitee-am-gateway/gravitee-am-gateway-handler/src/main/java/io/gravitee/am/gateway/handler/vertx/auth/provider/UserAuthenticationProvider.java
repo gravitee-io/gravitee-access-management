@@ -50,14 +50,14 @@ public class UserAuthenticationProvider implements AuthProvider {
         String clientId = authInfo.getString(OAuth2Constants.CLIENT_ID);
 
         userAuthenticationManager.authenticate(clientId, new EndUserAuthentication(username, password))
-                .subscribe(new SingleObserver<io.gravitee.am.identityprovider.api.User>() {
+                .subscribe(new SingleObserver<io.gravitee.am.model.User>() {
                     @Override
                     public void onSubscribe(Disposable d) {
 
                     }
 
                     @Override
-                    public void onSuccess(io.gravitee.am.identityprovider.api.User user) {
+                    public void onSuccess(io.gravitee.am.model.User user) {
                         resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.vertx.auth.user.User(user)));
                     }
 

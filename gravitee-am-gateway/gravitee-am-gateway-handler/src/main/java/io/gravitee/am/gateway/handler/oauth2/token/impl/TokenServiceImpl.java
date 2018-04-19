@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.token.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
 import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;

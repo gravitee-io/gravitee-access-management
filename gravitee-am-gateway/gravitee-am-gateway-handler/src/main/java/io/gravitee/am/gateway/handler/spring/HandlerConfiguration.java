@@ -34,6 +34,8 @@ import io.gravitee.am.gateway.handler.oauth2.scope.impl.ScopeServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.discovery.spring.OpenIDDiscoveryConfiguration;
+import io.gravitee.am.gateway.handler.user.UserService;
+import io.gravitee.am.gateway.handler.user.impl.UserServiceImpl;
 import io.gravitee.am.gateway.handler.vertx.spring.SecurityDomainRouterConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -70,13 +72,6 @@ public class HandlerConfiguration {
         return new IntrospectionServiceImpl();
     }
 
-    /*
-    @Bean
-    public AuthenticationKeyGenerator authenticationKeyGenerator() {
-        return new DefaultAuthenticationKeyGenerator();
-    }
-    */
-
     @Bean
     public IdentityProviderManager identityProviderManager() {
         return new IdentityProviderManagerImpl();
@@ -100,5 +95,10 @@ public class HandlerConfiguration {
     @Bean
     public ScopeService scopeService() {
         return new ScopeServiceImpl();
+    }
+
+    @Bean
+    public UserService userService() {
+        return new UserServiceImpl();
     }
 }

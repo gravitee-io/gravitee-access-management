@@ -27,14 +27,14 @@ import io.vertx.ext.auth.AuthProvider;
 public class User implements io.vertx.ext.auth.User {
 
     private JsonObject principal;
-    private io.gravitee.am.identityprovider.api.User user;
+    private io.gravitee.am.model.User user;
 
-    public User(io.gravitee.am.identityprovider.api.User user) {
+    public User(io.gravitee.am.model.User user) {
         this.user = user;
         this.principal = JsonObject.mapFrom(user);
     }
 
-    public io.gravitee.am.identityprovider.api.User getUser() {
+    public io.gravitee.am.model.User getUser() {
         return user;
     }
 

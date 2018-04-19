@@ -76,8 +76,14 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Maybe<User> findByUsernameAndDomain(String username, String domain) {
-        return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USERNAME, username))).first()).firstElement().map(this::convert);
+    public Maybe<User> findByUsernameAndDomain(String domain, String username) {
+        return Observable.fromPublisher(
+                usersCollection
+                        .find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USERNAME, username)))
+                        .limit(1)
+                        .first())
+                .firstElement()
+                .map(this::convert);
     }
 
     @Override
