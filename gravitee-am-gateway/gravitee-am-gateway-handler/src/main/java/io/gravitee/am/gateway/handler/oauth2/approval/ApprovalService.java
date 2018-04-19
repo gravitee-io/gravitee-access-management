@@ -27,4 +27,6 @@ import io.reactivex.Single;
 public interface ApprovalService {
 
     Single<AuthorizationRequest> checkApproval(AuthorizationRequest authorizationRequest, String username);
+
+    Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, String username);
 }

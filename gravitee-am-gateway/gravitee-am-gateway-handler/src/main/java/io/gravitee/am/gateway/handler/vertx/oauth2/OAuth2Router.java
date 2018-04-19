@@ -21,16 +21,17 @@ import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
+import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.UserAuthenticationProvider;
-import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.AuthorizeEndpointHandler;
-import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.CheckTokenEndpointHandler;
-import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.TokenEndpointHandler;
-import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.UserApprovalEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.*;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.AuthorizationApprovalEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.AuthorizationEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.UserApprovalEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection.IntrospectionEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.handler.AuthorizationRequestParseHandler;
 import io.gravitee.am.model.Domain;
@@ -70,6 +71,9 @@ public class OAuth2Router {
     private AuthorizationCodeService authorizationCodeService;
 
     @Autowired
+    private ScopeService scopeService;
+
+    @Autowired
     private UserAuthenticationManager userAuthenticationManager;
 
     @Autowired
@@ -94,9 +98,10 @@ public class OAuth2Router {
         final AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create();
 
         // Bind OAuth2 endpoints
-        Handler<RoutingContext> authorizeEndpoint = new AuthorizeEndpointHandler(clientService, approvalService, authorizationCodeService, tokenGranter);
+        Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(authorizationCodeService, tokenGranter, clientService, approvalService, domain);
+        Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(authorizationCodeService, tokenGranter, approvalService);
         Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler(tokenGranter);
-        Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler();
+        Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(clientService, scopeService);
 
         // Check_token is provided only for backward compatibility and must be remove in the future
         Handler<RoutingContext> checkTokenEndpoint = new CheckTokenEndpointHandler();
@@ -105,20 +110,29 @@ public class OAuth2Router {
         Handler<RoutingContext> introspectionEndpoint = new IntrospectionEndpointHandler();
         ((IntrospectionEndpointHandler) introspectionEndpoint).setIntrospectionService(introspectionService);
 
+        // set session handler for authorization flow (with approval page)
+        CookieHandler cookieHandler = CookieHandler.create();
+        SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
+        UserSessionHandler userSessionHandler = UserSessionHandler.create(userAuthProvider);
         router
                 .route("/oauth/authorize")
-                .handler(CookieHandler.create())
-                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
-                .handler(UserSessionHandler.create(userAuthProvider));
+                .handler(cookieHandler)
+                .handler(sessionHandler)
+                .handler(userSessionHandler);
+        router
+                .route("/oauth/confirm_access")
+                .handler(cookieHandler)
+                .handler(sessionHandler)
+                .handler(userSessionHandler);
 
-        router.route(HttpMethod.POST, "/oauth/authorize")
-                .handler(authorizationRequestParseHandler)
-                .handler(userAuthHandler)
-                .handler(authorizeEndpoint);
+        // declare oauth2 routes
         router.route(HttpMethod.GET,"/oauth/authorize")
                 .handler(authorizationRequestParseHandler)
                 .handler(userAuthHandler)
                 .handler(authorizeEndpoint);
+        router.route(HttpMethod.POST, "/oauth/authorize")
+                .handler(userAuthHandler)
+                .handler(authorizeApprovalEndpoint);
         router.route(HttpMethod.POST, "/oauth/token")
                 .handler(clientAuthHandler)
                 .handler(tokenEndpoint);

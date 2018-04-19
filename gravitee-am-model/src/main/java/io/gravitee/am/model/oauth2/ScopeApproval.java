@@ -45,6 +45,17 @@ public class ScopeApproval {
      */
     private String domain;
 
+    public ScopeApproval() {}
+
+    public ScopeApproval(String userId, String clientId, String scope, ApprovalStatus status, Date expiresAt, String domain) {
+        this.userId = userId;
+        this.clientId = clientId;
+        this.scope = scope;
+        this.status = status;
+        this.expiresAt = expiresAt;
+        this.domain = domain;
+    }
+
     public String getUserId() {
         return userId;
     }

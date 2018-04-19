@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
-import java.util.UUID;
+import io.gravitee.common.utils.UUID;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -25,6 +25,6 @@ public class UUIDIdGenerator implements IdGenerator {
 
     @Override
     public Object generate() {
-        return UUID.randomUUID().toString();
+        return UUID.random().toString();
     }
 }

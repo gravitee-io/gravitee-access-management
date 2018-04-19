@@ -43,4 +43,10 @@ public interface OAuth2Constants {
     String IMPLICIT = "implicit";
 
     String AUTHORIZATION_CODE = "authorization_code";
+
+    String AUTHORIZATION_REQUEST = "authorization_request";
+
+    String USER_OAUTH_APPROVAL = "user_oauth_approval";
+
+    String SCOPE_PREFIX = "scope.";
 }

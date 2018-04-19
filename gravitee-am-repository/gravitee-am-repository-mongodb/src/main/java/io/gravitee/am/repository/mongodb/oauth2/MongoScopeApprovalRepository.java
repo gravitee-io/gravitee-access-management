@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +55,7 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     private static final String FIELD_USER_ID = "userId";
     private static final String FIELD_CLIENT_ID = "clientId";
     private static final String FIELD_EXPIRES_AT = "expiresAt";
+    private static final String FIELD_SCOPE = "scope";
     private MongoCollection<ScopeApprovalMongo> scopeApprovalsCollection;
 
     @Autowired
@@ -64,6 +66,7 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
         scopeApprovalsCollection = mongoOperations.getCollection("scope_approvals", ScopeApprovalMongo.class);
         scopeApprovalsCollection.createIndex(new Document(FIELD_EXPIRES_AT, 1),  new IndexOptions().expireAfter(0l, TimeUnit.SECONDS)).subscribe(new IndexSubscriber());
         scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1)).subscribe(new IndexSubscriber());
+        scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1)).subscribe(new IndexSubscriber());
     }
 
     @Override
@@ -81,7 +84,32 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     @Override
     public Single<ScopeApproval> update(ScopeApproval scopeApproval) {
         ScopeApprovalMongo scopeApprovalMongo = convert(scopeApproval);
-        return Single.fromPublisher(scopeApprovalsCollection.replaceOne(eq(FIELD_ID, scopeApprovalMongo.getId()), scopeApprovalMongo)).flatMap(updateResult -> _findById(scopeApprovalMongo.getId()));
+
+        return Single.fromPublisher(scopeApprovalsCollection.replaceOne(
+                and(eq(FIELD_DOMAIN, scopeApproval.getDomain()),
+                        eq(FIELD_CLIENT_ID, scopeApproval.getClientId()),
+                        eq(FIELD_USER_ID, scopeApproval.getUserId()),
+                        eq(FIELD_SCOPE, scopeApproval.getScope()))
+                , scopeApprovalMongo)).flatMap(updateResult -> Single.just(scopeApproval));
+    }
+
+    @Override
+    public Single<ScopeApproval> upsert(ScopeApproval scopeApproval) {
+        return Observable.fromPublisher(scopeApprovalsCollection.find(
+                and(eq(FIELD_DOMAIN, scopeApproval.getDomain()),
+                        eq(FIELD_CLIENT_ID, scopeApproval.getClientId()),
+                        eq(FIELD_USER_ID, scopeApproval.getUserId()),
+                        eq(FIELD_SCOPE, scopeApproval.getScope()))).first())
+                .firstElement()
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (isEmpty) {
+                        return create(scopeApproval);
+                    } else {
+                        scopeApproval.setUpdatedAt(new Date());
+                        return update(scopeApproval);
+                    }
+                });
     }
 
     @Override
