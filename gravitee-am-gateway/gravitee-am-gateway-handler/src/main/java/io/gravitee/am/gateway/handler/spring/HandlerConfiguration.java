@@ -31,12 +31,9 @@ import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.introspection.impl.IntrospectionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.scope.impl.ScopeServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.token.AuthenticationKeyGenerator;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAuthenticationKeyGenerator;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.discovery.spring.OpenIDDiscoveryConfiguration;
-import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.gateway.handler.vertx.spring.SecurityDomainRouterConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -73,10 +70,12 @@ public class HandlerConfiguration {
         return new IntrospectionServiceImpl();
     }
 
+    /*
     @Bean
     public AuthenticationKeyGenerator authenticationKeyGenerator() {
         return new DefaultAuthenticationKeyGenerator();
     }
+    */
 
     @Bean
     public IdentityProviderManager identityProviderManager() {

@@ -49,11 +49,15 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
         oAuth2AuthorizationCode.setCreatedAt(new Date());
         oAuth2AuthorizationCode.setUpdatedAt(oAuth2AuthorizationCode.getCreatedAt());
 
-        return authorizationCodeRepository.store(oAuth2AuthorizationCode);
+        //TODO
+        // return authorizationCodeRepository.create(oAuth2AuthorizationCode);
+        return null;
     }
 
     @Override
     public Maybe<OAuth2Authentication> remove(String code) {
-        return authorizationCodeRepository.remove(code);
+        //TODO
+        // return authorizationCodeRepository.delete(code);
+        return Maybe.empty();
     }
 }

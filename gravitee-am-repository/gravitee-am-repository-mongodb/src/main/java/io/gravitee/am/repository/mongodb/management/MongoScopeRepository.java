@@ -21,10 +21,10 @@ import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.management.internal.model.ScopeMongo;
+import io.gravitee.am.repository.mongodb.oauth2.LoggableIndexSubscriber;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.subscribers.DefaultSubscriber;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,8 +58,8 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     @PostConstruct
     public void init() {
         scopesCollection = mongoOperations.getCollection("scopes", ScopeMongo.class);
-        scopesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new IndexSubscriber());
-        scopesCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_KEY, 1)).subscribe(new IndexSubscriber());
+        scopesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
+        scopesCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_KEY, 1)).subscribe(new LoggableIndexSubscriber());
     }
 
     @Override
@@ -131,22 +131,5 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         scopeMongo.setUpdatedAt(scope.getUpdatedAt());
 
         return scopeMongo;
-    }
-
-    private class IndexSubscriber extends DefaultSubscriber<String> {
-        @Override
-        public void onNext(String value) {
-            logger.debug("Created an index named : " + value);
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            logger.error("Error occurs during indexing", throwable);
-        }
-
-        @Override
-        public void onComplete() {
-            logger.debug("Index creation complete");
-        }
     }
 }
