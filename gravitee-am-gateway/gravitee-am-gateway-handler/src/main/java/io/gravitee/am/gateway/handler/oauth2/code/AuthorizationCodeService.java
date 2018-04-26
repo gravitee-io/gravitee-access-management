@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.code;
 
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
+import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
+import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
+import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -26,7 +28,7 @@ import io.reactivex.Single;
  */
 public interface AuthorizationCodeService {
 
-    Single<OAuth2AuthorizationCode> create(OAuth2Authentication oAuth2Authentication);
+    Single<AuthorizationCode> create(AuthorizationRequest authorizationRequest, User user);
 
-    Maybe<OAuth2Authentication> remove(String code);
+    Maybe<AuthorizationCode> remove(String code, Client client);
 }

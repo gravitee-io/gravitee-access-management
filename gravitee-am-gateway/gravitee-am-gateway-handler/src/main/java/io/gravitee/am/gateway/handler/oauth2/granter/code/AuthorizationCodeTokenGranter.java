@@ -25,11 +25,16 @@ import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
+import io.gravitee.am.repository.oauth2.model.authentication.Authentication;
+import io.gravitee.am.repository.oauth2.model.authentication.UsernamePasswordAuthenticationToken;
 import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+
+import java.util.Collections;
 
 /**
  * Implementation of the Authorization Code Grant Flow
@@ -68,20 +73,18 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
     @Override
     protected Single<OAuth2Authentication> createOAuth2Authentication(TokenRequest tokenRequest, Client client) {
         MultiValueMap<String, String> parameters = tokenRequest.getRequestParameters();
-        String authorizationCode = parameters.getFirst(OAuth2Constants.CODE);
+        String code = parameters.getFirst(OAuth2Constants.CODE);
         String redirectUri = parameters.getFirst(OAuth2Constants.REDIRECT_URI);
 
-        if (authorizationCode == null || authorizationCode.isEmpty()) {
+        if (code == null || code.isEmpty()) {
             throw new InvalidRequestException("An authorization code must be supplied.");
         }
 
-        return authorizationCodeService.remove(authorizationCode)
-                .switchIfEmpty(Maybe.error(new InvalidGrantException("Invalid authorization code: " + authorizationCode)))
-                .toSingle()
-                .map(storedAuth -> {
-                    OAuth2Request pendingOAuth2Request = storedAuth.getOAuth2Request();
+        // TODO fix NoSuchElementException
+        return authorizationCodeService.remove(code, client)
+                .flatMapSingle(authorizationCode -> {
                     // This might be null, if the authorization was done without the redirect_uri parameter
-                    String redirectUriApprovalParameter = pendingOAuth2Request.getRequestParameters().get(OAuth2Constants.REDIRECT_URI);
+                    String redirectUriApprovalParameter = authorizationCode.getRedirectUri();
                     if (redirectUriApprovalParameter != null) {
                         if (redirectUri == null) {
                             throw new InvalidGrantException("Redirect URI is missing");
@@ -90,7 +93,20 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                             throw new InvalidGrantException("Redirect URI mismatch.");
                         }
                     }
-                    return new OAuth2Authentication(pendingOAuth2Request, storedAuth.getUserAuthentication());
+
+                    // TODO to refactor OAuth2Authentication object
+                    OAuth2Request storedRequest = new OAuth2Request();
+                    storedRequest.setScope(authorizationCode.getScopes());
+                    storedRequest.setClientId(authorizationCode.getClientId());
+                    storedRequest.setRedirectUri(authorizationCode.getRedirectUri());
+
+                    // TODO fetch user from repository
+                    User user = new User();
+                    user.setId(authorizationCode.getSubject());
+                    user.setUsername(user.getId());
+                    Authentication userAuthentication =
+                            new UsernamePasswordAuthenticationToken(user.getUsername(), user, "", Collections.emptySet());
+                    return Single.just(new OAuth2Authentication(storedRequest, userAuthentication));
                 });
         }
 }

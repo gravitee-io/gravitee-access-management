@@ -26,16 +26,12 @@ import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.utils.URIBuilder;
 import io.gravitee.am.gateway.handler.vertx.oauth2.request.TokenRequestFactory;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.authentication.UsernamePasswordAuthenticationToken;
-import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
+import io.gravitee.am.model.User;
 import io.reactivex.Single;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.net.URISyntaxException;
-import java.util.Collections;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -111,12 +107,7 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
 
     private Single<AuthorizationRequest> setAuthorizationCodeResponse(AuthorizationRequest authorizationRequest, User authenticatedUser) {
         // prepare response
-        OAuth2Request storedRequest = authorizationRequest.createOAuth2Request(authorizationRequest);
-        io.gravitee.am.gateway.handler.vertx.auth.user.User user = (io.gravitee.am.gateway.handler.vertx.auth.user.User) authenticatedUser.getDelegate();
-        UsernamePasswordAuthenticationToken userAuthentication = new UsernamePasswordAuthenticationToken(user.getUser().getUsername(), user.getUser(), "", Collections.emptySet());
-        OAuth2Authentication oAuth2Authentication = new OAuth2Authentication(storedRequest, userAuthentication);
-
-        return authorizationCodeService.create(oAuth2Authentication)
+        return authorizationCodeService.create(authorizationRequest, authenticatedUser)
                 .map(code -> {
                     AuthorizationCodeResponse response = new AuthorizationCodeResponse();
                     response.setCode(code.getCode());

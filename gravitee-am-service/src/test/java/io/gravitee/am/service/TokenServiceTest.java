@@ -17,11 +17,12 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.Client;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.repository.oauth2.api.TokenRepository;
-import io.gravitee.am.repository.oauth2.model.OAuth2AccessToken;
+import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
+import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.TokenServiceImpl;
 import io.gravitee.am.service.model.TotalToken;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
@@ -47,7 +48,7 @@ public class TokenServiceTest {
     private TokenService tokenService = new TokenServiceImpl();
 
     @Mock
-    private TokenRepository tokenRepository;
+    private AccessTokenRepository accessTokenRepository;
 
     @Mock
     private ClientService clientService;
@@ -62,13 +63,19 @@ public class TokenServiceTest {
         client2.setClientId("client2");
         Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
 
-        OAuth2AccessToken accessToken1 = new OAuth2AccessToken("access-1");
-        OAuth2AccessToken accessToken2 = new OAuth2AccessToken("access-2");
-        OAuth2AccessToken accessToken3 = new OAuth2AccessToken("access-3");
+        AccessToken accessToken1 = new AccessToken();
+        accessToken1.setId("access-1");
+        accessToken1.setToken("access-1");
+        AccessToken accessToken2 = new AccessToken();
+        accessToken2.setId("access-2");
+        accessToken2.setToken("access-2");
+        AccessToken accessToken3 = new AccessToken();
+        accessToken3.setId("access-3");
+        accessToken3.setToken("access-3");
 
         when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(clients));
-        when(tokenRepository.findTokensByClientId("client1")).thenReturn(Single.just(Arrays.asList(accessToken1, accessToken2)));
-        when(tokenRepository.findTokensByClientId("client2")).thenReturn(Single.just(Arrays.asList(accessToken3)));
+        when(accessTokenRepository.findByClientId("client1")).thenReturn(Observable.fromIterable(Arrays.asList(accessToken1, accessToken2)));
+        when(accessTokenRepository.findByClientId("client2")).thenReturn(Observable.fromIterable(Arrays.asList(accessToken3)));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokensByDomain(DOMAIN).test();
         testObserver.awaitTerminalEvent();
@@ -96,7 +103,7 @@ public class TokenServiceTest {
         client2.setClientId("client2");
         Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
         when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(clients));
-        when(tokenRepository.findTokensByClientId("client1")).thenReturn(Single.error(TechnicalException::new));
+        when(accessTokenRepository.findByClientId("client1")).thenReturn(Observable.error(TechnicalException::new));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokensByDomain(DOMAIN).test();
         testObserver.assertError(TechnicalManagementException.class);
@@ -111,13 +118,19 @@ public class TokenServiceTest {
         client2.setClientId("client2");
         Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
 
-        OAuth2AccessToken accessToken1 = new OAuth2AccessToken("access-1");
-        OAuth2AccessToken accessToken2 = new OAuth2AccessToken("access-2");
-        OAuth2AccessToken accessToken3 = new OAuth2AccessToken("access-3");
+        AccessToken accessToken1 = new AccessToken();
+        accessToken1.setId("access-1");
+        accessToken1.setToken("access-1");
+        AccessToken accessToken2 = new AccessToken();
+        accessToken2.setId("access-2");
+        accessToken2.setToken("access-2");
+        AccessToken accessToken3 = new AccessToken();
+        accessToken3.setId("access-3");
+        accessToken3.setToken("access-3");
 
         when(clientService.findAll()).thenReturn(Single.just(clients));
-        when(tokenRepository.findTokensByClientId("client1")).thenReturn(Single.just(Arrays.asList(accessToken1, accessToken2)));
-        when(tokenRepository.findTokensByClientId("client2")).thenReturn(Single.just(Arrays.asList(accessToken3)));
+        when(accessTokenRepository.findByClientId("client1")).thenReturn(Observable.fromIterable(Arrays.asList(accessToken1, accessToken2)));
+        when(accessTokenRepository.findByClientId("client2")).thenReturn(Observable.fromIterable(Arrays.asList(accessToken3)));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokens().test();
         testObserver.awaitTerminalEvent();
@@ -145,7 +158,7 @@ public class TokenServiceTest {
         client2.setClientId("client2");
         Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
         when(clientService.findAll()).thenReturn(Single.just(clients));
-        when(tokenRepository.findTokensByClientId("client1")).thenReturn(Single.error(TechnicalException::new));
+        when(accessTokenRepository.findByClientId("client1")).thenReturn(Observable.error(TechnicalException::new));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokens().test();
         testObserver.assertError(TechnicalManagementException.class);

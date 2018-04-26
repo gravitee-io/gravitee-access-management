@@ -17,7 +17,6 @@ package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
-import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.stereotype.Component;
@@ -29,26 +28,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthorizationCodeRepositoryProxy extends AbstractProxy<AuthorizationCodeRepository> implements AuthorizationCodeRepository {
 
+    @Override
     public Single<AuthorizationCode> create(AuthorizationCode authorizationCode) {
         return target.create(authorizationCode);
     }
 
-    public Completable delete(String code) {
-        return target.delete(code);
+    @Override
+    public Maybe<AuthorizationCode> delete(String id) {
+        return target.delete(id);
     }
 
+    @Override
     public Maybe<AuthorizationCode> findByCode(String code) {
         return target.findByCode(code);
     }
-
-    /*
-    public Single<OAuth2AuthorizationCode> store(OAuth2AuthorizationCode oAuth2AuthorizationCode) {
-        return target.store(oAuth2AuthorizationCode);
-    }
-
-    public Maybe<OAuth2Authentication> remove(String code) {
-        return target.remove(code);
-    }
-    */
-
 }

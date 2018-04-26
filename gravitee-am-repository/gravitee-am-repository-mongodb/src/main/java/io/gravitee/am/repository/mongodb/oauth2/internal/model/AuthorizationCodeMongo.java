@@ -19,6 +19,7 @@ import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -44,6 +45,8 @@ public class AuthorizationCodeMongo {
 
     @BsonProperty("redirect_uri")
     private String redirectUri;
+
+    private Set<String> scopes;
 
     public String getId() {
         return id;
@@ -99,6 +102,14 @@ public class AuthorizationCodeMongo {
 
     public void setRedirectUri(String redirectUri) {
         this.redirectUri = redirectUri;
+    }
+
+    public Set<String> getScopes() {
+        return scopes;
+    }
+
+    public void setScopes(Set<String> scopes) {
+        this.scopes = scopes;
     }
 
     @Override

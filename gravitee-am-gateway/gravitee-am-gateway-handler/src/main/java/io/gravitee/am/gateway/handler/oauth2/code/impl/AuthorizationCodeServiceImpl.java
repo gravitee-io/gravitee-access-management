@@ -16,9 +16,12 @@
 package io.gravitee.am.gateway.handler.oauth2.code.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
+import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
+import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -39,25 +42,29 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
     @Autowired
     private AuthorizationCodeRepository authorizationCodeRepository;
 
-
     @Override
-    public Single<OAuth2AuthorizationCode> create(OAuth2Authentication oAuth2Authentication) {
-        OAuth2AuthorizationCode oAuth2AuthorizationCode = new OAuth2AuthorizationCode();
-        oAuth2AuthorizationCode.setCode(UUID.random().toString());
-        oAuth2AuthorizationCode.setOAuth2Authentication(oAuth2Authentication);
-        oAuth2AuthorizationCode.setExpiration(new Date(System.currentTimeMillis() + authorizationCodeValidity));
-        oAuth2AuthorizationCode.setCreatedAt(new Date());
-        oAuth2AuthorizationCode.setUpdatedAt(oAuth2AuthorizationCode.getCreatedAt());
+    public Single<AuthorizationCode> create(AuthorizationRequest authorizationRequest, User user) {
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setCode(UUID.random().toString());
+        authorizationCode.setClientId(authorizationRequest.getClientId());
+        authorizationCode.setSubject(user.getId());
+        authorizationCode.setScopes(authorizationRequest.getScopes());
+        authorizationCode.setExpireAt(new Date(System.currentTimeMillis() + authorizationCodeValidity));
+        authorizationCode.setCreatedAt(new Date());
 
-        //TODO
-        // return authorizationCodeRepository.create(oAuth2AuthorizationCode);
-        return null;
+        return authorizationCodeRepository.create(authorizationCode);
     }
 
     @Override
-    public Maybe<OAuth2Authentication> remove(String code) {
-        //TODO
-        // return authorizationCodeRepository.delete(code);
-        return Maybe.empty();
+    public Maybe<AuthorizationCode> remove(String code, Client client) {
+        return authorizationCodeRepository.findByCode(code)
+                .switchIfEmpty(Maybe.error(new InvalidRequestException("The authorization code " + code + " is invalid.")))
+                .flatMap(authorizationCode -> {
+                    if (!authorizationCode.getClientId().equals(client.getClientId())) {
+                        return Maybe.error(new InvalidRequestException("The authorization code " + code + " does not belong to the client " + client.getClientId() + "."));
+                    }
+                    return Maybe.just(authorizationCode);
+                })
+                .flatMap(authorizationCode -> authorizationCodeRepository.delete(authorizationCode.getId()));
     }
 }

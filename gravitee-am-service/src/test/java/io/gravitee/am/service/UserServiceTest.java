@@ -138,7 +138,7 @@ public class UserServiceTest {
 
     @Test
     public void shouldLoadUserByUsernameAndDomain() {
-        when(userRepository.findByUsernameAndDomain("my-user", DOMAIN)).thenReturn(Maybe.just(new User()));
+        when(userRepository.findByUsernameAndDomain(DOMAIN, "my-user")).thenReturn(Maybe.just(new User()));
         TestObserver testObserver = userService.loadUserByUsernameAndDomain(DOMAIN, "my-user").test();
 
         testObserver.awaitTerminalEvent();
@@ -149,7 +149,7 @@ public class UserServiceTest {
 
     @Test
     public void shouldLoadUserByUsernameAndDomain_notExistingUser() {
-        when(userRepository.findByUsernameAndDomain("my-user", DOMAIN)).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndDomain(DOMAIN, "my-user")).thenReturn(Maybe.empty());
         TestObserver testObserver = userService.loadUserByUsernameAndDomain(DOMAIN, "my-user").test();
         testObserver.awaitTerminalEvent();
 
@@ -158,7 +158,7 @@ public class UserServiceTest {
 
     @Test
     public void shouldLoadUserByUsernameAndDomain_technicalException() {
-        when(userRepository.findByUsernameAndDomain("my-user", DOMAIN)).thenReturn(Maybe.error(TechnicalException::new));
+        when(userRepository.findByUsernameAndDomain(DOMAIN, "my-user")).thenReturn(Maybe.error(TechnicalException::new));
         TestObserver testObserver = new TestObserver();
         userService.loadUserByUsernameAndDomain(DOMAIN, "my-user").subscribe(testObserver);
 

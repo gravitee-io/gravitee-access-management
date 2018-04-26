@@ -64,7 +64,7 @@ public class AuthorizationApprovalEndpointHandler extends AbstractAuthorizationE
             throw new AccessDeniedException();
         }
 
-        io.gravitee.am.identityprovider.api.User endUser = ((io.gravitee.am.gateway.handler.vertx.auth.user.User) authenticatedUser.getDelegate()).getUser();
+        io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.vertx.auth.user.User) authenticatedUser.getDelegate()).getUser();
 
         AuthorizationRequest authorizationRequest = context.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
         if (authorizationRequest == null) {
@@ -87,7 +87,7 @@ public class AuthorizationApprovalEndpointHandler extends AbstractAuthorizationE
 
         // handle approval response
         approvalService.saveApproval(authorizationRequest, endUser.getUsername())
-                .flatMap(authorizationRequest1 -> createAuthorizationResponse(authorizationRequest1, authenticatedUser))
+                .flatMap(authorizationRequest1 -> createAuthorizationResponse(authorizationRequest1, endUser))
                 .subscribe(authorizationRequest1 -> {
                     // remove OAuth2Constants.AUTHORIZATION_REQUEST session value
                     // should not be used after this step

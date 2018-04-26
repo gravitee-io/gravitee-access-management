@@ -75,7 +75,7 @@ public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointH
             throw new AccessDeniedException();
         }
 
-        io.gravitee.am.identityprovider.api.User endUser = ((io.gravitee.am.gateway.handler.vertx.auth.user.User) authenticatedUser.getDelegate()).getUser();
+        io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.vertx.auth.user.User) authenticatedUser.getDelegate()).getUser();
 
         // If the request fails due to a missing, invalid, or mismatching redirection URI, or if the client identifier is missing or invalid,
         // the authorization server SHOULD inform the resource owner of the error and MUST NOT automatically redirect the user-agent to the
@@ -84,7 +84,7 @@ public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointH
                 .switchIfEmpty(Maybe.error(new InvalidRequestException("No client with id : " + clientId)))
                 .flatMapSingle(client -> authorizationRequestResolver.resolve(request, client))
                 .flatMap(authorizationRequest -> approvalService.checkApproval(authorizationRequest, endUser.getUsername()))
-                .flatMap(authorizationRequest -> createAuthorizationResponse(authorizationRequest, authenticatedUser))
+                .flatMap(authorizationRequest -> createAuthorizationResponse(authorizationRequest, endUser))
                 .subscribe(authorizationRequest -> {
                     if (!authorizationRequest.isApproved()) {
                         // TODO should we put this data inside repository to handle cluster environment ?

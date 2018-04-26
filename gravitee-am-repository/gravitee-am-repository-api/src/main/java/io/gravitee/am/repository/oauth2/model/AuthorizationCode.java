@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.oauth2.model;
 
 import java.util.Date;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -57,6 +58,11 @@ public class AuthorizationCode {
      * Redirect URI used while asking for an authorization code
      */
     private String redirectUri;
+
+    /**
+     * The scopes of the access request
+     */
+    private Set<String> scopes;
 
     public String getId() {
         return id;
@@ -112,6 +118,14 @@ public class AuthorizationCode {
 
     public void setRedirectUri(String redirectUri) {
         this.redirectUri = redirectUri;
+    }
+
+    public Set<String> getScopes() {
+        return scopes;
+    }
+
+    public void setScopes(Set<String> scopes) {
+        this.scopes = scopes;
     }
 
     @Override
