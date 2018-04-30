@@ -41,7 +41,7 @@ public class AccessTokenMongo {
     @BsonProperty("client_id")
     private String clientId;
 
-    private Set<String> scope;
+    private Set<String> scopes;
 
     @BsonProperty("refresh_token")
     private String refreshToken;
@@ -88,12 +88,12 @@ public class AccessTokenMongo {
         this.clientId = clientId;
     }
 
-    public Set<String> getScope() {
-        return scope;
+    public Set<String> getScopes() {
+        return scopes;
     }
 
-    public void setScope(Set<String> scope) {
-        this.scope = scope;
+    public void setScopes(Set<String> scopes) {
+        this.scopes = scopes;
     }
 
     public String getRefreshToken() {

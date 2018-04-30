@@ -17,6 +17,7 @@ package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
+import io.gravitee.am.repository.oauth2.model.AccessTokenCriteria;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -48,5 +49,10 @@ public class AccessTokenRepositoryProxy extends AbstractProxy<AccessTokenReposit
 
     public Observable<AccessToken> findByClientId(String clientId) {
         return target.findByClientId(clientId);
+    }
+
+    @Override
+    public Maybe<AccessToken> findByCriteria(AccessTokenCriteria accessTokenCriteria) {
+        return target.findByCriteria(accessTokenCriteria);
     }
 }

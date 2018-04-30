@@ -52,7 +52,7 @@ public class AccessToken {
     /**
      * List of scope asked by the client
      */
-    private Set<String> scope;
+    private Set<String> scopes;
 
     /**
      * Reference to the refresh_token
@@ -104,12 +104,12 @@ public class AccessToken {
         this.clientId = clientId;
     }
 
-    public Set<String> getScope() {
-        return scope;
+    public Set<String> getScopes() {
+        return scopes;
     }
 
-    public void setScope(Set<String> scope) {
-        this.scope = scope;
+    public void setScopes(Set<String> scopes) {
+        this.scopes = scopes;
     }
 
     public String getRefreshToken() {

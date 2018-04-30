@@ -21,7 +21,6 @@ import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.AuthorizationCodeMongo;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
-import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -58,7 +57,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
     private Maybe<AuthorizationCode> findById(String id) {
         return Observable
-                .fromPublisher(authorizationCodeCollection.find(eq(FIELD_ID, id)).limit(1).first())
+                .fromPublisher(authorizationCodeCollection.find(eq(FIELD_ID, id)).first())
                 .firstElement()
                 .map(this::convert);
     }
@@ -81,9 +80,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
     @Override
     public Maybe<AuthorizationCode> findByCode(String code) {
-        return Single.fromPublisher(authorizationCodeCollection.find(eq(FIELD_CODE, code)).limit(1).first())
-                .toMaybe()
-                .map(this::convert);
+        return Observable.fromPublisher(authorizationCodeCollection.find(eq(FIELD_CODE, code)).first()).firstElement().map(this::convert);
     }
 
     private AuthorizationCode convert(AuthorizationCodeMongo authorizationCodeMongo) {
@@ -121,45 +118,4 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
         return authorizationCodeMongo;
     }
-
-    /*
-    private OAuth2Authentication deserializeAuthentication(byte[] authentication) {
-        try {
-            return SerializationUtils.deserialize(authentication);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private byte[] serializeAuthentication(OAuth2Authentication authentication) {
-        try {
-            return SerializationUtils.serialize(authentication);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private OAuth2AuthorizationCodeMongo convert(OAuth2AuthorizationCode oAuth2AuthorizationCode) {
-        OAuth2AuthorizationCodeMongo oAuth2AuthorizationCodeMongo = new OAuth2AuthorizationCodeMongo();
-        oAuth2AuthorizationCodeMongo.setCode(oAuth2AuthorizationCode.getCode());
-        oAuth2AuthorizationCodeMongo.setOAuth2Authentication(serializeAuthentication(oAuth2AuthorizationCode.getOAuth2Authentication()));
-        oAuth2AuthorizationCodeMongo.setExpiration(oAuth2AuthorizationCode.getExpiration());
-        oAuth2AuthorizationCodeMongo.setCreatedAt(oAuth2AuthorizationCode.getCreatedAt());
-        oAuth2AuthorizationCodeMongo.setUpdatedAt(oAuth2AuthorizationCode.getUpdatedAt());
-
-        return oAuth2AuthorizationCodeMongo;
-    }
-
-    private OAuth2AuthorizationCode convert(OAuth2AuthorizationCodeMongo oAuth2AuthorizationCodeMongo) {
-        OAuth2AuthorizationCode oAuth2AuthorizationCode = new OAuth2AuthorizationCode();
-        oAuth2AuthorizationCode.setCode(oAuth2AuthorizationCodeMongo.getCode());
-        oAuth2AuthorizationCode.setOAuth2Authentication(deserializeAuthentication(oAuth2AuthorizationCodeMongo.getOAuth2Authentication()));
-        oAuth2AuthorizationCode.setExpiration(oAuth2AuthorizationCodeMongo.getExpiration());
-        oAuth2AuthorizationCode.setCreatedAt(oAuth2AuthorizationCodeMongo.getCreatedAt());
-        oAuth2AuthorizationCode.setUpdatedAt(oAuth2AuthorizationCodeMongo.getUpdatedAt());
-
-        return oAuth2AuthorizationCode;
-    }
-
-    */
 }

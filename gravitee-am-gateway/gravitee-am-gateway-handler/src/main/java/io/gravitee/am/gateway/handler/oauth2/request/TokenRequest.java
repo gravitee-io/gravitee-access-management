@@ -16,11 +16,9 @@
 package io.gravitee.am.gateway.handler.oauth2.request;
 
 import io.gravitee.am.model.Client;
-import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
 import io.gravitee.common.util.MultiValueMap;
 
 import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * See <a href="https://tools.ietf.org/html/rfc6749#section-4.1.3"></a>
@@ -66,9 +64,15 @@ public class TokenRequest extends BaseRequest {
         modifiable.remove("password");
         modifiable.remove("client_secret");
         // Add grant type so it can be retrieved from OAuth2Request
+        // TODO is this necessary ?
         modifiable.put("grant_type", grantType);
-        return new OAuth2Request(modifiable, client.getClientId(), null, true, new HashSet<>(client.getScopes()),
-                null, null, null, null);
+
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId(client.getClientId());
+        oAuth2Request.setScopes(getScopes());
+        oAuth2Request.setRequestParameters(requestParameters);
+
+        return oAuth2Request;
     }
 }
 

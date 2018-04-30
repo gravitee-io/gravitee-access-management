@@ -18,12 +18,11 @@ package io.gravitee.am.gateway.handler.oauth2.granter;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
+import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
 import io.reactivex.Single;
 
 import java.util.Objects;
@@ -64,14 +63,13 @@ public class AbstractTokenGranter implements TokenGranter {
                             && !client.getAuthorizedGrantTypes().contains(grantType)) {
                         throw new UnauthorizedClientException("Unauthorized grant type: " + grantType);
                     }
-                    return createOAuth2Authentication(tokenRequest, client);
+                    return createOAuth2Request(tokenRequest, client);
                 })
-                .flatMap(oauth2Authentication -> tokenService.create(oauth2Authentication));
+                .flatMap(oAuth2Request -> tokenService.create(oAuth2Request));
     }
 
-    protected Single<OAuth2Authentication> createOAuth2Authentication(TokenRequest tokenRequest, Client client) {
-        OAuth2Request storedRequest = tokenRequest.createOAuth2Request(client);
-        return Single.just(new OAuth2Authentication(storedRequest, null));
+    protected Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client) {
+        return Single.just(tokenRequest.createOAuth2Request(client));
     }
 
     public void setClientService(ClientService clientService) {

@@ -13,34 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.oauth2.model;
+package io.gravitee.am.repository.mongodb.oauth2.internal.model;
+
+import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RefreshToken {
+public class RefreshTokenMongo {
 
-    /**
-     * Technical ID
-     */
+    @BsonId
     private String id;
 
-    /**
-     * Refresh token value
-     */
     private String token;
 
-    /**
-     * The refresh token creation date
-     */
+    @BsonProperty("created_at")
     private Date createdAt;
 
-    /**
-     * The refresh token expiration date
-     */
+    @BsonProperty("expire_at")
     private Date expireAt;
 
     public String getId() {
@@ -73,20 +67,5 @@ public class RefreshToken {
 
     public void setExpireAt(Date expireAt) {
         this.expireAt = expireAt;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        RefreshToken that = (RefreshToken) o;
-
-        return id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
     }
 }

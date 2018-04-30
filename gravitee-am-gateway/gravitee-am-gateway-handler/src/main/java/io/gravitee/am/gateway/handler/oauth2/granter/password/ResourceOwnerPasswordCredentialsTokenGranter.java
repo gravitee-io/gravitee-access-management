@@ -20,17 +20,13 @@ import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.authentication.UsernamePasswordAuthenticationToken;
-import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.Single;
-
-import java.util.Collections;
 
 /**
  * Implementation of the Resource Owner Password Credentials Grant Flow
@@ -68,7 +64,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
         return super.grant(tokenRequest);
     }
 
-    protected Single<OAuth2Authentication> createOAuth2Authentication(TokenRequest tokenRequest, Client client) {
+    protected Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client) {
         MultiValueMap<String, String> parameters = tokenRequest.getRequestParameters();
         String username = parameters.getFirst(USERNAME_PARAMETER);
         String password = parameters.getFirst(PASSWORD_PARAMETER);
@@ -76,9 +72,8 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
         return userAuthenticationManager.authenticate(tokenRequest.getClientId(), new EndUserAuthentication(username, password))
                 .map(user -> {
                     OAuth2Request storedRequest = tokenRequest.createOAuth2Request(client);
-                    UsernamePasswordAuthenticationToken userAuthentication =
-                            new UsernamePasswordAuthenticationToken(user.getUsername(), user, "", Collections.emptySet());
-                    return new OAuth2Authentication(storedRequest, userAuthentication);
+                    storedRequest.setSubject(user.getId());
+                    return storedRequest;
                 })
                 .onErrorResumeNext(ex -> Single.error(new InvalidGrantException()));
     }

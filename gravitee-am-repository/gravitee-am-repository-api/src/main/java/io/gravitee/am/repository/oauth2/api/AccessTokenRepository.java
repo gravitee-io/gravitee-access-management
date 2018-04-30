@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.repository.oauth2.model.AccessToken;
+import io.gravitee.am.repository.oauth2.model.AccessTokenCriteria;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -49,4 +50,12 @@ public interface AccessTokenRepository {
      * @return a collection of access tokens
      */
     Observable<AccessToken> findByClientId(String clientId);
+
+    /**
+     * Find access token by criteria to know if the access token must be re-new or re-use
+     *
+     * @param accessTokenCriteria
+     * @return an access token or empty
+     */
+    Maybe<AccessToken> findByCriteria(AccessTokenCriteria accessTokenCriteria);
 }

@@ -15,11 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
-import io.gravitee.am.repository.mongodb.oauth2.utils.RequestTokenFactory;
-import io.gravitee.am.repository.mongodb.oauth2.utils.TestAuthentication;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.code.OAuth2AuthorizationCode;
+import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
+import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -33,51 +31,39 @@ public class MongoAuthorizationCodeRepositoryTest extends AbstractOAuth2Reposito
     private AuthorizationCodeRepository authorizationCodeRepository;
 
     @Test
-    public void testStoreCode() {
+    public void shouldStoreCode() {
         String code = "testCode";
-        OAuth2Authentication expectedAuthentication = new OAuth2Authentication(RequestTokenFactory.createOAuth2Request("id", false), new TestAuthentication("test2", false));
-        OAuth2AuthorizationCode oAuth2AuthorizationCode = new OAuth2AuthorizationCode();
-        oAuth2AuthorizationCode.setCode(code);
-        oAuth2AuthorizationCode.setOAuth2Authentication(expectedAuthentication);
-        //authorizationCodeRepository.store(oAuth2AuthorizationCode).blockingGet();
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setCode(code);
 
-        /*
-        TestObserver<OAuth2Authentication> testObserver = authorizationCodeRepository.remove(code).test();
+        authorizationCodeRepository.create(authorizationCode).blockingGet();
+
+        TestObserver<AuthorizationCode> testObserver = authorizationCodeRepository.findByCode(code).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(oAuth2Authentication -> oAuth2Authentication.getOAuth2Request().getClientId().equals("id"));
-        */
-
-        //authorizationCodeRepository.remove(code).test().assertEmpty();
+        testObserver.assertValue(authorizationCode1 -> authorizationCode1.getCode().equals(code));
     }
 
     @Test
-    public void testStoreCodeTwice() {
+    public void shouldNotFindCode() {
+        String code = "unknownCode";
+        authorizationCodeRepository.findByCode(code).test().assertEmpty();
+    }
+
+    @Test
+    public void shouldRemoveCode() {
         String code = "testCode";
-        OAuth2Authentication expectedAuthentication = new OAuth2Authentication(RequestTokenFactory.createOAuth2Request( "id", false), new TestAuthentication("test2", false));
-        OAuth2AuthorizationCode oAuth2AuthorizationCode = new OAuth2AuthorizationCode();
-        oAuth2AuthorizationCode.setCode(code);
-        oAuth2AuthorizationCode.setOAuth2Authentication(expectedAuthentication);
-        //authorizationCodeRepository.store(oAuth2AuthorizationCode).blockingGet();
-        //authorizationCodeRepository.store(oAuth2AuthorizationCode).blockingGet();
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setId(code);
+        authorizationCode.setCode(code);
 
-        /*
-        TestObserver<OAuth2Authentication> testObserver = authorizationCodeRepository.remove(code).test();
-        testObserver.awaitTerminalEvent();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(oAuth2Authentication -> oAuth2Authentication.getOAuth2Request().getClientId().equals("id"));
-
-*/
-        //authorizationCodeRepository.remove(code).test().assertEmpty();
-    }
-
-    @Test
-    public void testReadingCodeThatDoesNotExist() {
-        //authorizationCodeRepository.remove("codeThatDoesNotExist").test().assertEmpty();
+        authorizationCodeRepository
+                .create(authorizationCode)
+                .toCompletable()
+                .andThen(authorizationCodeRepository.delete(code))
+                .test().assertEmpty();
     }
 
 }

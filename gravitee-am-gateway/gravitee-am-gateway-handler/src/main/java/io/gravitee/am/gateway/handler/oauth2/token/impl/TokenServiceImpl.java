@@ -15,18 +15,20 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.token.impl;
 
+import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
+import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.model.AccessTokenCriteria;
 import io.gravitee.common.utils.UUID;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.Optional;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -40,6 +42,9 @@ public class TokenServiceImpl implements TokenService {
     @Autowired
     private AccessTokenRepository accessTokenRepository;
 
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
     @Override
     public Maybe<AccessToken> get(String accessToken) {
         final Maybe<io.gravitee.am.repository.oauth2.model.AccessToken> result = accessTokenRepository.findByToken(accessToken).cache();
@@ -49,25 +54,35 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public Single<AccessToken> create(OAuth2Authentication authentication) {
+    public Single<AccessToken> create(OAuth2Request oAuth2Request) {
+        // TODO check if access token already exists, is it expired ? delete/renew
         // TODO manage refresh token
         // TODO manage token enhancer
-        // TODO check if access token already exists, is it expired ? delete/renew
-        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
-
-        accessToken.setId(UUID.random().toString());
-        accessToken.setToken(UUID.random().toString());
-        accessToken.setClientId(authentication.getOAuth2Request().getClientId());
-        accessToken.setSubject(((User) authentication.getUserAuthentication().getPrincipal()).getId());
-        int validitySeconds = getAccessTokenValiditySeconds(authentication.getOAuth2Request());
-        if (validitySeconds > 0) {
-            accessToken.setExpireAt(new Date(System.currentTimeMillis() + (validitySeconds * 1000L)));
-        }
-        accessToken.setCreatedAt(new Date());
-        accessToken.setRefreshToken(null);
-        accessToken.setScope(authentication.getOAuth2Request().getScope());
-
-        return accessTokenRepository.create(accessToken).map(this::convert);
+        // TODO Try to use switch if empty to avoid Optional use, but the switch empty method seems to always be call ?
+        return accessTokenRepository.findByCriteria(convert(oAuth2Request))
+                .map(accessToken -> Optional.of(accessToken))
+                .defaultIfEmpty(Optional.empty())
+                .flatMapSingle(optionalAccessToken -> {
+                    if (!optionalAccessToken.isPresent()) {
+                        return createAccessToken(oAuth2Request);
+                    } else {
+                        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = optionalAccessToken.get();
+                        // check if the access token is expired
+                        if (accessToken.getExpireAt().before(new Date())) {
+                            // remove the refresh token of the access token
+                            Completable deleteAccessTokenAction = accessTokenRepository.delete(accessToken.getToken());
+                            if (accessToken.getRefreshToken() != null) {
+                                deleteAccessTokenAction.andThen(refreshTokenRepository.delete(accessToken.getRefreshToken()));
+                            }
+                            // the access token (and its refresh token) have been removed
+                            // re-new them
+                            return deleteAccessTokenAction.andThen(createAccessToken(oAuth2Request));
+                        } else {
+                            // do we need to update something ?
+                            return Single.just(accessToken);
+                        }
+                    }
+                }).map(this::convert);
     }
 
     @Override
@@ -80,19 +95,52 @@ public class TokenServiceImpl implements TokenService {
         return accessTokenValiditySeconds;
     }
 
+    private Single<io.gravitee.am.repository.oauth2.model.AccessToken> createAccessToken(OAuth2Request oAuth2Request) {
+        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
+
+        accessToken.setId(UUID.random().toString());
+        accessToken.setToken(UUID.random().toString());
+        accessToken.setClientId(oAuth2Request.getClientId());
+        if (!oAuth2Request.isClientOnly()) {
+            accessToken.setSubject(oAuth2Request.getSubject());
+        }
+        int validitySeconds = getAccessTokenValiditySeconds(oAuth2Request);
+        if (validitySeconds > 0) {
+            accessToken.setExpireAt(new Date(System.currentTimeMillis() + (validitySeconds * 1000L)));
+        }
+        accessToken.setCreatedAt(new Date());
+        accessToken.setRefreshToken(null);
+        accessToken.setScopes(oAuth2Request.getScopes());
+
+        return accessTokenRepository.create(accessToken);
+    }
+
     private AccessToken convert(io.gravitee.am.repository.oauth2.model.AccessToken accessToken) {
         if (accessToken == null) {
             return null;
         }
 
         DefaultAccessToken token = new DefaultAccessToken(accessToken.getToken());
-        if (accessToken.getScope() != null && !accessToken.getScope().isEmpty()) {
-            token.setScope(String.join(" ", accessToken.getScope()));
+        if (accessToken.getScopes() != null && !accessToken.getScopes().isEmpty()) {
+            token.setScope(String.join(" ", accessToken.getScopes()));
         }
 
         token.setExpiresIn(accessToken.getExpireAt() != null ?
                 Long.valueOf((accessToken.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L).intValue() : 0);
 
         return token;
+    }
+
+    private AccessTokenCriteria convert(OAuth2Request oAuth2Request) {
+        AccessTokenCriteria.Builder builder = new AccessTokenCriteria.Builder();
+        builder.clientId(oAuth2Request.getClientId());
+
+        if (!oAuth2Request.isClientOnly()) {
+            builder.subject(oAuth2Request.getSubject());
+        }
+
+        builder.scopes(oAuth2Request.getScopes());
+
+        return builder.build();
     }
 }

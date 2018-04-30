@@ -16,13 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.request;
 
 import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationResponse;
-import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
-import io.gravitee.common.util.MultiValueMap;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -118,20 +113,5 @@ public class AuthorizationRequest extends BaseRequest implements Serializable {
 
     public void setApprovalParameters(Map<String, String> approvalParameters) {
         this.approvalParameters = approvalParameters;
-    }
-
-    public OAuth2Request createOAuth2Request(AuthorizationRequest authorizationRequest) {
-        MultiValueMap<String, String> requestParameters = getRequestParameters();
-        HashMap<String, String> modifiable = new HashMap<String, String>(requestParameters.toSingleValueMap());
-        modifiable.put("response_type", responseType);
-        return new OAuth2Request(modifiable,
-                authorizationRequest.getClientId(),
-                null,
-                true,
-                authorizationRequest.getScopes() != null ? new HashSet<>(authorizationRequest.getScopes()) : Collections.emptySet(),
-                null,
-                null,
-                null,
-                null);
     }
 }

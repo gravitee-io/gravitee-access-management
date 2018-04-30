@@ -13,30 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.oauth2.utils;
-
-
-import io.gravitee.am.repository.oauth2.model.authentication.AbstractAuthenticationToken;
+package io.gravitee.am.gateway.handler.oauth2.request;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class TestAuthentication extends AbstractAuthenticationToken {
+public class OAuth2Request extends BaseRequest {
 
-    private String principal;
+    private String subject;
 
-    public TestAuthentication(String name, boolean authenticated) {
-        super(null);
-        setAuthenticated(authenticated);
-        this.principal = name;
+    public boolean isClientOnly() {
+        return subject == null;
     }
 
-    public Object getCredentials() {
-        return null;
+    public String getSubject() {
+        return subject;
     }
 
-    public Object getPrincipal() {
-        return this.principal;
+    public void setSubject(String subject) {
+        this.subject = subject;
     }
 }

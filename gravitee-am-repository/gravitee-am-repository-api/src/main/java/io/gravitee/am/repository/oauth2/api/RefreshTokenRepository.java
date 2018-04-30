@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.token;
+package io.gravitee.am.repository.oauth2.api;
 
-import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
+import io.gravitee.am.repository.oauth2.model.RefreshToken;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface TokenService {
+public interface RefreshTokenRepository {
 
-    Maybe<AccessToken> get(String accessToken);
+    Maybe<RefreshToken> findByToken(String token);
 
-    Single<AccessToken> create(OAuth2Request oAuth2Request);
+    Single<RefreshToken> create(RefreshToken refreshToken);
 
-    Single<AccessToken> refresh();
+    Completable delete(String token);
 }

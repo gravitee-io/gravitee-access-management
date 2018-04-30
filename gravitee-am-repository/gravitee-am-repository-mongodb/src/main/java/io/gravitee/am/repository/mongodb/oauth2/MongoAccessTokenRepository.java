@@ -20,18 +20,21 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.AccessTokenMongo;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
+import io.gravitee.am.repository.oauth2.model.AccessTokenCriteria;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -47,6 +50,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     private static final String FIELD_TOKEN = "token";
     private static final String FIELD_SUBJECT = "subject";
     private static final String FIELD_ID = "_id";
+    private static final String FIELD_SCOPES = "scopes";
 
     @PostConstruct
     public void init() {
@@ -97,6 +101,30 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
                 .map(this::convert);
     }
 
+    @Override
+    public Maybe<AccessToken> findByCriteria(AccessTokenCriteria accessTokenCriteria) {
+        List<Bson> filters = new ArrayList<>();
+
+        if (accessTokenCriteria.getClientId() != null) {
+            filters.add(eq(FIELD_CLIENT_ID, accessTokenCriteria.getClientId()));
+        }
+
+        if (accessTokenCriteria.getSubject() != null) {
+            filters.add(eq(FIELD_SUBJECT, accessTokenCriteria.getSubject()));
+        }
+
+        if (accessTokenCriteria.getScopes() != null && !accessTokenCriteria.getScopes().isEmpty()) {
+            filters.add(in(FIELD_SCOPES, accessTokenCriteria.getScopes()));
+        }
+
+        // no filter selected, return empty
+        if (filters.isEmpty()) {
+            return Maybe.empty();
+        }
+
+        return Observable.fromPublisher(accessTokenCollection.find(and(filters)).first()).firstElement().map(this::convert);
+    }
+
     private AccessTokenMongo convert(AccessToken accessToken) {
         if (accessToken == null) {
             return null;
@@ -110,6 +138,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessTokenMongo.setExpireAt(accessToken.getExpireAt());
         accessTokenMongo.setRefreshToken(accessToken.getRefreshToken());
         accessTokenMongo.setSubject(accessToken.getSubject());
+        accessTokenMongo.setScopes(accessToken.getScopes());
 
         return accessTokenMongo;
     }
@@ -127,6 +156,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessToken.setExpireAt(accessTokenMongo.getExpireAt());
         accessToken.setRefreshToken(accessTokenMongo.getRefreshToken());
         accessToken.setSubject(accessTokenMongo.getSubject());
+        accessToken.setScopes(accessTokenMongo.getScopes());
 
         return accessToken;
     }

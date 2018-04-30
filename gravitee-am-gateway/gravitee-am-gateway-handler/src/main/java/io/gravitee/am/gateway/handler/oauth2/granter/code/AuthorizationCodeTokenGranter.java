@@ -20,21 +20,14 @@ import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.User;
-import io.gravitee.am.repository.oauth2.model.OAuth2Authentication;
-import io.gravitee.am.repository.oauth2.model.authentication.Authentication;
-import io.gravitee.am.repository.oauth2.model.authentication.UsernamePasswordAuthenticationToken;
-import io.gravitee.am.repository.oauth2.model.request.OAuth2Request;
 import io.gravitee.common.util.MultiValueMap;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
-
-import java.util.Collections;
 
 /**
  * Implementation of the Authorization Code Grant Flow
@@ -71,7 +64,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
     }
 
     @Override
-    protected Single<OAuth2Authentication> createOAuth2Authentication(TokenRequest tokenRequest, Client client) {
+    protected Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client) {
         MultiValueMap<String, String> parameters = tokenRequest.getRequestParameters();
         String code = parameters.getFirst(OAuth2Constants.CODE);
         String redirectUri = parameters.getFirst(OAuth2Constants.REDIRECT_URI);
@@ -80,10 +73,11 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
             throw new InvalidRequestException("An authorization code must be supplied.");
         }
 
-        // TODO fix NoSuchElementException
         return authorizationCodeService.remove(code, client)
                 .flatMapSingle(authorizationCode -> {
                     // This might be null, if the authorization was done without the redirect_uri parameter
+                    // https://tools.ietf.org/html/rfc6749#section-4.1.3 (4.1.3. Access Token Request); if provided
+                    // their values MUST be identical
                     String redirectUriApprovalParameter = authorizationCode.getRedirectUri();
                     if (redirectUriApprovalParameter != null) {
                         if (redirectUri == null) {
@@ -94,19 +88,9 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                         }
                     }
 
-                    // TODO to refactor OAuth2Authentication object
-                    OAuth2Request storedRequest = new OAuth2Request();
-                    storedRequest.setScope(authorizationCode.getScopes());
-                    storedRequest.setClientId(authorizationCode.getClientId());
-                    storedRequest.setRedirectUri(authorizationCode.getRedirectUri());
-
-                    // TODO fetch user from repository
-                    User user = new User();
-                    user.setId(authorizationCode.getSubject());
-                    user.setUsername(user.getId());
-                    Authentication userAuthentication =
-                            new UsernamePasswordAuthenticationToken(user.getUsername(), user, "", Collections.emptySet());
-                    return Single.just(new OAuth2Authentication(storedRequest, userAuthentication));
+                    OAuth2Request storedRequest = tokenRequest.createOAuth2Request(client);
+                    storedRequest.setSubject(authorizationCode.getSubject());
+                    return Single.just(storedRequest);
                 });
         }
 }
