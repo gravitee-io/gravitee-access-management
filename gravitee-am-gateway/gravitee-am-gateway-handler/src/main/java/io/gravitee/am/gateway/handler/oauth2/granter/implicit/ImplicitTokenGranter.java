@@ -48,4 +48,14 @@ public class ImplicitTokenGranter extends AbstractTokenGranter {
     public Single<AccessToken> grant(TokenRequest tokenRequest) {
         return super.grant(tokenRequest);
     }
+
+
+    /**
+     * The authorization server MUST NOT issue a refresh token for the implicit flow
+     * See <a href="https://tools.ietf.org/html/rfc6749#section-4.2.2">4.2.2. Access Token Response</a>
+     */
+    @Override
+    protected boolean isSupportRefreshToken() {
+        return false;
+    }
 }

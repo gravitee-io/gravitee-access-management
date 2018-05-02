@@ -22,6 +22,7 @@ package io.gravitee.am.gateway.handler.oauth2.request;
 public class OAuth2Request extends BaseRequest {
 
     private String subject;
+    private boolean supportRefreshToken;
 
     public boolean isClientOnly() {
         return subject == null;
@@ -33,5 +34,13 @@ public class OAuth2Request extends BaseRequest {
 
     public void setSubject(String subject) {
         this.subject = subject;
+    }
+
+    public boolean isSupportRefreshToken() {
+        return supportRefreshToken;
+    }
+
+    public void setSupportRefreshToken(boolean supportRefreshToken) {
+        this.supportRefreshToken = supportRefreshToken;
     }
 }

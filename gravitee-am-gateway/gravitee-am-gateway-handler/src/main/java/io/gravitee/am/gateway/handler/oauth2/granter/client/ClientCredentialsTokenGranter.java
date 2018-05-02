@@ -47,4 +47,13 @@ public class ClientCredentialsTokenGranter extends AbstractTokenGranter {
     public Single<AccessToken> grant(TokenRequest tokenRequest) {
         return super.grant(tokenRequest);
     }
+
+    /**
+     * A refresh token SHOULD NOT be included for the client client credentials flow
+     * See <a href="https://tools.ietf.org/html/rfc6749#section-4.4.3">4.4.3. Access Token Response</a>
+     */
+    @Override
+    protected boolean isSupportRefreshToken() {
+        return false;
+    }
 }

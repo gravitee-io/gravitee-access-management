@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.token;
 
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenServiceImpl;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.reactivex.Completable;
@@ -50,10 +52,14 @@ public class TokenServiceTest {
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
 
+    @Mock
+    private ClientService clientService;
+
     @Test
     public void shouldCreate_noExistingToken() {
         OAuth2Request oAuth2Request = new OAuth2Request();
 
+        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.empty());
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
@@ -93,6 +99,7 @@ public class TokenServiceTest {
         io.gravitee.am.repository.oauth2.model.AccessToken existingToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
         existingToken.setExpireAt(new Date(System.currentTimeMillis() - (60 * 1000)));
 
+        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.just(existingToken));
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
         when(accessTokenRepository.delete(anyString())).thenReturn(Completable.fromSingle(Single.just(new Object())));
@@ -115,6 +122,7 @@ public class TokenServiceTest {
         existingToken.setExpireAt(new Date(System.currentTimeMillis() - (60 * 1000)));
         existingToken.setRefreshToken("refresh-token");
 
+        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.just(existingToken));
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
         when(accessTokenRepository.delete(anyString())).thenReturn(Completable.fromSingle(Single.just(new Object())));

@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.token.impl;
 
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessTokenCriteria;
+import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -38,12 +41,16 @@ import java.util.Optional;
 public class TokenServiceImpl implements TokenService {
 
     private int accessTokenValiditySeconds = 60 * 60 * 12; // default 12 hours.
+    private int refreshTokenValiditySeconds = 60 * 60 * 24 * 30; // default 30 days.
 
     @Autowired
     private AccessTokenRepository accessTokenRepository;
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private ClientService clientService;
 
     @Override
     public Maybe<AccessToken> get(String accessToken) {
@@ -55,10 +62,7 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Single<AccessToken> create(OAuth2Request oAuth2Request) {
-        // TODO check if access token already exists, is it expired ? delete/renew
-        // TODO manage refresh token
         // TODO manage token enhancer
-        // TODO Try to use switch if empty to avoid Optional use, but the switch empty method seems to always be call ?
         return accessTokenRepository.findByCriteria(convert(oAuth2Request))
                 .map(accessToken -> Optional.of(accessToken))
                 .defaultIfEmpty(Optional.empty())
@@ -90,57 +94,77 @@ public class TokenServiceImpl implements TokenService {
         return null;
     }
 
-    private Integer getAccessTokenValiditySeconds(OAuth2Request oAuth2Request) {
-        // TODO manage client options
-        return accessTokenValiditySeconds;
+    private Single<io.gravitee.am.repository.oauth2.model.AccessToken> createAccessToken(OAuth2Request oAuth2Request) {
+        return clientService.findByClientId(oAuth2Request.getClientId())
+                .flatMapSingle(client -> {
+                    io.gravitee.am.repository.oauth2.model.AccessToken accessToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
+                    accessToken.setId(UUID.random().toString());
+                    accessToken.setToken(UUID.random().toString());
+                    accessToken.setClientId(oAuth2Request.getClientId());
+                    accessToken.setExpireAt(new Date(System.currentTimeMillis() + (getAccessTokenValiditySeconds(client) * 1000L)));
+                    accessToken.setCreatedAt(new Date());
+                    accessToken.setRefreshToken(null);
+                    accessToken.setScopes(oAuth2Request.getScopes());
+                    if (!oAuth2Request.isClientOnly()) {
+                        accessToken.setSubject(oAuth2Request.getSubject());
+                    }
+                    return Single.just(oAuth2Request.isSupportRefreshToken())
+                            .flatMap(supportRefreshToken -> {
+                                if (supportRefreshToken) {
+                                    return createRefreshToken(client)
+                                            .flatMap(refreshToken -> {
+                                                accessToken.setRefreshToken(refreshToken.getToken());
+                                                return Single.just(accessToken);
+                                            });
+                                } else {
+                                    return Single.just(accessToken);
+                                }
+                            })
+                            // TODO token enhancer
+                            .flatMap(accessTokenRepository::create);
+                });
     }
 
-    private Single<io.gravitee.am.repository.oauth2.model.AccessToken> createAccessToken(OAuth2Request oAuth2Request) {
-        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
+    private Single<RefreshToken> createRefreshToken(Client client) {
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setId(UUID.random().toString());
+        refreshToken.setToken(UUID.random().toString());
+        refreshToken.setCreatedAt(new Date());
+        refreshToken.setExpireAt(new Date(System.currentTimeMillis() + (getRefreshTokenValiditySeconds(client) * 1000L)));
 
-        accessToken.setId(UUID.random().toString());
-        accessToken.setToken(UUID.random().toString());
-        accessToken.setClientId(oAuth2Request.getClientId());
-        if (!oAuth2Request.isClientOnly()) {
-            accessToken.setSubject(oAuth2Request.getSubject());
-        }
-        int validitySeconds = getAccessTokenValiditySeconds(oAuth2Request);
-        if (validitySeconds > 0) {
-            accessToken.setExpireAt(new Date(System.currentTimeMillis() + (validitySeconds * 1000L)));
-        }
-        accessToken.setCreatedAt(new Date());
-        accessToken.setRefreshToken(null);
-        accessToken.setScopes(oAuth2Request.getScopes());
+        return refreshTokenRepository.create(refreshToken);
+    }
 
-        return accessTokenRepository.create(accessToken);
+    private Integer getAccessTokenValiditySeconds(Client client) {
+        int validitySeconds = client.getAccessTokenValiditySeconds();
+        return validitySeconds > 0 ? validitySeconds : accessTokenValiditySeconds;
+    }
+
+    private Integer getRefreshTokenValiditySeconds(Client client) {
+        int validitySeconds = client.getRefreshTokenValiditySeconds();
+        return validitySeconds > 0 ? validitySeconds : refreshTokenValiditySeconds;
     }
 
     private AccessToken convert(io.gravitee.am.repository.oauth2.model.AccessToken accessToken) {
-        if (accessToken == null) {
-            return null;
-        }
-
         DefaultAccessToken token = new DefaultAccessToken(accessToken.getToken());
         if (accessToken.getScopes() != null && !accessToken.getScopes().isEmpty()) {
             token.setScope(String.join(" ", accessToken.getScopes()));
         }
-
-        token.setExpiresIn(accessToken.getExpireAt() != null ?
-                Long.valueOf((accessToken.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L).intValue() : 0);
+        token.setExpiresIn(accessToken.getExpireAt() != null ? Long.valueOf((accessToken.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L).intValue() : 0);
+        token.setRefreshToken(accessToken.getRefreshToken());
 
         return token;
     }
 
+    // TODO : if we generate an access token with resource owner flow and then with the client credentials flow with the same client_id and scopes
+    // the server returns the same token, append grant_type information ?
     private AccessTokenCriteria convert(OAuth2Request oAuth2Request) {
         AccessTokenCriteria.Builder builder = new AccessTokenCriteria.Builder();
         builder.clientId(oAuth2Request.getClientId());
-
+        builder.scopes(oAuth2Request.getScopes());
         if (!oAuth2Request.isClientOnly()) {
             builder.subject(oAuth2Request.getSubject());
         }
-
-        builder.scopes(oAuth2Request.getScopes());
-
         return builder.build();
     }
 }

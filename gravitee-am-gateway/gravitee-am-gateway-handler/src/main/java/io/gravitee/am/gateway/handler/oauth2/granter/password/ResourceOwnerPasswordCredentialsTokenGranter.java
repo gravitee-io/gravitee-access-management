@@ -70,11 +70,11 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
         String password = parameters.getFirst(PASSWORD_PARAMETER);
 
         return userAuthenticationManager.authenticate(tokenRequest.getClientId(), new EndUserAuthentication(username, password))
-                .map(user -> {
-                    OAuth2Request storedRequest = tokenRequest.createOAuth2Request(client);
-                    storedRequest.setSubject(user.getId());
-                    return storedRequest;
-                })
+                .flatMap(user -> super.createOAuth2Request(tokenRequest, client)
+                        .map(oAuth2Request -> {
+                            oAuth2Request.setSubject(user.getId());
+                            return oAuth2Request;
+                        }))
                 .onErrorResumeNext(ex -> Single.error(new InvalidGrantException()));
     }
 

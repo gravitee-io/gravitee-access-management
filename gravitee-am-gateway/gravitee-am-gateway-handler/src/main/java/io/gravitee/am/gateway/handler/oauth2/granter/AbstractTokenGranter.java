@@ -40,6 +40,8 @@ public class AbstractTokenGranter implements TokenGranter {
 
     private TokenService tokenService;
 
+    private boolean supportRefreshToken = true;
+
     public AbstractTokenGranter(final String grantType) {
         Objects.requireNonNull(grantType);
         this.grantType = grantType;
@@ -69,7 +71,15 @@ public class AbstractTokenGranter implements TokenGranter {
     }
 
     protected Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client) {
-        return Single.just(tokenRequest.createOAuth2Request(client));
+        return Single.just(tokenRequest.createOAuth2Request())
+                .map(oAuth2Request -> {
+                    oAuth2Request.setSupportRefreshToken(isSupportRefreshToken());
+                    return oAuth2Request;
+                });
+    }
+
+    protected boolean isSupportRefreshToken() {
+        return supportRefreshToken;
     }
 
     public void setClientService(ClientService clientService) {
@@ -79,4 +89,5 @@ public class AbstractTokenGranter implements TokenGranter {
     public void setTokenService(TokenService tokenService) {
         this.tokenService = tokenService;
     }
+
 }

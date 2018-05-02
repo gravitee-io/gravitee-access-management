@@ -16,9 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.request;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
-
-import java.util.HashMap;
 
 /**
  * See <a href="https://tools.ietf.org/html/rfc6749#section-4.1.3"></a>
@@ -57,20 +56,18 @@ public class TokenRequest extends BaseRequest {
         this.password = password;
     }
 
-    public OAuth2Request createOAuth2Request(Client client) {
+    public OAuth2Request createOAuth2Request() {
         MultiValueMap<String, String> requestParameters = getRequestParameters();
-        HashMap<String, String> modifiable = new HashMap<String, String>(requestParameters.toSingleValueMap());
+        MultiValueMap<String, String> safeRequestParameters = new LinkedMultiValueMap(requestParameters);
+
         // Remove password if present to prevent leaks
-        modifiable.remove("password");
-        modifiable.remove("client_secret");
-        // Add grant type so it can be retrieved from OAuth2Request
-        // TODO is this necessary ?
-        modifiable.put("grant_type", grantType);
+        safeRequestParameters.remove("password");
+        safeRequestParameters.remove("client_secret");
 
         OAuth2Request oAuth2Request = new OAuth2Request();
-        oAuth2Request.setClientId(client.getClientId());
+        oAuth2Request.setClientId(getClientId());
         oAuth2Request.setScopes(getScopes());
-        oAuth2Request.setRequestParameters(requestParameters);
+        oAuth2Request.setRequestParameters(safeRequestParameters);
 
         return oAuth2Request;
     }

@@ -88,9 +88,11 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                         }
                     }
 
-                    OAuth2Request storedRequest = tokenRequest.createOAuth2Request(client);
-                    storedRequest.setSubject(authorizationCode.getSubject());
-                    return Single.just(storedRequest);
+                    return super.createOAuth2Request(tokenRequest, client)
+                            .map(oAuth2Request -> {
+                                oAuth2Request.setSubject(authorizationCode.getSubject());
+                                return oAuth2Request;
+                            });
                 });
         }
 }
