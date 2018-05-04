@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.spring;
 
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.gateway.handler.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.certificate.impl.CertificateManagerImpl;
 import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.idp.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
@@ -31,9 +33,13 @@ import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.introspection.impl.IntrospectionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.scope.impl.ScopeServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenEnhancerImpl;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.discovery.spring.OpenIDDiscoveryConfiguration;
+import io.gravitee.am.gateway.handler.role.RoleService;
+import io.gravitee.am.gateway.handler.role.impl.RoleServiceImpl;
 import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.gateway.handler.user.impl.UserServiceImpl;
 import io.gravitee.am.gateway.handler.vertx.spring.SecurityDomainRouterConfiguration;
@@ -100,5 +106,18 @@ public class HandlerConfiguration {
     @Bean
     public UserService userService() {
         return new UserServiceImpl();
+    }
+
+    @Bean
+    public TokenEnhancer tokenEnhancer() {
+        return new TokenEnhancerImpl();
+    }
+
+    @Bean
+    public CertificateManager certificateManager() { return new CertificateManagerImpl(); }
+
+    @Bean
+    public RoleService roleService() {
+        return new RoleServiceImpl();
     }
 }

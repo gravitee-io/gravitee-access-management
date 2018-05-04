@@ -20,6 +20,7 @@ import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,6 +45,7 @@ public class UserMongo extends Auditable {
     private String client;
     private long loginsCount;
     private Date loggedAt;
+    private List<String> roles;
     /**
      * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
      */
@@ -167,6 +169,14 @@ public class UserMongo extends Auditable {
 
     public void setLoggedAt(Date loggedAt) {
         this.loggedAt = loggedAt;
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 
     public Document getAdditionalInformation() {

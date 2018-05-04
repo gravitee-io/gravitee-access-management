@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
@@ -23,6 +24,7 @@ import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.TokenEndpointHandler;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -38,8 +40,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Collections;
+import java.util.Map;
+
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -54,6 +58,9 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
 
     @Mock
     private TokenGranter tokenGranter;
+
+    @Mock
+    private ClientService clientService;
 
     @Override
     public void setUp() throws Exception {
@@ -166,8 +173,18 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
             public String getScope() {
                 return null;
             }
+
+            @Override
+            public Map<String, Object> getAdditionalInformation() {
+                return null;
+            }
         };
 
+        io.gravitee.am.model.Client client = new io.gravitee.am.model.Client();
+        client.setClientId("my-client");
+        client.setScopes(Collections.singletonList("read"));
+
+        when(clientService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(tokenGranter.grant(any(TokenRequest.class))).thenReturn(Single.just(accessToken));
 
         testRequest(

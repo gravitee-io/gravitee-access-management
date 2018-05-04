@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.oauth2.token.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -28,6 +30,7 @@ public class DefaultAccessToken implements AccessToken {
     private int expiresIn;
     private String refreshToken;
     private String scope;
+    private Map<String, Object> additionalInformation;
 
     public DefaultAccessToken(String value) {
         this.value = value;
@@ -72,5 +75,13 @@ public class DefaultAccessToken implements AccessToken {
 
     public void setExpiresIn(int expiresIn) {
         this.expiresIn = expiresIn;
+    }
+
+    public Map<String, Object> getAdditionalInformation() {
+        return additionalInformation;
+    }
+
+    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
+        this.additionalInformation = additionalInformation;
     }
 }

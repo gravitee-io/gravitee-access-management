@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.token.impl;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
@@ -51,6 +52,9 @@ public class TokenServiceImpl implements TokenService {
 
     @Autowired
     private ClientService clientService;
+
+    @Autowired
+    private TokenEnhancer tokenEnhancer;
 
     @Override
     public Maybe<AccessToken> get(String accessToken) {
@@ -104,6 +108,7 @@ public class TokenServiceImpl implements TokenService {
                     accessToken.setExpireAt(new Date(System.currentTimeMillis() + (getAccessTokenValiditySeconds(client) * 1000L)));
                     accessToken.setCreatedAt(new Date());
                     accessToken.setRefreshToken(null);
+                    accessToken.setRequestedScopes(oAuth2Request.getScopes());
                     accessToken.setScopes(oAuth2Request.getScopes());
                     if (!oAuth2Request.isClientOnly()) {
                         accessToken.setSubject(oAuth2Request.getSubject());
@@ -120,7 +125,7 @@ public class TokenServiceImpl implements TokenService {
                                     return Single.just(accessToken);
                                 }
                             })
-                            // TODO token enhancer
+                            .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request))
                             .flatMap(accessTokenRepository::create);
                 });
     }
@@ -152,6 +157,7 @@ public class TokenServiceImpl implements TokenService {
         }
         token.setExpiresIn(accessToken.getExpireAt() != null ? Long.valueOf((accessToken.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L).intValue() : 0);
         token.setRefreshToken(accessToken.getRefreshToken());
+        token.setAdditionalInformation(accessToken.getAdditionalInformation());
 
         return token;
     }

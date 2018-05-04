@@ -15,14 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.user.impl;
 
-import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.model.NewUser;
-import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -33,6 +30,7 @@ import java.util.Date;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class UserServiceImpl implements UserService {
@@ -53,8 +51,15 @@ public class UserServiceImpl implements UserService {
                     logger.debug("Updating user: username[%s]", user.getUsername());
                     existingUser.setLoggedAt(new Date());
                     existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
-                    //TODO: How to map additional informations ?
-                    // updateUser.setAdditionalInformation(principal.getAdditionalInformation());
+                    existingUser.setRoles(user.getRoles());
+                    existingUser.setAdditionalInformation(user.getAdditionalInformation());
+                    //TODO: How to map these informations ?
+                    /*
+                    if (details != null) {
+                        newUser.setSource(details.get(SOURCE));
+                        newUser.setClient(CLIENT_ID);
+                    }
+                    */
                     return userRepository.update(existingUser);
                 })
                 .onErrorResumeNext(ex -> {
@@ -73,11 +78,16 @@ public class UserServiceImpl implements UserService {
                         newUser.setCreatedAt(new Date());
                         newUser.setLoggedAt(new Date());
                         newUser.setLoginsCount(1L);
-                        //TODO: How to map additional informations ?
-                        // newUser.setAdditionalInformation(principal.getAdditionalInformation());
+                        newUser.setRoles(user.getRoles());
+                        newUser.setAdditionalInformation(user.getAdditionalInformation());
                         return userRepository.create(newUser);
                     }
                     return Single.error(ex);
                 });
+    }
+
+    @Override
+    public Maybe<User> findById(String id) {
+        return userRepository.findById(id);
     }
 }

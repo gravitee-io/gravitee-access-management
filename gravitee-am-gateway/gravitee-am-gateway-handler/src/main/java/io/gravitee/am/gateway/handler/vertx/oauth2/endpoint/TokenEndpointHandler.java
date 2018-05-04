@@ -15,17 +15,17 @@
  */
 package io.gravitee.am.gateway.handler.vertx.oauth2.endpoint;
 
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.oauth2.request.TokenRequestFactory;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.SingleObserver;
-import io.reactivex.disposables.Disposable;
+import io.reactivex.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.auth.User;
@@ -44,12 +44,15 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 public class TokenEndpointHandler implements Handler<RoutingContext> {
 
     private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
+    private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
     private TokenGranter tokenGranter;
+    private ClientService clientService;
 
     public TokenEndpointHandler() { }
 
-    public TokenEndpointHandler(TokenGranter tokenGranter) {
+    public TokenEndpointHandler(TokenGranter tokenGranter, ClientService clientService) {
         this.tokenGranter = tokenGranter;
+        this.clientService = clientService;
     }
 
     @Override
@@ -73,34 +76,23 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
             throw new InvalidClientException();
         }
 
-        tokenGranter.grant(tokenRequest)
-                .subscribe(new SingleObserver<AccessToken>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-
-                    }
-
-                    @Override
-                    public void onSuccess(AccessToken accessToken) {
-                        context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .end(Json.encodePrettily(accessToken));
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        context.fail(e);
-                    }
-                });
-    }
-
-    public TokenGranter getTokenGranter() {
-        return tokenGranter;
+        clientService.findByClientId(client.getClientId())
+                .switchIfEmpty(Maybe.error(new InvalidRequestException("No client with id : " + client.getClientId())))
+                .flatMapSingle(client1 -> tokenRequestResolver.resolve(tokenRequest, client1))
+                .flatMap(tokenRequest1 -> tokenGranter.grant(tokenRequest1))
+                .subscribe(accessToken -> context.response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .end(Json.encodePrettily(accessToken))
+                        , error -> context.fail(error));
     }
 
     public void setTokenGranter(TokenGranter tokenGranter) {
         this.tokenGranter = tokenGranter;
+    }
+
+    public void setClientService(ClientService clientService) {
+        this.clientService = clientService;
     }
 }

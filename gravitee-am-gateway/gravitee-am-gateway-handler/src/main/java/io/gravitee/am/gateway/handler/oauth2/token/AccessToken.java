@@ -15,8 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.token;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.gravitee.am.gateway.handler.oauth2.token.jackson.AccessTokenSerializer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * See definition at <a href="https://tools.ietf.org/html/rfc6749#section-1.4"></a>
@@ -27,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonSerialize(using = AccessTokenSerializer.class)
 public interface AccessToken {
 
     String BEARER_TYPE = "Bearer";
@@ -65,18 +68,17 @@ public interface AccessToken {
      */
     String SCOPE = "scope";
 
-    @JsonProperty(ACCESS_TOKEN)
+    Map<String, Object> additionalInformation = new HashMap<>();
+
     String getValue();
 
-    @JsonProperty(TOKEN_TYPE)
     String getTokenType();
 
-    @JsonProperty(EXPIRES_IN)
     int getExpiresIn();
 
-    @JsonProperty(REFRESH_TOKEN)
     String getRefreshToken();
 
-    @JsonProperty(SCOPE)
     String getScope();
+
+    Map<String, Object> getAdditionalInformation();
 }

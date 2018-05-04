@@ -13,31 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.user;
+package io.gravitee.am.gateway.handler.role.impl;
 
-import io.gravitee.am.model.User;
-import io.reactivex.Maybe;
+import io.gravitee.am.gateway.handler.role.RoleService;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.repository.management.api.RoleRepository;
 import io.reactivex.Single;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
+import java.util.Set;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserService {
+public class RoleServiceImpl implements RoleService {
 
-    /**
-     * Used after a successful authentication.
-     * Perhaps not the best place to put this method.
-     *
-     * @param user
-     * @return
-     */
-    Single<User> findOrCreate(io.gravitee.am.identityprovider.api.User user);
+    @Autowired
+    private RoleRepository roleRepository;
 
-    /**
-     * Find user by its technical id
-     * @param id user technical id
-     * @return user or empty
-     */
-    Maybe<User> findById(String id);
+    @Override
+    public Single<Set<Role>> findByIdIn(List<String> roles) {
+        return roleRepository.findByIdIn(roles);
+    }
 }

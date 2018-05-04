@@ -18,8 +18,6 @@ package io.gravitee.am.gateway.handler.vertx.auth.provider;
 import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.reactivex.SingleObserver;
-import io.reactivex.disposables.Disposable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -50,22 +48,10 @@ public class UserAuthenticationProvider implements AuthProvider {
         String clientId = authInfo.getString(OAuth2Constants.CLIENT_ID);
 
         userAuthenticationManager.authenticate(clientId, new EndUserAuthentication(username, password))
-                .subscribe(new SingleObserver<io.gravitee.am.model.User>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-
-                    }
-
-                    @Override
-                    public void onSuccess(io.gravitee.am.model.User user) {
-                        resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.vertx.auth.user.User(user)));
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        resultHandler.handle(Future.failedFuture(e));
-                    }
-                });
+                .subscribe(
+                        user -> resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.vertx.auth.user.User(user))),
+                        error -> resultHandler.handle(Future.failedFuture(error))
+                );
     }
 
     public void setUserAuthenticationManager(UserAuthenticationManager userAuthenticationManager) {

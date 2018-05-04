@@ -13,31 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.user;
+package io.gravitee.am.gateway.handler.oauth2.token;
 
-import io.gravitee.am.model.User;
-import io.reactivex.Maybe;
+import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
+import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.Single;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserService {
+public interface TokenEnhancer {
 
-    /**
-     * Used after a successful authentication.
-     * Perhaps not the best place to put this method.
-     *
-     * @param user
-     * @return
-     */
-    Single<User> findOrCreate(io.gravitee.am.identityprovider.api.User user);
-
-    /**
-     * Find user by its technical id
-     * @param id user technical id
-     * @return user or empty
-     */
-    Maybe<User> findById(String id);
+    Single<AccessToken> enhance(AccessToken accessToken, OAuth2Request oAuth2Request);
 }

@@ -19,8 +19,6 @@ import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.BadClientCredentialsException;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
-import io.reactivex.MaybeObserver;
-import io.reactivex.disposables.Disposable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -55,31 +53,20 @@ public class ClientAuthenticationProvider implements AuthProvider {
 
         clientService
                 .findByClientId(clientId)
-                .subscribe(new MaybeObserver<io.gravitee.am.model.Client>() {
-                    @Override
-                    public void onSubscribe(Disposable disposable) {
-                    }
-
-                    @Override
-                    public void onSuccess(io.gravitee.am.model.Client client) {
-                        if (client.getClientSecret().equals(clientSecret)) {
-                            authHandler.handle(Future.succeededFuture(new Client(client.getClientId())));
-                        } else {
-                            authHandler.handle(Future.failedFuture(new BadClientCredentialsException()));
-                        }
-                    }
-
-                    @Override
-                    public void onError(Throwable throwable) {
-                        logger.error("Unexpected error while looking for a client: clientId[{}]", clientId, throwable);
-                        authHandler.handle(Future.failedFuture(throwable));
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        authHandler.handle(Future.failedFuture(new BadClientCredentialsException()));
-                    }
-                });
+                .subscribe(
+                        client -> {
+                            if (client.getClientSecret().equals(clientSecret)) {
+                                authHandler.handle(Future.succeededFuture(new Client(client.getClientId())));
+                            } else {
+                                authHandler.handle(Future.failedFuture(new BadClientCredentialsException()));
+                            }
+                        },
+                        error -> {
+                            logger.error("Unexpected error while looking for a client: clientId[{}]", clientId, error);
+                            authHandler.handle(Future.failedFuture(error));
+                        },
+                        () -> authHandler.handle(Future.failedFuture(new BadClientCredentialsException()))
+                );
     }
 
     public void setClientService(ClientService clientService) {

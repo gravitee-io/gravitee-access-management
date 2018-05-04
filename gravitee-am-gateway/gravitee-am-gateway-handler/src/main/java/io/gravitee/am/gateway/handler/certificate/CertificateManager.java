@@ -13,31 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.user;
+package io.gravitee.am.gateway.handler.certificate;
 
-import io.gravitee.am.model.User;
+import io.gravitee.am.certificate.api.CertificateProvider;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserService {
+public interface CertificateManager {
 
-    /**
-     * Used after a successful authentication.
-     * Perhaps not the best place to put this method.
-     *
-     * @param user
-     * @return
-     */
-    Single<User> findOrCreate(io.gravitee.am.identityprovider.api.User user);
-
-    /**
-     * Find user by its technical id
-     * @param id user technical id
-     * @return user or empty
-     */
-    Maybe<User> findById(String id);
+    Maybe<CertificateProvider> get(String id);
 }

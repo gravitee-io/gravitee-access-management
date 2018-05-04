@@ -22,6 +22,9 @@ import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -33,6 +36,10 @@ public final class TokenRequestFactory {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId(request.params().get(OAuth2Constants.CLIENT_ID));
         tokenRequest.setGrantType(request.params().get(OAuth2Constants.GRANT_TYPE));
+        String scopes = request.params().get(OAuth2Constants.SCOPE);
+        if (scopes != null) {
+            tokenRequest.setScopes(new HashSet<>(Arrays.asList(scopes.split(" "))));
+        }
         tokenRequest.setRequestParameters(extractRequestParameters(request));
         return tokenRequest;
     }
@@ -40,6 +47,7 @@ public final class TokenRequestFactory {
     public TokenRequest create(AuthorizationRequest authorizationRequest) {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId(authorizationRequest.getClientId());
+        tokenRequest.setScopes(authorizationRequest.getScopes());
         tokenRequest.setRequestParameters(authorizationRequest.getRequestParameters());
         return tokenRequest;
     }

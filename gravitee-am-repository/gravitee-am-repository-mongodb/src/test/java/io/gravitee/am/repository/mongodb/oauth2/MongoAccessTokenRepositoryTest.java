@@ -110,6 +110,7 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
         token.setToken("my-token");
         token.setClientId("my-client-id-3");
         token.setSubject("my-subject-3");
+        token.setRequestedScopes(Collections.singleton("read"));
         token.setScopes(Collections.singleton("read"));
 
         AccessTokenCriteria.Builder builder = new AccessTokenCriteria.Builder();

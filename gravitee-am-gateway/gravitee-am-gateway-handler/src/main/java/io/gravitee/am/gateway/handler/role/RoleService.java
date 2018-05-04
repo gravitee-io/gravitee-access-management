@@ -13,31 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.user;
+package io.gravitee.am.gateway.handler.role;
 
-import io.gravitee.am.model.User;
-import io.reactivex.Maybe;
+import io.gravitee.am.model.Role;
 import io.reactivex.Single;
 
+import java.util.List;
+import java.util.Set;
+
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserService {
+public interface RoleService {
 
-    /**
-     * Used after a successful authentication.
-     * Perhaps not the best place to put this method.
-     *
-     * @param user
-     * @return
-     */
-    Single<User> findOrCreate(io.gravitee.am.identityprovider.api.User user);
-
-    /**
-     * Find user by its technical id
-     * @param id user technical id
-     * @return user or empty
-     */
-    Maybe<User> findById(String id);
+    Single<Set<Role>> findByIdIn(List<String> roles);
 }

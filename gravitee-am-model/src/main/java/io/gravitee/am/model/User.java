@@ -16,7 +16,9 @@
 package io.gravitee.am.model;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -56,6 +58,8 @@ public class User {
     private long loginsCount;
 
     private Date loggedAt;
+
+    private List<String> roles;
 
     private Map<String, Object> additionalInformation;
 
@@ -181,6 +185,14 @@ public class User {
 
     public void setLoggedAt(Date loggedAt) {
         this.loggedAt = loggedAt;
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 
     public Map<String, Object> getAdditionalInformation() {

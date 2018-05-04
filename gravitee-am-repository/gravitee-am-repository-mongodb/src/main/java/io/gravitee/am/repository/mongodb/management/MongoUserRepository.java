@@ -130,6 +130,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         user.setClient(userMongo.getClient());
         user.setLoginsCount(userMongo.getLoginsCount());
         user.setLoggedAt(userMongo.getLoggedAt());
+        user.setRoles(userMongo.getRoles());
         user.setAdditionalInformation(userMongo.getAdditionalInformation());
         user.setCreatedAt(userMongo.getCreatedAt());
         user.setUpdatedAt(userMongo.getUpdatedAt());
@@ -157,6 +158,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         userMongo.setClient(user.getClient());
         userMongo.setLoginsCount(user.getLoginsCount());
         userMongo.setLoggedAt(user.getLoggedAt());
+        userMongo.setRoles(user.getRoles());
         userMongo.setAdditionalInformation(user.getAdditionalInformation() != null ? new Document(user.getAdditionalInformation()) : new Document());
         userMongo.setCreatedAt(user.getCreatedAt());
         userMongo.setUpdatedAt(user.getUpdatedAt());

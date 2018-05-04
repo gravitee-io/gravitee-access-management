@@ -100,7 +100,7 @@ public class OAuth2Router {
         // Bind OAuth2 endpoints
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(authorizationCodeService, tokenGranter, clientService, approvalService, domain);
         Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(authorizationCodeService, tokenGranter, approvalService);
-        Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler(tokenGranter);
+        Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler(tokenGranter, clientService);
         Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(clientService, scopeService);
 
         // Check_token is provided only for backward compatibility and must be remove in the future

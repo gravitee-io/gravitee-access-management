@@ -16,6 +16,8 @@
 package io.gravitee.am.repository.oauth2.model;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -50,9 +52,14 @@ public class AccessToken {
     private String clientId;
 
     /**
-     * List of scope asked by the client
+     * List of scope asked by the client with extra user permission scopes (if override option is enabled)
      */
     private Set<String> scopes;
+
+    /**
+     * List of scope asked by the client
+     */
+    private Set<String> requestedScopes;
 
     /**
      * Reference to the refresh_token
@@ -63,6 +70,11 @@ public class AccessToken {
      * Technical identifier of the end-user.
      */
     private String subject;
+
+    /**
+     * Additional information such as the id_token
+     */
+    private Map<String, Object> additionalInformation = new HashMap<>();
 
     public String getId() {
         return id;
@@ -108,6 +120,14 @@ public class AccessToken {
         return scopes;
     }
 
+    public Set<String> getRequestedScopes() {
+        return requestedScopes;
+    }
+
+    public void setRequestedScopes(Set<String> requestedScopes) {
+        this.requestedScopes = requestedScopes;
+    }
+
     public void setScopes(Set<String> scopes) {
         this.scopes = scopes;
     }
@@ -126,6 +146,14 @@ public class AccessToken {
 
     public void setSubject(String subject) {
         this.subject = subject;
+    }
+
+    public Map<String, Object> getAdditionalInformation() {
+        return additionalInformation;
+    }
+
+    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
+        this.additionalInformation = additionalInformation;
     }
 
     @Override

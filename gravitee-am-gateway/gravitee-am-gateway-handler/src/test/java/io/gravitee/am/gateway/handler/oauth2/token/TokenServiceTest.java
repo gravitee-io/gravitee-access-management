@@ -55,6 +55,9 @@ public class TokenServiceTest {
     @Mock
     private ClientService clientService;
 
+    @Mock
+    private TokenEnhancer tokenEnhancer;
+
     @Test
     public void shouldCreate_noExistingToken() {
         OAuth2Request oAuth2Request = new OAuth2Request();
@@ -62,6 +65,7 @@ public class TokenServiceTest {
         when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.empty());
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
+        when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
         TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request).test();
         testObserver.assertComplete();
@@ -103,6 +107,7 @@ public class TokenServiceTest {
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.just(existingToken));
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
         when(accessTokenRepository.delete(anyString())).thenReturn(Completable.fromSingle(Single.just(new Object())));
+        when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
         TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request).test();
         testObserver.assertComplete();
@@ -127,6 +132,7 @@ public class TokenServiceTest {
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
         when(accessTokenRepository.delete(anyString())).thenReturn(Completable.fromSingle(Single.just(new Object())));
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.fromSingle(Single.just(new Object())));
+        when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
         TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request).test();
         testObserver.assertComplete();

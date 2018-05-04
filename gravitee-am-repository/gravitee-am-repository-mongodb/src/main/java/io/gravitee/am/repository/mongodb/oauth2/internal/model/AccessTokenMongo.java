@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2.internal.model;
 
+import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -41,12 +43,20 @@ public class AccessTokenMongo {
     @BsonProperty("client_id")
     private String clientId;
 
+    @BsonProperty("requested_scopes")
+    private Set<String> requestedScopes;
+
     private Set<String> scopes;
 
     @BsonProperty("refresh_token")
     private String refreshToken;
 
     private String subject;
+
+    /**
+     * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
+     */
+    private Document additionalInformation;
 
     public String getId() {
         return id;
@@ -88,6 +98,14 @@ public class AccessTokenMongo {
         this.clientId = clientId;
     }
 
+    public Set<String> getRequestedScopes() {
+        return requestedScopes;
+    }
+
+    public void setRequestedScopes(Set<String> requestedScopes) {
+        this.requestedScopes = requestedScopes;
+    }
+
     public Set<String> getScopes() {
         return scopes;
     }
@@ -110,6 +128,14 @@ public class AccessTokenMongo {
 
     public void setSubject(String subject) {
         this.subject = subject;
+    }
+
+    public Document getAdditionalInformation() {
+        return additionalInformation;
+    }
+
+    public void setAdditionalInformation(Document additionalInformation) {
+        this.additionalInformation = additionalInformation;
     }
 
     @Override
