@@ -28,11 +28,12 @@ import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHa
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.UserAuthenticationProvider;
-import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.*;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.AuthorizationApprovalEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.AuthorizationEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.UserApprovalEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection.CheckTokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection.IntrospectionEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.token.TokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.handler.AuthorizationRequestParseHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.MediaType;

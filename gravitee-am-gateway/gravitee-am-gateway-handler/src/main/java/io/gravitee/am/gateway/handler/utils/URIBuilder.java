@@ -59,7 +59,7 @@ public class URIBuilder {
 
     private String scheme;
     private String host;
-    private int port;
+    private int port = -1;
     private String userInfo;
     private String path;
     private String query;
@@ -93,6 +93,32 @@ public class URIBuilder {
             throw new IllegalArgumentException("[" + uri + "] is not a valid URI");
         }
     }
+
+    public static URIBuilder fromHttpUrl(String httpUrl) {
+        Matcher matcher = HTTP_URL_PATTERN.matcher(httpUrl);
+        if (matcher.matches()) {
+            URIBuilder builder = new URIBuilder();
+            String scheme = matcher.group(1);
+            builder.scheme(scheme != null ? scheme.toLowerCase() : null);
+            builder.userInfo(matcher.group(4));
+            String host = matcher.group(5);
+            if ((scheme != null && !scheme.isEmpty()) && (host == null || host.isEmpty())) {
+                throw new IllegalArgumentException("[" + httpUrl + "] is not a valid HTTP URL");
+            }
+            builder.host(host);
+            String port = matcher.group(7);
+            if (port != null && !port.isEmpty()) {
+                builder.port(Integer.valueOf(port));
+            }
+            builder.path(matcher.group(8));
+            builder.query(matcher.group(10));
+            return builder;
+        }
+        else {
+            throw new IllegalArgumentException("[" + httpUrl + "] is not a valid HTTP URL");
+        }
+    }
+
 
     public URIBuilder scheme(String scheme) {
         this.scheme = scheme;
@@ -133,7 +159,7 @@ public class URIBuilder {
         if (query == null) {
             query = "";
         }
-        if (query.toString().length() > 0) {
+        if (query.length() > 0) {
             query += "&";
         }
         query += parameter + "=" + value;
@@ -144,7 +170,7 @@ public class URIBuilder {
         if (fragment == null) {
             fragment = "";
         }
-        if (fragment.toString().length() > 0) {
+        if (fragment.length() > 0) {
             fragment += "&";
         }
         fragment += parameter + "=" + value;

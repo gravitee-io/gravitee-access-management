@@ -15,52 +15,69 @@
  */
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
-import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
-import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection.CheckTokenEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.login.LoginEndpointHandler;
+import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Maybe;
 import io.vertx.core.http.HttpMethod;
-import org.junit.Ignore;
+import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.when;
+
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-@Ignore
-public class CheckTokenEndpointHandlerTest extends RxWebTestBase {
+public class LoginEndpointHandlerTest extends RxWebTestBase {
 
     @InjectMocks
-    private CheckTokenEndpointHandler checkTokenEndpointHandler = new CheckTokenEndpointHandler();
+    private LoginEndpointHandler loginEndpointHandler = new LoginEndpointHandler();
 
     @Mock
-    private TokenService tokenService;
+    private ThymeleafTemplateEngine engine;
+
+    @Mock
+    private Domain domain;
+
+    @Mock
+    private ClientService clientService;
+
+    @Mock
+    private IdentityProviderManager identityProviderManager;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        router.route(HttpMethod.POST, "/oauth/check_token").handler(checkTokenEndpointHandler);
+        router.route(HttpMethod.GET, "/login").handler(loginEndpointHandler);
         router.route().failureHandler(new ExceptionHandler());
     }
 
     @Test
-    public void shouldNotFound() throws Exception {
+    public void shouldNotInvokeLoginEndpoint_noClientParameter() throws Exception {
         testRequest(
-                HttpMethod.GET, "/oauth/check_token",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+                HttpMethod.GET, "/login",
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
     }
 
     @Test
-    public void shouldReturnInvalidToken_noTokenProvided() throws Exception {
+    public void shouldNotInvokeLoginEndpoint_noClient() throws Exception {
+        when(clientService.findByClientId(anyString())).thenReturn(Maybe.empty());
+
         testRequest(
-                HttpMethod.POST, "/oauth/check_token",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+                HttpMethod.GET, "/login?client_id=test",
+                HttpStatusCode.NOT_FOUND_404, "Not Found");
     }
+
 }

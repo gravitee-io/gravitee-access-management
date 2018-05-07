@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.oauth2.endpoint;
+package io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.token;
 
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;

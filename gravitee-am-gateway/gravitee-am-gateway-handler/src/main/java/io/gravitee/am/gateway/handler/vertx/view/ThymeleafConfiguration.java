@@ -13,36 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.spring;
+package io.gravitee.am.gateway.handler.vertx.view;
 
-import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
-import io.gravitee.am.gateway.handler.vertx.oauth2.OAuth2Router;
-import io.gravitee.am.gateway.handler.vertx.oidc.OIDCRouter;
-import io.gravitee.am.gateway.handler.vertx.view.ThymeleafConfiguration;
+import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import org.thymeleaf.templateresolver.ITemplateResolver;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Import(ThymeleafConfiguration.class)
 @Configuration
-public class SecurityDomainRouterConfiguration {
+public class ThymeleafConfiguration {
 
     @Bean
-    public VertxSecurityDomainHandler securityDomainHandler() {
-        return new VertxSecurityDomainHandler();
+    public ThymeleafTemplateResolverFactory getTemplateResolver() {
+        return new ThymeleafTemplateResolverFactory();
     }
 
     @Bean
-    public OIDCRouter oidcRouter() {
-        return new OIDCRouter();
+    public ThymeleafTemplateEngine getTemplateEngine(ITemplateResolver templateResolver) {
+        ThymeleafTemplateEngine thymeleafTemplateEngine = ThymeleafTemplateEngine.create();
+        thymeleafTemplateEngine.getDelegate().getThymeleafTemplateEngine().setTemplateResolver(templateResolver);
+        return thymeleafTemplateEngine;
     }
 
-    @Bean
-    public OAuth2Router oAuth2Router() {
-        return new OAuth2Router();
-    }
 }

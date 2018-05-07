@@ -22,7 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
-import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.TokenEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.token.TokenEndpointHandler;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
