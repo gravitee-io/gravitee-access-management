@@ -76,7 +76,7 @@ public class CertificateServiceImpl implements CertificateService {
     @Value("${certificates.path:${gravitee.home}/certificates}")
     private String certificatesPath;
 
-    private Map<String, Map<String, CertificateProvider>> certificateProviders = new HashMap<>();
+    private Map<String, CertificateProvider> certificateProviders = new HashMap<>();
 
     @Override
     public Maybe<Certificate> findById(String id) {
@@ -97,6 +97,17 @@ public class CertificateServiceImpl implements CertificateService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find certificates by domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find certificates by domain", ex));
+                });
+    }
+
+    @Override
+    public Single<List<Certificate>> findAll() {
+        LOGGER.debug("Find all certificates");
+        return certificateRepository.findAll()
+                .flatMap(certificates -> Single.just((List<Certificate>) new ArrayList<>(certificates)))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find all certificates", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find all certificates by domain", ex));
                 });
     }
 
@@ -279,15 +290,17 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public void setCertificateProviders(String domainId, Map<String, CertificateProvider> certificateProviders) {
-        this.certificateProviders.put(domainId, certificateProviders);
+    // TODO : refactor (after JWKS information)
+    public void setCertificateProviders(Map<String, CertificateProvider> certificateProviders) {
+        this.certificateProviders = certificateProviders;
     }
 
     @Override
-    public Maybe<CertificateProvider> getCertificateProvider(String domainId, String certificateId) {
+    // TODO : refactor (after JWKS information)
+    public Maybe<CertificateProvider> getCertificateProvider(String certificateId) {
         return Maybe.create(emitter -> {
             try {
-                CertificateProvider certificateProvider = this.certificateProviders.get(domainId).get(certificateId);
+                CertificateProvider certificateProvider = this.certificateProviders.get(certificateId);
                 if (certificateProvider != null) {
                     emitter.onSuccess(certificateProvider);
                 } else {

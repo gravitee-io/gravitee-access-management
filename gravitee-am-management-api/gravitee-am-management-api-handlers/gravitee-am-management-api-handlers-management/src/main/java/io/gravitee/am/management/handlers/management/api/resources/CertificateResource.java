@@ -91,7 +91,7 @@ public class CertificateResource {
     public void getPublicKey(@PathParam("domain") String domain,
                              @PathParam("certificate") String certificate,
                              @Suspended final AsyncResponse response) {
-        certificateService.getCertificateProvider(domain, certificate)
+        certificateService.getCertificateProvider(certificate)
                 .map(certificateProvider -> Response.ok(certificateProvider.publicKey()).build())
                 .switchIfEmpty(Maybe.error(new BadRequestException("No certificate provider found for the certificate " + certificate)))
                 .subscribe(

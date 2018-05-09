@@ -34,6 +34,8 @@ public interface CertificateService {
 
     Maybe<Certificate> findById(String id);
 
+    Single<List<Certificate>> findAll();
+
     Single<List<Certificate>> findByDomain(String domain);
 
     Single<Certificate> create(String domain, NewCertificate newCertificate, String schema);
@@ -42,7 +44,7 @@ public interface CertificateService {
 
     Single<Irrelevant> delete(String certificateId);
 
-    void setCertificateProviders(String domainId, Map<String, CertificateProvider> certificateProviders);
+    void setCertificateProviders(Map<String, CertificateProvider> certificateProviders);
 
-    Maybe<CertificateProvider> getCertificateProvider(String domainId, String certificateId);
+    Maybe<CertificateProvider> getCertificateProvider(String certificateId);
 }

@@ -22,6 +22,7 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.jwtbearer.JwtBearerExtensionGrantConfiguration;
 import io.jsonwebtoken.*;
+import io.reactivex.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -54,13 +55,13 @@ public class JwtBearerExtensionGrantProvider implements ExtensionGrantProvider, 
     private JwtBearerExtensionGrantConfiguration jwtBearerTokenGranterConfiguration;
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         jwtParser = Jwts.parser();
         jwtParser.setSigningKey(parsePublicKey(jwtBearerTokenGranterConfiguration.getPublicKey()));
     }
 
     @Override
-    public User grant(TokenRequest tokenRequest) throws InvalidGrantException {
+    public Maybe<User> grant(TokenRequest tokenRequest) throws InvalidGrantException {
         try {
             String assertion = tokenRequest.getRequestParameters().get(ASSERTION_QUERY_PARAM);
 
@@ -69,13 +70,10 @@ public class JwtBearerExtensionGrantProvider implements ExtensionGrantProvider, 
             }
             Jws<Claims> jwsClaims = jwtParser.parseClaimsJws(assertion);
             Claims claims = jwsClaims.getBody();
-            return new DefaultUser(claims.getSubject());
-        } catch (SignatureException e) {
-            LOGGER.error(e.getMessage(),e.getCause());
-            throw new InvalidGrantException(e.getMessage(), e);
+            return Maybe.just(new DefaultUser(claims.getSubject()));
         } catch (Exception e) {
             LOGGER.error(e.getMessage(),e.getCause());
-            throw new InvalidGrantException(e.getMessage(), e);
+            return Maybe.error(new InvalidGrantException(e.getMessage(), e));
         }
     }
 

@@ -72,6 +72,11 @@ public class AccessToken {
     private String subject;
 
     /**
+     * Grant type used to get the access token
+     */
+    private String grantType;
+
+    /**
      * Additional information such as the id_token
      */
     private Map<String, Object> additionalInformation = new HashMap<>();
@@ -146,6 +151,14 @@ public class AccessToken {
 
     public void setSubject(String subject) {
         this.subject = subject;
+    }
+
+    public String getGrantType() {
+        return grantType;
+    }
+
+    public void setGrantType(String grantType) {
+        this.grantType = grantType;
     }
 
     public Map<String, Object> getAdditionalInformation() {

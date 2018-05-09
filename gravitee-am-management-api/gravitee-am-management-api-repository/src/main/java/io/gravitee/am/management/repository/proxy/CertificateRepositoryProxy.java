@@ -31,8 +31,14 @@ import java.util.Set;
 @Component
 public class CertificateRepositoryProxy extends AbstractProxy<CertificateRepository> implements CertificateRepository {
 
+    @Override
     public Single<Set<Certificate>> findByDomain(String domain) {
         return target.findByDomain(domain);
+    }
+
+    @Override
+    public Single<Set<Certificate>> findAll() {
+        return target.findAll();
     }
 
     @Override

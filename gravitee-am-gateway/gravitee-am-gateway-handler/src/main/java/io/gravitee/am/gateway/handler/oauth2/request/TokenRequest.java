@@ -68,6 +68,7 @@ public class TokenRequest extends BaseRequest {
         oAuth2Request.setClientId(getClientId());
         oAuth2Request.setScopes(getScopes());
         oAuth2Request.setRequestParameters(safeRequestParameters);
+        oAuth2Request.setGrantType(getGrantType());
 
         return oAuth2Request;
     }

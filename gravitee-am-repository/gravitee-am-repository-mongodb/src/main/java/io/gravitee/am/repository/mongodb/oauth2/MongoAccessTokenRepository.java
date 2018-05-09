@@ -51,6 +51,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     private static final String FIELD_SUBJECT = "subject";
     private static final String FIELD_ID = "_id";
     private static final String FIELD_REQUESTED_SCOPES = "requested_scopes";
+    private static final String FIELD_GRANT_TYPE = "grant_type";
 
     @PostConstruct
     public void init() {
@@ -58,6 +59,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1)).subscribe(new LoggableIndexSubscriber());
         accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1)).subscribe(new LoggableIndexSubscriber());
         accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1).append(FIELD_REQUESTED_SCOPES, 1)).subscribe(new LoggableIndexSubscriber());
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1).append(FIELD_REQUESTED_SCOPES, 1).append(FIELD_GRANT_TYPE, 1)).subscribe(new LoggableIndexSubscriber());
         accessTokenCollection.createIndex(new Document(FIELD_TOKEN, 1)).subscribe(new LoggableIndexSubscriber());
         accessTokenCollection.createIndex(new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS)).subscribe(new LoggableIndexSubscriber());
     }
@@ -119,6 +121,10 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
             filters.add(eq(FIELD_REQUESTED_SCOPES, accessTokenCriteria.getScopes()));
         }
 
+        if (accessTokenCriteria.getGrantType() != null) {
+            filters.add(eq(FIELD_GRANT_TYPE, accessTokenCriteria.getGrantType()));
+        }
+
         // no filter selected, return empty
         if (filters.isEmpty()) {
             return Maybe.empty();
@@ -142,6 +148,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessTokenMongo.setSubject(accessToken.getSubject());
         accessTokenMongo.setRequestedScopes(accessToken.getRequestedScopes());
         accessTokenMongo.setScopes(accessToken.getScopes());
+        accessTokenMongo.setGrantType(accessToken.getGrantType());
         accessTokenMongo.setAdditionalInformation(accessToken.getAdditionalInformation() != null ? new Document(accessToken.getAdditionalInformation()) : new Document());
 
         return accessTokenMongo;
@@ -162,6 +169,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessToken.setSubject(accessTokenMongo.getSubject());
         accessToken.setRequestedScopes(accessTokenMongo.getRequestedScopes());
         accessToken.setScopes(accessTokenMongo.getScopes());
+        accessToken.setGrantType(accessTokenMongo.getGrantType());
         accessToken.setAdditionalInformation(accessTokenMongo.getAdditionalInformation());
 
         return accessToken;

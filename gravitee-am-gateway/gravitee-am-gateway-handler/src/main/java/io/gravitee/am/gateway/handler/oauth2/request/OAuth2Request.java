@@ -23,6 +23,7 @@ public class OAuth2Request extends BaseRequest {
 
     private String subject;
     private boolean supportRefreshToken;
+    private String grantType;
 
     public boolean isClientOnly() {
         return subject == null;
@@ -42,5 +43,13 @@ public class OAuth2Request extends BaseRequest {
 
     public void setSupportRefreshToken(boolean supportRefreshToken) {
         this.supportRefreshToken = supportRefreshToken;
+    }
+
+    public String getGrantType() {
+        return grantType;
+    }
+
+    public void setGrantType(String grantType) {
+        this.grantType = grantType;
     }
 }

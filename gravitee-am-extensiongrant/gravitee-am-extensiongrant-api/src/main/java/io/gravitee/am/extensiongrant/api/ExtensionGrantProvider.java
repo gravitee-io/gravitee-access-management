@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.extensiongrant.api;
 
-import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
+import io.reactivex.Maybe;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -28,8 +28,7 @@ public interface ExtensionGrantProvider {
     /**
      * Grant OAuth2 access tokens by validating the assertion stored inside the incoming token request
      * @param tokenRequest tokenRequest token endpoint request
-     * @return User representation of the assertion or null if no user is involved
-     * @throws InvalidGrantException if the assertion is not valid
+     * @return User representation of the assertion or empty if no user is involved
      */
-    User grant(TokenRequest tokenRequest) throws InvalidGrantException;
+    Maybe<User> grant(TokenRequest tokenRequest);
 }

@@ -13,21 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api;
-
-import io.gravitee.am.model.Certificate;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Single;
-
-import java.util.Set;
+package io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateRepository extends CrudRepository<Certificate, String> {
+public interface ExtensionGrantManager {
 
-    Single<Set<Certificate>> findAll();
-
-    Single<Set<Certificate>> findByDomain(String domain);
 }

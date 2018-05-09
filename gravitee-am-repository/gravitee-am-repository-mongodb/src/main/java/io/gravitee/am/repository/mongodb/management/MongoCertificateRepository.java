@@ -64,6 +64,11 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
+    public Single<Set<Certificate>> findAll() {
+        return Observable.fromPublisher(certificatesCollection.find()).map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
     public Maybe<Certificate> findById(String certificateId) {
         return Observable.fromPublisher(certificatesCollection.find(eq(FIELD_ID, certificateId)).first()).firstElement().map(this::convert);
     }

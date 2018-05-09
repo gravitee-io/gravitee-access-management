@@ -25,11 +25,13 @@ public class AccessTokenCriteria {
     private final String clientId;
     private final String subject;
     private final Set<String> scopes;
+    private final String grantType;
 
     public AccessTokenCriteria(Builder builder) {
         clientId = builder.clientId;
         subject = builder.subject;
         scopes = builder.scopes;
+        grantType = builder.grantType;
     }
 
     public String getClientId() {
@@ -44,10 +46,15 @@ public class AccessTokenCriteria {
         return scopes;
     }
 
+    public String getGrantType() {
+        return grantType;
+    }
+
     public static class Builder {
         private String clientId;
         private String subject;
         private Set<String> scopes;
+        private String grantType;
 
         public Builder clientId(String clientId) {
             this.clientId = clientId;
@@ -61,6 +68,11 @@ public class AccessTokenCriteria {
 
         public Builder scopes(Set<String> scopes) {
             this.scopes = scopes;
+            return this;
+        }
+
+        public Builder grantType(String grantType) {
+            this.grantType = grantType;
             return this;
         }
 

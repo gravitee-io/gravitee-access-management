@@ -29,6 +29,8 @@ import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.code.impl.AuthorizationCodeServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.ExtensionGrantManager;
+import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.impl.ExtensionGrantManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.introspection.impl.IntrospectionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
@@ -119,5 +121,10 @@ public class HandlerConfiguration {
     @Bean
     public RoleService roleService() {
         return new RoleServiceImpl();
+    }
+
+    @Bean
+    public ExtensionGrantManager extensionGrantManager() {
+        return new ExtensionGrantManagerImpl();
     }
 }

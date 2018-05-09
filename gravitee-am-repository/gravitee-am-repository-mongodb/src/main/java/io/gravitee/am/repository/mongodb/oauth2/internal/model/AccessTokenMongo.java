@@ -53,6 +53,9 @@ public class AccessTokenMongo {
 
     private String subject;
 
+    @BsonProperty("grant_type")
+    private String grantType;
+
     /**
      * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
      */
@@ -128,6 +131,14 @@ public class AccessTokenMongo {
 
     public void setSubject(String subject) {
         this.subject = subject;
+    }
+
+    public String getGrantType() {
+        return grantType;
+    }
+
+    public void setGrantType(String grantType) {
+        this.grantType = grantType;
     }
 
     public Document getAdditionalInformation() {

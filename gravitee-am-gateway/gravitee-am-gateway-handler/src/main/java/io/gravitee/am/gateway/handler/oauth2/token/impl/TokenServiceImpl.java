@@ -66,7 +66,6 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Single<AccessToken> create(OAuth2Request oAuth2Request) {
-        // TODO manage token enhancer
         return accessTokenRepository.findByCriteria(convert(oAuth2Request))
                 .map(accessToken -> Optional.of(accessToken))
                 .defaultIfEmpty(Optional.empty())
@@ -109,6 +108,7 @@ public class TokenServiceImpl implements TokenService {
                     accessToken.setCreatedAt(new Date());
                     accessToken.setRefreshToken(null);
                     accessToken.setRequestedScopes(oAuth2Request.getScopes());
+                    accessToken.setGrantType(oAuth2Request.getGrantType());
                     accessToken.setScopes(oAuth2Request.getScopes());
                     if (!oAuth2Request.isClientOnly()) {
                         accessToken.setSubject(oAuth2Request.getSubject());
@@ -162,12 +162,11 @@ public class TokenServiceImpl implements TokenService {
         return token;
     }
 
-    // TODO : if we generate an access token with resource owner flow and then with the client credentials flow with the same client_id and scopes
-    // the server returns the same token, append grant_type information ?
     private AccessTokenCriteria convert(OAuth2Request oAuth2Request) {
         AccessTokenCriteria.Builder builder = new AccessTokenCriteria.Builder();
         builder.clientId(oAuth2Request.getClientId());
         builder.scopes(oAuth2Request.getScopes());
+        builder.grantType(oAuth2Request.getGrantType());
         if (!oAuth2Request.isClientOnly()) {
             builder.subject(oAuth2Request.getSubject());
         }
