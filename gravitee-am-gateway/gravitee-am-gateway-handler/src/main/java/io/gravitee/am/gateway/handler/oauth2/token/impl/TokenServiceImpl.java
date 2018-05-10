@@ -66,10 +66,18 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Single<AccessToken> create(OAuth2Request oAuth2Request) {
-        return accessTokenRepository.findByCriteria(convert(oAuth2Request))
-                .map(accessToken -> Optional.of(accessToken))
-                .defaultIfEmpty(Optional.empty())
-                .flatMapSingle(optionalAccessToken -> {
+        return clientService.findByClientId(oAuth2Request.getClientId())
+                .flatMapSingle(client -> {
+                    if (client.isGenerateNewTokenPerRequest()) {
+                        Optional<io.gravitee.am.repository.oauth2.model.AccessToken> empty = Optional.empty();
+                        return Single.just(empty);
+                    } else {
+                        return accessTokenRepository.findByCriteria(convert(oAuth2Request))
+                                .map(accessToken -> Optional.of(accessToken))
+                                .defaultIfEmpty(Optional.empty()).toSingle();
+                    }
+                })
+                .flatMap(optionalAccessToken -> {
                     if (!optionalAccessToken.isPresent()) {
                         return createAccessToken(oAuth2Request);
                     } else {

@@ -84,6 +84,7 @@ public class TokenServiceTest {
         io.gravitee.am.repository.oauth2.model.AccessToken existingToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
         existingToken.setExpireAt(new Date(System.currentTimeMillis() + (60 * 1000)));
 
+        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.just(existingToken));
 
         TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request).test();
@@ -144,5 +145,26 @@ public class TokenServiceTest {
         verify(refreshTokenRepository, times(1)).delete(anyString());
     }
 
+    @Test
+    public void shouldCreate_multipleTokensForTheSameAccount() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setGenerateNewTokenPerRequest(true);
+
+        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
+        when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
+        when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
+
+        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(accessTokenRepository, times(1)).create(any());
+        verify(accessTokenRepository, never()).findByCriteria(any());
+        verify(accessTokenRepository, never()).delete(anyString());
+        verify(refreshTokenRepository, never()).delete(anyString());
+    }
 
 }
