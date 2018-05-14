@@ -58,10 +58,12 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Maybe<AccessToken> get(String accessToken) {
-        final Maybe<io.gravitee.am.repository.oauth2.model.AccessToken> result = accessTokenRepository.findByToken(accessToken).cache();
-        return result
-                .isEmpty()
-                .flatMapMaybe(empty -> (empty) ? Maybe.empty() : result.map(this::convert));
+        return find(accessToken).map(this::convert);
+    }
+
+    @Override
+    public Maybe<io.gravitee.am.repository.oauth2.model.AccessToken> find(String accessToken) {
+        return accessTokenRepository.findByToken(accessToken);
     }
 
     @Override

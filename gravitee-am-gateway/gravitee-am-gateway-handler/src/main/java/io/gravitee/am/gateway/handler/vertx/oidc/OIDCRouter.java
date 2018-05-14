@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.vertx.oidc;
 
+import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.gateway.handler.vertx.oidc.endpoint.ProviderConfigurationEndpoint;
 import io.gravitee.am.gateway.handler.vertx.oidc.endpoint.UserInfoEndpoint;
+import io.gravitee.am.gateway.handler.vertx.oidc.handler.UserInfoRequestParseHandler;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.ext.web.Router;
@@ -26,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class OIDCRouter {
@@ -33,17 +37,30 @@ public class OIDCRouter {
     @Autowired
     private OpenIDDiscoveryService discoveryService;
 
+    @Autowired
+    private TokenService tokenService;
+
+    @Autowired
+    private UserService userService;
+
     public void route(Router router) {
+        // OpenID Provider Configuration Information Endpoint
         Handler<RoutingContext> openIDProviderConfigurationEndpoint = new ProviderConfigurationEndpoint();
         ((ProviderConfigurationEndpoint) openIDProviderConfigurationEndpoint).setDiscoveryService(discoveryService);
         router
                 .route(HttpMethod.GET, "/.well-known/openid-configuration")
                 .handler(openIDProviderConfigurationEndpoint);
 
-        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint();
-        //((ProviderConfigurationEndpoint) userInfoEndpoint).setDiscoveryService(discoveryService);
+        // UserInfo Endpoint
+        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userService);
+        Handler<RoutingContext> userInfoRequestParseHandler = new UserInfoRequestParseHandler(tokenService);
         router
                 .route(HttpMethod.GET, "/userinfo")
+                .handler(userInfoRequestParseHandler)
+                .handler(userInfoEndpoint);
+        router
+                .route(HttpMethod.POST, "/userinfo")
+                .handler(userInfoRequestParseHandler)
                 .handler(userInfoEndpoint);
     }
 }

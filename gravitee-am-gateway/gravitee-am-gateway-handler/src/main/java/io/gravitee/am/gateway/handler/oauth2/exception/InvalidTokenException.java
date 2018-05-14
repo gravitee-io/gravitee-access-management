@@ -29,6 +29,10 @@ public class InvalidTokenException extends OAuth2Exception {
     public InvalidTokenException() {
     }
 
+    public InvalidTokenException(String message) {
+        super(message);
+    }
+
     @Override
     public String getOAuth2ErrorCode() {
         return "invalid_token";
