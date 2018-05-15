@@ -72,8 +72,14 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
         Client client = (Client) authenticatedUser.getDelegate();
 
         // Check that authenticated user is matching the client_id
-        if (! client.getClientId().equals(tokenRequest.getClientId())) {
-            throw new InvalidClientException();
+        // client_id is not required in the token request since the client can be authenticated via a Basic Authentication
+        if (tokenRequest.getClientId() != null) {
+            if (!client.getClientId().equals(tokenRequest.getClientId())) {
+                throw new InvalidClientException();
+            }
+        } else {
+            // set token request client_id with the authenticated client
+            tokenRequest.setClientId(client.getClientId());
         }
 
         clientService.findByClientId(client.getClientId())

@@ -33,6 +33,8 @@ import io.vertx.ext.web.handler.impl.HttpStatusException;
 public class ClientCredentialsAuthHandlerImpl extends AuthHandlerImpl {
 
     private static final HttpStatusException UNAUTHORIZED = new HttpStatusException(401);
+    private static final String USERNAME_FIELD = "username";
+    private static final String PASSWORD_FIELD = "password";
 
     public ClientCredentialsAuthHandlerImpl(AuthProvider authProvider) {
         super(authProvider);
@@ -66,8 +68,8 @@ public class ClientCredentialsAuthHandlerImpl extends AuthHandlerImpl {
 
         if (clientId != null && clientSecret != null) {
             JsonObject clientCredentials = new JsonObject()
-                    .put(OAuth2Constants.CLIENT_ID, clientId)
-                    .put(OAuth2Constants.CLIENT_SECRET, clientSecret);
+                    .put(USERNAME_FIELD, clientId)
+                    .put(PASSWORD_FIELD, clientSecret);
             handler.handle(Future.succeededFuture(clientCredentials));
         } else {
             handler.handle(Future.failedFuture(UNAUTHORIZED));

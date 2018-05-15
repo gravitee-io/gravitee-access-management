@@ -35,6 +35,8 @@ import org.slf4j.LoggerFactory;
 public class ClientAuthenticationProvider implements AuthProvider {
 
     private final Logger logger = LoggerFactory.getLogger(ClientAuthenticationProvider.class);
+    private static final String USERNAME_FIELD = "username";
+    private static final String PASSWORD_FIELD = "password";
 
     private ClientService clientService;
 
@@ -46,8 +48,8 @@ public class ClientAuthenticationProvider implements AuthProvider {
 
     @Override
     public void authenticate(JsonObject credentials, Handler<AsyncResult<User>> authHandler) {
-        String clientId = credentials.getString(OAuth2Constants.CLIENT_ID);
-        String clientSecret = credentials.getString(OAuth2Constants.CLIENT_SECRET);
+        String clientId = credentials.getString(USERNAME_FIELD);
+        String clientSecret = credentials.getString(PASSWORD_FIELD);
 
         logger.debug("Trying to authenticate a client: clientId[{}]", clientId);
 

@@ -25,8 +25,6 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-import java.util.Date;
-
 /**
  * The Client sends the UserInfo Request using either HTTP GET or HTTP POST.
  * The Access Token obtained from an OpenID Connect Authentication Request MUST be sent as a Bearer Token, per Section 2 of OAuth 2.0 Bearer Token Usage [RFC6750].
@@ -65,10 +63,9 @@ public class UserInfoRequestParseHandler implements Handler<RoutingContext> {
 
         final String accessToken = authorization.substring(idx + 1);
 
-        tokenService.find(accessToken)
-                .switchIfEmpty(Maybe.error(new InvalidTokenException()))
+        tokenService.get(accessToken)
                 .map(accessToken1 -> {
-                    if (accessToken1.getExpireAt().before(new Date())) {
+                    if (accessToken1.getExpiresIn() == 0) {
                         throw new InvalidTokenException("The access token expired");
                     }
                     return accessToken1;
@@ -79,6 +76,6 @@ public class UserInfoRequestParseHandler implements Handler<RoutingContext> {
                             context.next();
                         },
                         error -> context.fail(error),
-                        () -> context.fail(401));
+                        () -> context.fail(new InvalidTokenException()));
     }
 }

@@ -65,7 +65,7 @@ public class ClientCredentialsAuthHandlerTest extends AuthHandlerTestBase {
 
         @Override
         public void authenticate(JsonObject jsonObject, Handler<AsyncResult<User>> handler) {
-            if (jsonObject.getString(OAuth2Constants.CLIENT_ID) == null) {
+            if (jsonObject.getString("username") == null) {
                 handler.handle(Future.failedFuture("no-client-id"));
             } else {
                 handler.handle(Future.succeededFuture(new AbstractUser() {
@@ -77,7 +77,7 @@ public class ClientCredentialsAuthHandlerTest extends AuthHandlerTestBase {
                     @Override
                     public JsonObject principal() {
                         return new JsonObject().put(OAuth2Constants.CLIENT_ID,
-                                jsonObject.getString(OAuth2Constants.CLIENT_ID));
+                                jsonObject.getString("username"));
                     }
 
                     @Override

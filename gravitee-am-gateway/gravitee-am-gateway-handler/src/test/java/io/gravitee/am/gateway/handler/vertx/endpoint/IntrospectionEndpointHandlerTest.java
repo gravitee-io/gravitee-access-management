@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
-import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
-import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection.CheckTokenEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection.IntrospectionEndpointHandler;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.ext.auth.User;
@@ -30,33 +30,32 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
 // TODO : test valid use cases
-public class CheckTokenEndpointHandlerTest extends RxWebTestBase {
+public class IntrospectionEndpointHandlerTest extends RxWebTestBase {
 
     @InjectMocks
-    private CheckTokenEndpointHandler checkTokenEndpointHandler = new CheckTokenEndpointHandler();
+    private IntrospectionEndpointHandler introspectionEndpointHandler = new IntrospectionEndpointHandler();
 
     @Mock
-    private TokenService tokenService;
+    private IntrospectionService introspectionService;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        router.route(HttpMethod.POST, "/oauth/check_token")
-                .handler(checkTokenEndpointHandler);
+        router.route(HttpMethod.POST, "/oauth/introspect")
+                .handler(introspectionEndpointHandler);
         router.route().failureHandler(new ExceptionHandler());
     }
 
     @Test
     public void shouldNotInvokeEndpoint_noClient() throws Exception {
         testRequest(
-                HttpMethod.POST, "/oauth/check_token",
+                HttpMethod.POST, "/oauth/introspect",
                 HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
@@ -69,7 +68,8 @@ public class CheckTokenEndpointHandlerTest extends RxWebTestBase {
 
         testRequest(
                 HttpMethod.POST,
-                "/oauth/check_token",
+                "/oauth/introspect",
                 HttpStatusCode.BAD_REQUEST_400, "Bad Request");
     }
+
 }

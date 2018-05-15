@@ -15,14 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection;
 
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedTokenType;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionRequest;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.utils.TokenTypeHint;
+import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
+import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
@@ -42,6 +46,14 @@ public class IntrospectionEndpointHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
+        // If the protected resource uses OAuth 2.0 client credentials to
+        // authenticate to the introspection endpoint and its credentials are
+        // invalid, the authorization server responds with an HTTP 401
+        User authenticatedUser = context.user();
+        if (authenticatedUser == null || ! (authenticatedUser.getDelegate() instanceof Client)) {
+            throw new InvalidClientException();
+        }
+
         introspectionService
                 .introspect(createRequest(context))
                 .doOnSuccess(introspectionResponse -> context.response()
@@ -55,6 +67,10 @@ public class IntrospectionEndpointHandler implements Handler<RoutingContext> {
     private static IntrospectionRequest createRequest(RoutingContext context) {
         String token = context.request().getParam(TOKEN_PARAM);
         String tokenTypeHint = context.request().getParam(TOKEN_TYPE_HINT_PARAM);
+
+        if (token == null) {
+            throw new InvalidRequestException();
+        }
 
         IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
 

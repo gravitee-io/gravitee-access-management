@@ -15,18 +15,26 @@
  */
 package io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection;
 
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.functions.Consumer;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
+import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
+ * @deprecated Fall back to Gravitee.AM earlier versions
+ *
+ * OAuth 2.0 Token Introspection Endpoint but the response does not follow the rfc
+ * Responds 200 OK with access token if access token is valid or 401 invalid token if token is invalid or expired
+ *
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class CheckTokenEndpointHandler implements Handler<RoutingContext> {
@@ -37,29 +45,34 @@ public class CheckTokenEndpointHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
+        // If the protected resource uses OAuth 2.0 client credentials to
+        // authenticate to the introspection endpoint and its credentials are
+        // invalid, the authorization server responds with an HTTP 401
+        User authenticatedUser = context.user();
+        if (authenticatedUser == null || ! (authenticatedUser.getDelegate() instanceof Client)) {
+            throw new InvalidClientException();
+        }
+
         String token = context.request().getParam(TOKEN_PARAM);
+        if (token == null) {
+            throw new InvalidRequestException();
+        }
 
         tokenService.get(token)
-                .doOnSuccess(new Consumer<AccessToken>() {
-                    @Override
-                    public void accept(AccessToken accessToken) throws Exception {
-                        //TODO: check that the token has expired
-
-                        context.response()
+                .map(accessToken -> {
+                    if (accessToken.getExpiresIn() == 0) {
+                        throw new InvalidTokenException("Token is expired");
+                    }
+                    return accessToken;
+                })
+                .subscribe(
+                        accessToken -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .end(Json.encodePrettily(accessToken));
-                    }
-                })
-                .doOnError(e -> {
-                    // "Token was not recognised"
-                    context.fail(new InvalidTokenException());
-
-                    // Call global exception handler to display oauth2 exception error
-                    // TODO trigger WARNING io.reactivex.exceptions.OnErrorNotImplementedException
-                })
-                .subscribe();
+                                .end(Json.encodePrettily(accessToken)),
+                        error -> context.fail(new InvalidTokenException()),
+                        () -> context.fail(new InvalidTokenException("Token was not recognised")));
     }
 
     public void setTokenService(TokenService tokenService) {

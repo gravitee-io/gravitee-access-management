@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.token.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -30,6 +31,10 @@ public class DefaultAccessToken implements AccessToken {
     private int expiresIn;
     private String refreshToken;
     private String scope;
+    private String clientId;
+    private String subject;
+    private Date createdAt;
+    private Date expireAt;
     private Map<String, Object> additionalInformation;
 
     public DefaultAccessToken(String value) {
@@ -75,6 +80,38 @@ public class DefaultAccessToken implements AccessToken {
 
     public void setExpiresIn(int expiresIn) {
         this.expiresIn = expiresIn;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getExpireAt() {
+        return expireAt;
+    }
+
+    public void setExpireAt(Date expireAt) {
+        this.expireAt = expireAt;
     }
 
     public Map<String, Object> getAdditionalInformation() {

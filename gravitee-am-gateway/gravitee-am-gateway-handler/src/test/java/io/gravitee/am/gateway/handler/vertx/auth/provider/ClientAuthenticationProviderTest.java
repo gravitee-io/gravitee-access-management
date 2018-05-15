@@ -63,8 +63,8 @@ public class ClientAuthenticationProviderTest {
 
         when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(client));
         JsonObject credentials = new JsonObject();
-        credentials.put(OAuth2Constants.CLIENT_ID, "my-client-id");
-        credentials.put(OAuth2Constants.CLIENT_SECRET, "my-client-secret");
+        credentials.put("username", "my-client-id");
+        credentials.put("password", "my-client-secret");
 
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.authenticate(credentials, userAsyncResult -> {
@@ -84,8 +84,8 @@ public class ClientAuthenticationProviderTest {
 
         when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(client));
         JsonObject credentials = new JsonObject();
-        credentials.put(OAuth2Constants.CLIENT_ID, "my-client-id");
-        credentials.put(OAuth2Constants.CLIENT_SECRET, "my-other-client-secret");
+        credentials.put("username", "my-client-id");
+        credentials.put("password", "my-other-client-secret");
 
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.authenticate(credentials, userAsyncResult -> {

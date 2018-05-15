@@ -58,12 +58,7 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Maybe<AccessToken> get(String accessToken) {
-        return find(accessToken).map(this::convert);
-    }
-
-    @Override
-    public Maybe<io.gravitee.am.repository.oauth2.model.AccessToken> find(String accessToken) {
-        return accessTokenRepository.findByToken(accessToken);
+        return accessTokenRepository.findByToken(accessToken).map(this::convert);
     }
 
     @Override
@@ -167,6 +162,10 @@ public class TokenServiceImpl implements TokenService {
         }
         token.setExpiresIn(accessToken.getExpireAt() != null ? Long.valueOf((accessToken.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L).intValue() : 0);
         token.setRefreshToken(accessToken.getRefreshToken());
+        token.setClientId(accessToken.getClientId());
+        token.setSubject(accessToken.getSubject());
+        token.setExpireAt(accessToken.getExpireAt());
+        token.setCreatedAt(accessToken.getCreatedAt());
         token.setAdditionalInformation(accessToken.getAdditionalInformation());
 
         return token;

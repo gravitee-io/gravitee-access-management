@@ -18,16 +18,17 @@ package io.gravitee.am.gateway.handler.oauth2.introspection.impl;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionRequest;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionResponse;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
+import io.gravitee.am.gateway.handler.user.UserService;
+import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import io.reactivex.SingleSource;
-import io.reactivex.functions.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class IntrospectionServiceImpl implements IntrospectionService {
@@ -35,31 +36,46 @@ public class IntrospectionServiceImpl implements IntrospectionService {
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private UserService userService;
+
     @Override
     public Single<IntrospectionResponse> introspect(IntrospectionRequest introspectionRequest) {
-        Maybe<AccessToken> token = tokenService.get(introspectionRequest.getToken()).cache();
-        return token
-                .isEmpty()
-                .flatMap(empty -> {
-                    if (empty) {
-                        return Single.just(new IntrospectionResponse());
-                    } else {
-                        //TODO implement it !
-                        return token.flatMapSingle(new Function<AccessToken, SingleSource<IntrospectionResponse>>() {
-                            @Override
-                            public SingleSource<IntrospectionResponse> apply(AccessToken accessToken) throws Exception {
-                                IntrospectionResponse introspectionResponse = new IntrospectionResponse();
-                                introspectionResponse.setActive(true);
-                                introspectionResponse.setScope(accessToken.getScope());
+            return tokenService.get(introspectionRequest.getToken())
+                    .filter(token -> token.getExpiresIn() > 0)
+                    .flatMap(token -> {
+                        DefaultAccessToken accessToken = (DefaultAccessToken) token;
+                        if (accessToken.getSubject() != null) {
+                            return userService
+                                    .findById(accessToken.getSubject())
+                                    .map(user -> convert(accessToken, user))
+                                    .defaultIfEmpty(convert(accessToken, null));
 
-                                return Single.just(introspectionResponse);
-                            }
-                        });
-                    }
-                });
+                        } else {
+                            return Maybe.just(convert(accessToken, null));
+                        }
+                    })
+                    .defaultIfEmpty(new IntrospectionResponse())
+                    .toSingle();
+
     }
 
     public void setTokenService(TokenService tokenService) {
         this.tokenService = tokenService;
+    }
+
+    private IntrospectionResponse convert(DefaultAccessToken accessToken, User user) {
+        IntrospectionResponse introspectionResponse = new IntrospectionResponse();
+        introspectionResponse.setActive(true);
+        introspectionResponse.setScope(accessToken.getScope());
+        introspectionResponse.setClientId(accessToken.getClientId());
+        if (user != null) {
+            introspectionResponse.setUsername(user.getUsername());
+        }
+        introspectionResponse.setExpireAt(accessToken.getExpireAt().getTime() / 1000);
+        introspectionResponse.setIssueAt(accessToken.getCreatedAt().getTime() / 1000);
+        introspectionResponse.setTokenType(accessToken.getTokenType());
+        introspectionResponse.setSubject(accessToken.getSubject());
+        return introspectionResponse;
     }
 }

@@ -15,8 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.vertx.oidc.endpoint;
 
+import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
 import io.gravitee.am.gateway.handler.user.UserService;
-import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -47,13 +48,14 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        AccessToken accessToken = context.get(io.gravitee.am.gateway.handler.oauth2.token.AccessToken.ACCESS_TOKEN);
+        DefaultAccessToken accessToken = context.get(AccessToken.ACCESS_TOKEN);
 
         // The UserInfo Endpoint is an OAuth 2.0 Protected Resource that returns Claims about the authenticated End-User
         String subject = accessToken.getSubject();
         if (subject == null) {
             // TODO : what error should be thrown ? rfc seems to say nothing about an access token created from the client_credentials flow
             context.fail(400);
+            return;
         }
 
         // TODO : 5.4. Requesting Claims using Scope Values (http://openid.net/specs/openid-connect-core-1_0.html#UserInfo)

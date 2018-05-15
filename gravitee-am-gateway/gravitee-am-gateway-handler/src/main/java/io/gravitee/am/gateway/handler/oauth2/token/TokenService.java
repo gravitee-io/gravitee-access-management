@@ -28,8 +28,6 @@ public interface TokenService {
 
     Maybe<AccessToken> get(String accessToken);
 
-    Maybe<io.gravitee.am.repository.oauth2.model.AccessToken> find(String accessToken);
-
     Single<AccessToken> create(OAuth2Request oAuth2Request);
 
     Single<AccessToken> refresh();

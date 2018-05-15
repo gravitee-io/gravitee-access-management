@@ -15,14 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
+import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
 import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.vertx.oidc.endpoint.UserInfoEndpoint;
 import io.gravitee.am.gateway.handler.vertx.oidc.handler.UserInfoRequestParseHandler;
 import io.gravitee.am.model.User;
-import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
@@ -34,7 +35,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Collections;
-import java.util.Date;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
@@ -84,7 +84,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeUserEndpoint_invalidToken() throws Exception {
-        when(tokenService.find(anyString())).thenReturn(Maybe.empty());
+        when(tokenService.get(anyString())).thenReturn(Maybe.empty());
 
         testRequest(
                 HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
@@ -93,10 +93,10 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeUserEndpoint_expiredToken() throws Exception {
-        AccessToken accessToken = new AccessToken();
-        accessToken.setExpireAt(new Date(System.currentTimeMillis() - 10000));
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setExpiresIn(0);
 
-        when(tokenService.find(anyString())).thenReturn(Maybe.just(accessToken));
+        when(tokenService.get(anyString())).thenReturn(Maybe.just(accessToken));
 
         testRequest(
                 HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
@@ -105,12 +105,10 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeUserEndpoint_clientOnlyToken() throws Exception {
-        AccessToken accessToken = new AccessToken();
-        accessToken.setClientId("client-id");
-        accessToken.setSubject(null);
-        accessToken.setExpireAt(new Date(System.currentTimeMillis() + 10000));
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setExpiresIn(100);
 
-        when(tokenService.find(anyString())).thenReturn(Maybe.just(accessToken));
+        when(tokenService.get(anyString())).thenReturn(Maybe.just(accessToken));
 
         testRequest(
                 HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
@@ -119,12 +117,10 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeUserEndpoint_userNotFound() throws Exception {
-        AccessToken accessToken = new AccessToken();
-        accessToken.setClientId("client-id");
-        accessToken.setSubject(null);
-        accessToken.setExpireAt(new Date(System.currentTimeMillis() + 10000));
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setExpiresIn(100);
 
-        when(tokenService.find(anyString())).thenReturn(Maybe.just(accessToken));
+        when(tokenService.get(anyString())).thenReturn(Maybe.just(accessToken));
         when(userService.findById(anyString())).thenReturn(Maybe.empty());
 
         testRequest(
@@ -134,15 +130,14 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvokeUserEndpoint() throws Exception {
-        AccessToken accessToken = new AccessToken();
-        accessToken.setClientId("client-id");
-        accessToken.setSubject("user");
-        accessToken.setExpireAt(new Date(System.currentTimeMillis() + 10000));
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setSubject("user");
+        ((DefaultAccessToken) accessToken).setExpiresIn(100);
 
         User user = new User();
         user.setAdditionalInformation(Collections.singletonMap("sub", "user"));
 
-        when(tokenService.find(anyString())).thenReturn(Maybe.just(accessToken));
+        when(tokenService.get(anyString())).thenReturn(Maybe.just(accessToken));
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
