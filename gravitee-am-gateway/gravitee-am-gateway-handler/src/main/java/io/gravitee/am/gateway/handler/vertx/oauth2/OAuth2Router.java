@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.vertx.oauth2;
 
-import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
@@ -27,7 +26,6 @@ import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
-import io.gravitee.am.gateway.handler.vertx.auth.provider.UserAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.AuthorizationApprovalEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.AuthorizationEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.UserApprovalEndpointHandler;
@@ -39,12 +37,11 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.AuthProvider;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.handler.*;
-import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
+import io.vertx.reactivex.ext.web.handler.AuthHandler;
+import io.vertx.reactivex.ext.web.handler.ChainAuthHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -75,18 +72,11 @@ public class OAuth2Router {
     private ScopeService scopeService;
 
     @Autowired
-    private UserAuthenticationManager userAuthenticationManager;
-
-    @Autowired
-    private Vertx vertx;
-
-    @Autowired
     private Domain domain;
 
-    public void route(Router router) {
+    public void route(Router router, AuthProvider userAuthProvider) {
         // create authentication handlers
         final AuthProvider clientAuthProvider = new AuthProvider(new ClientAuthenticationProvider(clientService));
-        final AuthProvider userAuthProvider = new AuthProvider(new UserAuthenticationProvider(userAuthenticationManager));
 
         final AuthHandler clientAuthHandler = ChainAuthHandler.create()
                 .append(ClientCredentialsAuthHandler.create(clientAuthProvider.getDelegate()))
@@ -110,21 +100,6 @@ public class OAuth2Router {
 
         Handler<RoutingContext> introspectionEndpoint = new IntrospectionEndpointHandler();
         ((IntrospectionEndpointHandler) introspectionEndpoint).setIntrospectionService(introspectionService);
-
-        // set session handler for authorization flow (with approval page)
-        CookieHandler cookieHandler = CookieHandler.create();
-        SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
-        UserSessionHandler userSessionHandler = UserSessionHandler.create(userAuthProvider);
-        router
-                .route("/oauth/authorize")
-                .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(userSessionHandler);
-        router
-                .route("/oauth/confirm_access")
-                .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(userSessionHandler);
 
         // declare oauth2 routes
         router.route(HttpMethod.GET,"/oauth/authorize")

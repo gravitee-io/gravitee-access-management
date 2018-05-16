@@ -13,34 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.login;
+package io.gravitee.am.gateway.handler.vertx.handler;
 
-import com.google.common.net.HttpHeaders;
-import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.Session;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
+ * Enhance routing context with CSRF values to fill in the right value for the form fields.
+ *
+ * This handler must be call after {@link io.vertx.ext.web.handler.CSRFHandler}
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class LoginCallbackEndpointHandler implements Handler<RoutingContext> {
+public class CSRFHandler implements Handler<RoutingContext>{
 
     @Override
     public void handle(RoutingContext routingContext) {
-        Session session = routingContext.session();
-        if (session != null && session.get(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM) != null) {
-            final String redirectUrl = session.get(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM);
-            doRedirect(routingContext.response(), redirectUrl);
-        } else {
-            routingContext.fail(503);
-        }
+        // CSRF token
+        Map<String, String> _csrf = new HashMap<>();
+        _csrf.put("parameterName", io.vertx.ext.web.handler.CSRFHandler.DEFAULT_HEADER_NAME);
+        _csrf.put("token", routingContext.get(io.vertx.ext.web.handler.CSRFHandler.DEFAULT_HEADER_NAME));
+        routingContext.put("_csrf", _csrf);
 
+        routingContext.next();
     }
 
-    private void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    public static CSRFHandler create() {
+        return new CSRFHandler();
     }
 }

@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx.spring;
 
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
+import io.gravitee.am.gateway.handler.vertx.login.LoginRouter;
 import io.gravitee.am.gateway.handler.vertx.oauth2.OAuth2Router;
 import io.gravitee.am.gateway.handler.vertx.oidc.OIDCRouter;
 import io.gravitee.am.gateway.handler.vertx.view.ThymeleafConfiguration;
@@ -34,6 +35,11 @@ public class SecurityDomainRouterConfiguration {
     @Bean
     public VertxSecurityDomainHandler securityDomainHandler() {
         return new VertxSecurityDomainHandler();
+    }
+
+    @Bean
+    public LoginRouter loginRouter() {
+        return new LoginRouter();
     }
 
     @Bean

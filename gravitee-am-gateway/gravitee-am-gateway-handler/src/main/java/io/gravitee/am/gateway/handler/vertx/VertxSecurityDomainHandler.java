@@ -16,24 +16,18 @@
 package io.gravitee.am.gateway.handler.vertx;
 
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
-import io.gravitee.am.gateway.handler.vertx.auth.handler.FormLoginHandler;
-import io.gravitee.am.gateway.handler.vertx.auth.handler.OAuth2ClientAuthHandler;
-import io.gravitee.am.gateway.handler.vertx.auth.provider.OAuth2ClientAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.UserAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
-import io.gravitee.am.gateway.handler.vertx.login.LoginCallbackEndpointHandler;
-import io.gravitee.am.gateway.handler.vertx.login.LoginEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.login.LoginRouter;
 import io.gravitee.am.gateway.handler.vertx.oauth2.OAuth2Router;
 import io.gravitee.am.gateway.handler.vertx.oidc.OIDCRouter;
 import io.gravitee.am.model.Domain;
+import io.gravitee.common.utils.UUID;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.AuthProvider;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.*;
 import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
-import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -47,19 +41,13 @@ public class VertxSecurityDomainHandler {
     private UserAuthenticationManager userAuthenticationManager;
 
     @Autowired
-    private IdentityProviderManager identityProviderManager;
-
-    @Autowired
-    private ClientService clientService;
-
-    @Autowired
-    private ThymeleafTemplateEngine thymeleafTemplateEngine;
-
-    @Autowired
     private Vertx vertx;
 
     @Autowired
     private Domain domain;
+
+    @Autowired
+    private LoginRouter loginRouter;
 
     @Autowired
     private OIDCRouter oidcRouter;
@@ -67,52 +55,31 @@ public class VertxSecurityDomainHandler {
     @Autowired
     private OAuth2Router oauth2Router;
 
-    // TODO both auth handlers and session are created here and inside oauth2 router
     public Router create() {
         // Create the security domain router
         final Router router = Router.router(vertx);
 
-        // create web handlers
-        StaticHandler staticHandler = StaticHandler.create();
-        router.route()
-                .handler(BodyHandler.create())
-                .handler(staticHandler);
-        router.route("/oauth/*")
-                .handler(staticHandler);
-
-        // create authentication handlers
-        final AuthProvider userAuthProvider = new AuthProvider(new UserAuthenticationProvider(userAuthenticationManager));
-        final AuthProvider identityProviderAuthProvider = new AuthProvider(new OAuth2ClientAuthenticationProvider(identityProviderManager));
-
-        // set session handler for login and login call back
-        CookieHandler cookieHandler = CookieHandler.create();
-        SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
-        UserSessionHandler userSessionHandler = UserSessionHandler.create(userAuthProvider);
-
-        // Login endpoints
-        router.route("/login")
-                .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(userSessionHandler);
-        router
-                .route("/login/callback")
-                .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(userSessionHandler);
-
-        router.get("/login").handler(new LoginEndpointHandler(thymeleafTemplateEngine, domain, clientService, identityProviderManager));
-        router.post("/login").handler(FormLoginHandler.create(userAuthProvider.getDelegate()));
-
-        router.get("/login/callback")
-                .handler(OAuth2ClientAuthHandler.create(identityProviderAuthProvider.getDelegate(), identityProviderManager))
-                .handler(new LoginCallbackEndpointHandler());
-
-
-        oidcRouter.route(router);
-        oauth2Router.route(router);
-
-        // bind failure handler
+        // failure handler
         router.route().failureHandler(new ExceptionHandler());
+
+        // user authentication handler
+        final AuthProvider userAuthProvider = new AuthProvider(new UserAuthenticationProvider(userAuthenticationManager));
+
+        // body handler
+        router.route().handler(BodyHandler.create());
+
+        // static handler
+        staticHandler(router);
+
+        // session cookie handler
+        sessionAndCookieHandler(router, userAuthProvider);
+
+        // CSRF handler
+        csrfHandler(router);
+
+        loginRouter.route(router, userAuthProvider);
+        oauth2Router.route(router, userAuthProvider);
+        oidcRouter.route(router);
 
         return router;
     }
@@ -128,4 +95,47 @@ public class VertxSecurityDomainHandler {
     public void setDomain(Domain domain) {
         this.domain = domain;
     }
+
+    private void staticHandler(Router router) {
+        StaticHandler staticHandler = StaticHandler.create();
+        router.route().handler(staticHandler);
+        router.route("/oauth/*").handler(staticHandler);
+    }
+
+    private void sessionAndCookieHandler(Router router, AuthProvider userAuthProvider) {
+        CookieHandler cookieHandler = CookieHandler.create();
+        SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
+        UserSessionHandler userSessionHandler = UserSessionHandler.create(userAuthProvider);
+
+        // Login endpoint
+        router.route("/login")
+                .handler(cookieHandler)
+                .handler(sessionHandler)
+                .handler(userSessionHandler);
+        router
+                .route("/login/callback")
+                .handler(cookieHandler)
+                .handler(sessionHandler)
+                .handler(userSessionHandler);
+
+        // OAuth 2.0 Authorize endpoint
+        router
+                .route("/oauth/authorize")
+                .handler(cookieHandler)
+                .handler(sessionHandler)
+                .handler(userSessionHandler);
+        router
+                .route("/oauth/confirm_access")
+                .handler(cookieHandler)
+                .handler(sessionHandler)
+                .handler(userSessionHandler);
+    }
+
+    private void csrfHandler(Router router) {
+        CSRFHandler csrfHandler = CSRFHandler.create(UUID.random().toString());
+        io.gravitee.am.gateway.handler.vertx.handler.CSRFHandler csrfHandler1 = io.gravitee.am.gateway.handler.vertx.handler.CSRFHandler.create();
+        router.route("/login").handler(csrfHandler).handler(csrfHandler1);
+        router.route("/oauth/confirm_access").handler(csrfHandler).handler(csrfHandler1);
+    }
+
 }
