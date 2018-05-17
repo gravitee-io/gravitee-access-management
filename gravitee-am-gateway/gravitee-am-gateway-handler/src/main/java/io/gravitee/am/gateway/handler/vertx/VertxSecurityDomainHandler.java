@@ -118,6 +118,13 @@ public class VertxSecurityDomainHandler {
                 .handler(sessionHandler)
                 .handler(userSessionHandler);
 
+        // Logout endpoint
+        router
+                .route("/logout")
+                .handler(cookieHandler)
+                .handler(sessionHandler)
+                .handler(userSessionHandler);
+
         // OAuth 2.0 Authorize endpoint
         router
                 .route("/oauth/authorize")
