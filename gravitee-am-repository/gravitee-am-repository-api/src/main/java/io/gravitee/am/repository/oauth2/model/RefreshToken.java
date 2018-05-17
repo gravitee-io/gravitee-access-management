@@ -34,6 +34,16 @@ public class RefreshToken {
     private String token;
 
     /**
+     * The client which ask for this refresh_token
+     */
+    private String clientId;
+
+    /**
+     * Technical identifier of the end-user.
+     */
+    private String subject;
+
+    /**
      * The refresh token creation date
      */
     private Date createdAt;
@@ -57,6 +67,22 @@ public class RefreshToken {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
     }
 
     public Date getCreatedAt() {

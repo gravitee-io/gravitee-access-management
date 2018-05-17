@@ -31,6 +31,11 @@ public class RefreshTokenMongo {
 
     private String token;
 
+    @BsonProperty("client_id")
+    private String clientId;
+
+    private String subject;
+
     @BsonProperty("created_at")
     private Date createdAt;
 
@@ -51,6 +56,22 @@ public class RefreshTokenMongo {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
     }
 
     public Date getCreatedAt() {

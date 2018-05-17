@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.request;
 
-import io.gravitee.am.model.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 

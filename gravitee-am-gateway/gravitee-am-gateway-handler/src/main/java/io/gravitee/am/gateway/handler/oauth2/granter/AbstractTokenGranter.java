@@ -67,7 +67,7 @@ public class AbstractTokenGranter implements TokenGranter {
                     }
                     return createOAuth2Request(tokenRequest, client);
                 })
-                .flatMap(oAuth2Request -> tokenService.create(oAuth2Request));
+                .flatMap(this::createAccessToken);
     }
 
     protected Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client) {
@@ -78,12 +78,20 @@ public class AbstractTokenGranter implements TokenGranter {
                 });
     }
 
+    protected Single<AccessToken> createAccessToken(OAuth2Request oAuth2Request) {
+        return tokenService.create(oAuth2Request);
+    }
+
     protected boolean isSupportRefreshToken() {
         return supportRefreshToken;
     }
 
     public void setClientService(ClientService clientService) {
         this.clientService = clientService;
+    }
+
+    public TokenService getTokenService() {
+        return tokenService;
     }
 
     public void setTokenService(TokenService tokenService) {

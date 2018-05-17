@@ -30,5 +30,5 @@ public interface TokenService {
 
     Single<AccessToken> create(OAuth2Request oAuth2Request);
 
-    Single<AccessToken> refresh();
+    Single<AccessToken> refresh(String refreshToken, OAuth2Request oAuth2Request);
 }

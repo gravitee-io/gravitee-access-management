@@ -96,6 +96,8 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
         RefreshTokenMongo refreshTokenMongo = new RefreshTokenMongo();
         refreshTokenMongo.setId(refreshToken.getId());
         refreshTokenMongo.setToken(refreshToken.getToken());
+        refreshTokenMongo.setClientId(refreshToken.getClientId());
+        refreshTokenMongo.setSubject(refreshToken.getSubject());
         refreshTokenMongo.setCreatedAt(refreshToken.getCreatedAt());
         refreshTokenMongo.setExpireAt(refreshToken.getExpireAt());
 
@@ -110,6 +112,8 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setId(refreshTokenMongo.getId());
         refreshToken.setToken(refreshTokenMongo.getToken());
+        refreshToken.setClientId(refreshTokenMongo.getClientId());
+        refreshToken.setSubject(refreshTokenMongo.getSubject());
         refreshToken.setCreatedAt(refreshTokenMongo.getCreatedAt());
         refreshToken.setExpireAt(refreshTokenMongo.getExpireAt());
 

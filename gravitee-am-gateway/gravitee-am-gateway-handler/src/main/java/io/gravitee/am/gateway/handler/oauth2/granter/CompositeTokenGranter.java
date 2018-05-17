@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.granter.client.ClientCredentialsTok
 import io.gravitee.am.gateway.handler.oauth2.granter.code.AuthorizationCodeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.implicit.ImplicitTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.password.ResourceOwnerPasswordCredentialsTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.granter.refresh.RefreshTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
@@ -85,5 +86,6 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         addTokenGranter(new ResourceOwnerPasswordCredentialsTokenGranter(clientService, tokenService, userAuthenticationManager));
         addTokenGranter(new ImplicitTokenGranter(clientService, tokenService));
         addTokenGranter(new AuthorizationCodeTokenGranter(clientService, tokenService, authorizationCodeService));
+        addTokenGranter(new RefreshTokenGranter(clientService, tokenService));
     }
 }

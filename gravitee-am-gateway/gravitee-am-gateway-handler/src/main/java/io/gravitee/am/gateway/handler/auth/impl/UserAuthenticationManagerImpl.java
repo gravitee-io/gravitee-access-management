@@ -21,6 +21,8 @@ import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -29,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class UserAuthenticationManagerImpl implements UserAuthenticationManager {
@@ -63,6 +66,24 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                     // On authentication success, create the user
                     return userService.findOrCreate(user);
                 });
+    }
+
+    @Override
+    public Maybe<User> loadUserByUsername(String subject) {
+        // use to find a pre-authenticated user
+        // The user should be present in gravitee repository and should be retrieved from the user last identity provider
+        return userService
+                .findById(subject)
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(subject)))
+                .flatMap(user -> identityProviderManager.get(user.getSource())
+                        .flatMap(authenticationProvider -> authenticationProvider.loadUserByUsername(user.getUsername()))
+                        .map(idpUser -> {
+                            // update roles
+                            // TODO should we need to update others information from the idp user ?
+                            user.setRoles(idpUser.getRoles());
+                            return user;
+                        })
+                        .defaultIfEmpty(user));
     }
 
     public void setClientService(ClientService clientService) {
