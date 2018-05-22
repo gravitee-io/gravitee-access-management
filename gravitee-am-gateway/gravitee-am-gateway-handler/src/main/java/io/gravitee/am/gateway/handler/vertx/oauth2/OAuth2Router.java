@@ -90,7 +90,7 @@ public class OAuth2Router {
 
         // Bind OAuth2 endpoints
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(authorizationCodeService, tokenGranter, clientService, approvalService, domain);
-        Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(authorizationCodeService, tokenGranter, approvalService);
+        Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(authorizationCodeService, tokenGranter, approvalService, clientService);
         Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler(tokenGranter, clientService);
         Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(clientService, scopeService);
 

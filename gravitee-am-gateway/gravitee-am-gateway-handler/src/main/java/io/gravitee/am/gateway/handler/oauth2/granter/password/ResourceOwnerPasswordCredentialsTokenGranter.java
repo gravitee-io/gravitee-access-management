@@ -17,12 +17,10 @@ package io.gravitee.am.gateway.handler.oauth2.granter.password;
 
 import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.model.Client;
 import io.gravitee.common.util.MultiValueMap;
@@ -48,20 +46,14 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
         super(GRANT_TYPE);
     }
 
-    public ResourceOwnerPasswordCredentialsTokenGranter(ClientService clientService, TokenService tokenService) {
+    public ResourceOwnerPasswordCredentialsTokenGranter(TokenService tokenService) {
         this();
-        setClientService(clientService);
         setTokenService(tokenService);
     }
 
-    public ResourceOwnerPasswordCredentialsTokenGranter(ClientService clientService, TokenService tokenService, UserAuthenticationManager userAuthenticationManager) {
-        this(clientService, tokenService);
+    public ResourceOwnerPasswordCredentialsTokenGranter(TokenService tokenService, UserAuthenticationManager userAuthenticationManager) {
+        this(tokenService);
         setUserAuthenticationManager(userAuthenticationManager);
-    }
-
-    @Override
-    public Single<AccessToken> grant(TokenRequest tokenRequest) {
-        return super.grant(tokenRequest);
     }
 
     protected Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client) {

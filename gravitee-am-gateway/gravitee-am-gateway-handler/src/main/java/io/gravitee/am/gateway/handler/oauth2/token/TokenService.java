@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.token;
 
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
+import io.gravitee.am.model.Client;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -28,7 +29,7 @@ public interface TokenService {
 
     Maybe<AccessToken> get(String accessToken);
 
-    Single<AccessToken> create(OAuth2Request oAuth2Request);
+    Single<AccessToken> create(OAuth2Request oAuth2Request, Client client);
 
-    Single<AccessToken> refresh(String refreshToken, OAuth2Request oAuth2Request);
+    Single<AccessToken> refresh(String refreshToken, OAuth2Request oAuth2Request, Client client);
 }

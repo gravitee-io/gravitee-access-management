@@ -15,12 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.granter.client;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.reactivex.Single;
 
 /**
  * Implementation of the Client Credentials Grant Flow
@@ -37,15 +33,9 @@ public class ClientCredentialsTokenGranter extends AbstractTokenGranter {
         super(GRANT_TYPE);
     }
 
-    public ClientCredentialsTokenGranter(ClientService clientService, TokenService tokenService) {
+    public ClientCredentialsTokenGranter(TokenService tokenService) {
         this();
-        setClientService(clientService);
         setTokenService(tokenService);
-    }
-
-    @Override
-    public Single<AccessToken> grant(TokenRequest tokenRequest) {
-        return super.grant(tokenRequest);
     }
 
     /**

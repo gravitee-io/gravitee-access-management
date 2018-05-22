@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.approval.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
@@ -41,19 +40,15 @@ public class ApprovalServiceImpl implements ApprovalService {
     private ScopeApprovalRepository scopeApprovalRepository;
 
     @Autowired
-    private ClientService clientService;
-
-    @Autowired
     private Domain domain;
 
     @Value("${oauth2.approval.expiry:-1}")
     private int approvalExpirySeconds;
 
     @Override
-    public Single<AuthorizationRequest> checkApproval(AuthorizationRequest authorizationRequest, String username) {
-        return clientService.findByClientId(authorizationRequest.getClientId())
-                // check client auto approval option
-                .flatMapSingle(client -> checkAutoApproval(authorizationRequest, client))
+    public Single<AuthorizationRequest> checkApproval(AuthorizationRequest authorizationRequest, Client client, String username) {
+        // check client auto approval option
+        return checkAutoApproval(authorizationRequest, client)
                 .flatMap(authorizationRequest1 ->  {
                     if (authorizationRequest1.isApproved()) {
                         return Single.just(authorizationRequest1);

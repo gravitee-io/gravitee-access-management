@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.vertx.auth.provider;
 
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.BadClientCredentialsException;
-import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -58,7 +57,7 @@ public class ClientAuthenticationProvider implements AuthProvider {
                 .subscribe(
                         client -> {
                             if (client.getClientSecret().equals(clientSecret)) {
-                                authHandler.handle(Future.succeededFuture(new Client(client.getClientId())));
+                                authHandler.handle(Future.succeededFuture(new Client(client)));
                             } else {
                                 authHandler.handle(Future.failedFuture(new BadClientCredentialsException()));
                             }

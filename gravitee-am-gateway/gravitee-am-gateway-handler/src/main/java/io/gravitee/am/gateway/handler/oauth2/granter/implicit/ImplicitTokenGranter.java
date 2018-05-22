@@ -15,12 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.granter.implicit;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.reactivex.Single;
 
 /**
  * Implementation of the Implicit Grant Flow
@@ -38,17 +34,10 @@ public class ImplicitTokenGranter extends AbstractTokenGranter {
         super(GRANT_TYPE);
     }
 
-    public ImplicitTokenGranter(ClientService clientService, TokenService tokenService) {
+    public ImplicitTokenGranter(TokenService tokenService) {
         this();
-        setClientService(clientService);
         setTokenService(tokenService);
     }
-
-    @Override
-    public Single<AccessToken> grant(TokenRequest tokenRequest) {
-        return super.grant(tokenRequest);
-    }
-
 
     /**
      * The authorization server MUST NOT issue a refresh token for the implicit flow

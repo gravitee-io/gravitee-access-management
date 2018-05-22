@@ -109,10 +109,13 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvokeTokenEndpoint_withValidClientCredentials_noGrantType() throws Exception {
+        io.gravitee.am.model.Client client = new io.gravitee.am.model.Client();
+        client.setClientId("my-client-id");
+
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new Client("my-client")));
+                routingContext.setUser(new User(new Client(client)));
                 routingContext.next();
             }
         });
@@ -124,10 +127,13 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvokeTokenEndpoint_withInvalidClientCredentials() throws Exception {
+        io.gravitee.am.model.Client client = new io.gravitee.am.model.Client();
+        client.setClientId("other-client-id");
+
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new Client("other-client-id")));
+                routingContext.setUser(new User(new Client(client)));
                 routingContext.next();
             }
         });
@@ -139,10 +145,14 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvokeTokenEndpoint_withValidClientCredentials() throws Exception {
+        io.gravitee.am.model.Client client = new io.gravitee.am.model.Client();
+        client.setClientId("my-client");
+        client.setScopes(Collections.singletonList("read"));
+
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new Client("my-client")));
+                routingContext.setUser(new User(new Client(client)));
                 routingContext.next();
             }
         });
@@ -180,12 +190,8 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
             }
         };
 
-        io.gravitee.am.model.Client client = new io.gravitee.am.model.Client();
-        client.setClientId("my-client");
-        client.setScopes(Collections.singletonList("read"));
-
         when(clientService.findByClientId(any())).thenReturn(Maybe.just(client));
-        when(tokenGranter.grant(any(TokenRequest.class))).thenReturn(Single.just(accessToken));
+        when(tokenGranter.grant(any(TokenRequest.class), any(io.gravitee.am.model.Client.class))).thenReturn(Single.just(accessToken));
 
         testRequest(
                 HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
@@ -194,15 +200,19 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvokeTokenEndpoint_withValidClientCredentials_noAccessToken() throws Exception {
+        io.gravitee.am.model.Client client = new io.gravitee.am.model.Client();
+        client.setClientId("my-client");
+        client.setScopes(Collections.singletonList("read"));
+
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new Client("my-client")));
+                routingContext.setUser(new User(new Client(client)));
                 routingContext.next();
             }
         });
 
-        when(tokenGranter.grant(any(TokenRequest.class))).thenReturn(Single.error(new Exception()));
+        when(tokenGranter.grant(any(TokenRequest.class), any(io.gravitee.am.model.Client.class))).thenReturn(Single.error(new Exception()));
 
         testRequest(
                 HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",

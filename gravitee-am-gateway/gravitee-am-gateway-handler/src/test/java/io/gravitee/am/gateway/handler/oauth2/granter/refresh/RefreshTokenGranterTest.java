@@ -64,6 +64,9 @@ public class RefreshTokenGranterTest {
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.set("refresh_token", refreshToken);
 
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
         when(tokenRequest.getClientId()).thenReturn("my-client-id");
         when(tokenRequest.getGrantType()).thenReturn("refresh_token");
         when(tokenRequest.getRequestParameters()).thenReturn(parameters);
@@ -73,10 +76,10 @@ public class RefreshTokenGranterTest {
         when(oAuth2Request.getRequestParameters()).thenReturn(parameters);
         when(tokenRequest.createOAuth2Request()).thenReturn(oAuth2Request);
 
-        when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(new Client()));
-        when(tokenService.refresh(refreshToken, oAuth2Request)).thenReturn(Single.just(new DefaultAccessToken("token")));
+        when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(client));
+        when(tokenService.refresh(refreshToken, oAuth2Request, client)).thenReturn(Single.just(new DefaultAccessToken("token")));
 
-        TestObserver<AccessToken> testObserver = granter.grant(tokenRequest).test();
+        TestObserver<AccessToken> testObserver = granter.grant(tokenRequest, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(accessToken -> "token".equals(accessToken.getValue()));
@@ -88,6 +91,9 @@ public class RefreshTokenGranterTest {
         String refreshToken = "refresh-token";
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
         when(tokenRequest.getClientId()).thenReturn("my-client-id");
         when(tokenRequest.getGrantType()).thenReturn("refresh_token");
         when(tokenRequest.getRequestParameters()).thenReturn(parameters);
@@ -97,10 +103,10 @@ public class RefreshTokenGranterTest {
         when(oAuth2Request.getRequestParameters()).thenReturn(parameters);
         when(tokenRequest.createOAuth2Request()).thenReturn(oAuth2Request);
 
-        when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(new Client()));
-        when(tokenService.refresh(refreshToken, oAuth2Request)).thenReturn(Single.just(new DefaultAccessToken("token")));
+        when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(client));
+        when(tokenService.refresh(refreshToken, oAuth2Request, client)).thenReturn(Single.just(new DefaultAccessToken("token")));
 
-        TestObserver<AccessToken> testObserver = granter.grant(tokenRequest).test();
+        TestObserver<AccessToken> testObserver = granter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRequestException.class);
 
@@ -112,6 +118,9 @@ public class RefreshTokenGranterTest {
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.set("refresh_token", refreshToken);
 
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
         when(tokenRequest.getClientId()).thenReturn("my-client-id");
         when(tokenRequest.getGrantType()).thenReturn("refresh_token");
         when(tokenRequest.getRequestParameters()).thenReturn(parameters);
@@ -121,10 +130,10 @@ public class RefreshTokenGranterTest {
         when(oAuth2Request.getRequestParameters()).thenReturn(parameters);
         when(tokenRequest.createOAuth2Request()).thenReturn(oAuth2Request);
 
-        when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(new Client()));
-        when(tokenService.refresh(refreshToken, oAuth2Request)).thenReturn(Single.error(new InvalidGrantException()));
+        when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(client));
+        when(tokenService.refresh(refreshToken, oAuth2Request, client)).thenReturn(Single.error(new InvalidGrantException()));
 
-        TestObserver<AccessToken> testObserver = granter.grant(tokenRequest).test();
+        TestObserver<AccessToken> testObserver = granter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
     }

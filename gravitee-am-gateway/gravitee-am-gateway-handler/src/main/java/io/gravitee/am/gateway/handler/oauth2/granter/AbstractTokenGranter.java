@@ -15,9 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.granter;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
-import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
@@ -36,8 +34,6 @@ public class AbstractTokenGranter implements TokenGranter {
 
     private final String grantType;
 
-    private ClientService clientService;
-
     private TokenService tokenService;
 
     private boolean supportRefreshToken = true;
@@ -53,21 +49,15 @@ public class AbstractTokenGranter implements TokenGranter {
     }
 
     @Override
-    public Single<AccessToken> grant(TokenRequest tokenRequest) {
-        if (! this.grantType.equals(tokenRequest.getGrantType())) {
-            throw new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType());
+    public Single<AccessToken> grant(TokenRequest tokenRequest, Client client) {
+        // Is client allowed to use such grant type ?
+        if (client.getAuthorizedGrantTypes() != null && !client.getAuthorizedGrantTypes().isEmpty()
+                && !client.getAuthorizedGrantTypes().contains(grantType)) {
+            throw new UnauthorizedClientException("Unauthorized grant type: " + grantType);
         }
 
-        return clientService.findByClientId(tokenRequest.getClientId())
-                .flatMapSingle(client -> {
-                    // Is client allowed to use such grant type ?
-                    if (client.getAuthorizedGrantTypes() != null && !client.getAuthorizedGrantTypes().isEmpty()
-                            && !client.getAuthorizedGrantTypes().contains(grantType)) {
-                        throw new UnauthorizedClientException("Unauthorized grant type: " + grantType);
-                    }
-                    return createOAuth2Request(tokenRequest, client);
-                })
-                .flatMap(this::createAccessToken);
+        return createOAuth2Request(tokenRequest, client)
+                .flatMap(oAuth2Request ->  createAccessToken(oAuth2Request, client));
     }
 
     protected Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client) {
@@ -78,16 +68,12 @@ public class AbstractTokenGranter implements TokenGranter {
                 });
     }
 
-    protected Single<AccessToken> createAccessToken(OAuth2Request oAuth2Request) {
-        return tokenService.create(oAuth2Request);
+    protected Single<AccessToken> createAccessToken(OAuth2Request oAuth2Request, Client client) {
+        return tokenService.create(oAuth2Request, client);
     }
 
     protected boolean isSupportRefreshToken() {
         return supportRefreshToken;
-    }
-
-    public void setClientService(ClientService clientService) {
-        this.clientService = clientService;
     }
 
     public TokenService getTokenService() {

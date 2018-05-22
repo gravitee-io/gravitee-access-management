@@ -25,7 +25,6 @@ import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.oauth2.request.TokenRequestFactory;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.auth.User;
@@ -69,23 +68,22 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
             throw new InvalidRequestException();
         }
 
-        Client client = (Client) authenticatedUser.getDelegate();
+        Client authenticatedClient = (Client) authenticatedUser.getDelegate();
 
         // Check that authenticated user is matching the client_id
         // client_id is not required in the token request since the client can be authenticated via a Basic Authentication
         if (tokenRequest.getClientId() != null) {
-            if (!client.getClientId().equals(tokenRequest.getClientId())) {
+            if (!authenticatedClient.getClientId().equals(tokenRequest.getClientId())) {
                 throw new InvalidClientException();
             }
         } else {
             // set token request client_id with the authenticated client
-            tokenRequest.setClientId(client.getClientId());
+            tokenRequest.setClientId(authenticatedClient.getClientId());
         }
 
-        clientService.findByClientId(client.getClientId())
-                .switchIfEmpty(Maybe.error(new InvalidRequestException("No client with id : " + client.getClientId())))
-                .flatMapSingle(client1 -> tokenRequestResolver.resolve(tokenRequest, client1))
-                .flatMap(tokenRequest1 -> tokenGranter.grant(tokenRequest1))
+        final io.gravitee.am.model.Client client = authenticatedClient.getClient();
+        tokenRequestResolver.resolve(tokenRequest, client)
+                .flatMap(tokenRequest1 -> tokenGranter.grant(tokenRequest1, client))
                 .subscribe(accessToken -> context.response()
                         .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")

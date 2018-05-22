@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant;
 
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
@@ -49,10 +48,8 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     public ExtensionGrantGranter(ExtensionGrantProvider extensionGrantProvider,
                                  ExtensionGrant extensionGrant,
                                  UserService userService,
-                                 ClientService clientService,
                                  TokenService tokenService) {
         super(extensionGrant.getGrantType());
-        setClientService(clientService);
         setTokenService(tokenService);
         this.extensionGrantProvider = extensionGrantProvider;
         this.extensionGrant = extensionGrant;

@@ -72,7 +72,7 @@ public class ApprovalServiceTest {
 
         when(clientService.findByClientId(clientId)).thenReturn(Maybe.just(client));
 
-        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, userId).test();
+        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, userId).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -96,7 +96,7 @@ public class ApprovalServiceTest {
         when(clientService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(anyString(), anyString(), anyString())).thenReturn(Single.just(Collections.emptySet()));
 
-        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, userId).test();
+        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, userId).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -130,7 +130,7 @@ public class ApprovalServiceTest {
         when(clientService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(domainId, userId, clientId)).thenReturn(Single.just(Collections.singleton(userScopeApproval)));
 
-        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, userId).test();
+        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, userId).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -164,7 +164,7 @@ public class ApprovalServiceTest {
         when(clientService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(domainId, userId, clientId)).thenReturn(Single.just(Collections.singleton(userScopeApproval)));
 
-        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, userId).test();
+        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, userId).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

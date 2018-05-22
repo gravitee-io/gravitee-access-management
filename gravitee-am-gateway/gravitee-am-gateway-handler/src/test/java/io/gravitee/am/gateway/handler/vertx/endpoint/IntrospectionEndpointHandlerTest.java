@@ -61,8 +61,11 @@ public class IntrospectionEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldReturnInvalidToken_noTokenProvided() throws Exception {
+        io.gravitee.am.model.Client client = new io.gravitee.am.model.Client();
+        client.setClientId("my-client-id");
+
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new User(new Client("client-id")));
+            routingContext.setUser(new User(new Client(client)));
             routingContext.next();
         });
 

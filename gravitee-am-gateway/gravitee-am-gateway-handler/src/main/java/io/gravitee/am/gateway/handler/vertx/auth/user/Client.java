@@ -23,18 +23,26 @@ import io.vertx.ext.auth.User;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class Client implements User {
 
     private final String clientId;
 
-    public Client(String clientId) {
-        this.clientId = clientId;
+    private final io.gravitee.am.model.Client client;
+
+    public Client(io.gravitee.am.model.Client  client) {
+        this.clientId = client.getClientId();
+        this.client = client;
     }
 
     public String getClientId() {
         return clientId;
+    }
+
+    public io.gravitee.am.model.Client getClient() {
+        return client;
     }
 
     @Override

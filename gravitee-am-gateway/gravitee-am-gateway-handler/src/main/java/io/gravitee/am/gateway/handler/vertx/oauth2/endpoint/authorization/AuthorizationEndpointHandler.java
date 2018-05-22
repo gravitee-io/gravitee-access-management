@@ -82,9 +82,9 @@ public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointH
         // invalid redirection URI.
         clientService.findByClientId(clientId)
                 .switchIfEmpty(Maybe.error(new InvalidRequestException("No client with id : " + clientId)))
-                .flatMapSingle(client -> authorizationRequestResolver.resolve(request, client))
-                .flatMap(authorizationRequest -> approvalService.checkApproval(authorizationRequest, endUser.getUsername()))
-                .flatMap(authorizationRequest -> createAuthorizationResponse(authorizationRequest, endUser))
+                .flatMapSingle(client -> authorizationRequestResolver.resolve(request, client)
+                        .flatMap(authorizationRequest -> approvalService.checkApproval(authorizationRequest, client, endUser.getUsername()))
+                        .flatMap(authorizationRequest ->  createAuthorizationResponse(authorizationRequest, client, endUser)))
                 .subscribe(authorizationRequest -> {
                     if (!authorizationRequest.isApproved()) {
                         // TODO should we put this data inside repository to handle cluster environment ?

@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.granter;
 
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.model.Client;
 import io.reactivex.Single;
 
 /**
@@ -28,5 +29,5 @@ public interface TokenGranter {
 
     boolean handle(String grantType);
 
-    Single<AccessToken> grant(TokenRequest tokenRequest);
+    Single<AccessToken> grant(TokenRequest tokenRequest, Client client);
 }

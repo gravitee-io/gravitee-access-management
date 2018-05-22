@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.utils.URIBuilder;
 import io.gravitee.am.gateway.handler.vertx.oauth2.request.TokenRequestFactory;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Single;
 import io.vertx.core.Handler;
@@ -49,7 +50,7 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
         this.tokenGranter = tokenGranter;
     }
 
-    protected Single<AuthorizationRequest> createAuthorizationResponse(AuthorizationRequest authorizationRequest, User authenticatedUser) {
+    protected Single<AuthorizationRequest> createAuthorizationResponse(AuthorizationRequest authorizationRequest, Client client, User authenticatedUser) {
         // request is not approved, the user will be redirect to the approval page
         if (!authorizationRequest.isApproved()) {
             return Single.just(authorizationRequest);
@@ -58,7 +59,7 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
         // handle response type
         switch(authorizationRequest.getResponseType()) {
             case OAuth2Constants.TOKEN :
-                return setImplicitResponse(authorizationRequest);
+                return setImplicitResponse(authorizationRequest, client);
             case OAuth2Constants.CODE :
                 return setAuthorizationCodeResponse(authorizationRequest, authenticatedUser);
             default:
@@ -117,10 +118,10 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
                 });
     }
 
-    private Single<AuthorizationRequest> setImplicitResponse(AuthorizationRequest authorizationRequest) {
+    private Single<AuthorizationRequest> setImplicitResponse(AuthorizationRequest authorizationRequest, Client client) {
         TokenRequest tokenRequest = tokenRequestFactory.create(authorizationRequest);
         tokenRequest.setGrantType(OAuth2Constants.IMPLICIT);
-        return tokenGranter.grant(tokenRequest)
+        return tokenGranter.grant(tokenRequest, client)
                 .map(accessToken -> {
                     ImplicitResponse response = new ImplicitResponse();
                     response.setAccessToken(accessToken);

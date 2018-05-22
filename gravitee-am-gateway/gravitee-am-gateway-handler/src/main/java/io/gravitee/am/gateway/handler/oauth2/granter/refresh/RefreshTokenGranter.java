@@ -15,13 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.granter.refresh;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
-import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.model.Client;
 import io.reactivex.Single;
 
 /**
@@ -39,25 +38,19 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
         super(GRANT_TYPE);
     }
 
-    public RefreshTokenGranter(ClientService clientService, TokenService tokenService) {
+    public RefreshTokenGranter(TokenService tokenService) {
         this();
-        setClientService(clientService);
         setTokenService(tokenService);
     }
 
     @Override
-    public Single<AccessToken> grant(TokenRequest tokenRequest) {
-        return super.grant(tokenRequest);
-    }
-
-    @Override
-    protected Single<AccessToken> createAccessToken(OAuth2Request oAuth2Request) {
+    protected Single<AccessToken> createAccessToken(OAuth2Request oAuth2Request, Client client) {
         String refreshToken = oAuth2Request.getRequestParameters().getFirst("refresh_token");
 
         if (refreshToken == null || refreshToken.isEmpty()) {
             throw new InvalidRequestException("A refresh token must be supplied.");
         }
 
-        return getTokenService().refresh(refreshToken, oAuth2Request);
+        return getTokenService().refresh(refreshToken, oAuth2Request, client);
     }
 }

@@ -15,14 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.granter.code;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
@@ -47,20 +45,14 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
         super(GRANT_TYPE);
     }
 
-    public AuthorizationCodeTokenGranter(ClientService clientService, TokenService tokenService) {
+    public AuthorizationCodeTokenGranter(TokenService tokenService) {
         this();
-        setClientService(clientService);
         setTokenService(tokenService);
     }
 
-    public AuthorizationCodeTokenGranter(ClientService clientService, TokenService tokenService, AuthorizationCodeService authorizationCodeService) {
-        this(clientService, tokenService);
+    public AuthorizationCodeTokenGranter(TokenService tokenService, AuthorizationCodeService authorizationCodeService) {
+        this(tokenService);
         this.authorizationCodeService = authorizationCodeService;
-    }
-
-    @Override
-    public Single<AccessToken> grant(TokenRequest tokenRequest) {
-        return super.grant(tokenRequest);
     }
 
     @Override

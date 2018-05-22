@@ -16,10 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.token.impl;
 
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
-import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
@@ -54,9 +52,6 @@ public class TokenServiceImpl implements TokenService {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
-    private ClientService clientService;
-
-    @Autowired
     private TokenEnhancer tokenEnhancer;
 
     @Autowired
@@ -68,21 +63,21 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public Single<AccessToken> create(OAuth2Request oAuth2Request) {
-        return clientService.findByClientId(oAuth2Request.getClientId())
-                .flatMapSingle(client -> {
-                    if (client.isGenerateNewTokenPerRequest()) {
-                        Optional<io.gravitee.am.repository.oauth2.model.AccessToken> empty = Optional.empty();
-                        return Single.just(empty);
-                    } else {
-                        return accessTokenRepository.findByCriteria(convert(oAuth2Request))
-                                .map(accessToken -> Optional.of(accessToken))
-                                .defaultIfEmpty(Optional.empty()).toSingle();
-                    }
-                })
+    public Single<AccessToken> create(OAuth2Request oAuth2Request, Client client) {
+        // new token per request option enable ? create new token
+        if (client.isGenerateNewTokenPerRequest()) {
+            return createAccessToken(oAuth2Request, client).map(this::convert);
+        }
+
+        // try to find an existing token
+        // if exists and if it's not expired, re-use it
+        // if not, create a new access token
+        return accessTokenRepository.findByCriteria(convert(oAuth2Request))
+                .map(accessToken -> Optional.of(accessToken))
+                .defaultIfEmpty(Optional.empty()).toSingle()
                 .flatMap(optionalAccessToken -> {
                     if (!optionalAccessToken.isPresent()) {
-                        return createAccessToken(oAuth2Request);
+                        return createAccessToken(oAuth2Request, client);
                     } else {
                         io.gravitee.am.repository.oauth2.model.AccessToken accessToken = optionalAccessToken.get();
                         // check if the access token is expired
@@ -94,7 +89,7 @@ public class TokenServiceImpl implements TokenService {
                             }
                             // the access token (and its refresh token) have been removed
                             // re-new them
-                            return deleteAccessTokenAction.andThen(createAccessToken(oAuth2Request));
+                            return deleteAccessTokenAction.andThen(createAccessToken(oAuth2Request, client));
                         } else {
                             // do we need to update something ?
                             return Single.just(accessToken);
@@ -104,7 +99,7 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public Single<AccessToken> refresh(String refreshToken, OAuth2Request oAuth2Request) {
+    public Single<AccessToken> refresh(String refreshToken, OAuth2Request oAuth2Request, Client client) {
         // invalid_grant : The provided authorization grant (e.g., authorization code, resource owner credentials) or refresh token is
         // invalid, expired, revoked, does not match the redirection URI used in the authorization request, or was issued to another client.
         return refreshTokenRepository.findByToken(refreshToken)
@@ -124,34 +119,31 @@ public class TokenServiceImpl implements TokenService {
                         return userAuthenticationManager.loadUserByUsername(refreshToken1.getSubject())
                                 .flatMapSingle(user -> {
                                     oAuth2Request.setSubject(user.getId());
-                                    return deleteRefreshTokenAction.andThen(create(oAuth2Request));
+                                    return deleteRefreshTokenAction.andThen(create(oAuth2Request, client));
                                 })
                                 .onErrorResumeNext(error -> Single.error(new InvalidGrantException()));
                     } else {
-                        return deleteRefreshTokenAction.andThen(create(oAuth2Request));
+                        return deleteRefreshTokenAction.andThen(create(oAuth2Request, client));
                     }
                 });
     }
 
-    private Single<io.gravitee.am.repository.oauth2.model.AccessToken> createAccessToken(OAuth2Request oAuth2Request) {
-        return clientService.findByClientId(oAuth2Request.getClientId())
-                .flatMapSingle(client -> {
-                    io.gravitee.am.repository.oauth2.model.AccessToken accessToken = convert(oAuth2Request, client);
-                    return Single.just(oAuth2Request.isSupportRefreshToken())
-                            .flatMap(supportRefreshToken -> {
-                                if (supportRefreshToken) {
-                                    return createRefreshToken(oAuth2Request, client)
-                                            .flatMap(refreshToken -> {
-                                                accessToken.setRefreshToken(refreshToken.getToken());
-                                                return Single.just(accessToken);
-                                            });
-                                } else {
-                                    return Single.just(accessToken);
-                                }
-                            })
-                            .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request))
-                            .flatMap(accessTokenRepository::create);
-                });
+    private Single<io.gravitee.am.repository.oauth2.model.AccessToken> createAccessToken(OAuth2Request oAuth2Request, Client client) {
+        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = convert(oAuth2Request, client);
+        return Single.just(oAuth2Request.isSupportRefreshToken())
+            .flatMap(supportRefreshToken -> {
+                if (supportRefreshToken) {
+                    return createRefreshToken(oAuth2Request, client)
+                            .flatMap(refreshToken -> {
+                                accessToken.setRefreshToken(refreshToken.getToken());
+                                return Single.just(accessToken);
+                            });
+                } else {
+                    return Single.just(accessToken);
+                }
+            })
+            .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request))
+            .flatMap(accessTokenRepository::create);
     }
 
     private Single<RefreshToken> createRefreshToken(OAuth2Request oAuth2Request, Client client) {

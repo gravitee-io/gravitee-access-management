@@ -69,12 +69,15 @@ public class TokenServiceTest {
     public void shouldCreate_noExistingToken() {
         OAuth2Request oAuth2Request = new OAuth2Request();
 
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
+        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.empty());
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
         when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
-        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request).test();
+        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -88,13 +91,16 @@ public class TokenServiceTest {
     public void shouldCreate_existingNoExpiredToken() {
         OAuth2Request oAuth2Request = new OAuth2Request();
 
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
         io.gravitee.am.repository.oauth2.model.AccessToken existingToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
         existingToken.setExpireAt(new Date(System.currentTimeMillis() + (60 * 1000)));
 
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
+        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.just(existingToken));
 
-        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request).test();
+        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -108,16 +114,19 @@ public class TokenServiceTest {
     public void shouldCreate_existingExpiredToken_noRefreshToken() {
         OAuth2Request oAuth2Request = new OAuth2Request();
 
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
         io.gravitee.am.repository.oauth2.model.AccessToken existingToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
         existingToken.setExpireAt(new Date(System.currentTimeMillis() - (60 * 1000)));
 
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
+        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.just(existingToken));
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
         when(accessTokenRepository.delete(anyString())).thenReturn(Completable.fromSingle(Single.just(new Object())));
         when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
-        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request).test();
+        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -131,18 +140,21 @@ public class TokenServiceTest {
     public void shouldCreate_existingExpiredToken_withRefreshToken() {
         OAuth2Request oAuth2Request = new OAuth2Request();
 
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
         io.gravitee.am.repository.oauth2.model.AccessToken existingToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
         existingToken.setExpireAt(new Date(System.currentTimeMillis() - (60 * 1000)));
         existingToken.setRefreshToken("refresh-token");
 
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
+        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.just(existingToken));
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
         when(accessTokenRepository.delete(anyString())).thenReturn(Completable.fromSingle(Single.just(new Object())));
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.fromSingle(Single.just(new Object())));
         when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
-        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request).test();
+        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -164,7 +176,7 @@ public class TokenServiceTest {
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
         when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
-        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request).test();
+        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -199,7 +211,7 @@ public class TokenServiceTest {
         when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
         when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
-        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request).test();
+        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -231,7 +243,7 @@ public class TokenServiceTest {
         when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
         when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
-        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request).test();
+        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -258,7 +270,7 @@ public class TokenServiceTest {
 
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.empty());
 
-        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request).test();
+        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request, client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
@@ -286,7 +298,7 @@ public class TokenServiceTest {
 
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
 
-        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request).test();
+        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request, client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
@@ -315,7 +327,7 @@ public class TokenServiceTest {
 
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
 
-        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request).test();
+        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request, client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
@@ -346,7 +358,7 @@ public class TokenServiceTest {
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
         when(userAuthenticationManager.loadUserByUsername(anyString())).thenReturn(Maybe.empty());
 
-        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request).test();
+        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request, client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 

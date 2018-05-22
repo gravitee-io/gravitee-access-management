@@ -16,12 +16,15 @@
 package io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization;
 
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.common.http.HttpHeaders;
+import io.reactivex.Maybe;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.auth.User;
@@ -47,12 +50,15 @@ public class AuthorizationApprovalEndpointHandler extends AbstractAuthorizationE
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationApprovalEndpointHandler.class);
     private ApprovalService approvalService;
+    private ClientService clientService;
 
     public AuthorizationApprovalEndpointHandler(AuthorizationCodeService authorizationCodeService,
                                                 TokenGranter tokenGranter,
-                                                ApprovalService approvalService) {
+                                                ApprovalService approvalService,
+                                                ClientService clientService) {
         super(authorizationCodeService, tokenGranter);
         this.approvalService = approvalService;
+        this.clientService = clientService;
     }
 
     @Override
@@ -79,6 +85,14 @@ public class AuthorizationApprovalEndpointHandler extends AbstractAuthorizationE
 
         // prepare user approval choices
         MultiMap params = req.formAttributes();
+
+        // check client id
+        String requestedClientId = params.get(OAuth2Constants.CLIENT_ID);
+        if (requestedClientId == null || !requestedClientId.equals(authorizationRequest.getClientId())) {
+            context.response().setStatusCode(400).end("Invalid authorization request");
+        }
+
+        // retrieve user approval choices
         Map<String, String> approvalParameters = params.getDelegate().entries()
                 .stream()
                 .filter(entry -> entry.getKey().startsWith(OAuth2Constants.SCOPE_PREFIX))
@@ -86,8 +100,11 @@ public class AuthorizationApprovalEndpointHandler extends AbstractAuthorizationE
         authorizationRequest.setApprovalParameters(approvalParameters);
 
         // handle approval response
-        approvalService.saveApproval(authorizationRequest, endUser.getUsername())
-                .flatMap(authorizationRequest1 -> createAuthorizationResponse(authorizationRequest1, endUser))
+        clientService.findByClientId(requestedClientId)
+                .switchIfEmpty(Maybe.error(new InvalidRequestException("No client with id : " + requestedClientId)))
+                .toSingle()
+                .flatMap(client -> approvalService.saveApproval(authorizationRequest, endUser.getUsername())
+                        .flatMap(authorizationRequest1 -> createAuthorizationResponse(authorizationRequest1, client, endUser)))
                 .subscribe(authorizationRequest1 -> {
                     // remove OAuth2Constants.AUTHORIZATION_REQUEST session value
                     // should not be used after this step

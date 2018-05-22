@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.impl;
 
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.ExtensionGrantGranter;
@@ -47,9 +46,6 @@ public class ExtensionGrantManagerImpl implements ExtensionGrantManager, Initial
 
     @Autowired
     private Domain domain;
-
-    @Autowired
-    private ClientService clientService;
 
     @Autowired
     private TokenService tokenService;
@@ -101,7 +97,7 @@ public class ExtensionGrantManagerImpl implements ExtensionGrantManager, Initial
                                     ExtensionGrantProvider extensionGrantProvider = extensionGrantData.getExtensionGrantProvider();
                                     logger.info("\tInitializing extension grant: {} [{}]", extensionGrant.getName(), extensionGrant.getType());
                                     ExtensionGrantGranter extensionGrantGranter =
-                                            new ExtensionGrantGranter(extensionGrantProvider, extensionGrant, userService, clientService, tokenService);
+                                            new ExtensionGrantGranter(extensionGrantProvider, extensionGrant, userService, tokenService);
                                     ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrantGranter);
                                 });
                                 logger.info("Extension grants loaded for domain {}", domain.getName());
