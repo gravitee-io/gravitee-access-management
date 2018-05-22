@@ -19,7 +19,7 @@ import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.ClientRepository;
-import io.gravitee.am.repository.oauth2.api.TokenRepository;
+import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
@@ -62,7 +62,7 @@ public class ClientServiceImpl implements ClientService {
     private IdentityProviderService identityProviderService;
 
     @Autowired
-    private TokenRepository tokenRepository;
+    private AccessTokenRepository accessTokenRepository;
 
     @Autowired
     private DomainService domainService;
@@ -173,13 +173,14 @@ public class ClientServiceImpl implements ClientService {
         LOGGER.debug("Find top clients");
         return clientRepository.findAll()
                 .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .flatMapSingle(client -> tokenRepository.findTokensByClientId(client.getClientId())
-                                                            .map(oAuth2AccessTokens -> {
-                                                                TopClient topClient = new TopClient();
-                                                                topClient.setClient(client);
-                                                                topClient.setAccessTokens(oAuth2AccessTokens.size());
-                                                                return topClient;
-                                                            }))
+                .flatMapSingle(client -> accessTokenRepository.findByClientId(client.getClientId())
+                        .toList()
+                        .map(oAuth2AccessTokens -> {
+                            TopClient topClient = new TopClient();
+                            topClient.setClient(client);
+                            topClient.setAccessTokens(oAuth2AccessTokens.size());
+                            return topClient;
+                        }))
                 .toList()
                 .map(topClients -> topClients.stream().filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet()))
                 .onErrorResumeNext(ex -> {
@@ -193,7 +194,8 @@ public class ClientServiceImpl implements ClientService {
         LOGGER.debug("Find top clients by domain: {}", domain);
         return clientRepository.findByDomain(domain)
                 .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .flatMapSingle(client -> tokenRepository.findTokensByClientId(client.getClientId())
+                .flatMapSingle(client -> accessTokenRepository.findByClientId(client.getClientId())
+                        .toList()
                         .map(oAuth2AccessTokens -> {
                             TopClient topClient = new TopClient();
                             topClient.setClient(client);
