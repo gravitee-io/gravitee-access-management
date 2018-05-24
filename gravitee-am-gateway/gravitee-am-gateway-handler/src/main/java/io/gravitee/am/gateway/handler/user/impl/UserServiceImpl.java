@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.user.impl;
 
+import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -27,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -52,14 +55,8 @@ public class UserServiceImpl implements UserService {
                     existingUser.setLoggedAt(new Date());
                     existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
                     existingUser.setRoles(user.getRoles());
-                    existingUser.setAdditionalInformation(user.getAdditionalInformation());
-                    //TODO: How to map these informations ?
-                    /*
-                    if (details != null) {
-                        newUser.setSource(details.get(SOURCE));
-                        newUser.setClient(CLIENT_ID);
-                    }
-                    */
+                    Map<String, Object> additionalInformation = user.getAdditionalInformation();
+                    extractAdditionalInformation(existingUser, additionalInformation);
                     return userRepository.update(existingUser);
                 })
                 .onErrorResumeNext(ex -> {
@@ -67,19 +64,14 @@ public class UserServiceImpl implements UserService {
                         logger.debug("Creating a new user: username[%s]", user.getUsername());
                         final User newUser = new User();
                         newUser.setUsername(user.getUsername());
-                        //TODO: How to map these informations ?
-                        /*
-                        if (details != null) {
-                            newUser.setSource(details.get(SOURCE));
-                            newUser.setClient(CLIENT_ID);
-                        }
-                        */
                         newUser.setDomain(domain.getId());
                         newUser.setCreatedAt(new Date());
                         newUser.setLoggedAt(new Date());
                         newUser.setLoginsCount(1L);
                         newUser.setRoles(user.getRoles());
-                        newUser.setAdditionalInformation(user.getAdditionalInformation());
+
+                        Map<String, Object> additionalInformation = user.getAdditionalInformation();
+                        extractAdditionalInformation(newUser, additionalInformation);
                         return userRepository.create(newUser);
                     }
                     return Single.error(ex);
@@ -89,5 +81,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public Maybe<User> findById(String id) {
         return userRepository.findById(id);
+    }
+
+    private void extractAdditionalInformation(User user, Map<String, Object> additionalInformation) {
+        if (additionalInformation != null) {
+            Map<String, Object> extraInformation = new HashMap<>(additionalInformation);
+            user.setSource((String) extraInformation.remove("source"));
+            user.setClient((String) extraInformation.remove(OAuth2Constants.CLIENT_ID));
+            user.setAdditionalInformation(extraInformation);
+        }
     }
 }

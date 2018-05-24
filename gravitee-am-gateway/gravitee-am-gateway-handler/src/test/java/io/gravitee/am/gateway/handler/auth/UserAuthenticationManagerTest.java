@@ -32,11 +32,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Map;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -83,7 +84,7 @@ public class UserAuthenticationManagerTest {
         }).test();
 
         verifyZeroInteractions(userService);
-        observer.assertError(NoSuchElementException.class);
+        observer.assertError(BadCredentialsException.class);
     }
 
     @Test
@@ -113,7 +114,7 @@ public class UserAuthenticationManagerTest {
 
 
         verifyZeroInteractions(userService);
-        observer.assertError(NoSuchElementException.class);
+        observer.assertError(BadCredentialsException.class);
     }
 
     @Test
@@ -208,7 +209,7 @@ public class UserAuthenticationManagerTest {
     public void shouldAuthenticateUser_multipleIdentityProvider() {
         Client client = new Client();
         client.setClientId("client-id");
-        client.setIdentities(new HashSet<>(Arrays.asList("idp-1", "idp-2")));
+        client.setIdentities(new LinkedHashSet<>(Arrays.asList("idp-1", "idp-2")));
 
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(userService.findOrCreate(any())).then(invocation -> {
@@ -217,10 +218,10 @@ public class UserAuthenticationManagerTest {
             user.setUsername(idpUser.getUsername());
             return Single.just(user);
         });
-        when(identityProviderManager.get("idp-2")).thenReturn(Maybe.just(new AuthenticationProvider() {
+        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
             public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
-                return Maybe.empty();
+                throw new BadCredentialsException();
             }
 
             @Override
@@ -229,7 +230,7 @@ public class UserAuthenticationManagerTest {
             }
         }));
 
-        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
+        when(identityProviderManager.get("idp-2")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
             public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
                 return Maybe.just(new DefaultUser("username"));

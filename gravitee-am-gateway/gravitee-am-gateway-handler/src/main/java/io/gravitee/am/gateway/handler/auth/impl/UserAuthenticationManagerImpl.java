@@ -16,10 +16,13 @@
 package io.gravitee.am.gateway.handler.auth.impl;
 
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.auth.exception.BadCredentialsException;
 import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.Maybe;
@@ -28,6 +31,9 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -51,20 +57,48 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     public Single<User> authenticate(String clientId, Authentication authentication) {
         logger.debug("Trying to authenticate [{}]", authentication);
 
-        // TODO: look for a way to send a BadCredentialsException instead of a NoSuchElementException
-        // lastOrError() always throw a NoSuchElementException without a way to switch for an other exception type
         // Get identity providers associated to a client
         // For each idp, try to authenticate a user
         // Try to authenticate while the user can not be authenticated
         // If user can't be authenticated, send an exception
-        return Single.fromObservable(
-                clientService.findByClientId(clientId)
-                    .flatMapObservable(client -> Observable.fromIterable(client.getIdentities()))
-                    .flatMapMaybe(authProvider -> identityProviderManager.get(authProvider))
-                    .flatMapMaybe(authenticationProvider -> authenticationProvider.loadUserByUsername(authentication))
-                ).flatMap(user -> {
-                    // On authentication success, create the user
-                    return userService.findOrCreate(user);
+        return clientService.findByClientId(clientId)
+                .switchIfEmpty(Maybe.error(new BadCredentialsException("No client found for authentication " + authentication.getPrincipal())))
+                .flatMapObservable(client -> {
+                    if (client.getIdentities() == null || client.getIdentities().isEmpty()) {
+                        return Observable.error(new BadCredentialsException("No identity provider found for client : " + clientId));
+                    } else {
+                        return Observable.fromIterable(client.getIdentities());
+                    }
+                })
+                .flatMapMaybe(authProvider -> identityProviderManager.get(authProvider)
+                        .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to load authentication provider " + authProvider + ", an error occurred during the initialization stage")))
+                        .flatMap(authenticationProvider -> authenticationProvider.loadUserByUsername(authentication))
+                        .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate user : " + authentication.getPrincipal())))
+                        .map(user -> {
+                            Map<String, Object> additionalInformation =
+                                    user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
+                            additionalInformation.put("source", authProvider);
+                            additionalInformation.put(OAuth2Constants.CLIENT_ID, clientId);
+                            ((DefaultUser ) user).setAdditonalInformation(additionalInformation);
+                            return new UserAuthentication(user, null);
+                        })
+                        .onErrorResumeNext(error -> {
+                            return Maybe.just(new UserAuthentication(null, error));
+                        }))
+                .takeUntil(userAuthentication -> userAuthentication.getUser() != null)
+                .lastOrError()
+                .flatMap(userAuthentication -> {
+                    io.gravitee.am.identityprovider.api.User user = userAuthentication.getUser();
+                    if (user == null) {
+                        Throwable lastException = userAuthentication.getLastException();
+                        if (lastException != null) {
+                            return Single.error(lastException);
+                        } else {
+                            return Single.error(new BadCredentialsException("No user found for registered providers"));
+                        }
+                    } else {
+                        return userService.findOrCreate(user);
+                    }
                 });
     }
 
@@ -92,5 +126,26 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
     public void setIdentityProviderManager(IdentityProviderManager identityProviderManager) {
         this.identityProviderManager = identityProviderManager;
+    }
+
+    private class UserAuthentication {
+        private io.gravitee.am.identityprovider.api.User user;
+        private Throwable lastException;
+
+        public UserAuthentication() {
+        }
+
+        public UserAuthentication(io.gravitee.am.identityprovider.api.User user, Throwable lastException) {
+            this.user = user;
+            this.lastException = lastException;
+        }
+
+        public io.gravitee.am.identityprovider.api.User getUser() {
+            return user;
+        }
+
+        public Throwable getLastException() {
+            return lastException;
+        }
     }
 }
