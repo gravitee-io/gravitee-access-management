@@ -30,7 +30,7 @@ public class DelegateClientDetails extends BaseClientDetails {
 
     private final Client client;
 
-    DelegateClientDetails(Client client) {
+    public DelegateClientDetails(Client client) {
         super();
         this.client = client;
         setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());

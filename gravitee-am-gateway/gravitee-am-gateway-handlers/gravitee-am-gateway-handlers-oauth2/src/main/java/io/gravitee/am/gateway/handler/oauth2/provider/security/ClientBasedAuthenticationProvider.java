@@ -73,30 +73,37 @@ public class ClientBasedAuthenticationProvider implements AuthenticationProvider
                             authentication.getName(),
                             authentication.getCredentials());
 
+                    Exception lastException = null;
                     while (iter.hasNext() && user == null) {
                         String provider = iter.next();
                         io.gravitee.am.identityprovider.api.AuthenticationProvider authenticationProvider =
                                 identityProviderManager.get(provider);
 
                         if (authenticationProvider == null) {
-                            throw new BadCredentialsException("Unable to load authentication provider " + provider + ", an error occurred during the initialization stage");
+                            lastException = new BadCredentialsException("Unable to load authentication provider " + provider + ", an error occurred during the initialization stage");
+                        } else {
+                            try {
+                                user = authenticationProvider.loadUserByUsername(provAuthentication);
+                                // set user identity provider source
+                                details.put(RepositoryProviderUtils.SOURCE, provider);
+                            } catch (Exception ex) {
+                                logger.info("Unable to authenticate user {} with provider {}", authentication.getName(), provider, ex);
+                                lastException = new BadCredentialsException(ex.getMessage(), ex);
+                            }
                         }
 
-                        try {
-                            user = authenticationProvider.loadUserByUsername(provAuthentication);
-                            // set user identity provider source
-                            details.put(RepositoryProviderUtils.SOURCE, provider);
-                        } catch (Exception ex) {
-                            logger.info("Unable to authenticate user {} with provider {}", authentication.getName(), provider, ex);
-                            throw new BadCredentialsException(ex.getMessage(), ex);
-                        }
                     }
 
                     if (user != null) {
                         return new UsernamePasswordAuthenticationToken(user, provAuthentication.getCredentials(),
                                 AuthorityUtils.NO_AUTHORITIES);
                     }
-                    throw new BadCredentialsException("No user found for providers " + StringUtils.collectionToDelimitedString(identities, ","));
+
+                    if (lastException != null) {
+                        throw lastException;
+                    } else {
+                        throw new BadCredentialsException("No user found for providers " + StringUtils.collectionToDelimitedString(identities, ","));
+                    }
                 }
             } catch (Exception ex) {
                 throw new BadCredentialsException(ex.getMessage(), ex);
