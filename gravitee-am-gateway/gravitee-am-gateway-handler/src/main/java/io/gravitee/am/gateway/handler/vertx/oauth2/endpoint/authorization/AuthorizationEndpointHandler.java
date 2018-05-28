@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequestResolver;
@@ -28,6 +29,7 @@ import io.gravitee.am.gateway.handler.vertx.oauth2.request.AuthorizationRequestF
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.Maybe;
+import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -84,35 +86,30 @@ public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointH
                 .switchIfEmpty(Maybe.error(new InvalidRequestException("No client with id : " + clientId)))
                 .flatMapSingle(client -> authorizationRequestResolver.resolve(request, client)
                         .flatMap(authorizationRequest -> approvalService.checkApproval(authorizationRequest, client, endUser.getUsername()))
-                        .flatMap(authorizationRequest ->  createAuthorizationResponse(authorizationRequest, client, endUser)))
+                        .flatMap(authorizationRequest -> createAuthorizationResponse(authorizationRequest, client, endUser)))
                 .subscribe(authorizationRequest -> {
                     if (!authorizationRequest.isApproved()) {
                         // TODO should we put this data inside repository to handle cluster environment ?
                         context.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
-                        context.response().putHeader(HttpHeaders.LOCATION, "/" + domain.getPath() + "/oauth/confirm_access").setStatusCode(302).end();
+                        doRedirect(context.response(), "/" + domain.getPath() + "/oauth/confirm_access");
                     } else {
                         try {
-                            context.response().putHeader(HttpHeaders.LOCATION, buildRedirectUri(authorizationRequest)).setStatusCode(302).end();
+                            doRedirect(context.response(), buildRedirectUri(authorizationRequest));
                         } catch (Exception e) {
                             logger.error("Failed to redirect to client redirect_uri", e);
-                            // TODO : handle correct error response (https://tools.ietf.org/html/rfc6749#section-4.2.2.1)
-                            context.fail(500);
+                            context.fail(new ServerErrorException());
                         }
                     }
                 },
                 error -> {
                     logger.error("Failed to handle authorization request", error);
-                    // TODO : handle correct error response (https://tools.ietf.org/html/rfc6749#section-4.2.2.1)
                     context.fail(error);
                 });
 
     }
 
-    public void setClientService(ClientService clientService) {
-        this.clientService = clientService;
+    private void doRedirect(HttpServerResponse response, String url) {
+        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 
-    public void setApprovalService(ApprovalService approvalService) {
-        this.approvalService = approvalService;
-    }
 }

@@ -34,13 +34,14 @@ import java.util.Set;
  */
 public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
 
-    final ThymeleafTemplateEngine engine = ThymeleafTemplateEngine.create();
+    private ThymeleafTemplateEngine engine;
     private ClientService clientService;
     private ScopeService scopeService;
 
-    public UserApprovalEndpointHandler(ClientService clientService, ScopeService scopeService) {
+    public UserApprovalEndpointHandler(ClientService clientService, ScopeService scopeService, ThymeleafTemplateEngine engine) {
         this.clientService = clientService;
         this.scopeService = scopeService;
+        this.engine = engine;
     }
 
     @Override
@@ -70,7 +71,7 @@ public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
                 .subscribe(approvalData -> {
                         routingContext.put("client", approvalData.getClient());
                         routingContext.put("scopes", approvalData.getScopes());
-                        engine.render(routingContext, "webroot/views/access_confirmation.html", res -> {
+                        engine.render(routingContext, "access_confirmation", res -> {
                             if (res.succeeded()) {
                                 routingContext.response().end(res.result());
                             } else {

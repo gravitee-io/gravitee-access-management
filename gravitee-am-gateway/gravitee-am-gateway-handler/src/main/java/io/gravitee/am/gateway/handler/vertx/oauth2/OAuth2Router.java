@@ -26,13 +26,14 @@ import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.ErrorHandlerEndpoint;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.AuthorizationApprovalEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.AuthorizationEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.AuthorizationRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.UserApprovalEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection.CheckTokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection.IntrospectionEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.token.TokenEndpointHandler;
-import io.gravitee.am.gateway.handler.vertx.oauth2.handler.AuthorizationRequestParseHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -42,6 +43,7 @@ import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.AuthHandler;
 import io.vertx.reactivex.ext.web.handler.ChainAuthHandler;
+import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -72,6 +74,9 @@ public class OAuth2Router {
     private ScopeService scopeService;
 
     @Autowired
+    private ThymeleafTemplateEngine thymeleafTemplateEngine;
+
+    @Autowired
     private Domain domain;
 
     public void route(Router router, AuthProvider userAuthProvider) {
@@ -91,8 +96,8 @@ public class OAuth2Router {
         // Bind OAuth2 endpoints
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(authorizationCodeService, tokenGranter, clientService, approvalService, domain);
         Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(authorizationCodeService, tokenGranter, approvalService, clientService);
-        Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler(tokenGranter, clientService);
-        Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(clientService, scopeService);
+        Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler(tokenGranter);
+        Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(clientService, scopeService, thymeleafTemplateEngine);
 
         // Check_token is provided only for backward compatibility and must be remove in the future
         Handler<RoutingContext> checkTokenEndpoint = new CheckTokenEndpointHandler();
@@ -122,5 +127,7 @@ public class OAuth2Router {
                 .handler(introspectionEndpoint);
         router.route(HttpMethod.GET, "/oauth/confirm_access")
                 .handler(userApprovalEndpoint);
+        router.route(HttpMethod.GET, "/oauth/error")
+                .handler(new ErrorHandlerEndpoint(thymeleafTemplateEngine));
     }
 }

@@ -75,7 +75,4 @@ public class ClientCredentialsAuthHandlerImpl extends AuthHandlerImpl {
             handler.handle(Future.failedFuture(UNAUTHORIZED));
         }
     }
-
-
-
 }

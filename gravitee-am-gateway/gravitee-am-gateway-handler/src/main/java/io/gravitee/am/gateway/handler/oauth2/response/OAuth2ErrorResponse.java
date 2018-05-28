@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OAuth2ErrorResponse {
 
     @JsonProperty("error")

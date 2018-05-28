@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.utils;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -119,6 +121,18 @@ public class URIBuilder {
         }
     }
 
+    /**
+     * Convert a String to the application/x-www-form-urlencoded MIME format
+     */
+    public static String encodeURIComponent(String s) {
+        String result;
+        try {
+            result = URLEncoder.encode(s, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            result = s;
+        }
+        return result;
+    }
 
     public URIBuilder scheme(String scheme) {
         this.scheme = scheme;

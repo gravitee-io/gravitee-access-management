@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.token;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
@@ -45,13 +44,11 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
     private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
     private TokenGranter tokenGranter;
-    private ClientService clientService;
 
     public TokenEndpointHandler() { }
 
-    public TokenEndpointHandler(TokenGranter tokenGranter, ClientService clientService) {
+    public TokenEndpointHandler(TokenGranter tokenGranter) {
         this.tokenGranter = tokenGranter;
-        this.clientService = clientService;
     }
 
     @Override
@@ -90,13 +87,5 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
                         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                         .end(Json.encodePrettily(accessToken))
                         , error -> context.fail(error));
-    }
-
-    public void setTokenGranter(TokenGranter tokenGranter) {
-        this.tokenGranter = tokenGranter;
-    }
-
-    public void setClientService(ClientService clientService) {
-        this.clientService = clientService;
     }
 }

@@ -16,10 +16,12 @@
 package io.gravitee.am.gateway.handler.vertx;
 
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.UserAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.vertx.login.LoginRouter;
 import io.gravitee.am.gateway.handler.vertx.oauth2.OAuth2Router;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.AuthorizationEndpointFailureHandler;
 import io.gravitee.am.gateway.handler.vertx.oidc.OIDCRouter;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.utils.UUID;
@@ -47,6 +49,9 @@ public class VertxSecurityDomainHandler {
     private Domain domain;
 
     @Autowired
+    private ClientService clientService;
+
+    @Autowired
     private LoginRouter loginRouter;
 
     @Autowired
@@ -55,11 +60,13 @@ public class VertxSecurityDomainHandler {
     @Autowired
     private OAuth2Router oauth2Router;
 
+
     public Router create() {
         // Create the security domain router
         final Router router = Router.router(vertx);
 
         // failure handler
+        router.route("/oauth/authorize").failureHandler(new AuthorizationEndpointFailureHandler(domain, clientService));
         router.route().failureHandler(new ExceptionHandler());
 
         // user authentication handler

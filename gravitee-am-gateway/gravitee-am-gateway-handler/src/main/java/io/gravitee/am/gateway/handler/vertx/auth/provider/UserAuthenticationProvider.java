@@ -53,8 +53,4 @@ public class UserAuthenticationProvider implements AuthProvider {
                         error -> resultHandler.handle(Future.failedFuture(error))
                 );
     }
-
-    public void setUserAuthenticationManager(UserAuthenticationManager userAuthenticationManager) {
-        this.userAuthenticationManager = userAuthenticationManager;
-    }
 }

@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.request;
 
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.model.Client;
 import io.reactivex.observers.TestObserver;
@@ -146,6 +146,6 @@ public class AuthorizationRequestResolverTest {
 
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client).test();
         testObserver.assertNotComplete();
-        testObserver.assertError(InvalidRequestException.class);
+        testObserver.assertError(RedirectMismatchException.class);
     }
 }

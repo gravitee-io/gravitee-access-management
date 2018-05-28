@@ -16,11 +16,12 @@
 package io.gravitee.am.gateway.handler.vertx.handler;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.gateway.handler.oauth2.response.OAuth2ErrorResponse;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
@@ -35,13 +36,15 @@ public class ExceptionHandler implements Handler<RoutingContext> {
             Throwable throwable = routingContext.failure();
             if (throwable instanceof OAuth2Exception) {
                 OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
+                OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse(oAuth2Exception.getOAuth2ErrorCode());
+                oAuth2ErrorResponse.setDescription(oAuth2Exception.getMessage());
                 routingContext
                         .response()
                         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                         .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")
                         .setStatusCode(oAuth2Exception.getHttpStatusCode())
-                        .end(new JsonObject(oAuth2Exception.toString()).encodePrettily());
+                        .end(Json.encodePrettily(oAuth2ErrorResponse));
             } else {
                 if (routingContext.statusCode() != -1) {
                     routingContext

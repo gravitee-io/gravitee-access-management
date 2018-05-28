@@ -58,7 +58,7 @@ public class TokenRequestResolver {
                 }
             }
         }
-        if (requestScopes.isEmpty()) {
+        if (requestScopes == null || requestScopes.isEmpty()) {
             return Single.error(new InvalidScopeException("Empty scope (either the client or the user is not allowed the requested scopes)"));
         }
         return Single.just(tokenRequest);

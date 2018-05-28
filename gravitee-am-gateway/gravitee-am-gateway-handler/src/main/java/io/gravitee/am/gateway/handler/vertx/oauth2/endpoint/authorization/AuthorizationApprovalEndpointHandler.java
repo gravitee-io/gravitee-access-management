@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
@@ -86,12 +87,6 @@ public class AuthorizationApprovalEndpointHandler extends AbstractAuthorizationE
         // prepare user approval choices
         MultiMap params = req.formAttributes();
 
-        // check client id
-        String requestedClientId = params.get(OAuth2Constants.CLIENT_ID);
-        if (requestedClientId == null || !requestedClientId.equals(authorizationRequest.getClientId())) {
-            context.response().setStatusCode(400).end("Invalid authorization request");
-        }
-
         // retrieve user approval choices
         Map<String, String> approvalParameters = params.getDelegate().entries()
                 .stream()
@@ -100,33 +95,29 @@ public class AuthorizationApprovalEndpointHandler extends AbstractAuthorizationE
         authorizationRequest.setApprovalParameters(approvalParameters);
 
         // handle approval response
-        clientService.findByClientId(requestedClientId)
-                .switchIfEmpty(Maybe.error(new InvalidRequestException("No client with id : " + requestedClientId)))
+        clientService.findByClientId(authorizationRequest.getClientId())
+                .switchIfEmpty(Maybe.error(new InvalidRequestException("No client with id : " + authorizationRequest.getClientId())))
                 .toSingle()
                 .flatMap(client -> approvalService.saveApproval(authorizationRequest, endUser.getUsername())
                         .flatMap(authorizationRequest1 -> createAuthorizationResponse(authorizationRequest1, client, endUser)))
                 .subscribe(authorizationRequest1 -> {
-                    // remove OAuth2Constants.AUTHORIZATION_REQUEST session value
-                    // should not be used after this step
-                    context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
-
                     if (!authorizationRequest.isApproved()) {
                         context.fail(new AccessDeniedException("User denied access"));
                     } else {
                         try {
-                            context.response().putHeader(HttpHeaders.LOCATION, buildRedirectUri(authorizationRequest)).setStatusCode(302).end();
+                            String redirectUri = buildRedirectUri(authorizationRequest);
+                            // remove OAuth2Constants.AUTHORIZATION_REQUEST session value
+                            // should not be used after this step
+                            context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
+                            context.response().putHeader(HttpHeaders.LOCATION, redirectUri).setStatusCode(302).end();
                         } catch (Exception e) {
                             logger.error("Failed to redirect to client redirect_uri", e);
-                            // TODO : handle correct error response (https://tools.ietf.org/html/rfc6749#section-4.2.2.1)
-                            context.fail(500);
+                            context.fail(new ServerErrorException());
                         }
                     }
                 },
                 error -> {
-                    // TODO : handle correct error response (https://tools.ietf.org/html/rfc6749#section-4.2.2.1)
-                    if (context.session().get(OAuth2Constants.AUTHORIZATION_REQUEST) != null) {
-                        context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
-                    }
+                    logger.error("Failed to handle authorization approval request", error);
                     context.fail(error);
                 });
         }

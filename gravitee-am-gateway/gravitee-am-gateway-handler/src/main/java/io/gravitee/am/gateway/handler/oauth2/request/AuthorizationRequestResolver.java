@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.request;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
@@ -90,7 +91,7 @@ public class AuthorizationRequestResolver {
                 }
             }
         }
-        if (requestScopes.isEmpty()) {
+        if (requestScopes == null || requestScopes.isEmpty()) {
             return Single.error(new InvalidScopeException("Empty scope (either the client or the user is not allowed the requested scopes)"));
         }
         return Single.just(authorizationRequest);
@@ -107,7 +108,7 @@ public class AuthorizationRequestResolver {
      * @param client the client which trigger the request
      * @return the authorization request
      */
-    private Single<AuthorizationRequest> resolveRedirectUri(AuthorizationRequest authorizationRequest, Client client) {
+    public Single<AuthorizationRequest> resolveRedirectUri(AuthorizationRequest authorizationRequest, Client client) {
         String redirectUri = authorizationRequest.getRedirectUri();
         List<String> registeredClientRedirectUris = client.getRedirectUris();
         try {
@@ -142,7 +143,7 @@ public class AuthorizationRequestResolver {
                 return requestedRedirect;
             }
         }
-        throw new InvalidRequestException("Invalid redirect_uri : " + requestedRedirect);
+        throw new RedirectMismatchException("The redirect_uri MUST match the registered callback URL for this application");
     }
 
     private boolean redirectMatches(String requestedRedirect, String redirectUri) {
