@@ -19,10 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.common.util.OAuth2Utils;
-import org.springframework.security.web.DefaultRedirectStrategy;
-import org.springframework.security.web.RedirectStrategy;
-import org.springframework.security.web.WebAttributes;
+import org.springframework.security.web.*;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.util.RedirectUrlBuilder;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.util.Assert;
 
@@ -39,11 +38,14 @@ import java.io.IOException;
 public class ClientAwareAuthenticationFailureHandler implements AuthenticationFailureHandler {
 
     private final Logger logger = LoggerFactory.getLogger(ClientAwareAuthenticationFailureHandler.class);
+    private RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+    private PortMapper portMapper = new PortMapperImpl();
+    private PortResolver portResolver = new PortResolverImpl();
 
     private String defaultFailureUrl;
     private boolean forwardToDestination = false;
     private boolean allowSessionCreation = true;
-    private RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+    private boolean forceHttps = false;
 
     public ClientAwareAuthenticationFailureHandler() {
     }
@@ -67,6 +69,9 @@ public class ClientAwareAuthenticationFailureHandler implements AuthenticationFa
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Failed: " + exception.getMessage());
         } else {
             saveException(request, exception);
+
+            // build redirect to login url
+            defaultFailureUrl = buildRedirectUrlToLoginPage(request, response, exception);
 
             if (forwardToDestination) {
                 logger.debug("Forwarding to " + defaultFailureUrl);
@@ -138,5 +143,38 @@ public class ClientAwareAuthenticationFailureHandler implements AuthenticationFa
 
     public void setAllowSessionCreation(boolean allowSessionCreation) {
         this.allowSessionCreation = allowSessionCreation;
+    }
+
+    private String buildRedirectUrlToLoginPage(HttpServletRequest request, HttpServletResponse response,
+                                                 AuthenticationException authException) {
+
+        if (UrlUtils.isAbsoluteUrl(defaultFailureUrl)) {
+            return defaultFailureUrl;
+        }
+
+        int serverPort = portResolver.getServerPort(request);
+        String scheme = request.getScheme();
+
+        RedirectUrlBuilder urlBuilder = new RedirectUrlBuilder();
+
+        urlBuilder.setScheme(scheme);
+        urlBuilder.setServerName(request.getServerName());
+        urlBuilder.setPort(serverPort);
+        urlBuilder.setContextPath(request.getContextPath());
+        urlBuilder.setPathInfo(defaultFailureUrl);
+
+        if (forceHttps && "http".equals(scheme)) {
+            Integer httpsPort = portMapper.lookupHttpsPort(Integer.valueOf(serverPort));
+
+            if (httpsPort != null) {
+                // Overwrite scheme and port in the redirect URL
+                urlBuilder.setScheme("https");
+                urlBuilder.setPort(httpsPort.intValue());
+            } else {
+                logger.warn("Unable to redirect to HTTPS as no port mapping found for HTTP port " + serverPort);
+            }
+        }
+
+        return urlBuilder.getUrl();
     }
 }
