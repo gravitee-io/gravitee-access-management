@@ -44,15 +44,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
-import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
-import org.springframework.security.oauth2.common.AuthenticationScheme;
-import org.springframework.security.oauth2.provider.ClientDetailsService;
-import org.springframework.security.oauth2.provider.approval.ApprovalStore;
-import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
-import org.springframework.security.oauth2.provider.approval.TokenStoreUserApprovalHandler;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
@@ -162,8 +156,15 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
+    public RedirectStrategy redirectStrategy() {
+        return new XForwardedAwareRedirectStrategy();
+    }
+
+    @Bean
     public AuthenticationFailureHandler authenticationFailureHandler() {
-        return new ClientAwareAuthenticationFailureHandler("/login?error");
+        ClientAwareAuthenticationFailureHandler authenticationFailureHandler = new ClientAwareAuthenticationFailureHandler("/login?error");
+        authenticationFailureHandler.setRedirectStrategy(redirectStrategy());
+        return authenticationFailureHandler;
     }
 
     @Bean
@@ -173,7 +174,7 @@ public class OAuth2SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private AuthenticationSuccessHandler authenticationSuccessHandler() {
         SavedRequestAwareAuthenticationSuccessHandler successHandler = new CustomSavedRequestAwareAuthenticationSuccessHandler();
-        successHandler.setRedirectStrategy(new XForwardedAwareRedirectStrategy());
+        successHandler.setRedirectStrategy(redirectStrategy());
         return successHandler;
     }
 }
