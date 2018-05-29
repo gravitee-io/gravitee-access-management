@@ -17,18 +17,16 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.repository.mongodb.common.IdGenerator;
+import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.ClientMongo;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.subscribers.DefaultSubscriber;
 import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -46,7 +44,6 @@ import static com.mongodb.client.model.Filters.*;
 @Component
 public class MongoClientRepository extends AbstractManagementMongoRepository implements ClientRepository {
 
-    private static final Logger logger = LoggerFactory.getLogger(MongoClientRepository.class);
     private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_CLIENT_ID = "clientId";
@@ -62,11 +59,11 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     @PostConstruct
     public void init() {
         clientsCollection = mongoOperations.getCollection("clients", ClientMongo.class);
-        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new IndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1)).subscribe(new IndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_IDENTITIES, 1)).subscribe(new IndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_CERTIFICATE, 1)).subscribe(new IndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_GRANT_TYPES, 1)).subscribe(new IndexSubscriber());
+        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
+        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1)).subscribe(new LoggableIndexSubscriber());
+        clientsCollection.createIndex(new Document(FIELD_IDENTITIES, 1)).subscribe(new LoggableIndexSubscriber());
+        clientsCollection.createIndex(new Document(FIELD_CERTIFICATE, 1)).subscribe(new LoggableIndexSubscriber());
+        clientsCollection.createIndex(new Document(FIELD_GRANT_TYPES, 1)).subscribe(new LoggableIndexSubscriber());
     }
 
     @Override
@@ -132,8 +129,8 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) {
-        return Single.fromPublisher(clientsCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.CLIENT);
+    public Completable delete(String id) {
+        return Completable.fromPublisher(clientsCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
     @Override
@@ -202,22 +199,5 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setCreatedAt(client.getCreatedAt());
         clientMongo.setUpdatedAt(client.getUpdatedAt());
         return clientMongo;
-    }
-
-    private class IndexSubscriber extends DefaultSubscriber<String> {
-        @Override
-        public void onNext(String value) {
-            logger.debug("Created an index named : " + value);
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            logger.error("Error occurs during indexing", throwable);
-        }
-
-        @Override
-        public void onComplete() {
-            logger.debug("Index creation complete");
-        }
     }
 }

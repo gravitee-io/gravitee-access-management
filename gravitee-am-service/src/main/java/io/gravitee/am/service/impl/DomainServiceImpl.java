@@ -16,7 +16,6 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.*;
@@ -24,8 +23,8 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.am.service.model.UpdateLoginForm;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +34,10 @@ import org.springframework.stereotype.Component;
 import java.text.Normalizer;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -223,7 +224,7 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public Single<Irrelevant> delete(String domainId) {
+    public Completable delete(String domainId) {
         LOGGER.debug("Delete security domain {}", domainId);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
@@ -233,44 +234,50 @@ public class DomainServiceImpl implements DomainService {
                     }
                     return Single.just(domain);
                 })
-                .flatMap(domain -> {
+                .flatMapCompletable(domain -> {
                     // delete clients
                     return clientService.findByDomain(domainId)
-                            .flatMap(clients -> Observable.fromIterable(clients)
-                                    .flatMapSingle(c -> clientService.delete(c.getId())).toList());
+                            .flatMapCompletable(clients -> {
+                                List<Completable> deleteClientsCompletable = clients.stream().map(c -> clientService.delete(c.getId())).collect(Collectors.toList());
+                                return Completable.concat(deleteClientsCompletable);
+                            })
+                            // delete certificates
+                            .andThen(certificateService.findByDomain(domainId)
+                                    .flatMapCompletable(certificates -> {
+                                        List<Completable> deleteCertificatesCompletable = certificates.stream().map(c -> certificateService.delete(c.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteCertificatesCompletable);
+                                    })
+                            )
+                            // delete identity providers
+                            .andThen(identityProviderService.findByDomain(domainId)
+                                    .flatMapCompletable(identityProviders -> {
+                                        List<Completable> deleteIdentityProvidersCompletable = identityProviders.stream().map(i -> identityProviderService.delete(i.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteIdentityProvidersCompletable);
+                                    })
+                            )
+                            // delete roles
+                            .andThen(roleService.findByDomain(domainId)
+                                    .flatMapCompletable(roles -> {
+                                        List<Completable> deleteRolesCompletable = roles.stream().map(r -> roleService.delete(r.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteRolesCompletable);
+                                    })
+                            )
+                            // delete users
+                            .andThen(userService.findByDomain(domainId)
+                                    .flatMapCompletable(users -> {
+                                        List<Completable> deleteUsersCompletable = users.stream().map(u -> userService.delete(u.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteUsersCompletable);
+                                    })
+                            )
+                            .andThen(domainRepository.delete(domainId));
                 })
-                .flatMap(irrelevant -> {
-                    // delete certificates
-                    return certificateService.findByDomain(domainId)
-                            .flatMap(certificates -> Observable.fromIterable(certificates)
-                                    .flatMapSingle(c -> certificateService.delete(c.getId())).toList());
-                })
-                .flatMap(irrelevant -> {
-                    // delete identity providers
-                    return identityProviderService.findByDomain(domainId)
-                            .flatMap(idps -> Observable.fromIterable(idps)
-                                    .flatMapSingle(i -> identityProviderService.delete(i.getId())).toList());
-                })
-                .flatMap(irrelevant -> {
-                    // delete roles
-                    return roleService.findByDomain(domainId)
-                            .flatMap(roles -> Observable.fromIterable(roles)
-                                    .flatMapSingle(r -> roleService.delete(r.getId())).toList());
-                })
-                .flatMap(irrelevant -> {
-                    // delete users
-                    return userService.findByDomain(domainId)
-                            .flatMap(users -> Observable.fromIterable(users)
-                                    .flatMapSingle(u -> userService.delete(u.getId())).toList());
-                })
-                .flatMap(irrelevant -> domainRepository.delete(domainId))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
+                        return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete security domain {}", domainId, ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to delete security domain " + domainId, ex));
+                    return Completable.error(new TechnicalManagementException("An error occurs while trying to delete security domain " + domainId, ex));
                 });
     }
 

@@ -16,7 +16,6 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
@@ -28,6 +27,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.common.utils.UUID;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -138,7 +138,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Single<Irrelevant> delete(String identityProviderId) {
+    public Completable delete(String identityProviderId) {
         LOGGER.debug("Delete identity provider {}", identityProviderId);
 
         return identityProviderRepository.findById(identityProviderId)
@@ -148,16 +148,16 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                             if (clients.size() > 0) {
                                 throw new IdentityProviderWithClientsException();
                             }
-                            return Single.just(Irrelevant.CLIENT);
+                            return Single.just(clients);
                         }))
-                .flatMap(irrelevant -> identityProviderRepository.delete(identityProviderId))
+                .flatMapCompletable(irrelevant -> identityProviderRepository.delete(identityProviderId))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
+                        return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete identity provider: {}", identityProviderId, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete identity provider: %s", identityProviderId), ex));
                 });
     }

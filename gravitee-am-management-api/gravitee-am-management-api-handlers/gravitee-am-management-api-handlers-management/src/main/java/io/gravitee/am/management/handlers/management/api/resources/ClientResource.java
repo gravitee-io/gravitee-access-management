@@ -102,9 +102,8 @@ public class ClientResource extends AbstractResource {
                        @PathParam("client") String client,
                        @Suspended final AsyncResponse response) {
         clientService.delete(client)
-                .map(irrelevant -> Response.noContent().build())
                 .subscribe(
-                        result -> response.resume(result),
+                        () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
     }
 }

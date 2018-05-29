@@ -16,14 +16,12 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
@@ -125,7 +123,7 @@ public class MongoIdentityProviderRepositoryTest extends AbstractManagementRepos
         testObserver.assertValue(idp -> idp.getName().equals(identityProvider.getName()));
 
         // delete idp
-        TestObserver<Irrelevant> testObserver1 = identityProviderRepository.delete(identityProviderCreated.getId()).test();
+        TestObserver testObserver1 = identityProviderRepository.delete(identityProviderCreated.getId()).test();
         testObserver1.awaitTerminalEvent();
 
         // fetch idp

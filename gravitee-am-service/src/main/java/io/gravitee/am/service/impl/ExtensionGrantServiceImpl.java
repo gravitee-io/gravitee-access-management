@@ -16,7 +16,6 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.ExtensionGrant;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
@@ -25,6 +24,7 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
 import io.gravitee.common.utils.UUID;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -162,7 +162,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     }
 
     @Override
-    public Single<Irrelevant> delete(String domain, String extensionGrantId) {
+    public Completable delete(String domain, String extensionGrantId) {
         LOGGER.debug("Delete extension grant {}", extensionGrantId);
         return extensionGrantRepository.findById(extensionGrantId)
                 .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrantId)))
@@ -171,20 +171,18 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                             if (clients.size() > 0) {
                                 throw new ExtensionGrantWithClientsException();
                             }
-                            return Single.just(Irrelevant.CLIENT);
+                            return Single.just(clients);
                         }))
-                .flatMap(irrelevant -> extensionGrantRepository.delete(extensionGrantId))
-                .flatMap(irrelevant -> {
-                    // Reload domain to take care about extension grant update
-                    return domainService.reload(domain).flatMap(domain1 -> Single.just(irrelevant));
-                })
+                .flatMapCompletable(irrelevant -> extensionGrantRepository.delete(extensionGrantId)
+                        .andThen(domainService.reload(domain).toCompletable())
+                )
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
+                        return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to extension grant: {}", extensionGrantId, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete extension grant: %s", extensionGrantId), ex));
                 });
     }

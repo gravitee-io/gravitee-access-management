@@ -18,7 +18,6 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
@@ -27,6 +26,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.IdentityProviderServiceImpl;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -202,7 +202,7 @@ public class IdentityProviderServiceTest {
     @Test
     public void shouldDelete_technicalException() {
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(new IdentityProvider()));
-        when(identityProviderRepository.delete(anyString())).thenReturn(Single.error(TechnicalException::new));
+        when(identityProviderRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
 
         TestObserver testObserver = identityProviderService.delete("my-identity-provider").test();
 
@@ -214,7 +214,7 @@ public class IdentityProviderServiceTest {
     public void shouldDelete() {
         IdentityProvider existingIdentityProvider = Mockito.mock(IdentityProvider.class);
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(existingIdentityProvider));
-        when(identityProviderRepository.delete("my-identity-provider")).thenReturn(Single.just(Irrelevant.IDENTITY_PROVIDER));
+        when(identityProviderRepository.delete("my-identity-provider")).thenReturn(Completable.complete());
         when(clientService.findByIdentityProvider("my-identity-provider")).thenReturn(Single.just(Collections.emptySet()));
 
         TestObserver testObserver = identityProviderService.delete( "my-identity-provider").test();

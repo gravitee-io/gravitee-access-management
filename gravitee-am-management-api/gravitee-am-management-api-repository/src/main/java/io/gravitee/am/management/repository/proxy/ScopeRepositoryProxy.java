@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.management.repository.proxy;
 
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.api.ScopeRepository;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.stereotype.Component;
@@ -51,7 +51,7 @@ public class ScopeRepositoryProxy extends AbstractProxy<ScopeRepository> impleme
         return target.update(item);
     }
 
-    public Single<Irrelevant> delete(String s) {
+    public Completable delete(String s) {
         return target.delete(s);
     }
 }

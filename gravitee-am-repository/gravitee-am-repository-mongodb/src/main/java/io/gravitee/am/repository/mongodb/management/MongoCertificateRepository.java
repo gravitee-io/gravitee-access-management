@@ -17,17 +17,15 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.mongodb.common.IdGenerator;
+import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.CertificateMongo;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.subscribers.DefaultSubscriber;
 import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +42,6 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoCertificateRepository extends AbstractManagementMongoRepository implements CertificateRepository {
 
-    private static final Logger logger = LoggerFactory.getLogger(MongoCertificateRepository.class);
     private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
     private MongoCollection<CertificateMongo> certificatesCollection;
@@ -55,7 +52,7 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
     @PostConstruct
     public void init() {
         certificatesCollection = mongoOperations.getCollection("certificates", CertificateMongo.class);
-        certificatesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new IndexSubscriber());
+        certificatesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
     }
 
     @Override
@@ -87,8 +84,8 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) {
-        return Single.fromPublisher(certificatesCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.CERTIFICATE);
+    public Completable delete(String id) {
+        return Completable.fromPublisher(certificatesCollection.deleteOne(eq(FIELD_ID, id)));
     }
     private Certificate convert(CertificateMongo certificateMongo) {
         if (certificateMongo == null) {
@@ -121,22 +118,4 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         certificateMongo.setUpdatedAt(certificate.getUpdatedAt());
         return certificateMongo;
     }
-
-    private class IndexSubscriber extends DefaultSubscriber<String> {
-        @Override
-        public void onNext(String value) {
-            logger.debug("Created an index named : " + value);
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            logger.error("Error occurs during indexing", throwable);
-        }
-
-        @Override
-        public void onComplete() {
-            logger.debug("Index creation complete");
-        }
-    }
-
 }

@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -44,6 +44,6 @@ public interface UserService {
 
     Single<User> update(String domain, String id, UpdateUser updateUser);
 
-    Single<Irrelevant> delete(String userId);
+    Completable delete(String userId);
 
 }

@@ -16,8 +16,8 @@
 package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.stereotype.Component;
@@ -52,7 +52,7 @@ public class IdentityProviderRepositoryProxy extends AbstractProxy<IdentityProvi
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) {
+    public Completable delete(String id) {
         return target.delete(id);
     }
 }

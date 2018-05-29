@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.model.NewScope;
 import io.gravitee.am.service.model.UpdateScope;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -39,5 +39,5 @@ public interface ScopeService {
 
     Single<Scope> update(String domain, String id, UpdateScope updateScope);
 
-    Single<Irrelevant> delete(String scopeId);
+    Completable delete(String scopeId);
 }

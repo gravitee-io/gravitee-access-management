@@ -16,16 +16,11 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.util.Collections;
 import java.util.Set;
@@ -141,7 +136,7 @@ public class MongoDomainRepositoryTest extends AbstractManagementRepositoryTest 
         testObserver.assertValue(d -> d.getName().equals(domain.getName()));
 
         // delete domain
-        TestObserver<Irrelevant> testObserver1 = domainRepository.delete(domainCreated.getId()).test();
+        TestObserver testObserver1 = domainRepository.delete(domainCreated.getId()).test();
         testObserver1.awaitTerminalEvent();
 
         // fetch domain

@@ -16,12 +16,12 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.am.service.model.TopClient;
 import io.gravitee.am.service.model.TotalClient;
 import io.gravitee.am.service.model.UpdateClient;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -64,5 +64,5 @@ public interface ClientService {
 
     Single<TotalClient> findTotalClients();
 
-    Single<Irrelevant> delete(String clientId);
+    Completable delete(String clientId);
 }

@@ -17,9 +17,9 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -42,7 +42,7 @@ public interface CertificateService {
 
     Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema);
 
-    Single<Irrelevant> delete(String certificateId);
+    Completable delete(String certificateId);
 
     void setCertificateProviders(Map<String, CertificateProvider> certificateProviders);
 

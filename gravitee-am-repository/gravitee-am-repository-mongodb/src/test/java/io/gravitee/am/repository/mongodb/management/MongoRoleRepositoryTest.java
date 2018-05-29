@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
@@ -24,7 +22,6 @@ import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -121,7 +118,7 @@ public class MongoRoleRepositoryTest extends AbstractManagementRepositoryTest {
         testObserver.assertValue(r -> r.getName().equals(roleCreated.getName()));
 
         // delete role
-        TestObserver<Irrelevant> testObserver1 = roleRepository.delete(roleCreated.getId()).test();
+        TestObserver testObserver1 = roleRepository.delete(roleCreated.getId()).test();
         testObserver1.awaitTerminalEvent();
 
         // fetch role

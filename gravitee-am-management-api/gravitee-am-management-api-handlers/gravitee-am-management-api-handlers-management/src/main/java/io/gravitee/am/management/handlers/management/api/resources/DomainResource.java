@@ -89,9 +89,8 @@ public class DomainResource extends AbstractResource {
     public void delete(@PathParam("domain") String domain,
                        @Suspended final AsyncResponse response) {
         domainService.delete(domain)
-                .map(irrelevant -> Response.noContent().build())
                 .subscribe(
-                        result -> response.resume(result),
+                        () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
     }
 

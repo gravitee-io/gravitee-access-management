@@ -107,9 +107,8 @@ public class RoleResource {
                            @PathParam("role") String role,
                            @Suspended final AsyncResponse response) {
         roleService.delete(role)
-                .map(irrelevant -> Response.noContent().build())
                 .subscribe(
-                        result -> response.resume(result),
+                        () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
     }
 }

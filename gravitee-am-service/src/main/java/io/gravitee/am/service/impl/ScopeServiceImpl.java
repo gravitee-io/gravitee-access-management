@@ -16,7 +16,6 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.api.ScopeRepository;
@@ -32,6 +31,7 @@ import io.gravitee.am.service.model.UpdateClient;
 import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.am.service.model.UpdateScope;
 import io.gravitee.common.utils.UUID;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -133,7 +133,7 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
-    public Single<Irrelevant> delete(String scopeId) {
+    public Completable delete(String scopeId) {
         LOGGER.debug("Delete scope {}", scopeId);
         return scopeRepository.findById(scopeId)
                 .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
@@ -183,14 +183,14 @@ public class ScopeServiceImpl implements ScopeService {
 
                     return Single.merge(removePermissionsFromRole, removeScopesFromClient).toList();
                 })
-                .flatMap(irrelevant -> scopeRepository.delete(scopeId))
+                .flatMapCompletable(irrelevant -> scopeRepository.delete(scopeId))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
+                        return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete scope: {}", scopeId, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete scope: %s", scopeId), ex));
                 });
     }

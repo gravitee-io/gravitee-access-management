@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
@@ -25,6 +24,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.RoleServiceImpl;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -273,7 +273,7 @@ public class RoleServiceTest {
     @Test
     public void shouldDelete_technicalException() {
         when(roleRepository.findById("my-role")).thenReturn(Maybe.just(new Role()));
-        when(roleRepository.delete(anyString())).thenReturn(Single.error(TechnicalException::new));
+        when(roleRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
 
         TestObserver testObserver = roleService.delete("my-role").test();
 
@@ -284,7 +284,7 @@ public class RoleServiceTest {
     @Test
     public void shouldDelete() {
         when(roleRepository.findById("my-role")).thenReturn(Maybe.just(new Role()));
-        when(roleRepository.delete("my-role")).thenReturn(Single.just(Irrelevant.ROLE));
+        when(roleRepository.delete("my-role")).thenReturn(Completable.complete());
 
         TestObserver testObserver = roleService.delete( "my-role").test();
         testObserver.awaitTerminalEvent();

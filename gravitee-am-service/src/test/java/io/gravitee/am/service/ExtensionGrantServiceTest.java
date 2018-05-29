@@ -18,7 +18,6 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.service.exception.ExtensionGrantAlreadyExistsException;
@@ -27,6 +26,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ExtensionGrantServiceImpl;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -261,7 +261,7 @@ public class ExtensionGrantServiceTest {
     @Test
     public void shouldDelete_technicalException() {
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(new ExtensionGrant()));
-        when(extensionGrantRepository.delete(anyString())).thenReturn(Single.error(TechnicalException::new));
+        when(extensionGrantRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
 
         TestObserver testObserver = extensionGrantService.delete(DOMAIN, "my-extension-grant").test();
 
@@ -275,7 +275,7 @@ public class ExtensionGrantServiceTest {
         when(existingExtensionGrant.getGrantType()).thenReturn("my-extension-grant");
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(existingExtensionGrant));
         when(extensionGrantRepository.findByDomainAndGrantType(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
-        when(extensionGrantRepository.delete("my-extension-grant")).thenReturn(Single.just(Irrelevant.EXTENSION_GRANT));
+        when(extensionGrantRepository.delete("my-extension-grant")).thenReturn(Completable.complete());
         when(clientService.findByExtensionGrant("my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
         when(domainService.reload(DOMAIN)).thenReturn(Single.just(new Domain()));
 

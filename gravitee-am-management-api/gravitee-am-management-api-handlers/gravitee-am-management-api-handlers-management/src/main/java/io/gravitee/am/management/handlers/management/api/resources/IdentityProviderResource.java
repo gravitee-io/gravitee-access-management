@@ -109,9 +109,8 @@ public class IdentityProviderResource extends AbstractResource {
                        @PathParam("identity") String identity,
                        @Suspended final AsyncResponse response) {
         identityProviderService.delete(identity)
-                .map(irrelevant -> Response.noContent().build())
                 .subscribe(
-                        result -> response.resume(result),
+                        () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
     }
 }

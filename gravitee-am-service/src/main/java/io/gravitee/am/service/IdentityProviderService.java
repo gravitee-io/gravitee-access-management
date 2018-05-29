@@ -16,9 +16,9 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -39,5 +39,5 @@ public interface IdentityProviderService {
 
     Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider);
 
-    Single<Irrelevant> delete(String identityProviderId);
+    Completable delete(String identityProviderId);
 }

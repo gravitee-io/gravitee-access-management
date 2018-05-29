@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -41,6 +41,6 @@ public interface RoleService {
 
     Single<Role> update(String domain, String id, UpdateRole role);
 
-    Single<Irrelevant> delete(String roleId);
+    Completable delete(String roleId);
 
 }

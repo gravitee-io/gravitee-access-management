@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.service.RoleService;
@@ -26,6 +25,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.common.utils.UUID;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -138,23 +138,23 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public Single<Irrelevant> delete(String roleId) {
+    public Completable delete(String roleId) {
         LOGGER.debug("Delete role {}", roleId);
         return roleRepository.findById(roleId)
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(roleId)))
-                .flatMapSingle(role -> roleRepository.delete(roleId))
+                .flatMapCompletable(role -> roleRepository.delete(roleId))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
+                        return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete role: {}", roleId, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete role: %s", roleId), ex));
                 });
     }
 
-    private Single<Irrelevant> checkRoleUniqueness(String roleName, String roleId, String domain) {
+    private Single<Set<Role>> checkRoleUniqueness(String roleName, String roleId, String domain) {
 
         return roleRepository.findByDomain(domain)
                 .flatMap(roles -> {
@@ -163,7 +163,7 @@ public class RoleServiceImpl implements RoleService {
                             .anyMatch(role -> role.getName().equals(roleName))) {
                         throw new RoleAlreadyExistsException(roleName);
                     }
-                    return Single.just(Irrelevant.ROLE);
+                    return Single.just(roles);
                 });
     }
 

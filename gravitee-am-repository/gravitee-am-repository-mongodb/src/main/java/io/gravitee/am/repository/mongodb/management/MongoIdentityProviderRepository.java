@@ -17,23 +17,20 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.repository.mongodb.common.IdGenerator;
+import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.IdentityProviderMongo;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.subscribers.DefaultSubscriber;
 import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
-import java.util.function.BiConsumer;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -45,7 +42,6 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoIdentityProviderRepository extends AbstractManagementMongoRepository implements IdentityProviderRepository {
 
-    private static final Logger logger = LoggerFactory.getLogger(MongoIdentityProviderRepository.class);
     private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
     private MongoCollection<IdentityProviderMongo> identitiesCollection;
@@ -56,7 +52,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     @PostConstruct
     public void init() {
         identitiesCollection = mongoOperations.getCollection("identities", IdentityProviderMongo.class);
-        identitiesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new IndexSubscriber());
+        identitiesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
     }
 
     @Override
@@ -83,8 +79,8 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) {
-        return Single.fromPublisher(identitiesCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.IDENTITY_PROVIDER);
+    public Completable delete(String id) {
+        return Completable.fromPublisher(identitiesCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
     private IdentityProvider convert(IdentityProviderMongo identityProviderMongo) {
@@ -141,22 +137,4 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         map.forEach((k, v) -> document.append(k, Arrays.asList(v)));
         return document;
     }
-
-    private class IndexSubscriber extends DefaultSubscriber<String> {
-        @Override
-        public void onNext(String value) {
-            logger.debug("Created an index named : " + value);
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            logger.error("Error occurs during indexing", throwable);
-        }
-
-        @Override
-        public void onComplete() {
-            logger.debug("Index creation complete");
-        }
-    }
-
 }

@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.UserRepository;
@@ -28,6 +27,7 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.utils.UUID;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -164,19 +164,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<Irrelevant> delete(String userId) {
+    public Completable delete(String userId) {
         LOGGER.debug("Delete user {}", userId);
 
         return userRepository.findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                .flatMapSingle(user -> userRepository.delete(userId))
+                .flatMapCompletable(user -> userRepository.delete(userId))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
+                        return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete user: {}", userId, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete user: %s", userId), ex));
                 });
     }

@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.reactivex.observers.TestObserver;
@@ -121,7 +120,7 @@ public class MongoCertificateRepositoryTest extends AbstractManagementRepository
         testObserver.assertValue(d -> d.getName().equals(certificateCreated.getName()));
 
         // delete domain
-        TestObserver<Irrelevant> testObserver1 = certificateRepository.delete(certificateCreated.getId()).test();
+        TestObserver testObserver1 = certificateRepository.delete(certificateCreated.getId()).test();
         testObserver1.awaitTerminalEvent();
 
         // fetch domain

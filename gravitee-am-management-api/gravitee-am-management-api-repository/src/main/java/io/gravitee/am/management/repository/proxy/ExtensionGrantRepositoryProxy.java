@@ -16,8 +16,8 @@
 package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.ExtensionGrant;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.stereotype.Component;
@@ -56,7 +56,7 @@ public class ExtensionGrantRepositoryProxy extends AbstractProxy<ExtensionGrantR
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) {
+    public Completable delete(String id) {
         return target.delete(id);
     }
 }

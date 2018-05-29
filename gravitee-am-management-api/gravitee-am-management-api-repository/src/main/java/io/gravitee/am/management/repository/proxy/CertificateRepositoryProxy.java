@@ -16,8 +16,8 @@
 package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.management.api.CertificateRepository;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.stereotype.Component;
@@ -57,7 +57,7 @@ public class CertificateRepositoryProxy extends AbstractProxy<CertificateReposit
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) {
+    public Completable delete(String id) {
         return target.delete(id);
     }
 }

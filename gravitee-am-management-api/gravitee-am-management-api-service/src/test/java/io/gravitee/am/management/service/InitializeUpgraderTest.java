@@ -19,13 +19,13 @@ import io.gravitee.am.management.service.impl.upgrades.InitializeUpgrader;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateDomain;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Test;
@@ -95,7 +95,7 @@ public class InitializeUpgraderTest {
         when(domainService.findById(ADMIN_DOMAIN)).thenReturn(Maybe.just(adminDomain));
         when(domainService.update(eq(ADMIN_DOMAIN), any(UpdateDomain.class))).thenReturn(Single.just(adminDomain));
         when(clientService.findByDomainAndClientId(ADMIN_DOMAIN, ADMIN_CLIENT_ID)).thenReturn(Maybe.just(adminClient));
-        when(clientService.delete(ADMIN_CLIENT_ID)).thenReturn(Single.just(Irrelevant.CLIENT));
+        when(clientService.delete(ADMIN_CLIENT_ID)).thenReturn(Completable.complete());
 
         initializeUpgrader.upgrade();
 

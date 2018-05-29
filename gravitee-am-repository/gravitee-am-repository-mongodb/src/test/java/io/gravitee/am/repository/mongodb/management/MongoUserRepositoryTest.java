@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
@@ -121,7 +120,7 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         testObserver.assertValue(u -> u.getUsername().equals(user.getUsername()));
 
         // delete user
-        TestObserver<Irrelevant> testObserver1 = userRepository.delete(userCreated.getId()).test();
+        TestObserver testObserver1 = userRepository.delete(userCreated.getId()).test();
         testObserver1.awaitTerminalEvent();
 
         // fetch user

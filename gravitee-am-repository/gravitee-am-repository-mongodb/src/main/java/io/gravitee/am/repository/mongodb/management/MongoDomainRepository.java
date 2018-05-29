@@ -17,12 +17,12 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginFormMongo;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -85,8 +85,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) {
-        return Single.fromPublisher(domainsCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.DOMAIN);
+    public Completable delete(String id) {
+        return Completable.fromPublisher(domainsCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
     private Domain convert(DomainMongo domainMongo) {

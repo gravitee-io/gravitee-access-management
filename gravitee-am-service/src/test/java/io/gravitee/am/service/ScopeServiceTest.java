@@ -16,7 +16,6 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -28,6 +27,7 @@ import io.gravitee.am.service.impl.ScopeServiceImpl;
 import io.gravitee.am.service.model.NewScope;
 import io.gravitee.am.service.model.UpdateClient;
 import io.gravitee.am.service.model.UpdateRole;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -245,7 +245,7 @@ public class ScopeServiceTest {
         when(roleService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
         when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(scope));
-        when(scopeRepository.delete("my-scope")).thenReturn(Single.just(Irrelevant.SCOPE));
+        when(scopeRepository.delete("my-scope")).thenReturn(Completable.complete());
 
         TestObserver testObserver = scopeService.delete("my-scope").test();
         testObserver.awaitTerminalEvent();
@@ -277,7 +277,7 @@ public class ScopeServiceTest {
         when(roleService.update(anyString(), anyString(), any(UpdateRole.class))).thenReturn(Single.just(new Role()));
         when(clientService.update(anyString(), anyString(), any(UpdateClient.class))).thenReturn(Single.just(new Client()));
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(scope));
-        when(scopeRepository.delete("my-scope")).thenReturn(Single.just(Irrelevant.SCOPE));
+        when(scopeRepository.delete("my-scope")).thenReturn(Completable.complete());
 
         TestObserver testObserver = scopeService.delete("my-scope").test();
         testObserver.awaitTerminalEvent();

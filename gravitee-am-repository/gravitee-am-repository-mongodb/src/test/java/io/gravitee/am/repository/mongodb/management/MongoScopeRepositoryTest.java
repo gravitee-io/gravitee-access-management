@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
@@ -119,7 +118,7 @@ public class MongoScopeRepositoryTest extends AbstractManagementRepositoryTest {
         testObserver.assertValue(s -> s.getName().equals(scope.getName()));
 
         // delete scope
-        TestObserver<Irrelevant> testObserver1 = scopeRepository.delete(scopeCreated.getId()).test();
+        TestObserver testObserver1 = scopeRepository.delete(scopeCreated.getId()).test();
         testObserver1.awaitTerminalEvent();
 
         // fetch scope

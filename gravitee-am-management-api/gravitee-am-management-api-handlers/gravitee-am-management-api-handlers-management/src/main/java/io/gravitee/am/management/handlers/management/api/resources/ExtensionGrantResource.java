@@ -107,9 +107,8 @@ public class ExtensionGrantResource {
                        @PathParam("extensionGrant") String extensionGrant,
                        @Suspended final AsyncResponse response) {
         extensionGrantService.delete(domain, extensionGrant)
-                .map(irrelevant -> Response.noContent().build())
                 .subscribe(
-                        result -> response.resume(result),
+                        () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
     }
 }

@@ -26,6 +26,7 @@ import io.gravitee.am.service.impl.DomainServiceImpl;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.am.service.model.UpdateLoginForm;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -301,21 +302,21 @@ public class DomainServiceTest {
         mockClients.add(mockClient2);
 
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
-        when(domainRepository.delete(DOMAIN_ID)).thenReturn(Single.just(Irrelevant.DOMAIN));
+        when(domainRepository.delete(DOMAIN_ID)).thenReturn(Completable.complete());
         when(clientService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(mockClients));
-        when(clientService.delete(anyString())).thenReturn(Single.just(Irrelevant.CLIENT));
+        when(clientService.delete(anyString())).thenReturn(Completable.complete());
         when(certificate.getId()).thenReturn(CERTIFICATE_ID);
         when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(certificate)));
-        when(certificateService.delete(anyString())).thenReturn(Single.just(Irrelevant.CERTIFICATE));
+        when(certificateService.delete(anyString())).thenReturn(Completable.complete());
         when(identityProvider.getId()).thenReturn(IDP_ID);
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(identityProvider)));
-        when(identityProviderService.delete(anyString())).thenReturn(Single.just(Irrelevant.IDENTITY_PROVIDER));
+        when(identityProviderService.delete(anyString())).thenReturn(Completable.complete());
         when(role.getId()).thenReturn(ROLE_ID);
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(role)));
-        when(roleService.delete(anyString())).thenReturn(Single.just(Irrelevant.ROLE));
+        when(roleService.delete(anyString())).thenReturn(Completable.complete());
         when(user.getId()).thenReturn(USER_ID);
         when(userService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(user)));
-        when(userService.delete(anyString())).thenReturn(Single.just(Irrelevant.USER));
+        when(userService.delete(anyString())).thenReturn(Completable.complete());
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -333,7 +334,7 @@ public class DomainServiceTest {
     @Test
     public void shouldDeleteWithoutRelatedData() {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
-        when(domainRepository.delete(DOMAIN_ID)).thenReturn(Single.just(Irrelevant.DOMAIN));
+        when(domainRepository.delete(DOMAIN_ID)).thenReturn(Completable.complete());
         when(clientService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));

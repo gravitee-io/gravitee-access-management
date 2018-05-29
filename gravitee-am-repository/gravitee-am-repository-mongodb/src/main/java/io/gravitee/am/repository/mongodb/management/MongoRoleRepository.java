@@ -16,18 +16,16 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.repository.mongodb.common.IdGenerator;
+import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.subscribers.DefaultSubscriber;
 import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -46,7 +44,6 @@ import static com.mongodb.client.model.Filters.in;
 @Component
 public class MongoRoleRepository extends AbstractManagementMongoRepository implements RoleRepository {
 
-    private static final Logger logger = LoggerFactory.getLogger(MongoRoleRepository.class);
     private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
     private MongoCollection<RoleMongo> rolesCollection;
@@ -57,7 +54,7 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     @PostConstruct
     public void init() {
         rolesCollection = mongoOperations.getCollection("roles", RoleMongo.class);
-        rolesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new IndexSubscriber());
+        rolesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
     }
 
     @Override
@@ -89,8 +86,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) {
-        return Single.fromPublisher(rolesCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.ROLE);
+    public Completable delete(String id) {
+        return Completable.fromPublisher(rolesCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
     private Role convert(RoleMongo roleMongo) {
@@ -123,22 +120,5 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         roleMongo.setCreatedAt(role.getCreatedAt());
         roleMongo.setUpdatedAt(role.getUpdatedAt());
         return roleMongo;
-    }
-
-    private class IndexSubscriber extends DefaultSubscriber<String> {
-        @Override
-        public void onNext(String value) {
-            logger.debug("Created an index named : " + value);
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            logger.error("Error occurs during indexing", throwable);
-        }
-
-        @Override
-        public void onComplete() {
-            logger.debug("Index creation complete");
-        }
     }
 }

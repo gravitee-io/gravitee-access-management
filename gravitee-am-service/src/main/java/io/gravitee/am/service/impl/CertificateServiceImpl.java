@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.plugins.certificate.core.CertificateSchema;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
@@ -33,6 +32,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.common.utils.UUID;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -256,7 +256,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Single<Irrelevant> delete(String certificateId) {
+    public Completable delete(String certificateId) {
         LOGGER.debug("Delete certificate {}", certificateId);
         return certificateRepository.findById(certificateId)
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificateId)))
@@ -281,10 +281,10 @@ public class CertificateServiceImpl implements CertificateService {
                     }
                     return Single.just(certificate2);
                 })
-                .flatMap(certificate3 -> certificateRepository.delete(certificateId))
+                .flatMapCompletable(certificate3 -> certificateRepository.delete(certificateId))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to delete certificate: {}", certificateId, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete certificate: %s", certificateId), ex));
                 });
     }

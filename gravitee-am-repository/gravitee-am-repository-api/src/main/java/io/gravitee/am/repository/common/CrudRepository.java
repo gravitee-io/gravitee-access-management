@@ -15,8 +15,7 @@
  */
 package io.gravitee.am.repository.common;
 
-import io.gravitee.am.model.Irrelevant;
-import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -32,5 +31,5 @@ public interface CrudRepository<T, ID> {
 
     Single<T> update(T item);
 
-    Single<Irrelevant> delete(ID id);
+    Completable delete(ID id);
 }

@@ -108,9 +108,8 @@ public class ScopeResource extends AbstractResource {
                        @PathParam("scope") String scope,
                        @Suspended final AsyncResponse response) {
         scopeService.delete(scope)
-                .map(irrelevant -> Response.noContent().build())
                 .subscribe(
-                        result -> response.resume(result),
+                        () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
     }
 }

@@ -16,9 +16,9 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.ExtensionGrant;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -38,6 +38,6 @@ public interface ExtensionGrantService {
 
     Single<ExtensionGrant> update(String domain, String id, UpdateExtensionGrant updateExtensionGrant);
 
-    Single<Irrelevant> delete(String domain, String certificateId);
+    Completable delete(String domain, String certificateId);
 
 }

@@ -18,11 +18,11 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.CertificateServiceImpl;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -133,7 +133,7 @@ public class CertificateServiceTest {
 
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
         when(clientService.findByCertificate("my-certificate")).thenReturn(Single.just(Collections.emptySet()));
-        when(certificateRepository.delete("my-certificate")).thenReturn(Single.just(Irrelevant.CERTIFICATE));
+        when(certificateRepository.delete("my-certificate")).thenReturn(Completable.complete());
 
         TestObserver testObserver = certificateService.delete("my-certificate").test();
         testObserver.awaitTerminalEvent();

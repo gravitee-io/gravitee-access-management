@@ -134,9 +134,8 @@ public class CertificateResource {
                        @PathParam("certificate") String certificate,
                        @Suspended final AsyncResponse response) {
         certificateService.delete(certificate)
-                .map(irrelevant -> Response.noContent().build())
                 .subscribe(
-                        result -> response.resume(result),
+                        () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
     }
 }

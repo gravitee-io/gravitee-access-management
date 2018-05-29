@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
@@ -145,7 +144,7 @@ public class MongoClientRepositoryTest extends AbstractManagementRepositoryTest 
         testObserver.assertValue(c -> c.getClientId().equals(client.getClientId()));
 
         // delete client
-        TestObserver<Irrelevant> testObserver1 = clientRepository.delete(clientCreated.getId()).test();
+        TestObserver testObserver1 = clientRepository.delete(clientCreated.getId()).test();
         testObserver1.awaitTerminalEvent();
 
         // fetch client

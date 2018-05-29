@@ -17,11 +17,11 @@ package io.gravitee.am.repository.mongodb.oauth2;
 
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.ScopeApprovalMongo;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -113,8 +113,8 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     }
 
     @Override
-    public Single<Irrelevant> delete(String id) {
-        return Single.fromPublisher(scopeApprovalsCollection.deleteOne(eq(FIELD_ID, id))).map(deleteResult -> Irrelevant.SCOPE_APPROVAL);
+    public Completable delete(String id) {
+        return Completable.fromPublisher(scopeApprovalsCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
     @Override

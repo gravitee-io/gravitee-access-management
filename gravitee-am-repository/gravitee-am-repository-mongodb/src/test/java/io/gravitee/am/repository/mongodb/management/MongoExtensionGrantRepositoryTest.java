@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.ExtensionGrant;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.reactivex.observers.TestObserver;
@@ -120,7 +119,7 @@ public class MongoExtensionGrantRepositoryTest extends AbstractManagementReposit
         testObserver.assertValue(e -> e.getName().equals(extensionGrantCreated.getName()));
 
         // delete extension grant
-        TestObserver<Irrelevant> testObserver1 = extensionGrantRepository.delete(extensionGrantCreated.getId()).test();
+        TestObserver testObserver1 = extensionGrantRepository.delete(extensionGrantCreated.getId()).test();
         testObserver1.awaitTerminalEvent();
 
         // fetch extension grant

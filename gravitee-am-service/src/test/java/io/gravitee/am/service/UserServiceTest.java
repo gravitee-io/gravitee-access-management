@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -26,6 +25,7 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.UserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -246,7 +246,7 @@ public class UserServiceTest {
     @Test
     public void shouldDelete() {
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(new User()));
-        when(userRepository.delete("my-user")).thenReturn(Single.just(Irrelevant.USER));
+        when(userRepository.delete("my-user")).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete("my-user").test();
         testObserver.awaitTerminalEvent();
@@ -260,7 +260,7 @@ public class UserServiceTest {
     @Test
     public void shouldDelete_technicalException() {
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(new User()));
-        when(userRepository.delete("my-user")).thenReturn(Single.error(TechnicalException::new));
+        when(userRepository.delete("my-user")).thenReturn(Completable.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
         userService.delete("my-user").subscribe(testObserver);

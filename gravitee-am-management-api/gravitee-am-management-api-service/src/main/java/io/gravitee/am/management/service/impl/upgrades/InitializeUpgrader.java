@@ -91,7 +91,7 @@ public class InitializeUpgrader implements Upgrader, Ordered {
                                     updateDomain.setIdentities(adminClient.getIdentities());
                                     updateDomain.setOauth2Identities(adminClient.getOauth2Identities());
                                     return domainService.update(ADMIN_DOMAIN, updateDomain)
-                                            .flatMap(domain -> clientService.delete(adminClient.getId()).flatMap(irrelevant -> Single.just(domain)));
+                                            .flatMap(domain -> clientService.delete(adminClient.getId()).toSingleDefault(domain));
                                 }
                                 return Single.just(adminDomain);
                             });

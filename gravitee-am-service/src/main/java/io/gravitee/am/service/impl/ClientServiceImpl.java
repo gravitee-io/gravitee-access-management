@@ -16,7 +16,6 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
@@ -32,6 +31,7 @@ import io.gravitee.am.service.model.TopClient;
 import io.gravitee.am.service.model.TotalClient;
 import io.gravitee.am.service.model.UpdateClient;
 import io.gravitee.common.utils.UUID;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -330,23 +330,18 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Single<Irrelevant> delete(String clientId) {
+    public Completable delete(String clientId) {
         LOGGER.debug("Delete client {}", clientId);
         return clientRepository.findById(clientId)
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(clientId)))
-                .flatMapSingle(client -> clientRepository.delete(clientId)
-                        .flatMap(irrelevant -> {
-                            // Reload domain to take care about client delete
-                            return domainService.reload(client.getDomain()).flatMap(domain -> Single.just(irrelevant));
-                        })
-                )
+                .flatMapCompletable(client -> clientRepository.delete(clientId).andThen(domainService.reload(client.getDomain()).toCompletable()))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
+                        return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete client: {}", clientId, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete client: %s", clientId), ex));
                 });
     }

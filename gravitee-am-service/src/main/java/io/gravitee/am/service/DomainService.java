@@ -16,11 +16,11 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.am.service.model.UpdateLoginForm;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -52,6 +52,6 @@ public interface DomainService {
 
     Single<Domain> deleteLoginForm(String domainId);
 
-    Single<Irrelevant> delete(String domain);
+    Completable delete(String domain);
 
 }

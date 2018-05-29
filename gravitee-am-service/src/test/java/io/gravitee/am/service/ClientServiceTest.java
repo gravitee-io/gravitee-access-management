@@ -18,7 +18,6 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Irrelevant;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
@@ -29,6 +28,7 @@ import io.gravitee.am.service.impl.ClientServiceImpl;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.am.service.model.TotalClient;
 import io.gravitee.am.service.model.UpdateClient;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -477,7 +477,7 @@ public class ClientServiceTest {
         Client existingClient = Mockito.mock(Client.class);
         when(existingClient.getDomain()).thenReturn("my-domain");
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(existingClient));
-        when(clientRepository.delete("my-client")).thenReturn(Single.just(Irrelevant.CLIENT));
+        when(clientRepository.delete("my-client")).thenReturn(Completable.complete());
         when(domainService.reload("my-domain")).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = clientService.delete("my-client").test();
@@ -492,7 +492,7 @@ public class ClientServiceTest {
     @Test
     public void shouldDelete_technicalException() {
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
-        when(clientRepository.delete(anyString())).thenReturn(Single.error(TechnicalException::new));
+        when(clientRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
 
         TestObserver testObserver = clientService.delete("my-client").test();
         testObserver.awaitTerminalEvent();
