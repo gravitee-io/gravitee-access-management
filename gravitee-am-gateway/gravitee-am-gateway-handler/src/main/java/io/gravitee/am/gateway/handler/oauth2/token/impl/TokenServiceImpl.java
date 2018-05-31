@@ -58,8 +58,13 @@ public class TokenServiceImpl implements TokenService {
     private UserAuthenticationManager userAuthenticationManager;
 
     @Override
-    public Maybe<AccessToken> get(String accessToken) {
+    public Maybe<AccessToken> getAccessToken(String accessToken) {
         return accessTokenRepository.findByToken(accessToken).map(this::convert);
+    }
+
+    @Override
+    public Maybe<RefreshToken> getRefreshToken(String refreshToken) {
+        return refreshTokenRepository.findByToken(refreshToken);
     }
 
     @Override
@@ -126,6 +131,16 @@ public class TokenServiceImpl implements TokenService {
                         return deleteRefreshTokenAction.andThen(create(oAuth2Request, client));
                     }
                 });
+    }
+
+    @Override
+    public Completable deleteAccessToken(String accessToken) {
+        return accessTokenRepository.delete(accessToken);
+    }
+
+    @Override
+    public Completable deleteRefreshToken(String refreshToken) {
+        return refreshTokenRepository.delete(refreshToken);
     }
 
     private Single<io.gravitee.am.repository.oauth2.model.AccessToken> createAccessToken(OAuth2Request oAuth2Request, Client client) {

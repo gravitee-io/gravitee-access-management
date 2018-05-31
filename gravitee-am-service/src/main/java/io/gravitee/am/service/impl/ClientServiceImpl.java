@@ -267,7 +267,11 @@ public class ClientServiceImpl implements ClientService {
                             client.setCreatedAt(new Date());
                             client.setUpdatedAt(client.getCreatedAt());
 
-                            return clientRepository.create(client);
+                            return clientRepository.create(client)
+                                    .flatMap(client1 -> {
+                                        // Reload domain to take care about client creation
+                                        return domainService.reload(domain).flatMap(domain1 -> Single.just(client1));
+                                    });
                         }
                     })
                 .onErrorResumeNext(ex -> {
@@ -315,7 +319,7 @@ public class ClientServiceImpl implements ClientService {
 
                     return clientRepository.update(client)
                             .flatMap(irrelevant -> {
-                                // Reload domain to take care about client delete
+                                // Reload domain to take care about client update
                                 return domainService.reload(domain).flatMap(domain1 -> Single.just(irrelevant));
                             });
                 })

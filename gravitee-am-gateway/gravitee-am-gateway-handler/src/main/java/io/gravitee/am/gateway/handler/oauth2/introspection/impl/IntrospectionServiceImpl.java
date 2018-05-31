@@ -41,7 +41,7 @@ public class IntrospectionServiceImpl implements IntrospectionService {
 
     @Override
     public Single<IntrospectionResponse> introspect(IntrospectionRequest introspectionRequest) {
-            return tokenService.get(introspectionRequest.getToken())
+            return tokenService.getAccessToken(introspectionRequest.getToken())
                     .filter(token -> token.getExpiresIn() > 0)
                     .flatMap(token -> {
                         DefaultAccessToken accessToken = (DefaultAccessToken) token;

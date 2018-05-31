@@ -20,7 +20,6 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.common.http.HttpHeaders;
-import io.reactivex.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -63,7 +62,7 @@ public class UserInfoRequestParseHandler implements Handler<RoutingContext> {
 
         final String accessToken = authorization.substring(idx + 1);
 
-        tokenService.get(accessToken)
+        tokenService.getAccessToken(accessToken)
                 .map(accessToken1 -> {
                     if (accessToken1.getExpiresIn() == 0) {
                         throw new InvalidTokenException("The access token expired");

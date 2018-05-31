@@ -337,6 +337,7 @@ public class ClientServiceTest {
         when(newClient.getClientId()).thenReturn("my-client");
         when(clientRepository.findByClientIdAndDomain("my-client", DOMAIN)).thenReturn(Maybe.empty());
         when(clientRepository.create(any(Client.class))).thenReturn(Single.just(new Client()));
+        when(domainService.reload(DOMAIN)).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = clientService.create(DOMAIN, newClient).test();
         testObserver.awaitTerminalEvent();

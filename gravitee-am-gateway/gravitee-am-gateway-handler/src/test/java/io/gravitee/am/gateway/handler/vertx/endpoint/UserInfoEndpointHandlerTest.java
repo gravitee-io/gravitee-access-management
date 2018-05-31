@@ -84,7 +84,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeUserEndpoint_invalidToken() throws Exception {
-        when(tokenService.get(anyString())).thenReturn(Maybe.empty());
+        when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.empty());
 
         testRequest(
                 HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
@@ -96,7 +96,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         AccessToken accessToken = new DefaultAccessToken("token");
         ((DefaultAccessToken) accessToken).setExpiresIn(0);
 
-        when(tokenService.get(anyString())).thenReturn(Maybe.just(accessToken));
+        when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
 
         testRequest(
                 HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
@@ -108,7 +108,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         AccessToken accessToken = new DefaultAccessToken("token");
         ((DefaultAccessToken) accessToken).setExpiresIn(100);
 
-        when(tokenService.get(anyString())).thenReturn(Maybe.just(accessToken));
+        when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
 
         testRequest(
                 HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
@@ -120,7 +120,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         AccessToken accessToken = new DefaultAccessToken("token");
         ((DefaultAccessToken) accessToken).setExpiresIn(100);
 
-        when(tokenService.get(anyString())).thenReturn(Maybe.just(accessToken));
+        when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
         when(userService.findById(anyString())).thenReturn(Maybe.empty());
 
         testRequest(
@@ -137,7 +137,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         User user = new User();
         user.setAdditionalInformation(Collections.singletonMap("sub", "user"));
 
-        when(tokenService.get(anyString())).thenReturn(Maybe.just(accessToken));
+        when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(

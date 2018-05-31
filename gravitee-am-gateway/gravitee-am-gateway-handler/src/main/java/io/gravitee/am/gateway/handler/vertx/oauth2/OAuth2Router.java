@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
+import io.gravitee.am.gateway.handler.oauth2.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
@@ -33,6 +34,7 @@ import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.Author
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.authorization.UserApprovalEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection.CheckTokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.introspection.IntrospectionEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.revocation.RevocationTokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.token.TokenEndpointHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.MediaType;
@@ -74,6 +76,9 @@ public class OAuth2Router {
     private ScopeService scopeService;
 
     @Autowired
+    private RevocationTokenService revocationTokenService;
+
+    @Autowired
     private ThymeleafTemplateEngine thymeleafTemplateEngine;
 
     @Autowired
@@ -106,6 +111,9 @@ public class OAuth2Router {
         Handler<RoutingContext> introspectionEndpoint = new IntrospectionEndpointHandler();
         ((IntrospectionEndpointHandler) introspectionEndpoint).setIntrospectionService(introspectionService);
 
+        // Revocation token endpoint
+        Handler<RoutingContext> revocationTokenEndpoint = new RevocationTokenEndpointHandler(revocationTokenService);
+
         // declare oauth2 routes
         router.route(HttpMethod.GET,"/oauth/authorize")
                 .handler(authorizationRequestParseHandler)
@@ -125,6 +133,10 @@ public class OAuth2Router {
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(clientAuthHandler)
                 .handler(introspectionEndpoint);
+        router.route(HttpMethod.POST, "/oauth/revoke")
+                .consumes(MediaType.APPLICATION_FORM_URLENCODED)
+                .handler(clientAuthHandler)
+                .handler(revocationTokenEndpoint);
         router.route(HttpMethod.GET, "/oauth/confirm_access")
                 .handler(userApprovalEndpoint);
         router.route(HttpMethod.GET, "/oauth/error")

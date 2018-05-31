@@ -58,7 +58,7 @@ public class CheckTokenEndpointHandler implements Handler<RoutingContext> {
             throw new InvalidRequestException();
         }
 
-        tokenService.get(token)
+        tokenService.getAccessToken(token)
                 .map(accessToken -> {
                     if (accessToken.getExpiresIn() == 0) {
                         throw new InvalidTokenException("Token is expired");

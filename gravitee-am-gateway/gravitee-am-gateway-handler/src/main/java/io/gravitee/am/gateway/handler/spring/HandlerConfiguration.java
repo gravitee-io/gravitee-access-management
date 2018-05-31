@@ -33,6 +33,8 @@ import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.ExtensionGra
 import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.impl.ExtensionGrantManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.introspection.impl.IntrospectionServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.revocation.RevocationTokenService;
+import io.gravitee.am.gateway.handler.oauth2.revocation.impl.RevocationTokenServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.scope.impl.ScopeServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
@@ -126,5 +128,10 @@ public class HandlerConfiguration {
     @Bean
     public ExtensionGrantManager extensionGrantManager() {
         return new ExtensionGrantManagerImpl();
+    }
+
+    @Bean
+    public RevocationTokenService revocationTokenService() {
+        return new RevocationTokenServiceImpl();
     }
 }
