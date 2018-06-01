@@ -18,14 +18,14 @@ package io.gravitee.am.gateway.handler.vertx.login.endpoint;
 import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.utils.URIBuilder;
+import io.gravitee.am.gateway.handler.utils.UriBuilder;
+import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProviderConfiguration;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ClientNotFoundException;
-import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -145,7 +145,7 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
                 .map(authenticationProvider -> {
                     OAuth2AuthenticationProvider oAuth2AuthenticationProvider = (OAuth2AuthenticationProvider) authenticationProvider;
                     OAuth2IdentityProviderConfiguration configuration = oAuth2AuthenticationProvider.configuration();
-                    URIBuilder builder = URIBuilder.fromHttpUrl(configuration.getUserAuthorizationUri());
+                    UriBuilder builder = UriBuilder.fromHttpUrl(configuration.getUserAuthorizationUri());
                     builder.addParameter(OAuth2Constants.CLIENT_ID, configuration.getClientId());
                     builder.addParameter(OAuth2Constants.REDIRECT_URI, buildRedirectUri(request, identityProviderId));
                     builder.addParameter(OAuth2Constants.RESPONSE_TYPE, OAuth2Constants.CODE);
@@ -157,41 +157,10 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
     }
 
     private String buildRedirectUri(HttpServerRequest request, String identity) throws URISyntaxException {
-        URIBuilder builder = URIBuilder.newInstance();
-
-        String scheme = request.getHeader(HttpHeaders.X_FORWARDED_PROTO);
-        if (scheme != null && !scheme.isEmpty()) {
-            builder.scheme(scheme);
-        } else {
-            builder.scheme(request.scheme());
-        }
-
-        String host = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
-        if (host != null && !host.isEmpty()) {
-            handleHost(builder, host);
-        } else {
-            host = request.host();
-            builder.host(host);
-            handleHost(builder, host);
-        }
-        // append context path
-        builder.path("/" + domain.getPath() + "/login/callback");
-
-        // append identity provider id
-        builder.addParameter("provider", identity);
-
-        return builder.build().toString();
-    }
-
-    private void handleHost(URIBuilder builder, String host) {
-        if (host.contains(":")) {
-            // host contains both host and port
-            String [] parts = host.split(":");
-            builder.host(parts[0]);
-            builder.port(Integer.valueOf(parts[1]));
-        } else {
-            builder.host(host);
-        }
+        return UriBuilderRequest.resolveProxyRequest(
+                request,
+                "/" + domain.getPath() + "/login/callback",
+                Collections.singletonMap("provider", identity), true);
     }
 
     private class OAuth2ProviderData {

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.auth.handler.impl;
 import io.gravitee.am.gateway.handler.auth.exception.AuthenticationServiceException;
 import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.utils.URIBuilder;
+import io.gravitee.am.gateway.handler.utils.UriBuilder;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -105,7 +105,7 @@ public class OAuth2ClientAuthHandlerImpl extends AuthHandlerImpl {
     }
 
     private String buildRedirectUri(HttpServerRequest request) throws URISyntaxException {
-        URIBuilder builder = URIBuilder.fromHttpUrl(request.absoluteURI());
+        UriBuilder builder = UriBuilder.fromHttpUrl(request.absoluteURI());
         // append provider query param to avoid redirect mismatch exception
         builder.addParameter("provider", request.getParam(PROVIDER_PARAMETER));
 

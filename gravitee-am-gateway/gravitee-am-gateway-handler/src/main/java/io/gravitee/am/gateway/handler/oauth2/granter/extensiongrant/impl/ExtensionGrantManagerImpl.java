@@ -102,7 +102,7 @@ public class ExtensionGrantManagerImpl implements ExtensionGrantManager, Initial
                                 });
                                 logger.info("Extension grants loaded for domain {}", domain.getName());
                             },
-                        error -> logger.error("Failed to initializing extension grants for domain {}", domain.getName(), error)
+                        error -> logger.error("Unable to initialize extension grants for domain {}", domain.getName(), error)
                 );
     }
 

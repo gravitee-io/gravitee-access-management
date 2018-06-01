@@ -16,8 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx.auth.handler.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.utils.URIBuilder;
-import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -30,7 +29,7 @@ import io.vertx.ext.web.handler.impl.HttpStatusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
+import java.util.Collections;
 
 /**
  * Extends default {@link io.vertx.ext.web.handler.RedirectAuthHandler} with X-Forwarded Strategy
@@ -57,39 +56,17 @@ public class RedirectAuthHandlerImpl extends io.vertx.ext.web.handler.impl.Redir
         Session session = context.session();
         if (session != null) {
             // Now redirect to the login url - we'll get redirected back here after successful login
-            session.put(returnURLParam, context.request().uri());
+            session.put(returnURLParam, context.request().absoluteURI());
 
             try {
                 HttpServerRequest request = context.request();
-                URIBuilder builder = URIBuilder.newInstance();
+                String uri =
+                        UriBuilderRequest.resolveProxyRequest(
+                                new io.vertx.reactivex.core.http.HttpServerRequest(request),
+                                loginRedirectURL,
+                                Collections.singletonMap(OAuth2Constants.CLIENT_ID, request.getParam(OAuth2Constants.CLIENT_ID)), false);
 
-                // scheme
-                String scheme = request.getHeader(HttpHeaders.X_FORWARDED_PROTO);
-                if (scheme != null && !scheme.isEmpty()) {
-                    builder.scheme(scheme);
-                }
-
-                // host + port
-                String host = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
-                if (host != null && !host.isEmpty()) {
-                    if (host.contains(":")) {
-                        // Forwarded host contains both host and port
-                        String [] parts = host.split(":");
-                        builder.host(parts[0]);
-                        builder.port(Integer.valueOf(parts[1]));
-                    } else {
-                        builder.host(host);
-                    }
-                }
-
-                // path
-                builder.path(loginRedirectURL);
-
-                // query parameters
-                builder.addParameter(OAuth2Constants.CLIENT_ID, request.getParam(OAuth2Constants.CLIENT_ID));
-
-                URI uri = builder.build();
-                handler.handle(Future.failedFuture(new HttpStatusException(302, uri.toString())));
+                handler.handle(Future.failedFuture(new HttpStatusException(302, uri)));
             } catch (Exception e) {
                 logger.warn("Failed to decode login redirect url", e);
                 handler.handle(Future.failedFuture(new HttpStatusException(302, loginRedirectURL)));

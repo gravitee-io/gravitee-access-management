@@ -21,8 +21,9 @@ import io.gravitee.am.gateway.handler.oauth2.exception.OAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.utils.URIBuilder;
+import io.gravitee.am.gateway.handler.utils.UriBuilder;
 import io.gravitee.am.gateway.handler.vertx.oauth2.request.AuthorizationRequestFactory;
+import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
@@ -67,54 +68,55 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
     @Override
     public void handle(RoutingContext routingContext) {
         if (routingContext.failed()) {
-
-            AuthorizationRequest request = resolveInitialAuthorizeRequest(routingContext);
-            if (request == null || request.getRedirectUri() == null) {
-                // no authorization request, go to default error page
-                doRedirect(routingContext.response(), "/" + domain.getPath() + "/oauth/error");
-                return;
-            }
-            Throwable throwable = routingContext.failure();
-            if (throwable instanceof OAuth2Exception) {
-                OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
+            try {
+                AuthorizationRequest request = resolveInitialAuthorizeRequest(routingContext);
+                String defaultProxiedOAuthErrorPage =  UriBuilderRequest.resolveProxyRequest(routingContext.request(),  "/" + domain.getPath() + "/oauth/error", null, false);
                 String clientId = request.getClientId();
-                // no client available to get a registered redirect uri, go to default error page
-                if (clientId == null) {
-                    doRedirect(routingContext.response(), "/" + domain.getPath() + "/oauth/error");
+                if (request == null || request.getRedirectUri() == null || clientId == null) {
+                    // no authorization request
+                    // or no client available to get a registered redirect uri, go to default error page
+                    doRedirect(routingContext.response(), defaultProxiedOAuthErrorPage);
                     return;
                 }
-                clientService.findByClientId(clientId)
-                        .switchIfEmpty(Maybe.error(new InvalidRequestException("Client id " + clientId + " not found")))
-                        .subscribe(client -> {
-                            if (oAuth2Exception instanceof RedirectMismatchException) {
-                                // user set a wrong redirect_uri
-                                // redirect to a registered (first one) client redirect_uri
-                                request.setRedirectUri(client.getRedirectUris().iterator().next());
-                            }
-                            try {
-                                doRedirect(routingContext.response(), buildRedirectUri(oAuth2Exception, request));
-                            } catch (Exception ex) {
-                                logger.error("Fail to redirect to redirect uri " + request.getRedirectUri(), ex);
-                                // go to default error page
-                                doRedirect(routingContext.response(), "/" + domain.getPath() + "/oauth/error");
-                            }
-                        },
-                        error -> {
-                            // fail to get client, go to default error page
-                            doRedirect(routingContext.response(), "/" + domain.getPath() + "/oauth/error");
-                        });
-            } else {
-                if (routingContext.statusCode() != -1) {
-                    routingContext
-                            .response()
-                            .setStatusCode(routingContext.statusCode())
-                            .end();
+                Throwable throwable = routingContext.failure();
+                if (throwable instanceof OAuth2Exception) {
+                    OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
+                    clientService.findByClientId(clientId)
+                            .switchIfEmpty(Maybe.error(new InvalidRequestException("Client id " + clientId + " not found")))
+                            .subscribe(client -> {
+                                        if (oAuth2Exception instanceof RedirectMismatchException) {
+                                            // user set a wrong redirect_uri
+                                            // redirect to a registered (first one) client redirect_uri
+                                            request.setRedirectUri(client.getRedirectUris().iterator().next());
+                                        }
+                                        try {
+                                            doRedirect(routingContext.response(), buildRedirectUri(oAuth2Exception, request));
+                                        } catch (Exception ex) {
+                                            logger.error("Unable to redirect to redirect uri " + request.getRedirectUri(), ex);
+                                            // go to default error page
+                                            doRedirect(routingContext.response(), defaultProxiedOAuthErrorPage);
+                                        }
+                                    },
+                                    error -> {
+                                        // fail to get client, go to default error page
+                                        doRedirect(routingContext.response(), defaultProxiedOAuthErrorPage);
+                                    });
                 } else {
-                    routingContext
-                            .response()
-                            .setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
-                            .end();
+                    if (routingContext.statusCode() != -1) {
+                        routingContext
+                                .response()
+                                .setStatusCode(routingContext.statusCode())
+                                .end();
+                    } else {
+                        routingContext
+                                .response()
+                                .setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
+                                .end();
+                    }
                 }
+            } catch (Exception e) {
+                logger.error("Unable to handle authorization error response", e);
+                doRedirect(routingContext.response(),  "/" + domain.getPath() + "/oauth/error");
             }
         }
     }
@@ -155,10 +157,10 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
 
     private String append(String base, Map<String, String> query, boolean fragment) throws URISyntaxException {
         // prepare final redirect uri
-        URIBuilder template = URIBuilder.newInstance();
+        UriBuilder template = UriBuilder.newInstance();
 
         // get URI from the redirect_uri parameter
-        URIBuilder builder = URIBuilder.fromURIString(base);
+        UriBuilder builder = UriBuilder.fromURIString(base);
         URI redirectUri = builder.build();
 
         // create final redirect uri
@@ -170,9 +172,9 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
 
         // append error parameters in "application/x-www-form-urlencoded" format
         if (fragment) {
-            query.forEach((k, v) -> template.addFragmentParameter(k, URIBuilder.encodeURIComponent(v)));
+            query.forEach((k, v) -> template.addFragmentParameter(k, UriBuilder.encodeURIComponent(v)));
         } else {
-            query.forEach((k, v) -> template.addParameter(k, URIBuilder.encodeURIComponent(v)));
+            query.forEach((k, v) -> template.addParameter(k, UriBuilder.encodeURIComponent(v)));
         }
         return template.build().toString();
     }

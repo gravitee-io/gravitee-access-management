@@ -24,7 +24,7 @@ import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationCodeResponse;
 import io.gravitee.am.gateway.handler.oauth2.response.ImplicitResponse;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.utils.URIBuilder;
+import io.gravitee.am.gateway.handler.utils.UriBuilder;
 import io.gravitee.am.gateway.handler.vertx.oauth2.request.TokenRequestFactory;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
@@ -83,7 +83,7 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
     private String buildImplicitGrantRedirectUri(AuthorizationRequest authorizationRequest) throws URISyntaxException {
         ImplicitResponse authorizationResponse = (ImplicitResponse) authorizationRequest.getResponse();
         AccessToken accessToken = authorizationResponse.getAccessToken();
-        URIBuilder uriBuilder = URIBuilder.fromURIString(authorizationRequest.getRedirectUri());
+        UriBuilder uriBuilder = UriBuilder.fromURIString(authorizationRequest.getRedirectUri());
         uriBuilder.addFragmentParameter(AccessToken.ACCESS_TOKEN, accessToken.getValue());
         uriBuilder.addFragmentParameter(AccessToken.TOKEN_TYPE, accessToken.getTokenType());
         uriBuilder.addFragmentParameter(AccessToken.EXPIRES_IN, String.valueOf(accessToken.getExpiresIn()));
@@ -98,7 +98,7 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
 
     private String buildAuthorizationCodeRedirectUri(AuthorizationRequest authorizationRequest) throws URISyntaxException {
         AuthorizationCodeResponse authorizationResponse = (AuthorizationCodeResponse) authorizationRequest.getResponse();
-        URIBuilder uriBuilder = URIBuilder.fromURIString(authorizationRequest.getRedirectUri());
+        UriBuilder uriBuilder = UriBuilder.fromURIString(authorizationRequest.getRedirectUri());
         uriBuilder.addParameter(OAuth2Constants.CODE, authorizationResponse.getCode());
         if (authorizationResponse.getState() != null) {
             uriBuilder.addParameter(OAuth2Constants.STATE, authorizationRequest.getState());

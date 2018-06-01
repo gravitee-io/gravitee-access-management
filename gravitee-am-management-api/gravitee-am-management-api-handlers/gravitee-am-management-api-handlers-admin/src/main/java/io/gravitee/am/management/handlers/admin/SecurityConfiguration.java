@@ -38,7 +38,10 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.RedirectStrategy;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -54,9 +57,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
-
-    @Autowired
-    private JWTCookieGenerator jwtCookieGenerator;
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth)  {
@@ -74,11 +74,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/authorize", "/login", "/login/callback", "/logout")
                 .and()
             .authorizeRequests()
+                .antMatchers("/login").permitAll()
                 .anyRequest().authenticated()
                 .and()
             .formLogin()
                 .loginPage("/login")
                 .successHandler(authenticationSuccessHandler())
+                .failureHandler(authenticationFailureHandler())
                 .permitAll()
                 .and()
             .logout()
@@ -119,11 +121,18 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         CustomSavedRequestAwareAuthenticationSuccessHandler successHandler = new CustomSavedRequestAwareAuthenticationSuccessHandler();
-        successHandler.setRedirectStrategy(new XForwardedAwareRedirectStrategy());
+        successHandler.setRedirectStrategy(redirectStrategy());
         return successHandler;
     }
 
     @Bean
+    public AuthenticationFailureHandler authenticationFailureHandler() {
+        SimpleUrlAuthenticationFailureHandler authenticationFailureHandler = new SimpleUrlAuthenticationFailureHandler("/login?error");
+        authenticationFailureHandler.setRedirectStrategy(redirectStrategy());
+        return authenticationFailureHandler;
+    }
+
+        @Bean
     public IdentityProviderManager identityProviderManager() {
         return new IdentityProviderManagerImpl();
     }
@@ -131,5 +140,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public JWTCookieGenerator jwtCookieGenerator() {
         return new JWTCookieGenerator();
+    }
+
+    @Bean
+    public RedirectStrategy redirectStrategy() {
+        return new XForwardedAwareRedirectStrategy();
     }
 }

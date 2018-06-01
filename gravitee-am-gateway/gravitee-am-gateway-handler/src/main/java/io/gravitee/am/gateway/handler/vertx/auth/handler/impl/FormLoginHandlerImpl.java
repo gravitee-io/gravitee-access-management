@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.vertx.auth.handler.impl;
 
 import com.google.common.net.HttpHeaders;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.utils.URIBuilder;
+import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
@@ -31,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Extends default {@link io.vertx.ext.web.handler.FormLoginHandler} and appends
@@ -89,7 +91,9 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
                             // session should be upgraded as recommended by owasp
                             session.regenerateId();
 
-                            String returnURL = session.remove(returnURLParam);
+                            // Note : keep returnURLParam in session in case the user go to previous page
+                            // String returnURL = session.remove(returnURLParam);
+                            String returnURL = session.get(returnURLParam);
                             if (returnURL != null) {
                                 // Now redirect back to the original url
                                 doRedirect(req.response(), returnURL);
@@ -107,12 +111,16 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
                             req.response().end(DEFAULT_DIRECT_LOGGED_IN_OK_PAGE);
                         }
                     } else {
-                        URIBuilder uriBuilder = URIBuilder.newInstance();
-                        uriBuilder.path(context.request().uri());
-                        uriBuilder.addParameter(OAuth2Constants.CLIENT_ID, clientId);
-                        uriBuilder.addParameter("error", "login_failed");
                         try {
-                            doRedirect(context.response(), uriBuilder.build().toString());
+                            Map<String, String> parameters = new HashMap<>();
+                            parameters.put(OAuth2Constants.CLIENT_ID, clientId);
+                            parameters.put("error", "login_failed");
+                            String uri = UriBuilderRequest.resolveProxyRequest(
+                                    new io.vertx.reactivex.core.http.HttpServerRequest(req),
+                                    req.uri(),
+                                    parameters, false);
+
+                            doRedirect(context.response(), uri);
                         } catch (URISyntaxException e) {
                             context.fail(503);
                         }

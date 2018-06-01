@@ -60,7 +60,7 @@ public class OAuth2ClientAuthenticationProvider implements AuthProvider {
                     return authenticationProvider.loadUserByUsername(endUserAuthentication);
                 })
                 .subscribe(user -> resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.vertx.auth.user.User(convert(user)))), error -> {
-                    logger.error("Failed to authenticate oauth2 provider", error);
+                    logger.error("Unable to authenticate oauth2 provider", error);
                     resultHandler.handle(Future.failedFuture(error));
                 }, () -> resultHandler.handle(Future.failedFuture(new BadClientCredentialsException())));
 

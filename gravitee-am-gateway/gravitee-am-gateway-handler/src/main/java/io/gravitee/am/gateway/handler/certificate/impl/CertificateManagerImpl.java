@@ -68,6 +68,6 @@ public class CertificateManagerImpl implements CertificateManager, InitializingB
                         certificateProviders.put(certificate.getId(), certificateProvider);
                     });
                     logger.info("Certificates loaded for domain {}", domain.getName());
-                }, error -> logger.error("Failed to initializing identity providers for domain {}", domain.getName(), error));
+                }, error -> logger.error("Unable to initialize certificates for domain {}", domain.getName(), error));
     }
 }

@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.vertx.oauth2.request.AuthorizationRequestFactory;
+import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.Maybe;
@@ -88,21 +89,22 @@ public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointH
                         .flatMap(authorizationRequest -> approvalService.checkApproval(authorizationRequest, client, endUser.getUsername()))
                         .flatMap(authorizationRequest -> createAuthorizationResponse(authorizationRequest, client, endUser)))
                 .subscribe(authorizationRequest -> {
-                    if (!authorizationRequest.isApproved()) {
-                        // TODO should we put this data inside repository to handle cluster environment ?
-                        context.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
-                        doRedirect(context.response(), "/" + domain.getPath() + "/oauth/confirm_access");
-                    } else {
-                        try {
+                    try {
+                        if (!authorizationRequest.isApproved()) {
+                            // TODO should we put this data inside repository to handle cluster environment ?
+                            context.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
+                            String approvalPage = UriBuilderRequest.resolveProxyRequest(context.request(),"/" + domain.getPath() + "/oauth/confirm_access", null, false);
+                            doRedirect(context.response(), approvalPage);
+                        } else {
                             doRedirect(context.response(), buildRedirectUri(authorizationRequest));
-                        } catch (Exception e) {
-                            logger.error("Failed to redirect to client redirect_uri", e);
-                            context.fail(new ServerErrorException());
                         }
+                    } catch (Exception e) {
+                        logger.error("Unable to redirect to client redirect_uri", e);
+                        context.fail(new ServerErrorException());
                     }
                 },
                 error -> {
-                    logger.error("Failed to handle authorization request", error);
+                    logger.error("An exception occurs while handling authorization request", error);
                     context.fail(error);
                 });
 

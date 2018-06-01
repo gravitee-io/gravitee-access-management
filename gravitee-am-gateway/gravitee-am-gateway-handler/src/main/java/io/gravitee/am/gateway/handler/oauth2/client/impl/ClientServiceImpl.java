@@ -57,7 +57,7 @@ public class ClientServiceImpl implements ClientService, InitializingBean {
                 .doOnSuccess(clients1 -> clients1.forEach(client -> clients.put(client.getClientId(), client)))
                 .subscribe(
                         result -> logger.info("Clients loaded for domain {}", domain.getName()),
-                        error -> logger.error("Failed to initializing clients for domain {}", domain.getName(), error)
+                        error -> logger.error("Unable to initialize clients for domain {}", domain.getName(), error)
                 );
 
     }

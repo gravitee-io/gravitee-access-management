@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.web.util.UriComponentsBuilder;
+import sun.net.util.URLUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,7 +41,12 @@ public class XForwardedAwareRedirectStrategy implements RedirectStrategy {
     public void sendRedirect(HttpServletRequest request, HttpServletResponse response, String url) throws IOException {
         String redirectUrl = calculateRedirectUrl(request.getContextPath(), url);
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(redirectUrl);
+        UriComponentsBuilder builder;
+        if (UrlUtils.isAbsoluteUrl(redirectUrl)) {
+            builder = UriComponentsBuilder.fromHttpUrl(redirectUrl);
+        } else {
+            builder = UriComponentsBuilder.fromUriString(redirectUrl);
+        }
 
         String scheme = request.getHeader(HttpHeaders.X_FORWARDED_PROTO);
         if (scheme != null && !scheme.isEmpty()) {

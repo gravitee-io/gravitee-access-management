@@ -19,6 +19,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +27,7 @@ import java.util.regex.Pattern;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class URIBuilder {
+public class UriBuilder {
 
     private static final Pattern QUERY_PARAM_PATTERN = Pattern.compile("([^&=]+)(=?)([^&]+)?");
 
@@ -67,14 +68,14 @@ public class URIBuilder {
     private String query;
     private String fragment;
 
-    public static URIBuilder newInstance() {
-        return new URIBuilder();
+    public static UriBuilder newInstance() {
+        return new UriBuilder();
     }
 
-    public static URIBuilder fromURIString(String uri) {
+    public static UriBuilder fromURIString(String uri) {
         Matcher matcher = URI_PATTERN.matcher(uri);
         if (matcher.matches()) {
-            URIBuilder builder = new URIBuilder();
+            UriBuilder builder = new UriBuilder();
             String scheme = matcher.group(2);
             String userInfo = matcher.group(5);
             String host = matcher.group(6);
@@ -96,10 +97,10 @@ public class URIBuilder {
         }
     }
 
-    public static URIBuilder fromHttpUrl(String httpUrl) {
+    public static UriBuilder fromHttpUrl(String httpUrl) {
         Matcher matcher = HTTP_URL_PATTERN.matcher(httpUrl);
         if (matcher.matches()) {
-            URIBuilder builder = new URIBuilder();
+            UriBuilder builder = new UriBuilder();
             String scheme = matcher.group(1);
             builder.scheme(scheme != null ? scheme.toLowerCase() : null);
             builder.userInfo(matcher.group(4));
@@ -134,42 +135,49 @@ public class URIBuilder {
         return result;
     }
 
-    public URIBuilder scheme(String scheme) {
+    public UriBuilder scheme(String scheme) {
         this.scheme = scheme;
         return this;
     }
 
-    public URIBuilder host(String host) {
+    public UriBuilder host(String host) {
         this.host = host;
         return this;
     }
 
-    public URIBuilder port(int port) {
+    public UriBuilder port(int port) {
         this.port = port;
         return this;
     }
 
-    public URIBuilder userInfo(String userInfo) {
+    public UriBuilder userInfo(String userInfo) {
         this.userInfo = userInfo;
         return this;
     }
 
-    public URIBuilder path(String path) {
+    public UriBuilder path(String path) {
         this.path = path;
         return this;
     }
 
-    public URIBuilder query(String query) {
+    public UriBuilder query(String query) {
         this.query = query;
         return this;
     }
 
-    public URIBuilder fragment(String fragment) {
+    public UriBuilder fragment(String fragment) {
         this.fragment = fragment;
         return this;
     }
 
-    public URIBuilder addParameter(String parameter, String value) {
+    public UriBuilder parameters(Map<String, String> parameters) {
+        if (parameters != null) {
+            parameters.forEach((k, v) -> addParameter(k, v));
+        }
+        return this;
+    }
+
+    public UriBuilder addParameter(String parameter, String value) {
         if (query == null) {
             query = "";
         }
@@ -180,7 +188,7 @@ public class URIBuilder {
         return this;
     }
 
-    public URIBuilder addFragmentParameter(String parameter, String value) {
+    public UriBuilder addFragmentParameter(String parameter, String value) {
         if (fragment == null) {
             fragment = "";
         }

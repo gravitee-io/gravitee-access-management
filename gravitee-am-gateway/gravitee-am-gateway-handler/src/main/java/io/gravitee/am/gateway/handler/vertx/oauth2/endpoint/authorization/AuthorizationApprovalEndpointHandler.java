@@ -111,13 +111,13 @@ public class AuthorizationApprovalEndpointHandler extends AbstractAuthorizationE
                             context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
                             context.response().putHeader(HttpHeaders.LOCATION, redirectUri).setStatusCode(302).end();
                         } catch (Exception e) {
-                            logger.error("Failed to redirect to client redirect_uri", e);
+                            logger.error("Unable to redirect to client redirect_uri", e);
                             context.fail(new ServerErrorException());
                         }
                     }
                 },
                 error -> {
-                    logger.error("Failed to handle authorization approval request", error);
+                    logger.error("An error occurs while handling authorization approval request", error);
                     context.fail(error);
                 });
         }

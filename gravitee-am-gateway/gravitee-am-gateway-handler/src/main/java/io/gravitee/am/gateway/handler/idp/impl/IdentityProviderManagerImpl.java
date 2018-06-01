@@ -80,7 +80,7 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
                 })
                 .subscribe(
                         result -> logger.info("Identity providers loaded for domain {}", domain.getName()),
-                        error -> logger.error("Failed to initializing identity providers for domain {}", domain.getName(), error)
+                        error -> logger.error("Unable to initialize identity providers for domain {}", domain.getName(), error)
                 );
     }
 }
