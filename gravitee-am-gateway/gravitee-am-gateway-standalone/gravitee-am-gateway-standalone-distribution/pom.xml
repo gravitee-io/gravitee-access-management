@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <artifactId>gravitee-am-gateway-standalone</artifactId>
+        <groupId>io.gravitee.am.gateway.standalone</groupId>
+        <version>1.7.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>gravitee-am-gateway-standalone-distribution</artifactId>
+    <name>Gravitee IO - Access Management - Gateway - Standalone - Distribution</name>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>gravitee-am-gateway-standalone-distribution-zip</module>
+    </modules>
+
+    <dependencies>
+        <!-- Gravitee dependencies -->
+        <dependency>
+            <groupId>io.gravitee.am.gateway.standalone</groupId>
+            <artifactId>gravitee-am-gateway-standalone-container</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.gateway.standalone</groupId>
+            <artifactId>gravitee-am-gateway-standalone-bootstrap</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.identityprovider</groupId>
+            <artifactId>gravitee-am-identityprovider-inline</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.identityprovider</groupId>
+            <artifactId>gravitee-am-identityprovider-ldap</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.identityprovider</groupId>
+            <artifactId>gravitee-am-identityprovider-mongo</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.identityprovider</groupId>
+            <artifactId>gravitee-am-identityprovider-github</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.identityprovider</groupId>
+            <artifactId>gravitee-am-identityprovider-oauth2-generic</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.certificate</groupId>
+            <artifactId>gravitee-am-certificate-javakeystore</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-mongodb</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.extensiongrant</groupId>
+            <artifactId>gravitee-am-extensiongrant-jwtbearer</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.gateway</groupId>
+            <artifactId>gravitee-am-gateway-services-sync</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>distribution</finalName>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-plugins</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/staging</outputDirectory>
+                            <artifactItems>
+                                <!-- Identity providers -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.identityprovider</groupId>
+                                    <artifactId>gravitee-am-identityprovider-inline</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.identityprovider</groupId>
+                                    <artifactId>gravitee-am-identityprovider-ldap</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.identityprovider</groupId>
+                                    <artifactId>gravitee-am-identityprovider-mongo</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.identityprovider</groupId>
+                                    <artifactId>gravitee-am-identityprovider-github</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.identityprovider</groupId>
+                                    <artifactId>gravitee-am-identityprovider-oauth2-generic</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- Certificates -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.certificate</groupId>
+                                    <artifactId>gravitee-am-certificate-javakeystore</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- Repositories -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.repository</groupId>
+                                    <artifactId>gravitee-am-repository-mongodb</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- Extension Grants -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.extensiongrant</groupId>
+                                    <artifactId>gravitee-am-extensiongrant-jwtbearer</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- Services -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.gateway</groupId>
+                                    <artifactId>gravitee-am-gateway-services-sync</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.6</version>
+                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <id>bin</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptors>
+                                <descriptor>src/main/assembly/distribution.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -35,6 +35,6 @@
     <modules>
         <module>gravitee-am-gateway-standalone-bootstrap</module>
         <module>gravitee-am-gateway-standalone-container</module>
-        <!--<module>gravitee-am-gateway-standalone-distribution</module>-->
+        <module>gravitee-am-gateway-standalone-distribution</module>
     </modules>
 </project>
