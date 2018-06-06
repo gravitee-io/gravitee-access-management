@@ -16,12 +16,12 @@
 package io.gravitee.am.gateway.handler.oauth2.token;
 
 import io.gravitee.am.certificate.api.CertificateProvider;
-import io.gravitee.am.gateway.handler.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenEnhancerImpl;
-import io.gravitee.am.gateway.handler.role.RoleService;
-import io.gravitee.am.gateway.handler.user.UserService;
+import io.gravitee.am.gateway.service.RoleService;
+import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;

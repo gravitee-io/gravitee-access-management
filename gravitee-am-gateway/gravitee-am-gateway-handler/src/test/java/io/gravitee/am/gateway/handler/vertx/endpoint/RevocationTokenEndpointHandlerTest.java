@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
-import io.gravitee.am.gateway.handler.vertx.oauth2.endpoint.revocation.RevocationTokenEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.revocation.RevocationTokenEndpointHandler;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;

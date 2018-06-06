@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx.auth.handler.impl;
 
 import io.gravitee.am.gateway.handler.auth.exception.AuthenticationServiceException;
-import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.utils.UriBuilder;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;

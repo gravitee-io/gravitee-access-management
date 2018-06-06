@@ -47,21 +47,15 @@
         </dependency>
 
         <dependency>
-            <groupId>io.gravitee.am.repository</groupId>
-            <artifactId>gravitee-am-repository-api</artifactId>
+            <groupId>io.gravitee.am.gateway</groupId>
+            <artifactId>gravitee-am-gateway-service</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>io.gravitee.am.service</groupId>
-            <artifactId>gravitee-am-service</artifactId>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-api</artifactId>
             <version>${project.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.gravitee.am.plugins.handlers</groupId>
-                    <artifactId>gravitee-am-plugins-handlers-certificate</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
@@ -182,13 +176,6 @@
             <artifactId>vertx-auth-shiro</artifactId>
             <version>${vertx.version}</version>
             <scope>test</scope>
-        </dependency>
-
-        <!--TODO: to remove-->
-        <dependency>
-            <groupId>org.springframework.security.oauth</groupId>
-            <artifactId>spring-security-oauth2</artifactId>
-            <version>2.3.0.RELEASE</version>
         </dependency>
     </dependencies>
 </project>

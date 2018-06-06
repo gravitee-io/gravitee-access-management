@@ -16,13 +16,13 @@
 package io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.impl;
 
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
-import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.ExtensionGrantGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.ExtensionGrantManager;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.gravitee.am.gateway.handler.user.UserService;
+import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;

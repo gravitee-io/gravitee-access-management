@@ -17,9 +17,9 @@ package io.gravitee.am.gateway.handler.auth;
 
 import io.gravitee.am.gateway.handler.auth.exception.BadCredentialsException;
 import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
-import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
-import io.gravitee.am.gateway.handler.user.UserService;
+import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;

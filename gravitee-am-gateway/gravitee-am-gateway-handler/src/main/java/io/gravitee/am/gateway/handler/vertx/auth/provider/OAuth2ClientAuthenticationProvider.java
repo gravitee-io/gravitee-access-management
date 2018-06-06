@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx.auth.provider;
 
 import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
-import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.BadClientCredentialsException;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.vertx.core.AsyncResult;

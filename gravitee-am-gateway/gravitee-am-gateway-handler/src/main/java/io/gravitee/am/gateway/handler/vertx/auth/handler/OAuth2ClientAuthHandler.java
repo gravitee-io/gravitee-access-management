@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.handler;
 
-import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.impl.OAuth2ClientAuthHandlerImpl;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.reactivex.ext.web.handler.AuthHandler;

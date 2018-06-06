@@ -16,9 +16,9 @@
 package io.gravitee.am.gateway.handler.vertx.spring;
 
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
-import io.gravitee.am.gateway.handler.vertx.login.LoginRouter;
-import io.gravitee.am.gateway.handler.vertx.oauth2.OAuth2Router;
-import io.gravitee.am.gateway.handler.vertx.oidc.OIDCRouter;
+import io.gravitee.am.gateway.handler.vertx.handler.login.LoginRouter;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.OAuth2Router;
+import io.gravitee.am.gateway.handler.vertx.handler.oidc.OIDCRouter;
 import io.gravitee.am.gateway.handler.vertx.view.ThymeleafConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

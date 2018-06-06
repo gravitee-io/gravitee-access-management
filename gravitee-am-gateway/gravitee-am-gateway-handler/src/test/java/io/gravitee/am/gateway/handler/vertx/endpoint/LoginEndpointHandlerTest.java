@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
-import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
-import io.gravitee.am.gateway.handler.vertx.login.endpoint.LoginEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LoginEndpointHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;

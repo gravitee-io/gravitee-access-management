@@ -16,37 +16,13 @@
 package io.gravitee.am.gateway.handler.spring;
 
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.auth.idp.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
-import io.gravitee.am.gateway.handler.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.certificate.impl.CertificateManagerImpl;
-import io.gravitee.am.gateway.handler.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.idp.impl.IdentityProviderManagerImpl;
-import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
-import io.gravitee.am.gateway.handler.oauth2.approval.impl.ApprovalServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
-import io.gravitee.am.gateway.handler.oauth2.client.impl.ClientServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
-import io.gravitee.am.gateway.handler.oauth2.code.impl.AuthorizationCodeServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.granter.CompositeTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.ExtensionGrantManager;
-import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.impl.ExtensionGrantManagerImpl;
-import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
-import io.gravitee.am.gateway.handler.oauth2.introspection.impl.IntrospectionServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.revocation.RevocationTokenService;
-import io.gravitee.am.gateway.handler.oauth2.revocation.impl.RevocationTokenServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
-import io.gravitee.am.gateway.handler.oauth2.scope.impl.ScopeServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
-import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenEnhancerImpl;
-import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenServiceImpl;
-import io.gravitee.am.gateway.handler.oidc.discovery.spring.OpenIDDiscoveryConfiguration;
-import io.gravitee.am.gateway.handler.role.RoleService;
-import io.gravitee.am.gateway.handler.role.impl.RoleServiceImpl;
-import io.gravitee.am.gateway.handler.user.UserService;
-import io.gravitee.am.gateway.handler.user.impl.UserServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
+import io.gravitee.am.gateway.handler.oidc.spring.OpenIDConfiguration;
 import io.gravitee.am.gateway.handler.vertx.spring.SecurityDomainRouterConfiguration;
+import io.gravitee.am.gateway.service.spring.ServiceConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -57,30 +33,12 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @Import({
-        OpenIDDiscoveryConfiguration.class,
+        ServiceConfiguration.class,
+        OAuth2Configuration.class,
+        OpenIDConfiguration.class,
         SecurityDomainRouterConfiguration.class
 })
 public class HandlerConfiguration {
-
-    @Bean
-    public TokenGranter tokenGranter() {
-        return new CompositeTokenGranter();
-    }
-
-    @Bean
-    public ClientService clientService() {
-        return new ClientServiceImpl();
-    }
-
-    @Bean
-    public TokenService tokenService() {
-        return new TokenServiceImpl();
-    }
-
-    @Bean
-    public IntrospectionService introspectionService() {
-        return new IntrospectionServiceImpl();
-    }
 
     @Bean
     public IdentityProviderManager identityProviderManager() {
@@ -90,48 +48,5 @@ public class HandlerConfiguration {
     @Bean
     public UserAuthenticationManager userAuthenticationManager() {
         return new UserAuthenticationManagerImpl();
-    }
-
-    @Bean
-    public AuthorizationCodeService authorizationCodeService() {
-        return new AuthorizationCodeServiceImpl();
-    }
-
-    @Bean
-    public ApprovalService approvalService() {
-        return new ApprovalServiceImpl();
-    }
-
-    @Bean
-    public ScopeService scopeService() {
-        return new ScopeServiceImpl();
-    }
-
-    @Bean
-    public UserService userService() {
-        return new UserServiceImpl();
-    }
-
-    @Bean
-    public TokenEnhancer tokenEnhancer() {
-        return new TokenEnhancerImpl();
-    }
-
-    @Bean
-    public CertificateManager certificateManager() { return new CertificateManagerImpl(); }
-
-    @Bean
-    public RoleService roleService() {
-        return new RoleServiceImpl();
-    }
-
-    @Bean
-    public ExtensionGrantManager extensionGrantManager() {
-        return new ExtensionGrantManagerImpl();
-    }
-
-    @Bean
-    public RevocationTokenService revocationTokenService() {
-        return new RevocationTokenServiceImpl();
     }
 }

@@ -16,14 +16,14 @@
 package io.gravitee.am.gateway.handler.oauth2.token.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.gateway.handler.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oidc.utils.OIDCClaims;
-import io.gravitee.am.gateway.handler.role.RoleService;
-import io.gravitee.am.gateway.handler.user.UserService;
+import io.gravitee.am.gateway.service.RoleService;
+import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.model.AccessToken;

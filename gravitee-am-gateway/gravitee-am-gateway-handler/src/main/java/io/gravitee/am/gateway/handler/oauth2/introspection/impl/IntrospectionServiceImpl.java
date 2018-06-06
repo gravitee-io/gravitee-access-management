@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionResponse
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
-import io.gravitee.am.gateway.handler.user.UserService;
+import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
