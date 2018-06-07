@@ -34,6 +34,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -115,7 +117,7 @@ public class InitializeUpgrader implements Upgrader {
             UpdateClient updateClient = new UpdateClient();
             updateClient.setAccessTokenValiditySeconds(createdClient.getAccessTokenValiditySeconds());
             updateClient.setRefreshTokenValiditySeconds(createdClient.getRefreshTokenValiditySeconds());
-            updateClient.setAuthorizedGrantTypes(Collections.singletonList(GrantType.IMPLICIT.type()));
+            updateClient.setAuthorizedGrantTypes(Stream.of(GrantType.IMPLICIT, GrantType.CLIENT_CREDENTIALS).map(GrantType::type).collect(Collectors.toList()));
             updateClient.setScopes(Collections.singletonList(createdScope.getKey()));
             updateClient.setAutoApproveScopes(updateClient.getScopes());
             updateClient.setIdentities(Collections.singleton(createdIdentityProvider.getId()));
