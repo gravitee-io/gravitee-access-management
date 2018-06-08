@@ -163,9 +163,7 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
         // add additional information
         Map<String, Object> claims = new HashMap<>();
         if (mapper.getMappers() != null) {
-            mapper.getMappers().forEach((k, v) -> {
-                claims.put(k, authenticate.getStringAttribute(v));
-            });
+            mapper.getMappers().forEach((k, v) -> claims.put(k, authenticate.getObjectAttribute(v)));
         } else {
             // default values
             claims.put("sub", authenticate.getStringAttribute("uid"));
