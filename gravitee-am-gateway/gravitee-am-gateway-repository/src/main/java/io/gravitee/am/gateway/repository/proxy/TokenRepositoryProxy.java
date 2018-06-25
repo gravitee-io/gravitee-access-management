@@ -100,4 +100,9 @@ public class TokenRepositoryProxy extends AbstractProxy<TokenRepository> impleme
     public Collection<OAuth2AccessToken> findTokensByClientId(String clientId) {
         return target.findTokensByClientId(clientId);
     }
+
+    @Override
+    public Long countTokensByClientId(String clientId) {
+        return target.countTokensByClientId(clientId);
+    }
 }

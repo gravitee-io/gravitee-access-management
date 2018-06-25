@@ -193,6 +193,18 @@ public class OAuth2AccessTokenMongoRepository {
         return  oAuth2AccessTokensMongo;
     }
 
+
+    public Long countByClientId(String clientId) {
+        BasicDBObject whereQuery = new BasicDBObject();
+        whereQuery.put(FIELD_CLIENT_ID, clientId);
+
+        long accessTokens = mongoOperations
+                .getCollection(ACCESS_TOKEN_COLLECTION)
+                .count(whereQuery);
+
+        return accessTokens;
+    }
+
     private OAuth2AccessTokenMongo convert(DBObject result) {
         OAuth2AccessTokenMongo oAuth2AccessTokenMongo = new OAuth2AccessTokenMongo();
         oAuth2AccessTokenMongo.setValue((String) result.get(FIELD_KEY));

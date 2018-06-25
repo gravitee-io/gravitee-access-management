@@ -139,4 +139,12 @@ public interface TokenRepository {
      * @return a collection of access tokens
      */
     Collection<OAuth2AccessToken> findTokensByClientId(String clientId);
+
+    /**
+     * Count access tokens stored against the provided client id.
+     *
+     * @param clientId the client id to search
+     * @return the number of access tokens
+     */
+    Long countTokensByClientId(String clientId);
 }
