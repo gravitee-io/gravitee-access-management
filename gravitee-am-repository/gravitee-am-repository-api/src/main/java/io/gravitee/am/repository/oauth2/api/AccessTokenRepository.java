@@ -52,6 +52,14 @@ public interface AccessTokenRepository {
     Observable<AccessToken> findByClientId(String clientId);
 
     /**
+     * Count access tokens stored against the provided client id.
+     *
+     * @param clientId the client id to search
+     * @return the number of access tokens
+     */
+    Single<Long> countByClientId(String clientId);
+
+    /**
      * Find access token by criteria to know if the access token must be re-new or re-use
      *
      * @param accessTokenCriteria

@@ -63,19 +63,9 @@ public class TokenServiceTest {
         client2.setClientId("client2");
         Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
 
-        AccessToken accessToken1 = new AccessToken();
-        accessToken1.setId("access-1");
-        accessToken1.setToken("access-1");
-        AccessToken accessToken2 = new AccessToken();
-        accessToken2.setId("access-2");
-        accessToken2.setToken("access-2");
-        AccessToken accessToken3 = new AccessToken();
-        accessToken3.setId("access-3");
-        accessToken3.setToken("access-3");
-
         when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(clients));
-        when(accessTokenRepository.findByClientId("client1")).thenReturn(Observable.fromIterable(Arrays.asList(accessToken1, accessToken2)));
-        when(accessTokenRepository.findByClientId("client2")).thenReturn(Observable.fromIterable(Arrays.asList(accessToken3)));
+        when(accessTokenRepository.countByClientId("client1")).thenReturn(Single.just(2l));
+        when(accessTokenRepository.countByClientId("client2")).thenReturn(Single.just(1l));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokensByDomain(DOMAIN).test();
         testObserver.awaitTerminalEvent();
@@ -103,7 +93,7 @@ public class TokenServiceTest {
         client2.setClientId("client2");
         Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
         when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(clients));
-        when(accessTokenRepository.findByClientId("client1")).thenReturn(Observable.error(TechnicalException::new));
+        when(accessTokenRepository.countByClientId("client1")).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokensByDomain(DOMAIN).test();
         testObserver.assertError(TechnicalManagementException.class);
@@ -118,19 +108,9 @@ public class TokenServiceTest {
         client2.setClientId("client2");
         Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
 
-        AccessToken accessToken1 = new AccessToken();
-        accessToken1.setId("access-1");
-        accessToken1.setToken("access-1");
-        AccessToken accessToken2 = new AccessToken();
-        accessToken2.setId("access-2");
-        accessToken2.setToken("access-2");
-        AccessToken accessToken3 = new AccessToken();
-        accessToken3.setId("access-3");
-        accessToken3.setToken("access-3");
-
         when(clientService.findAll()).thenReturn(Single.just(clients));
-        when(accessTokenRepository.findByClientId("client1")).thenReturn(Observable.fromIterable(Arrays.asList(accessToken1, accessToken2)));
-        when(accessTokenRepository.findByClientId("client2")).thenReturn(Observable.fromIterable(Arrays.asList(accessToken3)));
+        when(accessTokenRepository.countByClientId("client1")).thenReturn(Single.just(2l));
+        when(accessTokenRepository.countByClientId("client2")).thenReturn(Single.just(1l));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokens().test();
         testObserver.awaitTerminalEvent();
@@ -158,7 +138,7 @@ public class TokenServiceTest {
         client2.setClientId("client2");
         Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
         when(clientService.findAll()).thenReturn(Single.just(clients));
-        when(accessTokenRepository.findByClientId("client1")).thenReturn(Observable.error(TechnicalException::new));
+        when(accessTokenRepository.countByClientId("client1")).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokens().test();
         testObserver.assertError(TechnicalManagementException.class);

@@ -47,11 +47,11 @@ public class TokenServiceImpl implements TokenService {
         LOGGER.debug("Find total tokens by domain: {}", domain);
         return clientService.findByDomain(domain)
                 .flatMapObservable(Observable::fromIterable)
-                .flatMapSingle(client -> accessTokenRepository.findByClientId(client.getClientId()).count())
+                .flatMapSingle(client -> accessTokenRepository.countByClientId(client.getClientId()))
                 .toList()
                 .flatMap(totalAccessTokens -> {
                     TotalToken totalToken = new TotalToken();
-                    totalToken.setTotalAccessTokens(totalAccessTokens.stream().mapToLong(value -> value).sum());
+                    totalToken.setTotalAccessTokens(totalAccessTokens.stream().mapToLong(Long::longValue).sum());
                     return Single.just(totalToken);
                 })
                 .onErrorResumeNext(ex -> {
@@ -66,11 +66,11 @@ public class TokenServiceImpl implements TokenService {
         LOGGER.debug("Find total tokens");
         return clientService.findAll()
                 .flatMapObservable(Observable::fromIterable)
-                .flatMapSingle(client -> accessTokenRepository.findByClientId(client.getClientId()).count())
+                .flatMapSingle(client -> accessTokenRepository.countByClientId(client.getClientId()))
                 .toList()
                 .flatMap(totalAccessTokens -> {
                     TotalToken totalToken = new TotalToken();
-                    totalToken.setTotalAccessTokens(totalAccessTokens.stream().mapToLong(value -> value).sum());
+                    totalToken.setTotalAccessTokens(totalAccessTokens.stream().mapToLong(Long::longValue).sum());
                     return Single.just(totalToken);
                 })
                 .onErrorResumeNext(ex -> {

@@ -52,6 +52,11 @@ public class AccessTokenRepositoryProxy extends AbstractProxy<AccessTokenReposit
     }
 
     @Override
+    public Single<Long> countByClientId(String clientId) {
+        return target.countByClientId(clientId);
+    }
+
+    @Override
     public Maybe<AccessToken> findByCriteria(AccessTokenCriteria accessTokenCriteria) {
         return target.findByCriteria(accessTokenCriteria);
     }

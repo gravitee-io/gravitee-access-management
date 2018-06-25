@@ -107,6 +107,11 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     }
 
     @Override
+    public Single<Long> countByClientId(String clientId) {
+        return Single.fromPublisher(accessTokenCollection.count(eq(FIELD_CLIENT_ID, clientId)));
+    }
+
+    @Override
     public Maybe<AccessToken> findByCriteria(AccessTokenCriteria accessTokenCriteria) {
         List<Bson> filters = new ArrayList<>();
 

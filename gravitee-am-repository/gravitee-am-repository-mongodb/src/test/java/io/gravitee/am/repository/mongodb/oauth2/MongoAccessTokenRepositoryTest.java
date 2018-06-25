@@ -104,6 +104,24 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
     }
 
     @Test
+    public void shouldCountByClientId() {
+        AccessToken token = new AccessToken();
+        token.setId(UUID.randomUUID().toString());
+        token.setToken("my-token");
+        token.setClientId("my-client-id-count");
+
+        TestObserver<Long> observer = accessTokenRepository.create(token)
+                .toCompletable()
+                .andThen(accessTokenRepository.countByClientId("my-client-id-count"))
+                .test();
+
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(new Long(1));
+    }
+
+    @Test
     public void shouldFindByCriteria() {
         AccessToken token = new AccessToken();
         token.setId(UUID.randomUUID().toString());
