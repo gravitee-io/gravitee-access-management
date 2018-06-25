@@ -124,7 +124,7 @@ public class CertificateResource {
                 .flatMapSingle(schema -> certificateService.update(domain, certificate, updateCertificate, schema))
                 .map(certificate1 -> {
                     // TODO remove after refactoring JWKS endpoint
-                    certificateManager.reloadCertifcateProviders(certificate1);
+                    certificateManager.reloadCertificateProviders(certificate1);
                     return Response.ok(certificate1).build();
                 })
                 .subscribe(

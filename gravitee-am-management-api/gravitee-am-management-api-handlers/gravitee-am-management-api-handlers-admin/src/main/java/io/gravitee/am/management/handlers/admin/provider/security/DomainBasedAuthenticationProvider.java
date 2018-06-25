@@ -49,7 +49,6 @@ public class DomainBasedAuthenticationProvider implements AuthenticationProvider
     @Autowired
     private Domain domain;
 
-    @Autowired
     private IdentityProviderManager identityProviderManager;
 
     @Override
@@ -97,5 +96,9 @@ public class DomainBasedAuthenticationProvider implements AuthenticationProvider
     public boolean supports(Class<?> authentication) {
         return authentication.equals(
                 UsernamePasswordAuthenticationToken.class);
+    }
+
+    public void setIdentityProviderManager(IdentityProviderManager identityProviderManager) {
+        this.identityProviderManager = identityProviderManager;
     }
 }

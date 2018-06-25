@@ -16,7 +16,7 @@
 package io.gravitee.am.management.handlers.admin.authentication;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.admin.provider.jwt.JWTCookieGenerator;
+import io.gravitee.am.management.handlers.admin.provider.jwt.JWTGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +43,7 @@ public class CustomSavedRequestAwareAuthenticationSuccessHandler extends SavedRe
     private RequestCache requestCache = new HttpSessionRequestCache();
 
     @Autowired
-    private JWTCookieGenerator jwtCookieGenerator;
+    private JWTGenerator jwtGenerator;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -86,6 +86,6 @@ public class CustomSavedRequestAwareAuthenticationSuccessHandler extends SavedRe
 
     private Cookie createJWTAuthenticationCookie(Authentication authentication) {
         final User principal = (User) authentication.getPrincipal();
-        return jwtCookieGenerator.generate(principal);
+        return jwtGenerator.generateCookie(principal);
     }
 }

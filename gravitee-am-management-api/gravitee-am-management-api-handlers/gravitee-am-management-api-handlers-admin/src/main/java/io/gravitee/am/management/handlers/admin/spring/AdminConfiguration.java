@@ -17,10 +17,6 @@ package io.gravitee.am.management.handlers.admin.spring;
 
 import io.gravitee.am.management.handlers.admin.SecurityConfiguration;
 import io.gravitee.am.management.handlers.admin.WebMvcConfiguration;
-import io.gravitee.am.management.handlers.admin.provider.jwt.JWTCookieGenerator;
-import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager;
-import io.gravitee.am.management.handlers.admin.security.impl.IdentityProviderManagerImpl;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 

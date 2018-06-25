@@ -104,7 +104,7 @@ public class CertificatesResource extends AbstractResource {
                 .flatMapSingle(schema -> certificateService.create(domain, newCertificate, schema))
                 .map(certificate -> {
                     // TODO remove after refactoring JWKS endpoint
-                    certificateManager.reloadCertifcateProviders(certificate);
+                    certificateManager.reloadCertificateProviders(certificate);
 
                     return Response
                         .created(URI.create("/domains/" + domain + "/certificates/" + certificate.getId()))

@@ -43,7 +43,7 @@ public class CertificateManager implements InitializingBean  {
     @Autowired
     private CertificateService certificateService;
 
-    public void reloadCertifcateProviders(Certificate certificate) {
+    public void reloadCertificateProviders(Certificate certificate) {
         CertificateProvider certificateProvider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration());
         certificateService.setCertificateProvider(certificate.getId(), certificateProvider);
     }

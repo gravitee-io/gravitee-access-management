@@ -20,7 +20,7 @@ import io.gravitee.am.management.handlers.admin.authentication.LoginUrlAuthentic
 import io.gravitee.am.management.handlers.admin.filter.OAuth2ClientAuthenticationFilter;
 import io.gravitee.am.management.handlers.admin.handler.CookieClearingLogoutHandler;
 import io.gravitee.am.management.handlers.admin.handler.CustomLogoutSuccessHandler;
-import io.gravitee.am.management.handlers.admin.provider.jwt.JWTCookieGenerator;
+import io.gravitee.am.management.handlers.admin.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.admin.provider.security.DomainBasedAuthenticationProvider;
 import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager;
 import io.gravitee.am.management.handlers.admin.security.impl.IdentityProviderManagerImpl;
@@ -33,11 +33,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -51,15 +53,15 @@ import javax.servlet.Filter;
 @Configuration
 @ComponentScan("io.gravitee.am.management.handlers.admin.controller")
 @EnableWebSecurity
-public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+public class SecurityConfiguration {
 
     private final Logger logger = LoggerFactory.getLogger(SecurityConfiguration.class);
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth)  {
+    @Autowired
+    protected void configureGlobal(AuthenticationManagerBuilder auth)  {
         logger.info("Loading identity providers to handle user authentication");
 
         // By default we are associating users added to the domain
@@ -67,45 +69,17 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         auth.authenticationEventPublisher(new DefaultAuthenticationEventPublisher(applicationEventPublisher));
     }
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http
-            .requestMatchers()
-                .antMatchers("/authorize", "/login", "/login/callback", "/logout")
-                .and()
-            .authorizeRequests()
-                .antMatchers("/login").permitAll()
-                .anyRequest().authenticated()
-                .and()
-            .formLogin()
-                .loginPage("/login")
-                .successHandler(authenticationSuccessHandler())
-                .failureHandler(authenticationFailureHandler())
-                .permitAll()
-                .and()
-            .logout()
-                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                .logoutSuccessHandler(new CustomLogoutSuccessHandler())
-                .invalidateHttpSession(true)
-                .addLogoutHandler(cookieClearingLogoutHandler())
-                .and()
-            .exceptionHandling()
-                .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
-                .and()
-            .addFilterBefore(clientOAuth2Filter(), AbstractPreAuthenticatedProcessingFilter.class);
-
-    }
-
     @Bean
     public DomainBasedAuthenticationProvider userAuthenticationProvider() {
-        return new DomainBasedAuthenticationProvider();
+        DomainBasedAuthenticationProvider domainBasedAuthenticationProvider = new DomainBasedAuthenticationProvider();
+        domainBasedAuthenticationProvider.setIdentityProviderManager(identityProviderManager());
+
+        return domainBasedAuthenticationProvider;
     }
 
     @Bean
-    public Filter clientOAuth2Filter() {
-        OAuth2ClientAuthenticationFilter oAuth2ClientAuthenticationFilter = new OAuth2ClientAuthenticationFilter("/login/callback");
-        oAuth2ClientAuthenticationFilter.setApplicationEventPublisher(applicationEventPublisher);
-        return oAuth2ClientAuthenticationFilter;
+    public IdentityProviderManager identityProviderManager() {
+        return new IdentityProviderManagerImpl();
     }
 
     @Bean
@@ -114,36 +88,95 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    public LogoutHandler cookieClearingLogoutHandler() {
-        return new CookieClearingLogoutHandler();
+    public JWTGenerator jwtCookieGenerator() {
+        return new JWTGenerator();
     }
 
-    @Bean
-    public AuthenticationSuccessHandler authenticationSuccessHandler() {
-        CustomSavedRequestAwareAuthenticationSuccessHandler successHandler = new CustomSavedRequestAwareAuthenticationSuccessHandler();
-        successHandler.setRedirectStrategy(redirectStrategy());
-        return successHandler;
-    }
+    @Configuration
+    @Order(1)
+    public static class LoginFormSecurityConfigurationAdapter extends WebSecurityConfigurerAdapter {
 
-    @Bean
-    public AuthenticationFailureHandler authenticationFailureHandler() {
-        SimpleUrlAuthenticationFailureHandler authenticationFailureHandler = new SimpleUrlAuthenticationFailureHandler("/login?error");
-        authenticationFailureHandler.setRedirectStrategy(redirectStrategy());
-        return authenticationFailureHandler;
-    }
+        @Autowired
+        private ApplicationEventPublisher applicationEventPublisher;
+
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+            http
+                .requestMatchers()
+                    .antMatchers("/authorize", "/login", "/login/callback", "/logout")
+                    .and()
+                .authorizeRequests()
+                    .antMatchers("/login").permitAll()
+                    .anyRequest().authenticated()
+                    .and()
+                .formLogin()
+                    .loginPage("/login")
+                    .successHandler(authenticationSuccessHandler())
+                    .failureHandler(authenticationFailureHandler())
+                    .permitAll()
+                    .and()
+                .logout()
+                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                    .logoutSuccessHandler(new CustomLogoutSuccessHandler())
+                    .invalidateHttpSession(true)
+                    .addLogoutHandler(cookieClearingLogoutHandler())
+                    .and()
+                .exceptionHandling()
+                    .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
+                    .and()
+                .addFilterBefore(clientOAuth2Filter(), AbstractPreAuthenticatedProcessingFilter.class);
+        }
 
         @Bean
-    public IdentityProviderManager identityProviderManager() {
-        return new IdentityProviderManagerImpl();
+        public Filter clientOAuth2Filter() {
+            OAuth2ClientAuthenticationFilter oAuth2ClientAuthenticationFilter = new OAuth2ClientAuthenticationFilter("/login/callback");
+            oAuth2ClientAuthenticationFilter.setApplicationEventPublisher(applicationEventPublisher);
+            return oAuth2ClientAuthenticationFilter;
+        }
+
+        @Bean
+        public LogoutHandler cookieClearingLogoutHandler() {
+            return new CookieClearingLogoutHandler();
+        }
+
+        @Bean
+        public AuthenticationSuccessHandler authenticationSuccessHandler() {
+            CustomSavedRequestAwareAuthenticationSuccessHandler successHandler = new CustomSavedRequestAwareAuthenticationSuccessHandler();
+            successHandler.setRedirectStrategy(redirectStrategy());
+            return successHandler;
+        }
+
+        @Bean
+        public AuthenticationFailureHandler authenticationFailureHandler() {
+            SimpleUrlAuthenticationFailureHandler authenticationFailureHandler = new SimpleUrlAuthenticationFailureHandler("/login?error");
+            authenticationFailureHandler.setRedirectStrategy(redirectStrategy());
+            return authenticationFailureHandler;
+        }
+
+        @Bean
+        public RedirectStrategy redirectStrategy() {
+            return new XForwardedAwareRedirectStrategy();
+        }
     }
 
-    @Bean
-    public JWTCookieGenerator jwtCookieGenerator() {
-        return new JWTCookieGenerator();
-    }
+    @Configuration
 
-    @Bean
-    public RedirectStrategy redirectStrategy() {
-        return new XForwardedAwareRedirectStrategy();
+    public static class BasicSecurityConfigurationAdapter extends WebSecurityConfigurerAdapter {
+
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+            http
+                .antMatcher("/token")
+                    .authorizeRequests()
+                        .anyRequest().authenticated()
+                    .and()
+                        .httpBasic()
+                            .realmName("Gravitee.io AM Management API")
+                    .and()
+                        .sessionManagement()
+                            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    .and()
+                        .csrf().disable();
+        }
     }
 }

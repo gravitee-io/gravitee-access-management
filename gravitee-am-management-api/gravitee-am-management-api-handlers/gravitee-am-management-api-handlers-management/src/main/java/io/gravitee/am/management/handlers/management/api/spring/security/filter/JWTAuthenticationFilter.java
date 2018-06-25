@@ -54,21 +54,29 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-        final Optional<Cookie> optionalStringToken;
+        String authToken;
 
-        if (request.getCookies() == null) {
-            optionalStringToken = Optional.empty();
+        // first check Authorization request header
+        final String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            authToken = authorization.substring(7);
         } else {
-            optionalStringToken = Arrays.stream(request.getCookies())
-                    .filter(cookie -> HttpHeaders.AUTHORIZATION.equals(cookie.getName()))
-                    .findAny();
-        }
+            // if no authorization header found, check authorization cookie
+            final Optional<Cookie> optionalStringToken;
 
-        if (!optionalStringToken.isPresent() || !optionalStringToken.get().getValue().startsWith("Bearer ")) {
-            throw new BadCredentialsException("No JWT token found");
-        }
+            if (request.getCookies() == null) {
+                optionalStringToken = Optional.empty();
+            } else {
+                optionalStringToken = Arrays.stream(request.getCookies())
+                        .filter(cookie -> HttpHeaders.AUTHORIZATION.equals(cookie.getName()))
+                        .findAny();
+            }
 
-        String authToken = optionalStringToken.get().getValue().substring(7);
+            if (!optionalStringToken.isPresent() || !optionalStringToken.get().getValue().startsWith("Bearer ")) {
+                throw new BadCredentialsException("No JWT token found");
+            }
+            authToken = optionalStringToken.get().getValue().substring(7);
+        }
 
         try {
             Claims claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken).getBody();

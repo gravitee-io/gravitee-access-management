@@ -18,7 +18,7 @@ package io.gravitee.am.management.handlers.admin.filter;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
-import io.gravitee.am.management.handlers.admin.provider.jwt.JWTCookieGenerator;
+import io.gravitee.am.management.handlers.admin.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.admin.provider.security.EndUserAuthentication;
 import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager;
 import org.slf4j.Logger;
@@ -70,7 +70,7 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
     private IdentityProviderManager identityProviderManager;
 
     @Autowired
-    private JWTCookieGenerator jwtCookieGenerator;
+    private JWTGenerator jwtGenerator;
 
     public OAuth2ClientAuthenticationFilter(String defaultFilterProcessesUrl) {
         super(defaultFilterProcessesUrl);
@@ -158,7 +158,7 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
 
     private Cookie createJWTAuthenticationCookie(Authentication authentication) {
         final User principal = (User) authentication.getPrincipal();
-        return jwtCookieGenerator.generate(principal);
+        return jwtGenerator.generateCookie(principal);
     }
 
     /**

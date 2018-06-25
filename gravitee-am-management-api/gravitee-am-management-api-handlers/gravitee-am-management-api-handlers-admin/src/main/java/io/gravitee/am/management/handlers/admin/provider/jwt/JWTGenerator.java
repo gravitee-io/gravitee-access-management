@@ -23,13 +23,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 import javax.servlet.http.Cookie;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class JWTCookieGenerator {
+public class JWTGenerator {
 
     private static final boolean DEFAULT_JWT_COOKIE_SECURE = false;
     private static final String DEFAULT_JWT_COOKIE_PATH = "/";
@@ -40,24 +43,41 @@ public class JWTCookieGenerator {
     @Autowired
     private Environment environment;
 
-    public Cookie generate(final User user) {
-        String compactJws = Jwts.builder()
-                .setSubject(user.getUsername())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + JWTCookieGenerator.DEFAULT_JWT_EXPIRE_AFTER))
-                .setClaims(user.getAdditionalInformation())
-                .signWith(SignatureAlgorithm.HS512, environment.getProperty("jwt.secret", DEFAULT_JWT_SECRET))
-                .compact();
-        return generate("Bearer " + compactJws);
-    }
+    public Cookie generateCookie(final User user) {
+        Date expirationDate = new Date(System.currentTimeMillis() + JWTGenerator.DEFAULT_JWT_EXPIRE_AFTER);
+        String jwtToken  = generateToken(user, expirationDate);
 
-    private Cookie generate(final String value) {
-        final Cookie cookie = new Cookie(HttpHeaders.AUTHORIZATION, value);
+        final Cookie cookie = new Cookie(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(environment.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
         cookie.setPath(environment.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
         cookie.setDomain(environment.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));
         cookie.setMaxAge(environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER));
+
         return cookie;
+    }
+
+    public Map<String, Object> generateToken(final User user) {
+        Date expirationDate = new Date(System.currentTimeMillis() + JWTGenerator.DEFAULT_JWT_EXPIRE_AFTER);
+        String jwtToken  = generateToken(user, expirationDate);
+
+        Map<String, Object> token = new HashMap<>();
+        token.put("access_token", jwtToken);
+        token.put("token_type", "bearer");
+        token.put("expires_at", expirationDate.toString());
+
+        return token;
+    }
+
+    private String generateToken(final User user, Date expirationDate) {
+        String compactJws = Jwts.builder()
+                .setSubject(user.getUsername())
+                .setIssuedAt(new Date())
+                .setExpiration(expirationDate)
+                .setClaims(user.getAdditionalInformation())
+                .signWith(SignatureAlgorithm.HS512, environment.getProperty("jwt.secret", DEFAULT_JWT_SECRET))
+                .compact();
+
+        return compactJws;
     }
 }
