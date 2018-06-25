@@ -31,6 +31,7 @@ import org.ldaptive.*;
 import org.ldaptive.auth.AuthenticationRequest;
 import org.ldaptive.auth.AuthenticationResponse;
 import org.ldaptive.auth.Authenticator;
+import org.ldaptive.auth.SearchDnResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -102,6 +103,8 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
                 String username = (String) authentication.getPrincipal();
                 String password = (String) authentication.getCredentials();
                 // authenticate user
+                // unable *={0} authentication filter (ldaptive use *={user})
+                ((SearchDnResolver) authenticator.getDnResolver()).setUserFilterParameters(Collections.singleton(username).toArray());
                 AuthenticationResponse response = authenticator.authenticate(
                         new AuthenticationRequest(username, new Credential(password), ReturnAttributes.ALL_USER.value()));
                 if (response.getResult()) { // authentication succeeded
@@ -179,7 +182,19 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
         // add additional information
         Map<String, Object> claims = new HashMap<>();
         if (mapper.getMappers() != null && !mapper.getMappers().isEmpty()) {
-            mapper.getMappers().forEach((k, v) -> claims.put(k, ldapEntry.getAttribute(v).getStringValue()));
+            mapper.getMappers().forEach((k, v) -> {
+                LdapAttribute ldapAttribute = ldapEntry.getAttribute(v);
+                if (ldapAttribute != null) {
+                    Collection<String> ldapValues = ldapAttribute.getStringValues();
+                    if (ldapValues != null) {
+                        if (ldapValues.size() == 1) {
+                            claims.put(k, ldapValues.iterator().next());
+                        } else {
+                            claims.put(k, ldapValues);
+                        }
+                    }
+                }
+            });
         } else {
             // default values
             claims.put("sub", user.getUsername());

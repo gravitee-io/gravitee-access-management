@@ -124,7 +124,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProviderMongo.setType(identityProvider.getType());
         identityProviderMongo.setConfiguration(identityProvider.getConfiguration());
         identityProviderMongo.setMappers(identityProvider.getMappers() != null ? new Document((Map) identityProvider.getMappers()) : new Document());
-        identityProviderMongo.setRoleMapper(identityProvider.getMappers() != null ? convert(identityProvider.getRoleMapper()) : new Document());
+        identityProviderMongo.setRoleMapper(identityProvider.getRoleMapper() != null ? convert(identityProvider.getRoleMapper()) : new Document());
         identityProviderMongo.setDomain(identityProvider.getDomain());
         identityProviderMongo.setExternal(identityProvider.isExternal());
         identityProviderMongo.setCreatedAt(identityProvider.getCreatedAt());
