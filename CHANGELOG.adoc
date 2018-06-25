@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/18?closed=1[1.6.4 (2018-06-25)]
+
+=== Bug fixes
+
+*_Dashboard_*
+
+- Do not fetch all access and refresh token information for "count" analytics https://github.com/gravitee-io/graviteeio-access-management/issues/249[#249]
+
+
 == https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/17?closed=1[1.6.3 (2018-06-18)]
 
 === Bug fixes
