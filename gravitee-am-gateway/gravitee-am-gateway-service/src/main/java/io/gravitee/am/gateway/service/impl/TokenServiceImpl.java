@@ -47,7 +47,7 @@ public class TokenServiceImpl implements TokenService {
             TotalToken totalToken = new TotalToken();
             totalToken.setTotalAccessTokens(clientService.findByDomain(domain)
                     .parallelStream()
-                    .mapToLong(c -> tokenRepository.findTokensByClientId(c.getClientId()).size()).sum());
+                    .mapToLong(c -> tokenRepository.countTokensByClientId(c.getClientId())).sum());
             return totalToken;
         } catch (Exception ex) {
             LOGGER.error("An error occurs while trying to find total tokens by domain: {}", domain, ex);
@@ -63,7 +63,7 @@ public class TokenServiceImpl implements TokenService {
             TotalToken totalToken = new TotalToken();
             totalToken.setTotalAccessTokens(clientService.findAll()
                     .parallelStream()
-                    .mapToLong(c -> tokenRepository.findTokensByClientId(c.getClientId()).size()).sum());
+                    .mapToLong(c -> tokenRepository.countTokensByClientId(c.getClientId())).sum());
             return totalToken;
         } catch (Exception ex) {
             LOGGER.error("An error occurs while trying to find total tokens", ex);

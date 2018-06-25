@@ -136,6 +136,19 @@ public class MongoTokenRepositoryTest {
     }
 
     @Test
+    public void testCountAccessTokensByClientId() {
+        String clientId = "id" + UUID.randomUUID();
+        String userName = "test2";
+        OAuth2Authentication expectedAuthentication = new OAuth2Authentication(RequestTokenFactory.createOAuth2Request(clientId, false), new TestAuthentication(userName, false));
+        expectedAuthentication.setName(userName);
+        OAuth2AccessToken expectedOAuth2AccessToken = new OAuth2AccessToken("testToken");
+        mongoTokenRepository.storeAccessToken(expectedOAuth2AccessToken, expectedAuthentication, "test2");
+
+        Long actualOAuth2AccessTokens = mongoTokenRepository.countTokensByClientId(clientId);
+        assertEquals(new Long(1), actualOAuth2AccessTokens);
+    }
+
+    @Test
     public void testReadingAccessTokenForTokenThatDoesNotExist() {
         assertFalse(mongoTokenRepository.readAccessToken("tokenThatDoesNotExist").isPresent());
     }

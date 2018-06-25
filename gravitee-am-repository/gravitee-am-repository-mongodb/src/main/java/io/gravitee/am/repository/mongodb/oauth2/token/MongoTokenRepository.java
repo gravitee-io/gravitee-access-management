@@ -150,6 +150,12 @@ public class MongoTokenRepository implements TokenRepository {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Long countTokensByClientId(String clientId) {
+        return oAuth2AccessTokenMongoRepository
+                .countByClientId(clientId);
+    }
+
     private OAuth2RefreshToken convert(OAuth2RefreshTokenMongo oAuth2RefreshTokenMongo) {
         OAuth2RefreshToken oAuth2RefreshToken = new OAuth2RefreshToken(oAuth2RefreshTokenMongo.getValue());
         oAuth2RefreshToken.setExpiration(oAuth2RefreshTokenMongo.getExpiration());

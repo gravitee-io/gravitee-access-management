@@ -183,7 +183,7 @@ public class ClientServiceImpl implements ClientService {
             return clients.parallelStream().map(c -> {
                 TopClient client = new TopClient();
                 client.setClient(c);
-                client.setAccessTokens(tokenRepository.findTokensByClientId(c.getClientId()).size());
+                client.setAccessTokens(tokenRepository.countTokensByClientId(c.getClientId()));
                 return client;
             }).filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet());
         } catch (TechnicalException ex) {
@@ -200,7 +200,7 @@ public class ClientServiceImpl implements ClientService {
             return clients.parallelStream().map(c -> {
                 TopClient client = new TopClient();
                 client.setClient(c);
-                client.setAccessTokens(tokenRepository.findTokensByClientId(c.getClientId()).size());
+                client.setAccessTokens(tokenRepository.countTokensByClientId(c.getClientId()));
                 return client;
             }).filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet());
         } catch (TechnicalException ex) {
