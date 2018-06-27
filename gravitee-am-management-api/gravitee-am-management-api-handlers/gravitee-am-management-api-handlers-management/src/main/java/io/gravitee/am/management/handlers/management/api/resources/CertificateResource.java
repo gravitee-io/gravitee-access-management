@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
 import io.gravitee.am.management.service.CertificatePluginService;
 import io.gravitee.am.management.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.am.model.Certificate;
@@ -56,6 +57,9 @@ public class CertificateResource {
 
     @Autowired
     private CertificatePluginService certificatePluginService;
+
+    @Autowired
+    private CertificateManager certificateManager;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -118,7 +122,11 @@ public class CertificateResource {
                 .flatMap(certificate1 ->  certificatePluginService.getSchema(certificate1.getType()))
                 .switchIfEmpty(Maybe.error(new CertificatePluginSchemaNotFoundException(certificate)))
                 .flatMapSingle(schema -> certificateService.update(domain, certificate, updateCertificate, schema))
-                .map(certificate1 -> Response.ok(certificate1).build())
+                .map(certificate1 -> {
+                    // TODO remove after refactoring JWKS endpoint
+                    certificateManager.reloadCertifcateProviders(certificate1);
+                    return Response.ok(certificate1).build();
+                })
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

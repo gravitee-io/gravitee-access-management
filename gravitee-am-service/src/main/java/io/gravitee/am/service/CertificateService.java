@@ -46,5 +46,8 @@ public interface CertificateService {
 
     void setCertificateProviders(Map<String, CertificateProvider> certificateProviders);
 
+    void setCertificateProvider(String certificateId, CertificateProvider certificateProvider);
+
     Maybe<CertificateProvider> getCertificateProvider(String certificateId);
+
 }

@@ -297,6 +297,12 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     // TODO : refactor (after JWKS information)
+    public void setCertificateProvider(String certificateId, CertificateProvider certificateProvider) {
+        this.certificateProviders.put(certificateId, certificateProvider);
+    }
+
+    @Override
+    // TODO : refactor (after JWKS information)
     public Maybe<CertificateProvider> getCertificateProvider(String certificateId) {
         return Maybe.create(emitter -> {
             try {
