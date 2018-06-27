@@ -67,7 +67,7 @@ public class DefaultAuthenticationKeyGenerator implements AuthenticationKeyGener
         if (clientDetails != null && clientDetails instanceof DelegateClientDetails) {
             Client client = ((DelegateClientDetails) clientDetails).getClient();
             if (client.isGenerateNewTokenPerRequest()) {
-                String uuid = UUID.random().toString();
+                String uuid = UUID.toString(UUID.random());
                 values.put(UUID_KEY, uuid);
             }
         }
