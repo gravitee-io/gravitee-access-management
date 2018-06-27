@@ -115,5 +115,5 @@ identities:
 ds:
   mongodb:
     dbname: gravitee-am
-    host: ${GRAVITEEIO_MONGODB_HOST:localhost}
-    port: ${GRAVITEEIO_MONGODB_PORT:27017}
+    host: localhost
+    port: 27017
