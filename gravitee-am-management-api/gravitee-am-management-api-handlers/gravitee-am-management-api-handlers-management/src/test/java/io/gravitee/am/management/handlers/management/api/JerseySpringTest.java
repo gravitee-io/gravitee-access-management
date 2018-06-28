@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api;
 
+import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
 import io.gravitee.am.management.service.CertificatePluginService;
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
+import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.*;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -82,6 +84,9 @@ public abstract class JerseySpringTest {
     @Autowired
     protected IdentityProviderPluginService identityProviderPluginService;
 
+    @Autowired
+    protected CertificateManager certificateManager;
+
     @Configuration
     @ComponentScan("io.gravitee.am.management.handlers.management.api.resources.enhancer")
     static class ContextConfiguration {
@@ -143,6 +148,16 @@ public abstract class JerseySpringTest {
         @Bean
         public IdentityProviderPluginService identityProviderPluginService() {
             return mock(IdentityProviderPluginService.class);
+        }
+
+        @Bean
+        public CertificateManager certificateManager() {
+            return mock(CertificateManager.class);
+        }
+
+        @Bean
+        public CertificatePluginManager certificatePluginManager() {
+            return mock(CertificatePluginManager.class);
         }
     }
 
