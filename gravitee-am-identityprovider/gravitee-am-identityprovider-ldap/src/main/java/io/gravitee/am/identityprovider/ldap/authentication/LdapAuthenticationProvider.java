@@ -230,7 +230,7 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
 
                     // group
                     if (MEMBEROF_ATTRIBUTE.equals(userAttribute) && ldapEntry.getAttribute(MEMBEROF_ATTRIBUTE) != null) {
-                        if (((List) ldapEntry.getAttribute(MEMBEROF_ATTRIBUTE)).contains(userValue)) {
+                        if (ldapEntry.getAttribute(MEMBEROF_ATTRIBUTE).getStringValues().contains(userValue)) {
                             roles.add(role);
                         }
                     // user
