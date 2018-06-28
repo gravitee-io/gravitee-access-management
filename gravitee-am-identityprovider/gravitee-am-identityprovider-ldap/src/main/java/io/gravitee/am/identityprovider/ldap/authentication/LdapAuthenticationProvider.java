@@ -29,6 +29,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.ldap.NamingException;
+import org.springframework.ldap.core.DirContextAdapter;
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -133,6 +134,7 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
 
                 // find user
                 authenticate = userSearch.searchForUser(username);
+                ((DirContextAdapter) authenticate).setUpdateMode(false);
 
                 // fetch user groups
                 try {
