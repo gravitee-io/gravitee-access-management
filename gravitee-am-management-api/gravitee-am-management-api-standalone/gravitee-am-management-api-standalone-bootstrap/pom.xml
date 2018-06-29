@@ -28,4 +28,22 @@
 
     <artifactId>gravitee-am-management-api-standalone-bootstrap</artifactId>
     <name>Gravitee IO - Access Management - Management API - Standalone - Boostrap</name>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>false</addClasspath>
+                            <mainClass>io.gravitee.am.management.standalone.boostrap.Bootstrap</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
