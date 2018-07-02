@@ -36,7 +36,7 @@ import javax.ws.rs.container.Suspended;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"dashboard", "tokens"})
+@Api(tags = {"dashboard"})
 public class DashboardTokensResource extends AbstractResource {
 
     @Autowired

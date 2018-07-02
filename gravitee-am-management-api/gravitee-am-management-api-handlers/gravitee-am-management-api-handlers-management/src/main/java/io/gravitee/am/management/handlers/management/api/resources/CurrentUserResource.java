@@ -37,7 +37,7 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"users", "current"})
+@Api(tags = {"user"})
 @Path("/user")
 public class CurrentUserResource extends AbstractResource {
 

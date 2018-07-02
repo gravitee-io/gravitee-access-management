@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Platform", "Plugin", "Identity Provider"})
+@Api(tags = {"Plugin", "Identity Provider"})
 public class IdentityProvidersPluginResource {
 
     @Context

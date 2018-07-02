@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"domain", "oauth2"})
+@Api(tags = {"extension grant"})
 public class ExtensionGrantsResource extends AbstractResource {
 
     @Context

@@ -42,7 +42,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"domain", "users"})
+@Api(tags = {"user"})
 public class UsersResource extends AbstractResource {
 
     private static final int MAX_USERS_SIZE_PER_PAGE = 30;

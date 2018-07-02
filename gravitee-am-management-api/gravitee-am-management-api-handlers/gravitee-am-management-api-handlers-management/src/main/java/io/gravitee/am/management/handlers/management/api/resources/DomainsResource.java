@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.*;

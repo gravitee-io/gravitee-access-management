@@ -39,7 +39,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Policy"})
+@Api(tags = {"Plugin", "Identity Provider"})
 public class IdentityProviderPluginResource {
 
     @Context

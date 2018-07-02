@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform;
 
-import io.swagger.annotations.Api;
-
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;
@@ -26,7 +24,6 @@ import javax.ws.rs.core.Context;
  * @author GraviteeSource Team
  */
 @Path("/platform")
-@Api(tags = {"Platform"})
 public class PlatformResource {
 
     @Context
