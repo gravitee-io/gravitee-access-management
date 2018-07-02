@@ -41,6 +41,7 @@ public class ManagementApplication extends ResourceConfig {
         beanConfig.setVersion(Version.RUNTIME_VERSION.MAJOR_VERSION);
         beanConfig.setResourcePackage("io.gravitee.am.management.handlers.management.api.resources");
         beanConfig.setTitle("Gravitee.io - Access Management API");
+        beanConfig.setBasePath("/management");
         beanConfig.setScan(true);
 
         register(DomainsResource.class);

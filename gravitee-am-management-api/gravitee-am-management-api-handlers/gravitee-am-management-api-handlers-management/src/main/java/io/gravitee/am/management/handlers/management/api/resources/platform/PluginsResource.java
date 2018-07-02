@@ -28,7 +28,7 @@ import javax.ws.rs.core.Context;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Platform", "Plugin"})
+@Api(tags = {"Plugin"})
 public class PluginsResource {
 
     @Context

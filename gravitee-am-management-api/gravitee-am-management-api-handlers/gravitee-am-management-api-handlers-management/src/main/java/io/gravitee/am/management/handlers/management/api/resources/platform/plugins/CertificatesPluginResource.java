@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Platform", "Plugin", "Certificate"})
+@Api(tags = {"Plugin", "Certificate"})
 public class CertificatesPluginResource {
 
     @Context

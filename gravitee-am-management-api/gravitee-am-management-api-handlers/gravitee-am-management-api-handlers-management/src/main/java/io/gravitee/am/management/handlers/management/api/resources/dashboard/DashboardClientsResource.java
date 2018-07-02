@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"dashboard", "clients"})
+@Api(tags = {"dashboard"})
 public class DashboardClientsResource extends AbstractResource {
 
     private static final int MAX_CLIENTS_FOR_DASHBOARD = 25;
