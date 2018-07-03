@@ -19,7 +19,8 @@ import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.http.HttpMethod;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AbstractUser;
 import io.vertx.ext.auth.AuthProvider;
@@ -28,6 +29,10 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.AuthHandler;
 import io.vertx.ext.web.handler.AuthHandlerTestBase;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.function.Consumer;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -59,6 +64,32 @@ public class ClientCredentialsAuthHandlerTest extends AuthHandlerTestBase {
     @Override
     protected AuthHandler createAuthHandler(AuthProvider authProvider) {
         return ClientCredentialsAuthHandler.create(authProvider).getDelegate();
+    }
+
+    @Override
+    protected HttpServerOptions getHttpServerOptions() {
+        return new HttpServerOptions().setPort(RANDOM_PORT).setHost("localhost");
+    }
+
+    @Override
+    protected HttpClientOptions getHttpClientOptions() {
+        return new HttpClientOptions().setDefaultPort(RANDOM_PORT);
+    }
+
+
+    @Override
+    protected void testRequestBuffer(HttpMethod method, String path, Consumer<HttpClientRequest> requestAction, Consumer<HttpClientResponse> responseAction, int statusCode, String statusMessage, Buffer responseBodyBuffer, boolean normalizeLineEndings) throws Exception {
+        this.testRequestBuffer(this.client, method, RANDOM_PORT, path, requestAction, responseAction, statusCode, statusMessage, responseBodyBuffer, normalizeLineEndings);
+    }
+
+    private final static int RANDOM_PORT = lookupAvailablePort();
+
+    public static int lookupAvailablePort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            return socket.getLocalPort();
+        } catch (IOException e) {
+        }
+        return -1;
     }
 
     class DummyAuthProvider implements AuthProvider {

@@ -31,6 +31,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.ServerSocket;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -87,11 +88,22 @@ public class RxWebTestBase extends RxVertxTestBase {
     }
 
     protected HttpServerOptions getHttpServerOptions() {
-        return new HttpServerOptions().setPort(8080).setHost("localhost");
+        return new HttpServerOptions().setPort(RANDOM_PORT).setHost("localhost");
     }
 
     protected HttpClientOptions getHttpClientOptions() {
-        return new HttpClientOptions().setDefaultPort(8080);
+        return new HttpClientOptions().setDefaultPort(RANDOM_PORT);
+    }
+
+
+    private final static int RANDOM_PORT = lookupAvailablePort();
+
+    public static int lookupAvailablePort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            return socket.getLocalPort();
+        } catch (IOException e) {
+        }
+        return -1;
     }
 
     @Override
@@ -160,7 +172,7 @@ public class RxWebTestBase extends RxVertxTestBase {
     protected void testRequestBuffer(HttpMethod method, String path, Consumer<HttpClientRequest> requestAction, Consumer<HttpClientResponse> responseAction,
                                      int statusCode, String statusMessage,
                                      Buffer responseBodyBuffer, boolean normalizeLineEndings) throws Exception {
-        testRequestBuffer(client, method, 8080, path, requestAction, responseAction, statusCode, statusMessage, responseBodyBuffer, normalizeLineEndings);
+        testRequestBuffer(client, method, RANDOM_PORT, path, requestAction, responseAction, statusCode, statusMessage, responseBodyBuffer, normalizeLineEndings);
     }
 
     protected void testRequestBuffer(HttpClient client, HttpMethod method, int port, String path, Consumer<HttpClientRequest> requestAction, Consumer<HttpClientResponse> responseAction,
