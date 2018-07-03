@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM nginx:1.12.1-alpine
+FROM nginx:1.15-alpine
 MAINTAINER Gravitee Team <http://gravitee.io>
 
 ARG GRAVITEEAM_VERSION=0
@@ -28,7 +28,7 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 ENV WWW_TARGET /var/www/html/
 
-RUN wget https://download.gravitee.io/graviteeio-am/components/gravitee-am-webui/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip --no-check-certificate -P /tmp/ \
+RUN wget --no-check-certificate -O /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-webui/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip \
     && unzip /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
     && mkdir -p ${WWW_TARGET} \
     && mv /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}/* ${WWW_TARGET} \

@@ -23,7 +23,7 @@ ENV GRAVITEEAM_HOME /opt/graviteeio-am-gateway
 # Update to get support for Zip/Unzip, nc and wget
 RUN apk add --update zip unzip netcat-openbsd wget
 
-RUN wget --no-check-certificate -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-gateway/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip \
+RUN wget --no-check-certificate -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://oss.sonatype.org/service/local/artifact/maven/content\?r\=snapshots\&g\=io.gravitee.am.gateway.standalone\&a\=gravitee-am-gateway-standalone-distribution-zip\&p\=zip\&v\=${GRAVITEEAM_VERSION} \
     && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
     && mv /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION} /opt/graviteeio-am-gateway \
     && rm -rf /tmp/*

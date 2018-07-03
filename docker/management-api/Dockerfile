@@ -18,14 +18,14 @@ FROM graviteeio/java:8
 MAINTAINER Gravitee Team <http://gravitee.io>
 
 ARG GRAVITEEAM_VERSION=0
-ENV GRAVITEEAM_HOME /opt/graviteeio-am-gateway
+ENV GRAVITEEAM_HOME /opt/graviteeio-am-management-api
 
 # Update to get support for Zip/Unzip, nc and wget
 RUN apk add --update zip unzip netcat-openbsd wget
 
-RUN wget --no-check-certificate -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-gateway/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip \
-    && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
-    && mv /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION} /opt/graviteeio-am-gateway \
+RUN wget --no-check-certificate -O /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip https://oss.sonatype.org/service/local/artifact/maven/content\?r\=snapshots\&g\=io.gravitee.am.management.standalone\&a\=gravitee-am-management-api-standalone-distribution-zip\&p\=zip\&v\=${GRAVITEEAM_VERSION} \
+    && unzip /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
+    && mv /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION} /opt/graviteeio-am-management-api \
     && rm -rf /tmp/*
 
 RUN addgroup -g 1000 gravitee \
@@ -37,5 +37,5 @@ USER 1000
 WORKDIR ${GRAVITEEAM_HOME}
 
 EXPOSE 8092
-VOLUME ["/opt/gravitee-am-gateway/logs"]
+VOLUME ["/opt/graviteeio-am-management-api/logs"]
 CMD ["./bin/gravitee"]
