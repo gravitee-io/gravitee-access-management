@@ -57,6 +57,13 @@ public class Scope {
      */
     private Date updatedAt;
 
+    public Scope() {
+    }
+
+    public Scope(String key) {
+        this.key = key;
+    }
+
     public String getId() {
         return id;
     }

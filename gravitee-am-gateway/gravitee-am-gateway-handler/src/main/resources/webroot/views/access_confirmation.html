@@ -22,18 +22,18 @@
     <div class="access-confirmation-container">
         <div class="access-confirmation-content">
             <div class="access-confirmation-content-header">
-                <h3><span style="font-weight: bold" th:text="${context.get('client').clientId}"></span> is requesting permissions to access your account</h3>
+                <h3><span style="font-weight: bold" th:text="${client.clientId}"></span> is requesting permissions to access your account</h3>
             </div>
             <div class="access-confirmation-content-body">
                 <form role="form" th:id="confirmationForm" th:action="@{authorize}" method="post">
                     <div class="permissions">
                         <h3 class="permissions-header">Review permissions</h3>
-                        <div class="permission" th:each="scope : ${context.get('scopes')}">
+                        <div class="permission" th:each="scope : ${scopes}">
                             <div class="permission-logo">
                                 <i class="fa lock"></i>
                             </div>
                             <div class="permission-info">
-                                <h3><span th:text="${scope.name}"></span> (<span th:text="${scope.key}"></span>)</h3>
+                                <h3><span th:text="(${scope.name}) ? ${scope.name} : ${scope.key}"></span> (<span th:text="${scope.key}"></span>)</h3>
                                 <p th:text="${scope.description}"></p>
                                 <input type="hidden" th:name="'scope.'+${scope.key}" value="true"/>
                             </div>

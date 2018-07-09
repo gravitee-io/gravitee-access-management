@@ -102,11 +102,8 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
                     params.put(OAuth2Constants.CLIENT_ID, routingContext.request().getParam(OAuth2Constants.CLIENT_ID));
                     routingContext.put("param", params);
 
-                    // fetch default or custom domain login template
-                    String template = domain.getLoginForm() != null ? domain.getLoginForm().getContent() : "login";
-
                     // render the login page
-                    engine.render(routingContext, template, res -> {
+                    engine.render(routingContext, "login", res -> {
                         if (res.succeeded()) {
                             routingContext.response().end(res.result());
                         } else {

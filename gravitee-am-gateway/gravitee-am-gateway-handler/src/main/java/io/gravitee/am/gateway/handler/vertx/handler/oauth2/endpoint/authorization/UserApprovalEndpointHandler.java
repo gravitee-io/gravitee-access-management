@@ -60,11 +60,13 @@ public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
                     // fetch scope information (name + description) from the authorization request
                     Set<Scope> requestedScopes = new HashSet<>();
                     for (String requestScope : authorizationRequest.getScopes()) {
-                        domainScopes
+                        Scope requestedScope = domainScopes
                                 .stream()
                                 .filter(scope -> scope.getKey().equalsIgnoreCase(requestScope))
-                                .distinct()
-                                .forEach(scope -> requestedScopes.add(scope));
+                                .findAny()
+                                .orElse(new Scope(requestScope));
+
+                        requestedScopes.add(requestedScope);
                     }
                     return new ApprovalData(client, requestedScopes);
                 })
