@@ -15,10 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
-import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
-import com.mongodb.WriteConcern;
-import com.mongodb.async.client.MongoClientSettings;
+import com.mongodb.*;
 import com.mongodb.connection.*;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
@@ -71,7 +68,12 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         if (uri != null && ! uri.isEmpty()) {
             // The builder can be configured with default options, which may be overridden by options specified in
             // the URI string.
-            return MongoClients.create(uri);
+            MongoClientSettings settings = builder
+                    .codecRegistry(pojoCodecRegistry)
+                    .applyConnectionString(new ConnectionString(uri))
+                    .build();
+
+            return MongoClients.create(settings);
         } else {
             // Advanced configuration
             SocketSettings.Builder socketBuilder = SocketSettings.builder();
@@ -80,7 +82,6 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             ServerSettings.Builder serverBuilder = ServerSettings.builder();
             SslSettings.Builder sslBuilder = SslSettings.builder();
 
-            Integer connectionsPerHost = readPropertyValue(propertyPrefix + "connectionsPerHost", Integer.class);
             Integer connectTimeout = readPropertyValue(propertyPrefix + "connectTimeout", Integer.class, 1000);
             Integer maxWaitTime = readPropertyValue(propertyPrefix + "maxWaitTime", Integer.class);
             Integer socketTimeout = readPropertyValue(propertyPrefix + "socketTimeout", Integer.class, 1000);
@@ -92,14 +93,8 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             Integer serverSelectionTimeout = readPropertyValue(propertyPrefix + "serverSelectionTimeout", Integer.class, 1000);
             Integer minHeartbeatFrequency = readPropertyValue(propertyPrefix + "minHeartbeatFrequency", Integer.class);
             String description = readPropertyValue(propertyPrefix + "description", String.class, "gravitee.io");
-            Integer heartbeatConnectTimeout = readPropertyValue(propertyPrefix + "heartbeatConnectTimeout", Integer.class, 1000);
             Integer heartbeatFrequency = readPropertyValue(propertyPrefix + "heartbeatFrequency", Integer.class);
-            Integer heartbeatSocketTimeout = readPropertyValue(propertyPrefix + "heartbeatSocketTimeout", Integer.class);
-            Integer localThreshold = readPropertyValue(propertyPrefix + "localThreshold", Integer.class);
-            Integer minConnectionsPerHost = readPropertyValue(propertyPrefix + "minConnectionsPerHost", Integer.class);
             Boolean sslEnabled = readPropertyValue(propertyPrefix + "sslEnabled", Boolean.class);
-            Integer threadsAllowedToBlockForConnectionMultiplier = readPropertyValue(propertyPrefix + "threadsAllowedToBlockForConnectionMultiplier", Integer.class);
-            Boolean cursorFinalizerEnabled = readPropertyValue(propertyPrefix + "cursorFinalizerEnabled", Boolean.class);
 
             if (maxWaitTime != null)
                 connectionPoolBuilder.maxWaitTime(maxWaitTime, TimeUnit.MILLISECONDS);
@@ -127,14 +122,11 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             // credentials option
             String username = readPropertyValue(propertyPrefix + "username");
             String password = readPropertyValue(propertyPrefix + "password");
-            List<MongoCredential> credentials = null;
+            MongoCredential credentials = null;
             if (username != null || password != null) {
                 String authSource = readPropertyValue(propertyPrefix + "authSource", String.class, "gravitee-am");
-                credentials = Collections.singletonList(MongoCredential.createCredential(
-                        username, authSource, password.toCharArray()));
-            }
-            if (credentials != null) {
-                builder.credentialList(credentials);
+                credentials = MongoCredential.createCredential(username, authSource, password.toCharArray());
+                builder.credential(credentials);
             }
 
             // clustering option
@@ -158,11 +150,11 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             ServerSettings serverSettings = serverBuilder.build();
             SslSettings sslSettings = sslBuilder.build();
             MongoClientSettings settings = builder
-                    .socketSettings(socketSettings)
-                    .connectionPoolSettings(connectionPoolSettings)
-                    .clusterSettings(clusterSettings)
-                    .serverSettings(serverSettings)
-                    .sslSettings(sslSettings)
+                    .applyToClusterSettings(builder1 -> builder1.applySettings(clusterSettings))
+                    .applyToSocketSettings(builder1 -> builder1.applySettings(socketSettings))
+                    .applyToConnectionPoolSettings(builder1 -> builder1.applySettings(connectionPoolSettings))
+                    .applyToServerSettings(builder1 -> builder1.applySettings(serverSettings))
+                    .applyToSslSettings(builder1 -> builder1.applySettings(sslSettings))
                     .build();
 
             return MongoClients.create(settings);
