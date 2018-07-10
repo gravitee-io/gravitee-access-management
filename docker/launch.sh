@@ -105,7 +105,7 @@ main() {
 if [ "$1" != "" ]; then
     export PORT=$1
 else
-    export PORT=80
+    export PORT=18000
 fi
 
 main
