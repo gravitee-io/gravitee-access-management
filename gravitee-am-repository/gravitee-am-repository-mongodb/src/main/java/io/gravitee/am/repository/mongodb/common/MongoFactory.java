@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
-import com.mongodb.ConnectionString;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
@@ -72,9 +71,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         if (uri != null && ! uri.isEmpty()) {
             // The builder can be configured with default options, which may be overridden by options specified in
             // the URI string.
-            ServerSettings serverSettings = ServerSettings.builder().applyConnectionString(new ConnectionString(uri)).build();
-            MongoClientSettings settings = builder.serverSettings(serverSettings).build();
-            return MongoClients.create(settings);
+            return MongoClients.create(uri);
         } else {
             // Advanced configuration
             SocketSettings.Builder socketBuilder = SocketSettings.builder();
