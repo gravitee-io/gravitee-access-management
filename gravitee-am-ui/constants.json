@@ -1,10 +1,10 @@
 {
   "portalTitle": "Access Management",
-  "baseURL": "http://localhost:8092/management",
+  "baseURL": "http://localhost:8093/management",
   "authentication": {
     "domainId": "admin",
-    "authorize": "http://localhost:8092/admin/authorize",
+    "authorize": "http://localhost:8093/admin/authorize",
     "redirectUri": "http://localhost:4200/login/callback",
-    "logoutUri": "http://localhost:8092/admin/logout?target_url=http://localhost:4200/logout/callback"
+    "logoutUri": "http://localhost:8093/admin/logout?target_url=http://localhost:4200/logout/callback"
   }
 }

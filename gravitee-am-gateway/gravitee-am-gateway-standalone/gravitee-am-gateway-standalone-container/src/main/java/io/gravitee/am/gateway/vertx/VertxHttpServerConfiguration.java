@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
  */
 public class VertxHttpServerConfiguration {
 
-    @Value("${http.port:8093}")
+    @Value("${http.port:8092}")
     private int port;
 
     @Value("${http.host:0.0.0.0}")
