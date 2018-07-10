@@ -29,7 +29,7 @@
 
 # HTTP Server
 #jetty:
-#  port: 8092
+#  port: 8093
 #  idleTimeout: 30000
 #  acceptors: -1
 #  selectors: -1
@@ -111,14 +111,6 @@ services:
   local:
     enabled: false
     path: ${gravitee.home}/domains # The path to domain descriptors
-
-# OAuth2 authentication
-authentication:
-  # Authorization credentials to access secure validation endpoint
-  oauth2:
-    url: http://localhost:8092/admin/oauth/check_token
-    clientId: admin
-    clientSecret: admin-secret
 
 # Identity providers configuration (http client configuration, database pool connection, ...)
 identities:
