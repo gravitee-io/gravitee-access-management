@@ -31,6 +31,7 @@ import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.*;
 import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -60,6 +61,8 @@ public class VertxSecurityDomainHandler {
     @Autowired
     private OAuth2Router oauth2Router;
 
+    @Autowired
+    private Environment environment;
 
     public Router create() {
         // Create the security domain router
@@ -111,7 +114,10 @@ public class VertxSecurityDomainHandler {
 
     private void sessionAndCookieHandler(Router router, AuthProvider userAuthProvider) {
         CookieHandler cookieHandler = CookieHandler.create();
-        SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
+        SessionHandler sessionHandler = SessionHandler
+                .create(LocalSessionStore.create(vertx))
+                .setCookieHttpOnlyFlag(true)
+                .setCookieSecureFlag(environment.getProperty("http.cookie.secure", Boolean.class, false));
         UserSessionHandler userSessionHandler = UserSessionHandler.create(userAuthProvider);
 
         // Login endpoint

@@ -29,7 +29,7 @@
 
 # Gateway HTTP server
 #http:
-#  port: 8082
+#  port: 8093
 #  host: 0.0.0.0
 #  idleTimeout: 0
 #  tcpKeepAlive: true
@@ -45,6 +45,8 @@
 #    truststore:
 #      path: ${gravitee.home}/security/truststore.jks
 #      password: secret
+#  cookie:
+#    secure: false
 
 # Path to plugins repository
 #plugins:
