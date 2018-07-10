@@ -1,13 +1,10 @@
 {
   "portalTitle": "Access Management",
-  "baseURL": "http://localhost/am/management",
+  "baseURL": "http://localhost:18000/am/management",
   "authentication": {
-    "oauth2": {
-      "authorize": "http://localhost/am/admin/oauth/authorize",
-      "userInfo": "http://localhost/am/admin/userinfo",
-      "clientId": "admin",
-      "redirectUri": "http://localhost/am/ui/oauth/callback",
-      "logoutUri": "http://localhost/am/admin/logout?target_url=http://localhost/am/ui/logout/callback"
-    }
+    "domainId": "admin",
+    "authorize": "http://localhost:18000/am/admin/authorize",
+    "redirectUri": "http://localhost:18000/am/ui/login/callback",
+    "logoutUri": "http://localhost:18000/am/admin/logout?target_url=http://localhost:18000/am/ui/logout/callback"
   }
 }
