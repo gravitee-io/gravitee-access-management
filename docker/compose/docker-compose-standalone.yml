@@ -25,7 +25,7 @@ services:
     volumes:
       - ./config/nginx.conf:/etc/nginx/nginx.conf
     ports:
-      - "${PORT}:${PORT}"
+      - "${PORT}:80"
 
   mongodb:
     image: mongo:3.4
@@ -34,7 +34,7 @@ services:
       - ./logs/am-mongodb:/var/log/mongodb
 
   gateway:
-    image: graviteeio/am-gateway:2.0.0-SNAPSHOT
+    image: graviteeio/am-gateway:2
     links:
       - mongodb
     depends_on:
@@ -46,7 +46,7 @@ services:
       - gravitee_oauth2_mongodb_uri=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
 
   management:
-    image: graviteeio/am-management-api:2.0.0-SNAPSHOT
+    image: graviteeio/am-management-api:2
     links:
       - mongodb
     depends_on:
@@ -58,7 +58,7 @@ services:
       - gravitee_oauth2_mongodb_uri=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
 
   webui:
-    image: graviteeio/am-management-ui:2.0.0-SNAPSHOT
+    image: graviteeio/am-management-ui:2
     depends_on:
       - management
     volumes:
