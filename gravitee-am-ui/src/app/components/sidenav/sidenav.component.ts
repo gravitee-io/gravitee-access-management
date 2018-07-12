@@ -19,6 +19,7 @@ import { SidenavService } from "./sidenav.service";
 import { Subscription} from "rxjs";
 import { AuthService } from "../../services/auth.service";
 import { AppConfig } from "../../../config/app.config";
+import * as _ from 'lodash';
 
 @Component({
   selector: 'gs-sidenav',
@@ -60,19 +61,32 @@ export class SidenavComponent implements OnInit, OnDestroy {
   }
 
   watchRoute() {
+    let that = this;
     this.router.events
       .filter(event => event instanceof NavigationEnd)
       .subscribe(event => {
+        for (let route of that.paths) {
+          route.data.menu.active = false;
+        }
         this.displayFirstLevel = false;
         this.displaySettingsLevel = false;
-        if (this.currentRoute.root.firstChild.snapshot.data && this.currentRoute.root.firstChild.snapshot.data.menu) {
+        let currentSnapshot = this.currentRoute.root.firstChild.snapshot;
+        if (currentSnapshot.data && currentSnapshot.data.menu) {
           // check if we display first level menu items
-          let displayFirstLevel = this.currentRoute.root.firstChild.snapshot.data.menu.displayFirstLevel;
+          let displayFirstLevel = currentSnapshot.data.menu.displayFirstLevel;
           this.displayFirstLevel = (typeof displayFirstLevel != 'undefined') ? displayFirstLevel : true;
           // check if we display settings level menu items
-          if (this.currentRoute.root.firstChild.snapshot.data.menu.displaySettingsLevel) {
-            let displaySettingsLevel = this.currentRoute.root.firstChild.snapshot.data.menu.displaySettingsLevel;
+          if (currentSnapshot.data.menu.displaySettingsLevel) {
+            let displaySettingsLevel = currentSnapshot.data.menu.displaySettingsLevel;
             this.displaySettingsLevel = (typeof displaySettingsLevel != 'undefined') ? displaySettingsLevel : false;
+          }
+          // check if we active first level menu
+          let activeParentPath = currentSnapshot.data.menu.activeParentPath;
+          if (activeParentPath) {
+            let path = _.find(that.paths, path => path.path === activeParentPath);
+            if (path) {
+              path.data.menu.active = true;
+            }
           }
         }
         this.currentSubPaths = [];

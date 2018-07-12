@@ -97,6 +97,18 @@ const routes: Routes = [
         icon: 'list',
         firstLevel: true
       }
+    },
+  },
+  { path: 'dashboard/clients/new',
+    component: ClientCreationComponent,
+    resolve: {
+      domains: DomainsResolver
+    },
+    data: {
+      menu: {
+        displayFirstLevel: true,
+        activeParentPath: 'dashboard/clients'
+      }
     }
   },
   {
@@ -254,12 +266,6 @@ const routes: Routes = [
       }
     ]
   },
-  { path: 'clients/new',
-    component: ClientCreationComponent,
-    resolve: {
-      domains: DomainsResolver
-    }
-  },
   { path: 'domains/:domainId', component: DomainComponent,
     resolve: {
       domain: DomainResolver,
@@ -290,6 +296,12 @@ const routes: Routes = [
             label: 'Clients',
             icon: 'list',
           }
+        }
+      },
+      { path: 'clients/new',
+        component: ClientCreationComponent,
+        resolve: {
+          domains: DomainsResolver
         }
       },
       { path: 'clients/:clientId',

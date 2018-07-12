@@ -38,7 +38,7 @@
       <div class="dashboard-description-actions">
         <mat-list>
           <h3 matSubheader>Shortcuts</h3>
-          <a mat-button [routerLink]="['/clients', 'new', {'domain' : domain.id}]">
+          <a mat-button [routerLink]="['/domains', domain.id, 'clients', 'new']">
             <mat-list-item>
               <mat-icon mat-list-icon>playlist_add</mat-icon>
               <h4 matLine>Create client</h4>

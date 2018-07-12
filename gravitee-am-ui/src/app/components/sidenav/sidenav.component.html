@@ -32,7 +32,7 @@
     <div *ngIf="displayFirstLevel">
       <mat-list-item *ngFor="let path of paths">
         <a [routerLink]="path.path" title="{{path.data.menu.label}}"
-           routerLinkActive="sidenav-active" [routerLinkActiveOptions]="{ exact: true }">
+           routerLinkActive="sidenav-active" [routerLinkActiveOptions]="{ exact: true }" [ngClass]="{'sidenav-active': path.data.menu.active}">
           <mat-icon>{{path.data.menu.icon}}</mat-icon>
           <span *ngIf="!reducedMode">{{path.data.menu.label}}</span>
         </a>

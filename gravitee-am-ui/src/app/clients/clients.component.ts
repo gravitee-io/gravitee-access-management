@@ -27,7 +27,7 @@ import { ClientService } from "../services/client.service";
 export class ClientsComponent implements OnInit {
   private clients: any[];
   domainId: string;
-  newClientRouterLink:any[] = ['/clients', 'new'];
+  newClientRouterLink:any[] = ['/dashboard', 'clients', 'new'];
 
   constructor(private dialogService: DialogService,
               private snackbarService: SnackbarService, private clientService: ClientService,
@@ -38,7 +38,7 @@ export class ClientsComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.params['domainId'];
     this.clients = this.route.snapshot.data['clients'];
     if (this.domainId) {
-      this.newClientRouterLink.push({'domain': this.domainId});
+      this.newClientRouterLink = ['/domains', this.domainId, 'clients', 'new'];
     }
   }
 

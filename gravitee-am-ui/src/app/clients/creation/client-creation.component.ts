@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { Location } from '@angular/common';
 import { ClientService } from "../../services/client.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../services/snackbar.service";
@@ -25,20 +24,16 @@ import { SnackbarService } from "../../services/snackbar.service";
   styleUrls: ['./client-creation.component.scss']
 })
 export class ClientCreationComponent implements OnInit {
-  private domainId: string;
   selectedDomainId: string;
   client: any = {};
   domains: any[];
 
   constructor(private clientService: ClientService, private router: Router, private route: ActivatedRoute,
-              private snackbarService : SnackbarService, private location: Location) { }
+              private snackbarService : SnackbarService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.selectedDomainId = this.route.snapshot.parent.params['domainId'];
     this.domains = this.route.snapshot.data['domains'];
-    this.route.params.subscribe(params => {
-      this.selectedDomainId = params['domain'];
-    });
   }
 
   create() {
