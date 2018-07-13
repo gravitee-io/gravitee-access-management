@@ -52,7 +52,7 @@ services:
     depends_on:
       - mongodb
     volumes:
-      - ./logs/am-gateway:/etc/gravitee.io/log
+      - ./logs/am-management-api:/etc/gravitee.io/log
     environment:
       - gravitee_management_mongodb_uri=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
       - gravitee_oauth2_mongodb_uri=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
