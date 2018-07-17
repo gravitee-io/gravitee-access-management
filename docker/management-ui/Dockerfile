@@ -19,6 +19,9 @@ MAINTAINER Gravitee Team <http://gravitee.io>
 
 ARG GRAVITEEAM_VERSION=0
 
+COPY files/entrypoint.sh /usr/local/bin/
+RUN chmod u+x /usr/local/bin/entrypoint.sh
+
 # Update to get support for Zip/Unzip, Bash
 RUN apk --update add zip unzip bash wget
 
@@ -34,6 +37,11 @@ RUN wget --no-check-certificate -O /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.
     && mv /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}/* ${WWW_TARGET} \
     && rm -rf /tmp/*
 
-EXPOSE 80
+ENV MGMT_API_URL http://localhost:8093/
+ENV MGMT_UI_URL http://localhost:4200/
 
+RUN cp /var/www/html/constants.json /var/www/html/constants.json.template
+
+EXPOSE 80 443
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
