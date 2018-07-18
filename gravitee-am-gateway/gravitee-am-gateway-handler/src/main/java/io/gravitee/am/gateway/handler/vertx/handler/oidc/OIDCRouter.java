@@ -25,7 +25,15 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -43,6 +51,9 @@ public class OIDCRouter {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private Environment environment;
+
     public void route(Router router) {
         // OpenID Provider Configuration Information Endpoint
         Handler<RoutingContext> openIDProviderConfigurationEndpoint = new ProviderConfigurationEndpoint();
@@ -54,6 +65,7 @@ public class OIDCRouter {
         // UserInfo Endpoint
         Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userService);
         Handler<RoutingContext> userInfoRequestParseHandler = new UserInfoRequestParseHandler(tokenService);
+        router.route("/userinfo").handler(CorsHandler.newInstance(corsHandler()));
         router
                 .route(HttpMethod.GET, "/userinfo")
                 .handler(userInfoRequestParseHandler)
@@ -62,5 +74,33 @@ public class OIDCRouter {
                 .route(HttpMethod.POST, "/userinfo")
                 .handler(userInfoRequestParseHandler)
                 .handler(userInfoEndpoint);
+    }
+
+    private io.vertx.ext.web.handler.CorsHandler corsHandler() {
+        return io.vertx.ext.web.handler.CorsHandler
+                .create(environment.getProperty("http.cors.allow-origin", String.class, "*"))
+                .allowedHeaders(getStringPropertiesAsList("http.cors.allow-headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, x-xsrf-token"))
+                .allowedMethods(getHttpMethodPropertiesAsList("http.cors.allow-methods", "GET, POST"))
+                .maxAgeSeconds(environment.getProperty("http.cors.max-age", Integer.class, 86400));
+    }
+
+    private Set<String> getStringPropertiesAsList(final String propertyKey, final String defaultValue) {
+        String property = environment.getProperty(propertyKey);
+        if (property == null) {
+            property = defaultValue;
+        }
+        return new HashSet<>(asList(property.replaceAll("\\s+","").split(",")));
+    }
+
+    private Set<HttpMethod> getHttpMethodPropertiesAsList(final String propertyKey, final String defaultValue) {
+        String property = environment.getProperty(propertyKey);
+        if (property == null) {
+            property = defaultValue;
+        }
+
+        return asList(property.replaceAll("\\s+","").split(","))
+                .stream()
+                .map(method -> HttpMethod.valueOf(method))
+                .collect(Collectors.toSet());
     }
 }
