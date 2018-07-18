@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationCodeResponse;
 import io.gravitee.am.gateway.handler.oauth2.response.ImplicitResponse;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.utils.UriBuilder;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.TokenRequestFactory;
@@ -59,7 +60,7 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
         // handle response type
         switch(authorizationRequest.getResponseType()) {
             case OAuth2Constants.TOKEN :
-                return setImplicitResponse(authorizationRequest, client);
+                return setImplicitResponse(authorizationRequest, client, authenticatedUser);
             case OAuth2Constants.CODE :
                 return setAuthorizationCodeResponse(authorizationRequest, authenticatedUser);
             default:
@@ -118,8 +119,9 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
                 });
     }
 
-    private Single<AuthorizationRequest> setImplicitResponse(AuthorizationRequest authorizationRequest, Client client) {
+    private Single<AuthorizationRequest> setImplicitResponse(AuthorizationRequest authorizationRequest, Client client, User authenticatedUser) {
         TokenRequest tokenRequest = tokenRequestFactory.create(authorizationRequest);
+        tokenRequest.setSubject(authenticatedUser.getId());
         tokenRequest.setGrantType(OAuth2Constants.IMPLICIT);
         return tokenGranter.grant(tokenRequest, client)
                 .map(accessToken -> {

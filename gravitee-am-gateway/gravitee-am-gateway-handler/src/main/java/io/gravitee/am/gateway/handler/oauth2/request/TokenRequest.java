@@ -30,6 +30,7 @@ public class TokenRequest extends BaseRequest {
     private String grantType;
     private String username;
     private String password;
+    private String subject;
 
     public String getGrantType() {
         return grantType;
@@ -55,6 +56,14 @@ public class TokenRequest extends BaseRequest {
         this.password = password;
     }
 
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
     public OAuth2Request createOAuth2Request() {
         MultiValueMap<String, String> requestParameters = getRequestParameters();
         MultiValueMap<String, String> safeRequestParameters = new LinkedMultiValueMap(requestParameters);
@@ -68,6 +77,7 @@ public class TokenRequest extends BaseRequest {
         oAuth2Request.setScopes(getScopes());
         oAuth2Request.setRequestParameters(safeRequestParameters);
         oAuth2Request.setGrantType(getGrantType());
+        oAuth2Request.setSubject(getSubject());
 
         return oAuth2Request;
     }
