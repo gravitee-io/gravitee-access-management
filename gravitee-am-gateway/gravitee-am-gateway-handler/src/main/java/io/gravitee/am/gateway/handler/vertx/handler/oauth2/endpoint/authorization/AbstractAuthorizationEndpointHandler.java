@@ -94,6 +94,10 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
         if (authorizationResponse.getState() != null) {
             uriBuilder.addFragmentParameter(OAuth2Constants.STATE, authorizationRequest.getState());
         }
+        // additional information
+        if (accessToken.getAdditionalInformation() != null) {
+            accessToken.getAdditionalInformation().forEach((k, v) -> uriBuilder.addFragmentParameter(k, String.valueOf(v)));
+        }
         return uriBuilder.build().toString();
     }
 
