@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.auth.handler.impl;
 import io.gravitee.am.gateway.handler.auth.exception.AuthenticationServiceException;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.utils.UriBuilder;
+import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
+import java.util.Collections;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -105,10 +106,11 @@ public class OAuth2ClientAuthHandlerImpl extends AuthHandlerImpl {
     }
 
     private String buildRedirectUri(HttpServerRequest request) throws URISyntaxException {
-        UriBuilder builder = UriBuilder.fromHttpUrl(request.absoluteURI());
-        // append provider query param to avoid redirect mismatch exception
-        builder.addParameter("provider", request.getParam(PROVIDER_PARAMETER));
-
-        return builder.build().toString();
+        return UriBuilderRequest.resolveProxyRequest(
+                new io.vertx.reactivex.core.http.HttpServerRequest(request),
+                request.uri(),
+                // append provider query param to avoid redirect mismatch exception
+                Collections.singletonMap("provider", request.getParam(PROVIDER_PARAMETER)),
+                true);
     }
 }
