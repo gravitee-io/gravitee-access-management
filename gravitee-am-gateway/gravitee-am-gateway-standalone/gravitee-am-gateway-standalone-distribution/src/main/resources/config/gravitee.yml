@@ -47,6 +47,9 @@
 #      password: secret
 #  cookie:
 #    secure: false
+#    session:
+#      name: session-name
+#      timeout: 1800000 # (in milliseconds)
 
 # Path to plugins repository
 #plugins:

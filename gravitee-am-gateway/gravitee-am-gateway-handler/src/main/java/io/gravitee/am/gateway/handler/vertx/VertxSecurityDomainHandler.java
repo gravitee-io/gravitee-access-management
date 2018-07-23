@@ -40,6 +40,9 @@ import org.springframework.core.env.Environment;
  */
 public class VertxSecurityDomainHandler {
 
+    private static final String DEFAULT_SESSION_COOKIE_NAME = "GRAVITEE_IO_AM_SESSION";
+    private static final long DEFAULT_SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
     @Autowired
     private UserAuthenticationManager userAuthenticationManager;
 
@@ -117,6 +120,8 @@ public class VertxSecurityDomainHandler {
         SessionHandler sessionHandler = SessionHandler
                 .create(LocalSessionStore.create(vertx))
                 .setCookieHttpOnlyFlag(true)
+                .setSessionCookieName(environment.getProperty("http.cookie.session.name", String.class, DEFAULT_SESSION_COOKIE_NAME))
+                .setSessionTimeout(environment.getProperty("http.cookie.session.timeout", Long.class, DEFAULT_SESSION_TIMEOUT))
                 .setCookieSecureFlag(environment.getProperty("http.cookie.secure", Boolean.class, false));
         UserSessionHandler userSessionHandler = UserSessionHandler.create(userAuthProvider);
 
