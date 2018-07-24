@@ -29,8 +29,6 @@ import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.impl.AuthHandlerImpl;
 import io.vertx.ext.web.handler.impl.HttpStatusException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -41,7 +39,6 @@ import java.util.Collections;
  */
 public class OAuth2ClientAuthHandlerImpl extends AuthHandlerImpl {
 
-    private static final Logger logger = LoggerFactory.getLogger(OAuth2ClientAuthHandlerImpl.class);
     private final static String USERNAME_PARAMETER = "username";
     private final static String PASSWORD_PARAMETER = "password";
     private static final String PROVIDER_PARAMETER = "provider";
@@ -111,6 +108,6 @@ public class OAuth2ClientAuthHandlerImpl extends AuthHandlerImpl {
                 request.uri(),
                 // append provider query param to avoid redirect mismatch exception
                 Collections.singletonMap("provider", request.getParam(PROVIDER_PARAMETER)),
-                true);
+                true, true);
     }
 }

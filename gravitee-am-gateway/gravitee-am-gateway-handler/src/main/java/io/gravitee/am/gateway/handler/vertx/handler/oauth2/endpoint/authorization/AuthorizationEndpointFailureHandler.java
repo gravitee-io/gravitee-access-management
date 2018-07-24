@@ -70,7 +70,7 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
         if (routingContext.failed()) {
             try {
                 AuthorizationRequest request = resolveInitialAuthorizeRequest(routingContext);
-                String defaultProxiedOAuthErrorPage =  UriBuilderRequest.resolveProxyRequest(routingContext.request(),  "/" + domain.getPath() + "/oauth/error", null, false);
+                String defaultProxiedOAuthErrorPage =  UriBuilderRequest.resolveProxyRequest(routingContext.request(),  "/" + domain.getPath() + "/oauth/error", null, false, false);
                 String clientId = request.getClientId();
                 if (request == null || request.getRedirectUri() == null || clientId == null) {
                     // no authorization request

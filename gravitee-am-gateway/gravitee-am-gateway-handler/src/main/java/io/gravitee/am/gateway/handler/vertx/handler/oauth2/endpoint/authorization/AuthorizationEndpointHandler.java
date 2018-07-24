@@ -93,7 +93,7 @@ public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointH
                         if (!authorizationRequest.isApproved()) {
                             // TODO should we put this data inside repository to handle cluster environment ?
                             context.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
-                            String approvalPage = UriBuilderRequest.resolveProxyRequest(context.request(),"/" + domain.getPath() + "/oauth/confirm_access", null, false);
+                            String approvalPage = UriBuilderRequest.resolveProxyRequest(context.request(),"/" + domain.getPath() + "/oauth/confirm_access", null, false, false);
                             doRedirect(context.response(), approvalPage);
                         } else {
                             doRedirect(context.response(), buildRedirectUri(authorizationRequest));
