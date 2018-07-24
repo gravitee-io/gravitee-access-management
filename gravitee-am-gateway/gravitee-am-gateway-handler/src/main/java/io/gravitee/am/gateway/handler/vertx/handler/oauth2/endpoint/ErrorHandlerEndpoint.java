@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint;
 
+import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
@@ -35,6 +37,7 @@ public class ErrorHandlerEndpoint implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         engine.render(routingContext, "access_error", res -> {
             if (res.succeeded()) {
+                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 routingContext.response().end(res.result());
             } else {
                 routingContext.fail(res.cause());

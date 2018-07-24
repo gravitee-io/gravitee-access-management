@@ -21,6 +21,8 @@ import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
@@ -75,6 +77,7 @@ public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
                         routingContext.put("scopes", approvalData.getScopes());
                         engine.render(routingContext, "access_confirmation", res -> {
                             if (res.succeeded()) {
+                                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                                 routingContext.response().end(res.result());
                             } else {
                                 routingContext.fail(res.cause());

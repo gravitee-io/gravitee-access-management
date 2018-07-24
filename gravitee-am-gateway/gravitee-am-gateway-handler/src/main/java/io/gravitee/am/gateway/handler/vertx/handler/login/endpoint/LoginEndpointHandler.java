@@ -26,6 +26,8 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -105,6 +107,7 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
                     // render the login page
                     engine.render(routingContext, "login", res -> {
                         if (res.succeeded()) {
+                            routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                             routingContext.response().end(res.result());
                         } else {
                             routingContext.fail(res.cause());
