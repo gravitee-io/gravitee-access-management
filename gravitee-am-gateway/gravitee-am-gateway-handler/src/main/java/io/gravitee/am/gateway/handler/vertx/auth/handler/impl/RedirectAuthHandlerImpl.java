@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Extends default {@link io.vertx.ext.web.handler.RedirectAuthHandler} with X-Forwarded Strategy
@@ -55,11 +57,15 @@ public class RedirectAuthHandlerImpl extends io.vertx.ext.web.handler.impl.Redir
     public void parseCredentials(RoutingContext context, Handler<AsyncResult<JsonObject>> handler) {
         Session session = context.session();
         if (session != null) {
-            // Now redirect to the login url - we'll get redirected back here after successful login
-            session.put(returnURLParam, context.request().absoluteURI());
-
             try {
+                // Save current request in session - we'll get redirected back here after successful login
                 HttpServerRequest request = context.request();
+                session.put(returnURLParam,
+                        UriBuilderRequest.resolveProxyRequest(
+                                new io.vertx.reactivex.core.http.HttpServerRequest(request),
+                                request.path(), request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)), true, false));
+
+                // Now redirect to the login url
                 String uri =
                         UriBuilderRequest.resolveProxyRequest(
                                 new io.vertx.reactivex.core.http.HttpServerRequest(request),
