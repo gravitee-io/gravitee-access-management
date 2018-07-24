@@ -85,7 +85,9 @@ public class UriBuilder {
             String fragment = matcher.group(13);
             builder.scheme(scheme);
             builder.host(host);
-            builder.port(Integer.valueOf(port));
+            if (port != null && !port.isEmpty()) {
+                builder.port(Integer.valueOf(port));
+            }
             builder.userInfo(userInfo);
             builder.path(path);
             builder.query(query);
