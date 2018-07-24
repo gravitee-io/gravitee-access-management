@@ -30,7 +30,19 @@ import java.util.Map;
  */
 public class UriBuilderRequest {
 
-    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean absoluteUrl) throws URISyntaxException {
+    private static final String X_FORWARDED_PATH = "X-Forwarded-Path";
+
+    /**
+     * Resolve proxy request
+     * @param request original request
+     * @param path request path
+     * @param parameters request query params
+     * @param absoluteUrl request result should be an absolute url ?
+     * @param queryParam request result will be set as a query param ?
+     * @return request uri representation
+     * @throws URISyntaxException
+     */
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean absoluteUrl, boolean queryParam) throws URISyntaxException {
         UriBuilder builder = UriBuilder.newInstance();
 
         // scheme
@@ -53,7 +65,16 @@ public class UriBuilderRequest {
             }
         }
 
-        builder.path(path);
+        // handle forwarded path for redirect_uri query param
+        String forwardedPath = request.getHeader(X_FORWARDED_PATH);
+        if (queryParam && forwardedPath != null && !forwardedPath.isEmpty()) {
+            // remove trailing slash
+            forwardedPath = forwardedPath.substring(0, forwardedPath.length() - (forwardedPath.endsWith("/") ? 1 : 0));
+            builder.path(forwardedPath + path);
+        } else {
+            builder.path(path);
+        }
+
         builder.parameters(parameters);
         return builder.build().toString();
     }
