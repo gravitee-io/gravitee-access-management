@@ -98,7 +98,7 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
                 })
                 .flatMap(tokenEnhancerData -> Single.just(tokenEnhancerData.getUser() == null)
                         .flatMap(isClientOnly -> {
-                            if (!isClientOnly) {
+                            if (!isClientOnly && tokenEnhancerData.getClient().isEnhanceScopesWithUserPermissions()) {
                                 // enhance token scopes with user permissions
                                 return enhanceScopes(accessToken, tokenEnhancerData.getUser(), oAuth2Request);
                             } else {
