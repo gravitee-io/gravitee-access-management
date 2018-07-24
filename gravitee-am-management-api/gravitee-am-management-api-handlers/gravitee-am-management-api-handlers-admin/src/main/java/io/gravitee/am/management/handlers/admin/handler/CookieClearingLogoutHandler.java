@@ -16,6 +16,8 @@
 package io.gravitee.am.management.handlers.admin.handler;
 
 import io.gravitee.common.http.HttpHeaders;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 
@@ -29,10 +31,19 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class CookieClearingLogoutHandler implements LogoutHandler {
 
+    private static final boolean DEFAULT_JWT_COOKIE_SECURE = false;
+    private static final String DEFAULT_JWT_COOKIE_PATH = "/";
+    private static final String DEFAULT_JWT_COOKIE_DOMAIN = "";
+
+    @Autowired
+    private Environment environment;
+
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         Cookie cookie = new Cookie(HttpHeaders.AUTHORIZATION, null);
-        cookie.setPath("/");
+        cookie.setSecure(environment.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
+        cookie.setPath(environment.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
+        cookie.setDomain(environment.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }
