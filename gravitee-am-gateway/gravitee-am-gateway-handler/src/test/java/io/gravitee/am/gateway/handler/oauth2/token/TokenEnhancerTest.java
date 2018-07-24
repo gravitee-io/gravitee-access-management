@@ -189,6 +189,7 @@ public class TokenEnhancerTest {
         oAuth2Request.setSubject("subject");
 
         Client client = new Client();
+        client.setEnhanceScopesWithUserPermissions(true);
 
         User user = new User();
         user.setRoles(Collections.singletonList("dev"));
@@ -222,6 +223,39 @@ public class TokenEnhancerTest {
         verify(certificateProvider, never()).sign(anyString());
         verify(userService, times(1)).findById(anyString());
         verify(roleService, times(1)).findByIdIn(anyList());
+    }
+
+    @Test
+    public void shouldEnhanceToken_withUserPermissions_disableEnhanceScope() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Collections.singleton("read"));
+        oAuth2Request.setSubject("subject");
+
+        Client client = new Client();
+        client.setEnhanceScopesWithUserPermissions(false);
+
+        User user = new User();
+        user.setRoles(Collections.singletonList("dev"));
+
+        Role role = new Role();
+        role.setId("dev");
+        role.setPermissions(Collections.singletonList("write"));
+
+        AccessToken accessToken = new AccessToken();
+        accessToken.setId("token-id");
+        accessToken.setToken("token-id");
+        accessToken.setScopes(Collections.singleton("read"));
+
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(roleService.findByIdIn(anyList())).thenReturn(Single.just(Collections.singleton(role)));
+        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
+
+        TestObserver<AccessToken> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(accessToken1 -> accessToken1.getScopes().contains("read") && !accessToken1.getScopes().contains("write"));
     }
 
     @Test
