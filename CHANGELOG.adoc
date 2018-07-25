@@ -1,5 +1,54 @@
 # Change Log
 
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/21?closed=1[2.0.3 (2018-07-25)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Fix NPE for UriBuilder https://github.com/gravitee-io/graviteeio-access-management/issues/279[#279]
+- Handle proxy request for login callback https://github.com/gravitee-io/graviteeio-access-management/issues/281[#281]
+
+*_Management_*
+
+- Cookies clearing not working during logout process https://github.com/gravitee-io/graviteeio-access-management/issues/283[#283]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/20?closed=1[2.0.2 (2018-07-24)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- No content-type for HTML pages https://github.com/gravitee-io/graviteeio-access-management/issues/274[#274]
+
+*_Oauth2_*
+
+- Handle proxy context-path for redirect_uri query param https://github.com/gravitee-io/graviteeio-access-management/issues/273[#273]
+- Unable enhance scopes option https://github.com/gravitee-io/graviteeio-access-management/issues/277[#277]
+
+
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/19?closed=1[2.0.1 (2018-07-23)]
+
+=== Bug fixes
+
+*_OIDC_*
+
+- Unable CORS for UserInfo Endpoint https://github.com/gravitee-io/graviteeio-access-management/issues/264[#264]
+- UserInfo endpoint 400 Bad Request for the implicit flow https://github.com/gravitee-io/graviteeio-access-management/issues/263[#263]
+
+*_Oauth2_*
+
+- Add additional parameters to the redirect_uri implicit response https://github.com/gravitee-io/graviteeio-access-management/issues/268[#268]
+- Handle proxy requests for social redirect callback https://github.com/gravitee-io/graviteeio-access-management/issues/267[#267]
+
+=== Improvements
+
+*_Gateway_*
+
+- Rename session cookie name to avoid potential security leaks https://github.com/gravitee-io/graviteeio-access-management/issues/271[#271]
+
+
 == https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/14?closed=1[2.0.0 (2018-07-13)]
 
 === Features
