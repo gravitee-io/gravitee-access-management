@@ -41,6 +41,10 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     private String groupRoleAttribute = "cn";
 
+    private Long connectTimeout = 5000l;
+
+    private Long responseTimeout = 5000l;
+
     public String getContextSourceUrl() {
         return contextSourceUrl;
     }
@@ -111,5 +115,21 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     public void setGroupRoleAttribute(String groupRoleAttribute) {
         this.groupRoleAttribute = groupRoleAttribute;
+    }
+
+    public Long getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(Long connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public Long getResponseTimeout() {
+        return responseTimeout;
+    }
+
+    public void setResponseTimeout(Long responseTimeout) {
+        this.responseTimeout = responseTimeout;
     }
 }

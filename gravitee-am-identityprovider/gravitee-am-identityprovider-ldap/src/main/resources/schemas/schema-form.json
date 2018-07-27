@@ -48,6 +48,20 @@
       "type" : "string",
       "default": "cn",
       "title": "Group role attribute"
+    },
+    "connectTimeout" : {
+      "type" : "integer",
+      "default": 5000,
+      "minimum": 0,
+      "title": "Connect timeout",
+      "description": "Duration of time in milliseconds that connects will block. (default 5000 ms)"
+    },
+    "responseTimeout" : {
+      "type" : "integer",
+      "default": 5000,
+      "minimum": 0,
+      "title": "Response timeout",
+      "description": "Duration of time in milliseconds to wait for responses. (default 5000 ms)"
     }
   },
   "required": [

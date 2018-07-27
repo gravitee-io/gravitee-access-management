@@ -26,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Duration;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,6 +49,8 @@ public class LdapAuthenticationProviderConfiguration {
     @Bean
     public ConnectionConfig connectionConfig() {
         ConnectionConfig connectionConfig = new ConnectionConfig();
+        connectionConfig.setConnectTimeout(Duration.ofMillis(configuration.getConnectTimeout()));
+        connectionConfig.setResponseTimeout(Duration.ofMillis(configuration.getResponseTimeout()));
         connectionConfig.setLdapUrl(configuration.getContextSourceUrl());
         BindConnectionInitializer connectionInitializer =
                 new BindConnectionInitializer(configuration.getContextSourceUsername(), new Credential(configuration.getContextSourcePassword()));
