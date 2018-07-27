@@ -1,5 +1,22 @@
 # Change Log
 
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/22?closed=1[2.0.4 (2018-07-27)]
+
+=== Bug fixes
+
+*_Oidc_*
+
+- UserInfo endpoint for social provider does not seem to work https://github.com/gravitee-io/graviteeio-access-management/issues/285[#285]
+- Userinfo Endpoint path https://github.com/gravitee-io/graviteeio-access-management/issues/286[#286]
+
+=== Improvements
+
+*_Identity_*
+
+- [ldap] No enough log https://github.com/gravitee-io/graviteeio-access-management/issues/287[#287]
+- [ldap] set connection and response timeout https://github.com/gravitee-io/graviteeio-access-management/issues/291[#291]
+
+
 == https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/21?closed=1[2.0.3 (2018-07-25)]
 
 === Bug fixes
