@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.vertx.handler.oidc.handler.UserInfoRequest
 import io.gravitee.am.gateway.service.UserService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.CorsHandler;
@@ -54,7 +55,13 @@ public class OIDCRouter {
     @Autowired
     private Environment environment;
 
-    public void route(Router router) {
+    @Autowired
+    private Vertx vertx;
+
+    public Router route() {
+        // Create the OpenID Connect router
+        final Router router = Router.router(vertx);
+
         // OpenID Provider Configuration Information Endpoint
         Handler<RoutingContext> openIDProviderConfigurationEndpoint = new ProviderConfigurationEndpoint();
         ((ProviderConfigurationEndpoint) openIDProviderConfigurationEndpoint).setDiscoveryService(discoveryService);
@@ -74,6 +81,8 @@ public class OIDCRouter {
                 .route(HttpMethod.POST, "/userinfo")
                 .handler(userInfoRequestParseHandler)
                 .handler(userInfoEndpoint);
+
+        return router;
     }
 
     private io.vertx.ext.web.handler.CorsHandler corsHandler() {

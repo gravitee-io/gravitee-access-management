@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LoginCallback
 import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LoginEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LogoutEndpointHandler;
 import io.gravitee.am.model.Domain;
+import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.AuthProvider;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
@@ -47,7 +48,13 @@ public class LoginRouter {
     @Autowired
     private Domain domain;
 
-    public void route(Router router, AuthProvider userAuthProvider) {
+    @Autowired
+    private Vertx vertx;
+
+    public Router route(AuthProvider userAuthProvider) {
+        // Create the login router
+        final Router router = Router.router(vertx);
+
         // create authentication handlers
         final AuthProvider identityProviderAuthProvider = new AuthProvider(new OAuth2ClientAuthenticationProvider(identityProviderManager));
 
@@ -62,5 +69,7 @@ public class LoginRouter {
 
         // logout handler
         router.route("/logout").handler(LogoutEndpointHandler.create());
+
+        return router;
     }
 }
