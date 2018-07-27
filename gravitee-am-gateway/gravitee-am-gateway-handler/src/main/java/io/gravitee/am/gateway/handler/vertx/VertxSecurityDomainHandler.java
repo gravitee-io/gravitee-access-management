@@ -90,9 +90,14 @@ public class VertxSecurityDomainHandler {
         // CSRF handler
         csrfHandler(router);
 
-        loginRouter.route(router, userAuthProvider);
-        oauth2Router.route(router, userAuthProvider);
-        oidcRouter.route(router);
+        // mount login router
+        router.mountSubRouter("/", loginRouter.route(userAuthProvider));
+
+        // mount OAuth 2.0 router
+        router.mountSubRouter("/oauth", oauth2Router.route(userAuthProvider));
+
+        // mount OpenID Connect router
+        router.mountSubRouter("/oidc", oidcRouter.route());
 
         return router;
     }

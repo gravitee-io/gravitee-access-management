@@ -40,6 +40,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.AuthProvider;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -84,7 +85,13 @@ public class OAuth2Router {
     @Autowired
     private Domain domain;
 
-    public void route(Router router, AuthProvider userAuthProvider) {
+    @Autowired
+    private Vertx vertx;
+
+    public Router route(AuthProvider userAuthProvider) {
+        // Create the OAuth 2.0 router
+        final Router router = Router.router(vertx);
+
         // create authentication handlers
         final AuthProvider clientAuthProvider = new AuthProvider(new ClientAuthenticationProvider(clientService));
 
@@ -115,31 +122,33 @@ public class OAuth2Router {
         Handler<RoutingContext> revocationTokenEndpoint = new RevocationTokenEndpointHandler(revocationTokenService);
 
         // declare oauth2 routes
-        router.route(HttpMethod.GET,"/oauth/authorize")
+        router.route(HttpMethod.GET,"/authorize")
                 .handler(authorizationRequestParseHandler)
                 .handler(userAuthHandler)
                 .handler(authorizeEndpoint);
-        router.route(HttpMethod.POST, "/oauth/authorize")
+        router.route(HttpMethod.POST, "/authorize")
                 .handler(userAuthHandler)
                 .handler(authorizeApprovalEndpoint);
-        router.route(HttpMethod.POST, "/oauth/token")
+        router.route(HttpMethod.POST, "/token")
                 .handler(clientAuthHandler)
                 .handler(tokenEndpoint);
-        router.route(HttpMethod.POST, "/oauth/check_token")
+        router.route(HttpMethod.POST, "/check_token")
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(clientAuthHandler)
                 .handler(checkTokenEndpoint);
-        router.route(HttpMethod.POST, "/oauth/introspect")
+        router.route(HttpMethod.POST, "/introspect")
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(clientAuthHandler)
                 .handler(introspectionEndpoint);
-        router.route(HttpMethod.POST, "/oauth/revoke")
+        router.route(HttpMethod.POST, "/revoke")
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(clientAuthHandler)
                 .handler(revocationTokenEndpoint);
-        router.route(HttpMethod.GET, "/oauth/confirm_access")
+        router.route(HttpMethod.GET, "/confirm_access")
                 .handler(userApprovalEndpoint);
-        router.route(HttpMethod.GET, "/oauth/error")
+        router.route(HttpMethod.GET, "/error")
                 .handler(new ErrorHandlerEndpoint(thymeleafTemplateEngine));
+
+        return router;
     }
 }
