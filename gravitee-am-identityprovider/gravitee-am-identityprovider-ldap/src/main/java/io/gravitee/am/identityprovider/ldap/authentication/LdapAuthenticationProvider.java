@@ -128,9 +128,11 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
                     // return user
                     emitter.onSuccess(createUser(userEntry));
                 } else { // authentication failed
+                    LOGGER.debug("Failed to authenticate user", response.getMessage());
                     emitter.onError(new BadCredentialsException(response.getMessage()));
                 }
             } catch (LdapException e) {
+                LOGGER.error("An error occurs during LDAP authentication", e);
                 emitter.onError(new InternalAuthenticationServiceException(e.getMessage(), e));
             }
         });
@@ -169,6 +171,7 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
                     emitter.onError(new UsernameNotFoundException(username));
                 }
             } catch (LdapException e) {
+                LOGGER.error("An error occurs while searching for a LDAP user", e);
                 emitter.onError(new InternalAuthenticationServiceException(e.getMessage(), e));
             }
         });
