@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.oauth2.model;
 
+import io.gravitee.common.util.MultiValueMap;
+
 import java.util.Date;
 import java.util.Set;
 
@@ -63,6 +65,11 @@ public class AuthorizationCode {
      * The scopes of the access request
      */
     private Set<String> scopes;
+
+    /**
+     * The Authorization request parameters
+     */
+    private MultiValueMap<String,String> requestParameters;
 
     public String getId() {
         return id;
@@ -126,6 +133,14 @@ public class AuthorizationCode {
 
     public void setScopes(Set<String> scopes) {
         this.scopes = scopes;
+    }
+
+    public MultiValueMap<String,String> getRequestParameters() {
+        return requestParameters;
+    }
+
+    public void setRequestParameters(MultiValueMap<String,String> requestParameters) {
+        this.requestParameters = requestParameters;
     }
 
     @Override
