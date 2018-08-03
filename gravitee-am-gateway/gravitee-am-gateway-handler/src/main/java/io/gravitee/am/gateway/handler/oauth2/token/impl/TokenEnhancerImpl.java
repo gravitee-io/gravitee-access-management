@@ -171,6 +171,12 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
         calendar.add(Calendar.SECOND, client.getIdTokenValiditySeconds() > 0 ? client.getIdTokenValiditySeconds() : defaultIDTokenExpireIn);
         IDToken.put(OIDCClaims.exp, calendar.getTimeInMillis() / 1000l);
 
+        // set nonce
+        String nonce = oAuth2Request.getRequestParameters().getFirst(OIDCClaims.nonce);
+        if (nonce != null && !nonce.isEmpty()) {
+            IDToken.put(OIDCClaims.nonce, nonce);
+        }
+
         // override claims for an end-user
         if (!oAuth2Request.isClientOnly() && client.getIdTokenCustomClaims() != null) {
             if (user.getAdditionalInformation() != null && !user.getAdditionalInformation().isEmpty()) {
@@ -203,7 +209,7 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
         defaultCertificateProvider = new CertificateProvider() {
             @Override
             public Single<String> sign(String payload) {
-                return Single.just(jwtBuilder.setHeaderParam(JwsHeader.KEY_ID,  signingKeyId).setPayload(payload).compact());
+                return Single.just(jwtBuilder.setPayload(payload).compact());
             }
 
             @Override

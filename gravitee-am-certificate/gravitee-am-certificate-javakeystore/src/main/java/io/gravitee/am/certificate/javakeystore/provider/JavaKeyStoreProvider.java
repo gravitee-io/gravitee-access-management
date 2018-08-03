@@ -112,7 +112,6 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
                 emitter.onError(e);
             }
         });
-
     }
 
     @Override
