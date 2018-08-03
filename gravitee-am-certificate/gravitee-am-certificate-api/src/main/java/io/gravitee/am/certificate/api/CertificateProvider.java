@@ -15,13 +15,19 @@
  */
 package io.gravitee.am.certificate.api;
 
+import io.gravitee.am.model.jose.JWK;
+import io.reactivex.Flowable;
+import io.reactivex.Single;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface CertificateProvider {
 
-    String sign(String payload);
+    Single<String> sign(String payload);
 
-    String publicKey();
+    Single<String> publicKey();
+
+    Flowable<JWK> keys();
 }

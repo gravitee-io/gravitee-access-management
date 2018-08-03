@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,6 +53,11 @@ public class CertificateManagerImpl implements CertificateManager, InitializingB
     public Maybe<CertificateProvider> get(String id) {
         CertificateProvider certificateProvider = certificateProviders.get(id);
         return (certificateProvider != null) ? Maybe.just(certificateProvider) : Maybe.empty();
+    }
+
+    @Override
+    public Collection<CertificateProvider> providers() {
+        return certificateProviders.values();
     }
 
     @Override

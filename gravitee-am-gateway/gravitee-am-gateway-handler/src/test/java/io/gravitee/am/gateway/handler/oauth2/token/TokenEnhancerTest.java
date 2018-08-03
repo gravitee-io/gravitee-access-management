@@ -133,7 +133,7 @@ public class TokenEnhancerTest {
         ((TokenEnhancerImpl) tokenEnhancer).setJwtBuilder(jwtBuilder);
 
         when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
-        when(certificateProvider.sign(anyString())).thenReturn(idTokenPayload);
+        when(certificateProvider.sign(anyString())).thenReturn(Single.just(idTokenPayload));
         when(certificateManager.get(anyString())).thenReturn(Maybe.just(certificateProvider));
 
         TestObserver<AccessToken> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request).test();

@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.certificate;
+package io.gravitee.am.gateway.handler.oidc.jwk;
 
-import io.gravitee.am.certificate.api.CertificateProvider;
-import io.reactivex.Maybe;
-
-import java.util.Collection;
+import io.reactivex.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateManager {
+public interface JWKSetService {
 
-    Maybe<CertificateProvider> get(String id);
-
-    Collection<CertificateProvider> providers();
+    Single<JWKSet> getKeys();
 }

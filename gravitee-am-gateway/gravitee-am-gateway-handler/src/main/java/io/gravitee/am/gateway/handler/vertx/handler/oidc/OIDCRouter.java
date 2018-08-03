@@ -17,7 +17,9 @@ package io.gravitee.am.gateway.handler.vertx.handler.oidc;
 
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.jwk.JWKSetService;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.ProviderConfigurationEndpoint;
+import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.ProviderJWKSetEndpoint;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.UserInfoEndpoint;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.handler.UserInfoRequestParseHandler;
 import io.gravitee.am.gateway.service.UserService;
@@ -45,6 +47,9 @@ public class OIDCRouter {
 
     @Autowired
     private OpenIDDiscoveryService discoveryService;
+
+    @Autowired
+    private JWKSetService jwkSetService;
 
     @Autowired
     private TokenService tokenService;
@@ -81,6 +86,13 @@ public class OIDCRouter {
                 .route(HttpMethod.POST, "/userinfo")
                 .handler(userInfoRequestParseHandler)
                 .handler(userInfoEndpoint);
+
+        // OpenID Provider JWK Set
+        Handler<RoutingContext> openIDProviderJWKSetEndpoint = new ProviderJWKSetEndpoint();
+        ((ProviderJWKSetEndpoint) openIDProviderJWKSetEndpoint).setJwkSetService(jwkSetService);
+        router
+                .route(HttpMethod.GET, "/.well-known/jwks.json")
+                .handler(openIDProviderJWKSetEndpoint);
 
         return router;
     }

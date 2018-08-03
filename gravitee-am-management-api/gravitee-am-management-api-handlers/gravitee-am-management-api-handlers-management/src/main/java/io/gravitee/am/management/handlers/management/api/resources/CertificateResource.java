@@ -98,8 +98,9 @@ public class CertificateResource {
                              @PathParam("certificate") String certificate,
                              @Suspended final AsyncResponse response) {
         certificateService.getCertificateProvider(certificate)
-                .map(certificateProvider -> Response.ok(certificateProvider.publicKey()).build())
                 .switchIfEmpty(Maybe.error(new BadRequestException("No certificate provider found for the certificate " + certificate)))
+                .flatMapSingle(certificateProvider -> certificateProvider.publicKey())
+                .map(publicKey -> Response.ok(publicKey).build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
