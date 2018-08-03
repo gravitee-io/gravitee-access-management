@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.token.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
@@ -26,6 +27,7 @@ import io.gravitee.am.gateway.service.RoleService;
 import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -33,6 +35,7 @@ import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.crypto.MacProvider;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.SingleSource;
@@ -55,7 +58,7 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
     private static final String OPEN_ID = "openid";
     private static final String ID_TOKEN = "id_token";
     private ObjectMapper objectMapper = new ObjectMapper();
-    private JwtBuilder jwtBuilder;
+    private CertificateProvider defaultCertificateProvider;
 
     @Value("${oidc.iss:http://gravitee.am}")
     private String iss;
@@ -79,7 +82,10 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
     public void afterPropertiesSet() {
         // create default signing HMAC key
         Key key = MacProvider.generateKey(SignatureAlgorithm.HS512, new SecureRandom(signingKeySecret.getBytes()));
-        jwtBuilder = Jwts.builder().signWith(SignatureAlgorithm.HS512, key);
+        JwtBuilder jwtBuilder = Jwts.builder().signWith(SignatureAlgorithm.HS512, key);
+
+        // create default certificate provider
+        setDefaultCertificateProvider(jwtBuilder);
     }
 
     @Override
@@ -175,9 +181,9 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
 
         // sign the ID Token and add id_token field to the access_token
         return certificateManager.get(client.getCertificate())
-                .map(certificateProvider -> certificateProvider.sign(objectMapper.writeValueAsString(IDToken)))
-                .defaultIfEmpty(jwtBuilder.setClaims(IDToken).compact())
-                .flatMapSingle(payload -> {
+                .defaultIfEmpty(defaultCertificateProvider)
+                .flatMapSingle(certificateProvider ->  certificateProvider.sign(objectMapper.writeValueAsString(IDToken)))
+                .flatMap(payload -> {
                     Map<String, Object> additionalInformation = new HashMap<>(accessToken.getAdditionalInformation());
                     additionalInformation.put(ID_TOKEN, payload);
                     accessToken.setAdditionalInformation(additionalInformation);
@@ -186,7 +192,26 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
     }
 
     public void setJwtBuilder(JwtBuilder jwtBuilder) {
-        this.jwtBuilder = jwtBuilder;
+        setDefaultCertificateProvider(jwtBuilder);
+    }
+
+    private void setDefaultCertificateProvider(JwtBuilder jwtBuilder) {
+        defaultCertificateProvider = new CertificateProvider() {
+            @Override
+            public Single<String> sign(String payload) {
+                return Single.just(jwtBuilder.setPayload(payload).compact());
+            }
+
+            @Override
+            public Single<String> publicKey() {
+                return null;
+            }
+
+            @Override
+            public Flowable<JWK> keys() {
+                return null;
+            }
+        };
     }
 
     private class TokenEnhancerData {

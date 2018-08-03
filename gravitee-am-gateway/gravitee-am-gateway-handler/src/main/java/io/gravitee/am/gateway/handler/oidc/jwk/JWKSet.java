@@ -13,20 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.certificate;
+package io.gravitee.am.gateway.handler.oidc.jwk;
 
-import io.gravitee.am.certificate.api.CertificateProvider;
-import io.reactivex.Maybe;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
+ * See <a href="https://tools.ietf.org/html/rfc7517#section-5">5. JWK Set Format</a>
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateManager {
+public class JWKSet {
 
-    Maybe<CertificateProvider> get(String id);
+    @JsonProperty("keys")
+    private List<JWK> keys;
 
-    Collection<CertificateProvider> providers();
+    public List<JWK> getKeys() {
+        return keys;
+    }
+
+    public void setKeys(List<JWK> keys) {
+        this.keys = keys;
+    }
 }
