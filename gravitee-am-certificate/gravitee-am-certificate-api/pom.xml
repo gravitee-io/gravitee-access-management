@@ -32,4 +32,20 @@
 
     <version>2.1.0-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Certificate - API</name>
+
+    <dependencies>
+        <!-- Gravitee.io dependencies -->
+        <dependency>
+            <groupId>io.gravitee.am.model</groupId>
+            <artifactId>gravitee-am-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- reactive dependencies -->
+        <dependency>
+            <groupId>io.reactivex.rxjava2</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>${rxjava.version}</version>
+        </dependency>
+    </dependencies>
 </project>
