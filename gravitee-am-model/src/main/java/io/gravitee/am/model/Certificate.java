@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -32,6 +33,8 @@ public class Certificate {
     private String configuration;
 
     private String domain;
+
+    private Map<String, Object> metadata;
 
     private Date createdAt;
 
@@ -75,6 +78,14 @@ public class Certificate {
 
     public void setDomain(String domain) {
         this.domain = domain;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
     }
 
     public Date getCreatedAt() {

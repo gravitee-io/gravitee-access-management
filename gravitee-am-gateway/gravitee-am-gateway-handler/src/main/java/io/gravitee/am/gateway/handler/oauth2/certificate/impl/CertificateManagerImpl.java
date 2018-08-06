@@ -64,7 +64,7 @@ public class CertificateManagerImpl implements CertificateManager, InitializingB
                         logger.info("\tInitializing certificate: {} [{}]", certificate.getName(), certificate.getType());
 
                         CertificateProvider certificateProvider =
-                                certificatePluginManager.create(certificate.getType(), certificate.getConfiguration());
+                                certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
                         certificateProviders.put(certificate.getId(), certificateProvider);
                     });
                     logger.info("Certificates loaded for domain {}", domain.getName());

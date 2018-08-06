@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
+import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 
 /**
@@ -34,6 +35,8 @@ public class CertificateMongo extends Auditable {
     private String configuration;
 
     private String domain;
+
+    private Document metadata;
 
     public String getId() {
         return id;
@@ -73,6 +76,14 @@ public class CertificateMongo extends Auditable {
 
     public void setDomain(String domain) {
         this.domain = domain;
+    }
+
+    public Document getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Document metadata) {
+        this.metadata = metadata;
     }
 
     @Override

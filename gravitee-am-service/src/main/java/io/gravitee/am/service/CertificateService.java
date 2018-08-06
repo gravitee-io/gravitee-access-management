@@ -42,6 +42,8 @@ public interface CertificateService {
 
     Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema);
 
+    Single<Certificate> update(Certificate certificate);
+
     Completable delete(String certificateId);
 
     void setCertificateProviders(Map<String, CertificateProvider> certificateProviders);
