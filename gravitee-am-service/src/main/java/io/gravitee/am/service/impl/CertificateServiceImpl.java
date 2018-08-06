@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.plugins.certificate.core.CertificateSchema;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.ClientService;
@@ -38,16 +37,9 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -72,9 +64,6 @@ public class CertificateServiceImpl implements CertificateService {
     private DomainService domainService;
 
     private ObjectMapper objectMapper = new ObjectMapper();
-
-    @Value("${certificates.path:${gravitee.home}/certificates}")
-    private String certificatesPath;
 
     private Map<String, CertificateProvider> certificateProviders = new HashMap<>();
 
@@ -112,7 +101,6 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    // TODO : refactor (remove file + add JWKS information)
     public Single<Certificate> create(String domain, NewCertificate newCertificate, String schema) {
         LOGGER.debug("Create a new certificate {} for domain {}", newCertificate, domain);
 
@@ -137,20 +125,11 @@ public class CertificateServiceImpl implements CertificateService {
                             try {
                                 JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
                                 byte[] data = Base64.getDecoder().decode(file.get("content").asText());
-                                File certificateFile = new File(certificatesPath + '/' + domain + '/' + certificateId + '/' + file.get("name").asText());
-                                if (!certificateFile.exists()) {
-                                    certificateFile.getParentFile().mkdirs();
-                                    certificateFile.createNewFile();
-                                }
-                                try (FileOutputStream fop = new FileOutputStream(certificateFile)) {
-                                    fop.write(data);
-                                    fop.flush();
-                                    fop.close();
+                                certificate.setMetadata(Collections.singletonMap("file", data));
 
-                                    // update configuration to set the file path
-                                    ((ObjectNode) certificateConfiguration).put(key, certificateFile.getAbsolutePath());
-                                    newCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
-                                }
+                                // update configuration to set the file name
+                                ((ObjectNode) certificateConfiguration).put(key, file.get("name").asText());
+                                newCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
                             } catch (IOException ex) {
                                 LOGGER.error("An error occurs while trying to create certificate binaries", ex);
                                 emitter.onError(ex);
@@ -181,7 +160,6 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    // TODO : refactor (remove file + add JWKS information)
     public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema) {
         LOGGER.debug("Update a certificate {} for domain {}", id, domain);
 
@@ -210,20 +188,11 @@ public class CertificateServiceImpl implements CertificateService {
                                             if (!oldFileInformation.equals(fileInformation)) {
                                                 JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
                                                 byte[] data = Base64.getDecoder().decode(file.get("content").asText());
-                                                File certificateFile = new File(certificatesPath + '/' + domain + '/' + oldCertificate.getId() + '/' + file.get("name").asText());
-                                                if (!certificateFile.exists()) {
-                                                    certificateFile.getParentFile().mkdirs();
-                                                    certificateFile.createNewFile();
-                                                }
-                                                try (FileOutputStream fop = new FileOutputStream(certificateFile)) {
-                                                    fop.write(data);
-                                                    fop.flush();
-                                                    fop.close();
+                                                oldCertificate.setMetadata(Collections.singletonMap("file", data));
 
-                                                    // update configuration to set the file path
-                                                    ((ObjectNode) certificateConfiguration).put(key, certificateFile.getAbsolutePath());
-                                                    updateCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
-                                                }
+                                                // update configuration to set the file path
+                                                ((ObjectNode) certificateConfiguration).put(key, file.get("name").asText());
+                                                updateCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
                                             }
                                         } catch (IOException ex) {
                                             LOGGER.error("An error occurs while trying to update certificate binaries", ex);
@@ -256,32 +225,35 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
+    public Single<Certificate> update(Certificate certificate) {
+        // update date
+        certificate.setUpdatedAt(new Date());
+
+        return certificateRepository.update(certificate)
+                .flatMap(certificate1 -> {
+                    // Reload domain to take care about certificate update
+                    return domainService.reload(certificate1.getDomain()).flatMap(domain1 -> Single.just(certificate1));
+                })
+                .doOnError(ex -> {
+                    LOGGER.error("An error occurs while trying to update a certificate", ex);
+                    throw new TechnicalManagementException("An error occurs while trying to update a certificate", ex);
+                });
+    }
+
+    @Override
     public Completable delete(String certificateId) {
         LOGGER.debug("Delete certificate {}", certificateId);
         return certificateRepository.findById(certificateId)
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificateId)))
-                .flatMapSingle(certificate1 -> clientService.findByCertificate(certificateId)
+                .flatMapSingle(certificate -> clientService.findByCertificate(certificateId)
                         .flatMap(clients -> {
                             if (clients.size() > 0) {
                                 throw new CertificateWithClientsException();
                             }
-                            return Single.just(certificate1);
+                            return Single.just(certificate);
                         })
                 )
-                .flatMap(certificate2 -> {
-                    // delete certificate files
-                    try {
-                        Path certificatePath = Paths.get(certificatesPath + '/' + certificate2.getDomain() + '/' + certificateId);
-                        Files.walk(certificatePath, FileVisitOption.FOLLOW_LINKS)
-                                .sorted(Comparator.reverseOrder())
-                                .map(Path::toFile)
-                                .forEach(File::delete);
-                    } catch (IOException ex) {
-                        throw new TechnicalException(ex);
-                    }
-                    return Single.just(certificate2);
-                })
-                .flatMapCompletable(certificate3 -> certificateRepository.delete(certificateId))
+                .flatMapCompletable(certificate -> certificateRepository.delete(certificateId))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to delete certificate: {}", certificateId, ex);
                     return Completable.error(new TechnicalManagementException(
@@ -317,9 +289,4 @@ public class CertificateServiceImpl implements CertificateService {
             }
         });
     }
-
-    public void setCertificatesPath(String certificatesPath) {
-        this.certificatesPath = certificatesPath;
-    }
-
 }

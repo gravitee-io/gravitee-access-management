@@ -13,28 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.plugins.certificate.core;
+package io.gravitee.am.certificate.api;
 
-import io.gravitee.am.certificate.api.CertificateProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificatePluginManager {
+public class CertificateMetadata {
 
-    void register(CertificateDefinition certificatePluginDefinition);
+    private Map<String, Object> metadata;
 
-    Collection<Plugin> getAll();
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
 
-    Plugin findById(String certificateId);
-
-    CertificateProvider create(String type, String configuration, Map<String, Object> metadata);
-
-    String getSchema(String certificateId) throws IOException;
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
 }

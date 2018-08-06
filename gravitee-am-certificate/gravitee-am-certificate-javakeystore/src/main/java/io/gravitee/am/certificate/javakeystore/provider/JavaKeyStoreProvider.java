@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.certificate.javakeystore.provider;
 
+import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.javakeystore.JavaKeyStoreConfiguration;
 import io.jsonwebtoken.Jwts;
@@ -22,15 +23,13 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
+import java.util.Objects;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,9 +42,16 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
     @Autowired
     private JavaKeyStoreConfiguration configuration;
 
+    @Autowired
+    private CertificateMetadata certificateMetadata;
+
     @Override
     public void afterPropertiesSet() throws Exception {
-        FileInputStream is = new FileInputStream(configuration.getJks());
+        Object file = certificateMetadata.getMetadata().get("file");
+        Objects.requireNonNull(file, "A jks file is required to use Java KeyStore certificate");
+
+        byte[] jksFile = (byte[]) file;
+        InputStream is = new ByteArrayInputStream(jksFile);
         KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
         keystore.load(is, configuration.getStorepass().toCharArray());
         Key key = keystore.getKey(configuration.getAlias(), configuration.getKeypass().toCharArray());

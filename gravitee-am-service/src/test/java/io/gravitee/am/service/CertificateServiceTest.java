@@ -26,17 +26,13 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,9 +59,6 @@ public class CertificateServiceTest {
 
     @Mock
     private ObjectMapper objectMapper;
-
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
 
     private final static String DOMAIN = "domain1";
 
@@ -122,11 +115,7 @@ public class CertificateServiceTest {
     }
 
     @Test
-    public void shouldDelete() throws IOException {
-        // prepare file system
-        folder.newFolder(DOMAIN);
-        File file = folder.newFile(DOMAIN + "/my-certificate");
-        ((CertificateServiceImpl) certificateService).setCertificatesPath(file.toPath().getParent().getParent().toString());
+    public void shouldDelete() {
         // prepare certificate
         Certificate certificate = Mockito.mock(Certificate.class);
         when(certificate.getDomain()).thenReturn(DOMAIN);

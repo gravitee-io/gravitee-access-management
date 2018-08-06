@@ -17,6 +17,7 @@ package io.gravitee.am.plugins.certificate.core.impl;
 
 import io.gravitee.am.certificate.api.Certificate;
 import io.gravitee.am.certificate.api.CertificateConfiguration;
+import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.plugins.certificate.core.CertificateConfigurationFactory;
 import io.gravitee.am.plugins.certificate.core.CertificateDefinition;
@@ -76,7 +77,7 @@ public class CertificatePluginManagerImpl implements CertificatePluginManager {
     }
 
     @Override
-    public CertificateProvider create(String type, String configuration) {
+    public CertificateProvider create(String type, String configuration, Map<String, Object> metadata) {
         logger.debug("Looking for a certificate provider for [{}]", type);
         Certificate certificate = certificates.get(type);
 
@@ -84,10 +85,14 @@ public class CertificatePluginManagerImpl implements CertificatePluginManager {
             Class<? extends CertificateConfiguration> configurationClass = certificate.configuration();
             CertificateConfiguration certificateConfiguration = certificateConfigurationFactory.create(configurationClass, configuration);
 
+            CertificateMetadata certificateMetadata = new CertificateMetadata();
+            certificateMetadata.setMetadata(metadata);
+
             return create0(
                     certificatePlugins.get(certificate),
                     certificate.certificateProvider(),
-                    certificateConfiguration);
+                    certificateConfiguration,
+                    certificateMetadata);
         } else {
             logger.error("No certificate provider is registered for type {}", type);
             throw new IllegalStateException("No certificate provider is registered for type " + type);
@@ -113,7 +118,7 @@ public class CertificatePluginManagerImpl implements CertificatePluginManager {
         return null;
     }
 
-    private <T> T create0(Plugin plugin, Class<T> certificateClass, CertificateConfiguration certificateConfiguration) {
+    private <T> T create0(Plugin plugin, Class<T> certificateClass, CertificateConfiguration certificateConfiguration, CertificateMetadata metadata) {
         if (certificateClass == null) {
             return null;
         }
@@ -137,6 +142,10 @@ public class CertificatePluginManagerImpl implements CertificatePluginManager {
                     // Add certificate configuration bean
                     configurableApplicationContext.addBeanFactoryPostProcessor(
                             new CertificateConfigurationBeanFactoryPostProcessor(certificateConfiguration));
+
+                    // Add certificate metadata bean
+                    configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new CertificateMetadataBeanFactoryPostProcessor(metadata));
 
                     return configurableApplicationContext;
                 }

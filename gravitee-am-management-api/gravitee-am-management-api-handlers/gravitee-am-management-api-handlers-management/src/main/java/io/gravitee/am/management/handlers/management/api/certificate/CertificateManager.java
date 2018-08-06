@@ -44,7 +44,7 @@ public class CertificateManager implements InitializingBean  {
     private CertificateService certificateService;
 
     public void reloadCertificateProviders(Certificate certificate) {
-        CertificateProvider certificateProvider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration());
+        CertificateProvider certificateProvider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
         certificateService.setCertificateProvider(certificate.getId(), certificateProvider);
     }
 
@@ -57,7 +57,7 @@ public class CertificateManager implements InitializingBean  {
             LOGGER.info("\tInitializing certificate: {} [{}]", certificate.getName(), certificate.getType());
 
             CertificateProvider certificateProvider =
-                    certificatePluginManager.create(certificate.getType(), certificate.getConfiguration());
+                    certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
             certificateProviders.put(certificate.getId(), certificateProvider);
         });
 

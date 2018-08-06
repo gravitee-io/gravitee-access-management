@@ -26,12 +26,15 @@ import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
+import org.bson.types.Binary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -98,6 +101,13 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         certificate.setType(certificateMongo.getType());
         certificate.setConfiguration(certificateMongo.getConfiguration());
         certificate.setDomain(certificateMongo.getDomain());
+        if (certificateMongo.getMetadata() != null) {
+            // convert bson binary type back to byte array
+            Map<String, Object> metadata = certificateMongo.getMetadata().entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue() instanceof Binary ? ((Binary) e.getValue()).getData() : e));
+            certificate.setMetadata(metadata);
+        }
         certificate.setCreatedAt(certificateMongo.getCreatedAt());
         certificate.setUpdatedAt(certificateMongo.getUpdatedAt());
         return certificate;
@@ -114,6 +124,7 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         certificateMongo.setType(certificate.getType());
         certificateMongo.setConfiguration(certificate.getConfiguration());
         certificateMongo.setDomain(certificate.getDomain());
+        certificateMongo.setMetadata(certificate.getMetadata() != null ? new Document(certificate.getMetadata()) : new Document());
         certificateMongo.setCreatedAt(certificate.getCreatedAt());
         certificateMongo.setUpdatedAt(certificate.getUpdatedAt());
         return certificateMongo;
