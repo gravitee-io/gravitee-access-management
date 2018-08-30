@@ -128,7 +128,7 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
                         }
                         observer.onSuccess(requestedScopes);
                     }, (roles, requestedScopes) -> {
-                        Set<String> enhanceScopes = new HashSet<>(accessToken.getScopes());
+                        Set<String> enhanceScopes = new HashSet<>();
                         enhanceScopes.addAll(roles.stream()
                                 .map(r -> r.getPermissions())
                                 .flatMap(List::stream)
@@ -144,6 +144,11 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
                         return accessToken;
                     });
         } else {
+            accessToken.setScopes(
+                    accessToken.getScopes().stream()
+                            .filter(s -> s.equals(OPEN_ID))
+                            .collect(Collectors.toSet())
+            );
             return Single.just(accessToken);
         }
     }
@@ -181,6 +186,7 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
                     Map<String, Object> additionalInformation = new HashMap<>(accessToken.getAdditionalInformation());
                     additionalInformation.put(ID_TOKEN, payload);
                     accessToken.setAdditionalInformation(additionalInformation);
+                    accessToken.getScopes().add(OPEN_ID);
                     return Single.just(accessToken);
                 });
     }
