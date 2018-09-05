@@ -31,6 +31,7 @@ import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -65,6 +66,9 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
 
     @Value("${oidc.signing.key.secret:s3cR3t4grAv1t33}")
     private String signingKeySecret;
+
+    @Value("${oidc.signing.key.kid:default-gravitee-AM-key}")
+    private String signingKeyId;
 
     @Autowired
     private ClientService clientService;
@@ -199,7 +203,7 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
         defaultCertificateProvider = new CertificateProvider() {
             @Override
             public Single<String> sign(String payload) {
-                return Single.just(jwtBuilder.setPayload(payload).compact());
+                return Single.just(jwtBuilder.setHeaderParam(JwsHeader.KEY_ID,  signingKeyId).setPayload(payload).compact());
             }
 
             @Override
