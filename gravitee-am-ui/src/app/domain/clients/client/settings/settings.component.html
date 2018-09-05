@@ -144,6 +144,7 @@
     <h4>Certificate</h4>
     <mat-form-field>
       <mat-select placeholder="Certificate" name="certificate" [(ngModel)]="client.certificate">
+        <mat-option><em>None</em></mat-option>
         <mat-option *ngFor="let certificate of certificates" [value]="certificate.id">{{ certificate.name }}</mat-option>
       </mat-select>
       <mat-hint style="font-size: 75%;">Certificate use to sign tokens.</mat-hint>
