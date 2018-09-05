@@ -98,10 +98,9 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
         return Single.create(emitter -> {
             try {
                 JWTClaimsSet claimsSet = JWTClaimsSet.parse(payload);
+                JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS512).keyID(configuration.getAlias()).build();
 
-                SignedJWT signedJWT = new SignedJWT(
-                        new JWSHeader(JWSAlgorithm.RS512),
-                        claimsSet);
+                SignedJWT signedJWT = new SignedJWT(header, claimsSet);
 
                 // compute the RSA signature
                 signedJWT.sign(signer);
