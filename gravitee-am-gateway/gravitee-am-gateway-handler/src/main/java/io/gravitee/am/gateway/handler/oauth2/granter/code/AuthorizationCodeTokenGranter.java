@@ -83,6 +83,10 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                     return super.createOAuth2Request(tokenRequest, client)
                             .map(oAuth2Request -> {
                                 oAuth2Request.setSubject(authorizationCode.getSubject());
+                                // set authorization code initial request parameters (step1 of authorization code flow)
+                                if (authorizationCode.getRequestParameters() != null) {
+                                    authorizationCode.getRequestParameters().forEach((key, value) -> oAuth2Request.getRequestParameters().putIfAbsent(key, value));
+                                }
                                 return oAuth2Request;
                             });
                 });

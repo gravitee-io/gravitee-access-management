@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2.internal.model;
 
+import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
@@ -47,6 +48,9 @@ public class AuthorizationCodeMongo {
     private String redirectUri;
 
     private Set<String> scopes;
+
+    @BsonProperty("request_parameters")
+    private Document requestParameters;
 
     public String getId() {
         return id;
@@ -110,6 +114,14 @@ public class AuthorizationCodeMongo {
 
     public void setScopes(Set<String> scopes) {
         this.scopes = scopes;
+    }
+
+    public Document getRequestParameters() {
+        return requestParameters;
+    }
+
+    public void setRequestParameters(Document requestParameters) {
+        this.requestParameters = requestParameters;
     }
 
     @Override
