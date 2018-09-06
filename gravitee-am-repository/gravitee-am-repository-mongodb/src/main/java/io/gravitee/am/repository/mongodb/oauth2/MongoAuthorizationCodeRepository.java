@@ -22,6 +22,8 @@ import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.AuthorizationCodeMongo;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
+import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -30,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -99,6 +102,11 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         authorizationCode.setRedirectUri(authorizationCodeMongo.getRedirectUri());
         authorizationCode.setScopes(authorizationCodeMongo.getScopes());
 
+        if (authorizationCodeMongo.getRequestParameters() != null) {
+            MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
+            authorizationCodeMongo.getRequestParameters().entrySet().forEach(entry -> requestParameters.put(entry.getKey(), (List<String>) entry.getValue()));
+            authorizationCode.setRequestParameters(requestParameters);
+        }
         return authorizationCode;
     }
 
@@ -117,6 +125,13 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         authorizationCodeMongo.setRedirectUri(authorizationCode.getRedirectUri());
         authorizationCodeMongo.setScopes(authorizationCode.getScopes());
 
+        if (authorizationCode.getRequestParameters() != null) {
+            Document document = new Document();
+            authorizationCode.getRequestParameters().forEach((key, value) -> {
+                document.append(key, value);
+            });
+            authorizationCodeMongo.setRequestParameters(document);
+        }
         return authorizationCodeMongo;
     }
 }
