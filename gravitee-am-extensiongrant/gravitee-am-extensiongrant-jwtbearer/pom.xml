@@ -31,7 +31,7 @@
     <name>Gravitee IO - Access Management - Extension Grant JWT Bearer</name>
 
     <properties>
-        <jjwt.version>0.7.0</jjwt.version>
+        <jjwt.version>0.9.1</jjwt.version>
     </properties>
 
     <dependencies>
