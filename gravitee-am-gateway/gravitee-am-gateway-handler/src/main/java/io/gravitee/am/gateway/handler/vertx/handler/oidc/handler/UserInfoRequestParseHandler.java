@@ -21,8 +21,11 @@ import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+
+import java.util.Arrays;
 
 /**
  * The Client sends the UserInfo Request using either HTTP GET or HTTP POST.
@@ -37,6 +40,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 public class UserInfoRequestParseHandler implements Handler<RoutingContext> {
 
     private static final String BEARER = "Bearer";
+    private static final String ACCESS_TOKEN_PARAM = "access_token";
+    private static final String OPENID_SCOPE = "openid";
     private TokenService tokenService;
 
     public UserInfoRequestParseHandler() {
@@ -49,23 +54,38 @@ public class UserInfoRequestParseHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext context) {
         final HttpServerRequest request = context.request();
-        final String authorization = request.headers().get(HttpHeaders.AUTHORIZATION);
+        String accessToken = null;
 
-        if (authorization == null) {
-            throw new InvalidRequestException("An access token is required");
+        // Try to get the access token from the body request
+        if (request.method().equals(HttpMethod.POST)) {
+            accessToken = context.request().getParam(ACCESS_TOKEN_PARAM);
         }
 
-        int idx = authorization.indexOf(' ');
-        if (idx <= 0 || !BEARER.equalsIgnoreCase(authorization.substring(0, idx))) {
-            throw new InvalidRequestException("The access token must be sent using the Authorization header field");
-        }
+        // no access token try to get one from the HTTP Authorization header
+        if (accessToken == null || accessToken.isEmpty()) {
+            final String authorization = request.headers().get(HttpHeaders.AUTHORIZATION);
 
-        final String accessToken = authorization.substring(idx + 1);
+            if (authorization == null) {
+                throw new InvalidRequestException("An access token is required");
+            }
+
+            int idx = authorization.indexOf(' ');
+            if (idx <= 0 || !BEARER.equalsIgnoreCase(authorization.substring(0, idx))) {
+                throw new InvalidRequestException("The access token must be sent using the Authorization header field");
+            }
+
+            accessToken = authorization.substring(idx + 1);
+        }
 
         tokenService.getAccessToken(accessToken)
                 .map(accessToken1 -> {
                     if (accessToken1.getExpiresIn() == 0) {
                         throw new InvalidTokenException("The access token expired");
+                    }
+                    // The Access Token must be obtained from an OpenID Connect Authentication Request (i.e should have at least openid scope)
+                    // https://openid.net/specs/openid-connect-core-1_0.html#UserInfoRequest
+                    if (accessToken1.getScope() == null || !Arrays.asList(accessToken1.getScope().split("\\s+")).contains(OPENID_SCOPE)) {
+                        throw new InvalidTokenException("Invalid access token scopes. The access token should have at least 'openid' scope");
                     }
                     return accessToken1;
                 })

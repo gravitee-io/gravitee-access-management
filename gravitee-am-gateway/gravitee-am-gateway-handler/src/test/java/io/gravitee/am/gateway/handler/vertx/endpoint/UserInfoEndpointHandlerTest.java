@@ -107,6 +107,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     public void shouldNotInvokeUserEndpoint_clientOnlyToken() throws Exception {
         AccessToken accessToken = new DefaultAccessToken("token");
         ((DefaultAccessToken) accessToken).setExpiresIn(100);
+        ((DefaultAccessToken) accessToken).setScope("openid");
 
         when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
 
@@ -119,6 +120,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     public void shouldNotInvokeUserEndpoint_userNotFound() throws Exception {
         AccessToken accessToken = new DefaultAccessToken("token");
         ((DefaultAccessToken) accessToken).setExpiresIn(100);
+        ((DefaultAccessToken) accessToken).setScope("openid");
 
         when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
         when(userService.findById(anyString())).thenReturn(Maybe.empty());
@@ -129,10 +131,46 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldInvokeUserEndpoint_noOpenIDScope_noScope() throws Exception {
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setSubject("user");
+        ((DefaultAccessToken) accessToken).setExpiresIn(100);
+
+        User user = new User();
+        user.setAdditionalInformation(Collections.singletonMap("sub", "user"));
+
+        when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+
+        testRequest(
+                HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized", null);
+    }
+
+    @Test
+    public void shouldInvokeUserEndpoint_noOpenIDScope() throws Exception {
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setSubject("user");
+        ((DefaultAccessToken) accessToken).setExpiresIn(100);
+        ((DefaultAccessToken) accessToken).setScope("read write");
+
+        User user = new User();
+        user.setAdditionalInformation(Collections.singletonMap("sub", "user"));
+
+        when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+
+        testRequest(
+                HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized", null);
+    }
+
+    @Test
     public void shouldInvokeUserEndpoint() throws Exception {
         AccessToken accessToken = new DefaultAccessToken("token");
         ((DefaultAccessToken) accessToken).setSubject("user");
         ((DefaultAccessToken) accessToken).setExpiresIn(100);
+        ((DefaultAccessToken) accessToken).setScope("openid");
 
         User user = new User();
         user.setAdditionalInformation(Collections.singletonMap("sub", "user"));
