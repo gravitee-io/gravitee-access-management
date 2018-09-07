@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationEndpointFailureHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationRequestParseHandler;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
@@ -79,8 +80,9 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
         SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
+        AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create();
         router.route("/oauth/authorize").handler(sessionHandler);
-        router.route(HttpMethod.GET, "/oauth/authorize").handler(authorizationEndpointHandler);
+        router.route(HttpMethod.GET, "/oauth/authorize").handler(authorizationRequestParseHandler).handler(authorizationEndpointHandler);
         router.route().failureHandler(new AuthorizationEndpointFailureHandler(domain, clientService));
     }
 
@@ -111,7 +113,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
 
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize?client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
@@ -141,7 +143,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
 
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize?client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
@@ -172,7 +174,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
 
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize?client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
@@ -294,6 +296,28 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     assertEquals("http://localhost:9999/callback#access_token=token&token_type=bearer&expires_in=0", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_noUser_prompt_none() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        when(domain.getPath()).thenReturn("test");
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&prompt=none",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback?error=login_required", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

@@ -19,12 +19,14 @@ import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InteractionRequiredException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Domain;
@@ -35,6 +37,8 @@ import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
 
 /**
  * The authorization endpoint is used to interact with the resource owner and obtain an authorization grant.
@@ -91,10 +95,19 @@ public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointH
                 .subscribe(authorizationRequest -> {
                     try {
                         if (!authorizationRequest.isApproved()) {
-                            // TODO should we put this data inside repository to handle cluster environment ?
-                            context.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
-                            String approvalPage = UriBuilderRequest.resolveProxyRequest(context.request(),"/" + domain.getPath() + "/oauth/confirm_access", null, false, false);
-                            doRedirect(context.response(), approvalPage);
+                            // check prompt value
+                            // if prompt=none and the Client does not have pre-configured consent for the requested Claims, throw interaction_required exception
+                            // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+                            // else redirect to consent user approval page
+                            String prompt = authorizationRequest.getRequestParameters().getFirst(OIDCParameters.PROMPT);
+                            if (prompt != null && Arrays.asList(prompt.split("\\s+")).contains("none")) {
+                                context.fail(new InteractionRequiredException());
+                            } else {
+                                // TODO should we put this data inside repository to handle cluster environment ?
+                                context.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
+                                String approvalPage = UriBuilderRequest.resolveProxyRequest(context.request(),"/" + domain.getPath() + "/oauth/confirm_access", null, false, false);
+                                doRedirect(context.response(), approvalPage);
+                            }
                         } else {
                             doRedirect(context.response(), buildRedirectUri(authorizationRequest));
                         }

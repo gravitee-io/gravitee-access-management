@@ -16,12 +16,17 @@
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.AuthorizationRequestFactory;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * The authorization server validates the request to ensure that all required parameters are present and valid.
@@ -53,7 +58,26 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
             throw new InvalidRequestException("A client id is required");
         }
 
+        // proceed prompt parameter
+        parsePromptParameter(context);
+
         context.next();
+    }
+
+    protected final void parsePromptParameter(RoutingContext context) {
+        String prompt = context.request().getParam(OIDCParameters.PROMPT);
+
+        if (prompt != null) {
+            // retrieve prompt values (prompt parameter is a space delimited, case sensitive list of ASCII string values)
+            // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+            List<String> promptValues = Arrays.asList(prompt.split("\\s+"));
+
+            // The Authorization Server MUST NOT display any authentication or consent user interface pages.
+            // An error is returned if an End-User is not already authenticated.
+            if (promptValues.contains("none") && context.user() == null) {
+                throw new LoginRequiredException();
+            }
+        }
     }
 
     public static AuthorizationRequestParseHandler create() {
