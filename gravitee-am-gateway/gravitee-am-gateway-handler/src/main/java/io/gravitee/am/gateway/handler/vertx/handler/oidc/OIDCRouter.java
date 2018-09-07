@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.ProviderJWKSet
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.UserInfoEndpoint;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.handler.UserInfoRequestParseHandler;
 import io.gravitee.am.gateway.service.UserService;
+import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.Vertx;
@@ -84,6 +85,7 @@ public class OIDCRouter {
                 .handler(userInfoEndpoint);
         router
                 .route(HttpMethod.POST, "/userinfo")
+                .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(userInfoRequestParseHandler)
                 .handler(userInfoEndpoint);
 
