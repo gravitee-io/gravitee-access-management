@@ -20,7 +20,6 @@ import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -60,6 +59,9 @@ public class AccessTokenMongo {
      * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
      */
     private Document additionalInformation;
+
+    @BsonProperty("requested_parameters")
+    private Document requestedParameters;
 
     public String getId() {
         return id;
@@ -147,6 +149,14 @@ public class AccessTokenMongo {
 
     public void setAdditionalInformation(Document additionalInformation) {
         this.additionalInformation = additionalInformation;
+    }
+
+    public Document getRequestedParameters() {
+        return requestedParameters;
+    }
+
+    public void setRequestedParameters(Document requestedParameters) {
+        this.requestedParameters = requestedParameters;
     }
 
     @Override

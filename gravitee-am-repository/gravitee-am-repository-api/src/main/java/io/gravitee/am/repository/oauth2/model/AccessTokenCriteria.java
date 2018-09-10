@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.oauth2.model;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -26,12 +27,14 @@ public class AccessTokenCriteria {
     private final String subject;
     private final Set<String> scopes;
     private final String grantType;
+    private final Map<String, String> requestedParameters;
 
     public AccessTokenCriteria(Builder builder) {
         clientId = builder.clientId;
         subject = builder.subject;
         scopes = builder.scopes;
         grantType = builder.grantType;
+        requestedParameters = builder.requestedParameters;
     }
 
     public String getClientId() {
@@ -50,11 +53,16 @@ public class AccessTokenCriteria {
         return grantType;
     }
 
+    public Map<String, String> getRequestedParameters() {
+        return requestedParameters;
+    }
+
     public static class Builder {
         private String clientId;
         private String subject;
         private Set<String> scopes;
         private String grantType;
+        private Map<String, String> requestedParameters;
 
         public Builder clientId(String clientId) {
             this.clientId = clientId;
@@ -73,6 +81,11 @@ public class AccessTokenCriteria {
 
         public Builder grantType(String grantType) {
             this.grantType = grantType;
+            return this;
+        }
+
+        public Builder requestedParameters(Map<String, String> requestedParameters) {
+            this.requestedParameters = requestedParameters;
             return this;
         }
 

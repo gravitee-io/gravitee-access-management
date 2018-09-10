@@ -21,17 +21,20 @@ import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessTokenCriteria;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
+import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 
@@ -196,6 +199,9 @@ public class TokenServiceImpl implements TokenService {
         if (!oAuth2Request.isClientOnly()) {
             accessToken.setSubject(oAuth2Request.getSubject());
         }
+        if (oAuth2Request.getRequestParameters() != null) {
+            accessToken.setRequestedParameters(oAuth2Request.getRequestParameters().toSingleValueMap());
+        }
         return accessToken;
     }
 
@@ -222,6 +228,14 @@ public class TokenServiceImpl implements TokenService {
         builder.grantType(oAuth2Request.getGrantType());
         if (!oAuth2Request.isClientOnly()) {
             builder.subject(oAuth2Request.getSubject());
+        }
+        // for now, only 'nonce' parameter is used to request for an access token
+        MultiValueMap<String, String> requestParameters = oAuth2Request.getRequestParameters();
+        if (requestParameters != null) {
+            String nonce = requestParameters.getFirst(OIDCParameters.NONCE);
+            if (nonce != null) {
+                builder.requestedParameters(Collections.singletonMap(OIDCParameters.NONCE, nonce));
+            }
         }
         return builder.build();
     }
