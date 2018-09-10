@@ -46,6 +46,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.Date;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -318,6 +319,126 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     assertEquals("http://localhost:9999/callback?error=login_required", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_user_max_age() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(false);
+
+        when(domain.getPath()).thenReturn("test");
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(approvalService.checkApproval(any(), any(), any())).thenReturn(Single.just(authorizationRequest));
+
+        router.route().order(-1).handler(new Handler<RoutingContext>() {
+            @Override
+            public void handle(RoutingContext routingContext) {
+                io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+                endUser.setLoggedAt(new Date(System.currentTimeMillis()-24*60*60*1000));
+                routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(endUser)));
+                routingContext.next();
+            }
+        });
+
+        // user is logged since yesterday, he must be redirected to the login page
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&max_age=1",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback?error=access_denied", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_user_max_age_prompt_none() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(false);
+
+        when(domain.getPath()).thenReturn("test");
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(approvalService.checkApproval(any(), any(), any())).thenReturn(Single.just(authorizationRequest));
+
+        router.route().order(-1).handler(new Handler<RoutingContext>() {
+            @Override
+            public void handle(RoutingContext routingContext) {
+                io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+                endUser.setLoggedAt(new Date(System.currentTimeMillis()-24*60*60*1000));
+                routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(endUser)));
+                routingContext.next();
+            }
+        });
+
+        // user is logged since yesterday, he must be redirected to the login page
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&max_age=1&prompt=none",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback?error=login_required", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_max_age() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(OAuth2Constants.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        AuthorizationCode code = new AuthorizationCode();
+        code.setCode("test-code");
+
+        when(domain.getPath()).thenReturn("test");
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(approvalService.checkApproval(any(), any(), any())).thenReturn(Single.just(authorizationRequest));
+        when(authorizationCodeService.create(any(), any())).thenReturn(Single.just(code));
+
+        router.route().order(-1).handler(new Handler<RoutingContext>() {
+            @Override
+            public void handle(RoutingContext routingContext) {
+                io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+                endUser.setLoggedAt(new Date(System.currentTimeMillis()- 60*1000));
+                routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(new io.gravitee.am.model.User())));
+                routingContext.next();
+            }
+        });
+
+        // user is logged for 1 min, the max_age is big enough to validate the request
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&max_age=120",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback?code=test-code", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

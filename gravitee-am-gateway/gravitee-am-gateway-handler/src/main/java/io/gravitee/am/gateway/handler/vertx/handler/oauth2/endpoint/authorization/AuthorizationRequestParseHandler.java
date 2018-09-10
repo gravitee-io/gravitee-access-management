@@ -24,9 +24,11 @@ import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.AuthorizationRequestFactory;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -41,6 +43,7 @@ import java.util.List;
  */
 public class AuthorizationRequestParseHandler implements Handler<RoutingContext> {
 
+    private static final String RETURN_FROM_LOGIN_PAGE = "return_from_login_page";
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
 
     @Override
@@ -62,8 +65,11 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         // proceed prompt parameter
         parsePromptParameter(context);
 
-        // proceed prompt parameter
+        // proceed pkce parameter
         parsePKCEParameter(context);
+
+        // proceed max_age parameter
+        parseMaxAgeParameter(context);
 
         context.next();
     }
@@ -113,6 +119,47 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         // Check that code challenge is valid
         if (!PKCEUtils.validCodeChallenge(codeChallenge)) {
             throw new InvalidRequestException("Invalid parameter: code_challenge");
+        }
+    }
+
+    private void parseMaxAgeParameter(RoutingContext context) {
+        // if user is already authenticated and if the last login date is greater than the max age parameter,
+        // the OP MUST attempt to actively re-authenticate the End-User.
+        User authenticatedUser = context.user();
+        if (authenticatedUser == null || !(authenticatedUser.getDelegate() instanceof io.gravitee.am.gateway.handler.vertx.auth.user.User)) {
+            // user not authenticated, continue
+            return;
+        }
+
+        String maxAge = context.request().getParam(OIDCParameters.MAX_AGE);
+        if (maxAge == null || !maxAge.matches("-?\\d+")) {
+            // none or invalid max age, continue
+            return;
+        }
+
+        io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.vertx.auth.user.User) authenticatedUser.getDelegate()).getUser();
+        Date loggedAt = endUser.getLoggedAt();
+        if (loggedAt == null) {
+            // user has no last login date, continue
+            return;
+        }
+
+        // check the elapsed user session duration
+        if (context.session() != null) {
+            long elapsedLoginTime = (System.currentTimeMillis() - loggedAt.getTime()) / 1000L;
+            Long maxAgeValue = Long.valueOf(maxAge);
+            if (maxAgeValue < elapsedLoginTime) {
+                // check if the user doesn't come from the login page
+                Boolean returnFromLoginPage = context.session().get(RETURN_FROM_LOGIN_PAGE);
+                if (returnFromLoginPage == null || !returnFromLoginPage) {
+                    // should we logout the user or just force it to go to the login page ?
+                    context.clearUser();
+                    // check prompt parameter in case the user set 'none' option
+                    parsePromptParameter(context);
+                }
+            }
+            // clean up session
+            context.session().remove(RETURN_FROM_LOGIN_PAGE);
         }
     }
 
