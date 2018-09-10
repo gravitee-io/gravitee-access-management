@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
 import io.gravitee.am.gateway.handler.oidc.utils.OIDCClaims;
 import io.gravitee.am.gateway.service.RoleService;
 import io.gravitee.am.gateway.service.UserService;
@@ -31,7 +32,6 @@ import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -175,6 +175,14 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
         String nonce = oAuth2Request.getRequestParameters().getFirst(OIDCClaims.nonce);
         if (nonce != null && !nonce.isEmpty()) {
             IDToken.put(OIDCClaims.nonce, nonce);
+        }
+
+        // set auth_time (Time when the End-User authentication occurred.)
+        if (!oAuth2Request.isClientOnly() && user != null && user.getLoggedAt() != null) {
+            String maxAge = oAuth2Request.getRequestParameters().getFirst(OIDCParameters.MAX_AGE);
+            if (maxAge != null) {
+                IDToken.put(OIDCClaims.auth_time, user.getLoggedAt().getTime() / 1000l);
+            }
         }
 
         // override claims for an end-user

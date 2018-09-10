@@ -17,12 +17,24 @@ package io.gravitee.am.gateway.handler.oauth2.utils;
 
 /**
  * See <a href="https://www.iana.org/assignments/oauth-parameters/oauth-parameters.xhtml">OAuth 2.0 parameters</a>
+ * See <a href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">3.1.2.1.  Authentication Request</a>
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface OIDCParameters {
 
+    /**
+     * OPTIONAL. Space delimited, case sensitive list of ASCII string values that specifies whether the Authorization Server prompts the End-User for reauthentication and consent.
+     */
     String PROMPT = "prompt";
+    /**
+     * OPTIONAL. String value used to associate a Client session with an ID Token, and to mitigate replay attacks.
+     */
     String NONCE = "nonce";
+    /**
+     * OPTIONAL. Maximum Authentication Age. Specifies the allowable elapsed time in seconds since the last time the End-User was actively authenticated by the OP.
+     * If the elapsed time is greater than this value, the OP MUST attempt to actively re-authenticate the End-User.
+     */
+    String MAX_AGE = "max_age";
 }
