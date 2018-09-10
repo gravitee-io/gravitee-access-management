@@ -32,10 +32,13 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -53,15 +56,41 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     private static final String FIELD_ID = "_id";
     private static final String FIELD_REQUESTED_SCOPES = "requested_scopes";
     private static final String FIELD_GRANT_TYPE = "grant_type";
+    private static final String FIELD_REQUESTED_PARAMETERS = "requested_parameters";
+    private static final String FIELD_NONCE = "nonce";
 
     @PostConstruct
     public void init() {
         accessTokenCollection = mongoOperations.getCollection("access_tokens", AccessTokenMongo.class);
-        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1)).subscribe(new LoggableIndexSubscriber());
-        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1)).subscribe(new LoggableIndexSubscriber());
-        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1).append(FIELD_REQUESTED_SCOPES, 1)).subscribe(new LoggableIndexSubscriber());
-        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1).append(FIELD_REQUESTED_SCOPES, 1).append(FIELD_GRANT_TYPE, 1)).subscribe(new LoggableIndexSubscriber());
+
+        // one field index
         accessTokenCollection.createIndex(new Document(FIELD_TOKEN, 1)).subscribe(new LoggableIndexSubscriber());
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1)).subscribe(new LoggableIndexSubscriber());
+
+        // two fields index
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1)).subscribe(new LoggableIndexSubscriber());
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_REQUESTED_SCOPES, 1)).subscribe(new LoggableIndexSubscriber());
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_GRANT_TYPE, 1)).subscribe(new LoggableIndexSubscriber());
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_REQUESTED_PARAMETERS + "." + FIELD_NONCE, 1)).subscribe(new LoggableIndexSubscriber());
+
+        // three fields index (with subject)
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1).append(FIELD_REQUESTED_SCOPES, 1)).subscribe(new LoggableIndexSubscriber());
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1).append(FIELD_GRANT_TYPE, 1)).subscribe(new LoggableIndexSubscriber());
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1).append(FIELD_REQUESTED_PARAMETERS + "." + FIELD_NONCE, 1)).subscribe(new LoggableIndexSubscriber());
+
+        // three fields index (without subject)
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_REQUESTED_SCOPES, 1).append(FIELD_GRANT_TYPE, 1)).subscribe(new LoggableIndexSubscriber());
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_REQUESTED_SCOPES, 1).append(FIELD_REQUESTED_PARAMETERS + "." + FIELD_NONCE, 1)).subscribe(new LoggableIndexSubscriber());
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_GRANT_TYPE, 1).append(FIELD_REQUESTED_PARAMETERS + "." + FIELD_NONCE, 1)).subscribe(new LoggableIndexSubscriber());
+
+        // four fields index
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_REQUESTED_SCOPES, 1).append(FIELD_GRANT_TYPE, 1).append(FIELD_SUBJECT, 1)).subscribe(new LoggableIndexSubscriber());
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_REQUESTED_SCOPES, 1).append(FIELD_GRANT_TYPE, 1).append(FIELD_REQUESTED_PARAMETERS + "." + FIELD_NONCE, 1)).subscribe(new LoggableIndexSubscriber());
+
+        // max fields index
+        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_REQUESTED_SCOPES, 1).append(FIELD_GRANT_TYPE, 1).append(FIELD_SUBJECT, 1).append(FIELD_REQUESTED_PARAMETERS + "." + FIELD_NONCE, 1)).subscribe(new LoggableIndexSubscriber());
+
+        // expire after index
         accessTokenCollection.createIndex(new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS)).subscribe(new LoggableIndexSubscriber());
     }
 
@@ -131,6 +160,10 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
             filters.add(eq(FIELD_GRANT_TYPE, accessTokenCriteria.getGrantType()));
         }
 
+        if (accessTokenCriteria.getRequestedParameters() != null) {
+            accessTokenCriteria.getRequestedParameters().forEach((key, value) -> filters.add(eq(FIELD_REQUESTED_PARAMETERS + "." + key, value)));
+        }
+
         // no filter selected, return empty
         if (filters.isEmpty()) {
             return Maybe.empty();
@@ -157,6 +190,12 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessTokenMongo.setGrantType(accessToken.getGrantType());
         accessTokenMongo.setAdditionalInformation(accessToken.getAdditionalInformation() != null ? new Document(accessToken.getAdditionalInformation()) : new Document());
 
+        if (accessToken.getRequestedParameters() != null) {
+            Document document = new Document();
+            accessToken.getRequestedParameters().forEach((key, value) -> document.append(key, value));
+            accessTokenMongo.setRequestedParameters(document);
+        }
+
         return accessTokenMongo;
     }
 
@@ -177,6 +216,12 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessToken.setScopes(accessTokenMongo.getScopes());
         accessToken.setGrantType(accessTokenMongo.getGrantType());
         accessToken.setAdditionalInformation(accessTokenMongo.getAdditionalInformation());
+
+        if (accessTokenMongo.getRequestedParameters() != null) {
+            Map<String, String> requestParameters = new HashMap<>();
+            accessTokenMongo.getRequestedParameters().entrySet().forEach(entry -> requestParameters.put(entry.getKey(), (String) entry.getValue()));
+            accessToken.setRequestedParameters(requestParameters);
+        }
 
         return accessToken;
     }

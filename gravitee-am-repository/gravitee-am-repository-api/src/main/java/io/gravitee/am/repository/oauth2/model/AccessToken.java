@@ -81,6 +81,11 @@ public class AccessToken {
      */
     private Map<String, Object> additionalInformation = new HashMap<>();
 
+    /**
+     * The Authorization/Token request parameters
+     */
+    private Map<String,String> requestedParameters;
+
     public String getId() {
         return id;
     }
@@ -167,6 +172,14 @@ public class AccessToken {
 
     public void setAdditionalInformation(Map<String, Object> additionalInformation) {
         this.additionalInformation = additionalInformation;
+    }
+
+    public Map<String, String> getRequestedParameters() {
+        return requestedParameters;
+    }
+
+    public void setRequestedParameters(Map<String, String> requestedParameters) {
+        this.requestedParameters = requestedParameters;
     }
 
     @Override

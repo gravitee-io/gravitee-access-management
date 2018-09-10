@@ -24,4 +24,5 @@ package io.gravitee.am.gateway.handler.oauth2.utils;
 public interface OIDCParameters {
 
     String PROMPT = "prompt";
+    String NONCE = "nonce";
 }

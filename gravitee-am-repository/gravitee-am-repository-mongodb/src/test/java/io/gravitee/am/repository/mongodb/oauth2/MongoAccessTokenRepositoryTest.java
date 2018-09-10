@@ -22,6 +22,7 @@ import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -130,11 +131,13 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
         token.setSubject("my-subject-3");
         token.setRequestedScopes(Collections.singleton("read"));
         token.setScopes(Collections.singleton("read"));
+        token.setRequestedParameters(Collections.singletonMap("nonce", "test-nonce"));
 
         AccessTokenCriteria.Builder builder = new AccessTokenCriteria.Builder();
         builder.clientId("my-client-id-3");
         builder.subject("my-subject-3");
         builder.scopes(Collections.singleton("read"));
+        builder.requestedParameters(Collections.singletonMap("nonce", "test-nonce"));
 
         TestObserver<AccessToken> observer = accessTokenRepository.create(token)
                 .toCompletable()
