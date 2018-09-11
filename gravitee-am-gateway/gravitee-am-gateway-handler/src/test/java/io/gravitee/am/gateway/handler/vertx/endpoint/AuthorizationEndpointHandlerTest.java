@@ -322,4 +322,151 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 HttpStatusCode.FOUND_302, "Found", null);
     }
 
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_noUser_code_challenge_method_without_code_challenge() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        when(domain.getPath()).thenReturn("test");
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&code_challenge_method=plain",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback?error=invalid_request&error_description=Missing+parameter%253A+code_challenge", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_noUser_invalid_code_challenge_method() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        when(domain.getPath()).thenReturn("test");
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&code_challenge_method=invalid&code_challenge=challenge",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback?error=invalid_request&error_description=Invalid+parameter%253A+code_challenge_method", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_noUser_invalid_code_challenge() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        when(domain.getPath()).thenReturn("test");
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&code_challenge_method=plain&code_challenge=challenge",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback?error=invalid_request&error_description=Invalid+parameter%253A+code_challenge", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_noUser_code_challenge_valid_plain() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(OAuth2Constants.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        AuthorizationCode code = new AuthorizationCode();
+        code.setCode("test-code");
+
+        when(domain.getPath()).thenReturn("test");
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(approvalService.checkApproval(any(), any(), any())).thenReturn(Single.just(authorizationRequest));
+        when(authorizationCodeService.create(any(), any())).thenReturn(Single.just(code));
+
+        router.route().order(-1).handler(new Handler<RoutingContext>() {
+            @Override
+            public void handle(RoutingContext routingContext) {
+                routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(new io.gravitee.am.model.User())));
+                routingContext.next();
+            }
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&code_challenge_method=plain&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback?code=test-code", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_noUser_code_challenge_valid_s256() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(OAuth2Constants.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        AuthorizationCode code = new AuthorizationCode();
+        code.setCode("test-code");
+
+        when(domain.getPath()).thenReturn("test");
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(approvalService.checkApproval(any(), any(), any())).thenReturn(Single.just(authorizationRequest));
+        when(authorizationCodeService.create(any(), any())).thenReturn(Single.just(code));
+
+        router.route().order(-1).handler(new Handler<RoutingContext>() {
+            @Override
+            public void handle(RoutingContext routingContext) {
+                routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(new io.gravitee.am.model.User())));
+                routingContext.next();
+            }
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&code_challenge_method=S256&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback?code=test-code", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
 }
