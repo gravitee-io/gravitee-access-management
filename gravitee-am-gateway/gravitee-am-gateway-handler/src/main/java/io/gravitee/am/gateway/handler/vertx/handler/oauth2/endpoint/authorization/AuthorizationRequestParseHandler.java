@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorizati
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
+import io.gravitee.am.gateway.handler.oauth2.pkce.PKCEUtils;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
@@ -61,10 +62,13 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         // proceed prompt parameter
         parsePromptParameter(context);
 
+        // proceed prompt parameter
+        parsePKCEParameter(context);
+
         context.next();
     }
 
-    protected final void parsePromptParameter(RoutingContext context) {
+    private void parsePromptParameter(RoutingContext context) {
         String prompt = context.request().getParam(OIDCParameters.PROMPT);
 
         if (prompt != null) {
@@ -77,6 +81,38 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
             if (promptValues.contains("none") && context.user() == null) {
                 throw new LoginRequiredException();
             }
+        }
+    }
+
+    private void parsePKCEParameter(RoutingContext context) {
+        String codeChallenge = context.request().getParam(OAuth2Constants.CODE_CHALLENGE);
+        String codeChallengeMethod = context.request().getParam(OAuth2Constants.CODE_CHALLENGE_METHOD);
+
+        if (codeChallenge == null && codeChallengeMethod != null) {
+            throw new InvalidRequestException("Missing parameter: code_challenge");
+        }
+
+        if (codeChallenge == null) {
+            // No code challenge provided by client
+            return;
+        }
+
+        if (codeChallengeMethod != null) {
+            // https://tools.ietf.org/html/rfc7636#section-4.2
+            // It must be plain or S256
+            if (!OAuth2Constants.PKCE_METHOD_S256.equalsIgnoreCase(codeChallengeMethod) &&
+                    !OAuth2Constants.PKCE_METHOD_PLAIN.equalsIgnoreCase(codeChallengeMethod)) {
+                throw new InvalidRequestException("Invalid parameter: code_challenge_method");
+            }
+        } else {
+            // https://tools.ietf.org/html/rfc7636#section-4.3
+            // Default code challenge is plain
+            context.request().params().set(OAuth2Constants.CODE_CHALLENGE_METHOD, OAuth2Constants.PKCE_METHOD_PLAIN);
+        }
+
+        // Check that code challenge is valid
+        if (!PKCEUtils.validCodeChallenge(codeChallenge)) {
+            throw new InvalidRequestException("Invalid parameter: code_challenge");
         }
     }
 

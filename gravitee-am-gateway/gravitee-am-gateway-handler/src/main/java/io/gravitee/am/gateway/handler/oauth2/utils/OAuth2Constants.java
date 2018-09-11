@@ -49,4 +49,19 @@ public interface OAuth2Constants {
     String USER_OAUTH_APPROVAL = "user_oauth_approval";
 
     String SCOPE_PREFIX = "scope.";
+
+    /**
+     * Next constants are defined for PKCE support.
+     * See <a href="https://tools.ietf.org/html/rfc7636#section-6.1">PKCE</a>
+     */
+    String CODE_CHALLENGE = "code_challenge";
+    String CODE_CHALLENGE_METHOD = "code_challenge_method";
+    String CODE_VERIFIER = "code_verifier";
+
+    /**
+     * Next constants are defined for PKCE support.
+     * See <a href="https://tools.ietf.org/html/rfc7636#section-6.2.2">PKCE</a>
+     */
+    String PKCE_METHOD_PLAIN = "plain";
+    String PKCE_METHOD_S256 = "S256";
 }
