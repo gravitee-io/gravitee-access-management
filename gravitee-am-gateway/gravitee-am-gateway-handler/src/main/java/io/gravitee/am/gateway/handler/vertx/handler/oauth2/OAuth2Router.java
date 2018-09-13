@@ -103,7 +103,7 @@ public class OAuth2Router {
                 userAuthProvider.getDelegate(), '/' + domain.getPath() + "/login");
 
         // create other handlers
-        final AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create();
+        final AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain);
 
         // Bind OAuth2 endpoints
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(authorizationCodeService, tokenGranter, clientService, approvalService, domain);
