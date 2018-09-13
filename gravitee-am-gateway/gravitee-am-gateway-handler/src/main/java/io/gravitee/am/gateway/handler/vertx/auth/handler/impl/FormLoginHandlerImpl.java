@@ -45,7 +45,6 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
 
     private static final Logger log = LoggerFactory.getLogger(FormLoginHandlerImpl.class);
     private static final String DEFAULT_DIRECT_LOGGED_IN_OK_PAGE = "<html><body><h1>Login successful</h1></body></html>";
-    private static final String RETURN_FROM_LOGIN_PAGE = "return_from_login_page";
     private String usernameParam;
     private String passwordParam;
     private String returnURLParam;
@@ -91,9 +90,6 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
                             // the user has upgraded from unauthenticated to authenticated
                             // session should be upgraded as recommended by owasp
                             session.regenerateId();
-
-                            // Note : keep in session that the user has just logged in
-                            session.put(RETURN_FROM_LOGIN_PAGE, true);
 
                             // Note : keep returnURLParam in session in case the user go to previous page
                             // String returnURL = session.remove(returnURLParam);

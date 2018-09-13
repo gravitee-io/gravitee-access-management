@@ -22,11 +22,17 @@ import io.gravitee.am.gateway.handler.oauth2.pkce.PKCEUtils;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
+import io.gravitee.am.gateway.handler.utils.UriBuilder;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.AuthorizationRequestFactory;
+import io.gravitee.am.model.Domain;
+import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -43,8 +49,13 @@ import java.util.List;
  */
 public class AuthorizationRequestParseHandler implements Handler<RoutingContext> {
 
-    private static final String RETURN_FROM_LOGIN_PAGE = "return_from_login_page";
+    private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseHandler.class);
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
+    private Domain domain;
+
+    public AuthorizationRequestParseHandler(Domain domain) {
+        this.domain = domain;
+    }
 
     @Override
     public void handle(RoutingContext context) {
@@ -86,6 +97,14 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
             // An error is returned if an End-User is not already authenticated.
             if (promptValues.contains("none") && context.user() == null) {
                 throw new LoginRequiredException();
+            }
+
+            // The Authentication Request contains the prompt parameter with the value login.
+            // In this case, the Authorization Server MUST reauthenticate the End-User even if the End-User is already authenticated.
+            if (promptValues.contains("login") && context.user() != null) {
+                if (!returnFromLoginPage(context)) {
+                    context.clearUser();
+                }
             }
         }
     }
@@ -145,25 +164,30 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         }
 
         // check the elapsed user session duration
-        if (context.session() != null) {
-            long elapsedLoginTime = (System.currentTimeMillis() - loggedAt.getTime()) / 1000L;
-            Long maxAgeValue = Long.valueOf(maxAge);
-            if (maxAgeValue < elapsedLoginTime) {
-                // check if the user doesn't come from the login page
-                Boolean returnFromLoginPage = context.session().get(RETURN_FROM_LOGIN_PAGE);
-                if (returnFromLoginPage == null || !returnFromLoginPage) {
-                    // should we logout the user or just force it to go to the login page ?
-                    context.clearUser();
-                    // check prompt parameter in case the user set 'none' option
-                    parsePromptParameter(context);
-                }
+        long elapsedLoginTime = (System.currentTimeMillis() - loggedAt.getTime()) / 1000L;
+        Long maxAgeValue = Long.valueOf(maxAge);
+        if (maxAgeValue < elapsedLoginTime) {
+            // check if the user doesn't come from the login page
+            if (!returnFromLoginPage(context)) {
+                // should we logout the user or just force it to go to the login page ?
+                context.clearUser();
+                // check prompt parameter in case the user set 'none' option
+                parsePromptParameter(context);
             }
-            // clean up session
-            context.session().remove(RETURN_FROM_LOGIN_PAGE);
         }
     }
 
-    public static AuthorizationRequestParseHandler create() {
-        return new AuthorizationRequestParseHandler();
+    private boolean returnFromLoginPage(RoutingContext context) {
+        String referer = context.request().headers().get(HttpHeaders.REFERER);
+        try {
+            return referer != null && UriBuilder.fromURIString(referer).build().getPath().contains('/' + domain.getPath() + "/login");
+        } catch (URISyntaxException e) {
+            logger.debug("Unable to calculate referer url : {}", referer, e);
+            return false;
+        }
+    }
+
+    public static AuthorizationRequestParseHandler create(Domain domain) {
+        return new AuthorizationRequestParseHandler(domain);
     }
 }
