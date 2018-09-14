@@ -28,9 +28,9 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.common.util.MultiValueMap;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.impl.crypto.MacSigner;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -43,6 +43,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.security.Key;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -290,5 +292,57 @@ public class TokenEnhancerTest {
         verify(certificateProvider, never()).sign(anyString());
         verify(roleService, never()).findByIdIn(anyList());
     }
+
+    @Test
+    public void shouldEnhanceToken_withIDToken_withUser_claimsRequest() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Collections.singleton("openid"));
+        oAuth2Request.setSubject("subject");
+        MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
+        requestParameters.put("claims", Collections.singletonList("{\"id_token\":{\"name\":{\"essential\":true}}}"));
+        oAuth2Request.setRequestParameters(requestParameters);
+
+        Client client = new Client();
+
+        User user = new User();
+        Map<String, Object> additionalInformation  = new HashMap<>();
+        additionalInformation.put("sub", "user");
+        additionalInformation.put("name", "gravitee user");
+        additionalInformation.put("family_name", "gravitee");
+        user.setAdditionalInformation(additionalInformation);
+
+        AccessToken accessToken = new AccessToken();
+        accessToken.setId("token-id");
+        accessToken.setToken("token-id");
+        accessToken.setScopes(Collections.singleton("openid"));
+
+        Key key = MacSigner.generateKey();
+        JwtParser parser = Jwts.parser().setSigningKey(key);
+        jwtBuilder = Jwts.builder().signWith(SignatureAlgorithm.HS512, key);
+        ((TokenEnhancerImpl) tokenEnhancer).setJwtBuilder(jwtBuilder);
+
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
+        when(certificateManager.get(anyString())).thenReturn(Maybe.empty());
+
+        TestObserver<AccessToken> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(accessToken1 -> accessToken1.getAdditionalInformation().containsKey("id_token"));
+        testObserver.assertValue(accessToken1 -> {
+            String idToken = (String) accessToken1.getAdditionalInformation().get("id_token");
+            Jwt jwt = parser.parse(idToken);
+            Map<String, Object> claims = (Map<String, Object>) jwt.getBody();
+            return !claims.containsKey("family_name");
+        });
+
+        verify(clientService, times(1)).findByClientId(anyString());
+        verify(certificateManager, times(1)).get(anyString());
+        verify(certificateProvider, never()).sign(anyString());
+        verify(userService, times(1)).findById(anyString());
+    }
+
 
 }

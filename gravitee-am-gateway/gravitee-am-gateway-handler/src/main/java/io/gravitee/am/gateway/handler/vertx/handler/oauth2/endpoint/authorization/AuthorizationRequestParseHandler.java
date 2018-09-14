@@ -22,11 +22,15 @@ import io.gravitee.am.gateway.handler.oauth2.pkce.PKCEUtils;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
+import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequest;
+import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequestResolver;
+import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequestSyntaxException;
 import io.gravitee.am.gateway.handler.utils.UriBuilder;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.AuthorizationRequestFactory;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
+import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -51,6 +55,7 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseHandler.class);
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
+    private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
     private Domain domain;
 
     public AuthorizationRequestParseHandler(Domain domain) {
@@ -81,6 +86,9 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
 
         // proceed max_age parameter
         parseMaxAgeParameter(context);
+
+        // proceed claims parameter
+        parseClaimsParameter(context);
 
         context.next();
     }
@@ -173,6 +181,19 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
                 context.clearUser();
                 // check prompt parameter in case the user set 'none' option
                 parsePromptParameter(context);
+            }
+        }
+    }
+
+    private void parseClaimsParameter(RoutingContext context) {
+        String claims = context.request().getParam(OIDCParameters.CLAIMS);
+        if (claims != null) {
+            try {
+                ClaimsRequest claimsRequest = claimsRequestResolver.resolve(claims);
+                // save claims request as json string value (will be use for id_token and/or UserInfo endpoint)
+                context.request().params().set(OIDCParameters.CLAIMS, Json.encode(claimsRequest));
+            } catch (ClaimsRequestSyntaxException e) {
+                throw new InvalidRequestException("Invalid parameter: claims");
             }
         }
     }

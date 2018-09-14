@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
+import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequest;
 import io.gravitee.am.gateway.handler.oidc.utils.OIDCClaims;
 import io.gravitee.am.gateway.service.RoleService;
 import io.gravitee.am.gateway.service.UserService;
@@ -32,6 +33,7 @@ import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.common.util.MultiValueMap;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -186,14 +188,26 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
         }
 
         // override claims for an end-user
-        if (!oAuth2Request.isClientOnly() && client.getIdTokenCustomClaims() != null) {
-            if (user.getAdditionalInformation() != null && !user.getAdditionalInformation().isEmpty()) {
-                final Map<String, Object> userAdditionalInformation = user.getAdditionalInformation();
+        if (!oAuth2Request.isClientOnly() && user.getAdditionalInformation() != null && !user.getAdditionalInformation().isEmpty()) {
+            final Map<String, Object> userAdditionalInformation = user.getAdditionalInformation();
+            boolean requestForSpecificClaims = false;
+            // processing claims list
+            // 1. process the request using the claims values (If present, the listed Claims are being requested to be added to the default Claims in the ID Token)
+            // 2. If not present, check if the client has enabled the ID token mapping claims.
+            // 3. Else send all user claims
+            MultiValueMap<String, String> requestedParameters = oAuth2Request.getRequestParameters();
+            if (requestedParameters != null && requestedParameters.getFirst(OIDCParameters.CLAIMS) != null) {
+                requestForSpecificClaims = processClaimsRequest(requestedParameters.getFirst(OIDCParameters.CLAIMS), userAdditionalInformation, IDToken);
+            } else if (client.getIdTokenCustomClaims() != null) {
                 client.getIdTokenCustomClaims().forEach((key, value) -> {
                     if (userAdditionalInformation.get(value) != null) {
                         IDToken.put(key, userAdditionalInformation.get(value));
                     }
                 });
+                requestForSpecificClaims = true;
+            }
+            if (!requestForSpecificClaims) {
+                IDToken.putAll(userAdditionalInformation);
             }
         }
 
@@ -230,6 +244,30 @@ public class TokenEnhancerImpl implements TokenEnhancer, InitializingBean {
                 return null;
             }
         };
+    }
+
+    /**
+     * Handle claims request previously made during the authorization request
+     * @param claimsValue claims request parameter
+     * @param userClaims user full claims list
+     * @param requestedClaims requested claims
+     * @return true if id_token claims have been found
+     */
+    private boolean processClaimsRequest(String claimsValue, final Map<String, Object> userClaims, Map<String, Object> requestedClaims) {
+        try {
+            ClaimsRequest claimsRequest = objectMapper.readValue(claimsValue, ClaimsRequest.class);
+            if (claimsRequest != null && claimsRequest.getIdTokenClaims() != null) {
+                claimsRequest.getIdTokenClaims().forEach((key, value) -> {
+                    if (userClaims.containsKey(key)) {
+                        requestedClaims.putIfAbsent(key, userClaims.get(key));
+                    }
+                });
+                return true;
+            }
+        } catch (Exception e) {
+            // Any members used that are not understood MUST be ignored.
+        }
+        return false;
     }
 
     private class TokenEnhancerData {

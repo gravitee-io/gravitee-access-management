@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.ldap.authentication;
 
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -200,11 +201,11 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
             });
         } else {
             // default values
-            claims.put("sub", user.getUsername());
-            addClaim(claims, ldapEntry, "email", "mail");
-            addClaim(claims, ldapEntry, "name", "displayname");
-            addClaim(claims, ldapEntry, "given_name", "givenname");
-            addClaim(claims, ldapEntry, "family_name", "sn");
+            claims.put(StandardClaims.SUB, user.getUsername());
+            addClaim(claims, ldapEntry, StandardClaims.NAME, "displayname");
+            addClaim(claims, ldapEntry, StandardClaims.GIVEN_NAME, "givenname");
+            addClaim(claims, ldapEntry, StandardClaims.FAMILY_NAME, "sn");
+            addClaim(claims, ldapEntry, StandardClaims.EMAIL, "mail");
         }
         user.setAdditonalInformation(claims);
 

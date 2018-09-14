@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.mongo.authentication;
 
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -48,7 +49,6 @@ import java.util.Map;
 public class MongoAuthenticationProvider implements AuthenticationProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MongoAuthenticationProvider.class);
-    private static final String CLAIMS_SUB = "sub";
 
     @Autowired
     private MongoIdentityProviderMapper mapper;
@@ -93,7 +93,7 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
     private User createUser(String username, Document document) {
         DefaultUser user = new DefaultUser(username);
         Map<String, Object> claims = new HashMap<>();
-        claims.put(CLAIMS_SUB, username);
+        claims.put(StandardClaims.SUB, username);
         if(this.mapper.getMappers() != null) {
             this.mapper.getMappers().forEach((k, v) -> claims.put(k, document.getString(v)));
         }

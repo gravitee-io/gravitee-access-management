@@ -28,6 +28,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.Json;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -35,6 +36,8 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
@@ -180,6 +183,39 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         testRequest(
                 HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldInvokeUserEndpoint_claimsRequest() throws Exception {
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setSubject("user");
+        ((DefaultAccessToken) accessToken).setExpiresIn(100);
+        ((DefaultAccessToken) accessToken).setScope("openid");
+        ((DefaultAccessToken) accessToken).setRequestedParameters(Collections.singletonMap("claims", "{\"userinfo\":{\"name\":{\"essential\":true}}}"));
+
+        User user = new User();
+        Map<String, Object> additionalInformation  = new HashMap<>();
+        additionalInformation.put("sub", "user");
+        additionalInformation.put("name", "gravitee user");
+        additionalInformation.put("family_name", "gravitee");
+        user.setAdditionalInformation(additionalInformation);
+
+        when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+
+        testRequest(
+                HttpMethod.GET,
+                "/userinfo",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+                resp -> {
+                    resp.bodyHandler(body -> {
+                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                        assertNotNull(claims);
+                        assertEquals(2, claims.size());
+                        assertFalse(claims.containsKey("family_name"));
+                    });
+                },
                 HttpStatusCode.OK_200, "OK", null);
     }
 }

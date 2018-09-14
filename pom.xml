@@ -66,6 +66,7 @@
         <module>gravitee-am-ui</module>
         <module>gravitee-am-service</module>
         <module>gravitee-am-plugins-handlers</module>
+        <module>gravitee-am-common</module>
     </modules>
 
     <dependencyManagement>

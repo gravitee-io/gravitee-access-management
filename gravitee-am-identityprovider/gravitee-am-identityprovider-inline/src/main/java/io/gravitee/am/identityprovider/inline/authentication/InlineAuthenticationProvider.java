@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.inline.authentication;
 
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -107,9 +108,10 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
         DefaultUser user = new DefaultUser(inlineUser.getUsername());
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", inlineUser.getUsername());
-        claims.put("given_name", inlineUser.getFirstname());
-        claims.put("family_name", inlineUser.getLastname());
+        claims.put(StandardClaims.SUB, inlineUser.getUsername());
+        claims.put(StandardClaims.NAME, inlineUser.getFirstname() + " " + inlineUser.getLastname());
+        claims.put(StandardClaims.GIVEN_NAME, inlineUser.getFirstname());
+        claims.put(StandardClaims.FAMILY_NAME, inlineUser.getLastname());
         user.setAdditonalInformation(claims);
 
         // set user roles
