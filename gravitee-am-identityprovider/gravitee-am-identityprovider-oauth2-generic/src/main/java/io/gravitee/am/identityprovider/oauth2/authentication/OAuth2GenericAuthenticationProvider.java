@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -58,7 +59,6 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
     private static final String GRANT_TYPE = "grant_type";
     private static final String HTTPS_SCHEME = "https";
     private static final String DEFAULT_USER_AGENT = "Vert.x-WebClient/3.5.1";
-    private static final String CLAIMS_SUB = "sub";
 
     @Autowired
     private HttpClient client;
@@ -152,10 +152,10 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
     }
 
     private User createUser(JsonObject jsonNode) {
-        User user = new DefaultUser(jsonNode.getString(CLAIMS_SUB));
+        User user = new DefaultUser(jsonNode.getString(StandardClaims.SUB));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
-        additionalInformation.put(CLAIMS_SUB, jsonNode.getValue(CLAIMS_SUB));
+        additionalInformation.put(StandardClaims.SUB, jsonNode.getValue(StandardClaims.SUB));
         if (this.mapper.getMappers() != null) {
             this.mapper.getMappers().forEach((k, v) -> {
                 if (jsonNode.getValue(v) != null) {

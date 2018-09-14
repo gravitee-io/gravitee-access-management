@@ -34,6 +34,14 @@
     <name>Gravitee IO - Access Management - Identity Provider - API</name>
 
     <dependencies>
+        <!-- Gravitee.io -->
+        <dependency>
+            <groupId>io.gravitee.am.common</groupId>
+            <artifactId>gravitee-am-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- RxJava 2 -->
         <dependency>
             <groupId>io.reactivex.rxjava2</groupId>
             <artifactId>rxjava</artifactId>

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.github.authentication;
 
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -26,7 +27,6 @@ import io.gravitee.am.identityprovider.github.utils.URLEncodedUtils;
 import io.gravitee.am.model.http.BasicNameValuePair;
 import io.gravitee.am.model.http.NameValuePair;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
-import io.gravitee.am.service.exception.authentication.UsernameNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -36,6 +36,8 @@ import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.core.http.HttpClient;
 import io.vertx.reactivex.core.http.HttpClientRequest;
 import io.vertx.reactivex.core.http.HttpClientResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
@@ -52,6 +54,7 @@ import java.util.Map;
 @Import(GithubAuthenticationProviderConfiguration.class)
 public class GithubAuthenticationProvider implements OAuth2AuthenticationProvider {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GithubAuthenticationProvider.class);
     private static final String CLIENT_ID = "client_id";
     private static final String CLIENT_SECRET = "client_secret";
     private static final String REDIRECT_URI = "redirect_uri";
@@ -151,7 +154,32 @@ public class GithubAuthenticationProvider implements OAuth2AuthenticationProvide
         User user = new DefaultUser(jsonObject.getString(GithubUser.LOGIN));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
-        additionalInformation.put("sub", jsonObject.getValue(GithubUser.LOGIN));
+
+        // Standard claims
+        additionalInformation.put(StandardClaims.SUB, jsonObject.getValue(GithubUser.LOGIN));
+        additionalInformation.put(StandardClaims.NAME, jsonObject.getValue(GithubUser.NAME));
+
+        // try to get the first name and last name
+        try {
+            String[] fullName = jsonObject.getString(GithubUser.NAME).split("\\s+");
+            if (fullName.length > 0) {
+                additionalInformation.put(StandardClaims.GIVEN_NAME, fullName[0]);
+            }
+            if (fullName.length > 1) {
+                additionalInformation.put(StandardClaims.FAMILY_NAME, fullName[1]);
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Unable to resolve Github user full name : {}", jsonObject.getValue(GithubUser.NAME), e);
+        }
+
+        additionalInformation.put(StandardClaims.PROFILE, jsonObject.getValue(GithubUser.HTML_URL));
+        additionalInformation.put(StandardClaims.PICTURE, jsonObject.getValue(GithubUser.AVATAR_URL));
+        additionalInformation.put(StandardClaims.WEBSITE, jsonObject.getValue(GithubUser.BLOG));
+        additionalInformation.put(StandardClaims.EMAIL, jsonObject.getValue(GithubUser.EMAIL));
+        additionalInformation.put(StandardClaims.ZONEINFO, jsonObject.getValue(GithubUser.LOCATION));
+        additionalInformation.put(StandardClaims.UPDATED_AT, jsonObject.getValue(GithubUser.UPDATED_AT));
+
+        // custom GitHub claims
         additionalInformation.put(GithubUser.AVATAR_URL, jsonObject.getValue(GithubUser.AVATAR_URL));
         additionalInformation.put(GithubUser.GRAVATAR_ID, jsonObject.getValue(GithubUser.GRAVATAR_ID));
         additionalInformation.put(GithubUser.URL, jsonObject.getValue(GithubUser.URL));
@@ -169,13 +197,13 @@ public class GithubAuthenticationProvider implements OAuth2AuthenticationProvide
         additionalInformation.put(GithubUser.NAME, jsonObject.getValue(GithubUser.NAME));
         additionalInformation.put(GithubUser.COMPANY, jsonObject.getValue(GithubUser.COMPANY));
         additionalInformation.put(GithubUser.LOCATION, jsonObject.getValue(GithubUser.LOCATION));
-        additionalInformation.put(GithubUser.EMAIL, jsonObject.getValue(GithubUser.EMAIL));
         additionalInformation.put(GithubUser.PUBLIC_REPOS, jsonObject.getValue(GithubUser.PUBLIC_REPOS));
         additionalInformation.put(GithubUser.PUBLIC_GISTS, jsonObject.getValue(GithubUser.PUBLIC_GISTS));
         additionalInformation.put(GithubUser.FOLLOWERS, jsonObject.getValue(GithubUser.FOLLOWERS));
         additionalInformation.put(GithubUser.FOLLOWING, jsonObject.getValue(GithubUser.FOLLOWING));
-        additionalInformation.put(GithubUser.LOCATION, jsonObject.getValue(GithubUser.LOCATION));
-        additionalInformation.put(GithubUser.EMAIL, jsonObject.getValue(GithubUser.EMAIL));
+        additionalInformation.put(GithubUser.BIO, jsonObject.getValue(GithubUser.BIO));
+        additionalInformation.put(GithubUser.BLOG, jsonObject.getValue(GithubUser.BLOG));
+        additionalInformation.put(GithubUser.CREATED_AT, jsonObject.getValue(GithubUser.CREATED_AT));
         ((DefaultUser) user).setAdditonalInformation(additionalInformation);
         return user;
     }

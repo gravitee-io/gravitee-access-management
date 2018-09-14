@@ -36,6 +36,7 @@ public class DefaultAccessToken implements AccessToken {
     private Date createdAt;
     private Date expireAt;
     private Map<String, Object> additionalInformation;
+    private Map<String, String> requestedParameters;
 
     public DefaultAccessToken(String value) {
         this.value = value;
@@ -120,5 +121,13 @@ public class DefaultAccessToken implements AccessToken {
 
     public void setAdditionalInformation(Map<String, Object> additionalInformation) {
         this.additionalInformation = additionalInformation;
+    }
+
+    public Map<String, String> getRequestedParameters() {
+        return requestedParameters;
+    }
+
+    public void setRequestedParameters(Map<String, String> requestedParameters) {
+        this.requestedParameters = requestedParameters;
     }
 }

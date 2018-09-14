@@ -16,6 +16,10 @@
 package io.gravitee.am.identityprovider.github.model;
 
 /**
+ * GitHub User claims
+ *
+ * See <a href="https://developer.github.com/v3/users/#get-a-single-user>Get a single user</a>
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
@@ -54,5 +58,6 @@ public abstract class GithubUser {
     public static final String COLLABORATORS = "collaborators";
     public static final String PRIVATE_GISTS = "private_gists";
     public static final String TWO_FACTOR_AUTHENTICATION = "two_factor_authentication";
-
+    public static final String BIO = "bio";
+    public static final String BLOG = "blog";
 }

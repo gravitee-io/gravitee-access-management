@@ -217,6 +217,7 @@ public class TokenServiceImpl implements TokenService {
         token.setExpireAt(accessToken.getExpireAt());
         token.setCreatedAt(accessToken.getCreatedAt());
         token.setAdditionalInformation(accessToken.getAdditionalInformation());
+        token.setRequestedParameters(accessToken.getRequestedParameters());
 
         return token;
     }

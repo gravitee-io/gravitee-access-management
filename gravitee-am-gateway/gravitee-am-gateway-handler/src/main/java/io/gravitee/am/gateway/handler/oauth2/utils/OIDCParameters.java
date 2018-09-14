@@ -37,4 +37,9 @@ public interface OIDCParameters {
      * If the elapsed time is greater than this value, the OP MUST attempt to actively re-authenticate the End-User.
      */
     String MAX_AGE = "max_age";
+
+    /**
+     * OPTIONAL. This parameter is used to request that specific Claims be returned. The value is a JSON object listing the requested Claims.
+     */
+    String CLAIMS = "claims";
 }
