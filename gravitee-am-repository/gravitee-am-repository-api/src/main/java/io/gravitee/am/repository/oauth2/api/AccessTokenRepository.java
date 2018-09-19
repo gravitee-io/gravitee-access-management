@@ -52,6 +52,14 @@ public interface AccessTokenRepository {
     Observable<AccessToken> findByClientId(String clientId);
 
     /**
+     * Retrieve access tokens stored against the provided authorization code.
+     *
+     * @param authorizationCode the authorization code to search
+     * @return a collection of access tokens
+     */
+    Observable<AccessToken> findByAuthorizationCode(String authorizationCode);
+
+    /**
      * Count access tokens stored against the provided client id.
      *
      * @param clientId the client id to search

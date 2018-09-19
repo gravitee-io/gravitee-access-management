@@ -31,24 +31,34 @@ import org.springframework.stereotype.Component;
 @Component
 public class AccessTokenRepositoryProxy extends AbstractProxy<AccessTokenRepository> implements AccessTokenRepository {
 
+    @Override
     public Maybe<AccessToken> findByToken(String token) {
         return target.findByToken(token);
     }
 
+    @Override
     public Single<AccessToken> create(AccessToken accessToken) {
         return target.create(accessToken);
     }
 
+    @Override
     public Completable delete(String token) {
         return target.delete(token);
     }
 
+    @Override
     public Observable<AccessToken> findByClientIdAndSubject(String clientId, String subject) {
         return target.findByClientIdAndSubject(clientId, subject);
     }
 
+    @Override
     public Observable<AccessToken> findByClientId(String clientId) {
         return target.findByClientId(clientId);
+    }
+
+    @Override
+    public Observable<AccessToken> findByAuthorizationCode(String authorizationCode) {
+        return target.findByAuthorizationCode(authorizationCode);
     }
 
     @Override

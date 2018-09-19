@@ -58,6 +58,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     private static final String FIELD_GRANT_TYPE = "grant_type";
     private static final String FIELD_REQUESTED_PARAMETERS = "requested_parameters";
     private static final String FIELD_NONCE = "nonce";
+    private static final String FIELD_AUTHORIZATION_CODE = "authorization_code";
 
     @PostConstruct
     public void init() {
@@ -66,6 +67,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         // one field index
         accessTokenCollection.createIndex(new Document(FIELD_TOKEN, 1)).subscribe(new LoggableIndexSubscriber());
         accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1)).subscribe(new LoggableIndexSubscriber());
+        accessTokenCollection.createIndex(new Document(FIELD_AUTHORIZATION_CODE, 1)).subscribe(new LoggableIndexSubscriber());
 
         // two fields index
         accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1)).subscribe(new LoggableIndexSubscriber());
@@ -136,6 +138,13 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     }
 
     @Override
+    public Observable<AccessToken> findByAuthorizationCode(String authorizationCode) {
+        return Observable
+                .fromPublisher(accessTokenCollection.find(eq(FIELD_AUTHORIZATION_CODE, authorizationCode)))
+                .map(this::convert);
+    }
+
+    @Override
     public Single<Long> countByClientId(String clientId) {
         return Single.fromPublisher(accessTokenCollection.count(eq(FIELD_CLIENT_ID, clientId)));
     }
@@ -196,6 +205,8 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
             accessTokenMongo.setRequestedParameters(document);
         }
 
+        accessTokenMongo.setAuthorizationCode(accessToken.getAuthorizationCode());
+
         return accessTokenMongo;
     }
 
@@ -222,6 +233,8 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
             accessTokenMongo.getRequestedParameters().entrySet().forEach(entry -> requestParameters.put(entry.getKey(), (String) entry.getValue()));
             accessToken.setRequestedParameters(requestParameters);
         }
+
+        accessToken.setAuthorizationCode(accessTokenMongo.getAuthorizationCode());
 
         return accessToken;
     }
