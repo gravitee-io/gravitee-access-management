@@ -86,6 +86,11 @@ public class AccessToken {
      */
     private Map<String,String> requestedParameters;
 
+    /**
+     * The authorization code used to obtain the access token
+     */
+    private String authorizationCode;
+
     public String getId() {
         return id;
     }
@@ -180,6 +185,14 @@ public class AccessToken {
 
     public void setRequestedParameters(Map<String, String> requestedParameters) {
         this.requestedParameters = requestedParameters;
+    }
+
+    public String getAuthorizationCode() {
+        return authorizationCode;
+    }
+
+    public void setAuthorizationCode(String authorizationCode) {
+        this.authorizationCode = authorizationCode;
     }
 
     @Override

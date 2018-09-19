@@ -63,6 +63,9 @@ public class AccessTokenMongo {
     @BsonProperty("requested_parameters")
     private Document requestedParameters;
 
+    @BsonProperty("authorization_code")
+    private String authorizationCode;
+
     public String getId() {
         return id;
     }
@@ -157,6 +160,14 @@ public class AccessTokenMongo {
 
     public void setRequestedParameters(Document requestedParameters) {
         this.requestedParameters = requestedParameters;
+    }
+
+    public String getAuthorizationCode() {
+        return authorizationCode;
+    }
+
+    public void setAuthorizationCode(String authorizationCode) {
+        this.authorizationCode = authorizationCode;
     }
 
     @Override

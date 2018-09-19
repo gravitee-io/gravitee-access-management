@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
@@ -200,7 +201,13 @@ public class TokenServiceImpl implements TokenService {
             accessToken.setSubject(oAuth2Request.getSubject());
         }
         if (oAuth2Request.getRequestParameters() != null) {
-            accessToken.setRequestedParameters(oAuth2Request.getRequestParameters().toSingleValueMap());
+            MultiValueMap<String, String> requestParameters = oAuth2Request.getRequestParameters();
+            accessToken.setRequestedParameters(requestParameters.toSingleValueMap());
+
+            String authorizationCode = requestParameters.getFirst(OAuth2Constants.CODE);
+            if (authorizationCode != null) {
+                accessToken.setAuthorizationCode(authorizationCode);
+            }
         }
         return accessToken;
     }
