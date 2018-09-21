@@ -13,13 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oidc.discovery;
+package io.gravitee.am.common.oauth2;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * OAuth 2.0 Response Types
+ *
+ * See <a href="https://tools.ietf.org/html/rfc6749">The OAuth 2.0 Authorization Framework</a>
+ *
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface OpenIDDiscoveryService {
+public interface ResponseType {
 
-    OpenIDProviderMetadata getConfiguration(String basePath);
+    /**
+     * "code" for requesting an authorization code
+     */
+    String CODE = "code";
+
+    /**
+     * "token" for requesting an access token (implicit grant)
+     */
+    String TOKEN = "token";
 }
