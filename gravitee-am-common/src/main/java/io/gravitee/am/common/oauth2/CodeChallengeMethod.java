@@ -13,13 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oidc.discovery;
+package io.gravitee.am.common.oauth2;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * See <a href="https://tools.ietf.org/html/rfc7636#section-4.2>4.2. Client Creates the Code Challenge</a>
+ *
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface OpenIDDiscoveryService {
+public interface CodeChallengeMethod {
 
-    OpenIDProviderMetadata getConfiguration(String basePath);
+    /**
+     * code_challenge = code_verifier
+     */
+    String PLAIN = "plain";
+
+    /**
+     * code_challenge = BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))
+     */
+    String S256 = "S256";
 }

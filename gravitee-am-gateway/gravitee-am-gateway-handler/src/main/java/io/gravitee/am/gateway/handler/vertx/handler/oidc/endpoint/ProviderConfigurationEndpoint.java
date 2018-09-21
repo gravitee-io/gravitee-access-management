@@ -16,11 +16,16 @@
 package io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint;
 
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.URISyntaxException;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -28,15 +33,23 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public class ProviderConfigurationEndpoint implements Handler<RoutingContext> {
 
+    private static final Logger logger = LoggerFactory.getLogger(ProviderConfigurationEndpoint.class);
     private OpenIDDiscoveryService discoveryService;
 
     @Override
     public void handle(RoutingContext context) {
+        String basePath = "/";
+        try {
+            basePath = UriBuilderRequest.resolveProxyRequest(context.request(), "/", null, true, true);
+        } catch (URISyntaxException e) {
+            logger.error("Unable to resolve OpenID Connect provider configuration endpoint", e);
+        }
+
         context.response()
                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                .end(Json.encodePrettily(discoveryService.getConfiguration()));
+                .end(Json.encodePrettily(discoveryService.getConfiguration(basePath)));
     }
 
     public OpenIDDiscoveryService getDiscoveryService() {

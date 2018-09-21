@@ -45,6 +45,15 @@ public class OpenIDProviderMetadata {
     @JsonProperty("jwks_uri")
     private String jwksUri;
 
+    @JsonProperty("end_session_endpoint")
+    private String endSessionEndpoint;
+
+    @JsonProperty("revocation_endpoint")
+    private String revocationEndpoint;
+
+    @JsonProperty("introspection_endpoint")
+    private String introspectionEndpoint;
+
     @JsonProperty("registration_endpoint")
     private String registrationEndpoint;
 
@@ -117,6 +126,9 @@ public class OpenIDProviderMetadata {
     @JsonProperty("ui_locales_supported")
     private List<String> uiLocalesSupported;
 
+    @JsonProperty("code_challenge_methods_supported")
+    private List<String> codeChallengeMethodsSupported;
+
     @JsonProperty("claims_parameter_supported")
     private Boolean claimsParameterSupported = Boolean.FALSE;
 
@@ -173,6 +185,30 @@ public class OpenIDProviderMetadata {
 
     public void setJwksUri(String jwksUri) {
         this.jwksUri = jwksUri;
+    }
+
+    public String getEndSessionEndpoint() {
+        return endSessionEndpoint;
+    }
+
+    public void setEndSessionEndpoint(String endSessionEndpoint) {
+        this.endSessionEndpoint = endSessionEndpoint;
+    }
+
+    public String getRevocationEndpoint() {
+        return revocationEndpoint;
+    }
+
+    public void setRevocationEndpoint(String revocationEndpoint) {
+        this.revocationEndpoint = revocationEndpoint;
+    }
+
+    public String getIntrospectionEndpoint() {
+        return introspectionEndpoint;
+    }
+
+    public void setIntrospectionEndpoint(String introspectionEndpoint) {
+        this.introspectionEndpoint = introspectionEndpoint;
     }
 
     public String getRegistrationEndpoint() {
@@ -361,6 +397,14 @@ public class OpenIDProviderMetadata {
 
     public List<String> getUiLocalesSupported() {
         return uiLocalesSupported;
+    }
+
+    public List<String> getCodeChallengeMethodsSupported() {
+        return codeChallengeMethodsSupported;
+    }
+
+    public void setCodeChallengeMethodsSupported(List<String> codeChallengeMethodsSupported) {
+        this.codeChallengeMethodsSupported = codeChallengeMethodsSupported;
     }
 
     public void setUiLocalesSupported(List<String> uiLocalesSupported) {
