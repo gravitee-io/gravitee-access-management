@@ -15,14 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
+import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDProviderMetadata;
+import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationEndpointFailureHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationEndpointHandler;
@@ -45,10 +50,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
 /**
@@ -71,17 +78,29 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
     private ApprovalService approvalService;
 
     @Mock
+    private TokenService tokenService;
+
+    @Mock
+    private IDTokenService idTokenService;
+
+    @Mock
     private Domain domain;
+
+    @Mock
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
     @InjectMocks
     private AuthorizationEndpointHandler authorizationEndpointHandler =
-            new AuthorizationEndpointHandler(authorizationCodeService, tokenGranter, clientService, approvalService, domain);
+            new AuthorizationEndpointHandler(authorizationCodeService, tokenGranter, tokenService, idTokenService, clientService, approvalService, domain);
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
         SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
-        AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain);
+        OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
+        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE, ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN));
+        when(openIDDiscoveryService.getConfiguration(anyString())).thenReturn(openIDProviderMetadata);
+        AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain, openIDDiscoveryService);
         router.route("/oauth/authorize").handler(sessionHandler);
         router.route(HttpMethod.GET, "/oauth/authorize").handler(authorizationRequestParseHandler).handler(authorizationEndpointHandler);
         router.route().failureHandler(new AuthorizationEndpointFailureHandler(domain, clientService));
@@ -342,7 +361,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             @Override
             public void handle(RoutingContext routingContext) {
                 io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
-                endUser.setLoggedAt(new Date(System.currentTimeMillis()-24*60*60*1000));
+                endUser.setLoggedAt(new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000));
                 routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(endUser)));
                 routingContext.next();
             }
@@ -380,7 +399,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             @Override
             public void handle(RoutingContext routingContext) {
                 io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
-                endUser.setLoggedAt(new Date(System.currentTimeMillis()-24*60*60*1000));
+                endUser.setLoggedAt(new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000));
                 routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(endUser)));
                 routingContext.next();
             }
@@ -424,7 +443,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             @Override
             public void handle(RoutingContext routingContext) {
                 io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
-                endUser.setLoggedAt(new Date(System.currentTimeMillis()- 60*1000));
+                endUser.setLoggedAt(new Date(System.currentTimeMillis() - 60 * 1000));
                 routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(new io.gravitee.am.model.User())));
                 routingContext.next();
             }
@@ -621,4 +640,68 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_hybridFlow_code_IDToken() throws Exception {
+        shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, "code=test-code&id_token=test-id-token", null);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_hybridFlow_code_token() throws Exception {
+        AccessToken accessToken = new DefaultAccessToken("token");
+        shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, "code=test-code&access_token=token&token_type=bearer&expires_in=0", accessToken);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_hybridFlow_code_IDToken_token() throws Exception {
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setAdditionalInformation(Collections.singletonMap("id_token", "test-id-token"));
+        shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN, "code=test-code&access_token=token&token_type=bearer&expires_in=0&id_token=test-id-token", accessToken);
+    }
+
+    private void shouldInvokeAuthorizationEndpoint_hybridFlow(String responseType, String expectedCallback, AccessToken accessToken) throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(responseType);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        AuthorizationCode code = new AuthorizationCode();
+        code.setCode("test-code");
+
+        when(domain.getPath()).thenReturn("test");
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(approvalService.checkApproval(any(), any(), any())).thenReturn(Single.just(authorizationRequest));
+        when(authorizationCodeService.create(any(), any())).thenReturn(Single.just(code));
+        when(idTokenService.create(any(), any(), any())).thenReturn(Single.just("test-id-token"));
+
+        if (accessToken != null) {
+            when(tokenService.create(any(), any())).thenReturn(Single.just(accessToken));
+        }
+
+        router.route().order(-1).handler(new Handler<RoutingContext>() {
+            @Override
+            public void handle(RoutingContext routingContext) {
+                routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(new io.gravitee.am.model.User())));
+                routingContext.next();
+            }
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=token&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback#" + expectedCallback, location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
 }

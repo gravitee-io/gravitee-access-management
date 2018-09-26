@@ -23,6 +23,9 @@ import java.util.Map;
  */
 public class CertificateMetadata {
 
+    public static final String FILE = "file";
+    public static final String DIGEST_ALGORITHM_NAME = "digestAlgorithmName";
+
     private Map<String, Object> metadata;
 
     public Map<String, Object> getMetadata() {

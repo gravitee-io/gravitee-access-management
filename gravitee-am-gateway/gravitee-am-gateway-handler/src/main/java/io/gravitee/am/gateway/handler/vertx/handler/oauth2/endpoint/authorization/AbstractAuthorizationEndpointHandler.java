@@ -15,17 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
+import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationCodeResponse;
+import io.gravitee.am.gateway.handler.oauth2.response.HybridResponse;
 import io.gravitee.am.gateway.handler.oauth2.response.ImplicitResponse;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
-import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.utils.UriBuilder;
+import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
+import io.gravitee.am.gateway.handler.oidc.utils.OIDCClaims;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.TokenRequestFactory;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
@@ -33,7 +35,7 @@ import io.reactivex.Single;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-import java.net.URISyntaxException;
+import java.util.Collections;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -44,11 +46,17 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
     private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
     private AuthorizationCodeService authorizationCodeService;
     private TokenGranter tokenGranter;
+    private TokenService tokenService;
+    private IDTokenService idTokenService;
 
     public AbstractAuthorizationEndpointHandler(AuthorizationCodeService authorizationCodeService,
-                                        TokenGranter tokenGranter) {
+                                                TokenGranter tokenGranter,
+                                                TokenService tokenService,
+                                                IDTokenService idTokenService) {
         this.authorizationCodeService = authorizationCodeService;
         this.tokenGranter = tokenGranter;
+        this.tokenService = tokenService;
+        this.idTokenService = idTokenService;
     }
 
     protected Single<AuthorizationRequest> createAuthorizationResponse(AuthorizationRequest authorizationRequest, Client client, User authenticatedUser) {
@@ -57,58 +65,25 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
             return Single.just(authorizationRequest);
         }
 
-        // handle response type
+        // Handle Response Type value that determines the authorization processing flow to be used
+        // When using the Hybrid Flow, this value is code id_token, code token, or code id_token token.
+        // https://openid.net/specs/openid-connect-core-1_0.html#HybridAuthRequest
         switch(authorizationRequest.getResponseType()) {
-            case OAuth2Constants.TOKEN :
+            case ResponseType.TOKEN :
                 return setImplicitResponse(authorizationRequest, client, authenticatedUser);
-            case OAuth2Constants.CODE :
+            case ResponseType.CODE :
                 return setAuthorizationCodeResponse(authorizationRequest, authenticatedUser);
+            case io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN :
+            case io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN :
+            case io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN :
+                return setHybridResponse(authorizationRequest, client, authenticatedUser);
             default:
                 return Single.just(authorizationRequest);
         }
     }
 
     protected String buildRedirectUri(AuthorizationRequest authorizationRequest) throws Exception {
-        String responseType = authorizationRequest.getResponseType();
-        switch (responseType) {
-            case OAuth2Constants.TOKEN:
-                return buildImplicitGrantRedirectUri(authorizationRequest);
-            case OAuth2Constants.CODE:
-                return buildAuthorizationCodeRedirectUri(authorizationRequest);
-            default:
-                throw new InvalidRequestException("Invalid response type : " + responseType);
-
-        }
-    }
-
-    private String buildImplicitGrantRedirectUri(AuthorizationRequest authorizationRequest) throws URISyntaxException {
-        ImplicitResponse authorizationResponse = (ImplicitResponse) authorizationRequest.getResponse();
-        AccessToken accessToken = authorizationResponse.getAccessToken();
-        UriBuilder uriBuilder = UriBuilder.fromURIString(authorizationRequest.getRedirectUri());
-        uriBuilder.addFragmentParameter(AccessToken.ACCESS_TOKEN, accessToken.getValue());
-        uriBuilder.addFragmentParameter(AccessToken.TOKEN_TYPE, accessToken.getTokenType());
-        uriBuilder.addFragmentParameter(AccessToken.EXPIRES_IN, String.valueOf(accessToken.getExpiresIn()));
-        if (accessToken.getScope() != null && !accessToken.getScope().isEmpty()) {
-            uriBuilder.addFragmentParameter(AccessToken.SCOPE, accessToken.getScope());
-        }
-        if (authorizationResponse.getState() != null) {
-            uriBuilder.addFragmentParameter(OAuth2Constants.STATE, authorizationRequest.getState());
-        }
-        // additional information
-        if (accessToken.getAdditionalInformation() != null) {
-            accessToken.getAdditionalInformation().forEach((k, v) -> uriBuilder.addFragmentParameter(k, String.valueOf(v)));
-        }
-        return uriBuilder.build().toString();
-    }
-
-    private String buildAuthorizationCodeRedirectUri(AuthorizationRequest authorizationRequest) throws URISyntaxException {
-        AuthorizationCodeResponse authorizationResponse = (AuthorizationCodeResponse) authorizationRequest.getResponse();
-        UriBuilder uriBuilder = UriBuilder.fromURIString(authorizationRequest.getRedirectUri());
-        uriBuilder.addParameter(OAuth2Constants.CODE, authorizationResponse.getCode());
-        if (authorizationResponse.getState() != null) {
-            uriBuilder.addParameter(OAuth2Constants.STATE, authorizationRequest.getState());
-        }
-        return uriBuilder.build().toString();
+        return authorizationRequest.getResponse().buildRedirectUri(authorizationRequest);
     }
 
     private Single<AuthorizationRequest> setAuthorizationCodeResponse(AuthorizationRequest authorizationRequest, User authenticatedUser) {
@@ -134,6 +109,38 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
                     response.setState(authorizationRequest.getState());
                     authorizationRequest.setResponse(response);
                     return authorizationRequest;
+                });
+    }
+
+    private Single<AuthorizationRequest> setHybridResponse(AuthorizationRequest authorizationRequest, Client client, User authenticatedUser) {
+       // Authorization Code is always returned when using the Hybrid Flow.
+        return authorizationCodeService.create(authorizationRequest, authenticatedUser)
+                .flatMap(code -> {
+                    // prepare response
+                    HybridResponse hybridResponse = new HybridResponse();
+                    hybridResponse.setState(authorizationRequest.getState());
+                    hybridResponse.setCode(code.getCode());
+                    OAuth2Request oAuth2Request = authorizationRequest.createOAuth2Request();
+                    oAuth2Request.setSubject(authenticatedUser.getId());
+                    oAuth2Request.getContext().put(OIDCClaims.c_hash, code.getCode());
+                    switch (authorizationRequest.getResponseType()) {
+                        // code id_token response type MUST include both an Authorization Code and an id_token
+                        case io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN:
+                            return idTokenService.create(oAuth2Request, client, authenticatedUser)
+                                    .map(idToken -> {
+                                        hybridResponse.setIdToken(idToken);
+                                        authorizationRequest.setResponse(hybridResponse);
+                                        return authorizationRequest;
+                                    });
+                        // others Hybrid Flow response type MUST include at least an Access Token, an Access Token Type and optionally an ID Token
+                        default:
+                            return tokenService.create(oAuth2Request, client)
+                                    .map(accessToken -> {
+                                        hybridResponse.setAccessToken(accessToken);
+                                        authorizationRequest.setResponse(hybridResponse);
+                                        return authorizationRequest;
+                                    });
+                    }
                 });
     }
 }

@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.plugins.certificate.core.CertificateSchema;
@@ -125,7 +126,7 @@ public class CertificateServiceImpl implements CertificateService {
                             try {
                                 JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
                                 byte[] data = Base64.getDecoder().decode(file.get("content").asText());
-                                certificate.setMetadata(Collections.singletonMap("file", data));
+                                certificate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, data));
 
                                 // update configuration to set the file name
                                 ((ObjectNode) certificateConfiguration).put(key, file.get("name").asText());
@@ -188,7 +189,7 @@ public class CertificateServiceImpl implements CertificateService {
                                             if (!oldFileInformation.equals(fileInformation)) {
                                                 JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
                                                 byte[] data = Base64.getDecoder().decode(file.get("content").asText());
-                                                oldCertificate.setMetadata(Collections.singletonMap("file", data));
+                                                oldCertificate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, data));
 
                                                 // update configuration to set the file path
                                                 ((ObjectNode) certificateConfiguration).put(key, file.get("name").asText());

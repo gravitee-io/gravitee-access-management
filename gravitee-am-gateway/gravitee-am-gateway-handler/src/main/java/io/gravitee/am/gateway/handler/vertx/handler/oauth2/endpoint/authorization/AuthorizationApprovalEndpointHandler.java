@@ -23,7 +23,9 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.Maybe;
 import io.vertx.reactivex.core.MultiMap;
@@ -55,9 +57,11 @@ public class AuthorizationApprovalEndpointHandler extends AbstractAuthorizationE
 
     public AuthorizationApprovalEndpointHandler(AuthorizationCodeService authorizationCodeService,
                                                 TokenGranter tokenGranter,
+                                                TokenService tokenService,
+                                                IDTokenService idTokenService,
                                                 ApprovalService approvalService,
                                                 ClientService clientService) {
-        super(authorizationCodeService, tokenGranter);
+        super(authorizationCodeService, tokenGranter, tokenService, idTokenService);
         this.approvalService = approvalService;
         this.clientService = clientService;
     }

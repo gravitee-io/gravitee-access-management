@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.oidc.spring;
 
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.discovery.impl.OpenIDDiscoveryServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
+import io.gravitee.am.gateway.handler.oidc.idtoken.impl.IDTokenServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.jwk.JWKSetService;
 import io.gravitee.am.gateway.handler.oidc.jwk.impl.JWKSetServiceImpl;
 import org.springframework.context.annotation.Bean;
@@ -37,5 +39,10 @@ public class OpenIDConfiguration {
     @Bean
     public JWKSetService jwkSetService() {
         return new JWKSetServiceImpl();
+    }
+
+    @Bean
+    public IDTokenService idTokenService() {
+        return new IDTokenServiceImpl();
     }
 }

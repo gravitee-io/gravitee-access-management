@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.response;
 
+import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
+
 import java.io.Serializable;
+import java.net.URISyntaxException;
 
 /**
  * Response after authorization code or implicit flow
@@ -38,4 +41,6 @@ public abstract class AuthorizationResponse implements Serializable {
     public void setState(String state) {
         this.state = state;
     }
+
+    public abstract String buildRedirectUri(AuthorizationRequest authorizationRequest) throws URISyntaxException;
 }

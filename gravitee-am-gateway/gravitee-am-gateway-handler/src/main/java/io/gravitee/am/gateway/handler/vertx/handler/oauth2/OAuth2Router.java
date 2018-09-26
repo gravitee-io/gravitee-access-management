@@ -23,6 +23,8 @@ import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
@@ -80,6 +82,12 @@ public class OAuth2Router {
     private RevocationTokenService revocationTokenService;
 
     @Autowired
+    private IDTokenService idTokenService;
+
+    @Autowired
+    private OpenIDDiscoveryService openIDDiscoveryService;
+
+    @Autowired
     private ThymeleafTemplateEngine thymeleafTemplateEngine;
 
     @Autowired
@@ -103,11 +111,11 @@ public class OAuth2Router {
                 userAuthProvider.getDelegate(), '/' + domain.getPath() + "/login");
 
         // create other handlers
-        final AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain);
+        final AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain, openIDDiscoveryService);
 
         // Bind OAuth2 endpoints
-        Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(authorizationCodeService, tokenGranter, clientService, approvalService, domain);
-        Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(authorizationCodeService, tokenGranter, approvalService, clientService);
+        Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(authorizationCodeService, tokenGranter, tokenService, idTokenService, clientService, approvalService, domain);
+        Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(authorizationCodeService, tokenGranter, tokenService, idTokenService, approvalService, clientService);
         Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler(tokenGranter);
         Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(clientService, scopeService, thymeleafTemplateEngine);
 

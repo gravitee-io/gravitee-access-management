@@ -25,8 +25,10 @@ import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequestResolver;
+import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
+import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Domain;
@@ -61,10 +63,12 @@ public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointH
 
     public AuthorizationEndpointHandler(AuthorizationCodeService authorizationCodeService,
                                         TokenGranter tokenGranter,
+                                        TokenService tokenService,
+                                        IDTokenService idTokenService,
                                         ClientService clientService,
                                         ApprovalService approvalService,
                                         Domain domain) {
-        super(authorizationCodeService, tokenGranter);
+        super(authorizationCodeService, tokenGranter, tokenService, idTokenService);
         this.clientService = clientService;
         this.approvalService = approvalService;
         this.domain = domain;
