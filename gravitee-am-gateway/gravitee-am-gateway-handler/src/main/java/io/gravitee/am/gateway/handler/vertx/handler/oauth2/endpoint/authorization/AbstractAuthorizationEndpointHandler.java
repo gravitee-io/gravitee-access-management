@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationCodeResponse;
 import io.gravitee.am.gateway.handler.oauth2.response.HybridResponse;
+import io.gravitee.am.gateway.handler.oauth2.response.IDTokenResponse;
 import io.gravitee.am.gateway.handler.oauth2.response.ImplicitResponse;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
@@ -34,8 +35,6 @@ import io.gravitee.am.model.User;
 import io.reactivex.Single;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
-import java.util.Collections;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -70,9 +69,12 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
         // https://openid.net/specs/openid-connect-core-1_0.html#HybridAuthRequest
         switch(authorizationRequest.getResponseType()) {
             case ResponseType.TOKEN :
+            case io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN :
                 return setImplicitResponse(authorizationRequest, client, authenticatedUser);
             case ResponseType.CODE :
                 return setAuthorizationCodeResponse(authorizationRequest, authenticatedUser);
+            case io.gravitee.am.common.oidc.ResponseType.ID_TOKEN:
+                return setIdTokenResponse(authorizationRequest, client, authenticatedUser);
             case io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN :
             case io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN :
             case io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN :
@@ -141,6 +143,19 @@ public abstract class AbstractAuthorizationEndpointHandler implements Handler<Ro
                                         return authorizationRequest;
                                     });
                     }
+                });
+    }
+
+    private Single<AuthorizationRequest> setIdTokenResponse(AuthorizationRequest authorizationRequest, Client client, User authenticatedUser) {
+        OAuth2Request oAuth2Request = authorizationRequest.createOAuth2Request();
+        oAuth2Request.setSubject(authenticatedUser.getId());
+        IDTokenResponse idTokenResponse = new IDTokenResponse();
+        idTokenResponse.setState(authorizationRequest.getState());
+        return idTokenService.create(oAuth2Request, client, authenticatedUser)
+                .map(idToken -> {
+                    idTokenResponse.setIdToken(idToken);
+                    authorizationRequest.setResponse(idTokenResponse);
+                    return authorizationRequest;
                 });
     }
 }

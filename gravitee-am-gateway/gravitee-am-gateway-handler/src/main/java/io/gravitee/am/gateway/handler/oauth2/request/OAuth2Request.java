@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.request;
 
+import io.gravitee.am.common.oidc.ResponseType;
+import io.gravitee.am.common.oidc.Scope;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +35,18 @@ public class OAuth2Request extends BaseRequest {
 
     public boolean isClientOnly() {
         return subject == null;
+    }
+
+    public boolean shouldGenerateIDToken() {
+        if (getResponseType() != null
+                && (ResponseType.CODE_ID_TOKEN_TOKEN.equals(getResponseType()) || ResponseType.ID_TOKEN_TOKEN.equals(getResponseType()))) {
+            return true;
+        }
+        if (getScopes() != null && getScopes().contains(Scope.OPENID.getName())) {
+            return true;
+        }
+
+        return false;
     }
 
     public String getSubject() {

@@ -98,7 +98,10 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         super.setUp();
         SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
-        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE, ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN));
+        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE,
+                ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN,
+                io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN,
+                io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, io.gravitee.am.common.oidc.ResponseType.ID_TOKEN));
         when(openIDDiscoveryService.getConfiguration(anyString())).thenReturn(openIDProviderMetadata);
         AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain, openIDDiscoveryService);
         router.route("/oauth/authorize").handler(sessionHandler);
@@ -657,6 +660,19 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         AccessToken accessToken = new DefaultAccessToken("token");
         ((DefaultAccessToken) accessToken).setAdditionalInformation(Collections.singletonMap("id_token", "test-id-token"));
         shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN, "code=test-code&access_token=token&token_type=bearer&expires_in=0&id_token=test-id-token", accessToken);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_implicitFlow_IDToken() throws Exception {
+        shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, "id_token=test-id-token", null);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_implicitFlow_IDToken_token() throws Exception {
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setAdditionalInformation(Collections.singletonMap("id_token", "test-id-token"));
+        when(tokenGranter.grant(any(), any())).thenReturn(Single.just(accessToken));
+        shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, "access_token=token&token_type=bearer&expires_in=0&id_token=test-id-token", null);
     }
 
     private void shouldInvokeAuthorizationEndpoint_hybridFlow(String responseType, String expectedCallback, AccessToken accessToken) throws Exception {

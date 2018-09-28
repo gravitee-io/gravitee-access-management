@@ -21,7 +21,7 @@ import java.io.Serializable;
 import java.net.URISyntaxException;
 
 /**
- * Response after authorization code or implicit flow
+ * Response after authorization code flow or implicit flow or hybrid flow
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team

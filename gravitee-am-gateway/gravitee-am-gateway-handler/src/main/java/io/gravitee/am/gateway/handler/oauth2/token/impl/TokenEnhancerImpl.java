@@ -43,9 +43,6 @@ import java.util.stream.Collectors;
  */
 public class TokenEnhancerImpl implements TokenEnhancer {
 
-    private static final String OPEN_ID = "openid";
-    private static final String ID_TOKEN = "id_token";
-
     @Autowired
     private ClientService clientService;
 
@@ -82,11 +79,13 @@ public class TokenEnhancerImpl implements TokenEnhancer {
                             }
                         })
                         .flatMap(accessToken1 -> {
-                            // enhance token with ID token
+                            // add access token hash value
                             if (oAuth2Request.getResponseType() != null && ResponseType.CODE_ID_TOKEN_TOKEN.equals(oAuth2Request.getResponseType())) {
                                 oAuth2Request.getContext().put(OIDCClaims.at_hash, accessToken1.getToken());
-                                return enhanceIDToken(accessToken1, tokenEnhancerData.getClient(), tokenEnhancerData.getUser(), oAuth2Request);
-                            } else if (oAuth2Request.getScopes() != null && oAuth2Request.getScopes().contains(OPEN_ID)) {
+                            }
+
+                            // enhance token with ID token
+                            if (oAuth2Request.shouldGenerateIDToken()) {
                                 return enhanceIDToken(accessToken1, tokenEnhancerData.getClient(), tokenEnhancerData.getUser(), oAuth2Request);
                             } else {
                                 return Single.just(accessToken1);
@@ -131,7 +130,7 @@ public class TokenEnhancerImpl implements TokenEnhancer {
         return idTokenService.create(oAuth2Request, client, user)
                 .flatMap(idToken -> {
                     Map<String, Object> additionalInformation = new HashMap<>(accessToken.getAdditionalInformation());
-                    additionalInformation.put(ID_TOKEN, idToken);
+                    additionalInformation.put(OAuth2Constants.ID_TOKEN, idToken);
                     accessToken.setAdditionalInformation(additionalInformation);
                     return Single.just(accessToken);
                 });
