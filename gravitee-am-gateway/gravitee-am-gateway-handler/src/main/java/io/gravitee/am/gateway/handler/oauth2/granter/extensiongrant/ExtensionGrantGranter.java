@@ -18,19 +18,17 @@ package io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.ExtensionGrant;
-import io.reactivex.Single;
+import io.gravitee.am.model.User;
+import io.reactivex.Maybe;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Implementation of the Extension Grants
@@ -57,29 +55,18 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     }
 
     @Override
-    protected Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client) {
+    protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
         return extensionGrantProvider.grant(convert(tokenRequest))
-                .map(user -> Optional.of(user))
-                .defaultIfEmpty(Optional.empty())
-                .flatMapSingle(optUser -> {
-                    if (optUser.isPresent() && extensionGrant.isCreateUser()) {
-                        User endUser = optUser.get();
-                        // set source provider
-                        Map<String, Object> additionalInformation =
-                                endUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(endUser.getAdditionalInformation());
-                        additionalInformation.put("source", extensionGrant.getIdentityProvider());
-                        ((DefaultUser) endUser).setAdditonalInformation(additionalInformation);
-                        return userService.findOrCreate(endUser)
-                                .flatMap(user -> super.createOAuth2Request(tokenRequest, client)
-                                        .map(oAuth2Request -> {
-                                            oAuth2Request.setSubject(user.getId());
-                                            return oAuth2Request;
-                                        }));
-                    } else {
-                        return super.createOAuth2Request(tokenRequest, client);
-                    }
+                .flatMap(endUser -> {
+                    // set source provider
+                    Map<String, Object> additionalInformation = endUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(endUser.getAdditionalInformation());
+                    additionalInformation.put("source", extensionGrant.getIdentityProvider());
+                    ((DefaultUser) endUser).setAdditonalInformation(additionalInformation);
+                    return userService.findOrCreate(endUser).toMaybe();
                 })
-                .onErrorResumeNext(ex -> Single.error(new InvalidGrantException()));
+                .onErrorResumeNext(ex -> {
+                    return Maybe.error(new InvalidGrantException());
+                });
     }
 
     private io.gravitee.am.repository.oauth2.model.request.TokenRequest convert(TokenRequest _tokenRequest) {

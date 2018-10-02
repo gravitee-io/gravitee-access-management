@@ -18,12 +18,15 @@ package io.gravitee.am.gateway.handler.oauth2.granter.password;
 import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
 import io.gravitee.common.util.MultiValueMap;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 /**
@@ -46,28 +49,42 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
         super(GRANT_TYPE);
     }
 
-    public ResourceOwnerPasswordCredentialsTokenGranter(TokenService tokenService) {
+    public ResourceOwnerPasswordCredentialsTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService, UserAuthenticationManager userAuthenticationManager) {
         this();
+        setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
-    }
-
-    public ResourceOwnerPasswordCredentialsTokenGranter(TokenService tokenService, UserAuthenticationManager userAuthenticationManager) {
-        this(tokenService);
         setUserAuthenticationManager(userAuthenticationManager);
     }
 
-    protected Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client) {
+    @Override
+    protected Single<TokenRequest> parseRequest(TokenRequest tokenRequest, Client client) {
         MultiValueMap<String, String> parameters = tokenRequest.getRequestParameters();
         String username = parameters.getFirst(USERNAME_PARAMETER);
         String password = parameters.getFirst(PASSWORD_PARAMETER);
 
+        if (username == null) {
+            return Single.error(new InvalidRequestException("Missing parameter: username"));
+        }
+
+        if (password == null) {
+            return Single.error(new InvalidRequestException("Missing parameter: password"));
+        }
+
+        // set required parameters
+        tokenRequest.setUsername(username);
+        tokenRequest.setPassword(password);
+
+        return super.parseRequest(tokenRequest, client);
+    }
+
+    @Override
+    protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
+        String username = tokenRequest.getUsername();
+        String password = tokenRequest.getPassword();
+
         return userAuthenticationManager.authenticate(tokenRequest.getClientId(), new EndUserAuthentication(username, password))
-                .flatMap(user -> super.createOAuth2Request(tokenRequest, client)
-                        .map(oAuth2Request -> {
-                            oAuth2Request.setSubject(user.getId());
-                            return oAuth2Request;
-                        }))
-                .onErrorResumeNext(ex -> Single.error(new InvalidGrantException()));
+                .onErrorResumeNext(ex -> Single.error(new InvalidGrantException()))
+                .toMaybe();
     }
 
     public void setUserAuthenticationManager(UserAuthenticationManager userAuthenticationManager) {

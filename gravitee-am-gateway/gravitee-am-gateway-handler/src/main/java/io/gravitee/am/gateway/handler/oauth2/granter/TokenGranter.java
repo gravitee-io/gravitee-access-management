@@ -27,7 +27,18 @@ import io.reactivex.Single;
  */
 public interface TokenGranter {
 
+    /**
+     * Select which OAuth 2.0 grant flow can handle the incoming Access Token Request
+     * @param grantType OAuth 2.0 grant flow type
+     * @return true if a grant flow can handle the Access Token Request
+     */
     boolean handle(String grantType);
 
+    /**
+     * The client requests an access token by authenticating with the authorization server and presenting the authorization grant.
+     * @param tokenRequest Access Token Request
+     * @param client OAuth2 client
+     * @return The authorization server authenticates the client and validates the authorization grant, and if valid, issues an access token.
+     */
     Single<AccessToken> grant(TokenRequest tokenRequest, Client client);
 }

@@ -19,11 +19,14 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.User;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -42,7 +45,7 @@ public class AuthorizationRequestResolverTest {
         authorizationRequest.setRedirectUri(redirectUri);
         Client client = new Client();
 
-        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client).test();
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
     }
@@ -57,7 +60,7 @@ public class AuthorizationRequestResolverTest {
         Client client = new Client();
         client.setAuthorizedGrantTypes(Collections.emptyList());
 
-        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client).test();
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UnauthorizedClientException.class);
     }
@@ -72,7 +75,7 @@ public class AuthorizationRequestResolverTest {
         Client client = new Client();
         client.setAuthorizedGrantTypes(Collections.singletonList("client_credentials"));
 
-        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client).test();
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UnauthorizedClientException.class);
     }
@@ -84,7 +87,7 @@ public class AuthorizationRequestResolverTest {
         authorizationRequest.setRedirectUri(redirectUri);
         Client client = new Client();
 
-        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client).test();
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidScopeException.class);
     }
@@ -98,7 +101,7 @@ public class AuthorizationRequestResolverTest {
         Client client = new Client();
         client.setScopes(Collections.singletonList(scope));
 
-        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client).test();
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(request -> request.getScopes().iterator().next().equals(scope));
@@ -114,9 +117,52 @@ public class AuthorizationRequestResolverTest {
         Client client = new Client();
         client.setScopes(Collections.singletonList("write"));
 
-        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client).test();
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidScopeException.class);
+    }
+
+    @Test
+    public void shouldResolveAuthorizationRequest_invalidScope_withUser() {
+        final String scope = "read";
+        final String redirectUri = "http://localhost:8080/callback";
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setScopes(Collections.singleton(scope));
+        authorizationRequest.setRedirectUri(redirectUri);
+        Client client = new Client();
+        client.setScopes(Collections.singletonList("write"));
+
+        User user = new User();
+        Role role = new Role();
+        role.setPermissions(Collections.singletonList("user"));
+        user.setRolesPermissions(Collections.singleton(role));
+
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidScopeException.class);
+    }
+
+    @Test
+    public void shouldResolveAuthorizationRequest_userPermissions() {
+        final String scope = "read";
+        final String userScope = "user";
+        final String redirectUri = "http://localhost:8080/callback";
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setRedirectUri(redirectUri);
+        authorizationRequest.setScopes(new HashSet<>(Arrays.asList(scope, userScope)));
+
+        Client client = new Client();
+        client.setScopes(Collections.singletonList(scope));
+        client.setEnhanceScopesWithUserPermissions(true);
+
+        User user = new User();
+        Role role = new Role();
+        role.setPermissions(Collections.singletonList(userScope));
+        user.setRolesPermissions(Collections.singleton(role));
+
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
     }
 
     @Test
@@ -129,7 +175,7 @@ public class AuthorizationRequestResolverTest {
         Client client = new Client();
         client.setRedirectUris(Arrays.asList("http://localhost:8080/callback", "http://localhost:8080/callback2"));
 
-        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client).test();
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
     }
@@ -144,7 +190,7 @@ public class AuthorizationRequestResolverTest {
         Client client = new Client();
         client.setRedirectUris(Arrays.asList("http://localhost:8080/allowRedirect", "http://localhost:8080/allowRedirect2"));
 
-        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client).test();
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertNotComplete();
         testObserver.assertError(RedirectMismatchException.class);
     }

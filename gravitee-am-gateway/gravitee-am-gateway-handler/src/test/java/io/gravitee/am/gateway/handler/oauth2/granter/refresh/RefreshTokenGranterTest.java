@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.granter.refresh;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
@@ -24,8 +23,8 @@ import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.common.util.LinkedMultiValueMap;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
@@ -50,12 +49,6 @@ public class RefreshTokenGranterTest {
     private TokenRequest tokenRequest;
 
     @Mock
-    private OAuth2Request oAuth2Request;
-
-    @Mock
-    private ClientService clientService;
-
-    @Mock
     private TokenService tokenService;
 
     @Test
@@ -67,28 +60,26 @@ public class RefreshTokenGranterTest {
         Client client = new Client();
         client.setClientId("my-client-id");
 
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("my-client-id");
+        oAuth2Request.setGrantType("refresh_token");
+
         when(tokenRequest.getClientId()).thenReturn("my-client-id");
         when(tokenRequest.getGrantType()).thenReturn("refresh_token");
         when(tokenRequest.getRequestParameters()).thenReturn(parameters);
-
-        when(oAuth2Request.getClientId()).thenReturn("my-client-id");
-        when(oAuth2Request.getGrantType()).thenReturn("refresh_token");
-        when(oAuth2Request.getRequestParameters()).thenReturn(parameters);
         when(tokenRequest.createOAuth2Request()).thenReturn(oAuth2Request);
 
-        when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(client));
-        when(tokenService.refresh(refreshToken, oAuth2Request, client)).thenReturn(Single.just(new DefaultAccessToken("token")));
+        when(tokenService.refresh(refreshToken, tokenRequest)).thenReturn(Single.just(new RefreshToken()));
+        when(tokenService.create(oAuth2Request, client, null)).thenReturn(Single.just(new DefaultAccessToken("token")));
 
         TestObserver<AccessToken> testObserver = granter.grant(tokenRequest, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(accessToken -> "token".equals(accessToken.getValue()));
-
     }
 
     @Test
     public void shouldNotGenerateAnAccessToken_invalidRequest() {
-        String refreshToken = "refresh-token";
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
 
         Client client = new Client();
@@ -98,18 +89,7 @@ public class RefreshTokenGranterTest {
         when(tokenRequest.getGrantType()).thenReturn("refresh_token");
         when(tokenRequest.getRequestParameters()).thenReturn(parameters);
 
-        when(oAuth2Request.getClientId()).thenReturn("my-client-id");
-        when(oAuth2Request.getGrantType()).thenReturn("refresh_token");
-        when(oAuth2Request.getRequestParameters()).thenReturn(parameters);
-        when(tokenRequest.createOAuth2Request()).thenReturn(oAuth2Request);
-
-        when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(client));
-        when(tokenService.refresh(refreshToken, oAuth2Request, client)).thenReturn(Single.just(new DefaultAccessToken("token")));
-
-        TestObserver<AccessToken> testObserver = granter.grant(tokenRequest, client).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(InvalidRequestException.class);
-
+        granter.grant(tokenRequest, client).test().assertError(InvalidRequestException.class);
     }
 
     @Test
@@ -125,16 +105,8 @@ public class RefreshTokenGranterTest {
         when(tokenRequest.getGrantType()).thenReturn("refresh_token");
         when(tokenRequest.getRequestParameters()).thenReturn(parameters);
 
-        when(oAuth2Request.getClientId()).thenReturn("my-client-id");
-        when(oAuth2Request.getGrantType()).thenReturn("refresh_token");
-        when(oAuth2Request.getRequestParameters()).thenReturn(parameters);
-        when(tokenRequest.createOAuth2Request()).thenReturn(oAuth2Request);
+        when(tokenService.refresh(refreshToken, tokenRequest)).thenReturn(Single.error(new InvalidGrantException()));
 
-        when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(client));
-        when(tokenService.refresh(refreshToken, oAuth2Request, client)).thenReturn(Single.error(new InvalidGrantException()));
-
-        TestObserver<AccessToken> testObserver = granter.grant(tokenRequest, client).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(InvalidGrantException.class);
+        granter.grant(tokenRequest, client).test().assertError(InvalidGrantException.class);
     }
 }

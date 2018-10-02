@@ -15,18 +15,21 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.granter.code;
 
+import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.pkce.PKCEUtils;
-import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.gravitee.common.util.MultiValueMap;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,45 +50,57 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
 
     private AuthorizationCodeService authorizationCodeService;
 
+    private UserAuthenticationManager userAuthenticationManager;
+
     public AuthorizationCodeTokenGranter() {
         super(GRANT_TYPE);
     }
 
-    public AuthorizationCodeTokenGranter(TokenService tokenService) {
+    public AuthorizationCodeTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService, AuthorizationCodeService authorizationCodeService, UserAuthenticationManager userAuthenticationManager) {
         this();
+        setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
-    }
-
-    public AuthorizationCodeTokenGranter(TokenService tokenService, AuthorizationCodeService authorizationCodeService) {
-        this(tokenService);
         this.authorizationCodeService = authorizationCodeService;
+        this.userAuthenticationManager = userAuthenticationManager;
     }
 
     @Override
-    protected Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client) {
+    protected Single<TokenRequest> parseRequest(TokenRequest tokenRequest, Client client) {
         MultiValueMap<String, String> parameters = tokenRequest.getRequestParameters();
         String code = parameters.getFirst(OAuth2Constants.CODE);
 
         if (code == null || code.isEmpty()) {
-            throw new InvalidRequestException("An authorization code must be supplied.");
+            return Single.error(new InvalidRequestException("Missing parameter: code"));
         }
 
-        return authorizationCodeService.remove(code, client)
-                .flatMapSingle(authorizationCode -> {
-                    checkRedirectUris(tokenRequest, authorizationCode);
-                    checkPCE(tokenRequest, authorizationCode);
+        return super.parseRequest(tokenRequest, client)
+                .flatMap(tokenRequest1 -> authorizationCodeService.remove(code, client)
+                        .map(authorizationCode -> {
+                            checkRedirectUris(tokenRequest1, authorizationCode);
+                            checkPCE(tokenRequest1, authorizationCode);
+                            // set resource owner
+                            tokenRequest1.setSubject(authorizationCode.getSubject());
+                            // set original scopes
+                            tokenRequest1.setScopes(authorizationCode.getScopes());
+                            // set authorization code initial request parameters (step1 of authorization code flow)
+                            if (authorizationCode.getRequestParameters() != null) {
+                                authorizationCode.getRequestParameters().forEach((key, value) -> tokenRequest1.getRequestParameters().putIfAbsent(key, value));
+                            }
+                            return tokenRequest1;
+                        }).toSingle());
+    }
 
-                    return super.createOAuth2Request(tokenRequest, client)
-                            .map(oAuth2Request -> {
-                                oAuth2Request.setSubject(authorizationCode.getSubject());
-                                // set authorization code initial request parameters (step1 of authorization code flow)
-                                if (authorizationCode.getRequestParameters() != null) {
-                                    authorizationCode.getRequestParameters().forEach((key, value) -> oAuth2Request.getRequestParameters().putIfAbsent(key, value));
-                                }
-                                return oAuth2Request;
-                            });
-                });
-        }
+    @Override
+    protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
+        return userAuthenticationManager.loadUserByUsername(tokenRequest.getSubject())
+                .onErrorResumeNext(ex -> { return Maybe.error(new InvalidGrantException()); });
+    }
+
+    @Override
+    protected Single<TokenRequest> resolveRequest(TokenRequest tokenRequest, Client client, User endUser) {
+        // request has already been resolved during step1 of authorization code flow
+        return Single.just(tokenRequest);
+    }
 
     private void checkRedirectUris(TokenRequest tokenRequest, AuthorizationCode authorizationCode) {
         String redirectUri = tokenRequest.getRequestParameters().getFirst(OAuth2Constants.REDIRECT_URI);

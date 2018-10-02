@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.oauth2.model;
 
 import java.util.Date;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -42,6 +43,11 @@ public class RefreshToken {
      * Technical identifier of the end-user.
      */
     private String subject;
+
+    /**
+     * Requested scopes
+     */
+    private Set<String> scopes;
 
     /**
      * The refresh token creation date
@@ -83,6 +89,14 @@ public class RefreshToken {
 
     public void setSubject(String subject) {
         this.subject = subject;
+    }
+
+    public Set<String> getScopes() {
+        return scopes;
+    }
+
+    public void setScopes(Set<String> scopes) {
+        this.scopes = scopes;
     }
 
     public Date getCreatedAt() {

@@ -15,13 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.token;
 
-import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
+import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenServiceImpl;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
@@ -57,13 +55,7 @@ public class TokenServiceTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
-    private ClientService clientService;
-
-    @Mock
     private TokenEnhancer tokenEnhancer;
-
-    @Mock
-    private UserAuthenticationManager userAuthenticationManager;
 
     @Test
     public void shouldCreate_noExistingToken() {
@@ -72,12 +64,11 @@ public class TokenServiceTest {
         Client client = new Client();
         client.setClientId("my-client-id");
 
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.empty());
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
-        when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
-        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client).test();
+        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -97,10 +88,9 @@ public class TokenServiceTest {
         io.gravitee.am.repository.oauth2.model.AccessToken existingToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
         existingToken.setExpireAt(new Date(System.currentTimeMillis() + (60 * 1000)));
 
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.just(existingToken));
 
-        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client).test();
+        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -120,13 +110,12 @@ public class TokenServiceTest {
         io.gravitee.am.repository.oauth2.model.AccessToken existingToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
         existingToken.setExpireAt(new Date(System.currentTimeMillis() - (60 * 1000)));
 
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.just(existingToken));
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
         when(accessTokenRepository.delete(anyString())).thenReturn(Completable.fromSingle(Single.just(new Object())));
-        when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
-        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client).test();
+        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -147,14 +136,13 @@ public class TokenServiceTest {
         existingToken.setExpireAt(new Date(System.currentTimeMillis() - (60 * 1000)));
         existingToken.setRefreshToken("refresh-token");
 
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.just(existingToken));
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
         when(accessTokenRepository.delete(anyString())).thenReturn(Completable.fromSingle(Single.just(new Object())));
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.fromSingle(Single.just(new Object())));
-        when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
-        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client).test();
+        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -172,11 +160,10 @@ public class TokenServiceTest {
         client.setClientId("client-id");
         client.setGenerateNewTokenPerRequest(true);
 
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
-        when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
-        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client).test();
+        TestObserver<AccessToken> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
@@ -189,8 +176,8 @@ public class TokenServiceTest {
     @Test
     public void shouldRefresh_withUser() {
         String clientId = "client-id";
-        OAuth2Request oAuth2Request = new OAuth2Request();
-        oAuth2Request.setClientId(clientId);
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId(clientId);
 
         String token = "refresh-token";
         RefreshToken refreshToken = new RefreshToken();
@@ -205,26 +192,23 @@ public class TokenServiceTest {
 
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
-        when(userAuthenticationManager.loadUserByUsername(anyString())).thenReturn(Maybe.just(new User()));
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.empty());
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
-        when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
-        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request, client).test();
+        TestObserver<RefreshToken> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
         verify(refreshTokenRepository, times(1)).findByToken(any());
         verify(refreshTokenRepository, times(1)).delete(anyString());
-        verify(userAuthenticationManager, times(1)).loadUserByUsername(anyString());
     }
 
     @Test
     public void shouldRefresh_withoutUser() {
         String clientId = "client-id";
-        OAuth2Request oAuth2Request = new OAuth2Request();
-        oAuth2Request.setClientId(clientId);
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId(clientId);
 
         String token = "refresh-token";
         RefreshToken refreshToken = new RefreshToken();
@@ -240,23 +224,21 @@ public class TokenServiceTest {
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
         when(accessTokenRepository.findByCriteria(any())).thenReturn(Maybe.empty());
         when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(client));
-        when(tokenEnhancer.enhance(any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
 
-        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request, client).test();
+        TestObserver<RefreshToken> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
         verify(refreshTokenRepository, times(1)).findByToken(any());
         verify(refreshTokenRepository, times(1)).delete(anyString());
-        verify(userAuthenticationManager, never()).loadUserByUsername(anyString());
     }
 
     @Test
     public void shouldNotRefresh_refreshNotFound() {
         String clientId = "client-id";
-        OAuth2Request oAuth2Request = new OAuth2Request();
-        oAuth2Request.setClientId(clientId);
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId(clientId);
 
         String token = "refresh-token";
         RefreshToken refreshToken = new RefreshToken();
@@ -270,7 +252,7 @@ public class TokenServiceTest {
 
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.empty());
 
-        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request, client).test();
+        TestObserver<RefreshToken> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
@@ -283,8 +265,8 @@ public class TokenServiceTest {
     @Test
     public void shouldNotRefresh_refreshExpired() {
         String clientId = "client-id";
-        OAuth2Request oAuth2Request = new OAuth2Request();
-        oAuth2Request.setClientId(clientId);
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId(clientId);
 
         String token = "refresh-token";
         RefreshToken refreshToken = new RefreshToken();
@@ -298,7 +280,7 @@ public class TokenServiceTest {
 
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
 
-        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request, client).test();
+        TestObserver<RefreshToken> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
@@ -311,8 +293,8 @@ public class TokenServiceTest {
     @Test
     public void shouldNotRefresh_notTheSameClient() {
         String clientId = "client-id";
-        OAuth2Request oAuth2Request = new OAuth2Request();
-        oAuth2Request.setClientId("wrong-client-id");
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("wrong-client-id");
 
         String token = "refresh-token";
         RefreshToken refreshToken = new RefreshToken();
@@ -327,7 +309,7 @@ public class TokenServiceTest {
 
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
 
-        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request, client).test();
+        TestObserver<RefreshToken> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
@@ -340,8 +322,8 @@ public class TokenServiceTest {
     @Test
     public void shouldNotRefresh_withUser_userNotFound() {
         String clientId = "client-id";
-        OAuth2Request oAuth2Request = new OAuth2Request();
-        oAuth2Request.setClientId(clientId);
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("wrong-client-id");
 
         String token = "refresh-token";
         RefreshToken refreshToken = new RefreshToken();
@@ -356,14 +338,12 @@ public class TokenServiceTest {
 
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
-        when(userAuthenticationManager.loadUserByUsername(anyString())).thenReturn(Maybe.empty());
 
-        TestObserver<AccessToken> testObserver = tokenService.refresh(refreshToken.getToken(), oAuth2Request, client).test();
+        TestObserver<RefreshToken> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
         verify(refreshTokenRepository, times(1)).findByToken(any());
-        verify(userAuthenticationManager, times(1)).loadUserByUsername(anyString());
     }
 
 }

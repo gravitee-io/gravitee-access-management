@@ -19,7 +19,6 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
-import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.TokenRequestFactory;
 import io.gravitee.common.http.HttpHeaders;
@@ -42,7 +41,6 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 public class TokenEndpointHandler implements Handler<RoutingContext> {
 
     private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
-    private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
     private TokenGranter tokenGranter;
 
     public TokenEndpointHandler() { }
@@ -62,7 +60,7 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
 
         // Check if a grant_type is defined
         if (tokenRequest.getGrantType() == null) {
-            throw new InvalidRequestException();
+            throw new InvalidRequestException("Missing parameter: grant_type");
         }
 
         Client authenticatedClient = (Client) authenticatedUser.getDelegate();
@@ -79,8 +77,7 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
         }
 
         final io.gravitee.am.model.Client client = authenticatedClient.getClient();
-        tokenRequestResolver.resolve(tokenRequest, client)
-                .flatMap(tokenRequest1 -> tokenGranter.grant(tokenRequest1, client))
+        tokenGranter.grant(tokenRequest, client)
                 .subscribe(accessToken -> context.response()
                         .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")
