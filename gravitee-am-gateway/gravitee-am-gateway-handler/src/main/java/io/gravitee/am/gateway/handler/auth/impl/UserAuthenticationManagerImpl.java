@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.auth.exception.BadCredentialsException;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.am.gateway.service.RoleService;
 import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -49,6 +51,9 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private RoleService roleService;
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
@@ -117,7 +122,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                             user.setRoles(idpUser.getRoles());
                             return user;
                         })
-                        .defaultIfEmpty(user));
+                        .defaultIfEmpty(user))
+                        .flatMap(user -> enhanceUserWithRoles(user));
     }
 
     public void setClientService(ClientService clientService) {
@@ -127,6 +133,19 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     public void setIdentityProviderManager(IdentityProviderManager identityProviderManager) {
         this.identityProviderManager = identityProviderManager;
     }
+
+    private Maybe<User> enhanceUserWithRoles(User user) {
+        List<String> userRoles = user.getRoles();
+        if (userRoles != null && !userRoles.isEmpty()) {
+            return roleService.findByIdIn(userRoles)
+                    .map(roles -> {
+                        user.setRolesPermissions(roles);
+                        return user;
+                    }).toMaybe();
+        }
+        return Maybe.just(user);
+    }
+
 
     private class UserAuthentication {
         private io.gravitee.am.identityprovider.api.User user;

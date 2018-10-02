@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.oauth2.granter.implicit.ImplicitTokenGrant
 import io.gravitee.am.gateway.handler.oauth2.granter.password.ResourceOwnerPasswordCredentialsTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.refresh.RefreshTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.model.Client;
@@ -43,6 +44,7 @@ import java.util.Objects;
 public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     private List<TokenGranter> tokenGranters = new ArrayList<>();
+    private TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
 
     @Autowired
     private TokenService tokenService;
@@ -79,10 +81,10 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
-        addTokenGranter(new ClientCredentialsTokenGranter(tokenService));
-        addTokenGranter(new ResourceOwnerPasswordCredentialsTokenGranter(tokenService, userAuthenticationManager));
-        addTokenGranter(new ImplicitTokenGranter(tokenService));
-        addTokenGranter(new AuthorizationCodeTokenGranter(tokenService, authorizationCodeService));
-        addTokenGranter(new RefreshTokenGranter(tokenService));
+        addTokenGranter(new ClientCredentialsTokenGranter(tokenRequestResolver, tokenService));
+        addTokenGranter(new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
+        addTokenGranter(new ImplicitTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
+        addTokenGranter(new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager));
+        addTokenGranter(new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
     }
 }

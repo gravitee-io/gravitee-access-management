@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.granter.client;
 
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 
 /**
@@ -33,8 +34,9 @@ public class ClientCredentialsTokenGranter extends AbstractTokenGranter {
         super(GRANT_TYPE);
     }
 
-    public ClientCredentialsTokenGranter(TokenService tokenService) {
+    public ClientCredentialsTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService) {
         this();
+        setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
     }
 

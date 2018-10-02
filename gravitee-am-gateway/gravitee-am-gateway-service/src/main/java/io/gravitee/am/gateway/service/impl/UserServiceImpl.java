@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.service.impl;
 
+import io.gravitee.am.gateway.service.RoleService;
 import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,6 +48,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RoleService roleService;
 
     @Override
     public Single<User> findOrCreate(io.gravitee.am.identityprovider.api.User user) {
@@ -76,12 +81,25 @@ public class UserServiceImpl implements UserService {
                         return userRepository.create(newUser);
                     }
                     return Single.error(ex);
-                });
+                })
+                .flatMap(user1 -> enhanceUserWithRoles(user1));
     }
 
     @Override
     public Maybe<User> findById(String id) {
         return userRepository.findById(id);
+    }
+
+    private Single<User> enhanceUserWithRoles(User user) {
+        List<String> userRoles = user.getRoles();
+        if (userRoles != null && !userRoles.isEmpty()) {
+            return roleService.findByIdIn(userRoles)
+                    .map(roles -> {
+                        user.setRolesPermissions(roles);
+                        return user;
+                    });
+        }
+        return Single.just(user);
     }
 
     private void extractAdditionalInformation(User user, Map<String, Object> additionalInformation) {

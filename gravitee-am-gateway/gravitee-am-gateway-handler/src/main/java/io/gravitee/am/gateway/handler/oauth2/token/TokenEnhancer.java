@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.token;
 
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
+import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.Single;
 
@@ -25,5 +27,5 @@ import io.reactivex.Single;
  */
 public interface TokenEnhancer {
 
-    Single<AccessToken> enhance(AccessToken accessToken, OAuth2Request oAuth2Request);
+    Single<AccessToken> enhance(AccessToken accessToken, OAuth2Request oAuth2Request, Client client, User endUser);
 }

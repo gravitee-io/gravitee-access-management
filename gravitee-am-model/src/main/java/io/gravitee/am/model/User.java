@@ -61,6 +61,8 @@ public class User {
 
     private List<String> roles;
 
+    private Set<Role> rolesPermissions;
+
     private Map<String, Object> additionalInformation;
 
     private Date createdAt;
@@ -193,6 +195,14 @@ public class User {
 
     public void setRoles(List<String> roles) {
         this.roles = roles;
+    }
+
+    public Set<Role> getRolesPermissions() {
+        return rolesPermissions;
+    }
+
+    public void setRolesPermissions(Set<Role> rolesPermissions) {
+        this.rolesPermissions = rolesPermissions;
     }
 
     public Map<String, Object> getAdditionalInformation() {

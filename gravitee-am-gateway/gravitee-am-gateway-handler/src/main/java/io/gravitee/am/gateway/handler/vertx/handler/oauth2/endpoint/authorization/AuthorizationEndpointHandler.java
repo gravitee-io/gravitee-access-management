@@ -89,7 +89,7 @@ public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointH
         // invalid redirection URI.
         clientService.findByClientId(clientId)
                 .switchIfEmpty(Maybe.error(new InvalidRequestException("No client with id : " + clientId)))
-                .flatMapSingle(client -> authorizationRequestResolver.resolve(request, client)
+                .flatMapSingle(client -> authorizationRequestResolver.resolve(request, client, endUser)
                         .flatMap(authorizationRequest -> approvalService.checkApproval(authorizationRequest, client, endUser.getUsername()))
                         .flatMap(authorizationRequest -> createAuthorizationResponse(authorizationRequest, client, endUser)))
                 .subscribe(authorizationRequest -> {

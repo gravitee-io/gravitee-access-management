@@ -15,8 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.granter.implicit;
 
+import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 /**
  * Implementation of the Implicit Grant Flow
@@ -27,16 +35,30 @@ import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
  */
 public class ImplicitTokenGranter extends AbstractTokenGranter {
 
-
     private final static String GRANT_TYPE = "implicit";
+    private UserAuthenticationManager userAuthenticationManager;
 
     public ImplicitTokenGranter() {
         super(GRANT_TYPE);
     }
 
-    public ImplicitTokenGranter(TokenService tokenService) {
+    public ImplicitTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService, UserAuthenticationManager userAuthenticationManager) {
         this();
+        setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
+        this.userAuthenticationManager = userAuthenticationManager;
+    }
+
+    @Override
+    protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
+        return userAuthenticationManager.loadUserByUsername(tokenRequest.getSubject())
+                .onErrorResumeNext(ex -> { return Maybe.error(new InvalidGrantException()); });
+    }
+
+    @Override
+    protected Single<TokenRequest> resolveRequest(TokenRequest tokenRequest, Client client, User endUser) {
+        // request has already been resolved during authorization implicit flow
+        return Single.just(tokenRequest);
     }
 
     /**
