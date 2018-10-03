@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.certificate.api;
+package io.gravitee.am.gateway.handler.oidc.idtoken;
 
-import io.gravitee.am.model.jose.JWK;
-import io.reactivex.Flowable;
+import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
+import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
 import io.reactivex.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateProvider {
+public interface IDTokenService {
 
-    Single<String> sign(String payload);
-
-    Single<String> publicKey();
-
-    Flowable<JWK> keys();
-
-    CertificateMetadata certificateMetadata();
+    Single<String> create(OAuth2Request oAuth2Request, Client client, User user);
 }

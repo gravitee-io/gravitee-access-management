@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.request;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -24,6 +27,8 @@ public class OAuth2Request extends BaseRequest {
     private String subject;
     private boolean supportRefreshToken;
     private String grantType;
+    private String responseType;
+    private Map<String, Object> context = new HashMap<>();
 
     public boolean isClientOnly() {
         return subject == null;
@@ -51,5 +56,21 @@ public class OAuth2Request extends BaseRequest {
 
     public void setGrantType(String grantType) {
         this.grantType = grantType;
+    }
+
+    public String getResponseType() {
+        return responseType;
+    }
+
+    public void setResponseType(String responseType) {
+        this.responseType = responseType;
+    }
+
+    public Map<String, Object> getContext() {
+        return context;
+    }
+
+    public void setContext(Map<String, Object> context) {
+        this.context = context;
     }
 }

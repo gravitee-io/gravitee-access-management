@@ -50,6 +50,8 @@ public interface OAuth2Constants {
 
     String SCOPE_PREFIX = "scope.";
 
+    String ID_TOKEN = "id_token";
+
     /**
      * Next constants are defined for PKCE support.
      * See <a href="https://tools.ietf.org/html/rfc7636#section-6.1">PKCE</a>

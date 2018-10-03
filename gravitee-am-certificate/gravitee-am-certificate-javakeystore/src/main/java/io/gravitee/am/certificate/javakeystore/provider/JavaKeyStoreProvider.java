@@ -25,6 +25,7 @@ import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.javakeystore.JavaKeyStoreConfiguration;
+import io.gravitee.am.certificate.javakeystore.Signature;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
 import io.reactivex.Flowable;
@@ -38,11 +39,13 @@ import java.io.*;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,6 +59,7 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
     private JWKSet jwkSet;
     private String publicKey;
     private Set<JWK> keys;
+    private Signature signature = Signature.SHA256withRSA;
 
     @Autowired
     private JavaKeyStoreConfiguration configuration;
@@ -65,7 +69,7 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        Object file = certificateMetadata.getMetadata().get("file");
+        Object file = certificateMetadata.getMetadata().get(CertificateMetadata.FILE);
         Objects.requireNonNull(file, "A jks file is required to use Java KeyStore certificate");
 
         byte[] jksFile = (byte[]) file;
@@ -80,6 +84,11 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
         if (key instanceof PrivateKey) {
             // Get certificate of public key
             Certificate cert = keystore.getCertificate(configuration.getAlias());
+            // Get Signing Algorithm name
+            if (cert instanceof X509Certificate) {
+                signature = getSignature(((X509Certificate) cert).getSigAlgOID());
+            }
+            certificateMetadata.getMetadata().put(CertificateMetadata.DIGEST_ALGORITHM_NAME, signature.getDigestOID());
             // Get public key
             PublicKey publicKey = cert.getPublicKey();
             // Return a key pair
@@ -98,7 +107,8 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
         return Single.create(emitter -> {
             try {
                 JWTClaimsSet claimsSet = JWTClaimsSet.parse(payload);
-                JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS512).keyID(configuration.getAlias()).build();
+                JWSAlgorithm jwsAlgorithm = signature.getJwsAlgorithm() == null ? JWSAlgorithm.RS256 : signature.getJwsAlgorithm();
+                JWSHeader header = new JWSHeader.Builder(jwsAlgorithm).keyID(configuration.getAlias()).build();
 
                 SignedJWT signedJWT = new SignedJWT(header, claimsSet);
 
@@ -122,6 +132,11 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
     @Override
     public Flowable<JWK> keys() {
         return Flowable.fromIterable(keys);
+    }
+
+    @Override
+    public CertificateMetadata certificateMetadata() {
+        return certificateMetadata;
     }
 
     private String getPublicKey() throws IOException {
@@ -195,6 +210,13 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
         }
 
         return jwk;
+    }
+
+    private Signature getSignature(String signingAlgorithmOID) {
+        return Stream.of(Signature.values())
+                .filter(signature -> signature.getAlgorithmId().toString().equals(signingAlgorithmOID))
+                .findFirst()
+                .orElse(Signature.SHA256withRSA);
     }
 
 

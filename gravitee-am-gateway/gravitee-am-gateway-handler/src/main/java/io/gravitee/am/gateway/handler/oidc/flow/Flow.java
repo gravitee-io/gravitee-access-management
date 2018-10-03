@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.certificate.api;
+package io.gravitee.am.gateway.handler.oidc.flow;
 
-import io.gravitee.am.model.jose.JWK;
-import io.reactivex.Flowable;
+import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationResponse;
+import io.gravitee.am.model.User;
 import io.reactivex.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateProvider {
+public interface Flow {
 
-    Single<String> sign(String payload);
+    boolean handle(String responseType);
 
-    Single<String> publicKey();
-
-    Flowable<JWK> keys();
-
-    CertificateMetadata certificateMetadata();
+    Single<AuthorizationResponse> run(AuthorizationRequest authorizationRequest, User endUser);
 }

@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.approval;
 
 import io.gravitee.am.gateway.handler.oauth2.approval.impl.ApprovalServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
@@ -96,12 +97,7 @@ public class ApprovalServiceTest {
         when(clientService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(anyString(), anyString(), anyString())).thenReturn(Single.just(Collections.emptySet()));
 
-        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, userId).test();
-        testObserver.awaitTerminalEvent();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(request -> !request.isApproved());
+        approvalService.checkApproval(authorizationRequest, client, userId).test().assertError(AccessDeniedException.class);
     }
 
     @Test
@@ -164,12 +160,7 @@ public class ApprovalServiceTest {
         when(clientService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(domainId, userId, clientId)).thenReturn(Single.just(Collections.singleton(userScopeApproval)));
 
-        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, userId).test();
-        testObserver.awaitTerminalEvent();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(request -> !request.isApproved());
+        approvalService.checkApproval(authorizationRequest, client, userId).test().assertError(AccessDeniedException.class);
     }
 
     @Test

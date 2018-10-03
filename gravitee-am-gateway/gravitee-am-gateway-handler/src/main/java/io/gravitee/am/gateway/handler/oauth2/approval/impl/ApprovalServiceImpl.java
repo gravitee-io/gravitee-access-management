@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.approval.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
+import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
@@ -125,8 +126,9 @@ public class ApprovalServiceImpl implements ApprovalService {
                         // Set only the scopes that have been approved by the user
                         authorizationRequest.setScopes(approvedScopes);
                         authorizationRequest.setApproved(true);
+                        return Single.just(authorizationRequest);
                     }
-                    return Single.just(authorizationRequest);
+                    return Single.error(new AccessDeniedException("User denied access"));
                 });
     }
 
