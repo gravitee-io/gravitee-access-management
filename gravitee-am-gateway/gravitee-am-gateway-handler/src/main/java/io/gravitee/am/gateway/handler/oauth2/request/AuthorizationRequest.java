@@ -114,4 +114,13 @@ public class AuthorizationRequest extends BaseRequest implements Serializable {
     public void setApprovalParameters(Map<String, String> approvalParameters) {
         this.approvalParameters = approvalParameters;
     }
+
+    public OAuth2Request createOAuth2Request() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId(getClientId());
+        oAuth2Request.setScopes(getScopes());
+        oAuth2Request.setRequestParameters(getRequestParameters());
+        oAuth2Request.setResponseType(getResponseType());
+        return oAuth2Request;
+    }
 }

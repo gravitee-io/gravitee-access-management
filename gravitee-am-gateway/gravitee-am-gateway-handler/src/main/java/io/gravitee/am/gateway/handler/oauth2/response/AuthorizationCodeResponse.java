@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.response;
 
+import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.utils.UriBuilder;
+
+import java.net.URISyntaxException;
+
 /**
  * See <a href="https://tools.ietf.org/html/rfc6749#section-4.1.2">4.1.2. Authorization Response</a>
  *
@@ -41,5 +46,15 @@ public class AuthorizationCodeResponse extends AuthorizationResponse {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    @Override
+    public String buildRedirectUri() throws URISyntaxException {
+        UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());
+        uriBuilder.addParameter(OAuth2Constants.CODE, getCode());
+        if (getState() != null) {
+            uriBuilder.addParameter(OAuth2Constants.STATE, getState());
+        }
+        return uriBuilder.build().toString();
     }
 }

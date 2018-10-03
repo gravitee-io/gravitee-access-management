@@ -17,12 +17,13 @@ package io.gravitee.am.gateway.handler.vertx.handler.oauth2;
 
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
-import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.flow.Flow;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
@@ -60,6 +61,9 @@ public class OAuth2Router {
     private TokenGranter tokenGranter;
 
     @Autowired
+    private Flow flow;
+
+    @Autowired
     private ClientService clientService;
 
     @Autowired
@@ -72,13 +76,13 @@ public class OAuth2Router {
     private ApprovalService approvalService;
 
     @Autowired
-    private AuthorizationCodeService authorizationCodeService;
-
-    @Autowired
     private ScopeService scopeService;
 
     @Autowired
     private RevocationTokenService revocationTokenService;
+
+    @Autowired
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
     @Autowired
     private ThymeleafTemplateEngine thymeleafTemplateEngine;
@@ -105,9 +109,9 @@ public class OAuth2Router {
 
         // Bind OAuth2 endpoints
         // Authorization endpoint
-        AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain);
-        Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(authorizationCodeService, tokenGranter, clientService, approvalService, domain);
-        Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(authorizationCodeService, tokenGranter, approvalService, clientService);
+        AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain, openIDDiscoveryService);
+        Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(flow, domain);
+        Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(approvalService);
         Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(clientService, scopeService, thymeleafTemplateEngine);
         // Token endpoint
         Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler(tokenGranter);

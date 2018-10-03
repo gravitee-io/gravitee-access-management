@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
+import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
@@ -23,6 +24,7 @@ import io.gravitee.am.gateway.handler.oauth2.pkce.PKCEUtils;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequest;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequestResolver;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequestSyntaxException;
@@ -58,9 +60,11 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
     private Domain domain;
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
-    public AuthorizationRequestParseHandler(Domain domain) {
+    public AuthorizationRequestParseHandler(Domain domain, OpenIDDiscoveryService openIDDiscoveryService) {
         this.domain = domain;
+        this.openIDDiscoveryService = openIDDiscoveryService;
     }
 
     @Override
@@ -71,15 +75,17 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         String responseType = authorizationRequest.getResponseType();
         String clientId = authorizationRequest.getClientId();
 
-        if (responseType == null || (!responseType.equals(OAuth2Constants.TOKEN) && !responseType.equals(OAuth2Constants.CODE))) {
-            throw new UnsupportedResponseTypeException("Unsupported response type: " + responseType);
-        }
+        // proceed response type parameter
+        parseResponseTypeParameter(responseType);
 
-        if (clientId == null) {
-            throw new InvalidRequestException("A client id is required");
-        }
+        // proceed client_id parameter
+        parseClientIdParameter(clientId);
 
+        // parse scope parameter
         parseScopeParameter(context);
+
+        // proceed nonce parameter
+        parseNonceParameter(context, responseType);
 
         // proceed prompt parameter
         parsePromptParameter(context);
@@ -101,6 +107,24 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         String scopes = context.request().params().get(OAuth2Constants.SCOPE);
         if (scopes != null && scopes.isEmpty()) {
             throw new InvalidScopeException("Invalid parameter: scope must not be empty");
+        }
+    }
+
+    private void parseResponseTypeParameter(String responseType) {
+        if (responseType == null) {
+            throw new InvalidRequestException("Missing parameter: response_type");
+        }
+
+        // get supported response types
+        List<String> responseTypesSupported = openIDDiscoveryService.getConfiguration("/").getResponseTypesSupported();
+        if (!responseTypesSupported.contains(responseType)) {
+            throw new UnsupportedResponseTypeException("Unsupported response type: " + responseType);
+        }
+    }
+
+    private void parseClientIdParameter(String clientId) {
+        if (clientId == null) {
+            throw new InvalidRequestException("Missing parameter: client_id");
         }
     }
 
@@ -209,6 +233,14 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         }
     }
 
+    private void parseNonceParameter(RoutingContext context, String responseType) {
+        String nonce = context.request().getParam(OIDCParameters.NONCE);
+        // nonce parameter is required for the Hybrid flow
+        if (nonce == null && isHybridFlow(responseType)) {
+            throw new InvalidRequestException("Missing parameter: nonce is required for Hybrid Flow");
+        }
+    }
+
     private boolean returnFromLoginPage(RoutingContext context) {
         String referer = context.request().headers().get(HttpHeaders.REFERER);
         try {
@@ -219,7 +251,11 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         }
     }
 
-    public static AuthorizationRequestParseHandler create(Domain domain) {
-        return new AuthorizationRequestParseHandler(domain);
+    private boolean isHybridFlow(String responseType) {
+        return (ResponseType.CODE_ID_TOKEN.equals(responseType) || ResponseType.CODE_TOKEN.equals(responseType) || ResponseType.CODE_ID_TOKEN_TOKEN.equals(responseType));
+    }
+
+    public static AuthorizationRequestParseHandler create(Domain domain, OpenIDDiscoveryService openIDDiscoveryService) {
+        return new AuthorizationRequestParseHandler(domain, openIDDiscoveryService);
     }
 }

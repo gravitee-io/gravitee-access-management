@@ -15,18 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.token;
 
-import io.gravitee.am.certificate.api.CertificateProvider;
-import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenEnhancerImpl;
+import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
-import io.gravitee.common.util.LinkedMultiValueMap;
-import io.gravitee.common.util.MultiValueMap;
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.impl.crypto.MacSigner;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
@@ -35,12 +28,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.security.Key;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -54,12 +43,7 @@ public class TokenEnhancerTest {
     private TokenEnhancer tokenEnhancer = new TokenEnhancerImpl();
 
     @Mock
-    private CertificateManager certificateManager;
-
-    @Mock
-    private CertificateProvider certificateProvider;
-
-    private JwtBuilder jwtBuilder;
+    private IDTokenService idTokenService;
 
     @Test
     public void shouldEnhanceToken_withoutIDToken() {
@@ -81,13 +65,12 @@ public class TokenEnhancerTest {
     }
 
     @Test
-    public void shouldEnhanceToken_withIDToken_clientOnly_clientCertificate() {
+    public void shouldEnhanceToken_withIDToken() {
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setClientId("client-id");
         oAuth2Request.setScopes(Collections.singleton("openid"));
 
         Client client = new Client();
-        client.setCertificate("client-certificate");
 
         AccessToken accessToken = new AccessToken();
         accessToken.setId("token-id");
@@ -95,12 +78,7 @@ public class TokenEnhancerTest {
 
         String idTokenPayload = "payload";
 
-        Key key = MacSigner.generateKey();
-        jwtBuilder = Jwts.builder().signWith(SignatureAlgorithm.HS512, key);
-        ((TokenEnhancerImpl) tokenEnhancer).setJwtBuilder(jwtBuilder);
-
-        when(certificateProvider.sign(anyString())).thenReturn(Single.just(idTokenPayload));
-        when(certificateManager.get(anyString())).thenReturn(Maybe.just(certificateProvider));
+        when(idTokenService.create(any(), any(), any())).thenReturn(Single.just(idTokenPayload));
 
         TestObserver<AccessToken> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null).test();
 
@@ -108,84 +86,6 @@ public class TokenEnhancerTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(accessToken1 -> accessToken1.getAdditionalInformation().containsKey("id_token"));
 
-        verify(certificateProvider, times(1)).sign(anyString());
-        verify(certificateManager, times(1)).get(anyString());
+        verify(idTokenService, times(1)).create(any(), any(), any());
     }
-
-    @Test
-    public void shouldEnhanceToken_withIDToken_clientOnly_defaultCertificate() {
-        OAuth2Request oAuth2Request = new OAuth2Request();
-        oAuth2Request.setClientId("client-id");
-        oAuth2Request.setScopes(Collections.singleton("openid"));
-
-        Client client = new Client();
-
-        AccessToken accessToken = new AccessToken();
-        accessToken.setId("token-id");
-        accessToken.setToken("token-id");
-
-        Key key = MacSigner.generateKey();
-        jwtBuilder = Jwts.builder().signWith(SignatureAlgorithm.HS512, key);
-        ((TokenEnhancerImpl) tokenEnhancer).setJwtBuilder(jwtBuilder);
-
-        when(certificateManager.get(anyString())).thenReturn(Maybe.empty());
-
-        TestObserver<AccessToken> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null).test();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(accessToken1 -> accessToken1.getAdditionalInformation().containsKey("id_token"));
-
-        verify(certificateManager, times(1)).get(anyString());
-        verify(certificateProvider, never()).sign(anyString());
-    }
-
-    @Test
-    public void shouldEnhanceToken_withIDToken_withUser_claimsRequest() {
-        OAuth2Request oAuth2Request = new OAuth2Request();
-        oAuth2Request.setClientId("client-id");
-        oAuth2Request.setScopes(Collections.singleton("openid"));
-        oAuth2Request.setSubject("subject");
-        MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
-        requestParameters.put("claims", Collections.singletonList("{\"id_token\":{\"name\":{\"essential\":true}}}"));
-        oAuth2Request.setRequestParameters(requestParameters);
-
-        Client client = new Client();
-
-        User user = new User();
-        Map<String, Object> additionalInformation  = new HashMap<>();
-        additionalInformation.put("sub", "user");
-        additionalInformation.put("name", "gravitee user");
-        additionalInformation.put("family_name", "gravitee");
-        user.setAdditionalInformation(additionalInformation);
-
-        AccessToken accessToken = new AccessToken();
-        accessToken.setId("token-id");
-        accessToken.setToken("token-id");
-        accessToken.setScopes(Collections.singleton("openid"));
-
-        Key key = MacSigner.generateKey();
-        JwtParser parser = Jwts.parser().setSigningKey(key);
-        jwtBuilder = Jwts.builder().signWith(SignatureAlgorithm.HS512, key);
-        ((TokenEnhancerImpl) tokenEnhancer).setJwtBuilder(jwtBuilder);
-
-        when(certificateManager.get(anyString())).thenReturn(Maybe.empty());
-
-        TestObserver<AccessToken> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, user).test();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(accessToken1 -> accessToken1.getAdditionalInformation().containsKey("id_token"));
-        testObserver.assertValue(accessToken1 -> {
-            String idToken = (String) accessToken1.getAdditionalInformation().get("id_token");
-            Jwt jwt = parser.parse(idToken);
-            Map<String, Object> claims = (Map<String, Object>) jwt.getBody();
-            return !claims.containsKey("family_name");
-        });
-
-        verify(certificateManager, times(1)).get(anyString());
-        verify(certificateProvider, never()).sign(anyString());
-    }
-
-
 }

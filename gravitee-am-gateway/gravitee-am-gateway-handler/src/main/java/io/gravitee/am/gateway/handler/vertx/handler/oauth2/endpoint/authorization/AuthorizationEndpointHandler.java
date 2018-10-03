@@ -15,23 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
-import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
-import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InteractionRequiredException;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
-import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
-import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
+import io.gravitee.am.gateway.handler.oidc.flow.Flow;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
-import io.reactivex.Maybe;
+import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -50,30 +45,21 @@ import java.util.Arrays;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointHandler {
+public class AuthorizationEndpointHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationEndpointHandler.class);
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
-    private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver();
-    private ClientService clientService;
-    private ApprovalService approvalService;
+    private Flow flow;
     private Domain domain;
 
-    public AuthorizationEndpointHandler(AuthorizationCodeService authorizationCodeService,
-                                        TokenGranter tokenGranter,
-                                        ClientService clientService,
-                                        ApprovalService approvalService,
-                                        Domain domain) {
-        super(authorizationCodeService, tokenGranter);
-        this.clientService = clientService;
-        this.approvalService = approvalService;
+    public AuthorizationEndpointHandler(Flow flow, Domain domain) {
         this.domain = domain;
+        this.flow = flow;
     }
 
     @Override
     public void handle(RoutingContext context) {
         AuthorizationRequest request = authorizationRequestFactory.create(context.request());
-        String clientId = request.getClientId();
 
         // The authorization server authenticates the resource owner and obtains
         // an authorization decision (by asking the resource owner or by establishing approval via other means).
@@ -84,40 +70,32 @@ public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointH
 
         io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.vertx.auth.user.User) authenticatedUser.getDelegate()).getUser();
 
-        // If the request fails due to a missing, invalid, or mismatching redirection URI, or if the client identifier is missing or invalid,
-        // the authorization server SHOULD inform the resource owner of the error and MUST NOT automatically redirect the user-agent to the
-        // invalid redirection URI.
-        clientService.findByClientId(clientId)
-                .switchIfEmpty(Maybe.error(new InvalidRequestException("No client with id : " + clientId)))
-                .flatMapSingle(client -> authorizationRequestResolver.resolve(request, client, endUser)
-                        .flatMap(authorizationRequest -> approvalService.checkApproval(authorizationRequest, client, endUser.getUsername()))
-                        .flatMap(authorizationRequest -> createAuthorizationResponse(authorizationRequest, client, endUser)))
-                .subscribe(authorizationRequest -> {
+        flow.run(request, endUser)
+                .subscribe(authorizationResponse -> {
                     try {
-                        if (!authorizationRequest.isApproved()) {
-                            // check prompt value
-                            // if prompt=none and the Client does not have pre-configured consent for the requested Claims, throw interaction_required exception
-                            // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
-                            // else redirect to consent user approval page
-                            String prompt = authorizationRequest.getRequestParameters().getFirst(OIDCParameters.PROMPT);
-                            if (prompt != null && Arrays.asList(prompt.split("\\s+")).contains("none")) {
-                                context.fail(new InteractionRequiredException());
-                            } else {
-                                // TODO should we put this data inside repository to handle cluster environment ?
-                                context.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
-                                String approvalPage = UriBuilderRequest.resolveProxyRequest(context.request(),"/" + domain.getPath() + "/oauth/confirm_access", null, false, false);
-                                doRedirect(context.response(), approvalPage);
-                            }
-                        } else {
-                            doRedirect(context.response(), buildRedirectUri(authorizationRequest));
-                        }
+                        doRedirect(context.response(), authorizationResponse.buildRedirectUri());
                     } catch (Exception e) {
                         logger.error("Unable to redirect to client redirect_uri", e);
                         context.fail(new ServerErrorException());
                     }
-                },
-                error -> {
-                    context.fail(error);
+                }, error -> {
+                    if (error instanceof AccessDeniedException) {
+                        // check prompt value
+                        // if prompt=none and the Client does not have pre-configured consent for the requested Claims, throw interaction_required exception
+                        // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+                        // else redirect to consent user approval page
+                        String prompt = request.getRequestParameters().getFirst(OIDCParameters.PROMPT);
+                        if (prompt != null && Arrays.asList(prompt.split("\\s+")).contains("none")) {
+                            context.fail(new InteractionRequiredException());
+                        } else {
+                            // TODO should we put this data inside repository to handle cluster environment ?
+                            context.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, request);
+                            String approvalPage = UriBuilderRequest.resolveProxyRequest(context.request(),"/" + domain.getPath() + "/oauth/confirm_access", null, false, false);
+                            doRedirect(context.response(), approvalPage);
+                        }
+                    } else {
+                        context.fail(error);
+                    }
                 });
 
     }

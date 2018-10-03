@@ -16,20 +16,18 @@
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
-import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
-import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
-import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.common.http.HttpHeaders;
-import io.reactivex.Maybe;
+import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,19 +45,13 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationApprovalEndpointHandler extends AbstractAuthorizationEndpointHandler {
+public class AuthorizationApprovalEndpointHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationApprovalEndpointHandler.class);
     private ApprovalService approvalService;
-    private ClientService clientService;
 
-    public AuthorizationApprovalEndpointHandler(AuthorizationCodeService authorizationCodeService,
-                                                TokenGranter tokenGranter,
-                                                ApprovalService approvalService,
-                                                ClientService clientService) {
-        super(authorizationCodeService, tokenGranter);
+    public AuthorizationApprovalEndpointHandler(ApprovalService approvalService) {
         this.approvalService = approvalService;
-        this.clientService = clientService;
     }
 
     @Override
@@ -95,25 +87,21 @@ public class AuthorizationApprovalEndpointHandler extends AbstractAuthorizationE
         authorizationRequest.setApprovalParameters(approvalParameters);
 
         // handle approval response
-        clientService.findByClientId(authorizationRequest.getClientId())
-                .switchIfEmpty(Maybe.error(new InvalidRequestException("No client with id : " + authorizationRequest.getClientId())))
-                .toSingle()
-                .flatMap(client -> approvalService.saveApproval(authorizationRequest, endUser.getUsername())
-                        .flatMap(authorizationRequest1 -> createAuthorizationResponse(authorizationRequest1, client, endUser)))
+        approvalService.saveApproval(authorizationRequest, endUser.getUsername())
                 .subscribe(authorizationRequest1 -> {
+                    // user denied access
                     if (!authorizationRequest.isApproved()) {
                         context.fail(new AccessDeniedException("User denied access"));
+                        return;
+                    }
+
+                    // user approved access, replay authorization request
+                    Session session = context.session();
+                    if (session != null && session.get(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM) != null) {
+                        final String redirectUrl = session.get(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM);
+                        doRedirect(context.response(), redirectUrl);
                     } else {
-                        try {
-                            String redirectUri = buildRedirectUri(authorizationRequest);
-                            // remove OAuth2Constants.AUTHORIZATION_REQUEST session value
-                            // should not be used after this step
-                            context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
-                            context.response().putHeader(HttpHeaders.LOCATION, redirectUri).setStatusCode(302).end();
-                        } catch (Exception e) {
-                            logger.error("Unable to redirect to client redirect_uri", e);
-                            context.fail(new ServerErrorException());
-                        }
+                        context.fail(503);
                     }
                 },
                 error -> {
@@ -122,4 +110,7 @@ public class AuthorizationApprovalEndpointHandler extends AbstractAuthorizationE
                 });
         }
 
+    private void doRedirect(HttpServerResponse response, String url) {
+        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    }
 }
