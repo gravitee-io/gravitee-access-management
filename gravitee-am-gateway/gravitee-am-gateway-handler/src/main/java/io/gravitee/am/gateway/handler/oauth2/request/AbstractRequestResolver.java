@@ -46,7 +46,7 @@ public abstract class AbstractRequestResolver<R extends BaseRequest> {
         final List<String> clientScopes = client.getScopes();
         final Set<String> requestScopes = request.getScopes();
         Set<String> clientResolvedScopes = new HashSet<>();
-        Set<String> resolvedScopes = requestScopes == null ? new HashSet<>() : new HashSet<>(requestScopes);
+        Set<String> resolvedScopes = new HashSet<>();
         Set<String> invalidScopes = new HashSet<>();
         // client scopes
         if (clientScopes != null && !clientScopes.isEmpty()) {
@@ -57,9 +57,9 @@ public abstract class AbstractRequestResolver<R extends BaseRequest> {
                 // filter the actual scopes granted by the client
                 for (String scope : requestScopes) {
                     if (clientScopes.contains(scope)) {
+                        resolvedScopes.add(scope);
                         clientResolvedScopes.add(scope);
                     } else {
-                        resolvedScopes.remove(scope);
                         invalidScopes.add(scope);
                     }
                 }
@@ -98,8 +98,8 @@ public abstract class AbstractRequestResolver<R extends BaseRequest> {
             return Single.error(new InvalidScopeException("Invalid scope(s): " + invalidScopes.stream().collect(Collectors.joining(" "))));
         }
 
-        if (resolvedScopes == null || resolvedScopes.isEmpty()) {
-            return Single.error(new InvalidScopeException("Empty scope (either the client or the user is not allowed the requested scopes)"));
+        if (resolvedScopes.isEmpty() && (requestScopes != null && !requestScopes.isEmpty())) {
+            return Single.error(new InvalidScopeException("Invalid scope(s): " + requestScopes.stream().collect(Collectors.joining(" "))));
         }
 
         // set resolved scopes

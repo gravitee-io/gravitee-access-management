@@ -144,12 +144,12 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
 
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&scope=unknown",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://localhost:9999/callback?error=invalid_scope&error_description=Empty+scope+%2528either+the+client+or+the+user+is+not+allowed+the+requested+scopes%2529", location);
+                    assertEquals("http://localhost:9999/callback?error=invalid_scope&error_description=Invalid+scope%2528s%2529%253A+unknown", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
