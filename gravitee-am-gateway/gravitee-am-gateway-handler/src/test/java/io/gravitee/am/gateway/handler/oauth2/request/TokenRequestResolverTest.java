@@ -35,15 +35,15 @@ public class TokenRequestResolverTest {
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
 
     @Test
-    public void shouldResolveTokenRequest() {
+    public void shouldNotResolveTokenRequest_unknownScope() {
         final String scope = "read";
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setScopes(Collections.singleton(scope));
         Client client = new Client();
 
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, null).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidScopeException.class);
     }
 
     @Test
@@ -67,13 +67,13 @@ public class TokenRequestResolverTest {
     }
 
     @Test
-    public void shouldNotResolveTokenRequest_emptyScope() {
+    public void shouldResolveTokenRequest_emptyScope() {
         TokenRequest tokenRequest = new TokenRequest();
         Client client = new Client();
 
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, null).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(InvalidScopeException.class);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
     }
 
     @Test

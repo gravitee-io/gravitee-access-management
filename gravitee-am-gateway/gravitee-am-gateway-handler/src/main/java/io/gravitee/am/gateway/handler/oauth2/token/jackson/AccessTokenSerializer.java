@@ -39,7 +39,10 @@ public class AccessTokenSerializer extends StdSerializer<AccessToken> {
         jsonGenerator.writeStringField(AccessToken.ACCESS_TOKEN, token.getValue());
         jsonGenerator.writeStringField(AccessToken.TOKEN_TYPE, token.getTokenType());
         jsonGenerator.writeNumberField(AccessToken.EXPIRES_IN, token.getExpiresIn());
-        jsonGenerator.writeStringField(AccessToken.SCOPE, token.getScope());
+
+        if (token.getScope() != null) {
+            jsonGenerator.writeStringField(AccessToken.SCOPE, token.getScope());
+        }
 
         if (token.getRefreshToken() != null) {
             jsonGenerator.writeStringField(AccessToken.REFRESH_TOKEN, token.getRefreshToken());

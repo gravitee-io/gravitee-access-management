@@ -37,7 +37,7 @@ public class AuthorizationRequestResolverTest {
     private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver();
 
     @Test
-    public void shouldResolveAuthorizationRequest() {
+    public void shouldNotResolveAuthorizationRequest_unknownScope() {
         final String scope = "read";
         final String redirectUri = "http://localhost:8080/callback";
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
@@ -46,8 +46,8 @@ public class AuthorizationRequestResolverTest {
         Client client = new Client();
 
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidScopeException.class);
     }
 
     @Test
@@ -88,8 +88,8 @@ public class AuthorizationRequestResolverTest {
         Client client = new Client();
 
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(InvalidScopeException.class);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
     }
 
     @Test
@@ -173,6 +173,7 @@ public class AuthorizationRequestResolverTest {
         authorizationRequest.setScopes(Collections.singleton(scope));
         authorizationRequest.setRedirectUri(redirectUri);
         Client client = new Client();
+        client.setScopes(Collections.singletonList(scope));
         client.setRedirectUris(Arrays.asList("http://localhost:8080/callback", "http://localhost:8080/callback2"));
 
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
@@ -188,6 +189,7 @@ public class AuthorizationRequestResolverTest {
         authorizationRequest.setScopes(Collections.singleton(scope));
         authorizationRequest.setRedirectUri(redirectUri);
         Client client = new Client();
+        client.setScopes(Collections.singletonList(scope));
         client.setRedirectUris(Arrays.asList("http://localhost:8080/allowRedirect", "http://localhost:8080/allowRedirect2"));
 
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
