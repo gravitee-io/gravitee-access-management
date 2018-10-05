@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.token.TokenEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.token.TokenRequestParseHandler;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -66,14 +67,23 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        router.route(HttpMethod.POST, "/oauth/token").handler(tokenEndpointHandler);
+        router.route(HttpMethod.POST, "/oauth/token")
+                .handler(new TokenRequestParseHandler())
+                .handler(tokenEndpointHandler);
         router.route().failureHandler(new ExceptionHandler());
+    }
+
+    @Test
+    public void shouldNotInvokeTokenEndpoint_emptyScope() throws Exception {
+        testRequest(
+                HttpMethod.POST, "/oauth/token?grant_type=client_credentials&scope=",
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
     }
 
     @Test
     public void shouldNotInvokeTokenEndpoint_noClient() throws Exception {
         testRequest(
-                HttpMethod.POST, "/oauth/token",
+                HttpMethod.POST, "/oauth/token?grant_type=client_credentials",
                 HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
@@ -103,7 +113,7 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
         });
 
         testRequest(
-                HttpMethod.POST, "/oauth/token",
+                HttpMethod.POST, "/oauth/token?grant_type=client_credentials",
                 HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 

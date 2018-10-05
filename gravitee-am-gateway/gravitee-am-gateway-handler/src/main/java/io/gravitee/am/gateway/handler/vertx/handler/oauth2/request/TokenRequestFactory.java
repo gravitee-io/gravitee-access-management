@@ -38,7 +38,7 @@ public final class TokenRequestFactory {
         tokenRequest.setGrantType(request.params().get(OAuth2Constants.GRANT_TYPE));
         String scopes = request.params().get(OAuth2Constants.SCOPE);
         if (scopes != null) {
-            tokenRequest.setScopes(new HashSet<>(Arrays.asList(scopes.split(" "))));
+            tokenRequest.setScopes(new HashSet<>(Arrays.asList(scopes.split("\\s+"))));
         }
         tokenRequest.setRequestParameters(extractRequestParameters(request));
         return tokenRequest;

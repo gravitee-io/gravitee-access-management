@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
 import io.gravitee.am.gateway.handler.oauth2.pkce.PKCEUtils;
@@ -78,6 +79,8 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
             throw new InvalidRequestException("A client id is required");
         }
 
+        parseScopeParameter(context);
+
         // proceed prompt parameter
         parsePromptParameter(context);
 
@@ -91,6 +94,14 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         parseClaimsParameter(context);
 
         context.next();
+    }
+
+    private void parseScopeParameter(RoutingContext context) {
+        // Check scope parameter
+        String scopes = context.request().params().get(OAuth2Constants.SCOPE);
+        if (scopes != null && scopes.isEmpty()) {
+            throw new InvalidScopeException("Invalid parameter: scope must not be empty");
+        }
     }
 
     private void parsePromptParameter(RoutingContext context) {

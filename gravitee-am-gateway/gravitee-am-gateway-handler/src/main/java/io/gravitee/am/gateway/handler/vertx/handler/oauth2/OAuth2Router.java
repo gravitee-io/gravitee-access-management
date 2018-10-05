@@ -36,6 +36,7 @@ import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.introspectio
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.introspection.IntrospectionEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.revocation.RevocationTokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.token.TokenEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.token.TokenRequestParseHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -102,14 +103,15 @@ public class OAuth2Router {
         final AuthHandler userAuthHandler = RedirectAuthHandler.create(
                 userAuthProvider.getDelegate(), '/' + domain.getPath() + "/login");
 
-        // create other handlers
-        final AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain);
-
         // Bind OAuth2 endpoints
+        // Authorization endpoint
+        AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain);
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(authorizationCodeService, tokenGranter, clientService, approvalService, domain);
         Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(authorizationCodeService, tokenGranter, approvalService, clientService);
-        Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler(tokenGranter);
         Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(clientService, scopeService, thymeleafTemplateEngine);
+        // Token endpoint
+        Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler(tokenGranter);
+        Handler<RoutingContext> tokenRequestParseHandler = new TokenRequestParseHandler();
 
         // Check_token is provided only for backward compatibility and must be remove in the future
         Handler<RoutingContext> checkTokenEndpoint = new CheckTokenEndpointHandler();
@@ -130,6 +132,7 @@ public class OAuth2Router {
                 .handler(userAuthHandler)
                 .handler(authorizeApprovalEndpoint);
         router.route(HttpMethod.POST, "/token")
+                .handler(tokenRequestParseHandler)
                 .handler(clientAuthHandler)
                 .handler(tokenEndpoint);
         router.route(HttpMethod.POST, "/check_token")
