@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.granter;
 
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
@@ -99,26 +100,34 @@ public class AbstractTokenGranter implements TokenGranter {
         return tokenRequestResolver.resolve(tokenRequest, client, endUser);
     }
 
-    protected boolean isSupportRefreshToken() {
-        return supportRefreshToken;
+    /**
+     * Determines if a refresh token should be included in the token response
+     * @param supportRefreshToken
+     */
+    protected void setSupportRefreshToken(boolean supportRefreshToken) {
+        this.supportRefreshToken = supportRefreshToken;
     }
 
     private Single<AccessToken> handleRequest(TokenRequest tokenRequest, Client client, User endUser) {
         return resolveRequest(tokenRequest, client, endUser)
-                .flatMap(this::createOAuth2Request)
+                .flatMap(tokenRequest1 -> createOAuth2Request(tokenRequest1, client))
                 .flatMap(oAuth2Request -> createAccessToken(oAuth2Request, client, endUser));
     }
 
-    private Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest) {
+    private Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client) {
         return Single.just(tokenRequest.createOAuth2Request())
                 .map(oAuth2Request -> {
-                    oAuth2Request.setSupportRefreshToken(isSupportRefreshToken());
+                    oAuth2Request.setSupportRefreshToken(isSupportRefreshToken(client));
                     return oAuth2Request;
                 });
     }
 
     private Single<AccessToken> createAccessToken(OAuth2Request oAuth2Request, Client client, User endUser) {
         return tokenService.create(oAuth2Request, client, endUser);
+    }
+
+    private boolean isSupportRefreshToken(Client client) {
+        return supportRefreshToken && client.getAuthorizedGrantTypes().contains(GrantType.REFRESH_TOKEN);
     }
 
     public TokenRequestResolver getTokenRequestResolver() {

@@ -228,4 +228,25 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
                 HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
                 HttpStatusCode.INTERNAL_SERVER_ERROR_500, "Internal Server Error");
     }
+
+    @Test
+    public void shouldInvokeTokenEndpoint_withValidClientCredentials_withoutGrantType() throws Exception {
+        io.gravitee.am.model.Client client = new io.gravitee.am.model.Client();
+        client.setClientId("my-client");
+        client.setAuthorizedGrantTypes(null);
+
+        router.route().order(-1).handler(new Handler<RoutingContext>() {
+            @Override
+            public void handle(RoutingContext routingContext) {
+                routingContext.setUser(new User(new Client(client)));
+                routingContext.next();
+            }
+        });
+
+        when(tokenGranter.grant(any(TokenRequest.class), any(io.gravitee.am.model.Client.class))).thenReturn(Single.error(new Exception()));
+
+        testRequest(
+                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
+                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+    }
 }
