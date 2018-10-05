@@ -40,6 +40,9 @@ public class ImplicitTokenGranter extends AbstractTokenGranter {
 
     public ImplicitTokenGranter() {
         super(GRANT_TYPE);
+        // The authorization server MUST NOT issue a refresh token for the implicit flow
+        // See <a href="https://tools.ietf.org/html/rfc6749#section-4.2.2">4.2.2. Access Token Response</a>
+        setSupportRefreshToken(false);
     }
 
     public ImplicitTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService, UserAuthenticationManager userAuthenticationManager) {
@@ -59,14 +62,5 @@ public class ImplicitTokenGranter extends AbstractTokenGranter {
     protected Single<TokenRequest> resolveRequest(TokenRequest tokenRequest, Client client, User endUser) {
         // request has already been resolved during authorization implicit flow
         return Single.just(tokenRequest);
-    }
-
-    /**
-     * The authorization server MUST NOT issue a refresh token for the implicit flow
-     * See <a href="https://tools.ietf.org/html/rfc6749#section-4.2.2">4.2.2. Access Token Response</a>
-     */
-    @Override
-    protected boolean isSupportRefreshToken() {
-        return false;
     }
 }

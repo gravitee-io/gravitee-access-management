@@ -39,6 +39,10 @@ public class InvalidClientException extends OAuth2Exception {
     public InvalidClientException() {
     }
 
+    public InvalidClientException(String message) {
+        super(message);
+    }
+
     @Override
     public String getOAuth2ErrorCode() {
         return "invalid_client";

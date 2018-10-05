@@ -59,19 +59,24 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
         }
 
         Client authenticatedClient = (Client) authenticatedUser.getDelegate();
+        final io.gravitee.am.model.Client client = ((Client) authenticatedUser.getDelegate()).getClient();
 
         // Check that authenticated user is matching the client_id
         // client_id is not required in the token request since the client can be authenticated via a Basic Authentication
         if (tokenRequest.getClientId() != null) {
-            if (!authenticatedClient.getClientId().equals(tokenRequest.getClientId())) {
+            if (!client.getClientId().equals(tokenRequest.getClientId())) {
                 throw new InvalidClientException();
             }
         } else {
             // set token request client_id with the authenticated client
-            tokenRequest.setClientId(authenticatedClient.getClientId());
+            tokenRequest.setClientId(client.getClientId());
         }
 
-        final io.gravitee.am.model.Client client = authenticatedClient.getClient();
+        // check if client has authorized grant types
+        if (client.getAuthorizedGrantTypes() == null || client.getAuthorizedGrantTypes().isEmpty()) {
+            throw new InvalidClientException("Invalid client: client must at least have one grant type configured");
+        }
+
         tokenGranter.grant(tokenRequest, client)
                 .subscribe(accessToken -> context.response()
                         .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
