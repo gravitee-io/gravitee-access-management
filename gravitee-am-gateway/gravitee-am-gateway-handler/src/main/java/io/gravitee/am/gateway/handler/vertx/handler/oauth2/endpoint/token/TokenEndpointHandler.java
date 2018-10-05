@@ -58,11 +58,6 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
             throw new InvalidClientException();
         }
 
-        // Check if a grant_type is defined
-        if (tokenRequest.getGrantType() == null) {
-            throw new InvalidRequestException("Missing parameter: grant_type");
-        }
-
         Client authenticatedClient = (Client) authenticatedUser.getDelegate();
 
         // Check that authenticated user is matching the client_id
