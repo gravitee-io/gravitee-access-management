@@ -29,6 +29,10 @@ public abstract class OAuth2Exception extends RuntimeException {
         super(message);
     }
 
+    public OAuth2Exception(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     public int getHttpStatusCode() {
         return 400;
     }
