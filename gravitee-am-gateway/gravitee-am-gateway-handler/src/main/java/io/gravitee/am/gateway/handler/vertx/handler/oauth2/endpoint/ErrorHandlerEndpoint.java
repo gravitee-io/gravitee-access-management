@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
 
@@ -27,6 +28,8 @@ import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
  */
 public class ErrorHandlerEndpoint implements Handler<RoutingContext> {
 
+    private static final String ERROR_PARAM = "error";
+    private static final String ERROR_DESCRIPTION_PARAM = "error_description";
     private ThymeleafTemplateEngine engine;
 
     public ErrorHandlerEndpoint(ThymeleafTemplateEngine engine) {
@@ -35,6 +38,11 @@ public class ErrorHandlerEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext routingContext) {
+        final HttpServerRequest request = routingContext.request();
+        final String error = request.getParam(ERROR_PARAM);
+        final String errorDescription = request.getParam(ERROR_DESCRIPTION_PARAM);
+        routingContext.put(ERROR_PARAM, error);
+        routingContext.put(ERROR_DESCRIPTION_PARAM, errorDescription);
         engine.render(routingContext, "access_error", res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);

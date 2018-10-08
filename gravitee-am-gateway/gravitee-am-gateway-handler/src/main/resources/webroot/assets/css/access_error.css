@@ -1,26 +1,38 @@
 .mdl-layout.mdl-js-layout {
     display: block;
-    background-color: #2d323e;
+    background-color: #fafafa;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    color: #333;
+    color: #767777;
     font-size: 12px;
 }
 
 .access-error-container {
-    max-width: 360px;
+    max-width: 680px;
     margin: auto;
     padding: 8% 0 0;
 }
 
 .access-error-content {
-    text-align: center;
     display: flex;
     flex-direction: column;
-    background: #FFFFFF;
-    padding: 25px;
-    box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24);
 }
 
 .access-error-content h1 {
+    margin-bottom: 10px;
     font-size: 42px;
+}
+
+.access-error-info {
+    color: orange;
+    padding: 20px;
+    border-radius: 2px;
+    border: 1px solid #e2e5e7;
+}
+
+.access-error-info .error {
+   font-weight: bold;
+}
+
+.access-error-info .error:after {
+    content: " : ";
 }

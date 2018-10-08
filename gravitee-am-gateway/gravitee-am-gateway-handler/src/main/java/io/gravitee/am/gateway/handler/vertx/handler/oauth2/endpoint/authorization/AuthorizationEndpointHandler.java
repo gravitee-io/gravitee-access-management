@@ -117,7 +117,6 @@ public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointH
                     }
                 },
                 error -> {
-                    logger.error("An exception occurs while handling authorization request", error);
                     context.fail(error);
                 });
 
