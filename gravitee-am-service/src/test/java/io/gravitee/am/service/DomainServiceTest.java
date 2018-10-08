@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.*;
+import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
@@ -57,6 +58,7 @@ public class DomainServiceTest {
     private static final String CERTIFICATE_ID = "id-certificate";
     private static final String ROLE_ID = "id-role";
     private static final String USER_ID = "id-user";
+    private static final String SCOPE_ID = "id-scope";
 
     @InjectMocks
     private DomainService domainService = new DomainServiceImpl();
@@ -77,6 +79,9 @@ public class DomainServiceTest {
     private User user;
 
     @Mock
+    private Scope scope;
+
+    @Mock
     private DomainRepository domainRepository;
 
     @Mock
@@ -93,6 +98,9 @@ public class DomainServiceTest {
 
     @Mock
     private RoleService roleService;
+
+    @Mock
+    private ScopeService scopeService;
 
     @Test
     public void shouldFindById() {
@@ -317,6 +325,9 @@ public class DomainServiceTest {
         when(user.getId()).thenReturn(USER_ID);
         when(userService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(user)));
         when(userService.delete(anyString())).thenReturn(Completable.complete());
+        when(scope.getId()).thenReturn(SCOPE_ID);
+        when(scopeService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(scope)));
+        when(scopeService.delete(anyString())).thenReturn(Completable.complete());
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -329,6 +340,7 @@ public class DomainServiceTest {
         verify(identityProviderService, times(1)).delete(IDP_ID);
         verify(roleService, times(1)).delete(ROLE_ID);
         verify(userService, times(1)).delete(USER_ID);
+        verify(scopeService, times(1)).delete(SCOPE_ID);
     }
 
     @Test
@@ -340,6 +352,7 @@ public class DomainServiceTest {
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(userService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
+        when(scopeService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -352,6 +365,7 @@ public class DomainServiceTest {
         verify(identityProviderService, never()).delete(anyString());
         verify(roleService, never()).delete(anyString());
         verify(userService, never()).delete(anyString());
+        verify(scopeService, never()).delete(anyString());
     }
 
     @Test

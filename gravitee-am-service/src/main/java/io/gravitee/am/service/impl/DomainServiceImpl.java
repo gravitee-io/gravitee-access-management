@@ -67,6 +67,9 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private ScopeService scopeService;
+
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("Find domain by ID: {}", id);
@@ -269,7 +272,13 @@ public class DomainServiceImpl implements DomainService {
                                         return Completable.concat(deleteUsersCompletable);
                                     })
                             )
-                            .andThen(domainRepository.delete(domainId));
+                            // delete scopes
+                            .andThen(scopeService.findByDomain(domainId)
+                                    .flatMapCompletable(scopes -> {
+                                        List<Completable> deleteScopesCompletable = scopes.stream().map(s -> scopeService.delete(s.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteScopesCompletable);
+                                    })
+                            .andThen(domainRepository.delete(domainId)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
