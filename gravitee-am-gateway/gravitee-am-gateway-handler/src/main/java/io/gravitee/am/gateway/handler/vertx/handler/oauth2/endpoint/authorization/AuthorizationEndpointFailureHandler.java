@@ -71,16 +71,16 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
             try {
                 AuthorizationRequest request = resolveInitialAuthorizeRequest(routingContext);
                 String defaultProxiedOAuthErrorPage =  UriBuilderRequest.resolveProxyRequest(routingContext.request(),  "/" + domain.getPath() + "/oauth/error", null, false, false);
-                String clientId = request.getClientId();
-                if (request == null || request.getRedirectUri() == null || clientId == null) {
-                    // no authorization request
-                    // or no client available to get a registered redirect uri, go to default error page
-                    doRedirect(routingContext.response(), defaultProxiedOAuthErrorPage);
-                    return;
-                }
                 Throwable throwable = routingContext.failure();
                 if (throwable instanceof OAuth2Exception) {
                     OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
+                    String clientId = request.getClientId();
+                    if (clientId == null || request.getRedirectUri() == null) {
+                        // no client available or missing redirect_uri, go to default error page
+                        request.setRedirectUri(defaultProxiedOAuthErrorPage);
+                        doRedirect(routingContext.response(), buildRedirectUri(oAuth2Exception, request));
+                        return;
+                    }
                     clientService.findByClientId(clientId)
                             .switchIfEmpty(Maybe.error(new InvalidRequestException("Client id " + clientId + " not found")))
                             .subscribe(client -> {
@@ -102,6 +102,7 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
                                         doRedirect(routingContext.response(), defaultProxiedOAuthErrorPage);
                                     });
                 } else {
+                    logger.error("An exception occurs while handling authorization request", throwable);
                     if (routingContext.statusCode() != -1) {
                         routingContext
                                 .response()
