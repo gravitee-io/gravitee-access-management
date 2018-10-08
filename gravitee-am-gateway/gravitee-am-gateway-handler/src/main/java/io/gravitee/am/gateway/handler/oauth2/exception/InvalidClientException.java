@@ -43,6 +43,10 @@ public class InvalidClientException extends OAuth2Exception {
         super(message);
     }
 
+    public InvalidClientException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     @Override
     public String getOAuth2ErrorCode() {
         return "invalid_client";
@@ -52,4 +56,5 @@ public class InvalidClientException extends OAuth2Exception {
     public int getHttpStatusCode() {
         return HttpStatusCode.UNAUTHORIZED_401;
     }
+
 }

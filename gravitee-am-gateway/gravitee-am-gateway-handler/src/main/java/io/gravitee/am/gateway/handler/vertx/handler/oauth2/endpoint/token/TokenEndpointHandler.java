@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.token;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
@@ -58,7 +57,6 @@ public class TokenEndpointHandler implements Handler<RoutingContext> {
             throw new InvalidClientException();
         }
 
-        Client authenticatedClient = (Client) authenticatedUser.getDelegate();
         final io.gravitee.am.model.Client client = ((Client) authenticatedUser.getDelegate()).getClient();
 
         // Check that authenticated user is matching the client_id
