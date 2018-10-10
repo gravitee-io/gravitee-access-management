@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
 import io.gravitee.am.gateway.handler.oidc.flow.Flow;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
@@ -48,6 +49,7 @@ import java.util.Arrays;
 public class AuthorizationEndpointHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationEndpointHandler.class);
+    private static final String CLIENT_CONTEXT_KEY = "client";
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private Flow flow;
     private Domain domain;
@@ -68,9 +70,13 @@ public class AuthorizationEndpointHandler implements Handler<RoutingContext> {
             throw new AccessDeniedException();
         }
 
+        // get client
+        Client client = context.get(CLIENT_CONTEXT_KEY);
+
+        // get resource owner
         io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.vertx.auth.user.User) authenticatedUser.getDelegate()).getUser();
 
-        flow.run(request, endUser)
+        flow.run(request, client, endUser)
                 .subscribe(authorizationResponse -> {
                     try {
                         doRedirect(context.response(), authorizationResponse.buildRedirectUri());
