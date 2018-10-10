@@ -43,10 +43,9 @@ public class AuthorizationCodeFlow extends AbstractFlow {
     private final static List<String> RESPONSE_TYPES = Collections.singletonList(ResponseType.CODE);
     private AuthorizationCodeService authorizationCodeService;
 
-    public AuthorizationCodeFlow(AuthorizationRequestResolver authorizationRequestResolver, ClientService clientService, ApprovalService approvalService, AuthorizationCodeService authorizationCodeService) {
+    public AuthorizationCodeFlow(AuthorizationRequestResolver authorizationRequestResolver, ApprovalService approvalService, AuthorizationCodeService authorizationCodeService) {
         super(RESPONSE_TYPES);
         setAuthorizationRequestResolver(authorizationRequestResolver);
-        setClientService(clientService);
         setApprovalService(approvalService);
         this.authorizationCodeService = authorizationCodeService;
     }

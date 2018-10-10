@@ -16,14 +16,11 @@
 package io.gravitee.am.gateway.handler.oidc.flow;
 
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationResponse;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 import java.util.List;
@@ -37,7 +34,6 @@ public abstract class AbstractFlow implements Flow {
 
     private final List<String> responseTypes;
     private AuthorizationRequestResolver authorizationRequestResolver;
-    private ClientService clientService;
     private ApprovalService approvalService;
 
     public AbstractFlow(final List<String> responseTypes) {
@@ -51,19 +47,11 @@ public abstract class AbstractFlow implements Flow {
     }
 
     @Override
-    public Single<AuthorizationResponse> run(AuthorizationRequest authorizationRequest, User endUser) {
-        return resolveClient(authorizationRequest)
-                .flatMap(client -> handleRequest(authorizationRequest, client, endUser));
+    public Single<AuthorizationResponse> run(AuthorizationRequest authorizationRequest, Client client, User endUser) {
+        return handleRequest(authorizationRequest, client, endUser);
     }
 
     protected abstract Single<AuthorizationResponse> prepareResponse(AuthorizationRequest authorizationRequest, Client client, User endUser);
-
-    private Single<Client> resolveClient(AuthorizationRequest authorizationRequest) {
-        final String clientId = authorizationRequest.getClientId();
-        return clientService.findByClientId(clientId)
-                .switchIfEmpty(Maybe.error(new InvalidRequestException("No client with id : " + clientId)))
-                .toSingle();
-    }
 
     private Single<AuthorizationResponse> handleRequest(AuthorizationRequest authorizationRequest, Client client, User endUser) {
         return prepareRequest(authorizationRequest, client, endUser)
@@ -86,15 +74,6 @@ public abstract class AbstractFlow implements Flow {
     public void setAuthorizationRequestResolver(AuthorizationRequestResolver authorizationRequestResolver) {
         this.authorizationRequestResolver = authorizationRequestResolver;
     }
-
-    public ClientService getClientService() {
-        return clientService;
-    }
-
-    public void setClientService(ClientService clientService) {
-        this.clientService = clientService;
-    }
-
 
     public ApprovalService getApprovalService() {
         return approvalService;

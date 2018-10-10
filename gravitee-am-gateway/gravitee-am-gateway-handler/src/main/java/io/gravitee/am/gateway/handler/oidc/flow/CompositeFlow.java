@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.oidc.flow;
 
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
@@ -27,6 +26,7 @@ import io.gravitee.am.gateway.handler.oidc.flow.authorizationcode.AuthorizationC
 import io.gravitee.am.gateway.handler.oidc.flow.hybrid.HybridFlow;
 import io.gravitee.am.gateway.handler.oidc.flow.implicit.ImplicitFlow;
 import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -47,9 +47,6 @@ public class CompositeFlow implements Flow, InitializingBean  {
     private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver();
 
     @Autowired
-    private ClientService clientService;
-
-    @Autowired
     private ApprovalService approvalService;
 
     @Autowired
@@ -67,19 +64,19 @@ public class CompositeFlow implements Flow, InitializingBean  {
     }
 
     @Override
-    public Single<AuthorizationResponse> run(AuthorizationRequest authorizationRequest, User endUser) {
+    public Single<AuthorizationResponse> run(AuthorizationRequest authorizationRequest, Client client, User endUser) {
         return Observable
                 .fromIterable(flows)
                 .filter(flow -> flow.handle(authorizationRequest.getResponseType()))
                 .switchIfEmpty(Observable.error(new UnsupportedResponseTypeException("Unsupported response type: " + authorizationRequest.getResponseType())))
-                .flatMapSingle(flow -> flow.run(authorizationRequest, endUser)).singleOrError();
+                .flatMapSingle(flow -> flow.run(authorizationRequest, client, endUser)).singleOrError();
     }
 
     @Override
     public void afterPropertiesSet() {
-        addFlow(new AuthorizationCodeFlow(authorizationRequestResolver, clientService, approvalService, authorizationCodeService));
-        addFlow(new ImplicitFlow(authorizationRequestResolver, clientService, approvalService, tokenService, idTokenService));
-        addFlow(new HybridFlow(authorizationRequestResolver, clientService, approvalService, authorizationCodeService, tokenService, idTokenService));
+        addFlow(new AuthorizationCodeFlow(authorizationRequestResolver, approvalService, authorizationCodeService));
+        addFlow(new ImplicitFlow(authorizationRequestResolver, approvalService, tokenService, idTokenService));
+        addFlow(new HybridFlow(authorizationRequestResolver, approvalService, authorizationCodeService, tokenService, idTokenService));
     }
 
     private void addFlow(Flow flow) {

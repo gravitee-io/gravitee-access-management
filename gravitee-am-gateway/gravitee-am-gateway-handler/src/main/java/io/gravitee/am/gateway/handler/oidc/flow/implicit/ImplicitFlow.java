@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oidc.flow.implicit;
 
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
@@ -45,13 +44,11 @@ public class ImplicitFlow extends AbstractFlow {
     private IDTokenService idTokenService;
 
     public ImplicitFlow(AuthorizationRequestResolver authorizationRequestResolver,
-                        ClientService clientService,
                         ApprovalService approvalService,
                         TokenService tokenService,
                         IDTokenService idTokenService) {
         super(RESPONSE_TYPES);
         setAuthorizationRequestResolver(authorizationRequestResolver);
-        setClientService(clientService);
         setApprovalService(approvalService);
         this.tokenService = tokenService;
         this.idTokenService = idTokenService;

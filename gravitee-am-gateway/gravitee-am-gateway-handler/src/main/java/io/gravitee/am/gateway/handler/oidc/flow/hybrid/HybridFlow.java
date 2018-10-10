@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oidc.flow.hybrid;
 
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequestResolver;
@@ -47,14 +46,12 @@ public class HybridFlow extends AbstractFlow {
     private IDTokenService idTokenService;
 
     public HybridFlow(AuthorizationRequestResolver authorizationRequestResolver,
-                      ClientService clientService,
                       ApprovalService approvalService,
                       AuthorizationCodeService authorizationCodeService,
                       TokenService tokenService,
                       IDTokenService idTokenService) {
         super(RESPONSE_TYPES);
         setAuthorizationRequestResolver(authorizationRequestResolver);
-        setClientService(clientService);
         setApprovalService(approvalService);
         this.authorizationCodeService = authorizationCodeService;
         this.tokenService = tokenService;

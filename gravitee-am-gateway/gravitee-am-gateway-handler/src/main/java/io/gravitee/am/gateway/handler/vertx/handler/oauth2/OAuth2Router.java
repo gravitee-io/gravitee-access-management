@@ -29,10 +29,7 @@ import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHa
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.ErrorHandlerEndpoint;
-import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationApprovalEndpointHandler;
-import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationEndpointHandler;
-import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationRequestParseHandler;
-import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.UserApprovalEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.*;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.introspection.CheckTokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.introspection.IntrospectionEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.revocation.RevocationTokenEndpointHandler;
@@ -110,6 +107,7 @@ public class OAuth2Router {
         // Bind OAuth2 endpoints
         // Authorization endpoint
         AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain, openIDDiscoveryService);
+        Handler<RoutingContext> authorizationClientHandler = new AuthorizationClientHandler(clientService);
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(flow, domain);
         Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(approvalService);
         Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(clientService, scopeService, thymeleafTemplateEngine);
@@ -130,6 +128,7 @@ public class OAuth2Router {
         // declare oauth2 routes
         router.route(HttpMethod.GET,"/authorize")
                 .handler(authorizationRequestParseHandler)
+                .handler(authorizationClientHandler)
                 .handler(userAuthHandler)
                 .handler(authorizeEndpoint);
         router.route(HttpMethod.POST, "/authorize")

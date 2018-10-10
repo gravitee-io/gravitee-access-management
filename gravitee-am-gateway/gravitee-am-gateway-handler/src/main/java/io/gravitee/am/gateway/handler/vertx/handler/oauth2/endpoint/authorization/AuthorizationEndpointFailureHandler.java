@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.OAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
@@ -24,10 +22,10 @@ import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.utils.UriBuilder;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -56,13 +54,12 @@ import java.util.Map;
 public class AuthorizationEndpointFailureHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationEndpointFailureHandler.class);
+    private static final String CLIENT_CONTEXT_KEY = "client";
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private Domain domain;
-    private ClientService clientService;
 
-    public AuthorizationEndpointFailureHandler(Domain domain, ClientService clientService) {
+    public AuthorizationEndpointFailureHandler(Domain domain) {
         this.domain = domain;
-        this.clientService = clientService;
     }
 
     @Override
@@ -75,32 +72,17 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
                 if (throwable instanceof OAuth2Exception) {
                     OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
                     String clientId = request.getClientId();
-                    if (clientId == null || request.getRedirectUri() == null) {
-                        // no client available or missing redirect_uri, go to default error page
+                    Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+                    // no client available or missing redirect_uri, go to default error page
+                    if (clientId == null || client == null || request.getRedirectUri() == null) {
                         request.setRedirectUri(defaultProxiedOAuthErrorPage);
-                        doRedirect(routingContext.response(), buildRedirectUri(oAuth2Exception, request));
-                        return;
                     }
-                    clientService.findByClientId(clientId)
-                            .switchIfEmpty(Maybe.error(new InvalidRequestException("Client id " + clientId + " not found")))
-                            .subscribe(client -> {
-                                        if (oAuth2Exception instanceof RedirectMismatchException) {
-                                            // user set a wrong redirect_uri
-                                            // redirect to a registered (first one) client redirect_uri
-                                            request.setRedirectUri(client.getRedirectUris().iterator().next());
-                                        }
-                                        try {
-                                            doRedirect(routingContext.response(), buildRedirectUri(oAuth2Exception, request));
-                                        } catch (Exception ex) {
-                                            logger.error("Unable to redirect to redirect uri " + request.getRedirectUri(), ex);
-                                            // go to default error page
-                                            doRedirect(routingContext.response(), defaultProxiedOAuthErrorPage);
-                                        }
-                                    },
-                                    error -> {
-                                        // fail to get client, go to default error page
-                                        doRedirect(routingContext.response(), defaultProxiedOAuthErrorPage);
-                                    });
+                    // user set a wrong redirect_uri, redirect to a registered (first one) client redirect_uri
+                    if (oAuth2Exception instanceof RedirectMismatchException) {
+                        request.setRedirectUri(client.getRedirectUris().iterator().next());
+                    }
+                    // redirect user
+                    doRedirect(routingContext.response(), buildRedirectUri(oAuth2Exception, request));
                 } else {
                     logger.error("An exception occurs while handling authorization request", throwable);
                     if (routingContext.statusCode() != -1) {

@@ -22,6 +22,9 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -40,7 +43,14 @@ public class ErrorHandlerEndpoint implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         final HttpServerRequest request = routingContext.request();
         final String error = request.getParam(ERROR_PARAM);
-        final String errorDescription = request.getParam(ERROR_DESCRIPTION_PARAM);
+        String errorDescription = request.getParam(ERROR_DESCRIPTION_PARAM);
+        if (errorDescription != null) {
+            try {
+                errorDescription = java.net.URLDecoder.decode(request.getParam(ERROR_DESCRIPTION_PARAM), StandardCharsets.UTF_8.name());
+            } catch (UnsupportedEncodingException e) {
+                // unable to decode UTF-8 encoded query parameter
+            }
+        }
         routingContext.put(ERROR_PARAM, error);
         routingContext.put(ERROR_DESCRIPTION_PARAM, errorDescription);
         engine.render(routingContext, "access_error", res -> {
