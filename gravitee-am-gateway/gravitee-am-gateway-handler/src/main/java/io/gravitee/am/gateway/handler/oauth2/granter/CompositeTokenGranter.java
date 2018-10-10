@@ -20,7 +20,6 @@ import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
 import io.gravitee.am.gateway.handler.oauth2.granter.client.ClientCredentialsTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.code.AuthorizationCodeTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.granter.implicit.ImplicitTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.password.ResourceOwnerPasswordCredentialsTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.refresh.RefreshTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
@@ -83,7 +82,6 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     public void afterPropertiesSet() {
         addTokenGranter(new ClientCredentialsTokenGranter(tokenRequestResolver, tokenService));
         addTokenGranter(new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
-        addTokenGranter(new ImplicitTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
         addTokenGranter(new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager));
         addTokenGranter(new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
     }

@@ -21,10 +21,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
-import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationCodeResponse;
-import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationResponse;
-import io.gravitee.am.gateway.handler.oauth2.response.HybridResponse;
-import io.gravitee.am.gateway.handler.oauth2.response.ImplicitResponse;
+import io.gravitee.am.gateway.handler.oauth2.response.*;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
@@ -87,7 +84,13 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         super.setUp();
         SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
-        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE, ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN));
+        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE,
+                ResponseType.TOKEN,
+                io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN,
+                io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN,
+                io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN,
+                io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN,
+                io.gravitee.am.common.oidc.ResponseType.ID_TOKEN));
         when(openIDDiscoveryService.getConfiguration(anyString())).thenReturn(openIDProviderMetadata);
         AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain, openIDDiscoveryService);
         router.route("/oauth/authorize").handler(sessionHandler);
@@ -100,12 +103,12 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         when(domain.getPath()).thenReturn("test");
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize",
+                "/oauth/authorize?response_type=code&client_id=client-id",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("/test/oauth/error", location);
+                    assertEquals("/test/oauth/error?error=access_denied", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -637,6 +640,24 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN, "code=test-code&access_token=token&token_type=bearer&expires_in=0&id_token=test-id-token", accessToken, null);
     }
 
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_implicitFlow_IDToken() throws Exception {
+        shouldInvokeAuthorizationEndpoint_implicitFlow(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, "id_token=test-id-token", null, "test-id-token");
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_implicitFlow_IDToken_token() throws Exception {
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setAdditionalInformation(Collections.singletonMap("id_token", "test-id-token"));
+        shouldInvokeAuthorizationEndpoint_implicitFlow(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, "access_token=token&token_type=bearer&expires_in=0&id_token=test-id-token", accessToken, null);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_implicitFlow_token() throws Exception {
+        AccessToken accessToken = new DefaultAccessToken("token");
+        shouldInvokeAuthorizationEndpoint_implicitFlow(ResponseType.TOKEN, "access_token=token&token_type=bearer&expires_in=0", accessToken, null);
+    }
+
     private void shouldInvokeAuthorizationEndpoint_hybridFlow(String responseType, String expectedCallback, AccessToken accessToken, String idToken) throws Exception {
         final Client client = new Client();
         client.setId("client-id");
@@ -659,6 +680,52 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         if (idToken != null) {
             ((HybridResponse) authorizationResponse).setIdToken(idToken);
         }
+
+        router.route().order(-1).handler(new Handler<RoutingContext>() {
+            @Override
+            public void handle(RoutingContext routingContext) {
+                routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(new io.gravitee.am.model.User())));
+                routingContext.next();
+            }
+        });
+
+        when(domain.getPath()).thenReturn("test");
+        when(flow.run(any(), any())).thenReturn(Single.just(authorizationResponse));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=token&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback#" + expectedCallback, location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    private void shouldInvokeAuthorizationEndpoint_implicitFlow(String responseType, String expectedCallback, AccessToken accessToken, String idToken) throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(responseType);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        AuthorizationResponse authorizationResponse = null;
+        if (accessToken != null) {
+            authorizationResponse = new ImplicitResponse();
+            ((ImplicitResponse) authorizationResponse).setAccessToken(accessToken);
+        }
+        if (idToken != null) {
+            authorizationResponse = new IDTokenResponse();
+            ((IDTokenResponse) authorizationResponse).setIdToken(idToken);
+        }
+        authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
 
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
