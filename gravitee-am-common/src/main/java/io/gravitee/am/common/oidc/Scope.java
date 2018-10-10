@@ -16,6 +16,7 @@
 package io.gravitee.am.common.oidc;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,7 +36,8 @@ public enum Scope {
             StandardClaims.UPDATED_AT)),
     EMAIL("email", Arrays.asList(StandardClaims.EMAIL, StandardClaims.EMAIL_VERIFIED)),
     ADDRESS("address", Arrays.asList(StandardClaims.ADDRESS)),
-    PHONE("phone", Arrays.asList(StandardClaims.PHONE_NUMBER, StandardClaims.PHONE_NUMBER_VERIFIED));
+    PHONE("phone", Arrays.asList(StandardClaims.PHONE_NUMBER, StandardClaims.PHONE_NUMBER_VERIFIED)),
+    OPENID("openid", Collections.emptyList());
 
     private final String name;
     private final List<String> claims;

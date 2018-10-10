@@ -20,10 +20,13 @@ import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequestResolver;
+import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationResponse;
+import io.gravitee.am.gateway.handler.oauth2.response.IDTokenResponse;
 import io.gravitee.am.gateway.handler.oauth2.response.ImplicitResponse;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.flow.AbstractFlow;
+import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Single;
@@ -39,24 +42,42 @@ public class ImplicitFlow extends AbstractFlow {
 
     private static final List<String> RESPONSE_TYPES = Arrays.asList(ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN);
     private TokenService tokenService;
+    private IDTokenService idTokenService;
 
-    public ImplicitFlow(AuthorizationRequestResolver authorizationRequestResolver, ClientService clientService, ApprovalService approvalService, TokenService tokenService) {
+    public ImplicitFlow(AuthorizationRequestResolver authorizationRequestResolver,
+                        ClientService clientService,
+                        ApprovalService approvalService,
+                        TokenService tokenService,
+                        IDTokenService idTokenService) {
         super(RESPONSE_TYPES);
         setAuthorizationRequestResolver(authorizationRequestResolver);
         setClientService(clientService);
         setApprovalService(approvalService);
         this.tokenService = tokenService;
+        this.idTokenService = idTokenService;
     }
 
     @Override
     protected Single<AuthorizationResponse> prepareResponse(AuthorizationRequest authorizationRequest, Client client, User endUser) {
-        return tokenService.create(authorizationRequest.createOAuth2Request(), client, endUser)
-                .map(accessToken -> {
-                    ImplicitResponse response = new ImplicitResponse();
-                    response.setRedirectUri(authorizationRequest.getRedirectUri());
-                    response.setAccessToken(accessToken);
-                    response.setState(authorizationRequest.getState());
-                    return response;
-                });
+        OAuth2Request oAuth2Request = authorizationRequest.createOAuth2Request();
+        if (io.gravitee.am.common.oidc.ResponseType.ID_TOKEN.equals(authorizationRequest.getResponseType())) {
+            return idTokenService.create(oAuth2Request, client, endUser)
+                    .map(idToken -> {
+                        IDTokenResponse response = new IDTokenResponse();
+                        response.setRedirectUri(authorizationRequest.getRedirectUri());
+                        response.setIdToken(idToken);
+                        response.setState(authorizationRequest.getState());
+                        return response;
+                    });
+        } else {
+            return tokenService.create(oAuth2Request, client, endUser)
+                    .map(accessToken -> {
+                        ImplicitResponse response = new ImplicitResponse();
+                        response.setRedirectUri(authorizationRequest.getRedirectUri());
+                        response.setAccessToken(accessToken);
+                        response.setState(authorizationRequest.getState());
+                        return response;
+                    });
+        }
     }
 }

@@ -78,7 +78,7 @@ public class CompositeFlow implements Flow, InitializingBean  {
     @Override
     public void afterPropertiesSet() {
         addFlow(new AuthorizationCodeFlow(authorizationRequestResolver, clientService, approvalService, authorizationCodeService));
-        addFlow(new ImplicitFlow(authorizationRequestResolver, clientService, approvalService, tokenService));
+        addFlow(new ImplicitFlow(authorizationRequestResolver, clientService, approvalService, tokenService, idTokenService));
         addFlow(new HybridFlow(authorizationRequestResolver, clientService, approvalService, authorizationCodeService, tokenService, idTokenService));
     }
 

@@ -15,11 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.token.impl;
 
-import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
+import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
-import io.gravitee.am.gateway.handler.oidc.utils.OIDCClaims;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
@@ -35,19 +34,13 @@ import java.util.Map;
  */
 public class TokenEnhancerImpl implements TokenEnhancer {
 
-    private static final String OPEN_ID = "openid";
-    private static final String ID_TOKEN = "id_token";
-
     @Autowired
     private IDTokenService idTokenService;
 
     @Override
     public Single<AccessToken> enhance(AccessToken accessToken, OAuth2Request oAuth2Request, Client client, User endUser) {
         // enhance token with ID token
-        if (oAuth2Request.getResponseType() != null && ResponseType.CODE_ID_TOKEN_TOKEN.equals(oAuth2Request.getResponseType())) {
-            oAuth2Request.getContext().put(OIDCClaims.at_hash, accessToken.getToken());
-            return enhanceIDToken(accessToken, client, endUser, oAuth2Request);
-        } else if (oAuth2Request.getScopes() != null && oAuth2Request.getScopes().contains(OPEN_ID)) {
+        if (oAuth2Request.shouldGenerateIDToken()) {
             return enhanceIDToken(accessToken, client, endUser, oAuth2Request);
         } else {
             return Single.just(accessToken);
@@ -58,7 +51,7 @@ public class TokenEnhancerImpl implements TokenEnhancer {
         return idTokenService.create(oAuth2Request, client, user)
                 .flatMap(idToken -> {
                     Map<String, Object> additionalInformation = new HashMap<>(accessToken.getAdditionalInformation());
-                    additionalInformation.put(ID_TOKEN, idToken);
+                    additionalInformation.put(OAuth2Constants.ID_TOKEN, idToken);
                     accessToken.setAdditionalInformation(additionalInformation);
                     return Single.just(accessToken);
                 });
