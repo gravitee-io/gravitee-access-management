@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.vertx.auth.handler.OAuth2ClientAuthHandler
 import io.gravitee.am.gateway.handler.vertx.auth.provider.OAuth2ClientAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LoginCallbackEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LoginEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LoginRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LogoutEndpointHandler;
 import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.model.Domain;
@@ -63,7 +64,9 @@ public class LoginRouter {
         final AuthProvider identityProviderAuthProvider = new AuthProvider(new OAuth2ClientAuthenticationProvider(identityProviderManager, userService));
 
         // login handler
-        router.get("/login").handler(new LoginEndpointHandler(thymeleafTemplateEngine, domain, clientService, identityProviderManager));
+        router.get("/login")
+                .handler(new LoginRequestParseHandler(clientService))
+                .handler(new LoginEndpointHandler(thymeleafTemplateEngine, domain, identityProviderManager));
         router.post("/login").handler(FormLoginHandler.create(userAuthProvider.getDelegate()));
 
         // oauth 2.0 login callback handler
