@@ -17,13 +17,19 @@ package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorizati
 
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.List;
 
 /**
  * The authorization server must ensure that the client used for the Authorization Request is registered and
@@ -44,14 +50,25 @@ public class AuthorizationClientHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext context) {
         final String clientId = context.request().getParam(OAuth2Constants.CLIENT_ID);
+        final String redirectUri = context.request().getParam(OAuth2Constants.REDIRECT_URI);
 
         authenticate(clientId, resultHandler -> {
             if (resultHandler.failed()) {
                 context.fail(resultHandler.cause());
                 return;
             }
-            context.put(CLIENT_CONTEXT_KEY, resultHandler.result());
-            context.next();
+            // put client in the execution context
+            Client client = resultHandler.result();
+            context.put(CLIENT_CONTEXT_KEY, client);
+
+            // additional check
+            try {
+                checkGrantTypes(client);
+                checkRedirectUri(redirectUri, client);
+                context.next();
+            } catch (Exception ex) {
+                context.fail(ex);
+            }
         });
     }
 
@@ -63,5 +80,70 @@ public class AuthorizationClientHandler implements Handler<RoutingContext> {
                         error -> authHandler.handle(Future.failedFuture(new ServerErrorException("Server error: unable to find client with client_id " + clientId))),
                         () -> authHandler.handle(Future.failedFuture(new InvalidRequestException("No client found for client_id " + clientId)))
                 );
+    }
+
+    private void checkGrantTypes(Client client) {
+        // Authorization endpoint implies that the client should at least have authorization_code ou implicit grant types.
+        List<String> authorizedGrantTypes = client.getAuthorizedGrantTypes();
+        if (authorizedGrantTypes == null || authorizedGrantTypes.isEmpty()) {
+            throw new UnauthorizedClientException("Client should at least have one authorized grand type");
+        }
+        if (!containsGrantType(authorizedGrantTypes)) {
+            throw new UnauthorizedClientException("Client must at least have authorization_code or implicit grant type enable");
+        }
+    }
+
+    private boolean containsGrantType(List<String> authorizedGrantTypes) {
+        return authorizedGrantTypes.stream()
+                .anyMatch(authorizedGrantType -> OAuth2Constants.AUTHORIZATION_CODE.equals(authorizedGrantType)
+                        || OAuth2Constants.IMPLICIT.equals(authorizedGrantType));
+    }
+
+    private void checkRedirectUri(String requestedRedirectUri, Client client) {
+        final List<String> registeredClientRedirectUris = client.getRedirectUris();
+        final boolean hasRegisteredClientRedirectUris = registeredClientRedirectUris != null && !registeredClientRedirectUris.isEmpty();
+        final boolean hasRequestedRedirectUri = requestedRedirectUri != null && !requestedRedirectUri.isEmpty();
+
+        // if no requested redirect_uri and no registered client redirect_uris
+        // throw invalid request exception
+        if (!hasRegisteredClientRedirectUris && !hasRequestedRedirectUri) {
+            throw new InvalidRequestException("A redirect_uri must be supplied.");
+        }
+
+        // if requested redirect_uri doesn't match registered client redirect_uris
+        // throw redirect mismatch exception
+        if (hasRequestedRedirectUri && hasRegisteredClientRedirectUris) {
+            checkMatchingRedirectUri(requestedRedirectUri, registeredClientRedirectUris);
+        }
+    }
+
+    private void checkMatchingRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
+        if (registeredClientRedirectUris
+                .stream()
+                .noneMatch(registeredClientUri -> redirectMatches(requestedRedirect, registeredClientUri))) {
+            throw new RedirectMismatchException("The redirect_uri MUST match the registered callback URL for this application");
+        }
+    }
+
+    private boolean redirectMatches(String requestedRedirect, String registeredClientUri) {
+        try {
+            URL req = new URL(requestedRedirect);
+            URL reg = new URL(registeredClientUri);
+
+            int requestedPort = req.getPort() != -1 ? req.getPort() : req.getDefaultPort();
+            int registeredPort = reg.getPort() != -1 ? reg.getPort() : reg.getDefaultPort();
+
+            boolean portsMatch = registeredPort == requestedPort;
+
+            if (reg.getProtocol().equals(req.getProtocol()) &&
+                    reg.getHost().equals(req.getHost()) &&
+                    portsMatch) {
+                return req.getPath().startsWith(reg.getPath());
+            }
+        } catch (MalformedURLException e) {
+
+        }
+
+        return requestedRedirect.equals(registeredClientUri);
     }
 }

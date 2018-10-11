@@ -16,8 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.request;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
-import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
-import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
@@ -48,36 +46,6 @@ public class AuthorizationRequestResolverTest {
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidScopeException.class);
-    }
-
-    @Test
-    public void shouldResolveAuthorizationRequest_emptyAuthorizedGrantType() {
-        final String scope = "read";
-        final String redirectUri = "http://localhost:8080/callback";
-        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
-        authorizationRequest.setScopes(Collections.singleton(scope));
-        authorizationRequest.setRedirectUri(redirectUri);
-        Client client = new Client();
-        client.setAuthorizedGrantTypes(Collections.emptyList());
-
-        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(UnauthorizedClientException.class);
-    }
-
-    @Test
-    public void shouldResolveAuthorizationRequest_invalidAuthorizedGrantType() {
-        final String scope = "read";
-        final String redirectUri = "http://localhost:8080/callback";
-        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
-        authorizationRequest.setScopes(Collections.singleton(scope));
-        authorizationRequest.setRedirectUri(redirectUri);
-        Client client = new Client();
-        client.setAuthorizedGrantTypes(Collections.singletonList("client_credentials"));
-
-        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(UnauthorizedClientException.class);
     }
 
     @Test
@@ -163,37 +131,5 @@ public class AuthorizationRequestResolverTest {
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-    }
-
-    @Test
-    public void shouldResolveAuthorizationRequest_matchingRedirectUri() {
-        final String scope = "read";
-        final String redirectUri = "http://localhost:8080/callback";
-        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
-        authorizationRequest.setScopes(Collections.singleton(scope));
-        authorizationRequest.setRedirectUri(redirectUri);
-        Client client = new Client();
-        client.setScopes(Collections.singletonList(scope));
-        client.setRedirectUris(Arrays.asList("http://localhost:8080/callback", "http://localhost:8080/callback2"));
-
-        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
-        testObserver.assertNoErrors();
-        testObserver.assertComplete();
-    }
-
-    @Test
-    public void shouldResolveAuthorizationRequest_mismatchingRedirectUri() {
-        final String scope = "read";
-        final String redirectUri = "http://localhost:8080/callback";
-        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
-        authorizationRequest.setScopes(Collections.singleton(scope));
-        authorizationRequest.setRedirectUri(redirectUri);
-        Client client = new Client();
-        client.setScopes(Collections.singletonList(scope));
-        client.setRedirectUris(Arrays.asList("http://localhost:8080/allowRedirect", "http://localhost:8080/allowRedirect2"));
-
-        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(RedirectMismatchException.class);
     }
 }

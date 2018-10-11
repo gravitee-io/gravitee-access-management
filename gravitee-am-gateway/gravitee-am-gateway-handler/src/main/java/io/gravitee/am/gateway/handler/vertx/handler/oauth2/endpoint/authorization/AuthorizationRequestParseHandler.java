@@ -21,7 +21,6 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
 import io.gravitee.am.gateway.handler.oauth2.pkce.PKCEUtils;
-import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
@@ -29,7 +28,6 @@ import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequest;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequestResolver;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequestSyntaxException;
 import io.gravitee.am.gateway.handler.utils.UriBuilder;
-import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.AuthorizationRequestFactory;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
@@ -57,7 +55,6 @@ import java.util.List;
 public class AuthorizationRequestParseHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseHandler.class);
-    private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
     private Domain domain;
     private OpenIDDiscoveryService openIDDiscoveryService;
@@ -69,23 +66,17 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
 
     @Override
     public void handle(RoutingContext context) {
-        AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(context.request());
-
-        // The authorization server validates the request to ensure that all required parameters are present and valid.
-        String responseType = authorizationRequest.getResponseType();
-        String clientId = authorizationRequest.getClientId();
-
         // proceed response type parameter
-        parseResponseTypeParameter(responseType);
+        parseResponseTypeParameter(context);
 
         // proceed client_id parameter
-        parseClientIdParameter(clientId);
+        parseClientIdParameter(context);
 
         // parse scope parameter
         parseScopeParameter(context);
 
         // proceed nonce parameter
-        parseNonceParameter(context, responseType);
+        parseNonceParameter(context);
 
         // proceed prompt parameter
         parsePromptParameter(context);
@@ -110,7 +101,9 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         }
     }
 
-    private void parseResponseTypeParameter(String responseType) {
+    private void parseResponseTypeParameter(RoutingContext context) {
+        String responseType = context.request().getParam(OAuth2Constants.RESPONSE_TYPE);
+
         if (responseType == null) {
             throw new InvalidRequestException("Missing parameter: response_type");
         }
@@ -122,7 +115,9 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         }
     }
 
-    private void parseClientIdParameter(String clientId) {
+    private void parseClientIdParameter(RoutingContext context) {
+        String clientId = context.request().getParam(OAuth2Constants.CLIENT_ID);
+
         if (clientId == null) {
             throw new InvalidRequestException("Missing parameter: client_id");
         }
@@ -233,8 +228,9 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         }
     }
 
-    private void parseNonceParameter(RoutingContext context, String responseType) {
+    private void parseNonceParameter(RoutingContext context) {
         String nonce = context.request().getParam(OIDCParameters.NONCE);
+        String responseType = context.request().getParam(OAuth2Constants.RESPONSE_TYPE);
         // nonce parameter is required for the Hybrid flow
         if (nonce == null && isHybridFlow(responseType)) {
             throw new InvalidRequestException("Missing parameter: nonce is required for Hybrid Flow");
