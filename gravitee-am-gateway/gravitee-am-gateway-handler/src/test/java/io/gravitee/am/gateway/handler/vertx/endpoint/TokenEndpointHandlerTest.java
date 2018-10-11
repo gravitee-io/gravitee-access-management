@@ -118,6 +118,13 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldNotInvokeAuthorizationEndpoint_duplicateParameters() throws Exception {
+        testRequest(
+                HttpMethod.POST, "/oauth/token?grant_type=client_credentials&grant_type=client_credentials",
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
+    }
+
+    @Test
     public void shouldInvokeTokenEndpoint_withValidClientCredentials_noGrantType() throws Exception {
         io.gravitee.am.model.Client client = new io.gravitee.am.model.Client();
         client.setClientId("my-client-id");

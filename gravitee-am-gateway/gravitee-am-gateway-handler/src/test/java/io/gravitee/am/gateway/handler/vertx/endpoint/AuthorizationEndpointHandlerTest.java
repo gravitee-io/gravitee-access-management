@@ -261,6 +261,22 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
     }
 
     @Test
+    public void shouldNotInvokeAuthorizationEndpoint_duplicateParameters() throws Exception {
+        when(domain.getPath()).thenReturn("test");
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("/test/oauth/error?error=invalid_request&error_description=Parameter+%255Bresponse_type%255D+is+included+more+than+once", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
     public void shouldInvokeAuthorizationEndpoint_approvalPage() throws Exception {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setApproved(false);

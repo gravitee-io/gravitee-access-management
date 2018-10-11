@@ -32,6 +32,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -41,6 +42,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The authorization server validates the request to ensure that all required parameters are present and valid.
@@ -66,6 +68,9 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
 
     @Override
     public void handle(RoutingContext context) {
+        // proceed request parameters
+        parseRequestParameters(context);
+
         // proceed response type parameter
         parseResponseTypeParameter(context);
 
@@ -91,6 +96,19 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         parseClaimsParameter(context);
 
         context.next();
+    }
+
+    private void parseRequestParameters(RoutingContext context) {
+        // invalid_request if the request is missing a required parameter, includes an
+        // invalid parameter value, includes a parameter more than once, or is otherwise malformed.
+        MultiMap requestParameters = context.request().params();
+        Set<String> requestParametersNames = requestParameters.names();
+        requestParametersNames.forEach(requestParameterName -> {
+            List<String> requestParameterValue = requestParameters.getAll(requestParameterName);
+            if (requestParameterValue.size() > 1) {
+                throw new InvalidRequestException("Parameter [" + requestParameterName + "] is included more than once");
+            }
+        });
     }
 
     private void parseScopeParameter(RoutingContext context) {
