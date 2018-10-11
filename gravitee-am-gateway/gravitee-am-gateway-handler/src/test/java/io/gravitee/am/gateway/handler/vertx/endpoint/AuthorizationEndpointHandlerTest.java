@@ -19,7 +19,6 @@ import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
-import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.response.*;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
@@ -184,7 +183,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
         client.setScopes(Collections.singletonList("read"));
-        client.setRedirectUris(Collections.singletonList("http://localhost:9999/authorize/callback"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(new io.gravitee.am.model.User())));
@@ -208,6 +207,32 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
     }
 
     @Test
+    public void shouldNotInvokeAuthorizationEndpoint_emptyRedirectUri() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(OAuth2Constants.CODE);
+
+        when(domain.getPath()).thenReturn("test");
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("/test/oauth/error?error=invalid_request&error_description=A+redirect_uri+must+be+supplied.", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
     public void shouldNotInvokeAuthorizationEndpoint_mismatchRedirectUri() throws Exception {
         final Client client = new Client();
         client.setId("client-id");
@@ -215,19 +240,17 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/authorize/callback"));
 
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(OAuth2Constants.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/wrong/callback");
+
         when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
-        router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(new io.gravitee.am.model.User())));
-            routingContext.next();
-        });
-
-        when(flow.run(any(), any(), any())).thenReturn(Single.error(new RedirectMismatchException("The redirect_uri MUST match the registered callback URL for this application")));
-
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/wrong/callback",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
@@ -650,7 +673,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
         client.setScopes(Collections.singletonList("read"));
-        client.setRedirectUris(Collections.singletonList("http://localhost:9999/authorize/callback"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
