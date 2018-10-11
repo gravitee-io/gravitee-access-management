@@ -17,11 +17,13 @@ package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.token;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
-import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.TokenRequestFactory;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * The authorization server validates the Access Token Request to ensure that all required parameters are present and valid.
@@ -33,23 +35,46 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public class TokenRequestParseHandler implements Handler<RoutingContext> {
 
-    private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
-
     @Override
     public void handle(RoutingContext context) {
-        TokenRequest tokenRequest = tokenRequestFactory.create(context.request());
+        // proceed request parameters
+        parseRequestParameters(context);
 
-        // Check if a grant_type is defined
-        if (tokenRequest.getGrantType() == null) {
+        // proceed grant_type parameter
+        parseGrantTypeParameter(context);
+
+        // proceed scope parameter
+        parseScopeParameter(context);
+
+        context.next();
+    }
+
+    private void parseRequestParameters(RoutingContext context) {
+        // invalid_request if the request is missing a required parameter, includes an
+        // invalid parameter value, includes a parameter more than once, or is otherwise malformed.
+        MultiMap requestParameters = context.request().params();
+        Set<String> requestParametersNames = requestParameters.names();
+        requestParametersNames.forEach(requestParameterName -> {
+            List<String> requestParameterValue = requestParameters.getAll(requestParameterName);
+            if (requestParameterValue.size() > 1) {
+                throw new InvalidRequestException("Parameter [" + requestParameterName + "] is included more than once");
+            }
+        });
+    }
+
+    private void parseGrantTypeParameter(RoutingContext context) {
+        String grantType = context.request().getParam(OAuth2Constants.GRANT_TYPE);
+
+        if (grantType == null) {
             throw new InvalidRequestException("Missing parameter: grant_type");
         }
+    }
 
+    private void parseScopeParameter(RoutingContext context) {
         // Check scope parameter
         String scopes = context.request().params().get(OAuth2Constants.SCOPE);
         if (scopes != null && scopes.isEmpty()) {
             throw new InvalidScopeException("Invalid parameter: scope must not be empty");
         }
-
-        context.next();
     }
 }
