@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.utils.UriBuilder;
+import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Client;
@@ -100,8 +101,19 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
             } catch (Exception e) {
                 logger.error("Unable to handle authorization error response", e);
                 doRedirect(routingContext.response(),  "/" + domain.getPath() + "/oauth/error");
+            } finally {
+                cleanSession(routingContext);
             }
         }
+    }
+
+    private void doRedirect(HttpServerResponse response, String url) {
+        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    }
+
+    private void cleanSession(RoutingContext context) {
+        // return url param (i.e return url after login process) should not be used after this step
+        context.session().remove(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM);
     }
 
     private AuthorizationRequest resolveInitialAuthorizeRequest(RoutingContext routingContext) {
@@ -131,11 +143,6 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
 
         boolean fragment = authorizationRequest.getResponseType() == null ? false : authorizationRequest.getResponseType().equals(OAuth2Constants.TOKEN);
         return append(authorizationRequest.getRedirectUri(), query, fragment);
-    }
-
-
-    private void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 
     private String append(String base, Map<String, String> query, boolean fragment) throws URISyntaxException {

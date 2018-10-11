@@ -24,9 +24,11 @@ import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorizatio
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.OIDCRouter;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.utils.UUID;
+import io.vertx.core.Handler;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.AuthProvider;
 import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.*;
 import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +70,9 @@ public class VertxSecurityDomainHandler {
         final Router router = Router.router(vertx);
 
         // failure handler
-        router.route("/oauth/authorize").failureHandler(new AuthorizationEndpointFailureHandler(domain));
+        Handler<RoutingContext> authorizationEndpointFailureHandler = new AuthorizationEndpointFailureHandler(domain);
+        router.route("/login").failureHandler(authorizationEndpointFailureHandler);
+        router.route("/oauth/authorize").failureHandler(authorizationEndpointFailureHandler);
         router.route().failureHandler(new ExceptionHandler());
 
         // user authentication handler

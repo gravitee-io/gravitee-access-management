@@ -16,21 +16,21 @@
 package io.gravitee.am.gateway.handler.vertx.handler.login.endpoint;
 
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.utils.UriBuilder;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProviderConfiguration;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -50,82 +50,91 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginEndpointHandler.class);
     private final static List<String> socialProviders = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket");
+    private static final String DOMAIN_CONTEXT_KEY = "domain";
+    private static final String CLIENT_CONTEXT_KEY = "client";
+    private static final String PARAM_CONTEXT_KEY = "param";
+    private static final String ERROR_PARAM_KEY = "error";
+    private static final String OAUTH2_PROVIDER_CONTEXT_KEY = "oauth2Providers";
+    private static final String OAUTH2_AUTHORIZE_URL_CONTEXT_KEY = "authorizeUrls";
     private ThymeleafTemplateEngine engine;
     private Domain domain;
-    private ClientService clientService;
     private IdentityProviderManager identityProviderManager;
 
     public LoginEndpointHandler() {}
 
     public LoginEndpointHandler(ThymeleafTemplateEngine thymeleafTemplateEngine,
                                 Domain domain,
-                                ClientService clientService,
                                 IdentityProviderManager identityProviderManager) {
         this.engine = thymeleafTemplateEngine;
         this.domain = domain;
-        this.clientService = clientService;
         this.identityProviderManager = identityProviderManager;
     }
 
     @Override
     public void handle(RoutingContext routingContext) {
-        String clientId = routingContext.request().getParam(OAuth2Constants.CLIENT_ID);
+        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+        final Set<String> oauth2Identities = client.getOauth2Identities();
 
-        if (clientId == null || clientId.isEmpty()) {
-            logger.error(OAuth2Constants.CLIENT_ID + " parameter is required");
-            routingContext.fail(400);
+        // no OAuth2/Social provider render login page
+        if (oauth2Identities == null || oauth2Identities.isEmpty()) {
+            renderLoginPage(routingContext);
             return;
         }
 
-        clientService
-                .findByClientId(clientId)
-                .switchIfEmpty(Maybe.error(new ClientNotFoundException(clientId)))
-                .flatMapObservable(client -> {
-                    if (client.getOauth2Identities() == null) {
-                        return Observable.fromIterable(Collections.emptyList());
-                    }
-                    return Observable.fromIterable(client.getOauth2Identities());
-                })
-                .flatMapSingle(oAuth2Identity -> getIdentityProvider(oAuth2Identity).zipWith(getAuthorizeUrl(oAuth2Identity, routingContext.request()),
-                        ((identityProvider, authorizeUrl) -> new OAuth2ProviderData(identityProvider, authorizeUrl))))
-                .toList()
-                .subscribe(oAuth2ProvidersData -> {
-                    // set context data
-                    routingContext.put("domain", domain);
-                    routingContext.put("oauth2Providers", oAuth2ProvidersData.stream().map(oAuth2ProviderData -> oAuth2ProviderData.getIdentityProvider()).collect(Collectors.toList()));
-                    routingContext.put("authorizeUrls", oAuth2ProvidersData.stream().collect(Collectors.toMap(o -> o.getIdentityProvider().getId(), o -> o.getAuthorizeUrl())));
+        // client enable OAuth 2.0/social connect
+        // get OAuth 2.0 client identity providers information to correctly build the login page
+        getOAuth2Identities(oauth2Identities, routingContext.request(), resultHandler -> {
+            if (resultHandler.failed()) {
+                logger.error("Unable to fetch client OAuth 2.0 identity providers", resultHandler.cause());
+                routingContext.fail(new InvalidRequestException("Unable to fetch client OAuth 2.0 identity providers"));
+                return;
+            }
 
-                    // backward compatibility
-                    Map<String, String> params = new HashMap<>();
-                    String error = routingContext.request().getParam("error");
-                    if (error != null) {
-                        params.put("error", error);
-                    }
-                    params.put(OAuth2Constants.CLIENT_ID, routingContext.request().getParam(OAuth2Constants.CLIENT_ID));
-                    routingContext.put("param", params);
+            // put oauth2 providers in context data
+            final List<OAuth2ProviderData> oAuth2ProviderData = resultHandler.result();
+            routingContext.put(OAUTH2_PROVIDER_CONTEXT_KEY, oAuth2ProviderData.stream().map(OAuth2ProviderData::getIdentityProvider).collect(Collectors.toList()));
+            routingContext.put(OAUTH2_AUTHORIZE_URL_CONTEXT_KEY, oAuth2ProviderData.stream().collect(Collectors.toMap(o -> o.getIdentityProvider().getId(), o -> o.getAuthorizeUrl())));
 
-                    // render the login page
-                    engine.render(routingContext, "login", res -> {
-                        if (res.succeeded()) {
-                            routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                            routingContext.response().end(res.result());
-                        } else {
-                            routingContext.fail(res.cause());
-                        }
-                    });
-
-                }, error -> {
-                    if (error instanceof AbstractManagementException) {
-                        AbstractManagementException managementException = (AbstractManagementException) error;
-                        routingContext.fail(managementException.getHttpStatusCode());
-                    } else {
-                        routingContext.fail(error);
-                    }
-                });
+            // render login page
+            renderLoginPage(routingContext);
+        });
     }
 
-    public void setDomain(Domain domain) {
-        this.domain = domain;
+    private void renderLoginPage(RoutingContext routingContext) {
+        // remove client context to avoid any leaks from custom login pages
+        routingContext.remove(CLIENT_CONTEXT_KEY);
+        // put domain in context data
+        routingContext.put(DOMAIN_CONTEXT_KEY, domain);
+
+        // put additional parameter (backward compatibility)
+        final String error = routingContext.request().getParam(ERROR_PARAM_KEY);
+        Map<String, String> params = new HashMap<>();
+        if (error != null) {
+            params.put(ERROR_PARAM_KEY, error);
+        }
+        params.put(OAuth2Constants.CLIENT_ID, routingContext.request().getParam(OAuth2Constants.CLIENT_ID));
+        routingContext.put(PARAM_CONTEXT_KEY, params);
+
+        // render the login page
+        engine.render(routingContext, "login", res -> {
+            if (res.succeeded()) {
+                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                routingContext.response().end(res.result());
+            } else {
+                logger.error("Unable to render login page", res.cause());
+                routingContext.fail(res.cause());
+            }
+        });
+    }
+
+    private void getOAuth2Identities(Set<String> oauth2Identities, HttpServerRequest request, Handler<AsyncResult<List<OAuth2ProviderData>>> resultHandler) {
+        Observable.fromIterable(oauth2Identities)
+                .flatMapSingle(oauth2Identity -> getIdentityProvider(oauth2Identity)
+                        .zipWith(getAuthorizeUrl(oauth2Identity, request),
+                                (identityProvider, authorizeUrl) -> new OAuth2ProviderData(identityProvider, authorizeUrl)))
+                .toList()
+                .subscribe(identityProviders -> resultHandler.handle(Future.succeededFuture(identityProviders)),
+                        error -> resultHandler.handle(Future.failedFuture(error)));
     }
 
     private Single<IdentityProvider> getIdentityProvider(String identityProviderId) {
