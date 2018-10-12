@@ -119,14 +119,6 @@ public class AuthorizationCode {
         this.subject = subject;
     }
 
-    public String getRedirectUri() {
-        return redirectUri;
-    }
-
-    public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
-    }
-
     public Set<String> getScopes() {
         return scopes;
     }

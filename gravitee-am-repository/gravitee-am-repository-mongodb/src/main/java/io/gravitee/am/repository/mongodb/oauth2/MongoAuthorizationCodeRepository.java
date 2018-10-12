@@ -99,7 +99,6 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         authorizationCode.setCreatedAt(authorizationCodeMongo.getCreatedAt());
         authorizationCode.setExpireAt(authorizationCodeMongo.getExpireAt());
         authorizationCode.setSubject(authorizationCodeMongo.getSubject());
-        authorizationCode.setRedirectUri(authorizationCodeMongo.getRedirectUri());
         authorizationCode.setScopes(authorizationCodeMongo.getScopes());
 
         if (authorizationCodeMongo.getRequestParameters() != null) {
@@ -122,7 +121,6 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         authorizationCodeMongo.setCreatedAt(authorizationCode.getCreatedAt());
         authorizationCodeMongo.setExpireAt(authorizationCode.getExpireAt());
         authorizationCodeMongo.setSubject(authorizationCode.getSubject());
-        authorizationCodeMongo.setRedirectUri(authorizationCode.getRedirectUri());
         authorizationCodeMongo.setScopes(authorizationCode.getScopes());
 
         if (authorizationCode.getRequestParameters() != null) {
