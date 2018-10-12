@@ -44,9 +44,6 @@ public class AuthorizationCodeMongo {
 
     private String subject;
 
-    @BsonProperty("redirect_uri")
-    private String redirectUri;
-
     private Set<String> scopes;
 
     @BsonProperty("request_parameters")
@@ -98,14 +95,6 @@ public class AuthorizationCodeMongo {
 
     public void setSubject(String subject) {
         this.subject = subject;
-    }
-
-    public String getRedirectUri() {
-        return redirectUri;
-    }
-
-    public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
     }
 
     public Set<String> getScopes() {

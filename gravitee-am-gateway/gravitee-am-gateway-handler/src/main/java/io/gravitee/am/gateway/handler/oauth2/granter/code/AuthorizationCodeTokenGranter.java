@@ -108,7 +108,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
         // This might be null, if the authorization was done without the redirect_uri parameter
         // https://tools.ietf.org/html/rfc6749#section-4.1.3 (4.1.3. Access Token Request); if provided
         // their values MUST be identical
-        String redirectUriApprovalParameter = authorizationCode.getRedirectUri();
+        String redirectUriApprovalParameter = authorizationCode.getRequestParameters().getFirst(OAuth2Constants.REDIRECT_URI);
         if (redirectUriApprovalParameter != null) {
             if (redirectUri == null) {
                 throw new InvalidGrantException("Redirect URI is missing");
