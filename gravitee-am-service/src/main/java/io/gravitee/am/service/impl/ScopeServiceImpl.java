@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.api.ScopeRepository;
+import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
@@ -41,7 +40,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,6 +58,9 @@ public class ScopeServiceImpl implements ScopeService {
 
     @Autowired
     private ScopeRepository scopeRepository;
+
+    @Autowired
+    private ScopeApprovalRepository scopeApprovalRepository;
 
     @Autowired
     private RoleService roleService;
@@ -137,62 +138,64 @@ public class ScopeServiceImpl implements ScopeService {
         LOGGER.debug("Delete scope {}", scopeId);
         return scopeRepository.findById(scopeId)
                 .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
-                .flatMapSingle(scope -> {
-                    // 1_ Remove permissions from role
-                    Single<List<Role>> removePermissionsFromRole = roleService.findByDomain(scope.getDomain())
-                            .flatMapObservable(roles -> Observable.fromIterable(roles.stream()
-                                    .filter(role -> role.getPermissions().contains(scope.getKey()))
-                                    .collect(Collectors.toList())))
-                            .flatMapSingle(role -> {
-                                role.getPermissions().remove(scope.getKey());
-                                UpdateRole updatedRole = new UpdateRole();
-                                updatedRole.setName(role.getName());
-                                updatedRole.setDescription(role.getDescription());
-                                updatedRole.setPermissions(role.getPermissions());
-                                // Save role
-                                return roleService.update(scope.getDomain(), role.getId(), updatedRole);
-                            }).toList();
+                .flatMapCompletable(scope ->
 
-                    // 2_ Remove scopes from client
-                    Single<List<Client>> removeScopesFromClient = clientService.findByDomain(scope.getDomain())
-                            .flatMapObservable(clients -> Observable.fromIterable(clients.stream()
-                                    .filter(client -> client.getScopes().contains(scope.getKey()))
-                                    .collect(Collectors.toList())))
-                            .flatMapSingle(client -> {
-                                // Remove scope from client
-                                client.getScopes().remove(scope.getKey());
+                        Completable.fromSingle(
+                                // 1_ Remove permissions from role
+                                roleService.findByDomain(scope.getDomain())
+                                        .flatMapObservable(roles -> Observable.fromIterable(roles.stream()
+                                                .filter(role -> role.getPermissions() != null && role.getPermissions().contains(scope.getKey()))
+                                                .collect(Collectors.toList())))
+                                        .flatMapSingle(role -> {
+                                            role.getPermissions().remove(scope.getKey());
+                                            UpdateRole updatedRole = new UpdateRole();
+                                            updatedRole.setName(role.getName());
+                                            updatedRole.setDescription(role.getDescription());
+                                            updatedRole.setPermissions(role.getPermissions());
+                                            // Save role
+                                            return roleService.update(scope.getDomain(), role.getId(), updatedRole);
+                                        }).toList())
+                                .andThen(
+                                        // 2_ Remove scopes from client
+                                        clientService.findByDomain(scope.getDomain())
+                                                .flatMapObservable(clients -> Observable.fromIterable(clients.stream()
+                                                        .filter(client -> client.getScopes().contains(scope.getKey()))
+                                                        .collect(Collectors.toList())))
+                                                .flatMapSingle(client -> {
+                                                    // Remove scope from client
+                                                    client.getScopes().remove(scope.getKey());
 
-                                UpdateClient updateClient = new UpdateClient();
-                                updateClient.setAutoApproveScopes(client.getAutoApproveScopes());
-                                updateClient.setScopes(client.getScopes());
-                                updateClient.setRefreshTokenValiditySeconds(client.getRefreshTokenValiditySeconds());
-                                updateClient.setRedirectUris(client.getRedirectUris());
-                                updateClient.setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());
-                                updateClient.setAuthorizedGrantTypes(client.getAuthorizedGrantTypes());
-                                updateClient.setCertificate(client.getCertificate());
-                                updateClient.setEnabled(client.isEnabled());
-                                updateClient.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
-                                updateClient.setGenerateNewTokenPerRequest(client.isGenerateNewTokenPerRequest());
-                                updateClient.setIdentities(client.getIdentities());
-                                updateClient.setIdTokenCustomClaims(client.getIdTokenCustomClaims());
-                                updateClient.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
+                                                    UpdateClient updateClient = new UpdateClient();
+                                                    updateClient.setAutoApproveScopes(client.getAutoApproveScopes());
+                                                    updateClient.setScopes(client.getScopes());
+                                                    updateClient.setRefreshTokenValiditySeconds(client.getRefreshTokenValiditySeconds());
+                                                    updateClient.setRedirectUris(client.getRedirectUris());
+                                                    updateClient.setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());
+                                                    updateClient.setAuthorizedGrantTypes(client.getAuthorizedGrantTypes());
+                                                    updateClient.setCertificate(client.getCertificate());
+                                                    updateClient.setEnabled(client.isEnabled());
+                                                    updateClient.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
+                                                    updateClient.setGenerateNewTokenPerRequest(client.isGenerateNewTokenPerRequest());
+                                                    updateClient.setIdentities(client.getIdentities());
+                                                    updateClient.setIdTokenCustomClaims(client.getIdTokenCustomClaims());
+                                                    updateClient.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
 
-                                // Save client
-                                return clientService.update(scope.getDomain(), client.getId(), updateClient);
-                            }).toList();
+                                                    // Save client
+                                                    return clientService.update(scope.getDomain(), client.getId(), updateClient);
+                                                }).toList()).toCompletable()
+                                // 3_ Remove scopes from scope_approvals
+                                .andThen(scopeApprovalRepository.delete(scope.getDomain(), scope.getKey()))
+                                // 4_ Delete scope
+                                .andThen(scopeRepository.delete(scopeId)))
+                                .onErrorResumeNext(ex -> {
+                                    if (ex instanceof AbstractManagementException) {
+                                        return Completable.error(ex);
+                                    }
 
-                    return Single.merge(removePermissionsFromRole, removeScopesFromClient).toList();
-                })
-                .flatMapCompletable(irrelevant -> scopeRepository.delete(scopeId))
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Completable.error(ex);
-                    }
-
-                    LOGGER.error("An error occurs while trying to delete scope: {}", scopeId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete scope: %s", scopeId), ex));
-                });
+                                    LOGGER.error("An error occurs while trying to delete scope: {}", scopeId, ex);
+                                    return Completable.error(new TechnicalManagementException(
+                                            String.format("An error occurs while trying to delete scope: %s", scopeId), ex));
+                                });
     }
 
     @Override

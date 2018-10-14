@@ -17,6 +17,7 @@ package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Single;
 
 import java.util.Set;
@@ -30,4 +31,6 @@ public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, S
     Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId);
 
     Single<ScopeApproval> upsert(ScopeApproval scopeApproval);
+
+    Completable delete(String domain, String scope);
 }

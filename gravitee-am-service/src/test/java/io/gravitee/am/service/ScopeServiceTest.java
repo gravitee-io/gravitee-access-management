@@ -20,6 +20,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
+import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.gravitee.am.service.exception.ScopeAlreadyExistsException;
 import io.gravitee.am.service.exception.ScopeNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -66,6 +67,9 @@ public class ScopeServiceTest {
 
     @Mock
     private ScopeRepository scopeRepository;
+
+    @Mock
+    private ScopeApprovalRepository scopeApprovalRepository;
 
     private final static String DOMAIN = "domain1";
 
@@ -246,6 +250,7 @@ public class ScopeServiceTest {
         when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(scope));
         when(scopeRepository.delete("my-scope")).thenReturn(Completable.complete());
+        when(scopeApprovalRepository.delete(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
 
         TestObserver testObserver = scopeService.delete("my-scope").test();
         testObserver.awaitTerminalEvent();
@@ -278,6 +283,7 @@ public class ScopeServiceTest {
         when(clientService.update(anyString(), anyString(), any(UpdateClient.class))).thenReturn(Single.just(new Client()));
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(scope));
         when(scopeRepository.delete("my-scope")).thenReturn(Completable.complete());
+        when(scopeApprovalRepository.delete(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
 
         TestObserver testObserver = scopeService.delete("my-scope").test();
         testObserver.awaitTerminalEvent();
