@@ -67,15 +67,19 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
 
         userService.findById(subject)
                 .map(user -> {
-                    final Map<String, Object> userClaims = user.getAdditionalInformation();
-                    if (userClaims == null || userClaims.isEmpty() || !userClaims.containsKey(StandardClaims.SUB)) {
+                    Map<String, Object> userClaims = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
+                    if (userClaims.isEmpty() || !userClaims.containsKey(StandardClaims.SUB)) {
                         // The sub (subject) Claim MUST always be returned in the UserInfo Response.
                         // https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse
                         throw new InvalidRequestException("UserInfo response is missing required claims");
                     }
 
+                    // Exchange the sub claim from the identity provider to the preferred_username
+                    userClaims.put(StandardClaims.PREFERRED_USERNAME, userClaims.get(StandardClaims.SUB));
+                    userClaims.put(StandardClaims.SUB, subject);
+
                     Map<String, Object> requestedClaims = new HashMap<>();
-                    requestedClaims.put(StandardClaims.SUB, userClaims.get(StandardClaims.SUB));
+
                     boolean requestForSpecificClaims = false;
                     // processing claims list
                     // 1. process the request using scope values
@@ -86,6 +90,10 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                     if (requestedParameters != null && requestedParameters.get(OIDCParameters.CLAIMS) != null) {
                         requestForSpecificClaims = processClaimsRequest(requestedParameters.get(OIDCParameters.CLAIMS), userClaims, requestedClaims);
                     }
+
+                    // Put at the end of the process to avoid override by identity provider
+                    requestedClaims.put(StandardClaims.SUB, subject);
+
                     return (requestForSpecificClaims) ? requestedClaims : userClaims;
                  })
                 .subscribe(claims -> context.response()
