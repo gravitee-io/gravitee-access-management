@@ -95,6 +95,6 @@ public class UserInfoRequestParseHandler implements Handler<RoutingContext> {
                             context.next();
                         },
                         error -> context.fail(error),
-                        () -> context.fail(new InvalidTokenException()));
+                        () -> context.fail(new InvalidTokenException("The access token is invalid")));
     }
 }

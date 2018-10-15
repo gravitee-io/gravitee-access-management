@@ -60,8 +60,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         // The UserInfo Endpoint is an OAuth 2.0 Protected Resource that returns Claims about the authenticated End-User
         String subject = accessToken.getSubject();
         if (subject == null) {
-            // TODO : what error should be thrown ? rfc seems to say nothing about an access token created from the client_credentials flow
-            context.fail(400);
+            context.fail(new InvalidRequestException("The access token was not issued for an End-User"));
             return;
         }
 
