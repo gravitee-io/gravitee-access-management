@@ -57,6 +57,8 @@ public class ImplicitFlow extends AbstractFlow {
     @Override
     protected Single<AuthorizationResponse> prepareResponse(AuthorizationRequest authorizationRequest, Client client, User endUser) {
         OAuth2Request oAuth2Request = authorizationRequest.createOAuth2Request();
+        oAuth2Request.setSupportRefreshToken(false);
+        oAuth2Request.setSubject(endUser.getId());
         if (io.gravitee.am.common.oidc.ResponseType.ID_TOKEN.equals(authorizationRequest.getResponseType())) {
             return idTokenService.create(oAuth2Request, client, endUser)
                     .map(idToken -> {

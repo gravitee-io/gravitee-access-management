@@ -110,13 +110,16 @@ public class AbstractTokenGranter implements TokenGranter {
 
     private Single<AccessToken> handleRequest(TokenRequest tokenRequest, Client client, User endUser) {
         return resolveRequest(tokenRequest, client, endUser)
-                .flatMap(tokenRequest1 -> createOAuth2Request(tokenRequest1, client))
+                .flatMap(tokenRequest1 -> createOAuth2Request(tokenRequest1, client, endUser))
                 .flatMap(oAuth2Request -> createAccessToken(oAuth2Request, client, endUser));
     }
 
-    private Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client) {
+    private Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client, User endUser) {
         return Single.just(tokenRequest.createOAuth2Request())
                 .map(oAuth2Request -> {
+                    if (endUser != null) {
+                        oAuth2Request.setSubject(endUser.getId());
+                    }
                     oAuth2Request.setSupportRefreshToken(isSupportRefreshToken(client));
                     return oAuth2Request;
                 });
