@@ -21,10 +21,12 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewDomain;
+import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.am.service.model.UpdateLoginForm;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,14 +125,15 @@ public class DomainServiceImpl implements DomainService {
                         return domainRepository.create(domain);
                     }
                 })
-            .onErrorResumeNext(ex -> {
-                if (ex instanceof AbstractManagementException) {
-                    return Single.error(ex);
-                }
+                .flatMap(this::createSystemScopes)
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
 
-                LOGGER.error("An error occurs while trying to create a domain", ex);
-                return Single.error(new TechnicalManagementException("An error occurs while trying to create a domain", ex));
-            });
+                    LOGGER.error("An error occurs while trying to create a domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a domain", ex));
+                });
     }
 
     @Override
@@ -275,7 +278,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete scopes
                             .andThen(scopeService.findByDomain(domainId)
                                     .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteScopesCompletable = scopes.stream().map(s -> scopeService.delete(s.getId())).collect(Collectors.toList());
+                                        List<Completable> deleteScopesCompletable = scopes.stream().map(s -> scopeService.delete(s.getId(), true)).collect(Collectors.toList());
                                         return Completable.concat(deleteScopesCompletable);
                                     })
                             .andThen(domainRepository.delete(domainId)));
@@ -335,6 +338,21 @@ public class DomainServiceImpl implements DomainService {
                     LOGGER.error("An error occurs while trying to update login form domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update login form domain", ex));
                 });
+    }
+
+    private Single<Domain> createSystemScopes(Domain domain) {
+        return Observable.fromArray(io.gravitee.am.common.oidc.Scope.values())
+                .flatMapSingle(systemScope -> {
+                    final String scopeKey = systemScope.getName();
+                    NewSystemScope scope = new NewSystemScope();
+                    scope.setKey(scopeKey);
+                    scope.setClaims(systemScope.getClaims());
+                    scope.setName(Character.toUpperCase(scopeKey.charAt(0)) + scopeKey.substring(1));
+                    scope.setDescription("Default description for scope " + scopeKey);
+                    return scopeService.create(domain.getId(), scope);
+                })
+                .lastOrError()
+                .map(scope -> domain);
     }
 
     private String generateContextPath(String domainName) {

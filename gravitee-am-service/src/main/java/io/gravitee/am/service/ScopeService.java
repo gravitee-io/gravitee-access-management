@@ -17,7 +17,9 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.model.NewScope;
+import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.UpdateScope;
+import io.gravitee.am.service.model.UpdateSystemScope;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -35,9 +37,13 @@ public interface ScopeService {
 
     Single<Scope> create(String domain, NewScope scope);
 
+    Single<Scope> create(String domain, NewSystemScope scope);
+
     Single<Set<Scope>> findByDomain(String domain);
 
     Single<Scope> update(String domain, String id, UpdateScope updateScope);
 
-    Completable delete(String scopeId);
+    Single<Scope> update(String domain, String id, UpdateSystemScope updateScope);
+
+    Completable delete(String scopeId, boolean force);
 }

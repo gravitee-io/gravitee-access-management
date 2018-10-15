@@ -23,6 +23,7 @@ import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.gravitee.am.service.exception.ScopeAlreadyExistsException;
 import io.gravitee.am.service.exception.ScopeNotFoundException;
+import io.gravitee.am.service.exception.SystemScopeDeleteException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ScopeServiceImpl;
 import io.gravitee.am.service.model.NewScope;
@@ -200,7 +201,7 @@ public class ScopeServiceTest {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
-        scopeService.delete("my-scope").subscribe(testObserver);
+        scopeService.delete("my-scope", false).subscribe(testObserver);
 
         testObserver.assertError(ScopeNotFoundException.class);
         testObserver.assertNotComplete();
@@ -211,7 +212,7 @@ public class ScopeServiceTest {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        scopeService.delete("my-scope").subscribe(testObserver);
+        scopeService.delete("my-scope", false).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -223,7 +224,7 @@ public class ScopeServiceTest {
         when(roleService.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        scopeService.delete("my-scope").subscribe(testObserver);
+        scopeService.delete("my-scope", false).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -236,7 +237,7 @@ public class ScopeServiceTest {
         when(clientService.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        scopeService.delete("my-scope").subscribe(testObserver);
+        scopeService.delete("my-scope", false).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -252,7 +253,7 @@ public class ScopeServiceTest {
         when(scopeRepository.delete("my-scope")).thenReturn(Completable.complete());
         when(scopeApprovalRepository.delete(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = scopeService.delete("my-scope").test();
+        TestObserver testObserver = scopeService.delete("my-scope", false).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -285,7 +286,7 @@ public class ScopeServiceTest {
         when(scopeRepository.delete("my-scope")).thenReturn(Completable.complete());
         when(scopeApprovalRepository.delete(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = scopeService.delete("my-scope").test();
+        TestObserver testObserver = scopeService.delete("my-scope", false).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -296,6 +297,18 @@ public class ScopeServiceTest {
         verify(roleService, times(1)).update(anyString(), anyString(), any(UpdateRole.class));
         verify(clientService, times(1)).update(anyString(), anyString(), any(UpdateClient.class));
         verify(scopeRepository, times(1)).delete("my-scope");
+    }
+
+    @Test
+    public void shouldNotDeleteSystemScope() throws TechnicalException {
+        Scope scope = new Scope();
+        scope.setKey("scope-key");
+        scope.setSystem(true);
+        when(scopeRepository.findById("scope-id")).thenReturn(Maybe.just(scope));
+
+        TestObserver testObserver = scopeService.delete("scope-id", false).test();
+        testObserver.assertError(SystemScopeDeleteException.class);
+        testObserver.assertNotComplete();
     }
 
 }

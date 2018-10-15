@@ -18,10 +18,19 @@
 <div class="scopes-container">
   <h1 *ngIf="!isEmpty">Scopes</h1>
   <div class="scopes-content" *ngIf="!isEmpty">
-    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]='scopes'>
+    <ngx-datatable class="material"
+                   [columnMode]="'flex'"
+                   [headerHeight]="40"
+                   [footerHeight]="40"
+                   [rowHeight]="50"
+                   [rows]='scopes'
+                   [sorts]="[{prop: 'system', dir: 'desc'}, {prop: 'key', dir: 'asc'}]">
       <ngx-datatable-column name="Key" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.key}}
+          <div fxLayout="row">
+            <span>{{row.key}}</span>
+            <mat-chip-list *ngIf="row.system"><mat-chip class="badge" color="primary" disabled="true">System</mat-chip></mat-chip-list>
+          </div>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Name" [flexGrow]="1">
@@ -33,7 +42,7 @@
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="scopes-actions">
             <a mat-icon-button [routerLink]="[row.id]"><mat-icon>settings</mat-icon></a>
-            <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon>delete</mat-icon></button>
+            <button *ngIf="!row.system" mat-icon-button (click)="delete(row.id, $event)"><mat-icon>delete</mat-icon></button>
           </div>
         </ng-template>
       </ngx-datatable-column>

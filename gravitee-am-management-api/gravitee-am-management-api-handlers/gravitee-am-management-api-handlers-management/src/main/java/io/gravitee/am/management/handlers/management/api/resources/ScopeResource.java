@@ -109,7 +109,7 @@ public class ScopeResource extends AbstractResource {
     public void delete(@PathParam("domain") String domain,
                        @PathParam("scope") String scope,
                        @Suspended final AsyncResponse response) {
-        scopeService.delete(scope)
+        scopeService.delete(scope, false)
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

@@ -17,10 +17,8 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.NewScope;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
@@ -99,7 +97,7 @@ public class ScopesResourceTest extends JerseySpringTest {
         scope.setName("scope-name");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(scope)).when(scopeService).create(eq(domainId), any());
+        doReturn(Single.just(scope)).when(scopeService).create(eq(domainId), any(NewScope.class));
 
         final Response response = target("domains")
                 .path(domainId)

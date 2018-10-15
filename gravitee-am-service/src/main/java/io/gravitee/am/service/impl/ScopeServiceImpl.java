@@ -21,14 +21,8 @@ import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.ScopeAlreadyExistsException;
-import io.gravitee.am.service.exception.ScopeNotFoundException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.model.NewScope;
-import io.gravitee.am.service.model.UpdateClient;
-import io.gravitee.am.service.model.UpdateRole;
-import io.gravitee.am.service.model.UpdateScope;
+import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.model.*;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -111,6 +105,37 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
+    public Single<Scope> create(String domain, NewSystemScope newScope) {
+        LOGGER.debug("Create a new system scope {} for domain {}", newScope, domain);
+        String scopeKey = newScope.getKey().toLowerCase();
+        return scopeRepository.findByDomainAndKey(domain, scopeKey)
+                .isEmpty()
+                .flatMap(empty -> {
+                    if (!empty) {
+                        throw new ScopeAlreadyExistsException(scopeKey, domain);
+                    }
+                    Scope scope = new Scope();
+                    scope.setId(UUID.toString(UUID.random()));
+                    scope.setDomain(domain);
+                    scope.setKey(scopeKey);
+                    scope.setSystem(true);
+                    scope.setClaims(newScope.getClaims());
+                    scope.setName(newScope.getName());
+                    scope.setDescription(newScope.getDescription());
+                    scope.setCreatedAt(new Date());
+                    scope.setUpdatedAt(new Date());
+                    return scopeRepository.create(scope);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to create a system scope", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a system scope", ex));
+                });
+    }
+
+    @Override
     public Single<Scope> update(String domain, String id, UpdateScope updateScope) {
         LOGGER.debug("Update a scope {} for domain {}", id, domain);
         return scopeRepository.findById(id)
@@ -118,8 +143,6 @@ public class ScopeServiceImpl implements ScopeService {
                 .flatMapSingle(scope -> {
                     scope.setName(updateScope.getName());
                     scope.setDescription(updateScope.getDescription());
-                    scope.setNames(updateScope.getNames());
-                    scope.setDescriptions(updateScope.getDescriptions());
                     scope.setUpdatedAt(new Date());
 
                     return scopeRepository.update(scope);
@@ -134,10 +157,38 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
-    public Completable delete(String scopeId) {
+    public Single<Scope> update(String domain, String id, UpdateSystemScope updateScope) {
+        LOGGER.debug("Update a system scope {} for domain {}", id, domain);
+        return scopeRepository.findById(id)
+                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
+                .flatMapSingle(scope -> {
+                    scope.setName(updateScope.getName());
+                    scope.setDescription(updateScope.getDescription());
+                    scope.setUpdatedAt(new Date());
+                    scope.setSystem(true);
+                    scope.setClaims(updateScope.getClaims());
+                    return scopeRepository.update(scope);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to update a system scope", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a system scope", ex));
+                });
+    }
+
+    @Override
+    public Completable delete(String scopeId, boolean force) {
         LOGGER.debug("Delete scope {}", scopeId);
         return scopeRepository.findById(scopeId)
                 .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
+                .flatMapSingle(scope -> {
+                    if (scope.isSystem() && !force) {
+                        throw new SystemScopeDeleteException(scopeId);
+                    }
+                    return Single.just(scope);
+                })
                 .flatMapCompletable(scope ->
 
                         Completable.fromSingle(

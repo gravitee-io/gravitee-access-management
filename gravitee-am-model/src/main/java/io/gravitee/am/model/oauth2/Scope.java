@@ -16,7 +16,7 @@
 package io.gravitee.am.model.oauth2;
 
 import java.util.Date;
-import java.util.Map;
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -36,11 +36,7 @@ public class Scope {
 
     private String name;
 
-    private Map<String, String> names;
-
     private String description;
-
-    private Map<String, String> descriptions;
 
     /**
      * Security domain associated to the scope
@@ -56,6 +52,10 @@ public class Scope {
      * Domain last updated date
      */
     private Date updatedAt;
+
+    private boolean system;
+
+    private List<String> claims;
 
     public Scope() {
     }
@@ -96,22 +96,6 @@ public class Scope {
         this.description = description;
     }
 
-    public Map<String, String> getNames() {
-        return names;
-    }
-
-    public void setNames(Map<String, String> names) {
-        this.names = names;
-    }
-
-    public Map<String, String> getDescriptions() {
-        return descriptions;
-    }
-
-    public void setDescriptions(Map<String, String> descriptions) {
-        this.descriptions = descriptions;
-    }
-
     public String getDomain() {
         return domain;
     }
@@ -134,5 +118,36 @@ public class Scope {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public void setSystem(boolean system) {
+        this.system = system;
+    }
+
+    public List<String> getClaims() {
+        return claims;
+    }
+
+    public void setClaims(List<String> claims) {
+        this.claims = claims;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Scope scope = (Scope) o;
+
+        return id.equals(scope.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
     }
 }

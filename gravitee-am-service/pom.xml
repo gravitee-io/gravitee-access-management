@@ -48,6 +48,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.common</groupId>
+            <artifactId>gravitee-am-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- TODO remove this dependency, it's used to generate certificate file, should be replaced with well known endpoint -->
         <dependency>
             <groupId>io.gravitee.am.plugins.handlers</groupId>
