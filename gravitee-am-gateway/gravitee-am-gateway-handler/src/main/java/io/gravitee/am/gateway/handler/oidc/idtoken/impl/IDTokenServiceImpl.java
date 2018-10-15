@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.idtoken.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
@@ -78,7 +79,10 @@ public class IDTokenServiceImpl implements IDTokenService, InitializingBean {
 
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         idToken.setIss(iss);
-        idToken.setSub(oAuth2Request.isClientOnly() ? oAuth2Request.getClientId() : user.getUsername());
+        idToken.setSub(oAuth2Request.isClientOnly() ? oAuth2Request.getClientId() : user.getId());
+        if (!oAuth2Request.isClientOnly() && user.getUsername() != null) {
+            idToken.addAdditionalClaim(StandardClaims.PREFERRED_USERNAME, user.getUsername());
+        }
         idToken.setAud(oAuth2Request.getClientId());
         idToken.setIat(calendar.getTimeInMillis() / 1000l);
 
