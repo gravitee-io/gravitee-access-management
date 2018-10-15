@@ -15,16 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
-import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LoginEndpointHandler;
-import io.gravitee.am.model.Domain;
+import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LoginRequestParseHandler;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -45,22 +43,15 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     private LoginEndpointHandler loginEndpointHandler = new LoginEndpointHandler();
 
     @Mock
-    private ThymeleafTemplateEngine engine;
-
-    @Mock
-    private Domain domain;
-
-    @Mock
     private ClientService clientService;
-
-    @Mock
-    private IdentityProviderManager identityProviderManager;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        router.route(HttpMethod.GET, "/login").handler(loginEndpointHandler);
+        router.route(HttpMethod.GET, "/login")
+                .handler(new LoginRequestParseHandler(clientService))
+                .handler(loginEndpointHandler);
         router.route().failureHandler(new ExceptionHandler());
     }
 
@@ -77,7 +68,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
 
         testRequest(
                 HttpMethod.GET, "/login?client_id=test",
-                HttpStatusCode.NOT_FOUND_404, "Not Found");
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
     }
 
 }
