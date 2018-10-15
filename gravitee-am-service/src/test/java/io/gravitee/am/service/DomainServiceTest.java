@@ -25,6 +25,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.DomainServiceImpl;
 import io.gravitee.am.service.model.NewDomain;
+import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.am.service.model.UpdateLoginForm;
 import io.reactivex.Completable;
@@ -182,6 +183,7 @@ public class DomainServiceTest {
         when(newDomain.getName()).thenReturn("my-domain");
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(new Domain()));
+        when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
 
         TestObserver testObserver = domainService.create(newDomain).test();
         testObserver.awaitTerminalEvent();
@@ -191,6 +193,7 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).create(any(Domain.class));
+        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(anyString(), any(NewSystemScope.class));
     }
 
     @Test
@@ -327,7 +330,7 @@ public class DomainServiceTest {
         when(userService.delete(anyString())).thenReturn(Completable.complete());
         when(scope.getId()).thenReturn(SCOPE_ID);
         when(scopeService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(scope)));
-        when(scopeService.delete(anyString())).thenReturn(Completable.complete());
+        when(scopeService.delete(SCOPE_ID, true)).thenReturn(Completable.complete());
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -340,7 +343,7 @@ public class DomainServiceTest {
         verify(identityProviderService, times(1)).delete(IDP_ID);
         verify(roleService, times(1)).delete(ROLE_ID);
         verify(userService, times(1)).delete(USER_ID);
-        verify(scopeService, times(1)).delete(SCOPE_ID);
+        verify(scopeService, times(1)).delete(SCOPE_ID, true);
     }
 
     @Test
@@ -365,7 +368,7 @@ public class DomainServiceTest {
         verify(identityProviderService, never()).delete(anyString());
         verify(roleService, never()).delete(anyString());
         verify(userService, never()).delete(anyString());
-        verify(scopeService, never()).delete(anyString());
+        verify(scopeService, never()).delete(anyString(), anyBoolean());
     }
 
     @Test

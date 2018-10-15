@@ -103,8 +103,8 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         scope.setName(scopeMongo.getName());
         scope.setDescription(scopeMongo.getDescription());
         scope.setDomain(scopeMongo.getDomain());
-        scope.setNames(scopeMongo.getNames());
-        scope.setDescriptions(scopeMongo.getDescriptions());
+        scope.setSystem(scopeMongo.isSystem());
+        scope.setClaims(scopeMongo.getClaims());
         scope.setCreatedAt(scopeMongo.getCreatedAt());
         scope.setUpdatedAt(scopeMongo.getUpdatedAt());
 
@@ -122,8 +122,8 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         scopeMongo.setName(scope.getName());
         scopeMongo.setDescription(scope.getDescription());
         scopeMongo.setDomain(scope.getDomain());
-        scopeMongo.setNames(scope.getNames());
-        scopeMongo.setDescriptions(scope.getDescriptions());
+        scopeMongo.setSystem(scope.isSystem());
+        scopeMongo.setClaims(scope.getClaims());
         scopeMongo.setCreatedAt(scope.getCreatedAt());
         scopeMongo.setUpdatedAt(scope.getUpdatedAt());
 

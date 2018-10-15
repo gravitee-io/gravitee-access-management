@@ -13,55 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.management.internal.model;
+package io.gravitee.am.service.model;
 
-import io.gravitee.am.repository.mongodb.common.model.Auditable;
-import org.bson.codecs.pojo.annotations.BsonId;
-
+import javax.validation.constraints.NotNull;
 import java.util.List;
-import java.util.Map;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)F
  * @author GraviteeSource Team
  */
-public class ScopeMongo extends Auditable {
+public class NewSystemScope {
 
-    /**
-     * Technical identifier
-     */
-    @BsonId
-    private String id;
-
-    /**
-     * Common identifier used during OAuth flow
-     */
+    @NotNull
     private String key;
 
+    @NotNull
     private String name;
 
-    private Map<String, String> names;
-
+    @NotNull
     private String description;
 
-    private Map<String, String> descriptions;
-
-    /**
-     * Security domain associated to the scope
-     */
-    private String domain;
-
-    private boolean system;
-
     private List<String> claims;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
 
     public String getKey() {
         return key;
@@ -87,43 +59,11 @@ public class ScopeMongo extends Auditable {
         this.description = description;
     }
 
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public boolean isSystem() {
-        return system;
-    }
-
-    public void setSystem(boolean system) {
-        this.system = system;
-    }
-
     public List<String> getClaims() {
         return claims;
     }
 
     public void setClaims(List<String> claims) {
         this.claims = claims;
-    }
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        ScopeMongo that = (ScopeMongo) o;
-
-        return id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
     }
 }

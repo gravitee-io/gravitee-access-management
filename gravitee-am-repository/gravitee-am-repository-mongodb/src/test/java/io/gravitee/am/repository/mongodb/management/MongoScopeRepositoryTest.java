@@ -22,6 +22,7 @@ import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -75,6 +76,8 @@ public class MongoScopeRepositoryTest extends AbstractManagementRepositoryTest {
     public void testCreate() throws TechnicalException {
         Scope scope = new Scope();
         scope.setName("testName");
+        scope.setSystem(true);
+        scope.setClaims(Collections.emptyList());
         TestObserver<Scope> testObserver = scopeRepository.create(scope).test();
         testObserver.awaitTerminalEvent();
 

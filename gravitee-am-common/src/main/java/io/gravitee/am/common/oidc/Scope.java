@@ -37,7 +37,8 @@ public enum Scope {
     EMAIL("email", Arrays.asList(StandardClaims.EMAIL, StandardClaims.EMAIL_VERIFIED)),
     ADDRESS("address", Arrays.asList(StandardClaims.ADDRESS)),
     PHONE("phone", Arrays.asList(StandardClaims.PHONE_NUMBER, StandardClaims.PHONE_NUMBER_VERIFIED)),
-    OPENID("openid", Collections.emptyList());
+    OPENID("openid", Collections.emptyList()),
+    OFFLINE_ACCESS("offline_access", Collections.emptyList());
 
     private final String name;
     private final List<String> claims;
