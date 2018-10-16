@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.vertx.handler.login.LoginRouter;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.OAuth2Router;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationEndpointFailureHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.OIDCRouter;
+import io.gravitee.am.gateway.handler.vertx.handler.session.RxSessionHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.utils.UUID;
 import io.vertx.core.Handler;
@@ -122,12 +123,15 @@ public class VertxSecurityDomainHandler {
 
     private void sessionAndCookieHandler(Router router, AuthProvider userAuthProvider) {
         CookieHandler cookieHandler = CookieHandler.create();
-        SessionHandler sessionHandler = SessionHandler
+        SessionHandler sessionHandler = RxSessionHandler
                 .create(LocalSessionStore.create(vertx))
                 .setCookieHttpOnlyFlag(true)
                 .setSessionCookieName(environment.getProperty("http.cookie.session.name", String.class, DEFAULT_SESSION_COOKIE_NAME))
                 .setSessionTimeout(environment.getProperty("http.cookie.session.timeout", Long.class, DEFAULT_SESSION_TIMEOUT))
                 .setCookieSecureFlag(environment.getProperty("http.cookie.secure", Boolean.class, false));
+        // override session cookie path
+        ((RxSessionHandler) sessionHandler).setSessionCookiePath("/" + domain.getPath());
+
         UserSessionHandler userSessionHandler = UserSessionHandler.create(userAuthProvider);
 
         // Login endpoint
@@ -163,6 +167,8 @@ public class VertxSecurityDomainHandler {
 
     private void csrfHandler(Router router) {
         CSRFHandler csrfHandler = CSRFHandler.create(UUID.random().toString());
+        // override cookie path
+        csrfHandler.setCookiePath("/" + domain.getPath());
         io.gravitee.am.gateway.handler.vertx.handler.CSRFHandler csrfHandler1 = io.gravitee.am.gateway.handler.vertx.handler.CSRFHandler.create();
         router.route("/login").handler(csrfHandler).handler(csrfHandler1);
         router.route("/oauth/confirm_access").handler(csrfHandler).handler(csrfHandler1);
