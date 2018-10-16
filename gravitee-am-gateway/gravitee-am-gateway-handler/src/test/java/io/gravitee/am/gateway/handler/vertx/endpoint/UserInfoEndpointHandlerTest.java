@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
@@ -194,12 +195,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         ((DefaultAccessToken) accessToken).setScope("openid");
         ((DefaultAccessToken) accessToken).setRequestedParameters(Collections.singletonMap("claims", "{\"userinfo\":{\"name\":{\"essential\":true}}}"));
 
-        User user = new User();
-        Map<String, Object> additionalInformation  = new HashMap<>();
-        additionalInformation.put("sub", "user");
-        additionalInformation.put("name", "gravitee user");
-        additionalInformation.put("family_name", "gravitee");
-        user.setAdditionalInformation(additionalInformation);
+        User user = createUser();
 
         when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
@@ -208,14 +204,146 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
                 HttpMethod.GET,
                 "/userinfo",
                 req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> {
-                    resp.bodyHandler(body -> {
-                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
-                        assertNotNull(claims);
-                        assertEquals(2, claims.size());
-                        assertFalse(claims.containsKey("family_name"));
-                    });
-                },
+                resp -> resp.bodyHandler(body -> {
+                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                    assertNotNull(claims);
+                    assertEquals(2, claims.size());
+                    assertFalse(claims.containsKey(StandardClaims.FAMILY_NAME));
+                }),
                 HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldInvokeUserEndpoint_scopesRequest() throws Exception {
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setSubject("user");
+        ((DefaultAccessToken) accessToken).setExpiresIn(100);
+        ((DefaultAccessToken) accessToken).setScope("openid profile");
+
+        User user = createUser();
+
+        when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+
+        testRequest(
+                HttpMethod.GET,
+                "/userinfo",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+                resp -> resp.bodyHandler(body -> {
+                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                    assertNotNull(claims);
+                    assertEquals(15, claims.size());
+                }),
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldInvokeUserEndpoint_scopesRequest_email() throws Exception {
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setSubject("user");
+        ((DefaultAccessToken) accessToken).setExpiresIn(100);
+        ((DefaultAccessToken) accessToken).setScope("openid email");
+
+        User user = createUser();
+
+        when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+
+        testRequest(
+                HttpMethod.GET,
+                "/userinfo",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+                resp -> resp.bodyHandler(body -> {
+                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                    assertNotNull(claims);
+                    assertEquals(3, claims.size());
+                    assertTrue(claims.containsKey(StandardClaims.EMAIL));
+                    assertTrue(claims.containsKey(StandardClaims.EMAIL_VERIFIED));
+                }),
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldInvokeUserEndpoint_scopesRequest_email_address() throws Exception {
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setSubject("user");
+        ((DefaultAccessToken) accessToken).setExpiresIn(100);
+        ((DefaultAccessToken) accessToken).setScope("openid email address");
+
+        User user = createUser();
+
+        when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+
+        testRequest(
+                HttpMethod.GET,
+                "/userinfo",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+                resp -> resp.bodyHandler(body -> {
+                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                    assertNotNull(claims);
+                    assertEquals(4, claims.size());
+                    assertTrue(claims.containsKey(StandardClaims.ADDRESS));
+                    assertTrue(claims.containsKey(StandardClaims.EMAIL));
+                    assertTrue(claims.containsKey(StandardClaims.EMAIL_VERIFIED));
+                }),
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldInvokeUserEndpoint_scopesRequest_and_claimsRequest() throws Exception {
+        AccessToken accessToken = new DefaultAccessToken("token");
+        ((DefaultAccessToken) accessToken).setSubject("user");
+        ((DefaultAccessToken) accessToken).setExpiresIn(100);
+        ((DefaultAccessToken) accessToken).setScope("openid email address");
+        ((DefaultAccessToken) accessToken).setRequestedParameters(Collections.singletonMap("claims", "{\"userinfo\":{\"name\":{\"essential\":true}}}"));
+
+        User user = createUser();
+
+        when(tokenService.getAccessToken(anyString())).thenReturn(Maybe.just(accessToken));
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+
+        testRequest(
+                HttpMethod.GET,
+                "/userinfo",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+                resp -> resp.bodyHandler(body -> {
+                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                    assertNotNull(claims);
+                    assertEquals(5, claims.size());
+                    assertTrue(claims.containsKey(StandardClaims.NAME));
+                    assertTrue(claims.containsKey(StandardClaims.ADDRESS));
+                    assertTrue(claims.containsKey(StandardClaims.EMAIL));
+                    assertTrue(claims.containsKey(StandardClaims.EMAIL_VERIFIED));
+                }),
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    private User createUser() {
+        User user = new User();
+        Map<String, Object> additionalInformation  = new HashMap<>();
+        additionalInformation.put(StandardClaims.SUB, "user");
+        additionalInformation.put(StandardClaims.NAME, "gravitee user");
+        additionalInformation.put(StandardClaims.FAMILY_NAME, "gravitee");
+        additionalInformation.put(StandardClaims.GIVEN_NAME, "gravitee");
+        additionalInformation.put(StandardClaims.MIDDLE_NAME, "gravitee");
+        additionalInformation.put(StandardClaims.NICKNAME, "gravitee");
+        additionalInformation.put(StandardClaims.PREFERRED_USERNAME, "gravitee");
+        additionalInformation.put(StandardClaims.PROFILE, "gravitee");
+        additionalInformation.put(StandardClaims.PICTURE, "gravitee");
+        additionalInformation.put(StandardClaims.WEBSITE, "gravitee");
+        additionalInformation.put(StandardClaims.GENDER, "gravitee");
+        additionalInformation.put(StandardClaims.BIRTHDATE, "gravitee");
+        additionalInformation.put(StandardClaims.ZONEINFO, "gravitee");
+        additionalInformation.put(StandardClaims.LOCALE, "gravitee");
+        additionalInformation.put(StandardClaims.UPDATED_AT, "gravitee");
+        additionalInformation.put(StandardClaims.EMAIL, "gravitee");
+        additionalInformation.put(StandardClaims.EMAIL_VERIFIED, "gravitee");
+        additionalInformation.put(StandardClaims.ADDRESS, "gravitee");
+        additionalInformation.put(StandardClaims.PHONE_NUMBER, "gravitee");
+        additionalInformation.put(StandardClaims.PHONE_NUMBER_VERIFIED, "gravitee");
+        user.setAdditionalInformation(additionalInformation);
+
+        return user;
     }
 }

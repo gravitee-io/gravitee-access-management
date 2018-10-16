@@ -55,4 +55,13 @@ public enum Scope {
     public List<String> getClaims() {
         return claims;
     }
+
+    public static boolean exists(String scope) {
+        try {
+            Scope.valueOf(scope);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
 }

@@ -206,6 +206,7 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
             addClaim(claims, ldapEntry, StandardClaims.GIVEN_NAME, "givenname");
             addClaim(claims, ldapEntry, StandardClaims.FAMILY_NAME, "sn");
             addClaim(claims, ldapEntry, StandardClaims.EMAIL, "mail");
+            addClaim(claims, ldapEntry, StandardClaims.PREFERRED_USERNAME, user.getUsername());
         }
         user.setAdditonalInformation(claims);
 

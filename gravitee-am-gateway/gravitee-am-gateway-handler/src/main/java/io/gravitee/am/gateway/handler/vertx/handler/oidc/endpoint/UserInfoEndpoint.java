@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint;
 
+import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
@@ -28,8 +29,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The UserInfo Endpoint is an OAuth 2.0 Protected Resource that returns Claims about the authenticated End-User.
@@ -73,25 +74,27 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                         throw new InvalidRequestException("UserInfo response is missing required claims");
                     }
 
-                    // Exchange the sub claim from the identity provider to the preferred_username
-                    userClaims.put(StandardClaims.PREFERRED_USERNAME, userClaims.get(StandardClaims.SUB));
+                    // Exchange the sub claim from the identity provider to its technical id
                     userClaims.put(StandardClaims.SUB, subject);
 
+                    // prepare requested claims
                     Map<String, Object> requestedClaims = new HashMap<>();
+                    // SUB claim is required
+                    requestedClaims.put(StandardClaims.SUB, subject);
 
                     boolean requestForSpecificClaims = false;
                     // processing claims list
                     // 1. process the request using scope values
-                    // TODO : 5.4. Requesting Claims using Scope Values (https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims)
+                    if (accessToken.getScope() != null) {
+                        final Set<String> scopes = new HashSet(Arrays.asList(accessToken.getScope().split("\\s+")));
+                        requestForSpecificClaims = processScopesRequest(scopes, userClaims, requestedClaims);
+                    }
                     // 2. process the request using the claims values (If present, the listed Claims are being requested to be added to any Claims that are being requested using scope values.
                     // If not present, the Claims being requested from the UserInfo Endpoint are only those requested using scope values.)
                     Map<String, String> requestedParameters = accessToken.getRequestedParameters();
                     if (requestedParameters != null && requestedParameters.get(OIDCParameters.CLAIMS) != null) {
                         requestForSpecificClaims = processClaimsRequest(requestedParameters.get(OIDCParameters.CLAIMS), userClaims, requestedClaims);
                     }
-
-                    // Put at the end of the process to avoid override by identity provider
-                    requestedClaims.put(StandardClaims.SUB, subject);
 
                     return (requestForSpecificClaims) ? requestedClaims : userClaims;
                  })
@@ -102,6 +105,39 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                                 .end(Json.encodePrettily(claims))
                         , error -> context.fail(error));
 
+    }
+
+    /**
+     * For OpenID Connect, scopes can be used to request that specific sets of information be made available as Claim Values.
+     *
+     * @param scopes scopes request parameter
+     * @param userClaims user full claims list
+     * @param requestedClaims requested claims
+     * @return true if OpenID Connect scopes have been found
+     */
+    private boolean processScopesRequest(Set<String> scopes, final Map<String, Object> userClaims, Map<String, Object> requestedClaims) {
+        // get requested scopes claims
+        final List<String> scopesClaims = scopes.stream()
+                .map(scope -> scope.toUpperCase())
+                .filter(scope -> Scope.exists(scope) && !Scope.valueOf(scope).getClaims().isEmpty())
+                .map(scope -> Scope.valueOf(scope))
+                .map(scope -> scope.getClaims())
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+
+        // no OpenID Connect scopes requested continue
+        if (scopesClaims.isEmpty()) {
+            return false;
+        }
+
+        // return specific available sets of information made by scope value request
+        scopesClaims.forEach(scopeClaim -> {
+            if (userClaims.containsKey(scopeClaim)) {
+                requestedClaims.putIfAbsent(scopeClaim, userClaims.get(scopeClaim));
+            }
+        });
+
+        return true;
     }
 
     /**

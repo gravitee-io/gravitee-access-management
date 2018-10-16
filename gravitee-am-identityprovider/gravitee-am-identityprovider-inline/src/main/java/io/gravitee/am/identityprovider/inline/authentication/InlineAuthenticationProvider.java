@@ -112,6 +112,7 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
         claims.put(StandardClaims.NAME, inlineUser.getFirstname() + " " + inlineUser.getLastname());
         claims.put(StandardClaims.GIVEN_NAME, inlineUser.getFirstname());
         claims.put(StandardClaims.FAMILY_NAME, inlineUser.getLastname());
+        claims.put(StandardClaims.PREFERRED_USERNAME, inlineUser.getUsername());
         user.setAdditonalInformation(claims);
 
         // set user roles
