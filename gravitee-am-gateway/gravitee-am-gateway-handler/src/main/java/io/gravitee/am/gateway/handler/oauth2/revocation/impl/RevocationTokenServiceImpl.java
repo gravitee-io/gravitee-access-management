@@ -49,7 +49,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
         if (request.getHint() != null && request.getHint().equals(TokenTypeHint.REFRESH_TOKEN)) {
             return revokeRefreshToken(token, requestingClientId)
                     .onErrorResumeNext(throwable -> {
-                        // if the token was issued to the client making the revocation request
+                        // if the token was not issued to the client making the revocation request
                         // the request is refused and the client is informed of the error
                         if (throwable instanceof InvalidGrantException) {
                             return Completable.error(throwable);
@@ -85,7 +85,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
         // token. If we don't find an access token... check if it's a refresh token.
         return revokeAccessToken(token, requestingClientId)
                 .onErrorResumeNext(throwable -> {
-                    // if the token was issued to the client making the revocation request
+                    // if the token was not issued to the client making the revocation request
                     // the request is refused and the client is informed of the error
                     if (throwable instanceof InvalidGrantException) {
                         return Completable.error(throwable);

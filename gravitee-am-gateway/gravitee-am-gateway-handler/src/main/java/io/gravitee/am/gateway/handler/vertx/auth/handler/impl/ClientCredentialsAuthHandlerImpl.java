@@ -48,17 +48,7 @@ public class ClientCredentialsAuthHandlerImpl extends AuthHandlerImpl {
                 return;
             }
 
-            JsonObject clientCredentials = parseAuthorization.result();
-            authProvider.authenticate(clientCredentials, authHandler -> {
-                if (authHandler.failed()) {
-                    handler.handle(Future.failedFuture(authHandler.cause()));
-                    return;
-                }
-
-                context.setUser(authHandler.result());
-                // continue
-                handler.handle(Future.succeededFuture());
-            });
+            handler.handle(Future.succeededFuture(parseAuthorization.result()));
         });
     }
 
