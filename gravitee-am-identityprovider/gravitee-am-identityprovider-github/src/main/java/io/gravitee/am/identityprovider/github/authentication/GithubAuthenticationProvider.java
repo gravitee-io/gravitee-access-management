@@ -158,6 +158,7 @@ public class GithubAuthenticationProvider implements OAuth2AuthenticationProvide
         // Standard claims
         additionalInformation.put(StandardClaims.SUB, jsonObject.getValue(GithubUser.LOGIN));
         additionalInformation.put(StandardClaims.NAME, jsonObject.getValue(GithubUser.NAME));
+        additionalInformation.put(StandardClaims.PREFERRED_USERNAME, jsonObject.getValue(GithubUser.LOGIN));
 
         // try to get the first name and last name
         try {

@@ -94,6 +94,7 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
         DefaultUser user = new DefaultUser(username);
         Map<String, Object> claims = new HashMap<>();
         claims.put(StandardClaims.SUB, username);
+        claims.put(StandardClaims.PREFERRED_USERNAME, username);
         if(this.mapper.getMappers() != null) {
             this.mapper.getMappers().forEach((k, v) -> claims.put(k, document.getString(v)));
         }

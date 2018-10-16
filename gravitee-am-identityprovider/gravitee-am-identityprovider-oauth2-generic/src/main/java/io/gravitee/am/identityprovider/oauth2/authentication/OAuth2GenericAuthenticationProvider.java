@@ -156,6 +156,7 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(StandardClaims.SUB, jsonNode.getValue(StandardClaims.SUB));
+        additionalInformation.put(StandardClaims.PREFERRED_USERNAME, jsonNode.getValue(StandardClaims.SUB));
         if (this.mapper.getMappers() != null) {
             this.mapper.getMappers().forEach((k, v) -> {
                 if (jsonNode.getValue(v) != null) {

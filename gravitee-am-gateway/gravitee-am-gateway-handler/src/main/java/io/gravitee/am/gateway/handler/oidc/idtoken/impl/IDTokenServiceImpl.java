@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.idtoken.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
-import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
@@ -44,10 +44,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.security.Key;
 import java.security.SecureRandom;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -80,9 +78,6 @@ public class IDTokenServiceImpl implements IDTokenService, InitializingBean {
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         idToken.setIss(iss);
         idToken.setSub(oAuth2Request.isClientOnly() ? oAuth2Request.getClientId() : user.getId());
-        if (!oAuth2Request.isClientOnly() && user.getUsername() != null) {
-            idToken.addAdditionalClaim(StandardClaims.PREFERRED_USERNAME, user.getUsername());
-        }
         idToken.setAud(oAuth2Request.getClientId());
         idToken.setIat(calendar.getTimeInMillis() / 1000l);
 
@@ -109,12 +104,15 @@ public class IDTokenServiceImpl implements IDTokenService, InitializingBean {
             final Map<String, Object> userAdditionalInformation = user.getAdditionalInformation();
             boolean requestForSpecificClaims = false;
             // processing claims list
-            // 1. process the request using the claims values (If present, the listed Claims are being requested to be added to the default Claims in the ID Token)
-            // 2. If not present, check if the client has enabled the ID token mapping claims.
-            // 3. Else send all user claims
+            // 1. process the request using scope values
+            if (oAuth2Request.getScopes() != null) {
+                requestForSpecificClaims = processScopesRequest(oAuth2Request.getScopes(), userAdditionalInformation, idToken);
+            }
             MultiValueMap<String, String> requestedParameters = oAuth2Request.getRequestParameters();
+            // 2. process the request using the claims values (If present, the listed Claims are being requested to be added to the default Claims in the ID Token)
             if (requestedParameters != null && requestedParameters.getFirst(OIDCParameters.CLAIMS) != null) {
                 requestForSpecificClaims = processClaimsRequest(requestedParameters.getFirst(OIDCParameters.CLAIMS), userAdditionalInformation, idToken);
+            // 3. If not present, check if the client has enabled the ID token mapping claims.
             } else if (client.getIdTokenCustomClaims() != null) {
                 client.getIdTokenCustomClaims().forEach((key, value) -> {
                     if (userAdditionalInformation.get(value) != null) {
@@ -123,6 +121,7 @@ public class IDTokenServiceImpl implements IDTokenService, InitializingBean {
                 });
                 requestForSpecificClaims = true;
             }
+            // 4. Else send all user claims
             if (!requestForSpecificClaims) {
                 idToken.setAdditionalClaims(userAdditionalInformation);
             }
@@ -161,6 +160,39 @@ public class IDTokenServiceImpl implements IDTokenService, InitializingBean {
 
         // create default certificate provider
         setDefaultCertificateProvider(jwtBuilder);
+    }
+
+    /**
+     * For OpenID Connect, scopes can be used to request that specific sets of information be made available as Claim Values.
+     *
+     * @param scopes scopes request parameter
+     * @param userClaims user full claims list
+     * @param requestedClaims requested claims
+     * @return true if OpenID Connect scopes have been found
+     */
+    private boolean processScopesRequest(Set<String> scopes, final Map<String, Object> userClaims, Map<String, Object> requestedClaims) {
+        // get requested scopes claims
+        final List<String> scopesClaims = scopes.stream()
+                .map(scope -> scope.toUpperCase())
+                .filter(scope -> Scope.exists(scope) && !Scope.valueOf(scope).getClaims().isEmpty())
+                .map(scope -> Scope.valueOf(scope))
+                .map(scope -> scope.getClaims())
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+
+        // no OpenID Connect scopes requested continue
+        if (scopesClaims.isEmpty()) {
+            return false;
+        }
+
+        // return specific available sets of information made by scope value request
+        scopesClaims.forEach(scopeClaim -> {
+            if (userClaims.containsKey(scopeClaim)) {
+                requestedClaims.putIfAbsent(scopeClaim, userClaims.get(scopeClaim));
+            }
+        });
+
+        return true;
     }
 
     /**
