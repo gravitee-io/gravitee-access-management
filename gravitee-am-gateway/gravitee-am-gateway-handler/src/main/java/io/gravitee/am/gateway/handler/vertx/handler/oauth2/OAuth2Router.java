@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.oidc.flow.Flow;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
+import io.gravitee.am.gateway.handler.vertx.auth.handler.impl.ClientChainAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.ErrorHandlerEndpoint;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.*;
@@ -97,7 +98,7 @@ public class OAuth2Router {
         // create authentication handlers
         final AuthProvider clientAuthProvider = new AuthProvider(new ClientAuthenticationProvider(clientService));
 
-        final AuthHandler clientAuthHandler = ChainAuthHandler.create()
+        final AuthHandler clientAuthHandler = ChainAuthHandler.newInstance(new ClientChainAuthHandler())
                 .append(ClientCredentialsAuthHandler.create(clientAuthProvider.getDelegate()))
                 .append(ClientBasicAuthHandler.create(clientAuthProvider.getDelegate()));
 

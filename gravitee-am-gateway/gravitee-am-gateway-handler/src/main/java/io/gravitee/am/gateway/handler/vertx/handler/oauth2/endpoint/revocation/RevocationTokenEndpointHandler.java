@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.revocation;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
-import io.gravitee.am.gateway.handler.oauth2.exception.OAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.revocation.RevocationTokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.utils.TokenTypeHint;
@@ -62,23 +61,14 @@ public class RevocationTokenEndpointHandler implements Handler<RoutingContext> {
         // of the error by the authorization server as described below.
         User authenticatedUser = context.user();
         if (authenticatedUser == null || ! (authenticatedUser.getDelegate() instanceof Client)) {
-            throw new InvalidClientException();
+            throw new InvalidClientException("Invalid client");
         }
 
         Client client = (Client) authenticatedUser.getDelegate();
 
         revocationTokenService
                 .revoke(createRequest(context, client.getClientId()))
-                .subscribe(
-                        () -> context.response().setStatusCode(200).end(),
-                        error -> {
-                            if (error instanceof OAuth2Exception) {
-                                context.response().setStatusCode(((OAuth2Exception) error).getHttpStatusCode()).end();
-                            } else {
-                                context.response().setStatusCode(503).end();
-                            }
-                        }
-                );
+                .subscribe(() -> context.response().setStatusCode(200).end(), error -> context.fail(error));
 
     }
 

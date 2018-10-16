@@ -138,6 +138,6 @@ public class RevocationTokenEndpointHandlerTest extends RxWebTestBase {
         testRequest(
                 HttpMethod.POST, "/oauth/revoke?token=toto",
                 req -> req.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED),
-                HttpStatusCode.SERVICE_UNAVAILABLE_503, "Service Unavailable", null);
+                HttpStatusCode.INTERNAL_SERVER_ERROR_500, "Internal Server Error", null);
     }
 }
