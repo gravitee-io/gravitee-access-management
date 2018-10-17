@@ -4,7 +4,7 @@ ifdef::env-github[]
 image:https://badges.gitter.im/Join Chat.svg["Gitter", link="https://gitter.im/gravitee-io/gravitee-io?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"]
 endif::[]
 
-Hosts all Dockerfiles to build Gravitee.io access MAnagement images.
+Hosts all Dockerfiles to build Gravitee.io access Management images.
 
 == How to launch AM environment
 You must have 

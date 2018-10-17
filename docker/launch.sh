@@ -91,11 +91,10 @@ main() {
         mkdir -p config
         curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/docker-compose-standalone.yml -o "docker-compose.yml"
         cd config && { curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/config/constants-standalone.json -o "constants.json" ; cd -; }
-        cd config && { curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/config/nginx-standalone.conf -o "nginx.conf" ; cd -; }
-	sed -i.bak "s/\${PORT}/$PORT/g" docker-compose.yml
+        cd config && { curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/config/nginx.conf -o "nginx.conf" ; cd -; }
+	    sed -i.bak "s/\${PORT}/$PORT/g" docker-compose.yml
         sed -i.bak "s/#PORT/$PORT/g" config/constants.json
-        sed -i.bak "s/#PORT/$PORT/g" config/nginx.conf
-        rm docker-compose.yml.bak config/constants.json.bak config/nginx.conf.bak
+        rm docker-compose.yml.bak config/constants.json.bak
         echo
         echo "Launch Gravitee.io Access Management ..."
         $dc_exec
