@@ -250,8 +250,8 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         String nonce = context.request().getParam(OIDCParameters.NONCE);
         String responseType = context.request().getParam(OAuth2Constants.RESPONSE_TYPE);
         // nonce parameter is required for the Hybrid flow
-        if (nonce == null && isHybridFlow(responseType)) {
-            throw new InvalidRequestException("Missing parameter: nonce is required for Hybrid Flow");
+        if (nonce == null && (isHybridFlow(responseType) || isImplicitFlow(responseType))) {
+            throw new InvalidRequestException("Missing parameter: nonce is required for Implicit and Hybrid Flow");
         }
     }
 
@@ -267,6 +267,10 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
 
     private boolean isHybridFlow(String responseType) {
         return (ResponseType.CODE_ID_TOKEN.equals(responseType) || ResponseType.CODE_TOKEN.equals(responseType) || ResponseType.CODE_ID_TOKEN_TOKEN.equals(responseType));
+    }
+
+    private boolean isImplicitFlow(String responseType) {
+        return (ResponseType.ID_TOKEN.equals(responseType) || ResponseType.ID_TOKEN_TOKEN.equals(responseType));
     }
 
     public static AuthorizationRequestParseHandler create(Domain domain, OpenIDDiscoveryService openIDDiscoveryService) {

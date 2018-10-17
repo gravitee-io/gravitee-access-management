@@ -729,6 +729,38 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
     }
 
     @Test
+    public void shouldNotInvokeAuthorizationEndpoint_implicitFlow_nonceMissing() throws Exception {
+        when(domain.getPath()).thenReturn("test");
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=id_token&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("/test/oauth/error?error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_hybridFlow_nonceMissing() throws Exception {
+        when(domain.getPath()).thenReturn("test");
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code+id_token&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("/test/oauth/error?error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
     public void shouldInvokeAuthorizationEndpoint_hybridFlow_code_IDToken() throws Exception {
         shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, "code=test-code&id_token=test-id-token", null, "test-id-token");
     }
