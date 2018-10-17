@@ -198,6 +198,9 @@ public class TokenServiceImpl implements TokenService {
                 accessToken.setAuthorizationCode(authorizationCode);
             }
         }
+        if (oAuth2Request.getAdditionalParameters() != null && !oAuth2Request.getAdditionalParameters().isEmpty()) {
+            oAuth2Request.getAdditionalParameters().toSingleValueMap().forEach((k, v) -> accessToken.getAdditionalInformation().put(k, v));
+        }
         return accessToken;
     }
 

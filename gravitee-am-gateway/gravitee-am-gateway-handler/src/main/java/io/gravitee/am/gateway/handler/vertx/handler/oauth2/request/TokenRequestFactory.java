@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.request;
 
-import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.common.util.LinkedMultiValueMap;
@@ -24,6 +24,9 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -41,14 +44,7 @@ public final class TokenRequestFactory {
             tokenRequest.setScopes(new HashSet<>(Arrays.asList(scopes.split("\\s+"))));
         }
         tokenRequest.setRequestParameters(extractRequestParameters(request));
-        return tokenRequest;
-    }
-
-    public TokenRequest create(AuthorizationRequest authorizationRequest) {
-        TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setClientId(authorizationRequest.getClientId());
-        tokenRequest.setScopes(authorizationRequest.getScopes());
-        tokenRequest.setRequestParameters(authorizationRequest.getRequestParameters());
+        tokenRequest.setAdditionalParameters(extractAdditionalParameters(request));
         return tokenRequest;
     }
 
@@ -56,5 +52,14 @@ public final class TokenRequestFactory {
         MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>(request.params().size());
         request.params().getDelegate().entries().forEach(entry -> requestParameters.add(entry.getKey(), entry.getValue()));
         return requestParameters;
+    }
+
+    private MultiValueMap<String, String> extractAdditionalParameters(HttpServerRequest request) {
+        final Set<String> restrictedParameters = Stream.concat(Stream.of(Parameters.values()).map(p -> p.value()),
+                Stream.of(io.gravitee.am.common.oidc.Parameters.values()).map(p -> p.value())).collect(Collectors.toSet());
+
+        MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
+        request.params().getDelegate().entries().stream().filter(entry -> !restrictedParameters.contains(entry.getKey())).forEach(entry -> additionalParameters.add(entry.getKey(), entry.getValue()));
+        return additionalParameters;
     }
 }

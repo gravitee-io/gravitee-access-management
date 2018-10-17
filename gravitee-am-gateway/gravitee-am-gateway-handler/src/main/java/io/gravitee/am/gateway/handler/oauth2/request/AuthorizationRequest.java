@@ -121,6 +121,7 @@ public class AuthorizationRequest extends BaseRequest implements Serializable {
         oAuth2Request.setScopes(getScopes());
         oAuth2Request.setRequestParameters(getRequestParameters());
         oAuth2Request.setResponseType(getResponseType());
+        oAuth2Request.setAdditionalParameters(getAdditionalParameters());
         return oAuth2Request;
     }
 }
