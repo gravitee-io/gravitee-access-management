@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
+import io.gravitee.am.gateway.handler.oidc.utils.OIDCClaims;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
@@ -48,6 +49,9 @@ public class TokenEnhancerImpl implements TokenEnhancer {
     }
 
     private Single<AccessToken> enhanceIDToken(AccessToken accessToken, Client client, User user, OAuth2Request oAuth2Request) {
+        if (oAuth2Request.isSupportAtHashValue()) {
+            oAuth2Request.getContext().put(OIDCClaims.at_hash, accessToken.getToken());
+        }
         return idTokenService.create(oAuth2Request, client, user)
                 .flatMap(idToken -> {
                     Map<String, Object> additionalInformation = new HashMap<>(accessToken.getAdditionalInformation());
