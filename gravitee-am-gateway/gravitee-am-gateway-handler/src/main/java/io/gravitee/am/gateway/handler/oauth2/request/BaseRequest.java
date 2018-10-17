@@ -47,28 +47,38 @@ public abstract class BaseRequest {
 
     private MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
 
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public void setScopes(Set<String> scopes) {
-        this.scopes = scopes;
-    }
-
-    public void setRequestParameters(MultiValueMap<String, String> requestParameters) {
-        this.requestParameters = requestParameters;
-    }
+    private MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
 
     public String getClientId() {
         return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
 
     public Set<String> getScopes() {
         return scopes;
     }
 
+    public void setScopes(Set<String> scopes) {
+        this.scopes = scopes;
+    }
+
     public MultiValueMap<String, String> getRequestParameters() {
         return requestParameters;
+    }
+
+    public void setRequestParameters(MultiValueMap<String, String> requestParameters) {
+        this.requestParameters = requestParameters;
+    }
+
+    public MultiValueMap<String, String> getAdditionalParameters() {
+        return additionalParameters;
+    }
+
+    public void setAdditionalParameters(MultiValueMap<String, String> additionalParameters) {
+        this.additionalParameters = additionalParameters;
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.request;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.common.util.LinkedMultiValueMap;
@@ -23,6 +24,9 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -40,6 +44,7 @@ public final class AuthorizationRequestFactory {
         authorizationRequest.setScopes(scope != null ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
         authorizationRequest.setState(request.params().get(OAuth2Constants.STATE));
         authorizationRequest.setRequestParameters(extractRequestParameters(request));
+        authorizationRequest.setAdditionalParameters(extractAdditionalParameters(request));
         return authorizationRequest;
     }
 
@@ -47,5 +52,14 @@ public final class AuthorizationRequestFactory {
         MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>(request.params().size());
         request.params().getDelegate().entries().forEach(entry -> requestParameters.add(entry.getKey(), entry.getValue()));
         return requestParameters;
+    }
+
+    private MultiValueMap<String, String> extractAdditionalParameters(HttpServerRequest request) {
+        final Set<String> restrictedParameters = Stream.concat(Stream.of(Parameters.values()).map(p -> p.value()),
+                Stream.of(io.gravitee.am.common.oidc.Parameters.values()).map(p -> p.value())).collect(Collectors.toSet());
+
+        MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
+        request.params().getDelegate().entries().stream().filter(entry -> !restrictedParameters.contains(entry.getKey())).forEach(entry -> additionalParameters.add(entry.getKey(), entry.getValue()));
+        return additionalParameters;
     }
 }
