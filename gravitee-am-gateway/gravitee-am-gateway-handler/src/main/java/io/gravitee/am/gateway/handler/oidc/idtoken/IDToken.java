@@ -113,7 +113,7 @@ public class IDToken extends HashMap<String, Object> {
     }
 
     public void addAdditionalClaim(String claimName, Object claimValue) {
-        put(claimName, claimValue);
+        putIfAbsent(claimName, claimValue);
     }
 
     public void setAdditionalClaims(Map<String, Object> additionalClaims) {
