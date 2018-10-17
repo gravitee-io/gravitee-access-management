@@ -87,4 +87,10 @@ public class OAuth2Request extends BaseRequest {
         }
         return false;
     }
+
+    public boolean isSupportAtHashValue() {
+        return getResponseType() != null
+                && (ResponseType.ID_TOKEN_TOKEN.equals(getResponseType())
+                || ResponseType.CODE_ID_TOKEN_TOKEN.equals(getResponseType()));
+    }
 }
