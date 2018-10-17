@@ -25,14 +25,16 @@ import java.util.Map;
  */
 public class InlineIdentityProviderMapper implements IdentityProviderMapper {
 
+    private Map<String, String> mappers;
+
     @Override
     public Map<String, String> getMappers() {
-        return null;
+        return mappers;
     }
 
     @Override
     public void setMappers(Map<String, String> mappers) {
-        // nothing to do
+        this.mappers = mappers;
     }
 
 

@@ -21,10 +21,16 @@ package io.gravitee.am.identityprovider.inline.model;
  */
 public class User {
 
+    private static final String FIRSTNAME = "firstname";
+    private static final String LASTNAME = "lastname";
+    private static final String USERNAME = "username";
+    private static final String EMAIL = "email";
+
     private String firstname;
     private String lastname;
     private String username;
     private String password;
+    private String email;
     private String [] roles;
 
     public String getFirstname() {
@@ -59,11 +65,34 @@ public class User {
         this.password = password;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String[] getRoles() {
         return roles;
     }
 
     public void setRoles(String[] roles) {
         this.roles = roles;
+    }
+
+    public Object getAttributeValue(String attributeKey) {
+        switch (attributeKey) {
+            case FIRSTNAME:
+                return getFirstname();
+            case LASTNAME:
+                return getLastname();
+            case USERNAME:
+                return getUsername();
+            case EMAIL:
+                return getEmail();
+            default:
+                return null;
+        }
     }
 }

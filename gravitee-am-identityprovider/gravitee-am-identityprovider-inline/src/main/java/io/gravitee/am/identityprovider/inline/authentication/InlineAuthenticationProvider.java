@@ -21,6 +21,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.inline.InlineIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.inline.InlineIdentityProviderMapper;
 import io.gravitee.am.identityprovider.inline.InlineIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.inline.authentication.provisioning.InlineInMemoryUserDetailsManager;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
@@ -56,6 +57,9 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
 
     @Autowired
     private InlineIdentityProviderRoleMapper roleMapper;
+
+    @Autowired
+    private InlineIdentityProviderMapper mapper;
 
     @Override
     public void afterPropertiesSet() {
@@ -107,12 +111,27 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
     private User createUser(io.gravitee.am.identityprovider.inline.model.User inlineUser) {
         DefaultUser user = new DefaultUser(inlineUser.getUsername());
 
+        // add additional information
         Map<String, Object> claims = new HashMap<>();
         claims.put(StandardClaims.SUB, inlineUser.getUsername());
-        claims.put(StandardClaims.NAME, inlineUser.getFirstname() + " " + inlineUser.getLastname());
-        claims.put(StandardClaims.GIVEN_NAME, inlineUser.getFirstname());
-        claims.put(StandardClaims.FAMILY_NAME, inlineUser.getLastname());
-        claims.put(StandardClaims.PREFERRED_USERNAME, inlineUser.getUsername());
+
+        if (mapper != null && mapper.getMappers() != null && !mapper.getMappers().isEmpty()) {
+            mapper.getMappers().forEach((k, v) -> {
+                Object attributeValue = inlineUser.getAttributeValue(v);
+                if (attributeValue != null) {
+                    claims.put(k, attributeValue);
+                }
+            });
+        } else {
+            // default values
+            claims.put(StandardClaims.NAME, inlineUser.getFirstname() + " " + inlineUser.getLastname());
+            claims.put(StandardClaims.GIVEN_NAME, inlineUser.getFirstname());
+            claims.put(StandardClaims.FAMILY_NAME, inlineUser.getLastname());
+            claims.put(StandardClaims.PREFERRED_USERNAME, inlineUser.getUsername());
+            if (inlineUser.getEmail() != null) {
+                claims.put(StandardClaims.EMAIL, inlineUser.getEmail());
+            }
+        }
         user.setAdditonalInformation(claims);
 
         // set user roles
