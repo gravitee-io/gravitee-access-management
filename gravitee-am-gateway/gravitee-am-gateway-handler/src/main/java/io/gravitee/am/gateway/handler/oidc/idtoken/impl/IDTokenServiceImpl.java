@@ -113,7 +113,7 @@ public class IDTokenServiceImpl implements IDTokenService, InitializingBean {
             if (requestedParameters != null && requestedParameters.getFirst(OIDCParameters.CLAIMS) != null) {
                 requestForSpecificClaims = processClaimsRequest(requestedParameters.getFirst(OIDCParameters.CLAIMS), userAdditionalInformation, idToken);
             // 3. If not present, check if the client has enabled the ID token mapping claims.
-            } else if (client.getIdTokenCustomClaims() != null) {
+            } else if (client.getIdTokenCustomClaims() != null && !client.getIdTokenCustomClaims().isEmpty()) {
                 client.getIdTokenCustomClaims().forEach((key, value) -> {
                     if (userAdditionalInformation.get(value) != null) {
                         idToken.addAdditionalClaim(key, userAdditionalInformation.get(value));

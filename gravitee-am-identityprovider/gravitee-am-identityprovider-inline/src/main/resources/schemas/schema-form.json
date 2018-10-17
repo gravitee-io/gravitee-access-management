@@ -25,6 +25,11 @@
             "description": "Username",
             "type" : "string"
           },
+          "email" : {
+            "title": "Email",
+            "description": "Email",
+            "type" : "string"
+          },
           "password" : {
             "title": "Password",
             "description": "Password",
