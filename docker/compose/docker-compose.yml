@@ -27,7 +27,7 @@ services:
     volumes:
       - ./config/nginx.conf:/etc/nginx/nginx.conf
     ports:
-      - 80:80
+      - ${NGINX_PORT}:80
     depends_on:
       - management
       - gateway
@@ -42,7 +42,7 @@ services:
       - ./logs/am-mongodb:/var/log/mongodb
 
   gateway:
-    image: graviteeio/am-gateway:2
+    image: graviteeio/am-gateway:${GIO_AM_VERSION}
     container_name: gio_am_gateway
     restart: always
     links:
@@ -56,7 +56,7 @@ services:
       - gravitee_oauth2_mongodb_uri=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
 
   management:
-    image: graviteeio/am-management-api:2
+    image: graviteeio/am-management-api:${GIO_AM_VERSION}
     container_name: gio_am_management
     restart: always
     links:
@@ -70,11 +70,13 @@ services:
       - gravitee_oauth2_mongodb_uri=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
 
   webui:
-    image: graviteeio/am-management-ui:2
+    image: graviteeio/am-management-ui:${GIO_AM_VERSION}
     container_name: gio_am_webui
     restart: always
     depends_on:
       - management
+    environment:
+      - MGMT_API_URL=http://localhost:${NGINX_PORT}/am/
+      - MGMT_UI_URL=http://localhost:${NGINX_PORT}/am/ui/
     volumes:
       - ./logs/am-webui:/var/log/httpd
-      - ./config/constants.json:/var/www/html/constants.json.template

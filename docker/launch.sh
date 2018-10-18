@@ -89,12 +89,9 @@ main() {
     pushd $WORKDIR > /dev/null
         echo "Download required files ..."
         mkdir -p config
-        curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/docker-compose-standalone.yml -o "docker-compose.yml"
-        cd config && { curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/config/constants-standalone.json -o "constants.json" ; cd -; }
+        curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/docker-compose.yml -o "docker-compose.yml"
+        curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/.env -o ".env"
         cd config && { curl -L https://raw.githubusercontent.com/gravitee-io/graviteeio-access-management/master/docker/compose/config/nginx.conf -o "nginx.conf" ; cd -; }
-	    sed -i.bak "s/\${PORT}/$PORT/g" docker-compose.yml
-        sed -i.bak "s/#PORT/$PORT/g" config/constants.json
-        rm docker-compose.yml.bak config/constants.json.bak
         echo
         echo "Launch Gravitee.io Access Management ..."
         $dc_exec
@@ -103,9 +100,9 @@ main() {
 
 # init port from input parameter
 if [ "$1" != "" ]; then
-    export PORT=$1
+    export NGINX_PORT=$1
 else
-    export PORT=80
+    export NGINX_PORT=80
 fi
 
 main
