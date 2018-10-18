@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
+import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.gateway.handler.oauth2.exception.OAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
@@ -141,8 +142,15 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
             query.put(OAuth2Constants.STATE, authorizationRequest.getState());
         }
 
-        boolean fragment = authorizationRequest.getResponseType() == null ? false : authorizationRequest.getResponseType().equals(OAuth2Constants.TOKEN);
+        boolean fragment = isImplicitFlow(authorizationRequest.getResponseType());
         return append(authorizationRequest.getRedirectUri(), query, fragment);
+    }
+
+    private boolean isImplicitFlow(String responseType) {
+        return responseType != null &&
+                (io.gravitee.am.common.oauth2.ResponseType.TOKEN.equals(responseType)
+                        || ResponseType.ID_TOKEN.equals(responseType)
+                        || ResponseType.ID_TOKEN_TOKEN.equals(responseType));
     }
 
     private String append(String base, Map<String, String> query, boolean fragment) throws URISyntaxException {
