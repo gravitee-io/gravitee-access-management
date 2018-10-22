@@ -107,8 +107,9 @@ public class OAuth2Router {
 
         // Bind OAuth2 endpoints
         // Authorization endpoint
-        AuthorizationRequestParseHandler authorizationRequestParseHandler = AuthorizationRequestParseHandler.create(domain, openIDDiscoveryService);
-        Handler<RoutingContext> authorizationClientHandler = new AuthorizationClientHandler(clientService);
+        Handler<RoutingContext> authorizationRequestParseRequiredParametersHandler = new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService);
+        Handler<RoutingContext> authorizationRequestParseClientHandler = new AuthorizationRequestParseClientHandler(clientService);
+        Handler<RoutingContext> authorizationRequestParseParametersHandler = new AuthorizationRequestParseParametersHandler(domain);
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(flow, domain);
         Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(approvalService);
         Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(clientService, scopeService, thymeleafTemplateEngine);
@@ -128,8 +129,9 @@ public class OAuth2Router {
 
         // declare oauth2 routes
         router.route(HttpMethod.GET,"/authorize")
-                .handler(authorizationRequestParseHandler)
-                .handler(authorizationClientHandler)
+                .handler(authorizationRequestParseRequiredParametersHandler)
+                .handler(authorizationRequestParseClientHandler)
+                .handler(authorizationRequestParseParametersHandler)
                 .handler(userAuthHandler)
                 .handler(authorizeEndpoint);
         router.route(HttpMethod.POST, "/authorize")

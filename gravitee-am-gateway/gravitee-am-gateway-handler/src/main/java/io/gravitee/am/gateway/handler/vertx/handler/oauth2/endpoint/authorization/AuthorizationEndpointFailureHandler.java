@@ -59,9 +59,11 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
     private static final String CLIENT_CONTEXT_KEY = "client";
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private Domain domain;
+    private String defaultErrorPagePath;
 
     public AuthorizationEndpointFailureHandler(Domain domain) {
         this.domain = domain;
+        defaultErrorPagePath = "/" + domain.getPath() + "/oauth/error";
     }
 
     @Override
@@ -69,7 +71,7 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
         if (routingContext.failed()) {
             try {
                 AuthorizationRequest request = resolveInitialAuthorizeRequest(routingContext);
-                String defaultProxiedOAuthErrorPage =  UriBuilderRequest.resolveProxyRequest(routingContext.request(),  "/" + domain.getPath() + "/oauth/error", null, false, false);
+                String defaultProxiedOAuthErrorPage =  UriBuilderRequest.resolveProxyRequest(routingContext.request(),  defaultErrorPagePath, null, false, false);
                 Throwable throwable = routingContext.failure();
                 if (throwable instanceof OAuth2Exception) {
                     OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
@@ -142,7 +144,7 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
             query.put(OAuth2Constants.STATE, authorizationRequest.getState());
         }
 
-        boolean fragment = isImplicitFlow(authorizationRequest.getResponseType());
+        boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri()) && isImplicitFlow(authorizationRequest.getResponseType());
         return append(authorizationRequest.getRedirectUri(), query, fragment);
     }
 
@@ -151,6 +153,10 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
                 (io.gravitee.am.common.oauth2.ResponseType.TOKEN.equals(responseType)
                         || ResponseType.ID_TOKEN.equals(responseType)
                         || ResponseType.ID_TOKEN_TOKEN.equals(responseType));
+    }
+
+    private boolean isDefaultErrorPage(String redirectUri) {
+        return redirectUri.contains(defaultErrorPagePath);
     }
 
     private String append(String base, Map<String, String> query, boolean fragment) throws URISyntaxException {
