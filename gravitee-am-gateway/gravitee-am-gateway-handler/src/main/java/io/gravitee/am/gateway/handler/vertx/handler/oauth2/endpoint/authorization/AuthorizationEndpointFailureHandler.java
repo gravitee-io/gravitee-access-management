@@ -79,9 +79,9 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
                     if (clientId == null || client == null || request.getRedirectUri() == null) {
                         request.setRedirectUri(defaultProxiedOAuthErrorPage);
                     }
-                    // user set a wrong redirect_uri, redirect to a registered (first one) client redirect_uri
+                    // user set a wrong redirect_uri, go to default error page
                     if (oAuth2Exception instanceof RedirectMismatchException) {
-                        request.setRedirectUri(client.getRedirectUris().iterator().next());
+                        request.setRedirectUri(defaultProxiedOAuthErrorPage);
                     }
                     // redirect user
                     doRedirect(routingContext.response(), buildRedirectUri(oAuth2Exception, request));
