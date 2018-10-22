@@ -51,7 +51,7 @@
         <jackson.version>2.9.6</jackson.version>
         <jetty.version>9.3.14.v20161028</jetty.version>
         <jjwt.version>0.9.0</jjwt.version>
-        <vertx.version>3.5.2</vertx.version>
+        <vertx.version>3.5.3</vertx.version>
         <rxjava.version>2.1.12</rxjava.version>
     </properties>
 
