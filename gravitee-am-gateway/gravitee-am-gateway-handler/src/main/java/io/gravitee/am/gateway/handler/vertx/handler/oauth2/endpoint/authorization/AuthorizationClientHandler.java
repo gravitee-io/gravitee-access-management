@@ -107,7 +107,13 @@ public class AuthorizationClientHandler implements Handler<RoutingContext> {
         // if no requested redirect_uri and no registered client redirect_uris
         // throw invalid request exception
         if (!hasRegisteredClientRedirectUris && !hasRequestedRedirectUri) {
-            throw new InvalidRequestException("A redirect_uri must be supplied.");
+            throw new InvalidRequestException("A redirect_uri must be supplied");
+        }
+
+        // if no requested redirect_uri and more than one registered client redirect_uris
+        // throw invalid request exception
+        if (!hasRequestedRedirectUri && (registeredClientRedirectUris != null && registeredClientRedirectUris.size() > 1)) {
+            throw new InvalidRequestException("Unable to find suitable redirect_uri, a redirect_uri must be supplied");
         }
 
         // if requested redirect_uri doesn't match registered client redirect_uris
