@@ -227,7 +227,34 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("/test/oauth/error?error=invalid_request&error_description=A+redirect_uri+must+be+supplied.", location);
+                    assertEquals("/test/oauth/error?error=invalid_request&error_description=A+redirect_uri+must+be+supplied", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_emptyRedirectUri_clientHasSeveralRedirectUris() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Arrays.asList("http://redirect1", "http://redirect2"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(OAuth2Constants.CODE);
+
+        when(domain.getPath()).thenReturn("test");
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("/test/oauth/error?error=invalid_request&error_description=Unable+to+find+suitable+redirect_uri%252C+a+redirect_uri+must+be+supplied", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -739,8 +766,8 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("/test/oauth/error?error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow", location);
-                },
+                    assertEquals("/test/oauth/error#error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow", location);
+                    },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
 
