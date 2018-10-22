@@ -33,6 +33,6 @@
    font-weight: bold;
 }
 
-.access-error-info .error:after {
+.access-error-info .error_description:before {
     content: " : ";
 }
