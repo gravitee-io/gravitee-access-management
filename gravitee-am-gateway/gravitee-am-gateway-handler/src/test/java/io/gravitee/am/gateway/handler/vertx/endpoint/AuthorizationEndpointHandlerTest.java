@@ -28,10 +28,7 @@ import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.flow.Flow;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
-import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationClientHandler;
-import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationEndpointFailureHandler;
-import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationEndpointHandler;
-import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationRequestParseHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.*;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpStatusCode;
@@ -95,13 +92,17 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 io.gravitee.am.common.oidc.ResponseType.ID_TOKEN));
         when(openIDDiscoveryService.getConfiguration(anyString())).thenReturn(openIDProviderMetadata);
 
+        // set domain
+        when(domain.getPath()).thenReturn("test");
+
         // set Authorization endpoint routes
         SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
         router.route("/oauth/authorize")
                 .handler(sessionHandler);
         router.route(HttpMethod.GET, "/oauth/authorize")
-                .handler(AuthorizationRequestParseHandler.create(domain, openIDDiscoveryService))
-                .handler(new AuthorizationClientHandler(clientService))
+                .handler(new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService))
+                .handler(new AuthorizationRequestParseClientHandler(clientService))
+                .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(authorizationEndpointHandler);
         router.route()
                 .failureHandler(new AuthorizationEndpointFailureHandler(domain));
@@ -114,7 +115,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
@@ -136,7 +136,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
@@ -158,7 +157,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
@@ -190,7 +188,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.error(new InvalidScopeException("Invalid scope(s): unknown")));
 
@@ -217,7 +214,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         authorizationRequest.setApproved(true);
         authorizationRequest.setResponseType(OAuth2Constants.CODE);
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
@@ -272,7 +268,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         authorizationRequest.setResponseType(OAuth2Constants.CODE);
         authorizationRequest.setRedirectUri("http://localhost:9999/wrong/callback");
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
@@ -282,14 +277,20 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://localhost:9999/authorize/callback?error=redirect_uri_mismatch&error_description=The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application", location);
+                    assertEquals("/test/oauth/error?error=redirect_uri_mismatch&error_description=The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
 
     @Test
     public void shouldNotInvokeAuthorizationEndpoint_duplicateParameters() throws Exception {
-        when(domain.getPath()).thenReturn("test");
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -313,7 +314,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
@@ -359,7 +359,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
@@ -398,7 +397,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
@@ -421,7 +419,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
@@ -452,7 +449,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setApproved(false);
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
@@ -486,7 +482,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setApproved(false);
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
@@ -533,7 +528,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
@@ -558,7 +552,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
@@ -585,7 +578,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
@@ -612,7 +604,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
@@ -653,7 +644,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
@@ -694,7 +684,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             }
         });
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
@@ -718,7 +707,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
@@ -740,7 +728,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeAuthorizationEndpoint_invalidClient() throws Exception {
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.empty());
 
         testRequest(
@@ -757,7 +744,13 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeAuthorizationEndpoint_implicitFlow_nonceMissing() throws Exception {
-        when(domain.getPath()).thenReturn("test");
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -766,14 +759,20 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("/test/oauth/error#error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow", location);
+                    assertEquals("/test/oauth/error?error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow", location);
                     },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
 
     @Test
     public void shouldNotInvokeAuthorizationEndpoint_hybridFlow_nonceMissing() throws Exception {
-        when(domain.getPath()).thenReturn("test");
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -851,7 +850,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
@@ -895,7 +893,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(domain.getPath()).thenReturn("test");
         when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 

@@ -15,15 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
-import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
-import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
 import io.gravitee.am.gateway.handler.oauth2.pkce.PKCEUtils;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
-import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequest;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequestResolver;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequestSyntaxException;
@@ -32,7 +29,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
-import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -42,7 +38,6 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 /**
  * The authorization server validates the request to ensure that all required parameters are present and valid.
@@ -54,34 +49,21 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationRequestParseHandler implements Handler<RoutingContext> {
+public class AuthorizationRequestParseParametersHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseParametersHandler.class);
     private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
     private Domain domain;
-    private OpenIDDiscoveryService openIDDiscoveryService;
 
-    public AuthorizationRequestParseHandler(Domain domain, OpenIDDiscoveryService openIDDiscoveryService) {
+
+    public AuthorizationRequestParseParametersHandler(Domain domain) {
         this.domain = domain;
-        this.openIDDiscoveryService = openIDDiscoveryService;
     }
 
     @Override
     public void handle(RoutingContext context) {
-        // proceed request parameters
-        parseRequestParameters(context);
-
-        // proceed response type parameter
-        parseResponseTypeParameter(context);
-
-        // proceed client_id parameter
-        parseClientIdParameter(context);
-
         // parse scope parameter
         parseScopeParameter(context);
-
-        // proceed nonce parameter
-        parseNonceParameter(context);
 
         // proceed prompt parameter
         parsePromptParameter(context);
@@ -98,46 +80,11 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         context.next();
     }
 
-    private void parseRequestParameters(RoutingContext context) {
-        // invalid_request if the request is missing a required parameter, includes an
-        // invalid parameter value, includes a parameter more than once, or is otherwise malformed.
-        MultiMap requestParameters = context.request().params();
-        Set<String> requestParametersNames = requestParameters.names();
-        requestParametersNames.forEach(requestParameterName -> {
-            List<String> requestParameterValue = requestParameters.getAll(requestParameterName);
-            if (requestParameterValue.size() > 1) {
-                throw new InvalidRequestException("Parameter [" + requestParameterName + "] is included more than once");
-            }
-        });
-    }
-
     private void parseScopeParameter(RoutingContext context) {
         // Check scope parameter
         String scopes = context.request().params().get(OAuth2Constants.SCOPE);
         if (scopes != null && scopes.isEmpty()) {
             throw new InvalidScopeException("Invalid parameter: scope must not be empty");
-        }
-    }
-
-    private void parseResponseTypeParameter(RoutingContext context) {
-        String responseType = context.request().getParam(OAuth2Constants.RESPONSE_TYPE);
-
-        if (responseType == null) {
-            throw new InvalidRequestException("Missing parameter: response_type");
-        }
-
-        // get supported response types
-        List<String> responseTypesSupported = openIDDiscoveryService.getConfiguration("/").getResponseTypesSupported();
-        if (!responseTypesSupported.contains(responseType)) {
-            throw new UnsupportedResponseTypeException("Unsupported response type: " + responseType);
-        }
-    }
-
-    private void parseClientIdParameter(RoutingContext context) {
-        String clientId = context.request().getParam(OAuth2Constants.CLIENT_ID);
-
-        if (clientId == null) {
-            throw new InvalidRequestException("Missing parameter: client_id");
         }
     }
 
@@ -246,15 +193,6 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
         }
     }
 
-    private void parseNonceParameter(RoutingContext context) {
-        String nonce = context.request().getParam(OIDCParameters.NONCE);
-        String responseType = context.request().getParam(OAuth2Constants.RESPONSE_TYPE);
-        // nonce parameter is required for the Hybrid flow
-        if (nonce == null && (isHybridFlow(responseType) || isImplicitFlow(responseType))) {
-            throw new InvalidRequestException("Missing parameter: nonce is required for Implicit and Hybrid Flow");
-        }
-    }
-
     private boolean returnFromLoginPage(RoutingContext context) {
         String referer = context.request().headers().get(HttpHeaders.REFERER);
         try {
@@ -263,17 +201,5 @@ public class AuthorizationRequestParseHandler implements Handler<RoutingContext>
             logger.debug("Unable to calculate referer url : {}", referer, e);
             return false;
         }
-    }
-
-    private boolean isHybridFlow(String responseType) {
-        return (ResponseType.CODE_ID_TOKEN.equals(responseType) || ResponseType.CODE_TOKEN.equals(responseType) || ResponseType.CODE_ID_TOKEN_TOKEN.equals(responseType));
-    }
-
-    private boolean isImplicitFlow(String responseType) {
-        return (ResponseType.ID_TOKEN.equals(responseType) || ResponseType.ID_TOKEN_TOKEN.equals(responseType));
-    }
-
-    public static AuthorizationRequestParseHandler create(Domain domain, OpenIDDiscoveryService openIDDiscoveryService) {
-        return new AuthorizationRequestParseHandler(domain, openIDDiscoveryService);
     }
 }

@@ -38,12 +38,12 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationClientHandler implements Handler<RoutingContext> {
+public class AuthorizationRequestParseClientHandler implements Handler<RoutingContext> {
 
     private static final String CLIENT_CONTEXT_KEY = "client";
     private ClientService clientService;
 
-    public AuthorizationClientHandler(ClientService clientService) {
+    public AuthorizationRequestParseClientHandler(ClientService clientService) {
         this.clientService = clientService;
     }
 
