@@ -99,7 +99,7 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
             // The Authorization Server MUST NOT display any authentication or consent user interface pages.
             // An error is returned if an End-User is not already authenticated.
             if (promptValues.contains("none") && context.user() == null) {
-                throw new LoginRequiredException();
+                throw new LoginRequiredException("Login required");
             }
 
             // The Authentication Request contains the prompt parameter with the value login.

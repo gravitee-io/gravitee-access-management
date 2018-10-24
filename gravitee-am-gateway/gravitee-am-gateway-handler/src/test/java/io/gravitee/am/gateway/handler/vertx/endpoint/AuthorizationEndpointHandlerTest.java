@@ -433,7 +433,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://localhost:9999/callback?error=login_required", location);
+                    assertEquals("http://localhost:9999/callback?error=login_required&error_description=Login+required", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -500,7 +500,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://localhost:9999/callback?error=login_required", location);
+                    assertEquals("http://localhost:9999/callback?error=login_required&error_description=Login+required", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
