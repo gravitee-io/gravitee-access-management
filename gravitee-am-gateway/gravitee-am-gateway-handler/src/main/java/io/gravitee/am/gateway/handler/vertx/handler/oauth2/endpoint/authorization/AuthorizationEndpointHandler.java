@@ -95,7 +95,7 @@ public class AuthorizationEndpointHandler implements Handler<RoutingContext> {
                         // else redirect to consent user approval page
                         String prompt = request.getRequestParameters().getFirst(OIDCParameters.PROMPT);
                         if (prompt != null && Arrays.asList(prompt.split("\\s+")).contains("none")) {
-                            context.fail(new InteractionRequiredException());
+                            context.fail(new InteractionRequiredException("Interaction required"));
                         } else {
                             // TODO should we put this data inside repository to handle cluster environment ?
                             context.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, request);

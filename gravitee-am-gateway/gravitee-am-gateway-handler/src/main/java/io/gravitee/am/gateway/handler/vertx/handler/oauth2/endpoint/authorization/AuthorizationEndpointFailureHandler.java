@@ -144,7 +144,7 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
             query.put(OAuth2Constants.STATE, authorizationRequest.getState());
         }
 
-        boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri()) && isImplicitFlow(authorizationRequest.getResponseType());
+        boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri()) && (isImplicitFlow(authorizationRequest.getResponseType()) || isHybridFlow(authorizationRequest.getResponseType()));
         return append(authorizationRequest.getRedirectUri(), query, fragment);
     }
 
@@ -153,6 +153,12 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
                 (io.gravitee.am.common.oauth2.ResponseType.TOKEN.equals(responseType)
                         || ResponseType.ID_TOKEN.equals(responseType)
                         || ResponseType.ID_TOKEN_TOKEN.equals(responseType));
+    }
+
+    private boolean isHybridFlow(String responseType) {
+        return responseType != null && (ResponseType.CODE_ID_TOKEN.equals(responseType)
+                || ResponseType.CODE_TOKEN.equals(responseType)
+                || ResponseType.CODE_ID_TOKEN_TOKEN.equals(responseType));
     }
 
     private boolean isDefaultErrorPage(String redirectUri) {
