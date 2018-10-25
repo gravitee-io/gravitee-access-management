@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
@@ -25,7 +26,6 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateDomain;
-import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,6 @@ import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
-import java.util.Optional;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -63,82 +62,73 @@ public class InitializeUpgrader implements Upgrader, Ordered {
     public boolean upgrade() {
         logger.info("Looking for a registered {} domain", ADMIN_DOMAIN);
 
-        domainService.findById(ADMIN_DOMAIN)
-                .switchIfEmpty(Single.error(new DomainNotFoundException(ADMIN_DOMAIN)))
-                .flatMap(adminDomain -> {
-                    logger.info("{} domain already exists. Apply required upgrades.", ADMIN_DOMAIN);
-                    if (!adminDomain.isMaster()) {
-                        logger.info("Set master flag for security domain {}", ADMIN_DOMAIN);
-                        return domainService.setMasterDomain(adminDomain.getId(), true);
-                    }
-                    return Single.just(adminDomain);
-                })
-                .flatMap(adminDomain -> {
-                    // New since AM v2
-                    // Move admin client identity providers to admin domain and remove the admin client
-                    return clientService.findByDomainAndClientId(ADMIN_DOMAIN, ADMIN_CLIENT_ID)
-                            .map(client -> Optional.of(client))
-                            .defaultIfEmpty(Optional.empty())
-                            .flatMapSingle(optionalClient -> {
-                                if (optionalClient.isPresent()) {
-                                    Client adminClient = optionalClient.get();
-                                    logger.info("Admin client found, move its identity providers to the admin domain");
-                                    UpdateDomain updateDomain = new UpdateDomain();
-                                    updateDomain.setName(adminDomain.getName());
-                                    updateDomain.setPath(adminDomain.getPath());
-                                    updateDomain.setDescription(adminDomain.getDescription());
-                                    updateDomain.setEnabled(adminDomain.isEnabled());
-                                    updateDomain.setIdentities(adminClient.getIdentities());
-                                    updateDomain.setOauth2Identities(adminClient.getOauth2Identities());
-                                    return domainService.update(ADMIN_DOMAIN, updateDomain)
-                                            .flatMap(domain -> clientService.delete(adminClient.getId()).toSingleDefault(domain));
-                                }
-                                return Single.just(adminDomain);
-                            });
+        // Initialize Upgrader must end before the others upgraders (i.e use blocking call)
+        try {
+            Domain adminDomain = domainService.findById(ADMIN_DOMAIN).blockingGet();
+            if (adminDomain == null) {
+                throw new DomainNotFoundException(ADMIN_DOMAIN);
+            }
 
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof DomainNotFoundException) {
-                        return domainNotFoundFallback();
-                    }
-                    return Single.error(new TechnicalManagementException(ex));
-                })
-                .subscribe();
+            logger.info("{} domain already exists. Apply required upgrades.", ADMIN_DOMAIN);
+            if (!adminDomain.isMaster()) {
+                logger.info("Set master flag for security domain {}", ADMIN_DOMAIN);
+                adminDomain = domainService.setMasterDomain(adminDomain.getId(), true).blockingGet();
+            }
+
+            // New since AM v2
+            // Move admin client identity providers to admin domain and remove the admin client
+            Client adminClient = clientService.findByDomainAndClientId(ADMIN_DOMAIN, ADMIN_CLIENT_ID).blockingGet();
+            if (adminClient != null) {
+                logger.info("Admin client found, move its identity providers to the admin domain");
+                UpdateDomain updateDomain = new UpdateDomain();
+                updateDomain.setName(adminDomain.getName());
+                updateDomain.setPath(adminDomain.getPath());
+                updateDomain.setDescription(adminDomain.getDescription());
+                updateDomain.setEnabled(adminDomain.isEnabled());
+                updateDomain.setIdentities(adminClient.getIdentities());
+                updateDomain.setOauth2Identities(adminClient.getOauth2Identities());
+                domainService.update(ADMIN_DOMAIN, updateDomain).blockingGet();
+                // remove admin client
+                clientService.delete(adminClient.getId()).blockingGet();
+            }
+        } catch (Exception ex) {
+            if (ex instanceof DomainNotFoundException) {
+                domainNotFoundFallback();
+            } else {
+                throw new TechnicalManagementException(ex);
+            }
+        }
 
         return true;
     }
 
-    private Single<Domain> domainNotFoundFallback() {
+    private Domain domainNotFoundFallback() {
         // Create a new admin domain
         logger.info("{} domain does not exists. Creating it.", ADMIN_DOMAIN);
         NewDomain adminDomain = new NewDomain();
         adminDomain.setName("admin");
         adminDomain.setDescription("AM Admin domain");
-        return domainService.create(adminDomain)
-                .flatMap(createdDomain -> {
-                    // Create an inline identity provider
-                    logger.info("Create an user-inline provider");
-                    NewIdentityProvider adminIdentityProvider = new NewIdentityProvider();
-                    adminIdentityProvider.setType("inline-am-idp");
-                    adminIdentityProvider.setName("Inline users");
-                    adminIdentityProvider.setConfiguration("{\"users\":[{\"firstname\":\"Administrator\",\"lastname\":\"\",\"username\":\"admin\",\"password\":\"adminadmin\"}]}");
-                    return identityProviderService.create(createdDomain.getId(), adminIdentityProvider)
-                            .flatMap(createdIdentityProvider -> {
-                                logger.info("Associate user-inline provider to previously created domain");
-                                UpdateDomain updateDomain = new UpdateDomain();
-                                updateDomain.setName(createdDomain.getName());
-                                updateDomain.setPath(createdDomain.getPath());
-                                updateDomain.setDescription(createdDomain.getDescription());
-                                updateDomain.setEnabled(createdDomain.isEnabled());
-                                updateDomain.setIdentities(Collections.singleton(createdIdentityProvider.getId()));
-                                updateDomain.setEnabled(true);
-                                return domainService.update(createdDomain.getId(), updateDomain);
-                            });
-                })
-                .flatMap(createdDomain -> {
-                    logger.info("Set master flag for security domain {}", ADMIN_DOMAIN);
-                    return domainService.setMasterDomain(createdDomain.getId(), true);
-                });
+        Domain createdDomain = domainService.create(adminDomain).blockingGet();
+
+        // Create an inline identity provider
+        logger.info("Create an user-inline provider");
+        NewIdentityProvider adminIdentityProvider = new NewIdentityProvider();
+        adminIdentityProvider.setType("inline-am-idp");
+        adminIdentityProvider.setName("Inline users");
+        adminIdentityProvider.setConfiguration("{\"users\":[{\"firstname\":\"Administrator\",\"lastname\":\"\",\"username\":\"admin\",\"password\":\"adminadmin\"}]}");
+        IdentityProvider createdIdentityProvider = identityProviderService.create(createdDomain.getId(), adminIdentityProvider).blockingGet();
+        logger.info("Associate user-inline provider to previously created domain");
+        UpdateDomain updateDomain = new UpdateDomain();
+        updateDomain.setName(createdDomain.getName());
+        updateDomain.setPath(createdDomain.getPath());
+        updateDomain.setDescription(createdDomain.getDescription());
+        updateDomain.setEnabled(createdDomain.isEnabled());
+        updateDomain.setIdentities(Collections.singleton(createdIdentityProvider.getId()));
+        updateDomain.setEnabled(true);
+        domainService.update(createdDomain.getId(), updateDomain).blockingGet();
+
+        logger.info("Set master flag for security domain {}", ADMIN_DOMAIN);
+        return domainService.setMasterDomain(createdDomain.getId(), true).blockingGet();
     }
 
     @Override
