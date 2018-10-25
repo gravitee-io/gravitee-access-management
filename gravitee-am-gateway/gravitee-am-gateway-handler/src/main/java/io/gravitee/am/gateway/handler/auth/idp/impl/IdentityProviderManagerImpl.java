@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -67,20 +68,21 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     public void afterPropertiesSet() {
         logger.info("Initializing identity providers for domain {}", domain.getName());
 
-        identityProviderRepository.findByDomain(domain.getId())
-                .doOnSuccess(identityProviders -> {
-                    identityProviders.forEach(identityProvider -> {
-                        logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
-                        AuthenticationProvider authenticationProvider =
-                                identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
-                                        identityProvider.getMappers(), identityProvider.getRoleMapper());
-                        providers.put(identityProvider.getId(), authenticationProvider);
-                        identities.put(identityProvider.getId(), identityProvider);
-                    });
-                })
-                .subscribe(
-                        result -> logger.info("Identity providers loaded for domain {}", domain.getName()),
-                        error -> logger.error("Unable to initialize identity providers for domain {}", domain.getName(), error)
-                );
+        // identity providers are required for extension grants bean creation
+        // make blocking call to create them first
+        try {
+            Set<IdentityProvider> identityProviders = identityProviderRepository.findByDomain(domain.getId()).blockingGet();
+            identityProviders.forEach(identityProvider -> {
+                logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+                AuthenticationProvider authenticationProvider =
+                        identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
+                                identityProvider.getMappers(), identityProvider.getRoleMapper());
+                providers.put(identityProvider.getId(), authenticationProvider);
+                identities.put(identityProvider.getId(), identityProvider);
+            });
+            logger.info("Identity providers loaded for domain {}", domain.getName());
+        } catch (Exception e) {
+            logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);
+        }
     }
 }
