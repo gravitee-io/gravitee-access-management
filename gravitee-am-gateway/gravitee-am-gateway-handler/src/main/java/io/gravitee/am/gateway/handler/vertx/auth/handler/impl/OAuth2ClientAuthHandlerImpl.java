@@ -122,8 +122,7 @@ public class OAuth2ClientAuthHandlerImpl extends AuthHandlerImpl {
                 new io.vertx.reactivex.core.http.HttpServerRequest(request),
                 request.uri(),
                 // append provider query param to avoid redirect mismatch exception
-                Collections.singletonMap("provider", request.getParam(PROVIDER_PARAMETER)),
-                true, true);
+                Collections.singletonMap("provider", request.getParam(PROVIDER_PARAMETER)), true);
     }
 
     private Map<String, String> getQueryParams(String url) throws URISyntaxException {

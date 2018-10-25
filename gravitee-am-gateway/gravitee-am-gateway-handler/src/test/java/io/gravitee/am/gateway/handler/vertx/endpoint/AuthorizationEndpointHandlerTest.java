@@ -81,6 +81,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
         // set openid provider service
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
         openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE,
@@ -124,7 +125,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("/test/oauth/error?error=access_denied", location);
+                    assertTrue(location.contains("/test/oauth/error?error=access_denied"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -223,7 +224,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("/test/oauth/error?error=invalid_request&error_description=A+redirect_uri+must+be+supplied", location);
+                    assertTrue(location.contains("/test/oauth/error?error=invalid_request&error_description=A+redirect_uri+must+be+supplied"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -250,7 +251,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("/test/oauth/error?error=invalid_request&error_description=Unable+to+find+suitable+redirect_uri%252C+a+redirect_uri+must+be+supplied", location);
+                    assertTrue(location.contains("/test/oauth/error?error=invalid_request&error_description=Unable+to+find+suitable+redirect_uri%252C+a+redirect_uri+must+be+supplied"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -277,7 +278,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("/test/oauth/error?error=redirect_uri_mismatch&error_description=The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application", location);
+                    assertTrue(location.contains("/test/oauth/error?error=redirect_uri_mismatch&error_description=The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -299,7 +300,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("/test/oauth/error?error=invalid_request&error_description=Parameter+%255Bresponse_type%255D+is+included+more+than+once", location);
+                    assertTrue(location.contains("/test/oauth/error?error=invalid_request&error_description=Parameter+%255Bresponse_type%255D+is+included+more+than+once"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -331,7 +332,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.startsWith("/test/oauth/confirm_access"));
+                    assertTrue(location.contains("/test/oauth/confirm_access"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -737,7 +738,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("/test/oauth/error?error=invalid_request&error_description=No+client+found+for+client_id+client-id", location);
+                    assertTrue(location.contains("/test/oauth/error?error=invalid_request&error_description=No+client+found+for+client_id+client-id"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -759,7 +760,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("/test/oauth/error?error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow", location);
+                    assertTrue(location.contains("/test/oauth/error?error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow"));
                     },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -781,7 +782,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("/test/oauth/error?error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow", location);
+                    assertTrue(location.contains("/test/oauth/error?error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

@@ -71,7 +71,7 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
         if (routingContext.failed()) {
             try {
                 AuthorizationRequest request = resolveInitialAuthorizeRequest(routingContext);
-                String defaultProxiedOAuthErrorPage =  UriBuilderRequest.resolveProxyRequest(routingContext.request(),  defaultErrorPagePath, null, false, false);
+                String defaultProxiedOAuthErrorPage =  UriBuilderRequest.resolveProxyRequest(routingContext.request(),  defaultErrorPagePath, null, false);
                 Throwable throwable = routingContext.failure();
                 if (throwable instanceof OAuth2Exception) {
                     OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
