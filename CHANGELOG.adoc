@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/24?closed=1[2.0.5 (2018-10-25)]
+
+=== Bug fixes
+
+*_Oauth2_*
+
+- Unable to create extension grants with identity provider https://github.com/gravitee-io/graviteeio-access-management/issues/405[#405]
+
+
 == https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/22?closed=1[2.0.4 (2018-07-27)]
 
 === Bug fixes
