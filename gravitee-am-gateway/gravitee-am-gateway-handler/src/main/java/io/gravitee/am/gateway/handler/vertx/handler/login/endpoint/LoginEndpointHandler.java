@@ -169,7 +169,7 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
         return UriBuilderRequest.resolveProxyRequest(
                 request,
                 "/" + domain.getPath() + "/login/callback",
-                Collections.singletonMap("provider", identity), true, true);
+                Collections.singletonMap("provider", identity), true);
     }
 
     private class OAuth2ProviderData {

@@ -40,7 +40,7 @@ public class ProviderConfigurationEndpoint implements Handler<RoutingContext> {
     public void handle(RoutingContext context) {
         String basePath = "/";
         try {
-            basePath = UriBuilderRequest.resolveProxyRequest(context.request(), "/", null, true, true);
+            basePath = UriBuilderRequest.resolveProxyRequest(context.request(), "/", null, true);
         } catch (URISyntaxException e) {
             logger.error("Unable to resolve OpenID Connect provider configuration endpoint", e);
         }

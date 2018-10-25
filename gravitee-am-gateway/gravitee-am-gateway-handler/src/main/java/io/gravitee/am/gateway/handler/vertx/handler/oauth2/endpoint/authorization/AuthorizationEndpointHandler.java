@@ -99,7 +99,7 @@ public class AuthorizationEndpointHandler implements Handler<RoutingContext> {
                         } else {
                             // TODO should we put this data inside repository to handle cluster environment ?
                             context.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, request);
-                            String approvalPage = UriBuilderRequest.resolveProxyRequest(context.request(),"/" + domain.getPath() + "/oauth/confirm_access", null, false, false);
+                            String approvalPage = UriBuilderRequest.resolveProxyRequest(context.request(),"/" + domain.getPath() + "/oauth/confirm_access", null, false);
                             doRedirect(context.response(), approvalPage);
                         }
                     } else {

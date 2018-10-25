@@ -37,12 +37,11 @@ public class UriBuilderRequest {
      * @param request original request
      * @param path request path
      * @param parameters request query params
-     * @param absoluteUrl request result should be an absolute url ?
      * @param queryParam request result will be set as a query param ?
      * @return request uri representation
      * @throws URISyntaxException
      */
-    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean absoluteUrl, boolean queryParam) throws URISyntaxException {
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean queryParam) throws URISyntaxException {
         UriBuilder builder = UriBuilder.newInstance();
 
         // scheme
@@ -50,9 +49,7 @@ public class UriBuilderRequest {
         if (scheme != null && !scheme.isEmpty()) {
             builder.scheme(scheme);
         } else {
-            if (absoluteUrl) {
-                builder.scheme(request.scheme());
-            }
+            builder.scheme(request.scheme());
         }
 
         // host + port
@@ -60,9 +57,7 @@ public class UriBuilderRequest {
         if (host != null && !host.isEmpty()) {
             handleHost(builder, host);
         } else {
-            if (absoluteUrl) {
-                handleHost(builder, request.host());
-            }
+            handleHost(builder, request.host());
         }
 
         // handle forwarded path for redirect_uri query param

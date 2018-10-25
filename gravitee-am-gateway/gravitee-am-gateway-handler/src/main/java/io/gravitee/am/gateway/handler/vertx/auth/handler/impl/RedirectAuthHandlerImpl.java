@@ -63,14 +63,14 @@ public class RedirectAuthHandlerImpl extends io.vertx.ext.web.handler.impl.Redir
                 session.put(returnURLParam,
                         UriBuilderRequest.resolveProxyRequest(
                                 new io.vertx.reactivex.core.http.HttpServerRequest(request),
-                                request.path(), request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)), true, false));
+                                request.path(), request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)), false));
 
                 // Now redirect to the login url
                 String uri =
                         UriBuilderRequest.resolveProxyRequest(
                                 new io.vertx.reactivex.core.http.HttpServerRequest(request),
                                 loginRedirectURL,
-                                Collections.singletonMap(OAuth2Constants.CLIENT_ID, request.getParam(OAuth2Constants.CLIENT_ID)), false, false);
+                                Collections.singletonMap(OAuth2Constants.CLIENT_ID, request.getParam(OAuth2Constants.CLIENT_ID)), false);
 
                 handler.handle(Future.failedFuture(new HttpStatusException(302, uri)));
             } catch (Exception e) {
