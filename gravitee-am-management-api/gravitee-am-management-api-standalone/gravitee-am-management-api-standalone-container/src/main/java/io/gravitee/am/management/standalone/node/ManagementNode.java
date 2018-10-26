@@ -17,13 +17,9 @@ package io.gravitee.am.management.standalone.node;
 
 import io.gravitee.am.management.core.http.HttpServer;
 import io.gravitee.am.management.service.InitializerService;
-import io.gravitee.am.management.services.core.ServiceManager;
 import io.gravitee.common.component.LifecycleComponent;
-import io.gravitee.common.node.AbstractNode;
-import io.gravitee.plugin.core.api.PluginRegistry;
-import io.gravitee.plugin.core.internal.PluginEventListener;
+import io.gravitee.node.container.AbstractNode;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,17 +30,19 @@ public class ManagementNode extends AbstractNode {
 
     @Override
     public String name() {
-        return "Gravitee.io - Access Management - Management API";
+        return "Gravitee.io - AM Management API";
     }
 
     @Override
-    protected List<Class<? extends LifecycleComponent>> getLifecycleComponents() {
-        List<Class<? extends LifecycleComponent>> components = new ArrayList<>();
+    public String application() {
+        return "gio-am-management";
+    }
 
-        components.add(PluginEventListener.class);
-        components.add(PluginRegistry.class);
+    @Override
+    public List<Class<? extends LifecycleComponent>> components() {
+        List<Class<? extends LifecycleComponent>> components = super.components();
+
         components.add(HttpServer.class);
-        components.add(ServiceManager.class);
         components.add(InitializerService.class);
 
         return components;

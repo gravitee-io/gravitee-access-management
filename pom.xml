@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>12</version>
+        <version>13</version>
     </parent>
 
     <groupId>io.gravitee.am</groupId>
@@ -45,13 +45,12 @@
     </issueManagement>
 
     <properties>
-        <gravitee-common.version>1.11.0</gravitee-common.version>
-        <gravitee-plugin-core.version>1.3.0</gravitee-plugin-core.version>
+        <gravitee-common.version>1.13.0</gravitee-common.version>
+        <gravitee-plugin-core.version>1.4.0</gravitee-plugin-core.version>
+        <gravitee-node.version>1.1.0</gravitee-node.version>
         <spring-security.version>4.2.4.RELEASE</spring-security.version>
-        <jackson.version>2.9.6</jackson.version>
         <jetty.version>9.3.14.v20161028</jetty.version>
         <jjwt.version>0.9.0</jjwt.version>
-        <vertx.version>3.5.2</vertx.version>
         <rxjava.version>2.1.12</rxjava.version>
     </properties>
 
@@ -82,6 +81,24 @@
                 <groupId>io.gravitee.plugin</groupId>
                 <artifactId>gravitee-plugin-core</artifactId>
                 <version>${gravitee-plugin-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.gravitee.node</groupId>
+                <artifactId>gravitee-node-container</artifactId>
+                <version>${gravitee-node.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.gravitee.node</groupId>
+                <artifactId>gravitee-node-api</artifactId>
+                <version>${gravitee-node.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.gravitee.node</groupId>
+                <artifactId>gravitee-node-vertx</artifactId>
+                <version>${gravitee-node.version}</version>
             </dependency>
 
             <!-- Spring -->

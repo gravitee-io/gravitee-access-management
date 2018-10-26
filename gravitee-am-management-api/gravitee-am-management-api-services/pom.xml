@@ -32,7 +32,6 @@
     <name>Gravitee IO - Access Management - Management API - Services</name>
 
     <modules>
-        <module>gravitee-am-management-api-services-core</module>
         <module>gravitee-am-management-api-services-sync</module>
     </modules>
 

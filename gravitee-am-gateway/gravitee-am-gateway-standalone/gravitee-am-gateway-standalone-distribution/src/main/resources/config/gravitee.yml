@@ -89,6 +89,30 @@ management:
 #    threadsAllowedToBlockForConnectionMultiplier: 5
 #    cursorFinalizerEnabled: true
 
+# AM Gateway service configurations. Provided values are default values.
+# All services are enabled by default. To stop one of them, you have to add the property 'enabled: false' (See the
+# 'local' service for an example).
+services:
+  core:
+    http:
+      enabled: true
+      port: 18092
+      host: localhost
+      authentication:
+        # authentication type to be used for the core services
+        # - none : to disable authentication
+        # - basic : to use basic authentication
+        # default is "basic"
+        type: basic
+        users:
+          admin: adminadmin
+
+  # Metrics service
+  metrics:
+    enabled: false
+    prometheus:
+      enabled: true
+
 # OAuth2 repository is used to store OAuth2 tokens: access_token, refresh_token
 oauth2:
   type: mongodb

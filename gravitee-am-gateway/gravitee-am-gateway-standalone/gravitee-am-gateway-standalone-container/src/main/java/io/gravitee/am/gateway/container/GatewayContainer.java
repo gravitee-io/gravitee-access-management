@@ -13,39 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.node;
+package io.gravitee.am.gateway.container;
 
-import io.gravitee.am.gateway.reactor.Reactor;
-import io.gravitee.am.gateway.vertx.VertxEmbeddedContainer;
-import io.gravitee.common.component.LifecycleComponent;
-import io.gravitee.node.container.AbstractNode;
+import io.gravitee.am.gateway.spring.StandaloneConfiguration;
+import io.gravitee.node.container.spring.SpringBasedContainer;
 
 import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GatewayNode extends AbstractNode {
+public class GatewayContainer extends SpringBasedContainer {
 
     @Override
-    public String name() {
+    protected List<Class<?>> annotatedClasses() {
+        List<Class<?>> classes = super.annotatedClasses();
+        classes.add(StandaloneConfiguration.class);
+        return classes;
+    }
+
+    @Override
+    protected String name() {
         return "Gravitee.io - AM Gateway";
     }
 
-    @Override
-    public String application() {
-        return "gio-am-gateway";
-    }
-
-    @Override
-    public List<Class<? extends LifecycleComponent>> components() {
-        List<Class<? extends LifecycleComponent>> components = super.components();
-
-        components.add(Reactor.class);
-        components.add(VertxEmbeddedContainer.class);
-
-        return components;
+    public static void main(String[] args) throws Exception {
+        // If you want to run Gravitee standalone from your IDE, please do not forget
+        // to specify -Dgravitee.home=/path/to/gravitee/home in order to make it works.
+        GatewayContainer container = new GatewayContainer();
+        container.start();
     }
 }

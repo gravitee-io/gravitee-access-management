@@ -31,7 +31,6 @@
 
     <packaging>pom</packaging>
     <modules>
-        <module>gravitee-am-gateway-services-core</module>
         <module>gravitee-am-gateway-services-sync</module>
     </modules>
 </project>

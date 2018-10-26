@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.standalone.spring;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.core.spring.CoreConfiguration;
 import io.gravitee.am.management.jetty.spring.JettyContainerConfiguration;
 import io.gravitee.am.management.repository.spring.RepositoryConfiguration;
@@ -25,7 +26,8 @@ import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
-import io.gravitee.common.node.Node;
+import io.gravitee.node.api.Node;
+import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,11 +39,10 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @Import({
-        EnvironmentConfiguration.class,
+        VertxConfiguration.class,
         PluginConfiguration.class,
         // TODO: Jetty configuration should be loaded implicitely (using plugin system ?)
         io.gravitee.am.service.spring.ServiceConfiguration.class,
-        io.gravitee.am.management.services.core.spring.ServiceConfiguration.class,
         JettyContainerConfiguration.class,
         ServiceConfiguration.class,
         RepositoryConfiguration.class,
@@ -59,5 +60,10 @@ public class StandaloneConfiguration {
     @Bean
     public EventManager eventManager() {
         return new EventManagerImpl();
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 }

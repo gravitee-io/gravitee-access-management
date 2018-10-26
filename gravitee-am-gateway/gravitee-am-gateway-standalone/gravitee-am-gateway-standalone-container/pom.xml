@@ -49,12 +49,6 @@
         <!-- Gravitee.io Access Management -->
         <dependency>
             <groupId>io.gravitee.am.gateway</groupId>
-            <artifactId>gravitee-am-gateway-services-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.am.gateway</groupId>
             <artifactId>gravitee-am-gateway-reactor</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -81,6 +75,22 @@
             <groupId>io.gravitee.am.plugins.handlers</groupId>
             <artifactId>gravitee-am-plugins-handlers-extensiongrant</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <!-- Gravitee.io -->
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-container</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-vertx</artifactId>
         </dependency>
 
         <!-- Logging -->
@@ -145,13 +155,6 @@
             <artifactId>spring-test</artifactId>
             <version>${spring.version}</version>
             <scope>test</scope>
-        </dependency>
-
-        <!-- Configuration -->
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>1.17</version>
         </dependency>
 
         <!-- Vert.x -->

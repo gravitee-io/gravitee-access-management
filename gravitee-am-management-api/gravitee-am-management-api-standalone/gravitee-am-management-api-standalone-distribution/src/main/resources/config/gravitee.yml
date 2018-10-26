@@ -29,6 +29,8 @@
 
 # HTTP Server
 #jetty:
+#  IP/hostname to bind to. Default is 0.0.0.0
+#  host: 0.0.0.0
 #  port: 8093
 #  idleTimeout: 30000
 #  acceptors: -1
@@ -43,6 +45,14 @@
 #  accesslog:
 #    enabled: true
 #    path: ${gravitee.home}/logs/gravitee_accesslog_yyyy_mm_dd.log
+#  secured: false
+#  ssl:
+#    keystore:
+#      path: ${gravitee.home}/security/keystore.jks
+#      password: secret
+#    truststore:
+#      path: ${gravitee.home}/security/truststore.jks
+#      password: secret
 
 #http:
 #  cors:
@@ -106,6 +116,20 @@ oauth2:
 # All services are enabled by default. To stop one of them, you have to add the property 'enabled: false' (See the
 # 'local' service for an example).
 services:
+  core:
+    http:
+      enabled: true
+      port: 18093
+      host: localhost
+      authentication:
+        # authentication type to be used for the core services
+        # - none : to disable authentication
+        # - basic : to use basic authentication
+        # default is "basic"
+        type: basic
+        users:
+          admin: adminadmin
+
   # Local registry service.
   # This registry is used to load domain definitions with json format from the file system.
   local:

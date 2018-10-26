@@ -23,6 +23,9 @@ import org.springframework.beans.factory.annotation.Value;
  */
 public class JettyConfiguration {
 
+    @Value("${jetty.host:0.0.0.0}")
+    private String httpHost;
+
     @Value("${jetty.port:8093}")
     private int httpPort;
 
@@ -56,8 +59,23 @@ public class JettyConfiguration {
     @Value("${jetty.accesslog.enabled:true}")
     private boolean accessLogEnabled;
 
-    @Value("${jetty.accesslog.path:${gravitee.home}/logs/gravitee_am_accesslog_yyyy_mm_dd.log}")
+    @Value("${jetty.accesslog.path:${gravitee.home}/logs/gravitee_accesslog_yyyy_mm_dd.log}")
     private String accessLogPath;
+
+    @Value("${jetty.secured:false}")
+    private boolean secured;
+
+    @Value("${jetty.ssl.keystore.path:#{null}}")
+    private String keyStorePath;
+
+    @Value("${jetty.ssl.keystore.password:#{null}}")
+    private String keyStorePassword;
+
+    @Value("${jetty.ssl.truststore.path:#{null}}")
+    private String trustStorePath;
+
+    @Value("${jetty.ssl.truststore.password:#{null}}")
+    private String trustStorePassword;
 
     public int getHttpPort() {
         return httpPort;
@@ -153,5 +171,53 @@ public class JettyConfiguration {
 
     public void setAccessLogPath(String accessLogPath) {
         this.accessLogPath = accessLogPath;
+    }
+
+    public String getHttpHost() {
+        return httpHost;
+    }
+
+    public void setHttpHost(String httpHost) {
+        this.httpHost = httpHost;
+    }
+
+    public boolean isSecured() {
+        return secured;
+    }
+
+    public void setSecured(boolean secured) {
+        this.secured = secured;
+    }
+
+    public String getKeyStorePath() {
+        return keyStorePath;
+    }
+
+    public void setKeyStorePath(String keyStorePath) {
+        this.keyStorePath = keyStorePath;
+    }
+
+    public String getKeyStorePassword() {
+        return keyStorePassword;
+    }
+
+    public void setKeyStorePassword(String keyStorePassword) {
+        this.keyStorePassword = keyStorePassword;
+    }
+
+    public String getTrustStorePath() {
+        return trustStorePath;
+    }
+
+    public void setTrustStorePath(String trustStorePath) {
+        this.trustStorePath = trustStorePath;
+    }
+
+    public String getTrustStorePassword() {
+        return trustStorePassword;
+    }
+
+    public void setTrustStorePassword(String trustStorePassword) {
+        this.trustStorePassword = trustStorePassword;
     }
 }
