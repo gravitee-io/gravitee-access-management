@@ -39,10 +39,15 @@
     </build>
 
     <dependencies>
-        <!-- Gravitee.io Common -->
+        <!-- Gravitee.io -->
         <dependency>
-            <groupId>io.gravitee.plugin</groupId>
-            <artifactId>gravitee-plugin-core</artifactId>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-container</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-api</artifactId>
         </dependency>
 
         <!-- Gravitee.io Access Management -->
@@ -55,12 +60,6 @@
         <dependency>
             <groupId>io.gravitee.am.management</groupId>
             <artifactId>gravitee-am-management-api-service</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.am.management</groupId>
-            <artifactId>gravitee-am-management-api-services-core</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -129,13 +128,6 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-        </dependency>
-
-        <!-- Configuration -->
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>1.17</version>
         </dependency>
     </dependencies>
 

@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class SyncManager {
 
     private final Logger logger = LoggerFactory.getLogger(SyncManager.class);
-    private final String ADMIN_DOMAIN = "admin";
+    private final static String ADMIN_DOMAIN = "admin";
 
     @Autowired
     private DomainService domainService;

@@ -128,6 +128,22 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.node.services</groupId>
+            <artifactId>gravitee-node-services-healthcheck</artifactId>
+            <version>${gravitee-node.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.node.services</groupId>
+            <artifactId>gravitee-node-services-monitoring</artifactId>
+            <version>${gravitee-node.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -208,6 +224,20 @@
                                     <groupId>io.gravitee.am.management</groupId>
                                     <artifactId>gravitee-am-management-api-services-sync</artifactId>
                                     <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>io.gravitee.node.services</groupId>
+                                    <artifactId>gravitee-node-services-healthcheck</artifactId>
+                                    <version>${gravitee-node.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>io.gravitee.node.services</groupId>
+                                    <artifactId>gravitee-node-services-monitoring</artifactId>
+                                    <version>${gravitee-node.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
                             </artifactItems>

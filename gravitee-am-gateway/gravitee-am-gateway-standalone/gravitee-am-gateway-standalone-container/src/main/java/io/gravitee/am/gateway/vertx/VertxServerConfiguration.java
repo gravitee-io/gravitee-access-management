@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Scope;
  * @author GraviteeSource Team
  */
 @Configuration
-public class VertxConfiguration {
+public class VertxServerConfiguration {
 
     @Bean
     public VertxHttpServerConfiguration httpServerConfiguration() {
@@ -39,19 +39,9 @@ public class VertxConfiguration {
     }
 
     @Bean
-    public VertxFactory vertxFactory() {
-        return new VertxFactory();
-    }
-
-    @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public GraviteeVerticle graviteeVerticle() {
         return new GraviteeVerticle();
-    }
-
-    @Bean
-    public GraviteeVerticleFactory graviteeVerticleFactory() {
-        return new GraviteeVerticleFactory();
     }
 
     @Bean

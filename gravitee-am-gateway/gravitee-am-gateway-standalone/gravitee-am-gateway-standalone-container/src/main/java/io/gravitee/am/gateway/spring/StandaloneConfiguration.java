@@ -15,15 +15,20 @@
  */
 package io.gravitee.am.gateway.spring;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.reactor.spring.ReactorConfiguration;
-import io.gravitee.am.gateway.vertx.VertxConfiguration;
+import io.gravitee.am.gateway.vertx.VertxServerConfiguration;
 import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
+import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
-import io.gravitee.common.node.Node;
+import io.gravitee.node.api.Node;
+import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
+import io.vertx.core.Vertx;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -34,12 +39,11 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @Import({
-        EnvironmentConfiguration.class,
-        PluginConfiguration.class,
-        ReactorConfiguration.class,
         VertxConfiguration.class,
-        io.gravitee.am.gateway.services.core.spring.ServiceConfiguration.class,
-        io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration.class,
+        ReactorConfiguration.class,
+        VertxServerConfiguration.class,
+        PluginConfiguration.class,
+        IdentityProviderConfiguration.class,
         CertificateConfiguration.class,
         ExtensionGrantConfiguration.class
 })
@@ -53,5 +57,15 @@ public class StandaloneConfiguration {
     @Bean
     public EventManager eventManager() {
         return new EventManagerImpl();
+    }
+
+    @Bean
+    public io.vertx.reactivex.core.Vertx vertx(@Autowired Vertx vertx) {
+        return io.vertx.reactivex.core.Vertx.newInstance(vertx);
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 }
