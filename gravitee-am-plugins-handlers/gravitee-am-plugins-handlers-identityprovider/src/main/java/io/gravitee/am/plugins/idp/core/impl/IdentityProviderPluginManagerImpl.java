@@ -185,11 +185,11 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
 
                     // Add identity provider mapper bean
                     configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new IdentityProviderMapperBeanFactoryPostProcessor(identityProviderMapper));
+                            new IdentityProviderMapperBeanFactoryPostProcessor(identityProviderMapper != null ? identityProviderMapper : new NoIdentityProviderMapper()));
 
                     // Add identity provider role mapper bean
                     configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new IdentityProviderRoleMapperBeanFactoryPostProcessor(identityProviderRoleMapper));
+                            new IdentityProviderRoleMapperBeanFactoryPostProcessor(identityProviderRoleMapper != null ? identityProviderRoleMapper : new NoIdentityProviderRoleMapper()));
 
                     return configurableApplicationContext;
                 }
