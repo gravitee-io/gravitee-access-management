@@ -23,10 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -49,7 +46,18 @@ public class SyncManager {
         logger.debug("Refreshing sync state...");
 
         // Registered domains
-        Set<Domain> domains = domainRepository.findAll().blockingGet();
+        Set<Domain> domains = domainRepository.findAll()
+                // remove master domains
+                .map(registeredDomains -> {
+                    if (registeredDomains != null) {
+                        return registeredDomains
+                                .stream()
+                                .filter(domain -> !domain.isMaster())
+                                .collect(Collectors.toSet());
+                    }
+                    return Collections.<Domain>emptySet();
+                })
+                .blockingGet();
 
         // Look for deleted domains
         if (deployedDomains.size() > domains.size()) {
@@ -79,7 +87,7 @@ public class SyncManager {
 
         // Deploy domains
         domains.stream()
-                .filter(domain -> domain.isEnabled() && !domain.isMaster())
+                .filter(domain -> domain.isEnabled())
                 .forEach(domain -> {
                     Domain deployedDomain = deployedDomains.get(domain.getId());
                     if (deployedDomain == null) {
