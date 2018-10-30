@@ -79,7 +79,7 @@ public class SyncManager {
 
         // Deploy domains
         domains.stream()
-                .filter(Domain::isEnabled)
+                .filter(domain -> domain.isEnabled() && !domain.isMaster())
                 .forEach(domain -> {
                     Domain deployedDomain = deployedDomains.get(domain.getId());
                     if (deployedDomain == null) {
