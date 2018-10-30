@@ -15,13 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.handler.impl;
 
-import io.gravitee.am.gateway.handler.auth.exception.AuthenticationServiceException;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.utils.UriBuilder;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
+import io.gravitee.am.service.exception.authentication.InternalAuthenticationServiceException;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -67,17 +67,7 @@ public class OAuth2ClientAuthHandlerImpl extends AuthHandlerImpl {
                 return;
             }
 
-            JsonObject credentials = parseAuthorization.result();
-            authProvider.authenticate(credentials, authHandler -> {
-                if (authHandler.failed()) {
-                    handler.handle(Future.failedFuture(authHandler.cause()));
-                    return;
-                }
-
-                context.setUser(authHandler.result());
-                // continue
-                handler.handle(Future.succeededFuture());
-            });
+            handler.handle(Future.succeededFuture(parseAuthorization.result()));
         });
     }
 
@@ -90,7 +80,7 @@ public class OAuth2ClientAuthHandlerImpl extends AuthHandlerImpl {
                 identityProviderManager.get(providerId)
                         .map(authenticationProvider -> {
                             if (!(authenticationProvider instanceof OAuth2AuthenticationProvider)) {
-                                throw new AuthenticationServiceException("OAuth2 Provider " + providerId + "is not social");
+                                throw new InternalAuthenticationServiceException("OAuth2 Provider " + providerId + "is not social");
                             }
                             return (OAuth2AuthenticationProvider) authenticationProvider;
                         })

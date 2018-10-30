@@ -21,6 +21,9 @@ package io.gravitee.am.service.exception.authentication;
  */
 public class BadCredentialsException extends AuthenticationException {
 
+    public BadCredentialsException() {
+    }
+
     public BadCredentialsException(String msg) {
         super(msg);
     }

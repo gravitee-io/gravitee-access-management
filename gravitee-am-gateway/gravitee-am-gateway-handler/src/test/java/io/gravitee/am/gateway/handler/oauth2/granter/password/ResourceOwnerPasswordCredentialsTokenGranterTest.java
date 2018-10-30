@@ -16,15 +16,18 @@
 package io.gravitee.am.gateway.handler.oauth2.granter.password;
 
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.common.util.LinkedMultiValueMap;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.reactivex.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,7 +36,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -53,7 +55,10 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
     private TokenRequest tokenRequest;
 
     @Mock
-    private ClientService clientService;
+    private TokenRequestResolver tokenRequestResolver;
+
+    @Mock
+    private TokenService tokenService;
 
     @Before
     public void setUp() {
@@ -69,15 +74,21 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
         Client client = new Client();
         client.setClientId("my-client-id");
 
+        AccessToken accessToken = new DefaultAccessToken("test-token");
+
         when(tokenRequest.getClientId()).thenReturn("my-client-id");
         when(tokenRequest.getGrantType()).thenReturn("password");
         when(tokenRequest.getRequestParameters()).thenReturn(parameters);
+        when(tokenRequest.createOAuth2Request()).thenReturn(new OAuth2Request());
 
-        when(clientService.findByClientId("my-client-id")).thenReturn(Maybe.just(client));
-        when(userAuthenticationManager.authenticate(eq(tokenRequest.getClientId()), any(Authentication.class))).thenReturn(
-                Single.just(new User()));
+        when(tokenRequestResolver.resolve(any(), any(), any())).thenReturn(Single.just(tokenRequest));
+        when(tokenService.create(any(), any(), any())).thenReturn(Single.just(accessToken));
+        when(userAuthenticationManager.authenticate(any(Client.class), any(Authentication.class))).thenReturn(Single.just(new User()));
 
-        Single<AccessToken> accessToken = granter.grant(tokenRequest, client);
+        TestObserver<AccessToken> testObserver = granter.grant(tokenRequest, client).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(token -> token.getValue().equals("test-token"));
 
     }
 

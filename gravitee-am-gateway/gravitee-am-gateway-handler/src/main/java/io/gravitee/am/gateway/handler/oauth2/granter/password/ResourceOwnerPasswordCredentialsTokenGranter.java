@@ -82,8 +82,8 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
         String username = tokenRequest.getUsername();
         String password = tokenRequest.getPassword();
 
-        return userAuthenticationManager.authenticate(tokenRequest.getClientId(), new EndUserAuthentication(username, password))
-                .onErrorResumeNext(ex -> Single.error(new InvalidGrantException()))
+        return userAuthenticationManager.authenticate(client, new EndUserAuthentication(username, password))
+                .onErrorResumeNext(ex -> Single.error(new InvalidGrantException(ex.getMessage())))
                 .toMaybe();
     }
 

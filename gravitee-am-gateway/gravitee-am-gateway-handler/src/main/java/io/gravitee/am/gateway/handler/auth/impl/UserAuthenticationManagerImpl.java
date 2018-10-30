@@ -16,16 +16,17 @@
 package io.gravitee.am.gateway.handler.auth.impl;
 
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.auth.exception.BadCredentialsException;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.service.RoleService;
 import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.authentication.BadCredentialsException;
+import io.gravitee.am.service.exception.authentication.InternalAuthenticationServiceException;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -47,9 +48,6 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     private final Logger logger = LoggerFactory.getLogger(UserAuthenticationManagerImpl.class);
 
     @Autowired
-    private ClientService clientService;
-
-    @Autowired
     private UserService userService;
 
     @Autowired
@@ -59,37 +57,20 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     private IdentityProviderManager identityProviderManager;
 
     @Override
-    public Single<User> authenticate(String clientId, Authentication authentication) {
+    public Single<User> authenticate(Client client, Authentication authentication) {
         logger.debug("Trying to authenticate [{}]", authentication);
 
         // Get identity providers associated to a client
         // For each idp, try to authenticate a user
         // Try to authenticate while the user can not be authenticated
         // If user can't be authenticated, send an exception
-        return clientService.findByClientId(clientId)
-                .switchIfEmpty(Maybe.error(new BadCredentialsException("No client found for authentication " + authentication.getPrincipal())))
-                .flatMapObservable(client -> {
-                    if (client.getIdentities() == null || client.getIdentities().isEmpty()) {
-                        return Observable.error(new BadCredentialsException("No identity provider found for client : " + clientId));
-                    } else {
-                        return Observable.fromIterable(client.getIdentities());
-                    }
-                })
-                .flatMapMaybe(authProvider -> identityProviderManager.get(authProvider)
-                        .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to load authentication provider " + authProvider + ", an error occurred during the initialization stage")))
-                        .flatMap(authenticationProvider -> authenticationProvider.loadUserByUsername(authentication))
-                        .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate user : " + authentication.getPrincipal())))
-                        .map(user -> {
-                            Map<String, Object> additionalInformation =
-                                    user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
-                            additionalInformation.put("source", authProvider);
-                            additionalInformation.put(OAuth2Constants.CLIENT_ID, clientId);
-                            ((DefaultUser ) user).setAdditonalInformation(additionalInformation);
-                            return new UserAuthentication(user, null);
-                        })
-                        .onErrorResumeNext(error -> {
-                            return Maybe.just(new UserAuthentication(null, error));
-                        }))
+        if (client.getIdentities() == null || client.getIdentities().isEmpty()) {
+            logger.error("No identity provider found for client : " + client.getClientId());
+            return Single.error(new BadCredentialsException("No identity provider found for client : " + client.getClientId()));
+        }
+
+        return Observable.fromIterable(client.getIdentities())
+                .flatMapMaybe(authProvider -> authenticate0(client, authentication, authProvider))
                 .takeUntil(userAuthentication -> userAuthentication.getUser() != null)
                 .lastOrError()
                 .flatMap(userAuthentication -> {
@@ -97,7 +78,12 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                     if (user == null) {
                         Throwable lastException = userAuthentication.getLastException();
                         if (lastException != null) {
-                            return Single.error(lastException);
+                            if (lastException instanceof BadCredentialsException) {
+                                return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
+                            } else {
+                                logger.error("An error occurs during user authentication", lastException);
+                                return Single.error(new InternalAuthenticationServiceException("Unable to validate credentials. The user account you are trying to access may be experiencing a problem.", lastException));
+                            }
                         } else {
                             return Single.error(new BadCredentialsException("No user found for registered providers"));
                         }
@@ -126,12 +112,26 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         .flatMap(user -> enhanceUserWithRoles(user));
     }
 
-    public void setClientService(ClientService clientService) {
-        this.clientService = clientService;
-    }
-
-    public void setIdentityProviderManager(IdentityProviderManager identityProviderManager) {
-        this.identityProviderManager = identityProviderManager;
+    private Maybe<UserAuthentication> authenticate0(Client client, Authentication authentication, String authProvider) {
+        return identityProviderManager.get(authProvider)
+                .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to load authentication provider " + authProvider + ", an error occurred during the initialization stage")))
+                .flatMap(authenticationProvider -> {
+                    logger.debug("Authentication attempt using identity provider {} ({})", authenticationProvider, authenticationProvider.getClass().getName());
+                    return authenticationProvider.loadUserByUsername(authentication)
+                            .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate user : " + authentication.getPrincipal() + " authentication provider has returned empty value")));
+                })
+                .map(user -> {
+                    logger.debug("Successfully Authenticated: " + authentication + " with provider authentication provider " + authProvider);
+                    Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
+                    additionalInformation.put("source", authProvider);
+                    additionalInformation.put(OAuth2Constants.CLIENT_ID, client.getClientId());
+                    ((DefaultUser ) user).setAdditonalInformation(additionalInformation);
+                    return new UserAuthentication(user, null);
+                })
+                .onErrorResumeNext(error -> {
+                    logger.debug("Unable to authenticate [{}] with authentication provider [{}]", authentication, authProvider, error);
+                    return Maybe.just(new UserAuthentication(null, error));
+                });
     }
 
     private Maybe<User> enhanceUserWithRoles(User user) {
