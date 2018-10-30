@@ -21,6 +21,9 @@ package io.gravitee.am.service.exception.authentication;
  */
 public abstract class AuthenticationException extends RuntimeException {
 
+    public AuthenticationException() {
+    }
+
     public AuthenticationException(String msg, Throwable t) {
         super(msg, t);
     }

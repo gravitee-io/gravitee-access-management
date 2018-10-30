@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.auth;
 
 import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -27,7 +28,7 @@ import io.reactivex.Single;
  */
 public interface UserAuthenticationManager {
 
-    Single<User> authenticate(String clientId, Authentication authentication);
+    Single<User> authenticate(Client client, Authentication authentication);
 
     Maybe<User> loadUserByUsername(String subject);
 }

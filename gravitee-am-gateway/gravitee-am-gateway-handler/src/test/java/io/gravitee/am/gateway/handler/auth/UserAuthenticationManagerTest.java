@@ -15,16 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.auth;
 
-import io.gravitee.am.gateway.handler.auth.exception.BadCredentialsException;
-import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -54,38 +53,10 @@ public class UserAuthenticationManagerTest {
     private UserAuthenticationManagerImpl userAuthenticationManager = new UserAuthenticationManagerImpl();
 
     @Mock
-    private ClientService clientService;
-
-    @Mock
     private UserService userService;
 
     @Mock
     private IdentityProviderManager identityProviderManager;
-
-    @Test
-    public void shouldNotAuthenticateUser_noClient() {
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.empty());
-
-        TestObserver<User> observer = userAuthenticationManager.authenticate("client-id", new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return null;
-            }
-
-            @Override
-            public Object getPrincipal() {
-                return null;
-            }
-
-            @Override
-            public Map<String, Object> getAdditionalInformation() {
-                return null;
-            }
-        }).test();
-
-        verifyZeroInteractions(userService);
-        observer.assertError(BadCredentialsException.class);
-    }
 
     @Test
     public void shouldNotAuthenticateUser_noIdentityProvider() {
@@ -93,28 +64,10 @@ public class UserAuthenticationManagerTest {
         client.setClientId("client-id");
         client.setIdentities(Collections.emptySet());
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
-
-        TestObserver<User> observer = userAuthenticationManager.authenticate("client-id", new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return null;
-            }
-
-            @Override
-            public Object getPrincipal() {
-                return null;
-            }
-
-            @Override
-            public Map<String, Object> getAdditionalInformation() {
-                return null;
-            }
-        }).test();
-
-
-        verifyZeroInteractions(userService);
+        TestObserver<User> observer = userAuthenticationManager.authenticate(client, null).test();
+        observer.assertNotComplete();
         observer.assertError(BadCredentialsException.class);
+        verifyZeroInteractions(userService);
     }
 
     @Test
@@ -123,7 +76,6 @@ public class UserAuthenticationManagerTest {
         client.setClientId("client-id");
         client.setIdentities(Collections.singleton("idp-1"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(userService.findOrCreate(any())).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgumentAt(0, io.gravitee.am.identityprovider.api.User.class);
             User user = new User();
@@ -143,7 +95,7 @@ public class UserAuthenticationManagerTest {
             }
         }));
 
-        TestObserver<User> observer = userAuthenticationManager.authenticate("client-id", new Authentication() {
+        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
             @Override
             public Object getCredentials() {
                 return null;
@@ -171,7 +123,6 @@ public class UserAuthenticationManagerTest {
         client.setClientId("client-id");
         client.setIdentities(Collections.singleton("idp-1"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
             public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
@@ -184,7 +135,7 @@ public class UserAuthenticationManagerTest {
             }
         }));
 
-        TestObserver<User> observer = userAuthenticationManager.authenticate("client-id", new Authentication() {
+        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
             @Override
             public Object getCredentials() {
                 return null;
@@ -211,7 +162,6 @@ public class UserAuthenticationManagerTest {
         client.setClientId("client-id");
         client.setIdentities(new LinkedHashSet<>(Arrays.asList("idp-1", "idp-2")));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(userService.findOrCreate(any())).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgumentAt(0, io.gravitee.am.identityprovider.api.User.class);
             User user = new User();
@@ -242,7 +192,7 @@ public class UserAuthenticationManagerTest {
             }
         }));
 
-        TestObserver<User> observer = userAuthenticationManager.authenticate("client-id", new Authentication() {
+        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
             @Override
             public Object getCredentials() {
                 return null;

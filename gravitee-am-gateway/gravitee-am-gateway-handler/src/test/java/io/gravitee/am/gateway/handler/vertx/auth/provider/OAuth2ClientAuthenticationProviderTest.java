@@ -16,11 +16,11 @@
 package io.gravitee.am.gateway.handler.vertx.auth.provider;
 
 import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
-import io.gravitee.am.gateway.handler.auth.exception.BadCredentialsException;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;

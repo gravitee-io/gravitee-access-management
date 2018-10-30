@@ -16,11 +16,11 @@
 package io.gravitee.am.gateway.handler.vertx.auth.provider;
 
 import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
-import io.gravitee.am.gateway.handler.auth.exception.BadCredentialsException;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.reactivex.Maybe;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -58,16 +58,20 @@ public class OAuth2ClientAuthenticationProvider implements AuthProvider {
 
     @Override
     public void authenticate(JsonObject authInfo, Handler<AsyncResult<User>> resultHandler) {
+        final String authProvider = authInfo.getString(PROVIDER_PARAMETER);
+        final String username = authInfo.getString(USERNAME_PARAMETER);
+        final String password = authInfo.getString(PASSWORD_PARAMETER);
+
+        logger.debug("Authentication attempt using identity provider {}", authProvider);
+
         identityProviderManager
                 .get(authInfo.getString(PROVIDER_PARAMETER))
                 .flatMap(authenticationProvider -> {
-                    String username = authInfo.getString(USERNAME_PARAMETER);
-                    String password = authInfo.getString(PASSWORD_PARAMETER);
                     EndUserAuthentication endUserAuthentication = new EndUserAuthentication(username, password);
                     endUserAuthentication.setAdditionalInformation(Collections.singletonMap(OAuth2Constants.REDIRECT_URI, authInfo.getString(OAuth2Constants.REDIRECT_URI)));
-                    return authenticationProvider.loadUserByUsername(endUserAuthentication);
+                    return authenticationProvider.loadUserByUsername(endUserAuthentication)
+                            .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate oauth2 provider, authentication provider has returned empty value")));
                 })
-                .switchIfEmpty(Maybe.error(new BadCredentialsException()))
                 .flatMapSingle(user -> {
                     // set source and client for the current authenticated end-user
                     Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
