@@ -118,7 +118,7 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
                             String uri = UriBuilderRequest.resolveProxyRequest(
                                     new io.vertx.reactivex.core.http.HttpServerRequest(req),
                                     req.uri(),
-                                    parameters, false);
+                                    parameters);
 
                             doRedirect(context.response(), uri);
                         } catch (URISyntaxException e) {
