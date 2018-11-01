@@ -37,11 +37,10 @@ public class UriBuilderRequest {
      * @param request original request
      * @param path request path
      * @param parameters request query params
-     * @param queryParam request result will be set as a query param ?
      * @return request uri representation
      * @throws URISyntaxException
      */
-    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean queryParam) throws URISyntaxException {
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters) throws URISyntaxException {
         UriBuilder builder = UriBuilder.newInstance();
 
         // scheme
@@ -62,7 +61,7 @@ public class UriBuilderRequest {
 
         // handle forwarded path for redirect_uri query param
         String forwardedPath = request.getHeader(X_FORWARDED_PATH);
-        if (queryParam && forwardedPath != null && !forwardedPath.isEmpty()) {
+        if (forwardedPath != null && !forwardedPath.isEmpty()) {
             // remove trailing slash
             forwardedPath = forwardedPath.substring(0, forwardedPath.length() - (forwardedPath.endsWith("/") ? 1 : 0));
             builder.path(forwardedPath + path);
