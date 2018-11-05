@@ -30,7 +30,7 @@ import java.util.Map;
  */
 public class UriBuilderRequest {
 
-    private static final String X_FORWARDED_PATH = "X-Forwarded-Path";
+    private static final String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
 
     /**
      * Resolve proxy request
@@ -60,7 +60,7 @@ public class UriBuilderRequest {
         }
 
         // handle forwarded path for redirect_uri query param
-        String forwardedPath = request.getHeader(X_FORWARDED_PATH);
+        String forwardedPath = request.getHeader(X_FORWARDED_PREFIX);
         if (forwardedPath != null && !forwardedPath.isEmpty()) {
             // remove trailing slash
             forwardedPath = forwardedPath.substring(0, forwardedPath.length() - (forwardedPath.endsWith("/") ? 1 : 0));

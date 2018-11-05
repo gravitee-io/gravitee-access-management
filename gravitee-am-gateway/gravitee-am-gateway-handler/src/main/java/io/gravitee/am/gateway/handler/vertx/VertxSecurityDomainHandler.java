@@ -126,7 +126,9 @@ public class VertxSecurityDomainHandler {
     }
 
     private void sessionAndCookieHandler(Router router, AuthProvider userAuthProvider) {
-        CookieHandler cookieHandler = CookieHandler.create();
+        // cookie handler
+        CookieHandler cookieHandler = io.gravitee.am.gateway.handler.vertx.handler.cookie.CookieHandler.create();
+        // session handler
         SessionHandler sessionHandler = RxSessionHandler
                 .create(LocalSessionStore.create(vertx))
                 .setCookieHttpOnlyFlag(true)
@@ -135,7 +137,7 @@ public class VertxSecurityDomainHandler {
                 .setCookieSecureFlag(environment.getProperty("http.cookie.secure", Boolean.class, false));
         // override session cookie path
         ((RxSessionHandler) sessionHandler).setSessionCookiePath("/" + domain.getPath());
-
+        // user session handler
         UserSessionHandler userSessionHandler = UserSessionHandler.create(userAuthProvider);
 
         // Login endpoint
