@@ -27,6 +27,10 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import java.io.FileInputStream;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -95,6 +99,9 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             String description = readPropertyValue(propertyPrefix + "description", String.class, "gravitee.io");
             Integer heartbeatFrequency = readPropertyValue(propertyPrefix + "heartbeatFrequency", Integer.class);
             Boolean sslEnabled = readPropertyValue(propertyPrefix + "sslEnabled", Boolean.class);
+            String keystore = readPropertyValue(propertyPrefix + "keystore", String.class);
+            String keystorePassword = readPropertyValue(propertyPrefix + "keystorePassword", String.class);
+            String keyPassword = readPropertyValue(propertyPrefix + "keyPassword", String.class);
 
             if (maxWaitTime != null)
                 connectionPoolBuilder.maxWaitTime(maxWaitTime, TimeUnit.MILLISECONDS);
@@ -116,6 +123,20 @@ public class MongoFactory implements FactoryBean<MongoClient> {
                 serverBuilder.heartbeatFrequency(heartbeatFrequency, TimeUnit.MILLISECONDS);
             if (sslEnabled != null)
                 sslBuilder.enabled(sslEnabled);
+            if (keystore != null) {
+                try {
+                    SSLContext ctx = SSLContext.getInstance("TLS");
+                    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                    KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                    ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
+                    keyManagerFactory.init(ks, keyPassword.toCharArray());
+                    ctx.init(keyManagerFactory.getKeyManagers(), null, null);
+                    sslBuilder.context(ctx);
+                } catch (Exception e) {
+                    logger.error(e.getCause().toString());
+                    throw new IllegalStateException("Error creating the keystore for mongodb", e);
+                }
+            }
             if (serverSelectionTimeout != null)
                 clusterBuilder.serverSelectionTimeout(serverSelectionTimeout, TimeUnit.MILLISECONDS);
 
