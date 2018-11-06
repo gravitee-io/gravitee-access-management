@@ -78,6 +78,10 @@ public class OAuth2Request extends BaseRequest {
     }
 
     public boolean shouldGenerateIDToken() {
+        if (getResponseType() != null && ResponseType.CODE_TOKEN.equals(getResponseType())) {
+            return false;
+        }
+
         if (getResponseType() != null
                 && (ResponseType.CODE_ID_TOKEN_TOKEN.equals(getResponseType()) || ResponseType.ID_TOKEN_TOKEN.equals(getResponseType()))) {
             return true;
