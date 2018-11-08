@@ -21,7 +21,8 @@
     "contextSourcePassword" : {
       "type" : "string",
       "title": "Password",
-      "description": "The password (credentials) to use when authenticating with the LDAP server."
+      "description": "The password (credentials) to use when authenticating with the LDAP server.",
+      "widget": "password"
     },
     "userSearchFilter" : {
       "type" : "string",
