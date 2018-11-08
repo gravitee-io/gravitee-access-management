@@ -56,4 +56,9 @@ public interface GrantType {
      * See <a href="https://tools.ietf.org/html/rfc7523#section-2.1">2.1. Using JWTs as Authorization Grant</a>
      */
     String JWT_BEARER ="urn:ietf:params:oauth:grant-type:jwt-bearer";
+
+    /**
+     * Hybrid
+     */
+    String HYBRID = "hybrid";
 }

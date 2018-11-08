@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.flow.hybrid;
 
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
@@ -69,6 +70,7 @@ public class HybridFlow extends AbstractFlow {
                     hybridResponse.setState(authorizationRequest.getState());
                     hybridResponse.setCode(code.getCode());
                     OAuth2Request oAuth2Request = authorizationRequest.createOAuth2Request();
+                    oAuth2Request.setGrantType(GrantType.HYBRID);
                     oAuth2Request.setSubject(endUser.getId());
                     oAuth2Request.getContext().put(OIDCClaims.c_hash, code.getCode());
                     switch (authorizationRequest.getResponseType()) {
