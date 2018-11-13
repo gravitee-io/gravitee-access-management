@@ -15,12 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
-import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
-import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
+import io.gravitee.am.gateway.handler.oauth2.token.Token;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequest;
 import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.common.http.HttpHeaders;
@@ -56,15 +57,8 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        DefaultAccessToken accessToken = context.get(AccessToken.ACCESS_TOKEN);
-
-        // The UserInfo Endpoint is an OAuth 2.0 Protected Resource that returns Claims about the authenticated End-User
+        AccessToken accessToken = context.get(Token.ACCESS_TOKEN);
         String subject = accessToken.getSubject();
-        if (subject == null) {
-            context.fail(new InvalidRequestException("The access token was not issued for an End-User"));
-            return;
-        }
-
         userService.findById(subject)
                 .map(user -> {
                     Map<String, Object> userClaims = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
@@ -91,19 +85,22 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                     }
                     // 2. process the request using the claims values (If present, the listed Claims are being requested to be added to any Claims that are being requested using scope values.
                     // If not present, the Claims being requested from the UserInfo Endpoint are only those requested using scope values.)
-                    Map<String, String> requestedParameters = accessToken.getRequestedParameters();
-                    if (requestedParameters != null && requestedParameters.get(OIDCParameters.CLAIMS) != null) {
-                        requestForSpecificClaims = processClaimsRequest(requestedParameters.get(OIDCParameters.CLAIMS), userClaims, requestedClaims);
+                    Map<String, Object> requestedParameters = accessToken.getAdditionalInformation();
+                    if (requestedParameters != null && requestedParameters.get(Claims.claims) != null) {
+                        requestForSpecificClaims = processClaimsRequest((String) requestedParameters.get(Claims.claims), userClaims, requestedClaims);
                     }
 
                     return (requestForSpecificClaims) ? requestedClaims : userClaims;
                  })
-                .subscribe(claims -> context.response()
+                .subscribe(
+                        claims -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .end(Json.encodePrettily(claims))
-                        , error -> context.fail(error));
+                                .end(Json.encodePrettily(claims)),
+                        error -> context.fail(error),
+                        () -> context.fail(new InvalidTokenException("No user found for this token"))
+                );
 
     }
 

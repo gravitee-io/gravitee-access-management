@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.revocation;
 
+import io.gravitee.am.model.Client;
 import io.reactivex.Completable;
 
 /**
@@ -23,5 +24,5 @@ import io.reactivex.Completable;
  */
 public interface RevocationTokenService {
 
-    Completable revoke(RevocationTokenRequest request);
+    Completable revoke(RevocationTokenRequest request, Client client);
 }

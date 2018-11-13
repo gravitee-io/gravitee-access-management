@@ -118,9 +118,7 @@ public class OAuth2Router {
         Handler<RoutingContext> tokenRequestParseHandler = new TokenRequestParseHandler();
 
         // Check_token is provided only for backward compatibility and must be remove in the future
-        Handler<RoutingContext> checkTokenEndpoint = new CheckTokenEndpointHandler();
-        ((CheckTokenEndpointHandler) checkTokenEndpoint).setTokenService(tokenService);
-
+        Handler<RoutingContext> checkTokenEndpoint = new CheckTokenEndpointHandler(tokenService);
         Handler<RoutingContext> introspectionEndpoint = new IntrospectionEndpointHandler();
         ((IntrospectionEndpointHandler) introspectionEndpoint).setIntrospectionService(introspectionService);
 

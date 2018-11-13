@@ -19,6 +19,8 @@ import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.auth.idp.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.gateway.handler.jwt.JwtService;
+import io.gravitee.am.gateway.handler.jwt.impl.JwtServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
 import io.gravitee.am.gateway.handler.oidc.spring.OpenIDConfiguration;
 import io.gravitee.am.gateway.handler.vertx.spring.SecurityDomainRouterConfiguration;
@@ -48,5 +50,10 @@ public class HandlerConfiguration {
     @Bean
     public UserAuthenticationManager userAuthenticationManager() {
         return new UserAuthenticationManagerImpl();
+    }
+
+    @Bean
+    public JwtService jwtService() {
+        return new JwtServiceImpl();
     }
 }

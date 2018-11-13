@@ -23,12 +23,16 @@ import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ExceptionHandler implements Handler<RoutingContext> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
 
     @Override
     public void handle(RoutingContext routingContext) {
@@ -46,6 +50,7 @@ public class ExceptionHandler implements Handler<RoutingContext> {
                         .setStatusCode(oAuth2Exception.getHttpStatusCode())
                         .end(Json.encodePrettily(oAuth2ErrorResponse));
             } else {
+                logger.error(throwable.getMessage(), throwable);
                 if (routingContext.statusCode() != -1) {
                     routingContext
                             .response()

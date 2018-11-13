@@ -38,11 +38,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 // TODO : test valid use cases
 public class CheckTokenEndpointHandlerTest extends RxWebTestBase {
 
-    @InjectMocks
-    private CheckTokenEndpointHandler checkTokenEndpointHandler = new CheckTokenEndpointHandler();
-
     @Mock
     private TokenService tokenService;
+
+    @InjectMocks
+    private CheckTokenEndpointHandler checkTokenEndpointHandler = new CheckTokenEndpointHandler(tokenService);
 
     @Override
     public void setUp() throws Exception {

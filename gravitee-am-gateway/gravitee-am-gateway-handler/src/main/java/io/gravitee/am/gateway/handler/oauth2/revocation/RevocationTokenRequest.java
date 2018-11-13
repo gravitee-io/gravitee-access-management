@@ -27,8 +27,6 @@ public class RevocationTokenRequest {
 
     private TokenTypeHint hint;
 
-    private String clientId;
-
     public RevocationTokenRequest(final String token) {
         this.token = token;
     }
@@ -43,13 +41,5 @@ public class RevocationTokenRequest {
 
     public void setHint(TokenTypeHint hint) {
         this.hint = hint;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
     }
 }

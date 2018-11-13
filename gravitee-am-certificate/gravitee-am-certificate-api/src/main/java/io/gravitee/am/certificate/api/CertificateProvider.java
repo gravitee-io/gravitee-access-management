@@ -25,7 +25,7 @@ import io.reactivex.Single;
  */
 public interface CertificateProvider {
 
-    Single<String> sign(String payload);
+    Single<Key> key();
 
     Single<String> publicKey();
 

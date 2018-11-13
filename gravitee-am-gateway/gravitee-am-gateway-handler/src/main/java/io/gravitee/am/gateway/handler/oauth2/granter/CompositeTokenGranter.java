@@ -24,7 +24,7 @@ import io.gravitee.am.gateway.handler.oauth2.granter.password.ResourceOwnerPassw
 import io.gravitee.am.gateway.handler.oauth2.granter.refresh.RefreshTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.model.Client;
 import io.reactivex.Observable;
@@ -60,7 +60,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         this.tokenGranters = new ArrayList<>(tokenGranters);
     }
 
-    public Single<AccessToken> grant(TokenRequest tokenRequest, Client client) {
+    public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return Observable
                 .fromIterable(tokenGranters)
                 .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType()))

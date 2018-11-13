@@ -173,7 +173,7 @@ public class ClientServiceImpl implements ClientService {
         LOGGER.debug("Find top clients");
         return clientRepository.findAll()
                 .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .flatMapSingle(client -> accessTokenRepository.countByClientId(client.getClientId())
+                .flatMapSingle(client -> accessTokenRepository.countByClientId(client.getId())
                         .map(oAuth2AccessTokens -> {
                             TopClient topClient = new TopClient();
                             topClient.setClient(client);
@@ -193,7 +193,7 @@ public class ClientServiceImpl implements ClientService {
         LOGGER.debug("Find top clients by domain: {}", domain);
         return clientRepository.findByDomain(domain)
                 .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .flatMapSingle(client -> accessTokenRepository.countByClientId(client.getClientId())
+                .flatMapSingle(client -> accessTokenRepository.countByClientId(client.getId())
                         .map(oAuth2AccessTokens -> {
                             TopClient topClient = new TopClient();
                             topClient.setClient(client);
@@ -312,7 +312,6 @@ public class ClientServiceImpl implements ClientService {
                     client.setIdTokenCustomClaims(updateClient.getIdTokenCustomClaims());
                     client.setCertificate(updateClient.getCertificate());
                     client.setEnhanceScopesWithUserPermissions(updateClient.isEnhanceScopesWithUserPermissions());
-                    client.setGenerateNewTokenPerRequest(updateClient.isGenerateNewTokenPerRequest());
                     client.setUpdatedAt(new Date());
 
                     return clientRepository.update(client)

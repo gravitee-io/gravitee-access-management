@@ -27,13 +27,14 @@ import org.eclipse.jetty.server.handler.HandlerWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SecurityDomainHandlerCollection extends HandlerWrapper implements Handler, EventListener<DomainEvent, Domain> {
+public class SecurityDomainHandlerCollection extends HandlerWrapper implements Handler, EventListener<DomainEvent, Domain>, InitializingBean {
 
     /**
      * Logger.
@@ -139,12 +140,15 @@ public class SecurityDomainHandlerCollection extends HandlerWrapper implements H
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-
-        eventManager.subscribeForEvents(this, DomainEvent.class);
     }
 
     @Override
     protected void doStop() throws Exception {
         super.doStop();
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+        eventManager.subscribeForEvents(this, DomainEvent.class);
     }
 }

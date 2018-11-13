@@ -20,13 +20,13 @@ import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -36,7 +36,7 @@ import java.util.Map;
 public class ClientServiceImpl implements ClientService, InitializingBean {
 
     private final Logger logger = LoggerFactory.getLogger(ClientServiceImpl.class);
-    private Map<String, Client> clients = new HashMap<>();
+    private Map<String, Set<Client>> domainsClients = new HashMap<>();
 
     @Autowired
     private Domain domain;
@@ -46,19 +46,35 @@ public class ClientServiceImpl implements ClientService, InitializingBean {
 
     @Override
     public Maybe<Client> findByClientId(String clientId) {
-        Client client = clients.get(clientId);
-        return (client != null) ? Maybe.just(client) : Maybe.empty();
+        return findByDomainAndClientId(domain.getId(), clientId);
+    }
+
+    @Override
+    public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
+        return Observable.fromIterable(domainsClients.get(domain))
+                .filter(client -> client.getClientId().equals(clientId))
+                .firstElement();
     }
 
     @Override
     public void afterPropertiesSet() {
         logger.info("Initializing clients for domain {}", domain.getName());
-        clientRepository.findByDomain(domain.getId())
-                .doOnSuccess(clients1 -> clients1.forEach(client -> clients.put(client.getClientId(), client)))
+        clientRepository.findAll()
                 .subscribe(
-                        result -> logger.info("Clients loaded for domain {}", domain.getName()),
-                        error -> logger.error("Unable to initialize clients for domain {}", domain.getName(), error)
-                );
+                        clients1 -> {
+                            clients1.forEach(client -> {
+                                Set<Client> existingDomainClients = domainsClients.get(client.getDomain());
+                                if (existingDomainClients != null) {
+                                    Set<Client> updateClients = new HashSet<>(existingDomainClients);
+                                    updateClients.add(client);
+                                    domainsClients.put(client.getDomain(), updateClients);
+                                } else {
+                                    domainsClients.put(client.getDomain(), Collections.singleton(client));
+                                }
+                            });
+                            logger.info("Clients loaded for domain {}", domain.getName());
+                        },
+                        error -> logger.error("Unable to initialize clients for domain {}", domain.getName(), error));
 
     }
 }

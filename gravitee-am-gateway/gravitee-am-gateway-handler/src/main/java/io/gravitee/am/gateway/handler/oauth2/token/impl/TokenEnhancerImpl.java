@@ -15,14 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.token.impl;
 
+import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
+import io.gravitee.am.gateway.handler.oauth2.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
-import io.gravitee.am.gateway.handler.oidc.utils.OIDCClaims;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
-import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -39,7 +39,7 @@ public class TokenEnhancerImpl implements TokenEnhancer {
     private IDTokenService idTokenService;
 
     @Override
-    public Single<AccessToken> enhance(AccessToken accessToken, OAuth2Request oAuth2Request, Client client, User endUser) {
+    public Single<Token> enhance(Token accessToken, OAuth2Request oAuth2Request, Client client, User endUser) {
         // enhance token with ID token
         if (oAuth2Request.shouldGenerateIDToken()) {
             return enhanceIDToken(accessToken, client, endUser, oAuth2Request);
@@ -48,15 +48,15 @@ public class TokenEnhancerImpl implements TokenEnhancer {
         }
     }
 
-    private Single<AccessToken> enhanceIDToken(AccessToken accessToken, Client client, User user, OAuth2Request oAuth2Request) {
+    private Single<Token> enhanceIDToken(Token accessToken, Client client, User user, OAuth2Request oAuth2Request) {
         if (oAuth2Request.isSupportAtHashValue()) {
-            oAuth2Request.getContext().put(OIDCClaims.at_hash, accessToken.getToken());
+            oAuth2Request.getContext().put(Claims.at_hash, accessToken.getValue());
         }
         return idTokenService.create(oAuth2Request, client, user)
                 .flatMap(idToken -> {
                     Map<String, Object> additionalInformation = new HashMap<>(accessToken.getAdditionalInformation());
                     additionalInformation.put(OAuth2Constants.ID_TOKEN, idToken);
-                    accessToken.setAdditionalInformation(additionalInformation);
+                    ((AccessToken) accessToken).setAdditionalInformation(additionalInformation);
                     return Single.just(accessToken);
                 });
     }

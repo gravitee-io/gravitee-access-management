@@ -19,7 +19,6 @@ import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
-import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -32,12 +31,12 @@ public class RefreshTokenMongo {
 
     private String token;
 
-    @BsonProperty("client_id")
-    private String clientId;
+    private String domain;
+
+    @BsonProperty("client")
+    private String client;
 
     private String subject;
-
-    private Set<String> scopes;
 
     @BsonProperty("created_at")
     private Date createdAt;
@@ -61,12 +60,20 @@ public class RefreshTokenMongo {
         this.token = token;
     }
 
-    public String getClientId() {
-        return clientId;
+    public String getDomain() {
+        return domain;
     }
 
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
+    public String getClient() {
+        return client;
+    }
+
+    public void setClient(String client) {
+        this.client = client;
     }
 
     public String getSubject() {
@@ -75,14 +82,6 @@ public class RefreshTokenMongo {
 
     public void setSubject(String subject) {
         this.subject = subject;
-    }
-
-    public Set<String> getScopes() {
-        return scopes;
-    }
-
-    public void setScopes(Set<String> scopes) {
-        this.scopes = scopes;
     }
 
     public Date getCreatedAt() {

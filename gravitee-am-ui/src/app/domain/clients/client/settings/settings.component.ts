@@ -109,13 +109,6 @@ export class ClientSettingsComponent implements OnInit {
     this.formChanged = true;
   }
 
-  selectedScope(event) {
-    this.scopes
-      .filter(scope => scope.key === event.source.value)
-      .map(scope => scope.checked = event.checked);
-    this.formChanged = true;
-  }
-
   selectedCustomGrantType(event) {
     this.customGrantTypes
       .filter(grantType => grantType.value === event.source.value)
@@ -159,11 +152,6 @@ export class ClientSettingsComponent implements OnInit {
 
   isScopesEnhanceWithUserPermissions() {
     return this.client.enhanceScopesWithUserPermissions;
-  }
-
-  enableMultipeTokens(event) {
-    this.client.generateNewTokenPerRequest = event.checked;
-    this.formChanged = true;
   }
 
   update() {

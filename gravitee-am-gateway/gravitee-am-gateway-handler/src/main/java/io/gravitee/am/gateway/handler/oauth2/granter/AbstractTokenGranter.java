@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientExcepti
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
@@ -56,7 +56,7 @@ public class AbstractTokenGranter implements TokenGranter {
     }
 
     @Override
-    public Single<AccessToken> grant(TokenRequest tokenRequest, Client client) {
+    public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return parseRequest(tokenRequest, client)
                 .flatMapMaybe(tokenRequest1 -> resolveResourceOwner(tokenRequest1, client))
                 .map(user -> Optional.of(user))
@@ -108,7 +108,7 @@ public class AbstractTokenGranter implements TokenGranter {
         this.supportRefreshToken = supportRefreshToken;
     }
 
-    private Single<AccessToken> handleRequest(TokenRequest tokenRequest, Client client, User endUser) {
+    private Single<Token> handleRequest(TokenRequest tokenRequest, Client client, User endUser) {
         return resolveRequest(tokenRequest, client, endUser)
                 .flatMap(tokenRequest1 -> createOAuth2Request(tokenRequest1, client, endUser))
                 .flatMap(oAuth2Request -> createAccessToken(oAuth2Request, client, endUser));
@@ -125,7 +125,7 @@ public class AbstractTokenGranter implements TokenGranter {
                 });
     }
 
-    private Single<AccessToken> createAccessToken(OAuth2Request oAuth2Request, Client client, User endUser) {
+    private Single<Token> createAccessToken(OAuth2Request oAuth2Request, Client client, User endUser) {
         return tokenService.create(oAuth2Request, client, endUser);
     }
 

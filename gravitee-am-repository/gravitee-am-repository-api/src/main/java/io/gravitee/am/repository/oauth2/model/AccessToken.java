@@ -15,137 +15,23 @@
  */
 package io.gravitee.am.repository.oauth2.model;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AccessToken {
+public class AccessToken extends Token {
 
     /**
-     * Technical ID
-     */
-    private String id;
-
-    /**
-     * Access token value
-     */
-    private String token;
-
-    /**
-     * The access_token creation date
-     */
-    private Date createdAt;
-
-    /**
-     * The access_token expiration date
-     */
-    private Date expireAt;
-
-    /**
-     * The client which ask for this access_token
-     */
-    private String clientId;
-
-    /**
-     * List of scope asked by the client with extra user permission scopes (if override option is enabled)
-     */
-    private Set<String> scopes;
-
-    /**
-     * List of scope asked by the client
-     */
-    private Set<String> requestedScopes;
-
-    /**
-     * Reference to the refresh_token
+     * Refresh token issued with the access token
      */
     private String refreshToken;
 
     /**
-     * Technical identifier of the end-user.
-     */
-    private String subject;
-
-    /**
-     * Grant type used to get the access token
-     */
-    private String grantType;
-
-    /**
-     * Additional information such as the id_token
-     */
-    private Map<String, Object> additionalInformation = new HashMap<>();
-
-    /**
-     * The Authorization/Token request parameters
-     */
-    private Map<String,String> requestedParameters;
-
-    /**
      * The authorization code used to obtain the access token
+     * Needed for token revocation if authorization code has been used more than once
+     * https://tools.ietf.org/html/rfc6749#section-4.1.2
      */
     private String authorizationCode;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getExpireAt() {
-        return expireAt;
-    }
-
-    public void setExpireAt(Date expireAt) {
-        this.expireAt = expireAt;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public Set<String> getScopes() {
-        return scopes;
-    }
-
-    public Set<String> getRequestedScopes() {
-        return requestedScopes;
-    }
-
-    public void setRequestedScopes(Set<String> requestedScopes) {
-        this.requestedScopes = requestedScopes;
-    }
-
-    public void setScopes(Set<String> scopes) {
-        this.scopes = scopes;
-    }
 
     public String getRefreshToken() {
         return refreshToken;
@@ -155,58 +41,11 @@ public class AccessToken {
         this.refreshToken = refreshToken;
     }
 
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public String getGrantType() {
-        return grantType;
-    }
-
-    public void setGrantType(String grantType) {
-        this.grantType = grantType;
-    }
-
-    public Map<String, Object> getAdditionalInformation() {
-        return additionalInformation;
-    }
-
-    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
-        this.additionalInformation = additionalInformation;
-    }
-
-    public Map<String, String> getRequestedParameters() {
-        return requestedParameters;
-    }
-
-    public void setRequestedParameters(Map<String, String> requestedParameters) {
-        this.requestedParameters = requestedParameters;
-    }
-
     public String getAuthorizationCode() {
         return authorizationCode;
     }
 
     public void setAuthorizationCode(String authorizationCode) {
         this.authorizationCode = authorizationCode;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        AccessToken that = (AccessToken) o;
-
-        return id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
     }
 }

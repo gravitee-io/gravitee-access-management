@@ -17,10 +17,12 @@ package io.gravitee.am.gateway.handler.oauth2.revocation;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.revocation.impl.RevocationTokenServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.RefreshToken;
 import io.gravitee.am.gateway.handler.oauth2.utils.TokenTypeHint;
-import io.gravitee.am.repository.oauth2.model.RefreshToken;
+import io.gravitee.am.model.Client;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.observers.TestObserver;
@@ -49,22 +51,24 @@ public class RevocationServiceTest {
     @Test
     public void shouldNotRevoke_WrongRequestedClientId() {
         final RevocationTokenRequest revocationTokenRequest = new RevocationTokenRequest("token");
-        revocationTokenRequest.setClientId("wrong-client-id");
 
-        DefaultAccessToken accessToken = new DefaultAccessToken("token");
+        AccessToken accessToken = new AccessToken("token");
         accessToken.setClientId("client-id");
 
-        when(tokenService.getAccessToken("token")).thenReturn(Maybe.just(accessToken));
-        when(tokenService.getRefreshToken("token")).thenReturn(Maybe.empty());
+        Client client = new Client();
+        client.setClientId("wrong-client-id");
 
-        TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest).test();
+        when(tokenService.getAccessToken("token", client)).thenReturn(Maybe.just(accessToken));
+        when(tokenService.getRefreshToken("token", client)).thenReturn(Maybe.empty());
+
+        TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest, client).test();
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
-        verify(tokenService, times(1)).getAccessToken("token");
+        verify(tokenService, times(1)).getAccessToken("token", client);
         verify(tokenService, never()).deleteAccessToken(anyString());
-        verify(tokenService, never()).getRefreshToken("token");
+        verify(tokenService, never()).getRefreshToken("token", client);
         verify(tokenService, never()).deleteRefreshToken(anyString());
     }
 
@@ -72,17 +76,20 @@ public class RevocationServiceTest {
     public void shouldRevoke_evenWithInvalidToken() {
         final RevocationTokenRequest revocationTokenRequest = new RevocationTokenRequest("token");
 
-        when(tokenService.getAccessToken("token")).thenReturn(Maybe.empty());
-        when(tokenService.getRefreshToken("token")).thenReturn(Maybe.empty());
+        Client client = new Client();
+        client.setClientId("client-id");
 
-        TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest).test();
+        when(tokenService.getAccessToken("token", client)).thenReturn(Maybe.empty());
+        when(tokenService.getRefreshToken("token", client)).thenReturn(Maybe.empty());
+
+        TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest, client).test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(tokenService, times(1)).getAccessToken("token");
+        verify(tokenService, times(1)).getAccessToken("token", client);
         verify(tokenService, never()).deleteAccessToken(anyString());
-        verify(tokenService, times(1)).getRefreshToken("token");
+        verify(tokenService, times(1)).getRefreshToken("token", client);
         verify(tokenService, never()).deleteRefreshToken(anyString());
 
     }
@@ -90,22 +97,24 @@ public class RevocationServiceTest {
     @Test
     public void shouldRevoke_accessToken() {
         final RevocationTokenRequest revocationTokenRequest = new RevocationTokenRequest("token");
-        revocationTokenRequest.setClientId("client-id");
 
-        DefaultAccessToken accessToken = new DefaultAccessToken("token");
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        AccessToken accessToken = new AccessToken("token");
         accessToken.setClientId("client-id");
 
-        when(tokenService.getAccessToken("token")).thenReturn(Maybe.just(accessToken));
+        when(tokenService.getAccessToken("token", client)).thenReturn(Maybe.just(accessToken));
         when(tokenService.deleteAccessToken("token")).thenReturn(Completable.complete());
 
-        TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest).test();
+        TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest, client).test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(tokenService, times(1)).getAccessToken("token");
+        verify(tokenService, times(1)).getAccessToken("token", client);
         verify(tokenService, times(1)).deleteAccessToken("token");
-        verify(tokenService, never()).getRefreshToken(anyString());
+        verify(tokenService, never()).getRefreshToken(anyString(), any());
         verify(tokenService, never()).deleteRefreshToken(anyString());
 
     }
@@ -113,24 +122,25 @@ public class RevocationServiceTest {
     @Test
     public void shouldRevoke_refreshToken() {
         final RevocationTokenRequest revocationTokenRequest = new RevocationTokenRequest("token");
-        revocationTokenRequest.setClientId("client-id");
         revocationTokenRequest.setHint(TokenTypeHint.REFRESH_TOKEN);
 
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setToken("token");
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        Token refreshToken = new RefreshToken("token");
         refreshToken.setClientId("client-id");
 
-        when(tokenService.getRefreshToken("token")).thenReturn(Maybe.just(refreshToken));
+        when(tokenService.getRefreshToken("token", client)).thenReturn(Maybe.just(refreshToken));
         when(tokenService.deleteRefreshToken("token")).thenReturn(Completable.complete());
 
-        TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest).test();
+        TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest, client).test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(tokenService, times(1)).getRefreshToken("token");
+        verify(tokenService, times(1)).getRefreshToken("token", client);
         verify(tokenService, times(1)).deleteRefreshToken("token");
-        verify(tokenService, never()).getAccessToken("token");
+        verify(tokenService, never()).getAccessToken("token", client);
         verify(tokenService, never()).deleteAccessToken("token");
 
     }

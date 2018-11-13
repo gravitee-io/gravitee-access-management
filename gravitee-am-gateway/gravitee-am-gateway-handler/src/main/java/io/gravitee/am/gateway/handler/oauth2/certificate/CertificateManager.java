@@ -28,5 +28,9 @@ public interface CertificateManager {
 
     Maybe<CertificateProvider> get(String id);
 
+    Maybe<CertificateProvider> findByDomainAndId(String domain, String id);
+
     Collection<CertificateProvider> providers();
+
+    CertificateProvider defaultCertificateProvider();
 }

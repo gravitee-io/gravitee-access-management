@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oidc.flow.hybrid;
 
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ResponseType;
+import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
@@ -27,7 +28,6 @@ import io.gravitee.am.gateway.handler.oauth2.response.HybridResponse;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.flow.AbstractFlow;
 import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
-import io.gravitee.am.gateway.handler.oidc.utils.OIDCClaims;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Single;
@@ -72,7 +72,7 @@ public class HybridFlow extends AbstractFlow {
                     OAuth2Request oAuth2Request = authorizationRequest.createOAuth2Request();
                     oAuth2Request.setGrantType(GrantType.HYBRID);
                     oAuth2Request.setSubject(endUser.getId());
-                    oAuth2Request.getContext().put(OIDCClaims.c_hash, code.getCode());
+                    oAuth2Request.getContext().put(Claims.c_hash, code.getCode());
                     switch (authorizationRequest.getResponseType()) {
                         // code id_token response type MUST include both an Authorization Code and an id_token
                         case io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN:

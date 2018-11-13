@@ -81,7 +81,7 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
 
     private Maybe<AuthorizationCode> handleInvalidCode(String code) {
         // The client MUST NOT use the authorization code more than once.
-        // If an authorization code is used more tha once, the authorization server MUST deny the request and SHOULD
+        // If an authorization code is used more than once, the authorization server MUST deny the request and SHOULD
         // revoke (when possible) all tokens previously issued based on that authorization code.
         // https://tools.ietf.org/html/rfc6749#section-4.1.2
         return accessTokenRepository.findByAuthorizationCode(code)
