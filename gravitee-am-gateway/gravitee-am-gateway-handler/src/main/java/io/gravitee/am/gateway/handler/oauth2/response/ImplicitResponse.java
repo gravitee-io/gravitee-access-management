@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.response;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.utils.UriBuilder;
 
@@ -38,13 +38,13 @@ public class ImplicitResponse extends AuthorizationResponse {
      *
      * Note : The authorization server MUST NOT issue a refresh token.
      */
-    private AccessToken accessToken;
+    private Token accessToken;
 
-    public AccessToken getAccessToken() {
+    public Token getAccessToken() {
         return accessToken;
     }
 
-    public void setAccessToken(AccessToken accessToken) {
+    public void setAccessToken(Token accessToken) {
         if (accessToken.getRefreshToken() != null) {
             throw new ServerErrorException("Implicit flow must not issue a refresh token");
         }
@@ -53,13 +53,13 @@ public class ImplicitResponse extends AuthorizationResponse {
 
     @Override
     public String buildRedirectUri() throws URISyntaxException {
-        AccessToken accessToken = getAccessToken();
+        Token accessToken = getAccessToken();
         UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());
-        uriBuilder.addFragmentParameter(AccessToken.ACCESS_TOKEN, accessToken.getValue());
-        uriBuilder.addFragmentParameter(AccessToken.TOKEN_TYPE, accessToken.getTokenType());
-        uriBuilder.addFragmentParameter(AccessToken.EXPIRES_IN, String.valueOf(accessToken.getExpiresIn()));
+        uriBuilder.addFragmentParameter(Token.ACCESS_TOKEN, accessToken.getValue());
+        uriBuilder.addFragmentParameter(Token.TOKEN_TYPE, accessToken.getTokenType());
+        uriBuilder.addFragmentParameter(Token.EXPIRES_IN, String.valueOf(accessToken.getExpiresIn()));
         if (accessToken.getScope() != null && !accessToken.getScope().isEmpty()) {
-            uriBuilder.addFragmentParameter(AccessToken.SCOPE, accessToken.getScope());
+            uriBuilder.addFragmentParameter(Token.SCOPE, accessToken.getScope());
         }
         if (getState() != null) {
             uriBuilder.addFragmentParameter(OAuth2Constants.STATE, getState());

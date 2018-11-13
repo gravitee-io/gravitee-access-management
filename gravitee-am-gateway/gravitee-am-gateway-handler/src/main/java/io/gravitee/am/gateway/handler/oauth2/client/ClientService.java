@@ -25,4 +25,6 @@ import io.reactivex.Maybe;
 public interface ClientService {
 
     Maybe<Client> findByClientId(String clientId);
+
+    Maybe<Client> findByDomainAndClientId(String domain, String clientId);
 }

@@ -226,7 +226,6 @@ public class ScopeServiceImpl implements ScopeService {
                                                     updateClient.setCertificate(client.getCertificate());
                                                     updateClient.setEnabled(client.isEnabled());
                                                     updateClient.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
-                                                    updateClient.setGenerateNewTokenPerRequest(client.isGenerateNewTokenPerRequest());
                                                     updateClient.setIdentities(client.getIdentities());
                                                     updateClient.setIdTokenCustomClaims(client.getIdTokenCustomClaims());
                                                     updateClient.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());

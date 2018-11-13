@@ -15,12 +15,10 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2.internal.model;
 
-import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
-import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -39,32 +37,18 @@ public class AccessTokenMongo {
     @BsonProperty("expire_at")
     private Date expireAt;
 
-    @BsonProperty("client_id")
-    private String clientId;
+    private String domain;
 
-    @BsonProperty("requested_scopes")
-    private Set<String> requestedScopes;
-
-    private Set<String> scopes;
-
-    @BsonProperty("refresh_token")
-    private String refreshToken;
+    @BsonProperty("client")
+    private String client;
 
     private String subject;
 
-    @BsonProperty("grant_type")
-    private String grantType;
-
-    /**
-     * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
-     */
-    private Document additionalInformation;
-
-    @BsonProperty("requested_parameters")
-    private Document requestedParameters;
-
     @BsonProperty("authorization_code")
     private String authorizationCode;
+
+    @BsonProperty("refresh_token")
+    private String refreshToken;
 
     public String getId() {
         return id;
@@ -82,6 +66,46 @@ public class AccessTokenMongo {
         this.token = token;
     }
 
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
+    public String getClient() {
+        return client;
+    }
+
+    public void setClient(String client) {
+        this.client = client;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public String getAuthorizationCode() {
+        return authorizationCode;
+    }
+
+    public void setAuthorizationCode(String authorizationCode) {
+        this.authorizationCode = authorizationCode;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
     public Date getCreatedAt() {
         return createdAt;
     }
@@ -96,78 +120,6 @@ public class AccessTokenMongo {
 
     public void setExpireAt(Date expireAt) {
         this.expireAt = expireAt;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public Set<String> getRequestedScopes() {
-        return requestedScopes;
-    }
-
-    public void setRequestedScopes(Set<String> requestedScopes) {
-        this.requestedScopes = requestedScopes;
-    }
-
-    public Set<String> getScopes() {
-        return scopes;
-    }
-
-    public void setScopes(Set<String> scopes) {
-        this.scopes = scopes;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public String getGrantType() {
-        return grantType;
-    }
-
-    public void setGrantType(String grantType) {
-        this.grantType = grantType;
-    }
-
-    public Document getAdditionalInformation() {
-        return additionalInformation;
-    }
-
-    public void setAdditionalInformation(Document additionalInformation) {
-        this.additionalInformation = additionalInformation;
-    }
-
-    public Document getRequestedParameters() {
-        return requestedParameters;
-    }
-
-    public void setRequestedParameters(Document requestedParameters) {
-        this.requestedParameters = requestedParameters;
-    }
-
-    public String getAuthorizationCode() {
-        return authorizationCode;
-    }
-
-    public void setAuthorizationCode(String authorizationCode) {
-        this.authorizationCode = authorizationCode;
     }
 
     @Override

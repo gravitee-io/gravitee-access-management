@@ -58,9 +58,11 @@ public class TokenServiceTest {
     @Test
     public void shouldFindTotalTokensByDomain() {
         Client client1 = new Client();
-        client1.setClientId("client1");
+        client1.setId("client1");
+        client1.setClientId(client1.getId());
         Client client2 = new Client();
-        client2.setClientId("client2");
+        client2.setId("client2");
+        client2.setClientId(client2.getId());
         Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
 
         when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(clients));
@@ -103,9 +105,11 @@ public class TokenServiceTest {
     @Test
     public void shouldFindTotalTokens() {
         Client client1 = new Client();
-        client1.setClientId("client1");
+        client1.setId("client1");
+        client1.setClientId(client1.getId());
         Client client2 = new Client();
-        client2.setClientId("client2");
+        client2.setId("client2");
+        client2.setClientId(client2.getId());
         Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
 
         when(clientService.findAll()).thenReturn(Single.just(clients));

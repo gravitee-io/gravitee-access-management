@@ -21,8 +21,8 @@ import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.response.*;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
-import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.Token;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDProviderMetadata;
@@ -387,7 +387,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         authorizationRequest.setResponseType(OAuth2Constants.TOKEN);
         authorizationRequest.setRedirectUri("http://localhost:9999/callback");
 
-        AccessToken accessToken = new DefaultAccessToken("token");
+        Token accessToken = new AccessToken("token");
 
         AuthorizationResponse authorizationResponse = new ImplicitResponse();
         authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
@@ -794,14 +794,14 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
 
     @Test
     public void shouldInvokeAuthorizationEndpoint_hybridFlow_code_token() throws Exception {
-        AccessToken accessToken = new DefaultAccessToken("token");
+        Token accessToken = new AccessToken("token");
         shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, "code=test-code&access_token=token&token_type=bearer&expires_in=0", accessToken, null);
     }
 
     @Test
     public void shouldInvokeAuthorizationEndpoint_hybridFlow_code_IDToken_token() throws Exception {
-        AccessToken accessToken = new DefaultAccessToken("token");
-        ((DefaultAccessToken) accessToken).setAdditionalInformation(Collections.singletonMap("id_token", "test-id-token"));
+        Token accessToken = new AccessToken("token");
+        ((AccessToken) accessToken).setAdditionalInformation(Collections.singletonMap("id_token", "test-id-token"));
         shouldInvokeAuthorizationEndpoint_hybridFlow(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN, "code=test-code&access_token=token&token_type=bearer&expires_in=0&id_token=test-id-token", accessToken, null);
     }
 
@@ -812,18 +812,18 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
 
     @Test
     public void shouldInvokeAuthorizationEndpoint_implicitFlow_IDToken_token() throws Exception {
-        AccessToken accessToken = new DefaultAccessToken("token");
-        ((DefaultAccessToken) accessToken).setAdditionalInformation(Collections.singletonMap("id_token", "test-id-token"));
+        Token accessToken = new AccessToken("token");
+        ((AccessToken) accessToken).setAdditionalInformation(Collections.singletonMap("id_token", "test-id-token"));
         shouldInvokeAuthorizationEndpoint_implicitFlow(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, "access_token=token&token_type=bearer&expires_in=0&id_token=test-id-token", accessToken, null);
     }
 
     @Test
     public void shouldInvokeAuthorizationEndpoint_implicitFlow_token() throws Exception {
-        AccessToken accessToken = new DefaultAccessToken("token");
+        Token accessToken = new AccessToken("token");
         shouldInvokeAuthorizationEndpoint_implicitFlow(ResponseType.TOKEN, "access_token=token&token_type=bearer&expires_in=0", accessToken, null);
     }
 
-    private void shouldInvokeAuthorizationEndpoint_hybridFlow(String responseType, String expectedCallback, AccessToken accessToken, String idToken) throws Exception {
+    private void shouldInvokeAuthorizationEndpoint_hybridFlow(String responseType, String expectedCallback, Token accessToken, String idToken) throws Exception {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
@@ -866,7 +866,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 HttpStatusCode.FOUND_302, "Found", null);
     }
 
-    private void shouldInvokeAuthorizationEndpoint_implicitFlow(String responseType, String expectedCallback, AccessToken accessToken, String idToken) throws Exception {
+    private void shouldInvokeAuthorizationEndpoint_implicitFlow(String responseType, String expectedCallback, Token accessToken, String idToken) throws Exception {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");

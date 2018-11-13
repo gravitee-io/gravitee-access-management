@@ -166,7 +166,6 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setIdTokenCustomClaims(clientMongo.getIdTokenCustomClaims());
         client.setCertificate(clientMongo.getCertificate());
         client.setEnhanceScopesWithUserPermissions(clientMongo.isEnhanceScopesWithUserPermissions());
-        client.setGenerateNewTokenPerRequest(clientMongo.isGenerateNewTokenPerRequest());
         client.setCreatedAt(clientMongo.getCreatedAt());
         client.setUpdatedAt(clientMongo.getUpdatedAt());
         return client;
@@ -195,7 +194,6 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setIdTokenCustomClaims(client.getIdTokenCustomClaims() != null ? new Document(client.getIdTokenCustomClaims()) : new Document());
         clientMongo.setCertificate(client.getCertificate());
         clientMongo.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
-        clientMongo.setGenerateNewTokenPerRequest(client.isGenerateNewTokenPerRequest());
         clientMongo.setCreatedAt(client.getCreatedAt());
         clientMongo.setUpdatedAt(client.getUpdatedAt());
         return clientMongo;

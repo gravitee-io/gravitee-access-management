@@ -19,7 +19,7 @@ import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionRequest;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionResponse;
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
 import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
@@ -41,30 +41,26 @@ public class IntrospectionServiceImpl implements IntrospectionService {
 
     @Override
     public Single<IntrospectionResponse> introspect(IntrospectionRequest introspectionRequest) {
-            return tokenService.getAccessToken(introspectionRequest.getToken())
-                    .filter(token -> token.getExpiresIn() > 0)
-                    .flatMap(token -> {
-                        DefaultAccessToken accessToken = (DefaultAccessToken) token;
-                        if (accessToken.getSubject() != null) {
-                            return userService
-                                    .findById(accessToken.getSubject())
-                                    .map(user -> convert(accessToken, user))
-                                    .defaultIfEmpty(convert(accessToken, null));
+        return tokenService.introspect(introspectionRequest.getToken())
+                .filter(token -> token.getExpiresIn() > 0)
+                .flatMap(token -> {
+                    AccessToken accessToken = (AccessToken) token;
+                    if (accessToken.getSubject() != null) {
+                        return userService
+                                .findById(accessToken.getSubject())
+                                .map(user -> convert(accessToken, user))
+                                .defaultIfEmpty(convert(accessToken, null));
 
-                        } else {
-                            return Maybe.just(convert(accessToken, null));
-                        }
-                    })
-                    .defaultIfEmpty(new IntrospectionResponse())
-                    .toSingle();
-
+                    } else {
+                        return Maybe.just(convert(accessToken, null));
+                    }
+                })
+                .defaultIfEmpty(new IntrospectionResponse())
+                .onErrorResumeNext(Maybe.just(new IntrospectionResponse()))
+                .toSingle();
     }
 
-    public void setTokenService(TokenService tokenService) {
-        this.tokenService = tokenService;
-    }
-
-    private IntrospectionResponse convert(DefaultAccessToken accessToken, User user) {
+    private IntrospectionResponse convert(AccessToken accessToken, User user) {
         IntrospectionResponse introspectionResponse = new IntrospectionResponse();
         introspectionResponse.setActive(true);
         introspectionResponse.setScope(accessToken.getScope());

@@ -16,10 +16,10 @@
 package io.gravitee.am.gateway.handler.oauth2.token;
 
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenEnhancerImpl;
 import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
@@ -53,11 +53,9 @@ public class TokenEnhancerTest {
 
         Client client = new Client();
 
-        AccessToken accessToken = new AccessToken();
-        accessToken.setId("token-id");
-        accessToken.setToken("token-id");
+        Token accessToken = new AccessToken("token-id");
 
-        TestObserver<AccessToken> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null).test();
+        TestObserver<Token> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null).test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -72,15 +70,13 @@ public class TokenEnhancerTest {
 
         Client client = new Client();
 
-        AccessToken accessToken = new AccessToken();
-        accessToken.setId("token-id");
-        accessToken.setToken("token-id");
+        Token accessToken = new AccessToken("token-id");
 
         String idTokenPayload = "payload";
 
         when(idTokenService.create(any(), any(), any())).thenReturn(Single.just(idTokenPayload));
 
-        TestObserver<AccessToken> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null).test();
+        TestObserver<Token> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null).test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

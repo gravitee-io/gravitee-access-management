@@ -18,7 +18,8 @@ package io.gravitee.am.gateway.handler.oauth2.token.jackson;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.Token;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
 
 import java.io.IOException;
 import java.util.Map;
@@ -36,16 +37,16 @@ public class AccessTokenSerializer extends StdSerializer<AccessToken> {
     @Override
     public void serialize(AccessToken token, JsonGenerator jsonGenerator, SerializerProvider provider) throws IOException {
         jsonGenerator.writeStartObject();
-        jsonGenerator.writeStringField(AccessToken.ACCESS_TOKEN, token.getValue());
-        jsonGenerator.writeStringField(AccessToken.TOKEN_TYPE, token.getTokenType());
-        jsonGenerator.writeNumberField(AccessToken.EXPIRES_IN, token.getExpiresIn());
+        jsonGenerator.writeStringField(Token.ACCESS_TOKEN, token.getValue());
+        jsonGenerator.writeStringField(Token.TOKEN_TYPE, token.getTokenType());
+        jsonGenerator.writeNumberField(Token.EXPIRES_IN, token.getExpiresIn());
 
         if (token.getScope() != null) {
-            jsonGenerator.writeStringField(AccessToken.SCOPE, token.getScope());
+            jsonGenerator.writeStringField(Token.SCOPE, token.getScope());
         }
 
         if (token.getRefreshToken() != null) {
-            jsonGenerator.writeStringField(AccessToken.REFRESH_TOKEN, token.getRefreshToken());
+            jsonGenerator.writeStringField(Token.REFRESH_TOKEN, token.getRefreshToken());
         }
 
         if (token.getAdditionalInformation() != null) {

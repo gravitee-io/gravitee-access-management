@@ -32,6 +32,10 @@
 
     <name>Gravitee IO - Access Management - Gateway - Domain Handler</name>
 
+    <properties>
+        <jjwt.version>0.10.5</jjwt.version>
+    </properties>
+
     <dependencies>
         <!-- Gravitee.io AM dependencies -->
         <dependency>
@@ -143,11 +147,23 @@
             <artifactId>logback-core</artifactId>
         </dependency>
 
-        <!-- JWT -->
+        <!-- JJwt -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt</artifactId>
-            <version>0.9.1</version>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Testing -->

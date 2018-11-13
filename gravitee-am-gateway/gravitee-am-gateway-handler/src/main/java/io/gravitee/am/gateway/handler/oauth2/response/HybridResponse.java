@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.response;
 
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.utils.UriBuilder;
 
@@ -75,12 +75,12 @@ public class HybridResponse extends ImplicitResponse {
         if (getIdToken() != null) {
             uriBuilder.addFragmentParameter(OAuth2Constants.ID_TOKEN, getIdToken());
         } else {
-            AccessToken accessToken = getAccessToken();
-            uriBuilder.addFragmentParameter(AccessToken.ACCESS_TOKEN, accessToken.getValue());
-            uriBuilder.addFragmentParameter(AccessToken.TOKEN_TYPE, accessToken.getTokenType());
-            uriBuilder.addFragmentParameter(AccessToken.EXPIRES_IN, String.valueOf(accessToken.getExpiresIn()));
+            Token accessToken = getAccessToken();
+            uriBuilder.addFragmentParameter(Token.ACCESS_TOKEN, accessToken.getValue());
+            uriBuilder.addFragmentParameter(Token.TOKEN_TYPE, accessToken.getTokenType());
+            uriBuilder.addFragmentParameter(Token.EXPIRES_IN, String.valueOf(accessToken.getExpiresIn()));
             if (accessToken.getScope() != null && !accessToken.getScope().isEmpty()) {
-                uriBuilder.addFragmentParameter(AccessToken.SCOPE, accessToken.getScope());
+                uriBuilder.addFragmentParameter(Token.SCOPE, accessToken.getScope());
             }
             // additional information
             if (accessToken.getAdditionalInformation() != null) {

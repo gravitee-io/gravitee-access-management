@@ -33,6 +33,10 @@ public class InvalidTokenException extends OAuth2Exception {
         super(message);
     }
 
+    public InvalidTokenException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     @Override
     public String getOAuth2ErrorCode() {
         return "invalid_token";

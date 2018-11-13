@@ -51,8 +51,6 @@ public class UpdateClient {
 
     private boolean enhanceScopesWithUserPermissions;
 
-    private boolean generateNewTokenPerRequest;
-
     public List<String> getRedirectUris() {
         return redirectUris;
     }
@@ -155,13 +153,5 @@ public class UpdateClient {
 
     public void setEnhanceScopesWithUserPermissions(boolean enhanceScopesWithUserPermissions) {
         this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
-    }
-
-    public boolean isGenerateNewTokenPerRequest() {
-        return generateNewTokenPerRequest;
-    }
-
-    public void setGenerateNewTokenPerRequest(boolean generateNewTokenPerRequest) {
-        this.generateNewTokenPerRequest = generateNewTokenPerRequest;
     }
 }

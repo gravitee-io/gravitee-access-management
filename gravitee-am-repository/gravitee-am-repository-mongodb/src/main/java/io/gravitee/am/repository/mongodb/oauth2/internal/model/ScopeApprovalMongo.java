@@ -26,9 +26,6 @@ import java.util.Date;
  */
 public class ScopeApprovalMongo extends Auditable {
 
-    /**
-     * Technical identifier
-     */
     @BsonId
     private String id;
 

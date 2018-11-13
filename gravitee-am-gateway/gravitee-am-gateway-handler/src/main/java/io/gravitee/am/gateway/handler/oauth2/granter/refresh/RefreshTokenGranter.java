@@ -27,6 +27,8 @@ import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -62,7 +64,7 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
         }
 
         return super.parseRequest(tokenRequest, client)
-                .flatMap(tokenRequest1 -> getTokenService().refresh(refreshToken, tokenRequest)
+                .flatMap(tokenRequest1 -> getTokenService().refresh(refreshToken, tokenRequest, client)
                         .map(refreshToken1 -> {
                             // set resource owner
                             if (refreshToken1.getSubject() != null) {
@@ -72,7 +74,7 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
                             // The requested scope MUST NOT include any scope
                             // not originally granted by the resource owner, and if omitted is
                             // treated as equal to the scope originally granted by the resource owner.
-                            final Set<String> originalScopes = refreshToken1.getScopes();
+                            final Set<String> originalScopes = (refreshToken1.getScope() != null ? new HashSet(Arrays.asList(refreshToken1.getScope().split("\\s+"))) : null);
                             final Set<String> requestedScopes = tokenRequest1.getScopes();
                             if (requestedScopes == null || requestedScopes.isEmpty()) {
                                 tokenRequest1.setScopes(originalScopes);

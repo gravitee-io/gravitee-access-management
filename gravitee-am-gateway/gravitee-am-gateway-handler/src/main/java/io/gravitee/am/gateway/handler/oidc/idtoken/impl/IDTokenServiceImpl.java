@@ -17,33 +17,23 @@ package io.gravitee.am.gateway.handler.oidc.idtoken.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateMetadata;
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.oidc.Scope;
+import io.gravitee.am.common.oidc.idtoken.Claims;
+import io.gravitee.am.common.oidc.idtoken.IDToken;
+import io.gravitee.am.gateway.handler.jwt.JwtService;
 import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
-import io.gravitee.am.gateway.handler.oidc.idtoken.IDToken;
 import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenUtils;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequest;
-import io.gravitee.am.gateway.handler.oidc.utils.OIDCClaims;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.jose.JWK;
 import io.gravitee.common.util.MultiValueMap;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.impl.crypto.MacProvider;
-import io.reactivex.Flowable;
 import io.reactivex.Single;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.security.Key;
-import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -51,25 +41,22 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IDTokenServiceImpl implements IDTokenService, InitializingBean {
+public class IDTokenServiceImpl implements IDTokenService {
 
     private static final int defaultIDTokenExpireIn = 14400;
     private static final String defaultDigestAlgorithm = "SHA-512";
-    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${oidc.iss:http://gravitee.am}")
     private String iss;
 
-    @Value("${oidc.signing.key.secret:s3cR3t4grAv1t33}")
-    private String signingKeySecret;
-
-    @Value("${oidc.signing.key.kid:default-gravitee-AM-key}")
-    private String signingKeyId;
-
-    private CertificateProvider defaultCertificateProvider;
-
     @Autowired
     private CertificateManager certificateManager;
+
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public Single<String> create(OAuth2Request oAuth2Request, Client client, User user) {
@@ -86,7 +73,7 @@ public class IDTokenServiceImpl implements IDTokenService, InitializingBean {
         idToken.setExp(calendar.getTimeInMillis() / 1000l);
 
         // set nonce
-        String nonce = oAuth2Request.getRequestParameters().getFirst(OIDCClaims.nonce);
+        String nonce = oAuth2Request.getRequestParameters().getFirst(Claims.nonce);
         if (nonce != null && !nonce.isEmpty()) {
             idToken.setNonce(nonce);
         }
@@ -129,7 +116,7 @@ public class IDTokenServiceImpl implements IDTokenService, InitializingBean {
 
         // sign the ID Token and add id_token field to the access_token
         return certificateManager.get(client.getCertificate())
-                .defaultIfEmpty(defaultCertificateProvider)
+                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
                 .flatMapSingle(certificateProvider -> {
                     // set hash claims (hybrid flow)
                     if (oAuth2Request.getContext() != null && !oAuth2Request.getContext().isEmpty()) {
@@ -144,22 +131,12 @@ public class IDTokenServiceImpl implements IDTokenService, InitializingBean {
                             idToken.addAdditionalClaim(claimName, getHashValue((String) claimValue, digestAlgorithm));
                         });
                     }
-                    return certificateProvider.sign(objectMapper.writeValueAsString(idToken));
+                    return jwtService.encode(idToken, certificateProvider);
                 });
     }
 
-    public void setJwtBuilder(JwtBuilder jwtBuilder) {
-        setDefaultCertificateProvider(jwtBuilder);
-    }
-
-    @Override
-    public void afterPropertiesSet() {
-        // create default signing HMAC key
-        Key key = MacProvider.generateKey(SignatureAlgorithm.HS512, new SecureRandom(signingKeySecret.getBytes()));
-        JwtBuilder jwtBuilder = Jwts.builder().signWith(SignatureAlgorithm.HS512, key);
-
-        // create default certificate provider
-        setDefaultCertificateProvider(jwtBuilder);
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -221,32 +198,5 @@ public class IDTokenServiceImpl implements IDTokenService, InitializingBean {
 
     private String getHashValue(String payload, String digestAlgorithm) {
         return IDTokenUtils.generateHashValue(payload, digestAlgorithm);
-    }
-
-    private void setDefaultCertificateProvider(JwtBuilder jwtBuilder) {
-        CertificateMetadata certificateMetadata = new CertificateMetadata();
-        certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, defaultDigestAlgorithm));
-
-        defaultCertificateProvider = new CertificateProvider() {
-            @Override
-            public Single<String> sign(String payload) {
-                return Single.just(jwtBuilder.setHeaderParam(JwsHeader.KEY_ID,  signingKeyId).setPayload(payload).compact());
-            }
-
-            @Override
-            public Single<String> publicKey() {
-                return null;
-            }
-
-            @Override
-            public Flowable<JWK> keys() {
-                return null;
-            }
-
-            @Override
-            public CertificateMetadata certificateMetadata() {
-                return certificateMetadata;
-            }
-        };
     }
 }

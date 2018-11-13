@@ -15,23 +15,16 @@
  */
 package io.gravitee.am.certificate.javakeystore.provider;
 
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.certificate.javakeystore.JavaKeyStoreConfiguration;
 import io.gravitee.am.certificate.javakeystore.Signature;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -53,13 +46,12 @@ import java.util.stream.Stream;
  */
 public class JavaKeyStoreProvider implements CertificateProvider, InitializingBean {
 
-    private Logger logger = LoggerFactory.getLogger(JavaKeyStoreProvider.class);
     private KeyPair keyPair;
-    private JWSSigner signer;
     private JWKSet jwkSet;
     private String publicKey;
     private Set<JWK> keys;
     private Signature signature = Signature.SHA256withRSA;
+    private io.gravitee.am.certificate.api.Key certificateKey;
 
     @Autowired
     private JavaKeyStoreConfiguration configuration;
@@ -91,37 +83,20 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
             certificateMetadata.getMetadata().put(CertificateMetadata.DIGEST_ALGORITHM_NAME, signature.getDigestOID());
             // Get public key
             PublicKey publicKey = cert.getPublicKey();
-            // Return a key pair
+            // create key pair
             keyPair = new KeyPair(publicKey, (PrivateKey) key);
-            // Create RSA-signer with the private key
-            signer = new RSASSASigner(keyPair.getPrivate());
+            // create key
+            certificateKey = new DefaultKey(configuration.getAlias(), keyPair);
             // get public key
-            this.publicKey =  getPublicKey();
+            this.publicKey = getPublicKey();
         } else {
             throw new IllegalArgumentException("A RSA Signer must be supplied");
         }
     }
 
     @Override
-    public Single<String> sign(String payload) {
-        return Single.create(emitter -> {
-            try {
-                JWTClaimsSet claimsSet = JWTClaimsSet.parse(payload);
-                JWSAlgorithm jwsAlgorithm = signature.getJwsAlgorithm() == null ? JWSAlgorithm.RS256 : signature.getJwsAlgorithm();
-                JWSHeader header = new JWSHeader.Builder(jwsAlgorithm).keyID(configuration.getAlias()).build();
-
-                SignedJWT signedJWT = new SignedJWT(header, claimsSet);
-
-                // compute the RSA signature
-                signedJWT.sign(signer);
-
-                // return signed JWT
-                emitter.onSuccess(signedJWT.serialize());
-            } catch (Exception e) {
-                logger.error("An error occurs while signing JWT token payload", e);
-                emitter.onError(e);
-            }
-        });
+    public Single<io.gravitee.am.certificate.api.Key> key() {
+        return Single.just(certificateKey);
     }
 
     @Override

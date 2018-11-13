@@ -20,8 +20,8 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.gateway.handler.oauth2.revocation.RevocationTokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
 import io.gravitee.am.gateway.handler.oauth2.utils.TokenTypeHint;
+import io.gravitee.am.model.Client;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import org.slf4j.Logger;
@@ -40,14 +40,13 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
     private TokenService tokenService;
 
     @Override
-    public Completable revoke(RevocationTokenRequest request) {
+    public Completable revoke(RevocationTokenRequest request, Client client) {
         String token = request.getToken();
-        String requestingClientId = request.getClientId();
 
         // Check the refresh_token store first. Fall back to the access token store if we don't
         // find anything. See RFC 7009, Sec 2.1: https://tools.ietf.org/html/rfc7009#section-2.1
         if (request.getHint() != null && request.getHint().equals(TokenTypeHint.REFRESH_TOKEN)) {
-            return revokeRefreshToken(token, requestingClientId)
+            return revokeRefreshToken(token, client)
                     .onErrorResumeNext(throwable -> {
                         // if the token was not issued to the client making the revocation request
                         // the request is refused and the client is informed of the error
@@ -65,7 +64,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                         }
 
                         // fallback to access token
-                        return revokeAccessToken(token, requestingClientId);
+                        return revokeAccessToken(token, client);
                     })
                     .onErrorResumeNext(throwable -> {
                         // Note: invalid tokens do not cause an error response since the client
@@ -83,7 +82,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
 
         // The user didn't hint that this is a refresh token, so it MAY be an access
         // token. If we don't find an access token... check if it's a refresh token.
-        return revokeAccessToken(token, requestingClientId)
+        return revokeAccessToken(token, client)
                 .onErrorResumeNext(throwable -> {
                     // if the token was not issued to the client making the revocation request
                     // the request is refused and the client is informed of the error
@@ -101,7 +100,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     }
 
                     // fallback to refresh token
-                    return revokeRefreshToken(token, requestingClientId);
+                    return revokeRefreshToken(token, client);
                 })
                 .onErrorResumeNext(throwable -> {
                     // Note: invalid tokens do not cause an error response since the client
@@ -118,30 +117,31 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
 
     }
 
-    private Completable revokeAccessToken(String token, String requestingClientId) {
-        return tokenService.getAccessToken(token)
-                .switchIfEmpty(Maybe.error(new InvalidTokenException()))
+    private Completable revokeAccessToken(String token, Client client) {
+        return tokenService.getAccessToken(token, client)
+                .switchIfEmpty(Maybe.error(new InvalidTokenException("Unknown access token")))
                 .flatMapCompletable(accessToken -> {
-                    String tokenClientId = ((DefaultAccessToken) accessToken).getClientId();
-                    if (!requestingClientId.equals(tokenClientId)) {
-                        logger.debug("Revoke FAILED: requesting client = {}, token's client = {}.", requestingClientId, tokenClientId);
+                    String tokenClientId = accessToken.getClientId();
+                    if (!client.getClientId().equals(tokenClientId)) {
+                        logger.debug("Revoke FAILED: requesting client = {}, token's client = {}.", client.getClientId(), tokenClientId);
                         return Completable.error(new InvalidGrantException("Cannot revoke tokens issued to other clients."));
                     }
 
-                    return tokenService.deleteAccessToken(token);
+                    return tokenService.deleteAccessToken(accessToken.getValue());
                 });
     }
 
-    private Completable revokeRefreshToken(String token, String requestingClientId) {
-        return tokenService.getRefreshToken(token)
-                .switchIfEmpty(Maybe.error(new InvalidTokenException()))
+    private Completable revokeRefreshToken(String token, Client client) {
+        return tokenService.getRefreshToken(token, client)
+                .switchIfEmpty(Maybe.error(new InvalidTokenException("Unknown refresh token")))
                 .flatMapCompletable(refreshToken -> {
-                    if (!requestingClientId.equals(refreshToken.getClientId())) {
-                        logger.debug("Revoke FAILED: requesting client = {}, token's client = {}.", requestingClientId, refreshToken.getClientId());
+                    String tokenClientId = refreshToken.getClientId();
+                    if (!client.getClientId().equals(tokenClientId)) {
+                        logger.debug("Revoke FAILED: requesting client = {}, token's client = {}.", client.getClientId(), tokenClientId);
                         return Completable.error(new InvalidGrantException("Cannot revoke tokens issued to other clients."));
                     }
 
-                    return tokenService.deleteRefreshToken(token);
+                    return tokenService.deleteRefreshToken(refreshToken.getValue());
                 });
     }
 }

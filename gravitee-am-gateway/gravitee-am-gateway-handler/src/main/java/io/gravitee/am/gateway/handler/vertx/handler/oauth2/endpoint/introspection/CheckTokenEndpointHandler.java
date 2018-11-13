@@ -43,6 +43,11 @@ public class CheckTokenEndpointHandler implements Handler<RoutingContext> {
 
     private TokenService tokenService;
 
+
+    public CheckTokenEndpointHandler(TokenService tokenService) {
+        this.tokenService = tokenService;
+    }
+
     @Override
     public void handle(RoutingContext context) {
         // If the protected resource uses OAuth 2.0 client credentials to
@@ -58,7 +63,8 @@ public class CheckTokenEndpointHandler implements Handler<RoutingContext> {
             throw new InvalidRequestException();
         }
 
-        tokenService.getAccessToken(token)
+        // any client can introspect a token, we first need to decode the token to get the client's certificate to verify the token
+        tokenService.introspect(token)
                 .map(accessToken -> {
                     if (accessToken.getExpiresIn() == 0) {
                         throw new InvalidTokenException("Token is expired");
@@ -73,9 +79,5 @@ public class CheckTokenEndpointHandler implements Handler<RoutingContext> {
                                 .end(Json.encodePrettily(accessToken)),
                         error -> context.fail(new InvalidTokenException()),
                         () -> context.fail(new InvalidTokenException("Token was not recognised")));
-    }
-
-    public void setTokenService(TokenService tokenService) {
-        this.tokenService = tokenService;
     }
 }

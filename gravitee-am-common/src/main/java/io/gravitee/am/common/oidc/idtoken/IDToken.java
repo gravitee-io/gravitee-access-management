@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oidc.idtoken;
+package io.gravitee.am.common.oidc.idtoken;
 
-import io.gravitee.am.gateway.handler.oidc.utils.OIDCClaims;
+import io.gravitee.am.common.jwt.JWT;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -30,86 +29,46 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IDToken extends HashMap<String, Object> {
+public class IDToken extends JWT {
 
-    public String getIss() {
-        return (String) get(OIDCClaims.iss);
+    public Long getAuthTime() {
+        return (Long) get(Claims.auth_time);
     }
 
-    public void setIss(String iss) {
-        put(OIDCClaims.iss, iss);
-    }
-
-    public String getSub() {
-        return (String) get(OIDCClaims.sub);
-    }
-
-    public void setSub(String sub) {
-        put(OIDCClaims.sub, sub);
-    }
-
-    public String getAud() {
-        return (String) get(OIDCClaims.aud);
-    }
-
-    public void setAud(String aud) {
-        put(OIDCClaims.aud, aud);
-    }
-
-    public long getExp() {
-        return (long) get(OIDCClaims.exp);
-    }
-
-    public void setExp(long exp) {
-        put(OIDCClaims.exp, exp);
-    }
-
-    public long getIat() {
-        return (long) get(OIDCClaims.iat);
-    }
-
-    public void setIat(long iat) {
-        put(OIDCClaims.iat, iat);
-    }
-
-    public long getAuthTime() {
-        return (long) get(OIDCClaims.auth_time);
-    }
-
-    public void setAuthTime(long authTime) {
-        put(OIDCClaims.auth_time, authTime);
+    public void setAuthTime(Long authTime) {
+        put(Claims.auth_time, authTime);
     }
 
     public String getNonce() {
-        return (String) get(OIDCClaims.nonce);
+        return (String) get(Claims.nonce);
     }
 
     public void setNonce(String nonce) {
-        put(OIDCClaims.nonce, nonce);
+        put(Claims.nonce, nonce);
     }
 
     public String getAcr() {
-        return (String) get(OIDCClaims.acr);
+        return (String) get(Claims.acr);
     }
 
     public void setAcr(String acr) {
-        put(OIDCClaims.acr, acr);
+        put(Claims.acr, acr);
     }
 
     public String getAmr() {
-        return (String) get(OIDCClaims.amr);
+        return (String) get(Claims.amr);
     }
 
     public void setAmr(String amr) {
-        put(OIDCClaims.amr, amr);
+        put(Claims.amr, amr);
     }
 
     public String getAzp() {
-        return (String) get(OIDCClaims.azp);
+        return (String) get(Claims.azp);
     }
 
     public void setAzp(String azp) {
-        put(OIDCClaims.azp, azp);
+        put(Claims.azp, azp);
     }
 
     public void addAdditionalClaim(String claimName, Object claimValue) {

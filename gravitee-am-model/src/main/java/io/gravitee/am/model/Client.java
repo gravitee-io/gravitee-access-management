@@ -81,8 +81,6 @@ public class Client {
 
     private boolean enhanceScopesWithUserPermissions;
 
-    private boolean generateNewTokenPerRequest;
-
     public String getId() {
         return id;
     }
@@ -235,26 +233,16 @@ public class Client {
         this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
     }
 
-    public boolean isGenerateNewTokenPerRequest() {
-        return generateNewTokenPerRequest;
-    }
-
-    public void setGenerateNewTokenPerRequest(boolean generateNewTokenPerRequest) {
-        this.generateNewTokenPerRequest = generateNewTokenPerRequest;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         Client client = (Client) o;
-
-        return clientId.equals(client.clientId);
+        return Objects.equals(id, client.id);
     }
 
     @Override
     public int hashCode() {
-        return clientId.hashCode();
+        return Objects.hash(id);
     }
 }

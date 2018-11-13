@@ -19,9 +19,9 @@ import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.gravitee.am.gateway.handler.oauth2.token.impl.DefaultAccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
@@ -74,7 +74,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
         Client client = new Client();
         client.setClientId("my-client-id");
 
-        AccessToken accessToken = new DefaultAccessToken("test-token");
+        Token accessToken = new AccessToken("test-token");
 
         when(tokenRequest.getClientId()).thenReturn("my-client-id");
         when(tokenRequest.getGrantType()).thenReturn("password");
@@ -85,7 +85,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
         when(tokenService.create(any(), any(), any())).thenReturn(Single.just(accessToken));
         when(userAuthenticationManager.authenticate(any(Client.class), any(Authentication.class))).thenReturn(Single.just(new User()));
 
-        TestObserver<AccessToken> testObserver = granter.grant(tokenRequest, client).test();
+        TestObserver<Token> testObserver = granter.grant(tokenRequest, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(token -> token.getValue().equals("test-token"));

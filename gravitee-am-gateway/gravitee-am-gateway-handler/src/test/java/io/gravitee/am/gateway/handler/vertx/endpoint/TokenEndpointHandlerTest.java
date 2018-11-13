@@ -18,7 +18,8 @@ package io.gravitee.am.gateway.handler.vertx.endpoint;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
-import io.gravitee.am.gateway.handler.oauth2.token.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.token.Token;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
@@ -175,37 +176,7 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
         });
 
         // Jackson is unable to generate a JSON from a mocked interface.
-        AccessToken accessToken = new AccessToken() {
-            @Override
-            public String getValue() {
-                return null;
-            }
-
-            @Override
-            public String getTokenType() {
-                return null;
-            }
-
-            @Override
-            public int getExpiresIn() {
-                return 0;
-            }
-
-            @Override
-            public String getRefreshToken() {
-                return null;
-            }
-
-            @Override
-            public String getScope() {
-                return null;
-            }
-
-            @Override
-            public Map<String, Object> getAdditionalInformation() {
-                return null;
-            }
-        };
+        Token accessToken = new AccessToken("my-token");
 
         when(clientService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(tokenGranter.grant(any(TokenRequest.class), any(io.gravitee.am.model.Client.class))).thenReturn(Single.just(accessToken));

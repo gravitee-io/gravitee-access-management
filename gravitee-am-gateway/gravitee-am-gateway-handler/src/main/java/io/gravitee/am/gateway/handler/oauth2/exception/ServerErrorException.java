@@ -34,6 +34,10 @@ public class ServerErrorException extends OAuth2Exception {
         super(message);
     }
 
+    public ServerErrorException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     @Override
     public String getOAuth2ErrorCode() {
         return "server_error";

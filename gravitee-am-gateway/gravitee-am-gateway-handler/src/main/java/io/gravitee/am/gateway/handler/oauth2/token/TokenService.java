@@ -19,7 +19,6 @@ import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
-import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -31,13 +30,15 @@ import io.reactivex.Single;
  */
 public interface TokenService {
 
-    Maybe<AccessToken> getAccessToken(String accessToken);
+    Maybe<Token> getAccessToken(String accessToken, Client client);
 
-    Maybe<RefreshToken> getRefreshToken(String refreshToken);
+    Maybe<Token> getRefreshToken(String refreshToken, Client client);
 
-    Single<AccessToken> create(OAuth2Request oAuth2Request, Client client, User endUser);
+    Maybe<Token> introspect(String token);
 
-    Single<RefreshToken> refresh(String refreshToken, TokenRequest tokenRequest);
+    Single<Token> create(OAuth2Request oAuth2Request, Client client, User endUser);
+
+    Single<Token> refresh(String refreshToken, TokenRequest tokenRequest, Client client);
 
     Completable deleteAccessToken(String accessToken);
 

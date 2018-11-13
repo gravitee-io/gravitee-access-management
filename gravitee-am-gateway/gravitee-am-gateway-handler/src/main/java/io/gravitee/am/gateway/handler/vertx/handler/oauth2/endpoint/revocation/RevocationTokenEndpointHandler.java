@@ -67,12 +67,12 @@ public class RevocationTokenEndpointHandler implements Handler<RoutingContext> {
         Client client = (Client) authenticatedUser.getDelegate();
 
         revocationTokenService
-                .revoke(createRequest(context, client.getClientId()))
+                .revoke(createRequest(context), client.getClient())
                 .subscribe(() -> context.response().setStatusCode(200).end(), error -> context.fail(error));
 
     }
 
-    private static RevocationTokenRequest createRequest(RoutingContext context, String clientId) {
+    private static RevocationTokenRequest createRequest(RoutingContext context) {
         String token = context.request().getParam(TOKEN_PARAM);
         String tokenTypeHint = context.request().getParam(TOKEN_TYPE_HINT_PARAM);
 
@@ -81,7 +81,6 @@ public class RevocationTokenEndpointHandler implements Handler<RoutingContext> {
         }
 
         RevocationTokenRequest revocationTokenRequest = new RevocationTokenRequest(token);
-        revocationTokenRequest.setClientId(clientId);
 
         if (tokenTypeHint != null) {
             try {

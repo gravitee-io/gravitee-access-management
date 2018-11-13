@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oidc;
 
+import io.gravitee.am.gateway.handler.jwt.JwtService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.jwk.JWKSetService;
@@ -59,6 +61,12 @@ public class OIDCRouter {
     private UserService userService;
 
     @Autowired
+    private ClientService clientService;
+
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
     private Environment environment;
 
     @Autowired
@@ -77,7 +85,7 @@ public class OIDCRouter {
 
         // UserInfo Endpoint
         Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userService);
-        Handler<RoutingContext> userInfoRequestParseHandler = new UserInfoRequestParseHandler(tokenService);
+        Handler<RoutingContext> userInfoRequestParseHandler = new UserInfoRequestParseHandler(tokenService, clientService, jwtService);
         router.route("/userinfo").handler(CorsHandler.newInstance(corsHandler()));
         router
                 .route(HttpMethod.GET, "/userinfo")
