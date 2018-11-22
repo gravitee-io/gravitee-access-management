@@ -37,6 +37,11 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-api</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.repository</groupId>
             <artifactId>gravitee-am-repository-api</artifactId>
             <version>${project.version}</version>

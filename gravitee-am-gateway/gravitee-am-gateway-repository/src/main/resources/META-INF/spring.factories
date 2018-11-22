@@ -1,2 +1,6 @@
 io.gravitee.plugin.core.api.PluginHandler=\
     io.gravitee.am.gateway.repository.plugins.RepositoryPluginHandler
+
+io.gravitee.node.api.healthcheck.Probe=\
+    io.gravitee.am.gateway.repository.healthcheck.ManagementRepositoryProbe,\
+    io.gravitee.am.gateway.repository.healthcheck.OAuth2RepositoryProbe
