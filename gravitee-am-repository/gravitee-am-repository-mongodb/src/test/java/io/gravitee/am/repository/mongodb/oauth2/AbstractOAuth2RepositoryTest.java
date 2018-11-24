@@ -15,12 +15,34 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
+import com.mongodb.reactivestreams.client.MongoDatabase;
+import io.reactivex.Observable;
+import junit.framework.TestCase;
+import org.bson.Document;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = OAuth2RepositoryTestConfiguration.class, loader = AnnotationConfigContextLoader.class)
-public abstract class AbstractOAuth2RepositoryTest {
+public abstract class AbstractOAuth2RepositoryTest extends TestCase {
+
+    @Autowired
+    private MongoDatabase mongoDatabase;
+
+    @Before
+    public void before() throws InterruptedException {
+        Thread.sleep(500l);
+    }
+
+    @After
+    public void after() {
+        Observable.fromPublisher(mongoDatabase.getCollection(collectionName()).deleteMany(new Document())).subscribe();
+    }
+
+    public abstract String collectionName();
 }

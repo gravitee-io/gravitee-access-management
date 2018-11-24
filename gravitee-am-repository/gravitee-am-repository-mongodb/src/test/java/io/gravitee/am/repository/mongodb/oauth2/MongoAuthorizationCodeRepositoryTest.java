@@ -30,6 +30,11 @@ public class MongoAuthorizationCodeRepositoryTest extends AbstractOAuth2Reposito
     @Autowired
     private AuthorizationCodeRepository authorizationCodeRepository;
 
+    @Override
+    public String collectionName() {
+        return "authorization_codes";
+    }
+
     @Test
     public void shouldStoreCode() {
         String code = "testCode";

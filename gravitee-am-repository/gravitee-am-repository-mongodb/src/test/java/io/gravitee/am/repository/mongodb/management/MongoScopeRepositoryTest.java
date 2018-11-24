@@ -34,6 +34,11 @@ public class MongoScopeRepositoryTest extends AbstractManagementRepositoryTest {
     @Autowired
     private ScopeRepository scopeRepository;
 
+    @Override
+    public String collectionName() {
+        return "scopes";
+    }
+
     @Test
     public void testFindByDomain() throws TechnicalException {
         // create scope

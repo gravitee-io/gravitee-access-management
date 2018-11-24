@@ -33,6 +33,11 @@ public class MongoExtensionGrantRepositoryTest extends AbstractManagementReposit
     @Autowired
     private ExtensionGrantRepository extensionGrantRepository;
 
+    @Override
+    public String collectionName() {
+        return "extension_grants";
+    }
+
     @Test
     public void testFindByDomain() throws TechnicalException {
         // create extension grant

@@ -15,28 +15,19 @@
  */
 package io.gravitee.am.identityprovider.mongo.authentication;
 
-import com.mongodb.reactivestreams.client.MongoClient;
-import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodProcess;
-import de.flapdoodle.embed.mongo.MongodStarter;
-import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
-import de.flapdoodle.embed.mongo.config.Net;
-import de.flapdoodle.embed.mongo.distribution.Version;
-import de.flapdoodle.embed.process.runtime.Network;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderMapper;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderRoleMapper;
 import io.reactivex.Observable;
 import org.bson.Document;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,31 +36,23 @@ import java.io.IOException;
 @Configuration
 public class MongoAuthenticationProviderTestConfiguration {
 
-    private static final MongodStarter starter = MongodStarter.getDefaultInstance();
-    private static MongodExecutable _mongodExe;
-    private static MongodProcess _mongod;
+    @Autowired
+    private MongoDatabase mongoDatabase;
 
     @PostConstruct
-    public void init() throws IOException {
-        _mongodExe = starter.prepare(new MongodConfigBuilder()
-                .version(Version.Main.PRODUCTION)
-                .net(new Net("localhost", 12347, Network.localhostIsIPv6()))
-                .build());
-        _mongod = _mongodExe.start();
-
-        MongoClient mongo = MongoClients.create("mongodb://localhost:12347");
-        MongoDatabase database = mongo.getDatabase("test-idp-mongo");
-        Observable.fromPublisher(database.createCollection("users")).subscribe();
-        MongoCollection<Document> collection = database.getCollection("users");
+    public void init() {
+        Observable.fromPublisher(mongoDatabase.createCollection("users")).blockingFirst();
+        MongoCollection<Document> collection = mongoDatabase.getCollection("users");
         Document doc = new Document("username", "bob").append("password", "bobspassword");
-        Observable.fromPublisher(collection.insertOne(doc)).subscribe();
+        Observable.fromPublisher(collection.insertOne(doc)).blockingFirst();
     }
 
     @Bean
     public MongoIdentityProviderConfiguration mongoIdentityProviderConfiguration() {
         MongoIdentityProviderConfiguration configuration = new MongoIdentityProviderConfiguration();
 
-        configuration.setUri("mongodb://localhost:12347");
+        String host = embeddedClient().getMongoClient().getSettings().getClusterSettings().getHosts().get(0).toString();
+        configuration.setUri("mongodb://" + host);
         configuration.setDatabase("test-idp-mongo");
         configuration.setUsersCollection("users");
         configuration.setFindUserByUsernameQuery("{username: ?}");
@@ -91,5 +74,15 @@ public class MongoAuthenticationProviderTestConfiguration {
     @Bean
     public MongoIdentityProviderRoleMapper roleMapper() {
         return new MongoIdentityProviderRoleMapper();
+    }
+
+    @Bean
+    public EmbeddedClient embeddedClient() {
+        return new EmbeddedClient("test-idp-mongo");
+    }
+
+    @Bean
+    public MongoDatabase mongoDatabase() {
+        return embeddedClient().mongoDatabase();
     }
 }

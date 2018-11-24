@@ -34,6 +34,11 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Override
+    public String collectionName() {
+        return "users";
+    }
+
     @Test
     public void testFindByDomain() throws TechnicalException {
         // create user

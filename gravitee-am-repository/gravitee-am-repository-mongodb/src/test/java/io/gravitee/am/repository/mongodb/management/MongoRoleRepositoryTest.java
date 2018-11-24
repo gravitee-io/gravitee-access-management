@@ -33,6 +33,11 @@ public class MongoRoleRepositoryTest extends AbstractManagementRepositoryTest {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Override
+    public String collectionName() {
+        return "roles";
+    }
+
     @Test
     public void testFindByDomain() throws TechnicalException {
         // create role

@@ -33,6 +33,11 @@ public class MongoCertificateRepositoryTest extends AbstractManagementRepository
     @Autowired
     private CertificateRepository certificateRepository;
 
+    @Override
+    public String collectionName() {
+        return "certificates";
+    }
+
     @Test
     public void testFindByDomain() throws TechnicalException {
         // create certificate

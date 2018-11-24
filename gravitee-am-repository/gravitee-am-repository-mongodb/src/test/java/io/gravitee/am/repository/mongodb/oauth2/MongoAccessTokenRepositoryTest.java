@@ -32,6 +32,11 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
     @Autowired
     private AccessTokenRepository accessTokenRepository;
 
+    @Override
+    public String collectionName() {
+        return "access_tokens";
+    }
+
     @Test
     public void shouldNotFindToken() {
         TestObserver<AccessToken> observer = accessTokenRepository.findByToken("unknown-token").test();

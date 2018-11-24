@@ -35,6 +35,11 @@ public class MongoClientRepositoryTest extends AbstractManagementRepositoryTest 
     @Autowired
     private ClientRepository clientRepository;
 
+    @Override
+    public String collectionName() {
+        return "clients";
+    }
+
     @Test
     public void testFindByDomain() throws TechnicalException {
         // create client

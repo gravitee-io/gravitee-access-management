@@ -34,6 +34,11 @@ public class MongoIdentityProviderRepositoryTest extends AbstractManagementRepos
     @Autowired
     private IdentityProviderRepository identityProviderRepository;
 
+    @Override
+    public String collectionName() {
+        return "identities";
+    }
+
     @Test
     public void testFindByDomain() throws TechnicalException {
         // create idp

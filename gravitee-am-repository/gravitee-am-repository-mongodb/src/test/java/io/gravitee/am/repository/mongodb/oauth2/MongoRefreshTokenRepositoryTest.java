@@ -31,6 +31,11 @@ public class MongoRefreshTokenRepositoryTest extends AbstractOAuth2RepositoryTes
     @Autowired
     private MongoRefreshTokenRepository refreshTokenRepository;
 
+    @Override
+    public String collectionName() {
+        return "refresh_tokens";
+    }
+
     @Test
     public void shouldNotFindToken() {
         TestObserver<RefreshToken> observer = refreshTokenRepository.findByToken("unknown-token").test();

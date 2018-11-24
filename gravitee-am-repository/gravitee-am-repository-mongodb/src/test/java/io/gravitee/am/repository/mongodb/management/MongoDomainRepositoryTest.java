@@ -34,6 +34,11 @@ public class MongoDomainRepositoryTest extends AbstractManagementRepositoryTest 
     @Autowired
     private DomainRepository domainRepository;
 
+    @Override
+    public String collectionName() {
+        return "domains";
+    }
+
     @Test
     public void testFindAll() throws TechnicalException {
         // create domain
