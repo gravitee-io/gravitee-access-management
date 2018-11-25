@@ -50,7 +50,7 @@
         <gravitee-node.version>1.1.0</gravitee-node.version>
         <spring-security.version>4.2.4.RELEASE</spring-security.version>
         <jetty.version>9.3.14.v20161028</jetty.version>
-        <jjwt.version>0.9.0</jjwt.version>
+        <jjwt.version>0.10.5</jjwt.version>
         <rxjava.version>2.1.12</rxjava.version>
     </properties>
 

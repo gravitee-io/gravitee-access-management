@@ -18,7 +18,10 @@ package io.gravitee.am.management.handlers.management.api.spring.security.filter
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.common.http.HttpHeaders;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -36,15 +39,17 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.security.Key;
 import java.util.Arrays;
 import java.util.Optional;
 
-public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
+public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFilter implements InitializingBean {
 
-    @Value("${jwt.secret:myJWT4Gr4v1t33_S3cr3t}")
+    @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
     private String jwtSecret;
     @Value("${jwt.cookie-path:/}")
     private String jwtCookiePath;
+    private Key key;
 
     public JWTAuthenticationFilter(RequestMatcher requiresAuthenticationRequestMatcher) {
         super(requiresAuthenticationRequestMatcher);
@@ -79,7 +84,8 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
         }
 
         try {
-            Claims claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken).getBody();
+            JwtParser jwtParser = Jwts.parser().setSigningKey(key);
+            Claims claims = jwtParser.parseClaimsJws(authToken).getBody();
             DefaultUser user = new DefaultUser(claims.getSubject());
             user.setAdditonalInformation(claims);
             return new UsernamePasswordAuthenticationToken(user, null, AuthorityUtils.NO_AUTHORITIES);
@@ -96,6 +102,14 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
         // As this is a REST authentication, after success we need to continue the request normally
         // and return the response as if the resource was not secured at all
         chain.doFilter(request, response);
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+        super.afterPropertiesSet();
+
+        // init JWT signing key
+        key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
     private void removeJWTAuthenticationCookie(HttpServletResponse response) {

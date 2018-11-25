@@ -18,12 +18,14 @@ package io.gravitee.am.management.handlers.admin.provider.jwt;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.common.http.HttpHeaders;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 import javax.servlet.http.Cookie;
-import java.text.SimpleDateFormat;
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,13 +34,16 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class JWTGenerator {
+public class JWTGenerator implements InitializingBean {
 
     private static final boolean DEFAULT_JWT_COOKIE_SECURE = false;
     private static final String DEFAULT_JWT_COOKIE_PATH = "/";
     private static final String DEFAULT_JWT_COOKIE_DOMAIN = "";
-    private static final String DEFAULT_JWT_SECRET = "myJWT4Gr4v1t33_S3cr3t";
     private static final int DEFAULT_JWT_EXPIRE_AFTER = 604800;
+    private Key key;
+
+    @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
+    private String signingKeySecret;
 
     @Autowired
     private Environment environment;
@@ -75,9 +80,15 @@ public class JWTGenerator {
                 .setIssuedAt(new Date())
                 .setExpiration(expirationDate)
                 .setClaims(user.getAdditionalInformation())
-                .signWith(SignatureAlgorithm.HS512, environment.getProperty("jwt.secret", DEFAULT_JWT_SECRET))
+                .signWith(key)
                 .compact();
 
         return compactJws;
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+        // init JWT signing key
+        key = Keys.hmacShaKeyFor(signingKeySecret.getBytes());
     }
 }
