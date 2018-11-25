@@ -19,6 +19,7 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -46,9 +47,11 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     public ExtensionGrantGranter(ExtensionGrantProvider extensionGrantProvider,
                                  ExtensionGrant extensionGrant,
                                  UserService userService,
-                                 TokenService tokenService) {
+                                 TokenService tokenService,
+                                 TokenRequestResolver tokenRequestResolver) {
         super(extensionGrant.getGrantType());
         setTokenService(tokenService);
+        setTokenRequestResolver(tokenRequestResolver);
         this.extensionGrantProvider = extensionGrantProvider;
         this.extensionGrant = extensionGrant;
         this.userService = userService;
@@ -58,11 +61,18 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
         return extensionGrantProvider.grant(convert(tokenRequest))
                 .flatMap(endUser -> {
-                    // set source provider
-                    Map<String, Object> additionalInformation = endUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(endUser.getAdditionalInformation());
-                    additionalInformation.put("source", extensionGrant.getIdentityProvider());
-                    ((DefaultUser) endUser).setAdditonalInformation(additionalInformation);
-                    return userService.findOrCreate(endUser).toMaybe();
+                    if (extensionGrant.isCreateUser()) {
+                        Map<String, Object> additionalInformation = endUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(endUser.getAdditionalInformation());
+                        // set source provider
+                        additionalInformation.put("source", extensionGrant.getIdentityProvider());
+                        ((DefaultUser) endUser).setAdditonalInformation(additionalInformation);
+                        return userService.findOrCreate(endUser).toMaybe();
+                    } else {
+                        User user = new User();
+                        user.setUsername(endUser.getUsername());
+                        user.setAdditionalInformation(endUser.getAdditionalInformation());
+                        return Maybe.just(user);
+                    }
                 })
                 .onErrorResumeNext(ex -> {
                     return Maybe.error(new InvalidGrantException());
