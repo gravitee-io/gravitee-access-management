@@ -16,13 +16,14 @@
 package io.gravitee.am.gateway.handler.oauth2.client;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.common.service.Service;
 import io.reactivex.Maybe;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ClientService {
+public interface ClientService extends Service {
 
     Maybe<Client> findByClientId(String clientId);
 

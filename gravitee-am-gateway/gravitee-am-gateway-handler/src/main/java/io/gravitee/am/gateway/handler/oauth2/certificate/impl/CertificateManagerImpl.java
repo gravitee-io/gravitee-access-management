@@ -18,11 +18,17 @@ package io.gravitee.am.gateway.handler.oauth2.certificate.impl;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.api.DefaultKey;
+import io.gravitee.am.gateway.core.event.DomainEvent;
 import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
+import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.management.api.CertificateRepository;
+import io.gravitee.common.event.Event;
+import io.gravitee.common.event.EventListener;
+import io.gravitee.common.event.EventManager;
+import io.gravitee.common.service.AbstractService;
 import io.jsonwebtoken.security.Keys;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -39,13 +45,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateManagerImpl implements CertificateManager, InitializingBean {
+public class CertificateManagerImpl extends AbstractService implements CertificateManager, InitializingBean, EventListener<DomainEvent, Domain> {
 
     private static final Logger logger = LoggerFactory.getLogger(CertificateManagerImpl.class);
     private static final String defaultDigestAlgorithm = "SHA-256";
@@ -65,7 +73,10 @@ public class CertificateManagerImpl implements CertificateManager, InitializingB
     @Autowired
     private CertificatePluginManager certificatePluginManager;
 
-    private Map<String, Map<String, CertificateProvider>> domainsCertificateProviders = new HashMap<>();
+    @Autowired
+    private EventManager eventManager;
+
+    private ConcurrentMap<String, Map<String, CertificateProvider>> domainsCertificateProviders = new ConcurrentHashMap<>();
 
     private CertificateProvider defaultCertificateProvider;
 
@@ -107,23 +118,66 @@ public class CertificateManagerImpl implements CertificateManager, InitializingB
                         certificates -> {
                             certificates.forEach(certificate -> {
                                 if (certificate.getDomain().equals(domain.getId())) {
-                                    logger.info("\tInitializing certificate: {} [{}]", certificate.getName(), certificate.getType());
+                                    logger.info("Initializing certificate: {} [{}]", certificate.getName(), certificate.getType());
                                 }
-                                CertificateProvider certificateProvider =
-                                        certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
-
-                                Map<String, CertificateProvider> existingDomainCertificateProviders = domainsCertificateProviders.get(certificate.getDomain());
-                                if (existingDomainCertificateProviders != null) {
-                                    Map<String, CertificateProvider> updateCertificateProviders = new HashMap<>(existingDomainCertificateProviders);
-                                    updateCertificateProviders.put(certificate.getId(), certificateProvider);
-                                    domainsCertificateProviders.put(certificate.getDomain(), updateCertificateProviders);
-                                } else {
-                                    domainsCertificateProviders.put(certificate.getDomain(), Collections.singletonMap(certificate.getId(), certificateProvider));
-                                }
+                                updateCertificateProvider(certificate);
                             });
                             logger.info("Certificates loaded for domain {}", domain.getName());
                         },
                         error -> logger.error("Unable to initialize certificates for domain {}", domain.getName(), error));
+    }
+
+    @Override
+    protected void doStart() throws Exception {
+        super.doStart();
+
+        logger.info("Register certificate manager event listener for cross domain events");
+        eventManager.subscribeForEvents(this, DomainEvent.class);
+    }
+
+    @Override
+    public void onEvent(Event<DomainEvent, Domain> event) {
+        Domain updatedDomain = event.content();
+        if (!updatedDomain.getId().equals(domain.getId())) {
+            switch (event.type()) {
+                case DEPLOY:
+                case UPDATE:
+                    updateDomainCertificateProviders(updatedDomain);
+                    break;
+                case UNDEPLOY:
+                    domainsCertificateProviders.remove(updatedDomain.getId());
+                    break;
+            }
+        }
+    }
+
+    private void updateDomainCertificateProviders(Domain updatedDomain) {
+        logger.info("Domain {} has received domain event from domain {}, update its certificates", domain.getName(), updatedDomain.getName());
+        certificateRepository.findByDomain(updatedDomain.getId())
+                .subscribe(
+                        certificates -> {
+                            certificates.forEach(certificate -> {
+                                logger.info("\tInitializing certificate: {} [{}]", certificate.getName(), certificate.getType());
+                                updateCertificateProvider(certificate);
+                            });
+                            logger.info("Certificates updated for domain {}", updatedDomain.getName());
+                        },
+                        error -> logger.error("Unable to update certificates for domain {}", updatedDomain.getName(), error));
+    }
+
+    private void updateCertificateProvider(Certificate certificate) {
+        // create certificate provider
+        CertificateProvider certificateProvider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
+
+        // add certificate provider to its domain
+        Map<String, CertificateProvider> existingDomainCertificateProviders = domainsCertificateProviders.get(certificate.getDomain());
+        if (existingDomainCertificateProviders != null) {
+            Map<String, CertificateProvider> updateCertificateProviders = new HashMap<>(existingDomainCertificateProviders);
+            updateCertificateProviders.put(certificate.getId(), certificateProvider);
+            domainsCertificateProviders.put(certificate.getDomain(), updateCertificateProviders);
+        } else {
+            domainsCertificateProviders.put(certificate.getDomain(), Collections.singletonMap(certificate.getId(), certificateProvider));
+        }
     }
 
     private void initDefaultCertificateProvider() {

@@ -15,13 +15,14 @@
  */
 package io.gravitee.am.extensiongrant.jwtbearer.provider;
 
-import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.jwtbearer.JwtBearerExtensionGrantConfiguration;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.SignatureException;
 import io.reactivex.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +72,9 @@ public class JwtBearerExtensionGrantProvider implements ExtensionGrantProvider, 
             Jws<Claims> jwsClaims = jwtParser.parseClaimsJws(assertion);
             Claims claims = jwsClaims.getBody();
             return Maybe.just(new DefaultUser(claims.getSubject()));
+        } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException | SignatureException | IllegalArgumentException e) {
+            LOGGER.debug(e.getMessage(),e.getCause());
+            return Maybe.error(new InvalidGrantException(e.getMessage(), e));
         } catch (Exception e) {
             LOGGER.error(e.getMessage(),e.getCause());
             return Maybe.error(new InvalidGrantException(e.getMessage(), e));
