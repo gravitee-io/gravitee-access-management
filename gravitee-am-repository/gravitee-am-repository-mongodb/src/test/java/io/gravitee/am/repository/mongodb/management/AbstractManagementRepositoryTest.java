@@ -39,7 +39,7 @@ public abstract class AbstractManagementRepositoryTest {
 
     @Before
     public void before() throws InterruptedException {
-        Thread.sleep(500l);
+        Thread.sleep(1000l);
     }
 
     @After

@@ -36,7 +36,7 @@ public abstract class AbstractOAuth2RepositoryTest extends TestCase {
 
     @Before
     public void before() throws InterruptedException {
-        Thread.sleep(500l);
+        Thread.sleep(1000l);
     }
 
     @After
