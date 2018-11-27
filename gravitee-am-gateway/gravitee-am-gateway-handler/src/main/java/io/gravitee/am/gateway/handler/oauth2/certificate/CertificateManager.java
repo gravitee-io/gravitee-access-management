@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.certificate;
 
 import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.common.service.Service;
 import io.reactivex.Maybe;
 
 import java.util.Collection;
@@ -24,7 +25,7 @@ import java.util.Collection;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateManager {
+public interface CertificateManager extends Service {
 
     Maybe<CertificateProvider> get(String id);
 

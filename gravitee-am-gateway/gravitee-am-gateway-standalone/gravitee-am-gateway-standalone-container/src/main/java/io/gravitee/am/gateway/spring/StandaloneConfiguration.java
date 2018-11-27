@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.gateway.event.EventManagerImpl;
 import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.reactor.spring.ReactorConfiguration;
 import io.gravitee.am.gateway.vertx.VertxServerConfiguration;
@@ -23,7 +24,6 @@ import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
 import io.gravitee.common.event.EventManager;
-import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.node.api.Node;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;

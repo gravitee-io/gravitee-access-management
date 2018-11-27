@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.gateway.handler;
 
+import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.spring.HandlerConfiguration;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.model.Domain;
+import io.gravitee.common.component.LifecycleComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +32,8 @@ import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -44,6 +49,7 @@ public class SecurityDomainRouterFactory {
     public VertxSecurityDomainHandler create(Domain domain) {
         if (domain.isEnabled()) {
             AbstractApplicationContext internalApplicationContext = createApplicationContext(domain);
+            startComponents(internalApplicationContext);
             VertxSecurityDomainHandler handler = internalApplicationContext.getBean(VertxSecurityDomainHandler.class);
             return handler;
         } else {
@@ -75,5 +81,21 @@ public class SecurityDomainRouterFactory {
         public ReactorHandlerClassLoader(ClassLoader parent) {
             super(new URL[]{}, parent);
         }
+    }
+
+    private void startComponents(ApplicationContext applicationContext) {
+        // register components that require event listener feature
+        List<Class<? extends LifecycleComponent>> components = new ArrayList<>();
+        components.add(ClientService.class);
+        components.add(CertificateManager.class);
+
+        components.forEach(componentClass -> {
+            LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);
+            try {
+                lifecyclecomponent.start();
+            } catch (Exception e) {
+                logger.error("An error occurs while starting component {}", componentClass.getSimpleName(), e);
+            }
+        });
     }
 }
