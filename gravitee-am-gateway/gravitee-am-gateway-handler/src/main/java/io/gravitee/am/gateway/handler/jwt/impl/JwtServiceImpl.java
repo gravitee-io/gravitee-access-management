@@ -16,22 +16,17 @@
 package io.gravitee.am.gateway.handler.jwt.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.jwt.JwtService;
-import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.model.Client;
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.JacksonDeserializer;
-import io.jsonwebtoken.io.JacksonSerializer;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.security.Key;
-import java.security.KeyPair;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
@@ -87,34 +82,11 @@ public class JwtServiceImpl implements JwtService {
     }
 
     private Single<String> sign(CertificateProvider certificateProvider, JWT jwt) {
-        return certificateProvider.key()
-                .map(key -> {
-                    Key signingKey = key.getValue() instanceof KeyPair ? ((KeyPair) key.getValue()).getPrivate() : (Key) key.getValue();
-                    return Jwts.builder().serializeToJsonWith(new JacksonSerializer(objectMapper)).signWith(signingKey).setHeaderParam(JwsHeader.KEY_ID, key.getKeyId()).setClaims(jwt).compact();
-                });
+        return Single.just(certificateProvider.getJwtBuilder().sign(jwt));
     }
 
     private Single<Map<String, Object>> decode(CertificateProvider certificateProvider, String payload) {
-        return certificateProvider.key()
-                .map(key -> {
-                    Key signingKey = key.getValue() instanceof KeyPair ? ((KeyPair) key.getValue()).getPublic() : (Key) key.getValue();
-                    try {
-                        JwtParser jwtParser = Jwts.parser().deserializeJsonWith(new JacksonDeserializer(objectMapper)).setSigningKey(signingKey);
-                        return jwtParser.parseClaimsJws(payload).getBody();
-                    } catch (ExpiredJwtException ex) {
-                        logger.debug("The following JWT token : {} is expired", payload);
-                        throw new io.gravitee.am.common.jwt.exception.ExpiredJwtException("Token is expired", ex);
-                    } catch (MalformedJwtException ex) {
-                        logger.debug("The following JWT token : {} is malformed", payload);
-                        throw new io.gravitee.am.common.jwt.exception.MalformedJwtException("Token is malformed", ex);
-                    } catch (io.jsonwebtoken.security.SignatureException | UnsupportedJwtException ex) {
-                        logger.debug("Verifying JWT token signature : {} has failed", payload);
-                        throw new io.gravitee.am.common.jwt.exception.SignatureException("Token's signature is invalid", ex);
-                    } catch (Exception ex) {
-                        logger.error("An error occurs while parsing JWT token : {}", payload, ex);
-                        throw ex;
-                    }
-                });
+        return Single.just(certificateProvider.getJwtParser().parse(payload));
     }
 
 }

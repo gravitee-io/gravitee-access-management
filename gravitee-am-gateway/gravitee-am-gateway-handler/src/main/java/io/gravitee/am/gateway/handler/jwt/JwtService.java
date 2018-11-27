@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.jwt;
 
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.certificate.CertificateProvider;
 import io.gravitee.am.model.Client;
 import io.reactivex.Single;
 

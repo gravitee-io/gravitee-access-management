@@ -222,7 +222,7 @@ public class TokenServiceImpl implements TokenService {
                     } else {
                         return Single.just(convert(accessToken, encodedAccessToken, null, oAuth2Request));
                     }
-                });
+                }); // RSA Signer can be very slow, delegate work to a bounded thread-pool
     }
 
     /**

@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.certificate.impl;
+package io.gravitee.am.gateway.handler.certificate.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateMetadata;
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.gateway.core.event.DomainEvent;
-import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.certificate.CertificateProvider;
+import io.gravitee.am.gateway.handler.jwt.impl.JJwtBuilder;
+import io.gravitee.am.gateway.handler.jwt.impl.JJwtParser;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.jose.JWK;
@@ -29,6 +32,10 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
+import io.jsonwebtoken.JwsHeader;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.JacksonDeserializer;
+import io.jsonwebtoken.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -41,6 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.security.Key;
+import java.security.KeyPair;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,6 +83,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     @Autowired
     private EventManager eventManager;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private ConcurrentMap<String, Map<String, CertificateProvider>> domainsCertificateProviders = new ConcurrentHashMap<>();
 
@@ -166,8 +177,11 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     }
 
     private void updateCertificateProvider(Certificate certificate) {
+        // create underline provider
+        io.gravitee.am.certificate.api.CertificateProvider provider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
+
         // create certificate provider
-        CertificateProvider certificateProvider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
+        CertificateProvider certificateProvider = create(provider);
 
         // add certificate provider to its domain
         Map<String, CertificateProvider> existingDomainCertificateProviders = domainsCertificateProviders.get(certificate.getDomain());
@@ -193,7 +207,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         CertificateMetadata certificateMetadata = new CertificateMetadata();
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, defaultDigestAlgorithm));
 
-        defaultCertificateProvider = new CertificateProvider() {
+        io.gravitee.am.certificate.api.CertificateProvider defaultProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
 
             @Override
             public Single<io.gravitee.am.certificate.api.Key> key() {
@@ -215,5 +229,25 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                 return certificateMetadata;
             }
         };
+
+        defaultCertificateProvider = create(defaultProvider);
+    }
+
+    private CertificateProvider create(io.gravitee.am.certificate.api.CertificateProvider provider) {
+        // create certificate provider
+        CertificateProvider certificateProvider = new CertificateProvider(provider);
+
+        // create parser and builder (default to jjwt)
+        io.gravitee.am.certificate.api.Key providerKey = provider.key().blockingGet();
+        Key signingKey = providerKey.getValue() instanceof KeyPair ? ((KeyPair) providerKey.getValue()).getPrivate() : (Key) providerKey.getValue();
+        Key verifyingKey = providerKey.getValue() instanceof KeyPair ? ((KeyPair) providerKey.getValue()).getPublic() : (Key) providerKey.getValue();
+
+        io.jsonwebtoken.JwtParser jjwtParser = Jwts.parser().deserializeJsonWith(new JacksonDeserializer(objectMapper)).setSigningKey(verifyingKey);
+        io.jsonwebtoken. JwtBuilder jjwtBuilder = Jwts.builder().serializeToJsonWith(new JacksonSerializer(objectMapper)).signWith(signingKey).setHeaderParam(JwsHeader.KEY_ID, providerKey.getKeyId());
+
+        certificateProvider.setJwtParser(new JJwtParser(jjwtParser));
+        certificateProvider.setJwtBuilder(new JJwtBuilder(jjwtBuilder));
+
+        return certificateProvider;
     }
 }

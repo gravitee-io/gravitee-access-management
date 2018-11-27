@@ -13,25 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.certificate;
+package io.gravitee.am.gateway.handler.jwt;
 
-import io.gravitee.am.certificate.api.CertificateProvider;
-import io.gravitee.common.service.Service;
-import io.reactivex.Maybe;
-
-import java.util.Collection;
+import io.gravitee.am.common.jwt.JWT;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateManager extends Service {
+public interface JwtBuilder {
 
-    Maybe<CertificateProvider> get(String id);
+    String sign(JWT payload);
 
-    Maybe<CertificateProvider> findByDomainAndId(String domain, String id);
-
-    Collection<CertificateProvider> providers();
-
-    CertificateProvider defaultCertificateProvider();
 }

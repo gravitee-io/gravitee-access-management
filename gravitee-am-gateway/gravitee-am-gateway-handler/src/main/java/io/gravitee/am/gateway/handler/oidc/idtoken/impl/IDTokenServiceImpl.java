@@ -21,7 +21,7 @@ import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.oidc.idtoken.IDToken;
 import io.gravitee.am.gateway.handler.jwt.JwtService;
-import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
 import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
@@ -121,7 +121,7 @@ public class IDTokenServiceImpl implements IDTokenService {
                     // set hash claims (hybrid flow)
                     if (oAuth2Request.getContext() != null && !oAuth2Request.getContext().isEmpty()) {
                         oAuth2Request.getContext().forEach((claimName, claimValue) -> {
-                            CertificateMetadata certificateMetadata = certificateProvider.certificateMetadata();
+                            CertificateMetadata certificateMetadata = certificateProvider.getProvider().certificateMetadata();
                             String digestAlgorithm = defaultDigestAlgorithm;
                             if (certificateMetadata != null
                                     && certificateMetadata.getMetadata() != null

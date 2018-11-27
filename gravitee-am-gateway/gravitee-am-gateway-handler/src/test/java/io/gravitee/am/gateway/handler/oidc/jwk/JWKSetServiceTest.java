@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.jwk;
 
 import io.gravitee.am.certificate.api.CertificateProvider;
-import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oidc.jwk.impl.JWKSetServiceImpl;
 import io.reactivex.Flowable;
 import io.reactivex.observers.TestObserver;
@@ -26,8 +26,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -53,7 +54,7 @@ public class JWKSetServiceTest {
         CertificateProvider certificateProvider = mock(CertificateProvider.class);
         when(certificateProvider.keys()).thenReturn(Flowable.just(key));
 
-        when(certificateManager.providers()).thenReturn(Collections.singletonList(certificateProvider));
+        when(certificateManager.providers()).thenReturn(Collections.singletonList(new io.gravitee.am.gateway.handler.certificate.CertificateProvider(certificateProvider)));
 
         TestObserver<JWKSet> testObserver = jwkSetService.getKeys().test();
 
@@ -74,7 +75,11 @@ public class JWKSetServiceTest {
         CertificateProvider certificateProvider2 = mock(CertificateProvider.class);
         when(certificateProvider2.keys()).thenReturn(Flowable.just(key2));
 
-        when(certificateManager.providers()).thenReturn(Arrays.asList(certificateProvider, certificateProvider2));
+        List<io.gravitee.am.gateway.handler.certificate.CertificateProvider> certificateProviders = new ArrayList<>();
+        certificateProviders.add(new io.gravitee.am.gateway.handler.certificate.CertificateProvider(certificateProvider));
+        certificateProviders.add(new io.gravitee.am.gateway.handler.certificate.CertificateProvider(certificateProvider2));
+
+        when(certificateManager.providers()).thenReturn(certificateProviders);
 
         TestObserver<JWKSet> testObserver = jwkSetService.getKeys().test();
 

@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.jwk.impl;
 
-import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oidc.jwk.JWK;
 import io.gravitee.am.gateway.handler.oidc.jwk.JWKSet;
 import io.gravitee.am.gateway.handler.oidc.jwk.JWKSetService;
@@ -36,7 +36,7 @@ public class JWKSetServiceImpl implements JWKSetService {
     @Override
     public Single<JWKSet> getKeys() {
         return Flowable.fromIterable(certificateManager.providers())
-                .flatMap(certificateProvider -> certificateProvider.keys())
+                .flatMap(certificateProvider -> certificateProvider.getProvider().keys())
                 .map(this::convert)
                 .toList()
                 .map(keys -> {

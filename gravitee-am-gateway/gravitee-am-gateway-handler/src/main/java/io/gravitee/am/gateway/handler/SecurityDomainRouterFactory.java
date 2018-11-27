@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler;
 
-import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.spring.HandlerConfiguration;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;

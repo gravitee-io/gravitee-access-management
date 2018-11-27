@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.oauth2.spring;
 
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.approval.impl.ApprovalServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.oauth2.certificate.impl.CertificateManagerImpl;
+import io.gravitee.am.gateway.handler.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.certificate.impl.CertificateManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.client.impl.ClientServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
