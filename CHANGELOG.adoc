@@ -1,5 +1,128 @@
 # Change Log
 
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/23?closed=1[2.1.0 (2018-11-28)]
+
+=== Bug fixes
+
+*_Certificate_*
+
+- Save certificate binary data into database https://github.com/gravitee-io/graviteeio-access-management/issues/295[#295]
+- Unable to disable client's certificate https://github.com/gravitee-io/graviteeio-access-management/issues/309[#309]
+
+*_Gateway_*
+
+- Gateway should not load master domains https://github.com/gravitee-io/graviteeio-access-management/issues/427[#427]
+- Rely on "X-Forwarded-Path" header to handle 302 redirection  https://github.com/gravitee-io/graviteeio-access-management/issues/433[#433]
+- Rely on X-Forwarded-Prefix to set Session domain cookie path https://github.com/gravitee-io/graviteeio-access-management/issues/436[#436]
+
+*_Identityprovider_*
+
+- Mongo] handle complex user claims https://github.com/gravitee-io/graviteeio-access-management/issues/441[#441]
+- [ldap] Use a password field for the LDAP password property https://github.com/gravitee-io/graviteeio-access-management/issues/438[#438]
+
+*_Management_*
+
+- Scopes are still present when a security domain is deleted. https://github.com/gravitee-io/graviteeio-access-management/issues/346[#346]
+
+*_Oauth2_*
+
+- A refresh_token is provided even for a client without this grant type https://github.com/gravitee-io/graviteeio-access-management/issues/338[#338]
+- Access token additional parameters https://github.com/gravitee-io/graviteeio-access-management/issues/341[#341]
+- Access token after Implicit/Hybrid flow is the same as Resource Owner Flow https://github.com/gravitee-io/graviteeio-access-management/issues/446[#446]
+- Authorization codemissing client_id https://github.com/gravitee-io/graviteeio-access-management/issues/343[#343]
+- Authorization server must throw invalid request exception if request includes a parameter more than once https://github.com/gravitee-io/graviteeio-access-management/issues/363[#363]
+- Client can ask for any scope, even if scope are not defined from domain settings https://github.com/gravitee-io/graviteeio-access-management/issues/337[#337]
+- Different behaviors between no scope and empty scope https://github.com/gravitee-io/graviteeio-access-management/issues/340[#340]
+- Flow with redirect_uri (auth_code / implicit) https://github.com/gravitee-io/graviteeio-access-management/issues/371[#371]
+- Gateway returns a 500 when providing an invalid Basic auth header https://github.com/gravitee-io/graviteeio-access-management/issues/339[#339]
+- Invalid set-cookie value https://github.com/gravitee-io/graviteeio-access-management/issues/352[#352]
+- Scope approvals are never removed https://github.com/gravitee-io/graviteeio-access-management/issues/362[#362]
+- Unsupported response_type with authorize endpoint https://github.com/gravitee-io/graviteeio-access-management/issues/342[#342]
+- Wrong "sub" claim for resource owner password grant flow https://github.com/gravitee-io/graviteeio-access-management/issues/374[#374]
+- [authorization code] An unknown client / invalid client must not be redirected to login form https://github.com/gravitee-io/graviteeio-access-management/issues/353[#353]
+- [authorization code] Login form must not be accessed directly https://github.com/gravitee-io/graviteeio-access-management/issues/358[#358]
+- [authorization code] No redirect_uri must result on an error https://github.com/gravitee-io/graviteeio-access-management/issues/357[#357]
+- [revocation] No error / error_description when the client_id is not the one used to generate token https://github.com/gravitee-io/graviteeio-access-management/issues/385[#385]
+- [revocation] No error and error_description when the client is unknown https://github.com/gravitee-io/graviteeio-access-management/issues/384[#384]
+
+*_Oidc_*
+
+- At_hash ID Token claim is required for Implicit and Hybrid flow https://github.com/gravitee-io/graviteeio-access-management/issues/396[#396]
+- Client cannot be found in case of failure https://github.com/gravitee-io/graviteeio-access-management/issues/408[#408]
+- Handle nonce parameter for existing tokens https://github.com/gravitee-io/graviteeio-access-management/issues/316[#316]
+- Hybrid Flow - response type code+token should not have an id_token in response even with scope openid https://github.com/gravitee-io/graviteeio-access-management/issues/439[#439]
+- Hybrid flow Authorization Error Response must be return in the fragment component of the Redirection URI https://github.com/gravitee-io/graviteeio-access-management/issues/413[#413]
+- Implicit flow should use fragment in redirection uri instead of query-param https://github.com/gravitee-io/graviteeio-access-management/issues/400[#400]
+- Mismatch redirect_uri should end up with default AM error page https://github.com/gravitee-io/graviteeio-access-management/issues/409[#409]
+- No error_description when calling UserInfo endpoint https://github.com/gravitee-io/graviteeio-access-management/issues/378[#378]
+- Nonce parameter is required for implicit flow https://github.com/gravitee-io/graviteeio-access-management/issues/395[#395]
+- OpenIDScopeUpgrader - ScopeAlreadyExistsException for newly created database https://github.com/gravitee-io/graviteeio-access-management/issues/418[#418]
+- Some Location HTTP redirect_uri are not absolute https://github.com/gravitee-io/graviteeio-access-management/issues/415[#415]
+- Sub claim must be an internal identifier https://github.com/gravitee-io/graviteeio-access-management/issues/376[#376]
+- UserInfo Response 'sub' claim mismatch ID Token 'sub' claim https://github.com/gravitee-io/graviteeio-access-management/issues/394[#394]
+- [implicit] redirect_uri is required https://github.com/gravitee-io/graviteeio-access-management/issues/402[#402]
+
+*_Plugins_*
+
+- PluginContextFactoryImpl - Unable to refresh plugin context https://github.com/gravitee-io/graviteeio-access-management/issues/430[#430]
+
+=== Features
+
+*_Gateway_*
+
+- Management] add healthcheck probes https://github.com/gravitee-io/graviteeio-access-management/issues/453[#453]
+
+*_Idp_*
+
+- Add "email" field for inline provider https://github.com/gravitee-io/graviteeio-access-management/issues/391[#391]
+- Enable user mapper for inline provider https://github.com/gravitee-io/graviteeio-access-management/issues/390[#390]
+
+*_Oauth2_*
+
+- Allow cross domains tokens introspection https://github.com/gravitee-io/graviteeio-access-management/issues/457[#457]
+- Rethink the way to store tokens https://github.com/gravitee-io/graviteeio-access-management/issues/451[#451]
+
+*_Oidc_*
+
+- Complete OpenID Provider Metadata https://github.com/gravitee-io/graviteeio-access-management/issues/330[#330]
+- Hybrid Flow handle multiple response type https://github.com/gravitee-io/graviteeio-access-management/issues/332[#332]
+- Implicit flow handle id_token response type https://github.com/gravitee-io/graviteeio-access-management/issues/334[#334]
+- Not the same nonce in the ID Token as in the authorization request https://github.com/gravitee-io/graviteeio-access-management/issues/299[#299]
+- Request with prompt=login when user logged in https://github.com/gravitee-io/graviteeio-access-management/issues/319[#319]
+- Request with prompt=none when not logged in https://github.com/gravitee-io/graviteeio-access-management/issues/300[#300]
+- Requesting Claims using Scope Values https://github.com/gravitee-io/graviteeio-access-management/issues/380[#380]
+- Requesting Claims using the "claims" Request Parameter https://github.com/gravitee-io/graviteeio-access-management/issues/325[#325]
+- Requesting ID Token with max_age=1 seconds restriction https://github.com/gravitee-io/graviteeio-access-management/issues/301[#301]
+- Requesting ID Token with max_age=10000 seconds restriction https://github.com/gravitee-io/graviteeio-access-management/issues/302[#302]
+- Revoke tokens issued from an code using twice https://github.com/gravitee-io/graviteeio-access-management/issues/328[#328]
+- Signed ID Token has no kid https://github.com/gravitee-io/graviteeio-access-management/issues/298[#298]
+- UserInfo Endpoint access with POST and bearer body https://github.com/gravitee-io/graviteeio-access-management/issues/317[#317]
+
+*_Openid_*
+
+- OpenID Connect support https://github.com/gravitee-io/graviteeio-access-management/issues/1[#1]
+- Well-known endpoint https://github.com/gravitee-io/graviteeio-access-management/issues/182[#182]
+
+=== Improvements
+
+*_Gateway_*
+
+- Improve logging https://github.com/gravitee-io/graviteeio-access-management/issues/424[#424]
+
+*_Management_*
+
+- Better support  for X-Forward-* headers https://github.com/gravitee-io/graviteeio-access-management/issues/419[#419]
+
+*_Oauth2_*
+
+- Default login page should display domain's name instead of domain's description https://github.com/gravitee-io/graviteeio-access-management/issues/445[#445]
+- Update extension grants for 2.1 version https://github.com/gravitee-io/graviteeio-access-management/issues/455[#455]
+
+*_Repository_*
+
+- [mongodb] TLS support https://github.com/gravitee-io/graviteeio-access-management/issues/443[#443]
+
+
 == https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/24?closed=1[2.0.5 (2018-10-25)]
 
 === Bug fixes
