@@ -52,6 +52,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         super(extensionGrant.getGrantType());
         setTokenService(tokenService);
         setTokenRequestResolver(tokenRequestResolver);
+        setSupportRefreshToken(false);
         this.extensionGrantProvider = extensionGrantProvider;
         this.extensionGrant = extensionGrant;
         this.userAuthenticationManager = userAuthenticationManager;
@@ -64,18 +65,21 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                     if (extensionGrant.isCreateUser()) {
                         Map<String, Object> additionalInformation = endUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(endUser.getAdditionalInformation());
                         // set source provider
-                        additionalInformation.put("source", extensionGrant.getIdentityProvider());
+                        additionalInformation.put("source", extensionGrant.getIdentityProvider() != null ? extensionGrant.getIdentityProvider() : extensionGrant.getId());
+                        additionalInformation.put("client_id", client.getClientId());
                         ((DefaultUser) endUser).setAdditionalInformation(additionalInformation);
                         return userAuthenticationManager.loadUser(endUser).toMaybe();
                     } else {
                         User user = new User();
+                        // we do not create AM user, user id is the idp user id
+                        user.setId(endUser.getId());
                         user.setUsername(endUser.getUsername());
                         user.setAdditionalInformation(endUser.getAdditionalInformation());
                         return Maybe.just(user);
                     }
                 })
                 .onErrorResumeNext(ex -> {
-                    return Maybe.error(new InvalidGrantException());
+                    return Maybe.error(new InvalidGrantException(ex.getMessage()));
                 });
     }
 

@@ -7,6 +7,25 @@
       "title": "Public key",
       "description": "SSH public key (ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*) (.*)) used to verify assertion payload integrity.",
       "type" : "string"
+    },
+    "claimsMapper" : {
+      "title": "Claims mapper",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "assertion_claim": {
+            "title": "Assertion claim",
+            "description": "Assertion payload claim",
+            "type": "string"
+          },
+          "token_claim": {
+            "title": "Token claim",
+            "description": "Claim that will be added to End-User claims",
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "required": [

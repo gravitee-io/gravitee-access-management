@@ -230,8 +230,8 @@ public class ClientServiceTest {
 
     @Test
     public void shouldFindByExtensionGrant() {
-        when(clientRepository.findByExtensionGrant("client-extension-grant")).thenReturn(Single.just(Collections.singleton(new Client())));
-        TestObserver<Set<Client>> testObserver = clientService.findByExtensionGrant("client-extension-grant").test();
+        when(clientRepository.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant")).thenReturn(Single.just(Collections.singleton(new Client())));
+        TestObserver<Set<Client>> testObserver = clientService.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -241,10 +241,10 @@ public class ClientServiceTest {
 
     @Test
     public void shouldFindByExtensionGrant_technicalException() {
-        when(clientRepository.findByExtensionGrant("client-extension-grant")).thenReturn(Single.error(TechnicalException::new));
+        when(clientRepository.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant")).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        clientService.findByExtensionGrant("client-extension-grant").subscribe(testObserver);
+        clientService.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant").subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();

@@ -69,6 +69,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientsCollection = mongoOperations.getCollection("clients", ClientMongo.class);
         clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
         clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1)).subscribe(new LoggableIndexSubscriber());
+        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1)).subscribe(new LoggableIndexSubscriber());
         clientsCollection.createIndex(new Document(FIELD_IDENTITIES, 1)).subscribe(new LoggableIndexSubscriber());
         clientsCollection.createIndex(new Document(FIELD_CERTIFICATE, 1)).subscribe(new LoggableIndexSubscriber());
         clientsCollection.createIndex(new Document(FIELD_GRANT_TYPES, 1)).subscribe(new LoggableIndexSubscriber());
@@ -102,8 +103,8 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     }
 
     @Override
-    public Single<Set<Client>> findByExtensionGrant(String tokenGranter) {
-        return Observable.fromPublisher(clientsCollection.find(eq(FIELD_GRANT_TYPES, tokenGranter))).map(this::convert).collect(HashSet::new, Set::add);
+    public Single<Set<Client>> findByDomainAndExtensionGrant(String domain, String tokenGranter) {
+        return Observable.fromPublisher(clientsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPES, tokenGranter)))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override

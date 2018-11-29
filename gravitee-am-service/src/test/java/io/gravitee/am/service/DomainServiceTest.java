@@ -59,6 +59,7 @@ public class DomainServiceTest {
     private static final String DOMAIN_ID = "id-domain";
     private static final String IDP_ID = "id-idp";
     private static final String CERTIFICATE_ID = "id-certificate";
+    private static final String EXTENSION_GRANT_ID = "id-extension-grant";
     private static final String ROLE_ID = "id-role";
     private static final String USER_ID = "id-user";
     private static final String SCOPE_ID = "id-scope";
@@ -75,6 +76,9 @@ public class DomainServiceTest {
 
     @Mock
     private IdentityProvider identityProvider;
+
+    @Mock
+    private ExtensionGrant extensionGrant;
 
     @Mock
     private Role role;
@@ -99,6 +103,9 @@ public class DomainServiceTest {
 
     @Mock
     private IdentityProviderService identityProviderService;
+
+    @Mock
+    private ExtensionGrantService extensionGrantService;
 
     @Mock
     private UserService userService;
@@ -374,6 +381,9 @@ public class DomainServiceTest {
         when(identityProvider.getId()).thenReturn(IDP_ID);
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(identityProvider)));
         when(identityProviderService.delete(eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
+        when(extensionGrant.getId()).thenReturn(EXTENSION_GRANT_ID);
+        when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(extensionGrant)));
+        when(extensionGrantService.delete(eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
         when(role.getId()).thenReturn(ROLE_ID);
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(role)));
         when(roleService.delete(anyString())).thenReturn(Completable.complete());
@@ -396,6 +406,7 @@ public class DomainServiceTest {
         verify(clientService, times(2)).delete(anyString());
         verify(certificateService, times(1)).delete(CERTIFICATE_ID);
         verify(identityProviderService, times(1)).delete(DOMAIN_ID, IDP_ID);
+        verify(extensionGrantService, times(1)).delete(DOMAIN_ID, EXTENSION_GRANT_ID);
         verify(roleService, times(1)).delete(ROLE_ID);
         verify(userService, times(1)).delete(USER_ID);
         verify(scopeService, times(1)).delete(SCOPE_ID, true);
@@ -409,6 +420,7 @@ public class DomainServiceTest {
         when(clientService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(userService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(scopeService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
@@ -423,6 +435,7 @@ public class DomainServiceTest {
         verify(clientService, never()).delete(anyString());
         verify(certificateService, never()).delete(anyString());
         verify(identityProviderService, never()).delete(anyString(), anyString());
+        verify(extensionGrantService, never()).delete(anyString(), anyString());
         verify(roleService, never()).delete(anyString());
         verify(userService, never()).delete(anyString());
         verify(scopeService, never()).delete(anyString(), anyBoolean());

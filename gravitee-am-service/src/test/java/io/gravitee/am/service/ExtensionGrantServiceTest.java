@@ -240,14 +240,14 @@ public class ExtensionGrantServiceTest {
         testObserver.assertError(ExtensionGrantNotFoundException.class);
         testObserver.assertNotComplete();
 
-        verify(clientService, never()).findByExtensionGrant(anyString());
+        verify(clientService, never()).findByDomainAndExtensionGrant(eq(DOMAIN), anyString());
         verify(extensionGrantRepository, never()).delete(anyString());
     }
 
     @Test
     public void shouldDelete_extensionGrantWithClients() {
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(new ExtensionGrant()));
-        when(clientService.findByExtensionGrant("my-extension-grant")).thenReturn(Single.just(Collections.singleton(new Client())));
+        when(clientService.findByDomainAndExtensionGrant(DOMAIN, "my-extension-grant")).thenReturn(Single.just(Collections.singleton(new Client())));
 
         TestObserver testObserver = extensionGrantService.delete(DOMAIN, "my-extension-grant").test();
 
@@ -276,7 +276,7 @@ public class ExtensionGrantServiceTest {
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(existingExtensionGrant));
         when(extensionGrantRepository.findByDomainAndGrantType(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.delete("my-extension-grant")).thenReturn(Completable.complete());
-        when(clientService.findByExtensionGrant("my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
+        when(clientService.findByDomainAndExtensionGrant(DOMAIN, "my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
         when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = extensionGrantService.delete(DOMAIN, "my-extension-grant").test();
