@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "e780207b-4236-473c-9a42-8031c342d6cf",
+		"_postman_id": "baa5848d-e14f-48bd-bb7e-fac6379e917b",
 		"name": "Gravitee.io AM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -19769,6 +19769,507 @@
 										{
 											"key": "password",
 											"value": "password",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/oauth/token",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"oauth",
+										"token"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				}
+			]
+		},
+		{
+			"name": "Extension grant",
+			"item": [
+				{
+					"name": "JWT Bearer",
+					"item": [
+						{
+							"name": "Create jks certificate",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "a1ab79e9-b254-47f9-8af9-e6ab3e47ab58",
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Extension Grant - create jks certificate\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.have.property('id');",
+											"    pm.environment.set('certificateJks', jsonData.id);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 5000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"type\": \"javakeystore-am-certificate\",\n  \"configuration\": \"{\\\"jks\\\":\\\"{\\\\\\\"name\\\\\\\":\\\\\\\"server.jks\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"size\\\\\\\":2237,\\\\\\\"content\\\\\\\":\\\\\\\"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\\\\\\\"}\\\",\\\"storepass\\\":\\\"letmein\\\",\\\"alias\\\":\\\"mytestkey\\\",\\\"keypass\\\":\\\"changeme\\\"}\",\n  \"name\": \"Test\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/certificates",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"certificates"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Configure User Management client",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 5000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"certificate\": \"{{certificateJks}}\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/clients/{{clientUM}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"clients",
+										"{{clientUM}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create extension grant",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "a1ab79e9-b254-47f9-8af9-e6ab3e47ab58",
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Extension Grant - create jwt bearer\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.have.property('id');",
+											"    pm.environment.set('jwtBearerExtensionGrant', jsonData.id);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 5000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"type\": \"jwtbearer-am-extension-grant\",\n  \"configuration\": \"{\\\"publicKey\\\":\\\"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCrviVm3+KD98U899xIF5w9I4C/3JTv/ZVduRhcMoGkfBe6sz2pJ2kf6bMjtWnEb91H63GHWdv554ez3HIYxBZsYddaU93YtiqrsbCCQc3GMmFB120WgUWfjqsvPOMcz3PyFy3yw+XLAiND0Pl2lv8K6ejJvfwmTRhy1DI5PQGvRWz57IdoCxjZE8H+Lr79dc/eFhcu6Fksxa2tugv86tyO38sA9v1L2CCQjsqQL8TnMHbDV8ahGK6Abv43KMjHV6tgFhOhHc1a2YaYCtEI0yKKH2t0K3hrHRwUfgqu4Q5xqWpBkEFX05YW8ygrWivXfDwGjqcMyiHEYlRvDcrRP0Jh test@test.com\\\",\\\"claimsMapper\\\":[{\\\"assertion_claim\\\":\\\"email\\\",\\\"token_claim\\\":\\\"email\\\"}]}\",\n  \"name\": \"JWT BEARER\",\n  \"grantType\": \"urn:ietf:params:oauth:grant-type:jwt-bearer\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/extensionGrants",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"extensionGrants"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create jwt bearer client",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c545400c-100e-44e5-a7b9-f4d4c11e516f",
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"var body = JSON.parse(responseBody);",
+											"pm.environment.set('clientJwtBearer', body.id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"clientId\": \"client-jwt-bearer\",\n  \"clientSecret\": \"client-jwt-bearer-secret\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/clients",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"clients"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Configure jwt bearer client",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 5000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"authorizedGrantTypes\": [\"urn:ietf:params:oauth:grant-type:jwt-bearer\"],\n  \"scopes\": [\"openid\"]\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/clients/{{clientJwtBearer}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"clients",
+										"{{clientJwtBearer}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Extension grant - create user\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.have.property('id');",
+											"    pm.expect(jsonData.internal).to.eql(true);",
+											"    pm.expect(jsonData.enabled).to.eql(true);",
+											"    pm.expect(jsonData.preRegistration).to.eql(false);",
+											"    pm.expect(jsonData.registrationCompleted).to.eql(true);",
+											"    pm.expect(jsonData.source).to.eql('default-idp-test')",
+											"    pm.environment.set('userUM', jsonData.id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"password\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/users",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Authenticate User",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Extension grant - authenticate - success\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('access_token');",
+											"    pm.environment.set('assertionToken', body.id_token);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Basic Y2xpZW50LXVtOmNsaWVudC11bS1zZWNyZXQ="
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "jensen.barbara",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "openid",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/oauth/token",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"oauth",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "JWT Bearer extension grant",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f4cec8d7-bd2c-44cc-8423-ae8cc21cc068",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Extension grant - jwt bearer grant - success\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('access_token');",
+											"    var claims = jwt_decode(body.id_token);",
+											"    pm.expect(claims).to.have.property('email');",
+											"});",
+											"",
+											"function jwt_decode(jwt) {",
+											"    var parts = jwt.split('.'); // header, payload, signature",
+											"    return JSON.parse(atob(parts[1]));",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/x-www-form-urlencoded",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Basic Y2xpZW50LWp3dC1iZWFyZXI6Y2xpZW50LWp3dC1iZWFyZXItc2VjcmV0",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+											"type": "text"
+										},
+										{
+											"key": "assertion",
+											"value": "{{assertionToken}}",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "openid",
 											"type": "text"
 										}
 									]

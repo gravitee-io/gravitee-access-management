@@ -72,6 +72,9 @@ public class DomainServiceImpl implements DomainService {
     private IdentityProviderService identityProviderService;
 
     @Autowired
+    private ExtensionGrantService extensionGrantService;
+
+    @Autowired
     private RoleService roleService;
 
     @Autowired
@@ -275,6 +278,13 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(identityProviders -> {
                                         List<Completable> deleteIdentityProvidersCompletable = identityProviders.stream().map(i -> identityProviderService.delete(domainId, i.getId())).collect(Collectors.toList());
                                         return Completable.concat(deleteIdentityProvidersCompletable);
+                                    })
+                            )
+                            // delete extension grants
+                            .andThen(extensionGrantService.findByDomain(domainId)
+                                    .flatMapCompletable(extensionGrants -> {
+                                        List<Completable> deleteExtensionGrantsCompletable = extensionGrants.stream().map(i -> extensionGrantService.delete(domainId, i.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteExtensionGrantsCompletable);
                                     })
                             )
                             // delete roles

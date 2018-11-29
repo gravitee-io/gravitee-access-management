@@ -85,8 +85,6 @@ public class ClientServiceImpl implements ClientService {
     @Autowired
     private ScopeService scopeService;
 
-
-
     @Override
     public Maybe<Client> findById(String id) {
         LOGGER.debug("Find client by ID: {}", id);
@@ -159,9 +157,9 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Single<Set<Client>> findByExtensionGrant(String extensionGrant) {
-        LOGGER.debug("Find clients by extension grant : {}", extensionGrant);
-        return clientRepository.findByExtensionGrant(extensionGrant)
+    public Single<Set<Client>> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
+        LOGGER.debug("Find clients by domain {} and extension grant : {}", domain, extensionGrant);
+        return clientRepository.findByDomainAndExtensionGrant(domain, extensionGrant)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find clients by extension grant", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find clients by extension grant", ex));

@@ -172,7 +172,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
         LOGGER.debug("Delete extension grant {}", extensionGrantId);
         return extensionGrantRepository.findById(extensionGrantId)
                 .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrantId)))
-                .flatMapSingle(extensionGrant -> clientService.findByExtensionGrant(extensionGrant.getGrantType())
+                .flatMapSingle(extensionGrant -> clientService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType())
                         .flatMap(clients -> {
                             if (clients.size() > 0) {
                                 throw new ExtensionGrantWithClientsException();

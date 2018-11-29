@@ -58,8 +58,8 @@ public class ClientRepositoryProxy extends AbstractProxy<ClientRepository> imple
     }
 
     @Override
-    public Single<Set<Client>> findByExtensionGrant(String tokenGranter) {
-        return target.findByExtensionGrant(tokenGranter);
+    public Single<Set<Client>> findByDomainAndExtensionGrant(String domain, String tokenGranter) {
+        return target.findByDomainAndExtensionGrant(domain, tokenGranter);
     }
 
     @Override

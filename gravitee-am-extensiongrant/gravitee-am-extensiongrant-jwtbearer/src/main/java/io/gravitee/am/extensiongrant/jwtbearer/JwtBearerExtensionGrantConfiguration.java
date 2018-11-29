@@ -17,6 +17,9 @@ package io.gravitee.am.extensiongrant.jwtbearer;
 
 import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -24,6 +27,7 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 public class JwtBearerExtensionGrantConfiguration implements ExtensionGrantConfiguration {
 
     private String publicKey;
+    private List<Map<String, String>> claimsMapper;
 
     public String getPublicKey() {
         return publicKey;
@@ -31,5 +35,13 @@ public class JwtBearerExtensionGrantConfiguration implements ExtensionGrantConfi
 
     public void setPublicKey(String publicKey) {
         this.publicKey = publicKey;
+    }
+
+    public List<Map<String, String>> getClaimsMapper() {
+        return claimsMapper;
+    }
+
+    public void setClaimsMapper(List<Map<String, String>> claimsMapper) {
+        this.claimsMapper = claimsMapper;
     }
 }

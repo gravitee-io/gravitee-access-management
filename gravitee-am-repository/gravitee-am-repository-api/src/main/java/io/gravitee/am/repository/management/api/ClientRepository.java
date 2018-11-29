@@ -39,7 +39,7 @@ public interface ClientRepository extends CrudRepository<Client, String> {
 
     Single<Set<Client>> findByCertificate(String certificate);
 
-    Single<Set<Client>> findByExtensionGrant(String tokenGranter);
+    Single<Set<Client>> findByDomainAndExtensionGrant(String domain, String tokenGranter);
 
     Single<Set<Client>> findAll();
 
