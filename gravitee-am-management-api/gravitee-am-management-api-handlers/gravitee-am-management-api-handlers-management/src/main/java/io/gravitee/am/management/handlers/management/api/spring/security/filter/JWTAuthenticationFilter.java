@@ -89,7 +89,7 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
             JwtParser jwtParser = Jwts.parser().setSigningKey(key);
             Claims claims = jwtParser.parseClaimsJws(authToken).getBody();
             DefaultUser user = new DefaultUser(claims.getSubject());
-            user.setAdditonalInformation(claims);
+            user.setAdditionalInformation(claims);
             return new UsernamePasswordAuthenticationToken(user, null, AuthorityUtils.NO_AUTHORITIES);
         } catch (Exception ex) {
             removeJWTAuthenticationCookie(response);

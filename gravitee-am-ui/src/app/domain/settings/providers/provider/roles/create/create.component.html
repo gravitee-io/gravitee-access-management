@@ -16,23 +16,37 @@
 
 -->
 <h5 matDialogTitle>
-  Set users to a role
+  Users and Groups role mapper
 </h5>
 <mat-dialog-content>
   <form #userRoleForm="ngForm" fxLayout="column">
-    <h5 style="color: grey; margin: 5px 0 5px 0;">User/group</h5>
-    <mat-form-field fxFlex>
-      <input matInput name="user" placeholder="attributeName=attributeValue" pattern="^(.+)\=(.+)" required autofocus ngModel/>
-    </mat-form-field>
+    <div fxLayout="row">
+      <div fxLayout="column" fxFlex style="margin-right: 10px;">
+        <h5 style="color: grey; margin: 5px 0 5px 0;">Users</h5>
+        <mat-form-field fxFlex>
+          <input matInput name="user" placeholder="attributeName=attributeValue" pattern="^(.+)\=(.+)" autofocus ngModel/>
+        </mat-form-field>
+      </div>
+      <div fxLayout="column" fxFlex>
+        <h5 style="color: grey; margin: 5px 0 5px 0;">Groups</h5>
+        <mat-form-field>
+          <mat-select placeholder="Group" name="groups" ngModel multiple #groupSelect>
+              <mat-option *ngFor="let group of data.groups" [value]="group.id">
+                {{group.name}}
+              </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
     <h5 style="color: grey; margin:  5px 0 15px 0;">Roles</h5>
     <mat-form-field>
       <mat-select placeholder="Roles" name="roles" ngModel multiple required>
-        <mat-option *ngFor="let role of data" [value]="role.id">{{ role.name }}</mat-option>
+        <mat-option *ngFor="let role of data.roles" [value]="role.id">{{ role.name }}</mat-option>
       </mat-select>
     </mat-form-field>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions>
-  <button type="button" mat-raised-button (click)="dialogRef.close(userRoleForm.value)" color="primary" [disabled]="userRoleForm.invalid">Save</button>
+  <button type="button" mat-raised-button (click)="dialogRef.close(userRoleForm.value)" color="primary" [disabled]="userRoleForm.invalid || formInvalid">Save</button>
   <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
 </mat-dialog-actions>

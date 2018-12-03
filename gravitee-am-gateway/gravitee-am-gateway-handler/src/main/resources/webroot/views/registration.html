@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Registration</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{assets/material/material.blue_grey-blue.min.css}">
+    <link rel="stylesheet" th:href="@{assets/material/material.icons.css}">
+    <link rel="stylesheet" th:href="@{assets/font-awesome/css/font-awesome.min.css}">
+    <link rel="stylesheet" th:href="@{assets/css/register.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="@{assets/ico/favicon.ico}">
+</head>
+
+<body>
+<div class="mdl-layout mdl-js-layout">
+    <div class="register-container">
+        <div th:if="${error == null && success == null}" class="register-form">
+            <div class="register-form-title">
+                <label>Create your account</label>
+            </div>
+            <div th:if="${warning}" class="register-error-info">
+                <p style="margin: 0;">An account already exists with this username.</p>
+            </div>
+            <form role="form" th:action="@{register}" method="post" style="display: flex; flex-direction: column; margin-top: 30px;">
+                <div style="display: flex; flex-direction: row">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="margin-right: 20px;">
+                        <input class="mdl-textfield__input" type="text" id="firstName" name="firstName"/>
+                        <label class="mdl-textfield__label mdl-required" for="firstName">First name</label>
+                    </div>
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <input class="mdl-textfield__input" type="text" id="lastName" name="lastName"/>
+                        <label class="mdl-textfield__label mdl-required" for="lastName">Last name</label>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <input class="mdl-textfield__input" type="text" id="username" name="username"/>
+                        <label class="mdl-textfield__label mdl-required" for="username">Username</label>
+                    </div>
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <input class="mdl-textfield__input" type="email" id="email" name="email"/>
+                        <label class="mdl-textfield__label mdl-required" for="email">Email address</label>
+                    </div>
+                </div>
+
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="display: flex;">
+                    <input class="mdl-textfield__input" type="password" id="password" name="password"/>
+                    <label class="mdl-textfield__label mdl-required" for="password">Password</label>
+                    <i id="changePasswordVisibility" class="mdl-textfield__icon material-icons">visibility</i>
+                </div>
+
+                <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
+                <div style="display: flex; flex-direction: row;">
+                    <a th:href="@{login(client_id=${param.client_id})}"><< Back to login</a>
+                    <span style="display: flex; flex:1"></span>
+                    <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary">Register</button>
+                </div>
+            </form>
+        </div>
+
+        <div th:if="${success}" class="register-form">
+            <div class="register-form-title">
+                <label>Registration confirmation</label>
+                <p>Thanks for creating your account. Go back to your application to <a th:href="@{login(client_id=${param.client_id})}">login</a></p>
+            </div>
+        </div>
+
+        <div th:if="${error}" class="register-form">
+            <div class="register-form-title">
+                <label>Registration error</label>
+                <p>Please go back to your client application and try again, or contact the owner and ask for support</p>
+            </div>
+            <div class="register-error-info">
+                Error description : <span th:text="${error}" class="error"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--[if lt IE 10]>
+<script th:src="@{assets/js/placeholder.js}"></script>
+<![endif]-->
+<script th:src="@{assets/material/material.min.js}"></script>
+<script th:src="@{assets/js/jquery-1.11.1.min.js}"></script>
+<script>
+    $(".mdl-textfield__input").focus(function (){
+        if( !this.value ){
+            $(this).prop('required', true);
+            $(this).parent().addClass('is-invalid');
+        }
+    });
+    $(".mdl-button[type='submit']").click(function (event){
+        $(this).siblings(".mdl-textfield").addClass('is-invalid');
+        $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
+    });
+    $("#changePasswordVisibility").click(function() {
+        var inputType = $('input#password').attr('type');
+        if (inputType === 'text') {
+            $('input#password').prop('type', 'password');
+            $(this).text('visibility');
+        } else {
+            $('input#password').prop('type', 'text');
+            $(this).text('visibility_off');
+        }
+    });
+</script>
+</body>
+</html>

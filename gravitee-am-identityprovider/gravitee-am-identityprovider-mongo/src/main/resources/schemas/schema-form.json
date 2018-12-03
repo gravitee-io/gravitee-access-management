@@ -60,17 +60,32 @@
       "title": "Query to find for a user using its identifier (username)",
       "description": "The query which is executed to search for an user using its identifier (username)."
     },
+    "usernameField" : {
+      "type" : "string",
+      "default": "username",
+      "title": "Username field",
+      "description": "The user username field (must be in the same collection as the users)."
+    },
     "passwordField" : {
       "type" : "string",
       "default": "password",
       "title": "Password field",
-      "description": "The user password field (must be in the same collection as the users."
+      "description": "The user password field (must be in the same collection as the users)."
+    },
+    "passwordEncoder" : {
+      "type": "string",
+      "enum": ["BCrypt", "None"],
+      "default": "BCrypt",
+      "title": "Password encoder",
+      "description": "The encoding mechanism to store password value."
     }
   },
   "required": [
     "database",
     "usersCollection",
     "findUserByUsernameQuery",
-    "passwordField"
+    "usernameField",
+    "passwordField",
+    "passwordEncoder"
   ]
 }

@@ -40,6 +40,16 @@
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary">Log in</button>
+
+                    <div class="login-actions" th:style="${allowForgotPassword and allowRegister} ? 'display:flex; flex-direction: row; margin-top: 10px; text-align: center;' : 'display:block; margin-top: 10px; text-align: center;'">
+                        <div th:if="${allowForgotPassword}">
+                            <a th:href="@{forgotPassword}">Forgot Password ?</a>
+                        </div>
+                        <span th:if="${allowForgotPassword and allowRegister}" style="display: flex; flex: 1;"></span>
+                        <div th:if="${allowRegister}">
+                            <a th:href="@{register(client_id=${param.client_id})}">Register</a>
+                        </div>
+                    </div>
                 </form>
 
                 <div th:if="${oauth2Providers and !oauth2Providers.empty}" class="social-login-buttons">

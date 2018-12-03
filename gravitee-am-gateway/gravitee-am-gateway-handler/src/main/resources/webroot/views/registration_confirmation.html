@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Registration confirmation</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{assets/material/material.blue_grey-blue.min.css}">
+    <link rel="stylesheet" th:href="@{assets/material/material.icons.css}">
+    <link rel="stylesheet" th:href="@{assets/font-awesome/css/font-awesome.min.css}">
+    <link rel="stylesheet" th:href="@{assets/css/registration_confirmation.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="@{assets/ico/favicon.ico}">
+</head>
+
+<body>
+<div class="mdl-layout mdl-js-layout">
+    <div class="registration-confirmation-container">
+        <div th:if="${error == null && success == null}" class="registration-confirmation-form">
+            <div class="registration-confirmation-form-title">
+                <label>Hi <span th:text="${user.firstName} + ' ' + ${user.lastName}"></span></label>
+                <p>Thanks for signing up, please complete the form to activate your account</p>
+            </div>
+            <form role="form" th:action="@{confirmRegistration}" method="post" style="display: flex; flex-direction: column; margin-top: 30px;">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: 100%; display: flex;">
+                    <input class="mdl-textfield__input" type="password" id="password" name="password"/>
+                    <label class="mdl-textfield__label mdl-required" for="password">Password</label>
+                    <i id="changePasswordVisibility" class="mdl-textfield__icon material-icons">visibility</i>
+                </div>
+
+                <input type="hidden" name="token" id="token" th:value="${token}"/>
+                <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary">Confirm registration</button>
+            </form>
+        </div>
+
+        <div th:if="${success}" class="registration-confirmation-form">
+            <div class="registration-confirmation-form-title">
+                <label>Account confirmation</label>
+                <p>Thanks for confirming your account. Go back to your application to login</p>
+            </div>
+        </div>
+
+        <div th:if="${error}" class="registration-confirmation-form">
+            <div class="registration-confirmation-form-title">
+                <label>Account confirmation error</label>
+                <p>Please go back to your client application and try again, or contact the owner and ask for support</p>
+            </div>
+            <div class="registration-confirmation-error-info">
+                Error description : <span th:text="${error}" class="error"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--[if lt IE 10]>
+<script th:src="@{assets/js/placeholder.js}"></script>
+<![endif]-->
+<script th:src="@{assets/material/material.min.js}"></script>
+<script th:src="@{assets/js/jquery-1.11.1.min.js}"></script>
+<script>
+    $(".mdl-textfield__input").focus(function (){
+        if( !this.value ){
+            $(this).prop('required', true);
+            $(this).parent().addClass('is-invalid');
+        }
+    });
+    $(".mdl-button[type='submit']").click(function (event){
+        $(this).siblings(".mdl-textfield").addClass('is-invalid');
+        $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
+    });
+    $("#changePasswordVisibility").click(function() {
+        var inputType = $('input#password').attr('type');
+        if (inputType === 'text') {
+            $('input#password').prop('type', 'password');
+            $(this).text('visibility');
+        } else {
+            $('input#password').prop('type', 'text');
+            $(this).text('visibility_off');
+        }
+    });
+</script>
+</body>
+</html>

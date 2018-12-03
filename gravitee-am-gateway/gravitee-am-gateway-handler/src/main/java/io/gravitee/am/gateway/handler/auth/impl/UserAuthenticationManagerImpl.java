@@ -18,16 +18,18 @@ package io.gravitee.am.gateway.handler.auth.impl;
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.authentication.AccountDisabledException;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.gravitee.am.service.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.service.exception.authentication.UsernameNotFoundException;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -35,9 +37,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -47,6 +51,9 @@ import java.util.Map;
 public class UserAuthenticationManagerImpl implements UserAuthenticationManager {
 
     private final Logger logger = LoggerFactory.getLogger(UserAuthenticationManagerImpl.class);
+    private static final String GROUP_MAPPER_PREFIX = "group";
+    private static final String SOURCE_FIELD = "source";
+    private static final String GROUP_MAPPING_ATTRIBUTE = "_RESERVED_AM_GROUP_MAPPING_";
 
     @Autowired
     private UserService userService;
@@ -84,6 +91,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         if (lastException != null) {
                             if (lastException instanceof BadCredentialsException) {
                                 return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
+                            } else if (lastException instanceof UsernameNotFoundException) {
+                                return Single.error(new InternalAuthenticationServiceException("Invalid or unknown user"));
                             } else {
                                 logger.error("An error occurs during user authentication", lastException);
                                 return Single.error(new InternalAuthenticationServiceException("Unable to validate credentials. The user account you are trying to access may be experiencing a problem.", lastException));
@@ -92,8 +101,15 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                             return Single.error(new BadCredentialsException("No user found for registered providers"));
                         }
                     } else {
-                        return userService.findOrCreate(domain.getId(), user);
+                        return loadUser(user);
                     }
+                })
+                .map(user -> {
+                    // check user account status
+                    if (!user.isEnabled()) {
+                        throw new AccountDisabledException("Account is disabled for user " + user.getUsername());
+                    }
+                    return user;
                 });
     }
 
@@ -106,14 +122,23 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(subject)))
                 .flatMap(user -> identityProviderManager.get(user.getSource())
                         .flatMap(authenticationProvider -> authenticationProvider.loadUserByUsername(user.getUsername()))
-                        .map(idpUser -> {
-                            // update roles
-                            // TODO should we need to update others information from the idp user ?
-                            user.setRoles(idpUser.getRoles());
-                            return user;
+                        .flatMap(idpUser -> {
+                            // enhance idp user with required information
+                            Map<String, Object> additionalInformation = idpUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(idpUser.getAdditionalInformation());
+                            additionalInformation.put("source", user.getSource());
+                            additionalInformation.put(OAuth2Constants.CLIENT_ID, user.getClient());
+                            ((DefaultUser) idpUser).setAdditionalInformation(additionalInformation);
+                            return loadUser(idpUser).toMaybe();
                         })
-                        .defaultIfEmpty(user))
-                        .flatMap(user -> enhanceUserWithRoles(user));
+                        .switchIfEmpty(Maybe.just(user).flatMap(user1 -> enhanceUserWithRoles(user1).toMaybe())));
+    }
+
+    @Override
+    public Single<User> loadUser(io.gravitee.am.identityprovider.api.User user) {
+        // use to load an authenticated user
+        return enhanceUserWithGroups(user)
+                .flatMap(user1 -> userService.findOrCreate(domain.getId(), user1))
+                .flatMap(this::enhanceUserWithRoles);
     }
 
     private Maybe<UserAuthentication> authenticate0(Client client, Authentication authentication, String authProvider) {
@@ -122,34 +147,68 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                 .flatMap(authenticationProvider -> {
                     logger.debug("Authentication attempt using identity provider {} ({})", authenticationProvider, authenticationProvider.getClass().getName());
                     return authenticationProvider.loadUserByUsername(authentication)
-                            .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate user : " + authentication.getPrincipal() + " authentication provider has returned empty value")));
+                            .switchIfEmpty(Maybe.error(new UsernameNotFoundException((String) authentication.getPrincipal())));
                 })
                 .map(user -> {
-                    logger.debug("Successfully Authenticated: " + authentication + " with provider authentication provider " + authProvider);
+                    logger.debug("Successfully Authenticated: " + authentication.getPrincipal() + " with provider authentication provider " + authProvider);
                     Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
                     additionalInformation.put("source", authProvider);
                     additionalInformation.put(OAuth2Constants.CLIENT_ID, client.getClientId());
-                    ((DefaultUser ) user).setAdditonalInformation(additionalInformation);
+                    ((DefaultUser ) user).setAdditionalInformation(additionalInformation);
                     return new UserAuthentication(user, null);
                 })
                 .onErrorResumeNext(error -> {
-                    logger.debug("Unable to authenticate [{}] with authentication provider [{}]", authentication, authProvider, error);
+                    logger.debug("Unable to authenticate [{}] with authentication provider [{}]", authentication.getPrincipal(), authProvider, error);
                     return Maybe.just(new UserAuthentication(null, error));
                 });
     }
 
-    private Maybe<User> enhanceUserWithRoles(User user) {
+    private Single<User> enhanceUserWithRoles(User user) {
         List<String> userRoles = user.getRoles();
         if (userRoles != null && !userRoles.isEmpty()) {
             return roleService.findByIdIn(userRoles)
                     .map(roles -> {
                         user.setRolesPermissions(roles);
                         return user;
-                    }).toMaybe();
+                    });
         }
-        return Maybe.just(user);
+        return Single.just(user);
     }
 
+    private Single<io.gravitee.am.identityprovider.api.User> enhanceUserWithGroups(io.gravitee.am.identityprovider.api.User user) {
+        // retrieve groups from user identity provider role mapper
+        final String source = user.getAdditionalInformation() == null ? null : (String) user.getAdditionalInformation().get(SOURCE_FIELD);
+        if (source != null) {
+            return identityProviderManager.getIdentityProvider(source)
+                    .map(identityProvider -> {
+                        Map<String, String[]> roleMapper = identityProvider.getRoleMapper();
+                        if (roleMapper != null) {
+                            // "groups" role mapping value starts with group=
+                            // retrieve only roles/groups mapping
+                            Map<String, List<String>> groupMapping = roleMapper
+                                    .entrySet()
+                                    .stream()
+                                    .collect(
+                                            Collectors.toMap(
+                                                    entry -> entry.getKey(),
+                                                    entry -> Arrays.asList(entry.getValue())
+                                                            .stream()
+                                                            .map(mapping -> mapping.split("=", 2))
+                                                            .filter(mapping -> GROUP_MAPPER_PREFIX.equals(mapping[0]))
+                                                            .map(mapping -> mapping[1])
+                                                            .collect(Collectors.toList())
+                                            ));
+
+                            user.getAdditionalInformation().put(GROUP_MAPPING_ATTRIBUTE, groupMapping);
+                        }
+                        return user;
+                    })
+                    .defaultIfEmpty(user)
+                    .toSingle();
+        } else {
+            return Single.just(user);
+        }
+    }
 
     private class UserAuthentication {
         private io.gravitee.am.identityprovider.api.User user;

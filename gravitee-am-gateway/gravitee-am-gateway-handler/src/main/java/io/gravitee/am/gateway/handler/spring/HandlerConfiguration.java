@@ -23,11 +23,19 @@ import io.gravitee.am.gateway.handler.jwk.JwkService;
 import io.gravitee.am.gateway.handler.jwk.impl.JwkServiceImpl;
 import io.gravitee.am.gateway.handler.jws.JwsService;
 import io.gravitee.am.gateway.handler.jws.impl.JwsServiceImpl;
+import io.gravitee.am.gateway.handler.email.EmailService;
+import io.gravitee.am.gateway.handler.email.impl.EmailServiceImpl;
 import io.gravitee.am.gateway.handler.jwt.JwtService;
 import io.gravitee.am.gateway.handler.jwt.impl.JwtServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
 import io.gravitee.am.gateway.handler.oidc.spring.OpenIDConfiguration;
+import io.gravitee.am.gateway.handler.form.FormManager;
+import io.gravitee.am.gateway.handler.form.impl.FormManagerImpl;
+import io.gravitee.am.gateway.handler.scim.spring.SCIMConfiguration;
+import io.gravitee.am.gateway.handler.user.spring.UserConfiguration;
 import io.gravitee.am.gateway.handler.vertx.spring.SecurityDomainRouterConfiguration;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -40,6 +48,8 @@ import org.springframework.context.annotation.Import;
 @Import({
         OAuth2Configuration.class,
         OpenIDConfiguration.class,
+        SCIMConfiguration.class,
+        UserConfiguration.class,
         SecurityDomainRouterConfiguration.class
 })
 public class HandlerConfiguration {
@@ -67,5 +77,20 @@ public class HandlerConfiguration {
     @Bean
     public JwkService jwkService() {
         return new JwkServiceImpl();
+    }
+
+    @Bean
+    public EmailService emailService() {
+        return new EmailServiceImpl();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public FormManager pageManager() {
+        return new FormManagerImpl();
     }
 }

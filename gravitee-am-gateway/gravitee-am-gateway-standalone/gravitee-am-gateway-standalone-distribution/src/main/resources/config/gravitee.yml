@@ -140,9 +140,47 @@ identities:
         maxTotalConnection: 200 # The maximum total number of connections in the pool
         maxPerRoute: 100 # The maximum number of connections to a particular host
 
+# JWT used to generate signed token for OAuth 2.0/OpenID Connect protocols and to verify emails
 jwt:
-  secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y # secret to sign JWT tokens (for the default certificate provider)
-  kid: default-gravitee-AM-key # kid (key ID) Header Parameter is a hint indicating which key was used to secure the JWT (for the default certificate provider)
+  secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y # jwt secret used to sign JWT tokens (HMAC algorithm)
+  #kid: default-gravitee-AM-key # kid (key ID) Header Parameter is a hint indicating which key was used to secure the JWT
+  #expire-after: 604800 # the end of validity of the token in seconds (default 604800 = a week)
+  #issuer: https://gravitee.am # the principal that issued the JWT (default https://gravitee.am)
+
+# SMTP configuration used to send mails
+email:
+  enabled: false
+  host: smtp.my.domain
+  subject: "[Gravitee.io] %s"
+  port: 587
+  from: noreply@my.domain
+  username: user@my.domain
+  password: password
+#  properties:
+#    auth: true
+#    starttls.enable: true
+#    ssl.trust: smtp.gmail.com
+
+# Mail templates
+#templates:
+#  path: ${gravitee.home}/templates
+
+# User management configuration
+user:
+  registration:
+    email:
+      #subject: New user registration
+    token:
+      #expire-after: 86400 # the end of validity of the token in seconds for registration email (default 86400 = a day)
+  resetPassword:
+    email:
+      #subject: Please reset your password
+    token:
+      #expire-after: 86400 # the end of validity of the token in seconds for reset password email (default 86400 = a day)
+
+# Gateway entry point used in emails
+gateway:
+  url: http://localhost:8092
 
 # Referenced properties
 ds:

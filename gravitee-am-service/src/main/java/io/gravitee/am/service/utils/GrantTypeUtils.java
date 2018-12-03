@@ -79,8 +79,8 @@ public class GrantTypeUtils {
     public static Client completeGrantTypeCorrespondance(Client client) {
         boolean updatedGrantType = false;
 
-        Set responseType = new HashSet<>(client.getResponseTypes());
-        Set grantType = new HashSet<>(client.getAuthorizedGrantTypes());
+        Set responseType = client.getResponseTypes() != null ? new HashSet<>(client.getResponseTypes()) : new HashSet();
+        Set grantType = client.getAuthorizedGrantTypes() != null ? new HashSet<>(client.getAuthorizedGrantTypes()) : new HashSet();
 
         //If response type contains "code", then grant_type must contains "authorization_code"
         if(responseType.contains(CODE) && !grantType.contains(AUTHORIZATION_CODE)) {

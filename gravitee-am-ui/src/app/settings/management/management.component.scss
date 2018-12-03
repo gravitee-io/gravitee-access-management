@@ -1,4 +1,7 @@
 :host {
+  mat-sidenav {
+    overflow: scroll;
+  }
   mat-sidenav-content {
     width: 100%;
   }

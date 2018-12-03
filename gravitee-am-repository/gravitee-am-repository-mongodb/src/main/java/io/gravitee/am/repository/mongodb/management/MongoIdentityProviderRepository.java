@@ -56,6 +56,11 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     }
 
     @Override
+    public Single<Set<IdentityProvider>> findAll() {
+        return Observable.fromPublisher(identitiesCollection.find()).map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
     public Single<Set<IdentityProvider>> findByDomain(String domain) {
         return Observable.fromPublisher(identitiesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
     }

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "4e9924d6-cd64-42de-9fe2-617bf550b80f",
+		"_postman_id": "e780207b-4236-473c-9a42-8031c342d6cf",
 		"name": "Gravitee.io AM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -15194,6 +15194,4598 @@
 								}
 							],
 							"_postman_isSubFolder": true
+						}
+					],
+					"_postman_isSubFolder": true
+				}
+			]
+		},
+		{
+			"name": "SCIM",
+			"item": [
+				{
+					"name": "Case - non SCIM domain",
+					"item": [
+						{
+							"name": "Fetch Service Provider Configuration",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/ServiceProviderConfig",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"ServiceProviderConfig"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Fetch Users endpoint",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Users",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Fetch Groups endpoint",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Groups",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Groups"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Configure domain",
+					"item": [
+						{
+							"name": "Configure SCIM",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "286df3a2-0e06-4b00-9614-3b0fd9ceecb9",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"SCIM enabled for domain\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.scim.enabled).to.eql(true);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 5000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"scim\": {\n    \"enabled\": true\n  }\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Service Provider Configuration",
+					"item": [
+						{
+							"name": "Fetch Service Provider Configuration",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check SCIM configuration\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig']);",
+											"    pm.expect(jsonData.patch.supported).to.eql(false);",
+											"    pm.expect(jsonData.bulk.supported).to.eql(false);",
+											"    pm.expect(jsonData.filter.supported).to.eql(false);",
+											"    pm.expect(jsonData.changePassword.supported).to.eql(false);",
+											"    pm.expect(jsonData.sort.supported).to.eql(false);",
+											"    pm.expect(jsonData.etag.supported).to.eql(false);",
+											"    pm.expect(jsonData.authenticationSchemes[0].type).to.eql('oauthbearertoken');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/ServiceProviderConfig",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"ServiceProviderConfig"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Case - invalid token",
+					"item": [
+						{
+							"name": "Fetch Users endpoint - no token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Users",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Fetch Users endpoint - invalid token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer wrong-token",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Users",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Users endpoint - no token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Users",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Users endpoint - invalid token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer wrong-token",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Users",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Replace Users endpoint - no token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Users/test-id",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Users",
+										"test-id"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Replace Users endpoint - invalid token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer wrong-token",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Users/test-id",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Users",
+										"test-id"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Users endpoint - no token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Users/test-id",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Users",
+										"test-id"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Users endpoint - invalid token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer wrong-token",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Users/test-id",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Users",
+										"test-id"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Fetch Groups endpoint - no token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Groups",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Groups"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Fetch Groups endpoint - invalid token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer wrong-token",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Groups",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Groups"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Replace Groups endpoint - no token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Groups/test-id",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Groups",
+										"test-id"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Replace Groups endpoint - invalid token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer wrong-token",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Groups/test-id",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Groups",
+										"test-id"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Groups endpoint - no token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Groups",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Groups"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Groups endpoint - invalid token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer wrong-token",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Groups",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Groups"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Groups endpoint - no token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Groups/test-id",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Groups",
+										"test-id"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Groups endpoint - invalid token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"SCIM is secured with a bearer token\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.status).to.eql(\"401\");",
+											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer wrong-token",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/scim/Groups/test-id",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"scim",
+										"Groups",
+										"test-id"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Configure client",
+					"item": [
+						{
+							"name": "Create SCIM client",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"var body = JSON.parse(responseBody);",
+											"pm.environment.set('clientSCIM', body.id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"clientId\": \"client-scim\",\n  \"clientSecret\": \"client-scim-secret\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/clients",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"clients"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Configure SCIM client",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 5000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"authorizedGrantTypes\": [\"client_credentials\"],\n  \"scopes\" : [\"scim\"]\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/clients/{{clientSCIM}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"clients",
+										"{{clientSCIM}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Generate token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has an access_token\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('access_token');",
+											"    ",
+											"    pm.environment.set('access_token', body.access_token);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Basic Y2xpZW50LXNjaW06Y2xpZW50LXNjaW0tc2VjcmV0"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/oauth/token",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"oauth",
+										"token"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Users",
+					"item": [
+						{
+							"name": "Create",
+							"item": [
+								{
+									"name": "Invalid request - malformed json",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"SCIM create user malformed json\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"400\");",
+													"    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
+													"    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Users",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - userName required",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"SCIM create userName field required\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"400\");",
+													"    pm.expect(jsonData.scimType).to.eql(\"invalidValue\");",
+													"    pm.expect(jsonData.detail).to.eql(\"Field [userName] is required\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Users",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"SCIM create user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.environment.set('userSCIM', jsonData.id);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Users",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - userName already exists",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"SCIM create user uniqueness\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"400\");",
+													"    pm.expect(jsonData.scimType).to.eql(\"uniqueness\");",
+													"    pm.expect(jsonData.detail).to.eql(\"User with username [bjensen] already exists\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Users",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Users"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Update",
+							"item": [
+								{
+									"name": "Invalid request - user not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"",
+													"pm.test(\"SCIM update user unknown user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"404\");",
+													"    pm.expect(jsonData.detail).to.eql(\"User [wrong-id] can not be found.\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Users/wrong-id",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Users",
+												"wrong-id"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - malformed json",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"SCIM update user malformed json\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"400\");",
+													"    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
+													"    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM update user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData.name.familyName).to.eql('Jensen2');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen2\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "List",
+							"item": [
+								{
+									"name": "List users",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ace28d5f-a975-4430-ba47-29184cf01460",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"// 2 users (one from SCIM and an other from inline idp)",
+													"pm.test(\"SCIM list users\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+													"    pm.expect(jsonData.totalResults).to.eql(2);",
+													"    pm.expect(jsonData.startIndex).to.eql(1);",
+													"    pm.expect(jsonData.itemsPerPage).to.eql(2);",
+													"    pm.expect(jsonData.Resources.length).to.eql(2);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Users",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Users"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Delete",
+							"item": [
+								{
+									"name": "Invalid request - user not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"",
+													"pm.test(\"SCIM delete user unknown user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"404\");",
+													"    pm.expect(jsonData.detail).to.eql(\"User [wrong-id] can not be found.\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Users/wrong-id",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Users",
+												"wrong-id"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 204\", function () {",
+													"    pm.response.to.have.status(204);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "List users",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ace28d5f-a975-4430-ba47-29184cf01460",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM list users after delete\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+													"    pm.expect(jsonData.totalResults).to.eql(1);",
+													"    pm.expect(jsonData.startIndex).to.eql(1);",
+													"    pm.expect(jsonData.itemsPerPage).to.eql(1);",
+													"    pm.expect(jsonData.Resources.length).to.eql(1);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Users",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Users"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Groups",
+					"item": [
+						{
+							"name": "Create",
+							"item": [
+								{
+									"name": "Invalid request - malformed json",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"SCIM create group malformed json\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"400\");",
+													"    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
+													"    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Groups",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Groups"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - displayName required",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"SCIM group displayName field required\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"400\");",
+													"    pm.expect(jsonData.scimType).to.eql(\"invalidValue\");",
+													"    pm.expect(jsonData.detail).to.eql(\"Field [displayName] is required\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"]\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Groups",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Groups"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create group",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"SCIM create user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
+													"    pm.environment.set('groupSCIM', jsonData.id);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Groups",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Groups"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - displayName already exists",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"SCIM create group uniqueness\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"400\");",
+													"    pm.expect(jsonData.scimType).to.eql(\"uniqueness\");",
+													"    pm.expect(jsonData.detail).to.eql(\"Group with display name [Tour Guides] already exists\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Groups",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Groups"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Update",
+							"item": [
+								{
+									"name": "Invalid request - group not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"",
+													"pm.test(\"SCIM update user unknown user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"404\");",
+													"    pm.expect(jsonData.detail).to.eql(\"Group [wrong-id] can not be found.\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides 2\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Groups/wrong-id",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Groups",
+												"wrong-id"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - malformed json",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"SCIM update user malformed json\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"400\");",
+													"    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
+													"    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Groups/{{groupSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Groups",
+												"{{groupSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update group",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM update user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
+													"    pm.expect(jsonData.displayName).to.eql('Tour Guides 2');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides 2\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Groups/{{groupSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Groups",
+												"{{groupSCIM}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "List",
+							"item": [
+								{
+									"name": "List groups",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ace28d5f-a975-4430-ba47-29184cf01460",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM list groups\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+													"    pm.expect(jsonData.totalResults).to.eql(1);",
+													"    pm.expect(jsonData.startIndex).to.eql(1);",
+													"    pm.expect(jsonData.itemsPerPage).to.eql(1);",
+													"    pm.expect(jsonData.Resources.length).to.eql(1);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Groups",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Groups"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Delete",
+							"item": [
+								{
+									"name": "Invalid request - group not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"",
+													"pm.test(\"SCIM delete group unknown group\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"404\");",
+													"    pm.expect(jsonData.detail).to.eql(\"Group [wrong-id] can not be found.\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Groups/wrong-id",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Groups",
+												"wrong-id"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete group",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 204\", function () {",
+													"    pm.response.to.have.status(204);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Groups/{{groupSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Groups",
+												"{{groupSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "List groups",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ace28d5f-a975-4430-ba47-29184cf01460",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM list groups after delete\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+													"    pm.expect(jsonData.totalResults).to.eql(0);",
+													"    pm.expect(jsonData.startIndex).to.eql(1);",
+													"    pm.expect(jsonData.itemsPerPage).to.eql(0);",
+													"    pm.expect(jsonData.Resources.length).to.eql(0);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/scim/Groups",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"scim",
+												"Groups"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						}
+					],
+					"_postman_isSubFolder": true
+				}
+			]
+		},
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "Users",
+					"item": [
+						{
+							"name": "Create",
+							"item": [
+								{
+									"name": "Invalid request - malformed json",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"wrong\" : \n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/users",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - username required",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"UM - create user - username field required\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"[username: ne peut pas être nul]\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"email\": \"jensen.barbara@mail.com\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/users",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - email required",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"UM - create user - email field required\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"[email: ne peut pas être nul]\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/users",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - password required if no pre-registration",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"UM - create user - password field required if no pre-registration\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"Field [password] is required\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/users",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - email malformed",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"UM - create user - email malformed\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"[jensen.barba: must be a well-formed email address]\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barba\",\n\t\"password\": \"password\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/users",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"UM - create user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.internal).to.eql(true);",
+													"    pm.expect(jsonData.enabled).to.eql(true);",
+													"    pm.expect(jsonData.preRegistration).to.eql(false);",
+													"    pm.expect(jsonData.registrationCompleted).to.eql(true);",
+													"    pm.expect(jsonData.source).to.eql('default-idp-test')",
+													"    pm.environment.set('userUM', jsonData.id);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"password\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/users",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - username already exists",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"UM - create user - uniqueness\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"A user [jensen.barbara] already exists.\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"password\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/users",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"users"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Update",
+							"item": [
+								{
+									"name": "Invalid request - user not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"",
+													"pm.test(\"UM - update user - unknown user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"User [wrong-id] can not be found.\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"email\": \"jensen.barbara@mail.com\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/users/wrong-id",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"users",
+												"wrong-id"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - malformed json",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/users/{{userUM}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"users",
+												"{{userUM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"UM - update user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.additionalInformation.profile).to.eql('https://my.profile.com');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"additionalInformation\": {\n\t\t\"profile\":\"https://my.profile.com\"\n\t}\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/users/{{userUM}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"users",
+												"{{userUM}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "List",
+							"item": [
+								{
+									"name": "List users",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ace28d5f-a975-4430-ba47-29184cf01460",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"UM - list users\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.currentPage).to.eql(0);",
+													"    pm.expect(jsonData.totalCount).to.eql(2);",
+													"    pm.expect(jsonData.data.length).to.eql(2);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/users",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"users"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Groups",
+					"item": [
+						{
+							"name": "Create",
+							"item": [
+								{
+									"name": "Invalid request - malformed json",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"wrong\" : \n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - name required",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"UM - create group - name field required\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"[name: ne peut pas être nul]\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create group",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"UM - create group\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.name).to.eql('My Group');",
+													"    pm.environment.set('groupUM', jsonData.id);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"My Group\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - name already exists",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"UM - create group - uniqueness\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"A group [My Group] already exists.\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"My Group\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Update",
+							"item": [
+								{
+									"name": "Invalid request - group not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"",
+													"pm.test(\"UM - update group - unknown user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"Group [wrong-id] can not be found.\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"My Group\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups/wrong-id",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups",
+												"wrong-id"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - malformed json",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups/{{userUM}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups",
+												"{{userUM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update group",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"UM - update group\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.name).to.eql('My Group 2');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"My Group 2\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups/{{groupUM}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups",
+												"{{groupUM}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Members",
+							"item": [
+								{
+									"name": "Update group - member not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"UM - update group - member not found\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.members).to.eql([]);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"My Group 2\",\n\t\"members\": [\"wrong-member-id\"]\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups/{{groupUM}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups",
+												"{{groupUM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update group - member exists",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"UM - update group - member found\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.members).to.eql([environment[\"userUM\"]]);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"My Group 2\",\n\t\"members\": [\"{{userUM}}\"]\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups/{{groupUM}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups",
+												"{{groupUM}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "List",
+							"item": [
+								{
+									"name": "List groups",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ace28d5f-a975-4430-ba47-29184cf01460",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"UM - list groups\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.currentPage).to.eql(0);",
+													"    pm.expect(jsonData.totalCount).to.eql(1);",
+													"    pm.expect(jsonData.data.length).to.eql(1);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Delete",
+							"item": [
+								{
+									"name": "Invalid request - group not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"",
+													"pm.test(\"UM - delete group - unknown group\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"Group [wrong-id] can not be found.\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups/wrong-id",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups",
+												"wrong-id"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete group",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 204\", function () {",
+													"    pm.response.to.have.status(204);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups/{{groupUM}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups",
+												"{{groupUM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "List groups",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ace28d5f-a975-4430-ba47-29184cf01460",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"UM - list groups - after delete\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.currentPage).to.eql(0);",
+													"    pm.expect(jsonData.totalCount).to.eql(0);",
+													"    pm.expect(jsonData.data.length).to.eql(0);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/groups",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"groups"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "35f0648e-0920-4673-98f8-09fd3bf1dd72",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"id": "25349ed5-4030-41bc-a22b-2093961b43f4",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"_postman_isSubFolder": true
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Configure client",
+					"item": [
+						{
+							"name": "Create User Management client",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d1195033-78b1-481b-acc9-845df5ddae80",
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"var body = JSON.parse(responseBody);",
+											"pm.environment.set('clientUM', body.id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"clientId\": \"client-um\",\n  \"clientSecret\": \"client-um-secret\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/clients",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"clients"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Configure User Management client",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 5000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"authorizedGrantTypes\": [\"password\"],\n  \"scopes\" : [\"openid\"],\n  \"identities\" : [\"default-idp-test\"]\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/clients/{{clientUM}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"clients",
+										"{{clientUM}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Authenticate User",
+					"item": [
+						{
+							"name": "Authenticate - wrong user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"UM - authenticate - wrong user\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.error).to.eql('invalid_grant');",
+											"    pm.expect(jsonData.error_description).to.eql('Invalid or unknown user');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Basic Y2xpZW50LXVtOmNsaWVudC11bS1zZWNyZXQ="
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "username",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "password",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/oauth/token",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"oauth",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Authenticate - wrong credentials",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"UM - authenticate - wrong credentials\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.error).to.eql('invalid_grant');",
+											"    pm.expect(jsonData.error_description).to.eql('The credentials you entered are invalid');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Basic Y2xpZW50LXVtOmNsaWVudC11bS1zZWNyZXQ="
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "jensen.barbara",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "wrong-password",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/oauth/token",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"oauth",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Authenticate - success",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"UM - authenticate - success\", function () {",
+											"     var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('access_token');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Basic Y2xpZW50LXVtOmNsaWVudC11bS1zZWNyZXQ="
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "jensen.barbara",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "password",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/oauth/token",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"oauth",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update user - disable user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"UM - update user\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.enabled).to.eql(false);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"additionalInformation\": {\n\t\t\"profile\":\"https://my.profile.com\"\n\t},\n\t\"enabled\": false\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/users/{{userUM}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"users",
+										"{{userUM}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Authenticate - user disabled",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"UM - authenticate - user disabled\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.error).to.eql('invalid_grant');",
+											"    pm.expect(jsonData.error_description).to.eql('Account is disabled for user jensen.barbara');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Basic Y2xpZW50LXVtOmNsaWVudC11bS1zZWNyZXQ="
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "jensen.barbara",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "password",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/oauth/token",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"oauth",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update user - enable user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"UM - update user\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.enabled).to.eql(true);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"additionalInformation\": {\n\t\t\"profile\":\"https://my.profile.com\"\n\t},\n\t\"enabled\": true\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/users/{{userUM}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"users",
+										"{{userUM}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update user - reset password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"password\": \"myNewPassword\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/users/{{userUM}}/resetPassword",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"users",
+										"{{userUM}}",
+										"resetPassword"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Authenticate - success after reset password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"UM - authenticate - success after reset password\", function () {",
+											"     var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('access_token');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Basic Y2xpZW50LXVtOmNsaWVudC11bS1zZWNyZXQ="
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "jensen.barbara",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "myNewPassword",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/oauth/token",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"oauth",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid request - user not found",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"UM - delete user - unknown user\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.message).to.eql(\"User [wrong-id] can not be found.\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/users/wrong-id",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"users",
+										"wrong-id"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/users/{{userUM}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"users",
+										"{{userUM}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Authenticate - user not found",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"UM - authenticate - wrong user\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.error).to.eql('invalid_grant');",
+											"    pm.expect(jsonData.error_description).to.eql('Invalid or unknown user');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Basic Y2xpZW50LXVtOmNsaWVudC11bS1zZWNyZXQ="
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "username",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "password",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/oauth/token",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"oauth",
+										"token"
+									]
+								}
+							},
+							"response": []
 						}
 					],
 					"_postman_isSubFolder": true

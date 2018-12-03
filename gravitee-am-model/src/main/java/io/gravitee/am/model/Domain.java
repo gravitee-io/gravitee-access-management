@@ -18,6 +18,8 @@ package io.gravitee.am.model;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.scim.SCIMSettings;
 
 import java.util.Date;
 import java.util.Set;
@@ -77,6 +79,10 @@ public class Domain {
     private Event lastEvent;
 
     private OIDCSettings oidc;
+
+    private LoginSettings loginSettings;
+
+    private SCIMSettings scim;
 
     public String getId() {
         return id;
@@ -180,6 +186,22 @@ public class Domain {
 
     public void setOidc(OIDCSettings oidc) {
         this.oidc = oidc;
+    }
+
+    public SCIMSettings getScim() {
+        return scim;
+    }
+
+    public void setScim(SCIMSettings scim) {
+        this.scim = scim;
+    }
+
+    public LoginSettings getLoginSettings() {
+        return loginSettings;
+    }
+
+    public void setLoginSettings(LoginSettings loginSettings) {
+        this.loginSettings = loginSettings;
     }
 
     public boolean isDynamicClientRegistrationEnabled() {

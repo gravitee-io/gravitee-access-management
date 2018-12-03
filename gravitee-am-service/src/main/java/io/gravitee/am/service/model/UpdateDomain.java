@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.scim.SCIMSettings;
+
 import javax.validation.constraints.NotNull;
 import java.util.Set;
 
@@ -49,6 +52,10 @@ public class UpdateDomain {
     private Set<String> identities;
 
     private Set<String> oauth2Identities;
+
+    private SCIMSettings scim;
+
+    private LoginSettings loginSettings;
 
     public String getName() {
         return name;
@@ -96,5 +103,21 @@ public class UpdateDomain {
 
     public void setOauth2Identities(Set<String> oauth2Identities) {
         this.oauth2Identities = oauth2Identities;
+    }
+
+    public SCIMSettings getScim() {
+        return scim;
+    }
+
+    public void setScim(SCIMSettings scim) {
+        this.scim = scim;
+    }
+
+    public LoginSettings getLoginSettings() {
+        return loginSettings;
+    }
+
+    public void setLoginSettings(LoginSettings loginSettings) {
+        this.loginSettings = loginSettings;
     }
 }

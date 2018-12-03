@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.auth.idp;
 
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.common.service.Service;
 import io.reactivex.Maybe;
@@ -29,4 +30,6 @@ public interface IdentityProviderManager extends Service {
     Maybe<AuthenticationProvider> get(String id);
 
     Maybe<IdentityProvider> getIdentityProvider(String id);
+
+    Maybe<UserProvider> getUserProvider(String id);
 }

@@ -27,5 +27,7 @@ import java.util.Set;
  */
 public interface IdentityProviderRepository extends CrudRepository<IdentityProvider, String> {
 
+    Single<Set<IdentityProvider>> findAll();
+
     Single<Set<IdentityProvider>> findByDomain(String domain);
 }

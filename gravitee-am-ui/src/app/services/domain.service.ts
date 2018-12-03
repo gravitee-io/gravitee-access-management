@@ -67,20 +67,20 @@ export class DomainService {
     });
   }
 
+  patchScimSettings(id, domain): Observable<Response> {
+    return this.http.patch(this.domainsURL + id, {
+      'scim': domain.scim
+    });
+  }
+
+  patchLoginSettings(id, domain): Observable<Response> {
+    return this.http.patch(this.domainsURL + id, {
+      'loginSettings': domain.loginSettings
+    });
+  }
+
   delete(id): Observable<Response> {
     return this.http.delete(this.domainsURL + id);
-  }
-
-  getLoginForm(id): Observable<Response> {
-    return this.http.get(this.domainsURL + id + '/login');
-  }
-
-  createLoginForm(id, loginForm): Observable<Response> {
-    return this.http.put(this.domainsURL + id + '/login', loginForm);
-  }
-
-  deleteLoginForm(domainId): Observable<Response> {
-    return this.http.delete(this.domainsURL + domainId + '/login');
   }
 
   notify(domain): void {

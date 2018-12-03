@@ -27,7 +27,7 @@ export class UserResolver implements Resolve<any> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     let domainId: string = AppConfig.settings.authentication.domainId;
     if (!state.url.startsWith('/settings')) {
-      domainId = route.parent.paramMap.get('domainId');
+      domainId = route.parent.parent.paramMap.get('domainId');
     }
     let userId: string = route.paramMap.get('userId');
     return this.userService.get(domainId, userId).map(res => res.json());

@@ -21,6 +21,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderMapper;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
 import io.reactivex.Observable;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,7 @@ public class MongoAuthenticationProviderTestConfiguration {
         configuration.setUsersCollection("users");
         configuration.setFindUserByUsernameQuery("{username: ?}");
         configuration.setPasswordField("password");
+        configuration.setPasswordEncoder(PasswordEncoder.NONE.getValue());
 
         return configuration;
     }

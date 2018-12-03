@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.admin;
 
 import io.gravitee.am.management.handlers.admin.authentication.CustomSavedRequestAwareAuthenticationSuccessHandler;
 import io.gravitee.am.management.handlers.admin.authentication.LoginUrlAuthenticationEntryPoint;
+import io.gravitee.am.management.handlers.admin.filter.CheckAuthenticationCookieFilter;
 import io.gravitee.am.management.handlers.admin.filter.OAuth2ClientAuthenticationFilter;
 import io.gravitee.am.management.handlers.admin.handler.CookieClearingLogoutHandler;
 import io.gravitee.am.management.handlers.admin.handler.CustomLogoutSuccessHandler;
@@ -124,7 +125,8 @@ public class SecurityConfiguration {
                 .exceptionHandling()
                     .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
                     .and()
-                .addFilterBefore(clientOAuth2Filter(), AbstractPreAuthenticatedProcessingFilter.class);
+                .addFilterBefore(clientOAuth2Filter(), AbstractPreAuthenticatedProcessingFilter.class)
+                .addFilterBefore(checkAuthCookieFilter(), AbstractPreAuthenticatedProcessingFilter.class);
         }
 
         @Bean
@@ -132,6 +134,11 @@ public class SecurityConfiguration {
             OAuth2ClientAuthenticationFilter oAuth2ClientAuthenticationFilter = new OAuth2ClientAuthenticationFilter("/login/callback");
             oAuth2ClientAuthenticationFilter.setApplicationEventPublisher(applicationEventPublisher);
             return oAuth2ClientAuthenticationFilter;
+        }
+
+        @Bean
+        public Filter checkAuthCookieFilter() {
+            return new CheckAuthenticationCookieFilter();
         }
 
         @Bean

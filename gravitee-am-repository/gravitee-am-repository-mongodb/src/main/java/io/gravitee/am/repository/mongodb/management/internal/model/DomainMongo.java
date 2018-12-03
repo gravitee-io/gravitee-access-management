@@ -52,6 +52,10 @@ public class DomainMongo extends Auditable {
 
     private OIDCSettingsMongo oidc;
 
+    private SCIMSettingsMongo scim;
+
+    private LoginSettingsMongo loginSettings;
+
     public String getId() {
         return id;
     }
@@ -138,6 +142,22 @@ public class DomainMongo extends Auditable {
 
     public void setOidc(OIDCSettingsMongo oidc) {
         this.oidc = oidc;
+    }
+
+    public SCIMSettingsMongo getScim() {
+        return scim;
+    }
+
+    public void setScim(SCIMSettingsMongo scim) {
+        this.scim = scim;
+    }
+
+    public LoginSettingsMongo getLoginSettings() {
+        return loginSettings;
+    }
+
+    public void setLoginSettings(LoginSettingsMongo loginSettings) {
+        this.loginSettings = loginSettings;
     }
 
     @Override

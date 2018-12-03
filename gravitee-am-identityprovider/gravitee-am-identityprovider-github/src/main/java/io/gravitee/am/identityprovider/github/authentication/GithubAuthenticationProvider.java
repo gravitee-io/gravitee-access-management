@@ -118,11 +118,12 @@ public class GithubAuthenticationProvider implements OAuth2AuthenticationProvide
 
     private User createUser(JsonObject jsonObject) {
         User user = new DefaultUser(jsonObject.getString(GithubUser.LOGIN));
+        ((DefaultUser) user).setId(String.valueOf(jsonObject.getValue(GithubUser.ID)));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
 
         // Standard claims
-        additionalInformation.put(StandardClaims.SUB, jsonObject.getValue(GithubUser.LOGIN));
+        additionalInformation.put(StandardClaims.SUB, jsonObject.getValue(GithubUser.ID));
         additionalInformation.put(StandardClaims.NAME, jsonObject.getValue(GithubUser.NAME));
         additionalInformation.put(StandardClaims.PREFERRED_USERNAME, jsonObject.getValue(GithubUser.LOGIN));
 
@@ -171,7 +172,7 @@ public class GithubAuthenticationProvider implements OAuth2AuthenticationProvide
         additionalInformation.put(GithubUser.BIO, jsonObject.getValue(GithubUser.BIO));
         additionalInformation.put(GithubUser.BLOG, jsonObject.getValue(GithubUser.BLOG));
         additionalInformation.put(GithubUser.CREATED_AT, jsonObject.getValue(GithubUser.CREATED_AT));
-        ((DefaultUser) user).setAdditonalInformation(additionalInformation);
+        ((DefaultUser) user).setAdditionalInformation(additionalInformation);
         return user;
     }
 }

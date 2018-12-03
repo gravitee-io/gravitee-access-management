@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.HttpStatusCode;
@@ -80,6 +81,7 @@ public class DomainsResourceTest extends JerseySpringTest {
         domain.setName("domain-name");
 
         doReturn(Single.just(domain)).when(domainService).create(any());
+        doReturn(Single.just(new IdentityProvider())).when(identityProviderManager).create(domain.getId());
 
         final Response response = target("domains").request().post(Entity.json(newDomain));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());

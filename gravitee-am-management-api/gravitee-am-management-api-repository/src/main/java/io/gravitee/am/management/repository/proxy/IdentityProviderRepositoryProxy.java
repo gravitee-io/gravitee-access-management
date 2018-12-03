@@ -32,6 +32,11 @@ import java.util.Set;
 public class IdentityProviderRepositoryProxy extends AbstractProxy<IdentityProviderRepository> implements IdentityProviderRepository {
 
     @Override
+    public Single<Set<IdentityProvider>> findAll() {
+        return target.findAll();
+    }
+
+    @Override
     public Single<Set<IdentityProvider>> findByDomain(String domain) {
         return target.findByDomain(domain);
     }

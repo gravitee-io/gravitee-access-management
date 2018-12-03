@@ -66,6 +66,17 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     private DomainService domainService;
 
     @Override
+    public Single<List<IdentityProvider>> findAll() {
+        LOGGER.debug("Find all identity providers");
+        return identityProviderRepository.findAll()
+                .map(identityProviders -> (List<IdentityProvider>) new ArrayList<>(identityProviders))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find all identity providers", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find all identity providers", ex));
+                });
+    }
+
+    @Override
     public Maybe<IdentityProvider> findById(String id) {
         LOGGER.debug("Find identity provider by ID: {}", id);
         return identityProviderRepository.findById(id)
@@ -92,7 +103,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         LOGGER.debug("Create a new identity provider {} for domain {}", newIdentityProvider, domain);
 
         IdentityProvider identityProvider = new IdentityProvider();
-        identityProvider.setId(UUID.toString(UUID.random()));
+        identityProvider.setId(newIdentityProvider.getId() == null ? UUID.toString(UUID.random()) : newIdentityProvider.getId());
         identityProvider.setDomain(domain);
         identityProvider.setName(newIdentityProvider.getName());
         identityProvider.setType(newIdentityProvider.getType());

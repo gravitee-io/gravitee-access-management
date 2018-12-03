@@ -66,12 +66,12 @@ public class AuthenticationSuccessListenerTest {
     public void shouldCreateUser() {
         when(eventMock.getAuthentication()).thenReturn(authenticationMock);
         when(authenticationMock.getPrincipal()).thenReturn(userDetailsMock);
-        when(userServiceMock.loadUserByUsernameAndDomain(domainMock.getId(), userDetailsMock.getUsername())).thenReturn(Maybe.empty());
+        when(userServiceMock.findByDomainAndUsername(domainMock.getId(), userDetailsMock.getUsername())).thenReturn(Maybe.empty());
         when(userServiceMock.create(anyString(), any(NewUser.class))).thenReturn(Single.just(new io.gravitee.am.model.User()));
 
         listener.onApplicationEvent(eventMock);
 
-        verify(userServiceMock, times(1)).loadUserByUsernameAndDomain(domainMock.getId(), userDetailsMock.getUsername());
+        verify(userServiceMock, times(1)).findByDomainAndUsername(domainMock.getId(), userDetailsMock.getUsername());
         verify(userServiceMock, times(1)).create(any(String.class), any(NewUser.class));
         verify(userServiceMock, never()).update(any(String.class), any(String.class), any(UpdateUser.class));
     }
@@ -80,12 +80,12 @@ public class AuthenticationSuccessListenerTest {
     public void shouldUpdatedUser() {
         when(eventMock.getAuthentication()).thenReturn(authenticationMock);
         when(authenticationMock.getPrincipal()).thenReturn(userDetailsMock);
-        when(userServiceMock.loadUserByUsernameAndDomain(domainMock.getId(), userDetailsMock.getUsername())).thenReturn(Maybe.just(repositoryUserMock));
+        when(userServiceMock.findByDomainAndUsername(domainMock.getId(), userDetailsMock.getUsername())).thenReturn(Maybe.just(repositoryUserMock));
         when(userServiceMock.update(anyString(), anyString(), any(UpdateUser.class))).thenReturn(Single.just(new io.gravitee.am.model.User()));
 
         listener.onApplicationEvent(eventMock);
 
-        verify(userServiceMock, times(1)).loadUserByUsernameAndDomain(domainMock.getId(), userDetailsMock.getUsername());
+        verify(userServiceMock, times(1)).findByDomainAndUsername(domainMock.getId(), userDetailsMock.getUsername());
         verify(userServiceMock, times(1)).update(any(String.class), any(String.class), any(UpdateUser.class));
         verify(userServiceMock, never()).create(any(String.class), any(NewUser.class));
     }

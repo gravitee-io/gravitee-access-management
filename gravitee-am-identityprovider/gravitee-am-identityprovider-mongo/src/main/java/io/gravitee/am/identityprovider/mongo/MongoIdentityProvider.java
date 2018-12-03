@@ -15,14 +15,13 @@
  */
 package io.gravitee.am.identityprovider.mongo;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.IdentityProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.mongo.authentication.MongoAuthenticationProvider;
+import io.gravitee.am.identityprovider.mongo.user.MongoUserProvider;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class MongoIdentityProvider implements IdentityProvider {
@@ -32,6 +31,10 @@ public class MongoIdentityProvider implements IdentityProvider {
 
     public Class<? extends AuthenticationProvider> authenticationProvider() {
         return MongoAuthenticationProvider.class;
+    }
+
+    public Class<? extends UserProvider> userProvider() {
+        return MongoUserProvider.class;
     }
 
     public Class<? extends IdentityProviderMapper> mapper() {

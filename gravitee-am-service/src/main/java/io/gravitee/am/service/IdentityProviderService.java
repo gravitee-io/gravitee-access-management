@@ -31,6 +31,8 @@ import java.util.List;
  */
 public interface IdentityProviderService {
 
+    Single<List<IdentityProvider>> findAll();
+
     Maybe<IdentityProvider> findById(String id);
 
     Single<List<IdentityProvider>> findByDomain(String domain);

@@ -21,6 +21,7 @@ import org.springframework.web.servlet.ViewResolver;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 
 /**
@@ -31,15 +32,11 @@ import org.thymeleaf.templateresolver.ITemplateResolver;
 public class ThymeleafConfiguration {
 
     @Bean
-    public ThymeleafTemplateResolverFactory getTemplateResolver() {
-        return new ThymeleafTemplateResolverFactory();
-    }
-
-    @Bean
-    public TemplateEngine getTemplateEngine(ITemplateResolver templateResolver) {
+    public TemplateEngine getTemplateEngine() {
         SpringTemplateEngine templateEngine = new SpringTemplateEngine();
         templateEngine.setEnableSpringELCompiler(true);
-        templateEngine.setTemplateResolver(templateResolver);
+        templateEngine.setTemplateResolver(overrideTemplateResolver());
+        templateEngine.addTemplateResolver(defaultTemplateResolver());
         return templateEngine;
     }
 
@@ -49,5 +46,18 @@ public class ThymeleafConfiguration {
         viewResolver.setTemplateEngine(templateEngine);
         viewResolver.setCharacterEncoding("UTF-8");
         return viewResolver;
+    }
+
+    @Bean
+    public ITemplateResolver overrideTemplateResolver() {
+        return new DomainBasedTemplateResolver();
+
+    }
+    private ITemplateResolver defaultTemplateResolver() {
+        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
+        templateResolver.setPrefix("/views/");
+        templateResolver.setSuffix(".html");
+        templateResolver.setTemplateMode("HTML");
+        return templateResolver;
     }
 }

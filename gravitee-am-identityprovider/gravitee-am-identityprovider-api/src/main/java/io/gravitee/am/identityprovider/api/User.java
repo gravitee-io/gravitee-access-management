@@ -16,14 +16,23 @@
 package io.gravitee.am.identityprovider.api;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface User extends Serializable {
+
+    /**
+     * Returns the technical id used of the user
+     *
+     * @return the technical id
+     */
+    String getId();
 
     /**
      * Returns the username used to authenticate the user. Cannot return <code>null</code>.
@@ -31,6 +40,13 @@ public interface User extends Serializable {
      * @return the username (never <code>null</code>)
      */
     String getUsername();
+
+    /**
+     * Returns the credentials of the user. (Useful for user management)
+     *
+     * @return the credentials
+     */
+    String getCredentials();
 
     /**
      * Indicates whether the user's account has expired. An expired account cannot be authenticated.
@@ -55,8 +71,23 @@ public interface User extends Serializable {
     List<String> getRoles();
 
     /**
+     * Returns the user additional information
      *
-     * @return
+     * @return the user additional information
      */
     Map<String, Object> getAdditionalInformation();
+
+    /**
+     * Returns the user creation date
+     *
+     * @return the user creation date
+     */
+    Date getCreatedAt();
+
+    /**
+     * Returns the last time when user has been updated
+     *
+     * @return the last time when user has been updated
+     */
+    Date getUpdatedAt();
 }

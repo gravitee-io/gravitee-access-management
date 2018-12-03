@@ -131,6 +131,31 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     }
 
     @Override
+    public UserProvider create(String type, String configuration) {
+        logger.debug("Looking for an user provider for [{}]", type);
+        IdentityProvider identityProvider = identityProviders.get(type);
+
+        if (identityProvider != null) {
+
+            if (identityProvider.userProvider() == null) {
+                logger.info("No user provider is registered for type {}", type);
+                return null;
+            }
+
+            Class<? extends IdentityProviderConfiguration> configurationClass = identityProvider.configuration();
+            IdentityProviderConfiguration identityProviderConfiguration = identityProviderConfigurationFactory.create(configurationClass, configuration);
+
+            return create0(
+                    identityProviderPlugins.get(identityProvider),
+                    identityProvider.userProvider(),
+                    identityProviderConfiguration);
+        } else {
+            logger.error("No identity provider is registered for type {}", type);
+            throw new IllegalStateException("No identity provider is registered for type " + type);
+        }
+    }
+
+    @Override
     public String getSchema(String identityProviderId) throws IOException {
         IdentityProvider identityProvider = identityProviders.get(identityProviderId);
         Path policyWorkspace = identityProviderPlugins.get(identityProvider).path();
@@ -204,6 +229,52 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
             return identityObj;
         } catch (Exception ex) {
             logger.error("An unexpected error occurs while loading identity provider", ex);
+            return null;
+        }
+    }
+
+    private <T> T create0(Plugin plugin, Class<T> userProvider, IdentityProviderConfiguration identityProviderConfiguration) {
+        try {
+            T identityObj = createInstance(userProvider);
+            final Import annImport = userProvider.getAnnotation(Import.class);
+            Set<Class<?>> configurations = (annImport != null) ?
+                    new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
+
+            ApplicationContext idpApplicationContext = pluginContextFactory.create(new AnnotationBasedPluginContextConfigurer(plugin) {
+                @Override
+                public Set<Class<?>> configurations() {
+                    return configurations;
+                }
+
+                @Override
+                public ConfigurableApplicationContext applicationContext() {
+                    ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
+
+                    // Add gravitee properties
+                    configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new PropertiesBeanFactoryPostProcessor(properties));
+
+                    // Add Vert.x instance
+                    configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new VertxBeanFactoryPostProcessor(vertx));
+
+                    // Add identity provider configuration bean
+                    configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new IdentityProviderConfigurationBeanFactoryPostProcessor(identityProviderConfiguration));
+
+                    return configurableApplicationContext;
+                }
+            });
+
+            idpApplicationContext.getAutowireCapableBeanFactory().autowireBean(identityObj);
+
+            if (identityObj instanceof InitializingBean) {
+                ((InitializingBean) identityObj).afterPropertiesSet();
+            }
+
+            return identityObj;
+        } catch (Exception ex) {
+            logger.error("An unexpected error occurs while loading user provider", ex);
             return null;
         }
     }

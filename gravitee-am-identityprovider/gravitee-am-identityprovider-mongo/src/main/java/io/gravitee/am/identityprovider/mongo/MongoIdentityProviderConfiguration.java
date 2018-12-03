@@ -16,12 +16,17 @@
 package io.gravitee.am.identityprovider.mongo;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class MongoIdentityProviderConfiguration implements IdentityProviderConfiguration {
+    private static final String FIELD_USERNAME = "username";
+    private static final String FIELD_PASSWORD = "password";
+
     private String uri;
     private String host;
     private int port;
@@ -32,7 +37,9 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
     private String database;
     private String usersCollection;
     private String findUserByUsernameQuery;
-    private String passwordField;
+    private String usernameField = FIELD_USERNAME;
+    private String passwordField = FIELD_PASSWORD;
+    private String passwordEncoder = PasswordEncoder.BCRYPT.getValue();
 
     public String getUri() {
         return this.uri;
@@ -114,11 +121,27 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
         this.findUserByUsernameQuery = findUserByUsernameQuery;
     }
 
+    public String getUsernameField() {
+        return usernameField;
+    }
+
+    public void setUsernameField(String usernameField) {
+        this.usernameField = usernameField;
+    }
+
     public String getPasswordField() {
         return this.passwordField;
     }
 
     public void setPasswordField(String passwordField) {
         this.passwordField = passwordField;
+    }
+
+    public String getPasswordEncoder() {
+        return passwordEncoder;
+    }
+
+    public void setPasswordEncoder(String passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
     }
 }

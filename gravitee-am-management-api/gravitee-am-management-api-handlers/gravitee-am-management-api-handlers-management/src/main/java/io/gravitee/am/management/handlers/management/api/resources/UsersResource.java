@@ -15,12 +15,13 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
@@ -37,6 +38,8 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import java.net.URI;
+import java.util.Comparator;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -67,31 +70,37 @@ public class UsersResource extends AbstractResource {
             @ApiResponse(code = 200, message = "List users for a security domain", response = User.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(@PathParam("domain") String domain,
+                                @QueryParam("q") String query,
                                 @QueryParam("page") @DefaultValue("0") int page,
                                 @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
                                 @Suspended final AsyncResponse response) {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> userService.findByDomain(domain, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE))
-                        .flatMap(pagedUsers ->
-                                Observable.fromIterable(pagedUsers.getData())
-                                    .flatMapSingle(user -> {
-                                        if (user.getSource() != null) {
-                                            return identityProviderService.findById(user.getSource())
-                                                    .map(idP -> {
-                                                        user.setSource(idP.getName());
-                                                        return user;
-                                                    })
-                                                    .defaultIfEmpty(user)
-                                                    .toSingle();
-                                        }
-                                        return Single.just(user);
-                                    })
-                                    .toList()
-                                    .map(users -> new Page(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))
-                        )
-                        .map(users -> Response.ok(users).build())
+                .flatMapSingle(irrelevant -> {
+                    if (query != null) {
+                        return userService.search(domain, query, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+                    } else {
+                        return userService.findByDomain(domain, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+                    }
+                })
+                .flatMap(pagedUsers ->
+                        Observable.fromIterable(pagedUsers.getData())
+                            .flatMapSingle(user -> {
+                                if (user.getSource() != null) {
+                                    return identityProviderService.findById(user.getSource())
+                                            .map(idP -> {
+                                                user.setSource(idP.getName());
+                                                return user;
+                                            })
+                                            .defaultIfEmpty(user)
+                                            .toSingle();
+                                }
+                                return Single.just(user);
+                            })
+                            .toSortedList(Comparator.comparing(User::getUsername))
+                            .map(users -> new Page(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))
                 )
+                .map(users -> Response.ok(users).build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
@@ -104,23 +113,27 @@ public class UsersResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "User successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public Response create(
+    public void create(
             @PathParam("domain") String domain,
             @ApiParam(name = "user", required = true)
-            @Valid @NotNull final NewUser newUser) {
-   /*     domainService.findById(domain);
-
-        User user = userService.create(domain, newUser);
-        if (user != null) {
-            return Response
-                    .created(URI.create("/domains/" + domain + "/users/" + user.getId()))
-                    .entity(user)
-                    .build();
+            @Valid @NotNull final NewUser newUser,
+            @Suspended final AsyncResponse response) {
+        // user must have a password in no pre registration mode
+        if (!newUser.isPreRegistration() && newUser.getPassword() == null) {
+            response.resume(new UserInvalidException(("Field [password] is required")));
+            return;
         }
 
-        return Response.serverError().build();*/
-
-        return Response.status(Response.Status.NOT_IMPLEMENTED).entity("Not implemented").build();
+        domainService.findById(domain)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(userProvider -> userService.create(domain, newUser))
+                .map(user -> Response
+                        .created(URI.create("/domains/" + domain + "/users/" + user.getId()))
+                        .entity(user)
+                        .build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
     }
 
     @Path("{user}")

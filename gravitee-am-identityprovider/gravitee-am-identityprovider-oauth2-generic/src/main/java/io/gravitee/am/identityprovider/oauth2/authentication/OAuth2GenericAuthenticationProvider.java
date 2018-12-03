@@ -121,6 +121,7 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
     private User createUser(JsonObject jsonNode) {
         String username = jsonNode.containsKey(StandardClaims.PREFERRED_USERNAME) ? jsonNode.getString(StandardClaims.PREFERRED_USERNAME) : jsonNode.getString(StandardClaims.SUB);
         User user = new DefaultUser(username);
+        ((DefaultUser) user).setId(jsonNode.getString(StandardClaims.SUB));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(StandardClaims.SUB, jsonNode.getValue(StandardClaims.SUB));
@@ -137,7 +138,7 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
                     .filter(claimName -> jsonNode.containsKey(claimName))
                     .forEach(claimName -> additionalInformation.put(claimName, jsonNode.getValue(claimName)));
         }
-        ((DefaultUser) user).setAdditonalInformation(additionalInformation);
+        ((DefaultUser) user).setAdditionalInformation(additionalInformation);
         return user;
     }
 

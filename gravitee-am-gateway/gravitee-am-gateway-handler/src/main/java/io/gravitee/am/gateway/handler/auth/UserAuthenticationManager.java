@@ -31,4 +31,6 @@ public interface UserAuthenticationManager {
     Single<User> authenticate(Client client, Authentication authentication);
 
     Maybe<User> loadUserByUsername(String subject);
+
+    Single<User> loadUser(io.gravitee.am.identityprovider.api.User user);
 }

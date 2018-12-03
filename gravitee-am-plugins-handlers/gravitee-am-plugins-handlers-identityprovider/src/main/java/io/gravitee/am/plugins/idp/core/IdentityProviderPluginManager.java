@@ -16,6 +16,7 @@
 package io.gravitee.am.plugins.idp.core;
 
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.plugin.core.api.Plugin;
 
 import java.io.IOException;
@@ -37,6 +38,8 @@ public interface IdentityProviderPluginManager {
     Plugin findById(String identityProviderId);
 
     AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper);
+
+    UserProvider create(String type, String configuration);
 
     String getSchema(String identityProviderId) throws IOException;
 }

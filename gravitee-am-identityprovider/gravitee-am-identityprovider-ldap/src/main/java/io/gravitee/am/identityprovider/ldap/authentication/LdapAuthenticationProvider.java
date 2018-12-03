@@ -182,9 +182,10 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
 
     private User createUser(LdapEntry ldapEntry) {
         DefaultUser user = new DefaultUser(ldapEntry.getAttribute(identifierAttribute).getStringValue());
-
+        user.setId(user.getUsername());
         // add additional information
         Map<String, Object> claims = new HashMap<>();
+        claims.put(StandardClaims.SUB, user.getUsername());
         if (mapper.getMappers() != null && !mapper.getMappers().isEmpty()) {
             mapper.getMappers().forEach((k, v) -> {
                 LdapAttribute ldapAttribute = ldapEntry.getAttribute(v);
@@ -201,14 +202,13 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
             });
         } else {
             // default values
-            claims.put(StandardClaims.SUB, user.getUsername());
             addClaim(claims, ldapEntry, StandardClaims.NAME, "displayname");
             addClaim(claims, ldapEntry, StandardClaims.GIVEN_NAME, "givenname");
             addClaim(claims, ldapEntry, StandardClaims.FAMILY_NAME, "sn");
             addClaim(claims, ldapEntry, StandardClaims.EMAIL, "mail");
             addClaim(claims, ldapEntry, StandardClaims.PREFERRED_USERNAME, user.getUsername());
         }
-        user.setAdditonalInformation(claims);
+        user.setAdditionalInformation(claims);
 
         // set user roles
         user.setRoles(getUserRoles(ldapEntry));

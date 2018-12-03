@@ -23,6 +23,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -36,9 +37,13 @@ public interface UserService {
 
     Single<Page<User>> findByDomain(String domain, int page, int size);
 
-    Maybe<User> findById(String id);
+    Single<Page<User>> search(String domain, String query, int limit);
 
-    Maybe<User> loadUserByUsernameAndDomain(String domain, String username);
+    Single<List<User>> findByIdIn(List<String> ids);
+
+    Maybe<User> findByDomainAndUsername(String domain, String username);
+
+    Maybe<User> findById(String id);
 
     Single<User> create(String domain, NewUser newUser);
 

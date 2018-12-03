@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.DomainService;
@@ -54,6 +55,9 @@ public class IdentityProviderResource extends AbstractResource {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private IdentityProviderManager identityProviderManager;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -95,6 +99,7 @@ public class IdentityProviderResource extends AbstractResource {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapSingle(irrelevant -> identityProviderService.update(domain, identity, updateIdentityProvider))
+                .flatMap(identityProvider -> identityProviderManager.reloadUserProvider(identityProvider))
                 .map(identityProvider -> Response.ok(identityProvider).build())
                 .subscribe(
                         result -> response.resume(result),

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.auth.idp.impl;
 import io.gravitee.am.gateway.core.event.IdentityProviderEvent;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.common.event.Payload;
@@ -60,6 +61,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     private ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
     private ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
 
     @Override
     public Maybe<AuthenticationProvider> get(String id) {
@@ -71,6 +73,12 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     public Maybe<IdentityProvider> getIdentityProvider(String id) {
         IdentityProvider identityProvider = identities.get(id);
         return (identityProvider != null) ? Maybe.just(identityProvider) : Maybe.empty();
+    }
+
+    @Override
+    public Maybe<UserProvider> getUserProvider(String id) {
+        UserProvider userProvider = userProviders.get(id);
+        return (userProvider != null) ? Maybe.just(userProvider) : Maybe.empty();
     }
 
     @Override
@@ -128,6 +136,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         logger.info("Domain {} has received identity provider event, delete identity provider {}", domain.getName(), identityProviderId);
         providers.remove(identityProviderId);
         identities.remove(identityProviderId);
+        userProviders.remove(identityProviderId);
     }
 
     private void updateAuthenticationProvider(IdentityProvider identityProvider) {
@@ -135,7 +144,12 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         AuthenticationProvider authenticationProvider =
                 identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
                         identityProvider.getMappers(), identityProvider.getRoleMapper());
+        UserProvider userProvider =
+                identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
         providers.put(identityProvider.getId(), authenticationProvider);
         identities.put(identityProvider.getId(), identityProvider);
+        if (userProvider != null) {
+            userProviders.put(identityProvider.getId(), userProvider);
+        }
     }
 }

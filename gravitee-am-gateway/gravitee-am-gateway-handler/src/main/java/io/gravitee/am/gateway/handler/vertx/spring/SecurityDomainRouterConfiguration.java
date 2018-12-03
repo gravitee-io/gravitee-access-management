@@ -16,9 +16,12 @@
 package io.gravitee.am.gateway.handler.vertx.spring;
 
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
-import io.gravitee.am.gateway.handler.vertx.handler.login.LoginRouter;
+import io.gravitee.am.gateway.handler.vertx.email.EmailConfiguration;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.OAuth2Router;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.OIDCRouter;
+import io.gravitee.am.gateway.handler.vertx.handler.root.RootRouter;
+import io.gravitee.am.gateway.handler.vertx.handler.scim.SCIMRouter;
+import io.gravitee.am.gateway.handler.vertx.view.FreeMarkerConfiguration;
 import io.gravitee.am.gateway.handler.vertx.view.ThymeleafConfiguration;
 import io.gravitee.am.service.spring.ServiceConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -27,10 +30,13 @@ import org.springframework.context.annotation.Import;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import({
         ThymeleafConfiguration.class,
+        FreeMarkerConfiguration.class,
+        EmailConfiguration.class,
         ServiceConfiguration.class
 })
 @Configuration
@@ -42,8 +48,8 @@ public class SecurityDomainRouterConfiguration {
     }
 
     @Bean
-    public LoginRouter loginRouter() {
-        return new LoginRouter();
+    public RootRouter rootRouter() {
+        return new RootRouter();
     }
 
     @Bean
@@ -54,5 +60,10 @@ public class SecurityDomainRouterConfiguration {
     @Bean
     public OAuth2Router oAuth2Router() {
         return new OAuth2Router();
+    }
+
+    @Bean
+    public SCIMRouter scimRouter() {
+        return new SCIMRouter();
     }
 }

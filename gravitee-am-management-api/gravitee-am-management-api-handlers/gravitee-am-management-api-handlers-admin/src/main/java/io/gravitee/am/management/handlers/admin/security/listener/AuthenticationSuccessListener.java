@@ -53,7 +53,7 @@ public class AuthenticationSuccessListener implements ApplicationListener<Authen
         final User principal = (User) event.getAuthentication().getPrincipal();
         Map<String, String> details = (Map<String, String>) event.getAuthentication().getDetails();
 
-        userService.loadUserByUsernameAndDomain(domain.getId(), principal.getUsername())
+        userService.findByDomainAndUsername(domain.getId(), principal.getUsername())
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
                 .flatMapSingle(user -> {
                     UpdateUser updateUser = new UpdateUser();
@@ -69,6 +69,7 @@ public class AuthenticationSuccessListener implements ApplicationListener<Authen
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof UserNotFoundException) {
                         final NewUser newUser = new NewUser();
+                        newUser.setInternal(false);
                         newUser.setUsername(principal.getUsername());
                         if (details != null) {
                             newUser.setSource(details.get(SOURCE));

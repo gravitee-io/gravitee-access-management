@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Inject } from '@angular/core';
+import {Component, OnInit, Inject, ViewChild} from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { SnackbarService } from "../../../../../services/snackbar.service";
-import {ActivatedRoute, Router} from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { ProviderService } from "../../../../../services/provider.service";
 import { DialogService } from "../../../../../services/dialog.service";
 import {AppConfig} from "../../../../../../config/app.config";
+import { MatSelect } from "@angular/material";
+import {GroupService} from "../../../../../services/group.service";
+import {NgForm} from "@angular/forms";
 
 @Component({
   selector: 'app-roles',
@@ -30,6 +33,7 @@ export class ProviderRolesComponent implements OnInit {
   private domainId: string;
   private provider: any;
   roles: any;
+  groups: any;
   providerRoleMapper: any = {};
 
   constructor(private snackbarService: SnackbarService, private providerService: ProviderService,
@@ -43,29 +47,56 @@ export class ProviderRolesComponent implements OnInit {
     }
     this.provider = this.route.snapshot.parent.data['provider'];
     this.roles = this.route.snapshot.data['roles'];
+    this.groups = this.route.snapshot.data['groups'].data;
     if (this.provider.roleMapper) {
       this.providerRoleMapper = this.provider.roleMapper;
     }
   }
 
   add() {
-    let dialogRef = this.dialog.open(CreateRoleMapperComponent, { data: this.roles, width : '500px'});
+    let dialogRef = this.dialog.open(CreateRoleMapperComponent, { data: { domain: this.domainId, roles: this.roles, groups: this.groups }, width : '700px'});
+
     dialogRef.afterClosed().subscribe(mapper => {
       if (mapper) {
         let errorMessages = [];
         let roleMapped = false;
         mapper.roles.forEach(role => {
+          // no mapping for this role
           if (!this.providerRoleMapper.hasOwnProperty(role)) {
-            this.providerRoleMapper[role] = [mapper.user];
+            if (mapper.user) {
+              this.providerRoleMapper[role] = [mapper.user];
+            }
+            if (mapper.groups && mapper.groups.length > 0) {
+              mapper.groups.forEach(group => {
+                (this.providerRoleMapper[role] = this.providerRoleMapper[role] || []).push('group=' + group);
+              });
+            }
             roleMapped = true;
           } else {
+            // check user/group uniqueness
             let users = this.providerRoleMapper[role];
-            if (users.indexOf(mapper.user) === -1) {
-              users.push(mapper.user);
-              this.providerRoleMapper[role] = users;
-              roleMapped = true;
-            } else {
-              errorMessages.push(`${mapper.user} has already the ${this.getRole(role)} role`);
+            // user
+            if (mapper.user) {
+              if (users.indexOf(mapper.user) === -1) {
+                users.push(mapper.user);
+                this.providerRoleMapper[role] = users;
+                roleMapped = true;
+              } else {
+                errorMessages.push(`'${mapper.user}' has already the '${this.getRole(role)}' role`);
+              }
+            }
+            // group
+            if (mapper.groups && mapper.groups.length > 0) {
+              mapper.groups.forEach(group => {
+                let groupValue = 'group=' + group;
+                if (users.indexOf(groupValue) === -1) {
+                  users.push(groupValue);
+                  this.providerRoleMapper[role] = users;
+                  roleMapped = true;
+                } else {
+                  errorMessages.push(`'${this.getGroup(group)}' has already the '${this.getRole(role)}' role`);
+                }
+              });
             }
           }
         });
@@ -91,7 +122,7 @@ export class ProviderRolesComponent implements OnInit {
   deleteUserFromRole(role, user, event) {
     event.preventDefault();
     this.dialogService
-      .confirm('Delete user from role', `Are you sure you want to remove this user from ${this.getRole(role)} role ?`)
+      .confirm('Delete entry from role', `Are you sure you want to remove this entry from '${this.getRole(role)}' role ?`)
       .subscribe(res => {
         if (res) {
           let users = this.providerRoleMapper[role];
@@ -120,12 +151,59 @@ export class ProviderRolesComponent implements OnInit {
     return !this.providerRoleMapper || this.providerRoles.length == 0;
   }
 
+  getGroup(id): string {
+    return this.groups.filter((group) => group.id === id).map(group => group.name);
+  }
+
+  displayMapping(mapping: string): string {
+    let mapperKey = mapping.split('=')[0];
+    let mapperValue = mapping.split('=')[1];
+    if (mapperKey === 'group') {
+      mapperValue = this.getGroup(mapperValue);
+    }
+    return mapperKey + '=' + mapperValue;
+  }
+
 }
 
 @Component({
   selector: 'create-role-mapper',
   templateUrl: './create/create.component.html',
 })
-export class CreateRoleMapperComponent {
-  constructor(@Inject(MAT_DIALOG_DATA) public data: any, public dialogRef: MatDialogRef<CreateRoleMapperComponent>) { }
+export class CreateRoleMapperComponent implements OnInit {
+  @ViewChild('groupSelect') selectElem: MatSelect;
+  @ViewChild('userRoleForm') form: NgForm;
+  private page = 0;
+  private size = 25;
+  private RELOAD_TOP_SCROLL_POSITION = 25;
+  groups: any[];
+
+  constructor(@Inject(MAT_DIALOG_DATA) public data: any,
+              public dialogRef: MatDialogRef<CreateRoleMapperComponent>,
+              private groupService: GroupService) {
+    this.groups = data.groups;
+  }
+
+  ngOnInit() {
+    this.selectElem.onOpen.subscribe(() => this.registerPanelScrollEvent());
+  }
+
+  get formInvalid() {
+    let formValue = this.form.value;
+    return !formValue.user && (formValue.groups === undefined || formValue.groups.length == 0);
+  }
+
+  registerPanelScrollEvent() {
+    const panel = this.selectElem.panel.nativeElement;
+    panel.addEventListener('scroll', event => this.loadGroupsOnScroll(event));
+  }
+
+  loadGroupsOnScroll(event) {
+    if (event.target.scrollTop > this.RELOAD_TOP_SCROLL_POSITION) {
+      this.groupService.findByDomain(this.data.domain, ++this.page, this.size).map(res => res.json()).subscribe(response => {
+        this.groups = response.data;
+        this.RELOAD_TOP_SCROLL_POSITION += this.groups.length * this.page;
+      });
+    }
+  }
 }
