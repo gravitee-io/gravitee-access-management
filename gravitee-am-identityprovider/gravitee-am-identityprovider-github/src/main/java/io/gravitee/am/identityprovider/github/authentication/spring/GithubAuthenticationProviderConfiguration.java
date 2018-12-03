@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.identityprovider.github.authentication.spring;
 
-import io.vertx.core.http.HttpClientOptions;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.core.http.HttpClient;
+import io.vertx.reactivex.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +32,7 @@ import java.util.Properties;
 @Configuration
 public class GithubAuthenticationProviderConfiguration {
 
+    private static final String DEFAULT_USER_AGENT = "Gravitee.io-AM/2";
     private static final String DEFAULT_MAX_TOTAL_CONNECTION = "200";
     private static final String DEFAULT_CONNECTION_TIMEOUT = "10";
 
@@ -43,12 +44,13 @@ public class GithubAuthenticationProviderConfiguration {
     private Vertx vertx;
 
     @Bean
-    public HttpClient httpClient() {
-        HttpClientOptions httpClientOptions = new HttpClientOptions();
+    public WebClient httpClient() {
+        WebClientOptions httpClientOptions = new WebClientOptions();
         httpClientOptions
+                .setUserAgent(DEFAULT_USER_AGENT)
                 .setConnectTimeout(Integer.valueOf(properties.getProperty("identities.github.http.connectionTimeout", DEFAULT_CONNECTION_TIMEOUT)) * 1000)
                 .setMaxPoolSize(Integer.valueOf(properties.getProperty("identities.github.http.pool.maxTotalConnection", DEFAULT_MAX_TOTAL_CONNECTION)));
 
-        return vertx.createHttpClient(httpClientOptions);
+        return WebClient.create(vertx, httpClientOptions);
     }
 }

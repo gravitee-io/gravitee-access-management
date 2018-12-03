@@ -110,7 +110,7 @@ public class OAuth2ClientAuthHandlerImpl extends AuthHandlerImpl {
     private String buildRedirectUri(HttpServerRequest request) throws URISyntaxException {
         return UriBuilderRequest.resolveProxyRequest(
                 new io.vertx.reactivex.core.http.HttpServerRequest(request),
-                request.uri(),
+                request.path(),
                 // append provider query param to avoid redirect mismatch exception
                 Collections.singletonMap("provider", request.getParam(PROVIDER_PARAMETER)));
     }

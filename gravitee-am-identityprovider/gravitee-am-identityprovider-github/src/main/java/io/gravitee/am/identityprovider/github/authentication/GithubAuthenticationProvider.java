@@ -28,20 +28,16 @@ import io.gravitee.am.model.http.BasicNameValuePair;
 import io.gravitee.am.model.http.NameValuePair;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.vertx.core.http.RequestOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
-import io.vertx.reactivex.core.http.HttpClient;
-import io.vertx.reactivex.core.http.HttpClientRequest;
-import io.vertx.reactivex.core.http.HttpClientResponse;
+import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,11 +55,9 @@ public class GithubAuthenticationProvider implements OAuth2AuthenticationProvide
     private static final String CLIENT_SECRET = "client_secret";
     private static final String REDIRECT_URI = "redirect_uri";
     private static final String CODE = "code";
-    private static final String HTTPS_SCHEME = "https";
-    private static final String DEFAULT_USER_AGENT = "Vert.x-WebClient/3.5.1";
 
     @Autowired
-    private HttpClient client;
+    private WebClient client;
 
     @Autowired
     private OAuth2IdentityProviderConfiguration configuration;
@@ -76,7 +70,7 @@ public class GithubAuthenticationProvider implements OAuth2AuthenticationProvide
 
     @Override
     public Maybe<User> loadUserByUsername(String username) {
-        return null;
+        return Maybe.empty();
     }
 
     @Override
@@ -85,69 +79,41 @@ public class GithubAuthenticationProvider implements OAuth2AuthenticationProvide
     }
 
     private Maybe<String> authenticate(Authentication authentication) {
-        return io.reactivex.Maybe.create(emitter -> {
-            // prepare body request parameters
-            List<NameValuePair> urlParameters = new ArrayList<>();
-            urlParameters.add(new BasicNameValuePair(CLIENT_ID, configuration.getClientId()));
-            urlParameters.add(new BasicNameValuePair(CLIENT_SECRET, configuration.getClientSecret()));
-            urlParameters.add(new BasicNameValuePair(REDIRECT_URI, (String) authentication.getAdditionalInformation().get(REDIRECT_URI)));
-            urlParameters.add(new BasicNameValuePair(CODE, (String) authentication.getCredentials()));
-            String bodyRequest = URLEncodedUtils.format(urlParameters);
+        // prepare body request parameters
+        List<NameValuePair> urlParameters = new ArrayList<>();
+        urlParameters.add(new BasicNameValuePair(CLIENT_ID, configuration.getClientId()));
+        urlParameters.add(new BasicNameValuePair(CLIENT_SECRET, configuration.getClientSecret()));
+        urlParameters.add(new BasicNameValuePair(REDIRECT_URI, (String) authentication.getAdditionalInformation().get(REDIRECT_URI)));
+        urlParameters.add(new BasicNameValuePair(CODE, (String) authentication.getCredentials()));
+        String bodyRequest = URLEncodedUtils.format(urlParameters);
 
-            URI requestUri = URI.create(configuration.getAccessTokenUri());
-            final int port = requestUri.getPort() != -1 ? requestUri.getPort() : (HTTPS_SCHEME.equals(requestUri.getScheme()) ? 443 : 80);
-            boolean ssl = HTTPS_SCHEME.equalsIgnoreCase(requestUri.getScheme());
+        return client.postAbs(configuration.getAccessTokenUri())
+                .putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()))
+                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
+                .rxSendBuffer(Buffer.buffer(bodyRequest))
+                .toMaybe()
+                .map(httpResponse -> {
+                    if (httpResponse.statusCode() != 200) {
+                        throw new BadCredentialsException(httpResponse.statusMessage());
+                    }
 
-            HttpClientRequest request = client.post(
-                    new RequestOptions()
-                            .setHost(requestUri.getHost())
-                            .setPort(port)
-                            .setSsl(ssl)
-                            .setURI(requestUri.toString()), response -> {
-                if (response.statusCode() != 200) {
-                    emitter.onError(new BadCredentialsException(response.statusMessage()));
-                } else {
-                    response.bodyHandler(body -> {
-                        Map<String, String> bodyResponse = URLEncodedUtils.format(body.toString());
-                        emitter.onSuccess(bodyResponse.get("access_token"));
-                    });
-                }
-            }).setChunked(true).putHeader(HttpHeaders.CONTENT_TYPE, URLEncodedUtils.CONTENT_TYPE);
-
-            request.write(bodyRequest);
-            request.end();
-        });
+                    Map<String, String> bodyResponse = URLEncodedUtils.format(httpResponse.bodyAsString());
+                    return bodyResponse.get("access_token");
+                });
     }
 
     private Maybe<User> profile(String accessToken) {
-        URI requestUri = URI.create(configuration.getUserProfileUri());
-        final int port = requestUri.getPort() != -1 ? requestUri.getPort() : (HTTPS_SCHEME.equals(requestUri.getScheme()) ? 443 : 80);
-        boolean ssl = HTTPS_SCHEME.equalsIgnoreCase(requestUri.getScheme());
-        HttpClientRequest request = client.get(
-                new RequestOptions()
-                        .setHost(requestUri.getHost())
-                        .setPort(port)
-                        .setSsl(ssl)
-                        .setURI(requestUri.toString()))
-                        // https://developer.github.com/v3/#user-agent-required
-                        .putHeader(HttpHeaders.USER_AGENT, DEFAULT_USER_AGENT)
-                        .putHeader(HttpHeaders.AUTHORIZATION, "token " + accessToken);
-
-        return request
-                .toObservable()
-                .flatMap(httpClientResponse -> {
+        return client.getAbs(configuration.getUserProfileUri())
+                .putHeader(HttpHeaders.AUTHORIZATION, "token " + accessToken)
+                .rxSend()
+                .toMaybe()
+                .map(httpClientResponse -> {
                     if (httpClientResponse.statusCode() != 200) {
                         throw new BadCredentialsException(httpClientResponse.statusMessage());
                     }
-                    return Observable.just(httpClientResponse);
-                })
-                .flatMap(HttpClientResponse::toObservable)
-                // we reduce the response chunks into a single one to have access to the full JSON object
-                .reduce(Buffer.buffer(), Buffer::appendBuffer)
-                .map(buffer -> createUser(buffer.toJsonObject()))
-                .toMaybe()
-                // Vert.x requires the HttpClientRequest.end() method to be invoked to signaling that the request can be sent
-                .doOnSubscribe(subscription -> request.end());
+
+                    return createUser(httpClientResponse.bodyAsJsonObject());
+                });
     }
 
     private User createUser(JsonObject jsonObject) {
