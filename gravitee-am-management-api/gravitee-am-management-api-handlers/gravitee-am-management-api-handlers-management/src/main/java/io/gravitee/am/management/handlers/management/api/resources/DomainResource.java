@@ -142,11 +142,6 @@ public class DomainResource extends AbstractResource {
         return resourceContext.getResource(RolesResource.class);
     }
 
-    @Path("login")
-    public DomainLoginFormResource getDomainLoginFormResource() {
-        return resourceContext.getResource(DomainLoginFormResource.class);
-    }
-
     @Path("users")
     public UsersResource getUsersResource() {
         return resourceContext.getResource(UsersResource.class);
@@ -160,5 +155,15 @@ public class DomainResource extends AbstractResource {
     @Path("scopes")
     public ScopesResource getScopesResource() {
         return resourceContext.getResource(ScopesResource.class);
+    }
+
+    @Path("forms")
+    public FormsResource getPagesResource() {
+        return resourceContext.getResource(FormsResource.class);
+    }
+
+    @Path("groups")
+    public GroupsResource getGroupsResource() {
+        return resourceContext.getResource(GroupsResource.class);
     }
 }

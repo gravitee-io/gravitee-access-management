@@ -75,7 +75,7 @@ public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
                 .subscribe(approvalData -> {
                         routingContext.put("client", approvalData.getClient());
                         routingContext.put("scopes", approvalData.getScopes());
-                        engine.render(routingContext, "access_confirmation", res -> {
+                        engine.render(routingContext, "oauth2_user_consent", res -> {
                             if (res.succeeded()) {
                                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                                 routingContext.response().end(res.result());

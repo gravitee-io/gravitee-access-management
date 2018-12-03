@@ -1,0 +1,55 @@
+.users-container {
+  padding: 20px 70px 20px 50px;
+  h1 {
+    font-weight: 400;
+  }
+  ngx-datatable {
+    font-size: 14px;
+    box-shadow: none;
+  }
+
+  .users-search {
+    text-align: center;
+    margin-bottom: 10px;
+
+    mat-form-field {
+      width: 70%;
+    }
+
+    mat-icon {
+      vertical-align: middle;
+      padding-bottom: 4px;
+    }
+  }
+}
+
+.users-actions {
+  margin-left: -10px;
+
+  button, a {
+    top: -9px;
+    color: grey;
+  }
+}
+
+.add-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
+
+.add-button-center {
+  text-align: center;
+}
+
+/deep/ .ngx-datatable.material .datatable-footer .datatable-pager {
+  ul li:not(:last-child):after {
+    content: none;
+  }
+}
+
+:host /deep/ .ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
+  &:first-child {
+    padding-left: 42px;
+  }
+}

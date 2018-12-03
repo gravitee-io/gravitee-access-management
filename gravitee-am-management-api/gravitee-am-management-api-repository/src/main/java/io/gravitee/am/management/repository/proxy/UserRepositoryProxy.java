@@ -23,6 +23,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -43,8 +44,28 @@ public class UserRepositoryProxy extends AbstractProxy<UserRepository> implement
     }
 
     @Override
+    public Single<Page<User>> search(String domain, String query, int limit) {
+        return target.search(domain, query, limit);
+    }
+
+    @Override
+    public Single<List<User>> findByDomainAndEmail(String domain, String email) {
+        return target.findByDomainAndEmail(domain, email);
+    }
+
+    @Override
     public Maybe<User> findByUsernameAndDomain(String username, String domain) {
         return target.findByUsernameAndDomain(username, domain);
+    }
+
+    @Override
+    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
+        return target.findByDomainAndUsernameAndSource(domain, username, source);
+    }
+
+    @Override
+    public Single<List<User>> findByIdIn(List<String> ids) {
+        return target.findByIdIn(ids);
     }
 
     @Override

@@ -19,8 +19,8 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
-import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.UserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
@@ -54,9 +54,6 @@ public class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
 
     private final static String DOMAIN = "domain1";
 
@@ -139,7 +136,7 @@ public class UserServiceTest {
     @Test
     public void shouldLoadUserByUsernameAndDomain() {
         when(userRepository.findByUsernameAndDomain(DOMAIN, "my-user")).thenReturn(Maybe.just(new User()));
-        TestObserver testObserver = userService.loadUserByUsernameAndDomain(DOMAIN, "my-user").test();
+        TestObserver testObserver = userService.findByDomainAndUsername(DOMAIN, "my-user").test();
 
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
@@ -150,7 +147,7 @@ public class UserServiceTest {
     @Test
     public void shouldLoadUserByUsernameAndDomain_notExistingUser() {
         when(userRepository.findByUsernameAndDomain(DOMAIN, "my-user")).thenReturn(Maybe.empty());
-        TestObserver testObserver = userService.loadUserByUsernameAndDomain(DOMAIN, "my-user").test();
+        TestObserver testObserver = userService.findByDomainAndUsername(DOMAIN, "my-user").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertNoValues();
@@ -160,7 +157,7 @@ public class UserServiceTest {
     public void shouldLoadUserByUsernameAndDomain_technicalException() {
         when(userRepository.findByUsernameAndDomain(DOMAIN, "my-user")).thenReturn(Maybe.error(TechnicalException::new));
         TestObserver testObserver = new TestObserver();
-        userService.loadUserByUsernameAndDomain(DOMAIN, "my-user").subscribe(testObserver);
+        userService.findByDomainAndUsername(DOMAIN, "my-user").subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -169,9 +166,10 @@ public class UserServiceTest {
     @Test
     public void shouldCreate() {
         NewUser newUser = Mockito.mock(NewUser.class);
-        when(newUser.getPassword()).thenReturn("password");
-        when(passwordEncoder.encode("password")).thenReturn("password");
+        when(newUser.getUsername()).thenReturn("username");
+        when(newUser.getSource()).thenReturn("source");
         when(userRepository.create(any(User.class))).thenReturn(Single.just(new User()));
+        when(userRepository.findByDomainAndUsernameAndSource(DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = userService.create(DOMAIN, newUser).test();
         testObserver.awaitTerminalEvent();
@@ -185,8 +183,9 @@ public class UserServiceTest {
     @Test
     public void shouldCreate_technicalException() {
         NewUser newUser = Mockito.mock(NewUser.class);
-        when(newUser.getPassword()).thenReturn("password");
-        when(passwordEncoder.encode("password")).thenReturn("password");
+        when(newUser.getUsername()).thenReturn("username");
+        when(newUser.getSource()).thenReturn("source");
+        when(userRepository.findByDomainAndUsernameAndSource(DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
         when(userRepository.create(any(User.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
@@ -197,10 +196,23 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldCreate_alreadyExists() {
+        NewUser newUser = Mockito.mock(NewUser.class);
+        when(newUser.getUsername()).thenReturn("username");
+        when(newUser.getSource()).thenReturn("source");
+        when(userRepository.findByDomainAndUsernameAndSource(DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.just(new User()));
+        when(userRepository.create(any(User.class))).thenReturn(Single.error(TechnicalException::new));
+
+        TestObserver testObserver = new TestObserver();
+        userService.create(DOMAIN, newUser).subscribe(testObserver);
+
+        testObserver.assertError(UserAlreadyExistsException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
     public void shouldUpdate() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
-        when(updateUser.getPassword()).thenReturn("password");
-        when(passwordEncoder.encode("password")).thenReturn("password");
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(new User()));
         when(userRepository.update(any(User.class))).thenReturn(Single.just(new User()));
 
@@ -217,8 +229,6 @@ public class UserServiceTest {
     @Test
     public void shouldUpdate_technicalException() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
-        when(updateUser.getPassword()).thenReturn("password");
-        when(passwordEncoder.encode("password")).thenReturn("password");
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(new User()));
         when(userRepository.update(any(User.class))).thenReturn(Single.error(TechnicalException::new));
 
@@ -232,8 +242,6 @@ public class UserServiceTest {
     @Test
     public void shouldUpdate_userNotFound() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
-        when(updateUser.getPassword()).thenReturn("password");
-        when(passwordEncoder.encode("password")).thenReturn("password");
         when(userRepository.findById("my-user")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();

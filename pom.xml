@@ -54,6 +54,13 @@
         <rxjava.version>2.1.12</rxjava.version>
         <com.fasterxml.jackson.version>2.9.6</com.fasterxml.jackson.version>
         <nimbus.version>5.14</nimbus.version>
+        <freemarker.version>2.3.28</freemarker.version>
+        <jsoup.version>1.10.1</jsoup.version>
+        <mail.version>1.4.7</mail.version>
+        <org.mongodb.version>3.8.0</org.mongodb.version>
+        <org.mongodb.mongodb.driver.reactivestreams.version>1.9.0</org.mongodb.mongodb.driver.reactivestreams.version>
+        <embed.mongo.version>2.0.3</embed.mongo.version>
+        <validation-api.version>2.0.1.Final</validation-api.version>
     </properties>
 
     <modules>

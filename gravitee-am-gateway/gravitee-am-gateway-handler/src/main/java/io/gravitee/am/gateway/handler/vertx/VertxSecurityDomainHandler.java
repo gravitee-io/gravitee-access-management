@@ -19,10 +19,12 @@ import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.UserAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
-import io.gravitee.am.gateway.handler.vertx.handler.login.LoginRouter;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.OAuth2Router;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationEndpointFailureHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.OIDCRouter;
+import io.gravitee.am.gateway.handler.vertx.handler.root.RootRouter;
+import io.gravitee.am.gateway.handler.vertx.handler.scim.SCIMRouter;
+import io.gravitee.am.gateway.handler.vertx.handler.scim.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.session.RxSessionHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.utils.UUID;
@@ -59,13 +61,16 @@ public class VertxSecurityDomainHandler {
     private Domain domain;
 
     @Autowired
-    private LoginRouter loginRouter;
+    private RootRouter rootRouter;
 
     @Autowired
     private OIDCRouter oidcRouter;
 
     @Autowired
     private OAuth2Router oauth2Router;
+
+    @Autowired
+    private SCIMRouter scimRouter;
 
     @Autowired
     private Environment environment;
@@ -78,6 +83,7 @@ public class VertxSecurityDomainHandler {
         Handler<RoutingContext> authorizationEndpointFailureHandler = new AuthorizationEndpointFailureHandler(domain);
         router.route("/login").failureHandler(authorizationEndpointFailureHandler);
         router.route("/oauth/authorize").failureHandler(authorizationEndpointFailureHandler);
+        router.routeWithRegex("/scim/(.*)").failureHandler(new ErrorHandler());
         router.route().failureHandler(new ExceptionHandler());
 
         // user authentication handler
@@ -95,14 +101,19 @@ public class VertxSecurityDomainHandler {
         // CSRF handler
         csrfHandler(router);
 
-        // mount login router
-        router.mountSubRouter("/", loginRouter.route(userAuthProvider));
+        // mount root router
+        router.mountSubRouter("/", rootRouter.route(userAuthProvider));
 
         // mount OAuth 2.0 router
         router.mountSubRouter("/oauth", oauth2Router.route(userAuthProvider));
 
         // mount OpenID Connect router
         router.mountSubRouter("/oidc", oidcRouter.route());
+
+        // mount SCIM router
+        if (isSCIMEnabled()) {
+            router.mountSubRouter("/scim", scimRouter.route());
+        }
 
         return router;
     }
@@ -178,6 +189,10 @@ public class VertxSecurityDomainHandler {
         io.gravitee.am.gateway.handler.vertx.handler.CSRFHandler csrfHandler1 = io.gravitee.am.gateway.handler.vertx.handler.CSRFHandler.create();
         router.route("/login").handler(csrfHandler).handler(csrfHandler1);
         router.route("/oauth/confirm_access").handler(csrfHandler).handler(csrfHandler1);
+    }
+
+    private boolean isSCIMEnabled() {
+        return domain.getScim() != null && domain.getScim().isEnabled();
     }
 
 }

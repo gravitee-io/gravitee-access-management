@@ -13,123 +13,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
-import { DomainService } from "../../../services/domain.service";
-import { SnackbarService } from "../../../services/snackbar.service";
-import { DialogService } from "../../../services/dialog.service";
-import { MatDialog, MatDialogRef } from "@angular/material/dialog";
-import { AppConfig } from "../../../../config/app.config";
+import {Component, OnInit} from '@angular/core';
+import {DomainService} from "../../../services/domain.service";
+import {SnackbarService} from "../../../services/snackbar.service";
+import {AppConfig} from "../../../../config/app.config";
+import {ActivatedRoute, Router} from "@angular/router";
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-domain-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
-export class DomainSettingsLoginComponent implements OnInit, AfterViewInit {
+export class DomainSettingsLoginComponent implements OnInit {
   domainId: string;
-  domainLoginForm: any = {};
-  loginFormContent:string = `// Custom login form...`;
-  originalFormContent: string = (' ' + this.loginFormContent).slice(1);
-  config:any = { lineNumbers: true, readOnly: true};
-  loginFormFound: boolean = false;
+  domain: any = {};
   formChanged: boolean = false;
-  @ViewChild('editor') editor: any;
-  @ViewChild('preview') preview: ElementRef;
 
-  constructor(private route: ActivatedRoute, private router: Router, private domainService: DomainService, private snackbarService: SnackbarService,
-              private dialogService: DialogService, public dialog: MatDialog) { }
+  constructor(private domainService: DomainService,
+              private snackbarService: SnackbarService,
+              private route: ActivatedRoute,
+              private router: Router) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.domainId = AppConfig.settings.authentication.domainId;
     }
-    this.domainLoginForm = this.route.snapshot.data['domainLoginForm'];
-    if (this.domainLoginForm && this.domainLoginForm.content) {
-      this.loginFormContent = this.domainLoginForm.content;
-      this.originalFormContent = (' ' + this.loginFormContent).slice(1);
-      this.loginFormFound = true;
-    }
+    this.domain = this.route.snapshot.data['domain'];
+    this.domain.loginSettings = this.domain.loginSettings || {};
   }
 
-  ngAfterViewInit(): void {
-    this.enableCodeMirror();
-  }
-
-  create() {
-    this.domainLoginForm['content'] = this.loginFormContent;
-    this.domainService.createLoginForm(this.domainId, this.domainLoginForm).map(res => res.json()).subscribe(data => {
-      this.snackbarService.open("Login form " + (this.loginFormFound ? 'updated' : 'created'));
-      this.loginFormFound = true;
-      this.domainLoginForm = data;
+  save() {
+    this.domainService.patchLoginSettings(this.domainId, this.domain).map(res => res.json()).subscribe(data => {
+      this.domain = data;
       this.formChanged = false;
-    })
+      this.snackbarService.open("Login configuration updated");
+    });
   }
 
-  onContentChanges(e) {
-    if (e !== this.originalFormContent) {
-      this.formChanged = true;
-    }
-  }
-
-  delete(event) {
-    event.preventDefault();
-    this.dialogService
-      .confirm('Delete Login form', 'Are you sure you want to delete this login form ?')
-      .subscribe(res => {
-        if (res) {
-          this.domainService.deleteLoginForm(this.domainId).subscribe(response => {
-            this.snackbarService.open("Login form deleted");
-            this.domainLoginForm = {};
-            this.loginFormContent = this.originalFormContent;
-            this.loginFormFound = false;
-          });
-        }
-      });
-  }
-
-  isEnabled() {
-    return this.domainLoginForm && this.domainLoginForm.enabled;
-  }
-
-  enableLoginForm(event) {
-    this.domainLoginForm.enabled = event.checked;
-    this.enableCodeMirror();
+  enableRegistration(event) {
+    this.domain.loginSettings.registerEnabled = event.checked;
     this.formChanged = true;
   }
 
-  onTabSelectedChanged(e) {
-    if (e.index === 1) {
-      this.refreshPreview();
-    }
+  isRegistrationEnabled() {
+    return this.domain.loginSettings && this.domain.loginSettings.registerEnabled;
   }
 
-  refreshPreview() {
-    let doc =  this.preview.nativeElement.contentDocument || this.preview.nativeElement.contentWindow;
-    doc.open();
-    doc.write(this.loginFormContent);
-    doc.close();
+
+  enableForgotPassword(event) {
+    this.domain.loginSettings.forgotPasswordEnabled = event.checked;
+    this.formChanged = true;
   }
 
-  resizeIframe() {
-    this.preview.nativeElement.style.height = this.preview.nativeElement.contentWindow.document.body.scrollHeight + 'px';
+  isForgotPasswordEnabled() {
+    return this.domain.loginSettings && this.domain.loginSettings.forgotPasswordEnabled;
   }
 
-  openLoginInfo() {
-    this.dialog.open(DomainSettingsLoginInfoDialog);
-  }
-
-  private enableCodeMirror(): void {
-    this.editor.instance.setOption('readOnly', !this.domainLoginForm.enabled);
-  }
-}
-
-
-@Component({
-  selector: 'login-info-dialog',
-  templateUrl: './dialog/login-info.component.html',
-})
-export class DomainSettingsLoginInfoDialog {
-  constructor(public dialogRef: MatDialogRef<DomainSettingsLoginInfoDialog>) {}
 }

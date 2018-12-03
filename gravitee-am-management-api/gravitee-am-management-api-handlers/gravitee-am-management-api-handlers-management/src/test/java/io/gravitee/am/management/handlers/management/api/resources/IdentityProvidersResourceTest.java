@@ -95,6 +95,7 @@ public class IdentityProvidersResourceTest extends JerseySpringTest {
         identityProvider.setName("identityProvider-name");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(identityProvider)).when(identityProviderManager).reloadUserProvider(identityProvider);
         doReturn(Single.just(identityProvider)).when(identityProviderService).create(eq(domainId), any());
 
         final Response response = target("domains")

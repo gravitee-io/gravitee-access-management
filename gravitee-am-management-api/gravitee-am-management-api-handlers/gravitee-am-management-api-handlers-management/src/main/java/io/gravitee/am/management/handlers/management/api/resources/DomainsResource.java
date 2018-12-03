@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.model.NewDomain;
@@ -44,6 +45,9 @@ public class DomainsResource extends AbstractResource {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private IdentityProviderManager identityProviderManager;
 
     @Context
     private ResourceContext resourceContext;
@@ -84,6 +88,8 @@ public class DomainsResource extends AbstractResource {
             @Valid @NotNull final NewDomain newDomain,
             @Suspended final AsyncResponse response) {
         domainService.create(newDomain)
+                // create default idp
+                .flatMap(domain -> identityProviderManager.create(domain.getId()).map(identityProvider -> domain))
                 .subscribe(
                         domain -> response.resume(Response
                                                     .created(URI.create("/domains/" + domain.getId()))

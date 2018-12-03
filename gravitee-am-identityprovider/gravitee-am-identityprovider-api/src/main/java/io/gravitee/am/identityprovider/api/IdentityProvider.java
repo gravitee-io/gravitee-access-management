@@ -25,6 +25,8 @@ public interface IdentityProvider {
 
     Class<? extends AuthenticationProvider> authenticationProvider();
 
+    default Class<? extends UserProvider> userProvider() { return null; }
+
     default Class<? extends IdentityProviderMapper> mapper() {
         return null;
     }

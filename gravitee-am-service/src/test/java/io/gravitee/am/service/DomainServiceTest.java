@@ -29,7 +29,6 @@ import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.model.UpdateDomain;
-import io.gravitee.am.service.model.UpdateLoginForm;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -63,6 +62,7 @@ public class DomainServiceTest {
     private static final String ROLE_ID = "id-role";
     private static final String USER_ID = "id-user";
     private static final String SCOPE_ID = "id-scope";
+    private static final String GROUP_ID = "id-group";
 
     @InjectMocks
     private DomainService domainService = new DomainServiceImpl();
@@ -86,6 +86,9 @@ public class DomainServiceTest {
     private Scope scope;
 
     @Mock
+    private Group group;
+
+    @Mock
     private DomainRepository domainRepository;
 
     @Mock
@@ -105,6 +108,9 @@ public class DomainServiceTest {
 
     @Mock
     private ScopeService scopeService;
+
+    @Mock
+    private GroupService groupService;
 
     @Test
     public void shouldFindById() {
@@ -377,6 +383,9 @@ public class DomainServiceTest {
         when(scope.getId()).thenReturn(SCOPE_ID);
         when(scopeService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(scope)));
         when(scopeService.delete(SCOPE_ID, true)).thenReturn(Completable.complete());
+        when(group.getId()).thenReturn(GROUP_ID);
+        when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(group)));
+        when(groupService.delete(anyString())).thenReturn(Completable.complete());
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -390,6 +399,7 @@ public class DomainServiceTest {
         verify(roleService, times(1)).delete(ROLE_ID);
         verify(userService, times(1)).delete(USER_ID);
         verify(scopeService, times(1)).delete(SCOPE_ID, true);
+        verify(groupService, times(1)).delete(GROUP_ID);
     }
 
     @Test
@@ -402,6 +412,7 @@ public class DomainServiceTest {
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(userService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(scopeService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
+        when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -456,47 +467,6 @@ public class DomainServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
-    }
-
-    @Test
-    public void shouldUpdateLoginForm() {
-        UpdateLoginForm updateLoginForm = mock(UpdateLoginForm.class);
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
-        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(new Domain()));
-
-        TestObserver testObserver = domainService.updateLoginForm(DOMAIN_ID, updateLoginForm).test();
-        testObserver.awaitTerminalEvent();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(domainRepository, times(1)).update(any(Domain.class));
-    }
-
-    @Test
-    public void shouldUpdateLoginForm_domainNotFound() {
-        UpdateLoginForm updateLoginForm = mock(UpdateLoginForm.class);
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.empty());
-
-        TestObserver testObserver = domainService.updateLoginForm(DOMAIN_ID, updateLoginForm).test();
-
-        testObserver.assertError(DomainNotFoundException.class);
-        testObserver.assertNotComplete();
-
-        verify(domainRepository, never()).update(any(Domain.class));
-    }
-
-    @Test
-    public void shouldUpdateLoginForm_technicalException() {
-        UpdateLoginForm updateLoginForm = mock(UpdateLoginForm.class);
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.error(TechnicalException::new));
-
-        TestObserver testObserver = domainService.updateLoginForm(DOMAIN_ID, updateLoginForm).test();
-
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
-
-        verify(domainRepository, never()).update(any(Domain.class));
     }
 
     @Test

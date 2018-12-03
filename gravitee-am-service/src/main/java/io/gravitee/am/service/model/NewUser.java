@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.model;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.util.Date;
 import java.util.Map;
 
@@ -24,15 +26,20 @@ import java.util.Map;
  */
 public class NewUser {
 
+    @NotNull
     private String username;
 
     private String password;
 
+    @NotNull
+    @Pattern(regexp = "^[\\w!#$%&’*+/=?`{|}~^-]+(?:\\.[\\w!#$%&’*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}$", message = "must be a well-formed email address")
     private String email;
 
     private String firstName;
 
     private String lastName;
+
+    private String externalId;
 
     private boolean accountNonExpired = true;
 
@@ -41,6 +48,12 @@ public class NewUser {
     private boolean credentialsNonExpired = true;
 
     private boolean enabled = true;
+
+    private boolean internal;
+
+    private boolean preRegistration;
+
+    private boolean registrationCompleted;
 
     private String domain;
 
@@ -98,6 +111,14 @@ public class NewUser {
         this.lastName = lastName;
     }
 
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
     public boolean isAccountNonExpired() {
         return accountNonExpired;
     }
@@ -128,6 +149,30 @@ public class NewUser {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isInternal() {
+        return internal;
+    }
+
+    public void setInternal(boolean internal) {
+        this.internal = internal;
+    }
+
+    public boolean isPreRegistration() {
+        return preRegistration;
+    }
+
+    public void setPreRegistration(boolean preRegistration) {
+        this.preRegistration = preRegistration;
+    }
+
+    public boolean isRegistrationCompleted() {
+        return registrationCompleted;
+    }
+
+    public void setRegistrationCompleted(boolean registrationCompleted) {
+        this.registrationCompleted = registrationCompleted;
     }
 
     public String getDomain() {

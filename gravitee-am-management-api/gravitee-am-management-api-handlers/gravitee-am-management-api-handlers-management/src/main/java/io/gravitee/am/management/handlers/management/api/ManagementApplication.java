@@ -26,6 +26,7 @@ import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.jaxrs.listing.ApiListingResource;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
 import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.ServerProperties;
 
@@ -56,10 +57,12 @@ public class ManagementApplication extends ResourceConfig {
         register(NotFoundExceptionMapper.class);
         register(BadRequestExceptionMapper.class);
         register(Oauth2ExceptionMapper.class);
+        register(ValidationExceptionMapper.class);
+        register(JsonMappingExceptionMapper.class);
 
         register(UriBuilderRequestFilter.class);
         register(ByteArrayOutputStreamWriter.class);
-        register(JacksonFeature.class);
+        register(JacksonJaxbJsonProvider.class);
 
         register(ApiListingResource.class);
         register(SwaggerSerializers.class);

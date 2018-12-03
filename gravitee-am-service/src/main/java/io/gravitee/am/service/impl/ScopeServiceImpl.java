@@ -224,7 +224,7 @@ public class ScopeServiceImpl implements ScopeService {
                                         // 2_ Remove scopes from client
                                         clientService.findByDomain(scope.getDomain())
                                                 .flatMapObservable(clients -> Observable.fromIterable(clients.stream()
-                                                        .filter(client -> client.getScopes().contains(scope.getKey()))
+                                                        .filter(client -> client.getScopes() != null && client.getScopes().contains(scope.getKey()))
                                                         .collect(Collectors.toList())))
                                                 .flatMapSingle(client -> {
                                                     // Remove scope from client

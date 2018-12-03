@@ -15,47 +15,47 @@
  */
 package io.gravitee.am.gateway.handler.vertx.view;
 
-import io.gravitee.am.model.Domain;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.gravitee.am.model.Form;
 import org.thymeleaf.IEngineConfiguration;
-import org.thymeleaf.cache.ICacheEntryValidity;
-import org.thymeleaf.templatemode.TemplateMode;
+import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templateresolver.AbstractConfigurableTemplateResolver;
-import org.thymeleaf.templateresolver.AbstractTemplateResolver;
-import org.thymeleaf.templateresolver.StringTemplateResolver;
 import org.thymeleaf.templateresource.ITemplateResource;
 import org.thymeleaf.templateresource.StringTemplateResource;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DomainBasedTemplateResolver extends AbstractConfigurableTemplateResolver implements InitializingBean {
+public class DomainBasedTemplateResolver extends AbstractConfigurableTemplateResolver {
 
-    private Map<String, String> templates = new HashMap<>();
+    private ConcurrentMap<String, String> templates = new ConcurrentHashMap<>();
 
-    @Autowired
-    private Domain domain;
-
+    private TemplateEngine templateEngine;
 
     @Override
     protected ITemplateResource computeTemplateResource(IEngineConfiguration configuration, String ownerTemplate, String template, String resourceName, String characterEncoding, Map<String, Object> templateResolutionAttributes) {
         if (templates.containsKey(resourceName)) {
             return new StringTemplateResource(templates.get(resourceName));
         }
-
         return null;
     }
 
-    @Override
-    public void afterPropertiesSet() {
-        if (domain.getLoginForm() != null && domain.getLoginForm().getContent() != null && domain.getLoginForm().isEnabled()) {
-            templates.put("login", domain.getLoginForm().getContent());
-        }
+    public void addPage(Form page) {
+        templates.put(page.getTemplate(), page.getContent());
+        templateEngine.clearTemplateCacheFor(page.getTemplate());
+    }
+
+    public void removePage(Form page) {
+        templates.remove(page.getTemplate());
+        templateEngine.clearTemplateCacheFor(page.getTemplate());
+    }
+
+    public void setTemplateEngine(TemplateEngine templateEngine) {
+        this.templateEngine = templateEngine;
     }
 }

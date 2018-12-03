@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
@@ -54,6 +55,9 @@ public class IdentityProvidersResource extends AbstractResource {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private IdentityProviderManager identityProviderManager;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered identity providers for a security domain")
@@ -91,12 +95,12 @@ public class IdentityProvidersResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> identityProviderService.create(domain, newIdentityProvider)
-                        .map(identityProvider -> Response
-                                .created(URI.create("/domains/" + domain + "/identities/" + identityProvider.getId()))
-                                .entity(identityProvider)
-                                .build())
-                )
+                .flatMapSingle(irrelevant -> identityProviderService.create(domain, newIdentityProvider))
+                .flatMap(identityProvider -> identityProviderManager.reloadUserProvider(identityProvider))
+                .map(identityProvider -> Response
+                        .created(URI.create("/domains/" + domain + "/identities/" + identityProvider.getId()))
+                        .entity(identityProvider)
+                        .build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

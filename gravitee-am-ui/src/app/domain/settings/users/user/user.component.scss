@@ -1,0 +1,60 @@
+.user-container {
+  padding: 20px 70px 20px 50px;
+  h1 {
+    font-weight: 400;
+  }
+  .user-content {
+    padding: 50px 0 20px;
+    form {
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 2px;
+      border: 1px solid rgb(226, 229, 231);
+    }
+    .additional-information {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f1f1f1;
+      h4 {
+        margin: 0;
+        font-weight: 400;
+      }
+      span {
+        font-size: 75%;
+        color: rgba(0, 0, 0, 0.54);
+      }
+      a {
+        cursor: pointer;
+        font-size: 75%;
+        color: #2196f3;
+      }
+    }
+    .user-settings-delete-zone {
+      color: #f44336;
+      font-size: 75%;
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 2px;
+      border: 1px solid #e2e5e7;
+      .user-settings-delete-button {
+        margin-top: 20px;
+      }
+    }
+    .user-activities {
+      margin-left: 20px;
+      h3 {
+        font-weight: 400;
+      }
+      .user-activities-content {
+        border-top: 1px solid rgb(226, 229, 231);
+        p {
+          font-size: 12px;
+          color: rgba(0, 0, 0, 0.38);
+        }
+        mat-icon {
+          color: grey;
+        }
+      }
+    }
+  }
+}

@@ -16,9 +16,8 @@
 package io.gravitee.am.gateway.handler.vertx.auth.provider;
 
 import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
+import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
@@ -54,14 +53,10 @@ public class OAuth2ClientAuthenticationProviderTest {
     private IdentityProviderManager identityProviderManager;
 
     @Mock
-    private UserService userService;
+    private UserAuthenticationManager userAuthenticationManager;
 
     @Mock
     private AuthenticationProvider authenticationProvider;
-
-    @Mock
-    private Domain domain;
-
 
     @Test
     public void shouldAuthenticateUser() throws Exception {
@@ -71,7 +66,7 @@ public class OAuth2ClientAuthenticationProviderTest {
 
         io.gravitee.am.identityprovider.api.User user  = new io.gravitee.am.identityprovider.api.DefaultUser("username");
 
-        when(userService.findOrCreate(any(),any())).thenReturn(Single.just(new User()));
+        when(userAuthenticationManager.loadUser(any())).thenReturn(Single.just(new User()));
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
         when(identityProviderManager.get(anyString())).thenReturn(Maybe.just(authenticationProvider));
 
@@ -83,7 +78,7 @@ public class OAuth2ClientAuthenticationProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
-        verify(userService, times(1)).findOrCreate(any(),any());
+        verify(userAuthenticationManager, times(1)).loadUser(any());
     }
 
 
@@ -93,7 +88,6 @@ public class OAuth2ClientAuthenticationProviderTest {
         credentials.put("username", "my-user-id");
         credentials.put("password", "my-user-password");
 
-        when(userService.findOrCreate(any(),any())).thenReturn(Single.just(new User()));
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.error(new BadCredentialsException()));
         when(identityProviderManager.get(anyString())).thenReturn(Maybe.just(authenticationProvider));
 
@@ -106,7 +100,7 @@ public class OAuth2ClientAuthenticationProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
-        verify(userService, never()).findOrCreate(any(),any());
+        verify(userAuthenticationManager, never()).loadUser(any());
     }
 
     @Test
@@ -115,7 +109,6 @@ public class OAuth2ClientAuthenticationProviderTest {
         credentials.put("username", "my-user-id");
         credentials.put("password", "my-user-password");
 
-        when(userService.findOrCreate(any(),any())).thenReturn(Single.just(new User()));
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.empty());
         when(identityProviderManager.get(anyString())).thenReturn(Maybe.just(authenticationProvider));
 
@@ -128,7 +121,7 @@ public class OAuth2ClientAuthenticationProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
-        verify(userService, never()).findOrCreate(any(),any());
+        verify(userAuthenticationManager, never()).loadUser(any());
     }
 
 

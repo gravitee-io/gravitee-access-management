@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.model;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.util.Date;
 import java.util.Map;
 
@@ -24,13 +26,15 @@ import java.util.Map;
  */
 public class UpdateUser {
 
-    private String password;
-
+    @NotNull
+    @Pattern(regexp = "^[\\w!#$%&’*+/=?`{|}~^-]+(?:\\.[\\w!#$%&’*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}$", message = "must be a well-formed email address")
     private String email;
 
     private String firstName;
 
     private String lastName;
+
+    private String externalId;
 
     private boolean accountNonExpired = true;
 
@@ -40,11 +44,15 @@ public class UpdateUser {
 
     private boolean enabled = true;
 
+    private boolean preRegistration;
+
+    private boolean registrationCompleted;
+
     private String source;
 
     private String client;
 
-    private Long loginsCount;
+    private long loginsCount;
 
     private Date loggedAt;
 
@@ -53,14 +61,6 @@ public class UpdateUser {
     private Date createdAt;
 
     private Date updatedAt;
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
 
     public String getEmail() {
         return email;
@@ -84,6 +84,14 @@ public class UpdateUser {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
 
     public boolean isAccountNonExpired() {
@@ -118,6 +126,22 @@ public class UpdateUser {
         this.enabled = enabled;
     }
 
+    public boolean isPreRegistration() {
+        return preRegistration;
+    }
+
+    public void setPreRegistration(boolean preRegistration) {
+        this.preRegistration = preRegistration;
+    }
+
+    public boolean isRegistrationCompleted() {
+        return registrationCompleted;
+    }
+
+    public void setRegistrationCompleted(boolean registrationCompleted) {
+        this.registrationCompleted = registrationCompleted;
+    }
+
     public String getSource() {
         return source;
     }
@@ -134,11 +158,11 @@ public class UpdateUser {
         this.client = client;
     }
 
-    public Long getLoginsCount() {
+    public long getLoginsCount() {
         return loginsCount;
     }
 
-    public void setLoginsCount(Long loginsCount) {
+    public void setLoginsCount(long loginsCount) {
         this.loginsCount = loginsCount;
     }
 

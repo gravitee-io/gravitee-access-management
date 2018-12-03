@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.spring;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.event.EventManagerImpl;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -72,6 +73,7 @@ public class StandaloneConfiguration {
         //Enable ObjectMapper to manage Optional type.
         Json.mapper.registerModule(new Jdk8Module());//Manage Optional java type
         //Json.mapper.enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);//Reject duplicated keys
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return mapper;
     }
 }

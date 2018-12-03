@@ -15,9 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.view;
 
-import io.gravitee.am.model.Domain;
 import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thymeleaf.TemplateEngine;
@@ -32,19 +30,16 @@ import org.thymeleaf.templateresolver.ITemplateResolver;
 @Configuration
 public class ThymeleafConfiguration {
 
-    @Autowired
-    private Domain domain;
-
     @Bean
     public ThymeleafTemplateEngine getTemplateEngine() {
         ThymeleafTemplateEngine thymeleafTemplateEngine = ThymeleafTemplateEngine.create();
         TemplateEngine templateEngine = thymeleafTemplateEngine.getDelegate().getThymeleafTemplateEngine();
-        if (domain.getLoginForm() != null && domain.getLoginForm().getContent() != null && domain.getLoginForm().isEnabled()) {
-            templateEngine.setTemplateResolver(overrideTemplateResolver());
-            templateEngine.addTemplateResolver(defaultTemplateResolver());
-        } else {
-            templateEngine.setTemplateResolver(defaultTemplateResolver());
-        }
+
+        // set template resolvers
+        DomainBasedTemplateResolver overrideTemplateResolver = (DomainBasedTemplateResolver) overrideTemplateResolver();
+        overrideTemplateResolver.setTemplateEngine(templateEngine);
+        templateEngine.setTemplateResolver(overrideTemplateResolver);
+        templateEngine.addTemplateResolver(defaultTemplateResolver());
 
         return thymeleafTemplateEngine;
     }

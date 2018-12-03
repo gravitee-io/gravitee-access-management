@@ -26,9 +26,10 @@ import { ProviderService } from "../../../../services/provider.service";
 })
 export class ClientIdPComponent implements OnInit {
   private domainId: string;
+  private loadIdentities: boolean = true;
   client: any;
-  identityProviders: any[] = [];
-  oauth2IdentityProviders: any[] = [];
+  identityProviders: any[];
+  oauth2IdentityProviders: any[];
 
   constructor(private route: ActivatedRoute, private clientService: ClientService, private snackbarService: SnackbarService,
               private providerService: ProviderService) { }
@@ -36,9 +37,16 @@ export class ClientIdPComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.client = this.route.snapshot.parent.data['client'];
+    if (!this.client.identities) {
+      this.client.identities = [];
+    }
+    if (!this.client.oauth2Identities) {
+      this.client.oauth2Identities = [];
+    }
     this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => {
       this.identityProviders = data.filter(idp => !idp.external);
       this.oauth2IdentityProviders = data.filter(idp => idp.external);
+      this.loadIdentities = false;
     });
   }
 
@@ -49,4 +57,29 @@ export class ClientIdPComponent implements OnInit {
     });
   }
 
+  selectIdentityProvider(event, identityProviderId) {
+    (event.checked) ? this.client.identities.push(identityProviderId) :  this.client.identities.splice(this.client.identities.indexOf(identityProviderId), 1);
+    this.update();
+  }
+
+  selectOAuth2IdentityProvider(event, identityProviderId) {
+    (event.checked) ? this.client.oauth2Identities.push(identityProviderId) :  this.client.oauth2Identities.splice(this.client.oauth2Identities.indexOf(identityProviderId), 1);
+    this.update();
+  }
+
+  isIdentityProviderSelected(identityProviderId) {
+    return this.client.identities.includes(identityProviderId);
+  }
+
+  isOAuth2IdentityProviderSelected(identityProviderId) {
+    return this.client.oauth2Identities.includes(identityProviderId);
+  }
+
+  hasIdentityProviders() {
+    return this.identityProviders && this.identityProviders.length > 0;
+  }
+
+  hasOAuth2IdentityProviders() {
+    return this.oauth2IdentityProviders && this.oauth2IdentityProviders.length > 0;
+  }
 }

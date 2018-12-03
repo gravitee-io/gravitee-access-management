@@ -24,6 +24,7 @@ import com.mongodb.reactivestreams.client.MongoClients;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.NoOpPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -63,6 +64,9 @@ public class MongoAuthenticationProviderConfiguration {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
+        if (configuration.getPasswordEncoder() != null && io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.BCRYPT.getValue().equals(configuration.getPasswordEncoder())) {
+            return new BCryptPasswordEncoder();
+        }
         return NoOpPasswordEncoder.getInstance();
     }
 }

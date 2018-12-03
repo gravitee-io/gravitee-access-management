@@ -45,6 +45,9 @@ public abstract class Event {
             case SCOPE:
                 event1 =  ScopeEvent.actionOf(event.getPayload().getAction());
                 break;
+            case FORM:
+                event1 =  FormEvent.actionOf(event.getPayload().getAction());
+                break;
         }
 
         return event1;

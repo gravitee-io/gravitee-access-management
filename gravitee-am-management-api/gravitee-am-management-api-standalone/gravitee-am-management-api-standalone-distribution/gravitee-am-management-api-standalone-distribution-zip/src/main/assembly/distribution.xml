@@ -77,23 +77,13 @@
 		</fileSet>
 
 		<fileSet>
-			<directory>../target/distribution/domains</directory>
-			<outputDirectory>/domains</outputDirectory>
-			<includes>
-				<include>**/*</include>
-			</includes>
-			<fileMode>755</fileMode>
-		</fileSet>
-
-		<fileSet>
-			<directory>../target/distribution/template</directory>
-			<outputDirectory>/template</outputDirectory>
+			<directory>../target/distribution/templates</directory>
+			<outputDirectory>/templates</outputDirectory>
 			<includes>
 				<include>**/*</include>
 			</includes>
 			<fileMode>755</fileMode>
 		</fileSet>
 	</fileSets>
-
 </assembly>
 

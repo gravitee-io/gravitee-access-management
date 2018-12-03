@@ -110,6 +110,7 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
 
     private User createUser(io.gravitee.am.identityprovider.inline.model.User inlineUser) {
         DefaultUser user = new DefaultUser(inlineUser.getUsername());
+        user.setId(inlineUser.getUsername());
 
         // add additional information
         Map<String, Object> claims = new HashMap<>();
@@ -132,7 +133,7 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
                 claims.put(StandardClaims.EMAIL, inlineUser.getEmail());
             }
         }
-        user.setAdditonalInformation(claims);
+        user.setAdditionalInformation(claims);
 
         // set user roles
         user.setRoles(getUserRoles(inlineUser));

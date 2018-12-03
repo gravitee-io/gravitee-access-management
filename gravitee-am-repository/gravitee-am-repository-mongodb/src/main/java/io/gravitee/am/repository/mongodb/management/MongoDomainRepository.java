@@ -24,12 +24,16 @@ import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginFormMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.SCIMSettingsMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -117,6 +121,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setIdentities(domainMongo.getIdentities());
         domain.setOauth2Identities(domainMongo.getOauth2Identities());
         domain.setOidc(convert(domainMongo.getOidc()));
+        domain.setScim(convert(domainMongo.getScim()));
+        domain.setLoginSettings(convert(domainMongo.getLoginSettings()));
 
         // set last event
         Document document = domainMongo.getLastEvent();
@@ -145,6 +151,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setIdentities(domain.getIdentities());
         domainMongo.setOauth2Identities(domain.getOauth2Identities());
         domainMongo.setOidc(convert(domain.getOidc()));
+        domainMongo.setScim(convert(domain.getScim()));
+        domainMongo.setLoginSettings(convert(domain.getLoginSettings()));
 
         // save last event
         Event event = domain.getLastEvent();
@@ -248,5 +256,49 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setOpenDynamicClientRegistrationEnabled(dcr.isOpenDynamicClientRegistrationEnabled());
 
         return result;
+    }
+
+    private SCIMSettings convert(SCIMSettingsMongo scimMongo) {
+        if (scimMongo == null) {
+            return null;
+        }
+
+        SCIMSettings scimSettings = new SCIMSettings();
+        scimSettings.setEnabled(scimMongo.isEnabled());
+        return scimSettings;
+    }
+
+    private SCIMSettingsMongo convert(SCIMSettings scim) {
+        if (scim == null) {
+            return null;
+        }
+
+        SCIMSettingsMongo scimMongo = new SCIMSettingsMongo();
+        scimMongo.setEnabled(scim.isEnabled());
+        return scimMongo;
+    }
+
+    private LoginSettings convert(LoginSettingsMongo loginSettingsMongo) {
+        if (loginSettingsMongo == null) {
+            return null;
+        }
+
+        LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setForgotPasswordEnabled(loginSettingsMongo.isForgotPasswordEnabled());
+        loginSettings.setRegisterEnabled(loginSettingsMongo.isRegisterEnabled());
+        loginSettings.setRememberMeEnabled(loginSettingsMongo.isRememberMeEnabled());
+        return loginSettings;
+    }
+
+    private LoginSettingsMongo convert(LoginSettings loginSettings) {
+        if (loginSettings == null) {
+            return null;
+        }
+
+        LoginSettingsMongo loginSettingsMongo = new LoginSettingsMongo();
+        loginSettingsMongo.setForgotPasswordEnabled(loginSettings.isForgotPasswordEnabled());
+        loginSettingsMongo.setRegisterEnabled(loginSettings.isRegisterEnabled());
+        loginSettingsMongo.setRememberMeEnabled(loginSettings.isRememberMeEnabled());
+        return loginSettingsMongo;
     }
 }

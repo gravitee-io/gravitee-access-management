@@ -18,6 +18,7 @@ package io.gravitee.am.common.oidc;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * OpenID Connect Clients use scope values, as defined in Section 3.3 of OAuth 2.0 [RFC6749], to specify what access privileges are being requested for Access Tokens.
@@ -40,7 +41,8 @@ public enum Scope {
     OPENID("openid","Openid","Used to perform Openid requests", Collections.emptyList()),
     OFFLINE_ACCESS("offline_access", "Offline_access","Access to End-User UserInfo even when he is not logged in.", Collections.emptyList()),
     DCR("dcr", "Client_registration", "Access to client information through openid register endpoint.", Collections.emptyList()),
-    DCR_ADMIN("dcr_admin", "Client_registration_admin", "Access to Dynamic Client Registration endpoint.", Collections.emptyList());
+    DCR_ADMIN("dcr_admin", "Client_registration_admin", "Access to Dynamic Client Registration endpoint.", Collections.emptyList()),
+    SCIM("scim", "SCIM", "Access to System for Cross-domain Identity Management endpoint.", Collections.emptyList());
 
     private final String key;
     private final String label;

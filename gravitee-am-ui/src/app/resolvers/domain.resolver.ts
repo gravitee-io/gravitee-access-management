@@ -27,7 +27,7 @@ export class DomainResolver implements Resolve<any> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     let domainId = AppConfig.settings.authentication.domainId;
     if (!state.url.startsWith('/settings')) {
-      domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId');
+      domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
     }
     return this.domainService.get(domainId).map(res => res.json());
   }

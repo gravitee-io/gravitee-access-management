@@ -88,7 +88,7 @@ public class RoleResource {
     public void update(
             @PathParam("domain") String domain,
             @PathParam("role") String role,
-            @ApiParam(name = "certificate", required = true) @Valid @NotNull UpdateRole updateRole,
+            @ApiParam(name = "role", required = true) @Valid @NotNull UpdateRole updateRole,
             @Suspended final AsyncResponse response) {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))

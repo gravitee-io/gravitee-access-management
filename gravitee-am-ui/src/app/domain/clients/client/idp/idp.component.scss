@@ -1,12 +1,33 @@
-form {
-  padding: 20px;
-  background: #fafafa;
-  border-radius: 2px;
-  border: 1px solid rgb(226, 229, 231);
-  .client-idp-form-actions {
-    margin-top: 20px;
+.client-idp-content {
+  h4 {
+    margin-top: 0px;
+  }
+
+  .client-idp-default-idp {
+    padding: 10px;
+    background-color: #f1f1f1;
+    h4 {
+      margin: 0;
+      font-weight: 400;
+    }
+    span {
+      font-size: 75%;
+      color: rgba(0, 0, 0, 0.54);
+    }
+  }
+
+  mat-grid-tile {
+    background: #f1f1f1;
+    &.active {
+      background: #ffffff;
+      border: 1px solid #4C93BF;
+    }
+    span {
+      margin-right: 20px;
+    }
   }
 }
+
 
 .client-idp-description {
   margin-left: 20px;
@@ -23,5 +44,11 @@ form {
       font-size: 12px;
       color: rgba(0, 0, 0, 0.38);
     }
+  }
+}
+
+mat-grid-tile {
+  figure {
+    padding: 20px;
   }
 }

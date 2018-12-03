@@ -17,7 +17,9 @@ package io.gravitee.am.service.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 
@@ -41,6 +43,8 @@ public class PatchDomain {
     private Optional<Set<String>> oauth2Identities;
     @JsonProperty("oidc")
     private Optional<PatchOIDCSettings> oidc;
+    private Optional<SCIMSettings> scim;
+    private Optional<LoginSettings> loginSettings;
 
     public Optional<String> getName() {
         return name;
@@ -98,6 +102,22 @@ public class PatchDomain {
         this.oidc = oidc;
     }
 
+    public Optional<SCIMSettings> getScim() {
+        return scim;
+    }
+
+    public void setScim(Optional<SCIMSettings> scim) {
+        this.scim = scim;
+    }
+
+    public Optional<LoginSettings> getLoginSettings() {
+        return loginSettings;
+    }
+
+    public void setLoginSettings(Optional<LoginSettings> loginSettings) {
+        this.loginSettings = loginSettings;
+    }
+
     public Domain patch(Domain toPatch) {
 
         SetterUtils.safeSet(toPatch::setName, this.getName());
@@ -106,6 +126,8 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setPath, this.getPath());
         SetterUtils.safeSet(toPatch::setIdentities, this.getIdentities());
         SetterUtils.safeSet(toPatch::setOauth2Identities, this.getOauth2Identities());
+        SetterUtils.safeSet(toPatch::setScim, this.getScim());
+        SetterUtils.safeSet(toPatch::setLoginSettings, this.getLoginSettings());
 
         if (this.getOidc() != null) {
             if (this.getOidc().isPresent()) {

@@ -15,26 +15,26 @@
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DomainLoginComponent } from './login.component';
+import { DomainSettingsLoginComponent } from './login.component';
 
-describe('DomainLoginComponent', () => {
-  let component: DomainLoginComponent;
-  let fixture: ComponentFixture<DomainLoginComponent>;
+describe('DomainSettingsLoginComponent', () => {
+  let component: DomainSettingsLoginComponent;
+  let fixture: ComponentFixture<DomainSettingsLoginComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainLoginComponent ]
+      declarations: [ DomainSettingsLoginComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(DomainLoginComponent);
+    fixture = TestBed.createComponent(DomainSettingsLoginComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('should be created', () => {
     expect(component).toBeTruthy();
   });
 });

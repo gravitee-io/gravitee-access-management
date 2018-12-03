@@ -37,11 +37,31 @@ export class UserService {
   }
 
   update(domainId, id, user): Observable<Response>  {
-    return this.http.put(this.usersURL + domainId + "/users/" + id, user);
+    return this.http.put(this.usersURL + domainId + "/users/" + id, {
+      'firstName' : user.firstName,
+      'lastName' : user.lastName,
+      'email' : user.email,
+      'enabled': user.enabled,
+      'additionalInformation' : user.additionalInformation
+    });
   }
 
   delete(domainId, id): Observable<Response>  {
     return this.http.delete(this.usersURL + domainId + "/users/" + id);
+  }
+
+  resendRegistrationConfirmation(domainId, id) {
+    return this.http.post(this.usersURL + domainId + "/users/" + id + "/sendRegistrationConfirmation", {});
+  }
+
+  resetPassword(domainId, id, password) {
+    return this.http.post(this.usersURL + domainId + "/users/" + id + "/resetPassword", {
+      'password': password
+    });
+  }
+
+  search(domainId, searchTerm, page, size) {
+    return this.http.get(this.usersURL + domainId + "/users?q=" + searchTerm + "&page=" + page + "&size=" + size);
   }
 
 }

@@ -27,5 +27,6 @@ public enum Type {
     CERTIFICATE,
     EXTENSION_GRANT,
     SCOPE,
-    ROLE
+    ROLE,
+    FORM
 }

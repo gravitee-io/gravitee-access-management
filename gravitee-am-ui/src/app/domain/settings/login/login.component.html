@@ -15,33 +15,37 @@
     limitations under the License.
 
 -->
-<div class="domain-login-container">
-  <h1>Login Page</h1>
-  <div fxLayout="column">
-    <div>
-      <mat-slide-toggle matTooltip="{{isEnabled() ? 'Disable custom login page ?' : 'Enable custom login page ?'}}"
-                       [matTooltipPosition]="'after'"
-                       (change)="enableLoginForm($event)"
-                       [checked]="isEnabled()">
-      </mat-slide-toggle>
+<div class="login-container">
+  <h1>Login</h1>
+  <div class="login-content">
+    <div fxFlex="70">
+      <form (ngSubmit)="save()" fxLayout="column" #scimForm="ngForm">
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableRegistration($event)"
+            [checked]="isRegistrationEnabled()">
+            User registration
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Enable self user registration. A link to the create account service will be available through the login page.</mat-hint>
+        </div>
+        <div fxLayout="column" style="margin-top: 10px;">
+          <mat-slide-toggle
+            (change)="enableForgotPassword($event)"
+            [checked]="isForgotPasswordEnabled()">
+            Forgot password
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Enable Self-service password reset (SSPR) that allows users who have forgotten their password to ask for a new one.</mat-hint>
+        </div>
+        <div fxLayout="row" style="margin-top: 50px;">
+          <button mat-raised-button [disabled]="!formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
     </div>
-    <mat-hint><small class="hint">Create a specific login page to authenticated users <button mat-icon-button (click)="openLoginInfo()"><mat-icon>info_outline</mat-icon></button></small></mat-hint>
-  </div>
-
-  <mat-tab-group (selectChange)="onTabSelectedChanged($event);">
-    <mat-tab label="Html" [disabled]="!isEnabled()">
-      <div style= "position:relative;">
-        <codemirror #editor [(ngModel)]="loginFormContent" [config]="config" (change)="onContentChanges($event)"></codemirror>
+    <div class="login-description" fxFlex>
+      <h3>Login settings</h3>
+      <div class="login-description-content">
+        <p>Features which will be available on the login page.</p>
       </div>
-    </mat-tab>
-    <mat-tab label="Preview" [disabled]="!isEnabled()">
-      <iframe frameborder="0" class="preview" #preview width="100%" (load)="resizeIframe()">
-      </iframe>
-    </mat-tab>
-  </mat-tab-group>
-  <div style="margin-top: 50px;">
-    <button mat-raised-button [disabled]="!formChanged" (click)="create()">SAVE</button>
-    <span fxFlex></span>
-    <button *ngIf="loginFormFound" mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+    </div>
   </div>
 </div>

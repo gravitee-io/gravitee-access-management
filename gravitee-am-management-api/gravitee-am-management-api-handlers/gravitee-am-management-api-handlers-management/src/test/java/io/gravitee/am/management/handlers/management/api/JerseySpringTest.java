@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api;
 import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
 import io.gravitee.am.management.service.CertificatePluginService;
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
+import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.*;
@@ -52,7 +53,7 @@ public abstract class JerseySpringTest {
     protected DomainService domainService;
 
     @Autowired
-    protected UserService userService;
+    protected io.gravitee.am.management.service.UserService userService;
 
     @Autowired
     protected ScopeService scopeService;
@@ -87,6 +88,9 @@ public abstract class JerseySpringTest {
     @Autowired
     protected CertificateManager certificateManager;
 
+    @Autowired
+    protected IdentityProviderManager identityProviderManager;
+
     @Configuration
     @ComponentScan("io.gravitee.am.management.handlers.management.api.resources.enhancer")
     static class ContextConfiguration {
@@ -96,8 +100,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public UserService userService() {
-            return mock(UserService.class);
+        public io.gravitee.am.management.service.UserService userService() {
+            return mock(io.gravitee.am.management.service.UserService.class);
         }
 
         @Bean
@@ -158,6 +162,11 @@ public abstract class JerseySpringTest {
         @Bean
         public CertificatePluginManager certificatePluginManager() {
             return mock(CertificatePluginManager.class);
+        }
+
+        @Bean
+        public IdentityProviderManager identityProviderManager() {
+            return mock(IdentityProviderManager.class);
         }
     }
 

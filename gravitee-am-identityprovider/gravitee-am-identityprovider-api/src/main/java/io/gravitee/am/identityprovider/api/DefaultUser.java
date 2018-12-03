@@ -15,16 +15,22 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class DefaultUser implements User {
 
+    private String id;
+
     private String username;
+
+    private String credentials;
 
     private boolean accountExpired = false;
 
@@ -32,7 +38,11 @@ public class DefaultUser implements User {
 
     private List<String> roles;
 
-    private Map<String, Object> additonalInformation;
+    private Map<String, Object> additionalInformation;
+
+    private Date createdAt;
+
+    private Date updatedAt;
 
     public DefaultUser(String username) {
         this.username = username;
@@ -46,8 +56,16 @@ public class DefaultUser implements User {
         this.enabled = enabled;
     }
 
-    public void setAdditonalInformation(Map<String, Object> additonalInformation) {
-        this.additonalInformation = additonalInformation;
+    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
+        this.additionalInformation = additionalInformation;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     @Override
@@ -57,6 +75,15 @@ public class DefaultUser implements User {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    @Override
+    public String getCredentials() {
+        return credentials;
+    }
+
+    public void setCredentials(String credentials) {
+        this.credentials = credentials;
     }
 
     @Override
@@ -71,7 +98,7 @@ public class DefaultUser implements User {
 
     @Override
     public Map<String, Object> getAdditionalInformation() {
-        return additonalInformation;
+        return additionalInformation;
     }
 
     @Override
@@ -81,6 +108,24 @@ public class DefaultUser implements User {
 
     public void setRoles(List<String> roles) {
         this.roles = roles;
+    }
+
+    @Override
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    @Override
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     @Override
