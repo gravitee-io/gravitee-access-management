@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.common.oidc;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Standard OpenID Connect Claims
  *
@@ -124,4 +127,10 @@ public interface StandardClaims {
      * Time the End-User's information was last updated. Its value is a JSON number representing the number of seconds from 1970-01-01T0:0:0Z as measured in UTC until the date/time.
      */
     String UPDATED_AT = "updated_at";
+
+    static List<String> claims() {
+        return Arrays.asList(SUB, NAME, GIVEN_NAME, FAMILY_NAME, MIDDLE_NAME, NICKNAME,
+                PREFERRED_USERNAME, PROFILE, PICTURE, WEBSITE, EMAIL, EMAIL_VERIFIED,
+                GENDER, BIRTHDATE, ZONEINFO, LOCALE, PHONE_NUMBER, PHONE_NUMBER_VERIFIED, ADDRESS, UPDATED_AT);
+    }
 }
