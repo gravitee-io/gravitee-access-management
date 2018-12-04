@@ -15,28 +15,34 @@
  */
 package io.gravitee.am.gateway.handler.auth.idp.impl;
 
+import io.gravitee.am.gateway.core.event.IdentityProviderEvent;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
+import io.gravitee.common.event.Event;
+import io.gravitee.common.event.EventListener;
+import io.gravitee.common.event.EventManager;
+import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IdentityProviderManagerImpl implements IdentityProviderManager, InitializingBean {
+public class IdentityProviderManagerImpl extends AbstractService implements IdentityProviderManager, InitializingBean, EventListener<IdentityProviderEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
 
@@ -49,8 +55,11 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     @Autowired
     private IdentityProviderRepository identityProviderRepository;
 
-    private Map<String, AuthenticationProvider> providers = new HashMap<>();
-    private Map<String, IdentityProvider> identities = new HashMap<>();
+    @Autowired
+    private EventManager eventManager;
+
+    private ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
 
     @Override
     public Maybe<AuthenticationProvider> get(String id) {
@@ -72,17 +81,61 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
         // make blocking call to create them first
         try {
             Set<IdentityProvider> identityProviders = identityProviderRepository.findByDomain(domain.getId()).blockingGet();
-            identityProviders.forEach(identityProvider -> {
-                logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
-                AuthenticationProvider authenticationProvider =
-                        identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
-                                identityProvider.getMappers(), identityProvider.getRoleMapper());
-                providers.put(identityProvider.getId(), authenticationProvider);
-                identities.put(identityProvider.getId(), identityProvider);
-            });
+            identityProviders.forEach(identityProvider -> updateAuthenticationProvider(identityProvider));
             logger.info("Identity providers loaded for domain {}", domain.getName());
         } catch (Exception e) {
             logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);
         }
+    }
+
+    @Override
+    protected void doStart() throws Exception {
+        super.doStart();
+
+        logger.info("Register event listener for identity provider events");
+        eventManager.subscribeForEvents(this, IdentityProviderEvent.class);
+    }
+
+    @Override
+    public void onEvent(Event<IdentityProviderEvent, Payload> event) {
+        if (domain.getId().equals(event.content().getDomain())) {
+            switch (event.type()) {
+                case DEPLOY:
+                case UPDATE:
+                    updateIdentityProvider(event.content().getId(), event.type());
+                    break;
+                case UNDEPLOY:
+                    removeIdentityProvider(event.content().getId());
+                    break;
+            }
+        }
+    }
+
+    private void updateIdentityProvider(String identityProviderId, IdentityProviderEvent identityProviderEvent) {
+        final String eventType = identityProviderEvent.toString().toLowerCase();
+        logger.info("Domain {} has received {} identity provider event for {}", domain.getName(), eventType, identityProviderId);
+        identityProviderRepository.findById(identityProviderId)
+                .subscribe(
+                        identityProvider -> {
+                            updateAuthenticationProvider(identityProvider);
+                            logger.info("Identity provider {} {}d for domain {}", identityProviderId, eventType, domain.getName());
+                        },
+                        error -> logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error),
+                        () -> logger.error("No identity provider found with id {}", identityProviderId));
+    }
+
+    private void removeIdentityProvider(String identityProviderId) {
+        logger.info("Domain {} has received identity provider event, delete identity provider {}", domain.getName(), identityProviderId);
+        providers.remove(identityProviderId);
+        identities.remove(identityProviderId);
+    }
+
+    private void updateAuthenticationProvider(IdentityProvider identityProvider) {
+        logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+        AuthenticationProvider authenticationProvider =
+                identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
+                        identityProvider.getMappers(), identityProvider.getRoleMapper());
+        providers.put(identityProvider.getId(), authenticationProvider);
+        identities.put(identityProvider.getId(), identityProvider);
     }
 }

@@ -16,6 +16,10 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.common.event.Action;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
@@ -100,7 +104,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         return identityProviderRepository.create(identityProvider)
                 .flatMap(identityProvider1 -> {
                     // Reload domain to take care about identity provider creation
-                    return domainService.reload(domain).flatMap(domain1 -> Single.just(identityProvider1));
+                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getDomain(), Action.CREATE));
+                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(identityProvider1));
                 })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to create an identity provider", ex);
@@ -124,7 +129,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     return identityProviderRepository.update(identityProvider)
                             .flatMap(identityProvider1 -> {
                                 // Reload domain to take care about identity provider update
-                                return domainService.reload(domain).flatMap(domain1 -> Single.just(identityProvider1));
+                                Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getDomain(), Action.UPDATE));
+                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(identityProvider1));
                             });
                 })
                 .onErrorResumeNext(ex -> {
@@ -138,7 +144,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Completable delete(String identityProviderId) {
+    public Completable delete(String domain, String identityProviderId) {
         LOGGER.debug("Delete identity provider {}", identityProviderId);
 
         return identityProviderRepository.findById(identityProviderId)
@@ -150,7 +156,11 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                             }
                             return Single.just(clients);
                         }))
-                .flatMapCompletable(irrelevant -> identityProviderRepository.delete(identityProviderId))
+                .flatMapCompletable(irrelevant -> {
+                    // Reload domain to take care about delete identity provider
+                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProviderId, domain, Action.DELETE));
+                    return identityProviderRepository.delete(identityProviderId).andThen(domainService.reload(domain, event)).toCompletable();
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

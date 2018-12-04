@@ -17,6 +17,10 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.event.Action;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.mongodb.common.IdGenerator;
@@ -26,12 +30,14 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -106,6 +112,12 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setLoginForm(convert(domainMongo.getLoginForm()));
         domain.setIdentities(domainMongo.getIdentities());
         domain.setOauth2Identities(domainMongo.getOauth2Identities());
+
+        // set last event
+        Document document = domainMongo.getLastEvent();
+        if (document != null) {
+            domain.setLastEvent(convert(document));
+        }
         return domain;
     }
 
@@ -126,6 +138,12 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setLoginForm(convert(domain.getLoginForm()));
         domainMongo.setIdentities(domain.getIdentities());
         domainMongo.setOauth2Identities(domain.getOauth2Identities());
+
+        // save last event
+        Event event = domain.getLastEvent();
+        if (event != null) {
+            domainMongo.setLastEvent(convert(event));
+        }
         return domainMongo;
     }
 
@@ -151,5 +169,24 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         formMongo.setContent(loginForm.getContent());
         formMongo.setAssets(loginForm.getAssets());
         return formMongo;
+    }
+
+    private Event convert(Document document) {
+        Type type = Type.valueOf(document.get("type", String.class));
+        Payload content = new Payload(document.get("content", Map.class));
+        content.put("action", Action.valueOf((String) content.get("action")));
+        Event event = new Event(type, content);
+
+        return event;
+    }
+
+    private Document convert(Event event) {
+        Document document = new Document();
+        document.put("type", event.getType().toString());
+        Payload payload = event.getPayload();
+        payload.put("action", payload.getAction().toString());
+        document.put("content", payload);
+
+        return document;
     }
 }

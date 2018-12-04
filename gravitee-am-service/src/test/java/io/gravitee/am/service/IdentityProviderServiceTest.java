@@ -121,7 +121,7 @@ public class IdentityProviderServiceTest {
     public void shouldCreate() {
         NewIdentityProvider newIdentityProvider = Mockito.mock(NewIdentityProvider.class);
         when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(new IdentityProvider()));
-        when(domainService.reload(DOMAIN)).thenReturn(Single.just(new Domain()));
+        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = identityProviderService.create(DOMAIN, newIdentityProvider).test();
         testObserver.awaitTerminalEvent();
@@ -130,6 +130,7 @@ public class IdentityProviderServiceTest {
         testObserver.assertNoErrors();
 
         verify(identityProviderRepository, times(1)).create(any(IdentityProvider.class));
+        verify(domainService, times(1)).reload(eq(DOMAIN), any());
     }
 
     @Test
@@ -149,7 +150,7 @@ public class IdentityProviderServiceTest {
         UpdateIdentityProvider updateIdentityProvider = Mockito.mock(UpdateIdentityProvider.class);
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(new IdentityProvider()));
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(new IdentityProvider()));
-        when(domainService.reload(DOMAIN)).thenReturn(Single.just(new Domain()));
+        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider).test();
         testObserver.awaitTerminalEvent();
@@ -158,6 +159,7 @@ public class IdentityProviderServiceTest {
         testObserver.assertNoErrors();
 
         verify(identityProviderRepository, times(1)).update(any(IdentityProvider.class));
+        verify(domainService, times(1)).reload(eq(DOMAIN), any());
     }
 
     @Test
@@ -176,7 +178,7 @@ public class IdentityProviderServiceTest {
     public void shouldDelete_notExistingIdentityProvider() {
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = identityProviderService.delete("my-identity-provider").test();
+        TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
 
         testObserver.assertError(IdentityProviderNotFoundException.class);
         testObserver.assertNotComplete();
@@ -190,7 +192,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(new IdentityProvider()));
         when(clientService.findByIdentityProvider("my-identity-provider")).thenReturn(Single.just(Collections.singleton(new Client())));
 
-        TestObserver testObserver = identityProviderService.delete("my-identity-provider").test();
+        TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
 
         testObserver.assertError(IdentityProviderWithClientsException.class);
         testObserver.assertNotComplete();
@@ -204,7 +206,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(new IdentityProvider()));
         when(identityProviderRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
 
-        TestObserver testObserver = identityProviderService.delete("my-identity-provider").test();
+        TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -216,13 +218,15 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(existingIdentityProvider));
         when(identityProviderRepository.delete("my-identity-provider")).thenReturn(Completable.complete());
         when(clientService.findByIdentityProvider("my-identity-provider")).thenReturn(Single.just(Collections.emptySet()));
+        when(domainService.reload(anyString(), any())).thenReturn(Single.just(new Domain()));
 
-        TestObserver testObserver = identityProviderService.delete( "my-identity-provider").test();
+        TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
         verify(identityProviderRepository, times(1)).delete("my-identity-provider");
+        verify(domainService, times(1)).reload(anyString(), any());
     }
 }

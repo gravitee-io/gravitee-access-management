@@ -18,28 +18,28 @@ package io.gravitee.am.gateway.core.event;
 import io.gravitee.am.model.common.event.Action;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum DomainEvent {
+public enum IdentityProviderEvent {
 
     DEPLOY,
     UPDATE,
     UNDEPLOY;
 
-    public static DomainEvent actionOf(Action action) {
-        DomainEvent domainEvent = null;
+    public static IdentityProviderEvent actionOf(Action action) {
+        IdentityProviderEvent identityProviderEvent = null;
         switch (action) {
             case CREATE:
-                domainEvent = DomainEvent.DEPLOY;
+                identityProviderEvent = IdentityProviderEvent.DEPLOY;
                 break;
             case UPDATE:
-                domainEvent = DomainEvent.UPDATE;
+                identityProviderEvent = IdentityProviderEvent.UPDATE;
                 break;
             case DELETE:
-                domainEvent = DomainEvent.UNDEPLOY;
+                identityProviderEvent = IdentityProviderEvent.UNDEPLOY;
                 break;
         }
-        return domainEvent;
+        return identityProviderEvent;
     }
 }

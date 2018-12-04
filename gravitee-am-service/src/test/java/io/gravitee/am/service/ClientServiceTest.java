@@ -337,7 +337,7 @@ public class ClientServiceTest {
         when(newClient.getClientId()).thenReturn("my-client");
         when(clientRepository.findByClientIdAndDomain("my-client", DOMAIN)).thenReturn(Maybe.empty());
         when(clientRepository.create(any(Client.class))).thenReturn(Single.just(new Client()));
-        when(domainService.reload(DOMAIN)).thenReturn(Single.just(new Domain()));
+        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = clientService.create(DOMAIN, newClient).test();
         testObserver.awaitTerminalEvent();
@@ -363,7 +363,7 @@ public class ClientServiceTest {
 
         verify(clientRepository, never()).create(any(Client.class));
     }
-    
+
     @Test
     public void shouldCreate2_technicalException() {
         NewClient newClient = Mockito.mock(NewClient.class);
@@ -404,7 +404,7 @@ public class ClientServiceTest {
         when(identityProviderService.findById("id1")).thenReturn(Maybe.just(new IdentityProvider()));
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(new IdentityProvider()));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
-        when(domainService.reload(DOMAIN)).thenReturn(Single.just(new Domain()));
+        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
         testObserver.awaitTerminalEvent();
@@ -479,7 +479,7 @@ public class ClientServiceTest {
         when(existingClient.getDomain()).thenReturn("my-domain");
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(existingClient));
         when(clientRepository.delete("my-client")).thenReturn(Completable.complete());
-        when(domainService.reload("my-domain")).thenReturn(Single.just(new Domain()));
+        when(domainService.reload(eq("my-domain"), any())).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = clientService.delete("my-client").test();
         testObserver.awaitTerminalEvent();

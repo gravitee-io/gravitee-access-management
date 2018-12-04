@@ -15,10 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.client.impl;
 
-import io.gravitee.am.gateway.core.event.DomainEvent;
+import io.gravitee.am.gateway.core.event.ClientEvent;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -42,7 +43,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ClientServiceImpl extends AbstractService implements ClientService, InitializingBean, EventListener<DomainEvent, Domain> {
+public class ClientServiceImpl extends AbstractService implements ClientService, InitializingBean, EventListener<ClientEvent, Payload> {
 
     private final Logger logger = LoggerFactory.getLogger(ClientServiceImpl.class);
     private ConcurrentMap<String, Set<Client>> domainsClients = new ConcurrentHashMap<>();
@@ -85,35 +86,39 @@ public class ClientServiceImpl extends AbstractService implements ClientService,
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register clients event listener for cross domain events");
-        eventManager.subscribeForEvents(this, DomainEvent.class);
+        logger.info("Register event listener for client events");
+        eventManager.subscribeForEvents(this, ClientEvent.class);
     }
 
     @Override
-    public void onEvent(Event<DomainEvent, Domain> event) {
-        Domain updatedDomain = event.content();
-        if (!updatedDomain.getId().equals(domain.getId())) {
-            switch (event.type()) {
-                case DEPLOY:
-                case UPDATE:
-                    updateDomainClients(updatedDomain);
-                    break;
-                case UNDEPLOY:
-                    domainsClients.remove(updatedDomain.getId());
-                    break;
-            }
+    public void onEvent(Event<ClientEvent, Payload> event) {
+        switch (event.type()) {
+            case DEPLOY:
+            case UPDATE:
+                updateClient(event.content().getId(), event.type());
+                break;
+            case UNDEPLOY:
+                removeClient(event.content().getId(), event.content().getDomain());
+                break;
         }
     }
 
-    private void updateDomainClients(Domain updatedDomain) {
-        logger.info("Domain {} has received domain event from domain {}, update its clients", domain.getName(), updatedDomain.getName());
-        clientRepository.findByDomain(updatedDomain.getId())
+    private void updateClient(String clientId, ClientEvent clientEvent) {
+        final String eventType = clientEvent.toString().toLowerCase();
+        logger.info("Domain {} has received {} client event for {}", domain.getName(), eventType, clientId);
+        clientRepository.findById(clientId)
                 .subscribe(
-                        clients -> {
-                            updateClients(clients);
-                            logger.info("Clients updated for domain {}", updatedDomain.getName());
+                        client -> {
+                            updateClients(Collections.singleton(client));
+                            logger.info("Client {} {}d for domain {}", clientId, eventType, domain.getName());
                         },
-                        error -> logger.error("Unable to update clients for domain {}", domain.getName(), error));
+                        error -> logger.error("Unable to {} client for domain {}", eventType, domain.getName(), error),
+                        () -> logger.error("No client found with id {}", clientId));
+    }
+
+    private void removeClient(String clientId, String domainId) {
+        logger.info("Domain {} has received client event, delete client {}", domain.getName(), clientId);
+        domainsClients.get(domainId).removeIf(client -> client.getId().equals(clientId));
     }
 
     private void updateClients(Set<Client> clients) {

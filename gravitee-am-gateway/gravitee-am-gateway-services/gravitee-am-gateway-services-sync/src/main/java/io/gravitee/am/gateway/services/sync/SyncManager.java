@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.services.sync;
 
 import io.gravitee.am.gateway.core.event.DomainEvent;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.common.event.EventManager;
 import org.slf4j.Logger;
@@ -96,7 +98,13 @@ public class SyncManager {
                     } else {
                         // Check last update date
                         if (domain.getUpdatedAt().after(deployedDomain.getUpdatedAt())) {
-                            eventManager.publishEvent(DomainEvent.UPDATE, domain);
+                            // get event type and publish corresponding event
+                            Event lastEvent = domain.getLastEvent();
+                            Enum eventType = io.gravitee.am.gateway.core.event.Event.valueOf(lastEvent);
+                            Object content = Type.DOMAIN.equals(lastEvent.getType()) ? domain : lastEvent.getPayload();
+                            eventManager.publishEvent(eventType, content);
+
+                            // update local domains map
                             deployedDomains.put(domain.getId(), domain);
                         }
                     }

@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.UpdateDomain;
@@ -44,7 +45,7 @@ public interface DomainService {
 
     Single<Domain> update(String domainId, UpdateDomain domain);
 
-    Single<Domain> reload(String domainId);
+    Single<Domain> reload(String domainId, Event event);
 
     Single<Domain> setMasterDomain(String domainId, boolean isMaster);
 

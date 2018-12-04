@@ -39,5 +39,5 @@ public interface IdentityProviderService {
 
     Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider);
 
-    Completable delete(String identityProviderId);
+    Completable delete(String domain, String identityProviderId);
 }
