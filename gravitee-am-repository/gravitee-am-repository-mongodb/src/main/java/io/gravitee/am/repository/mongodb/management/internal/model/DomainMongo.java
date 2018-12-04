@@ -16,6 +16,8 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
+import io.gravitee.common.event.Event;
+import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.Set;
@@ -44,6 +46,8 @@ public class DomainMongo extends Auditable {
     private Set<String> identities;
 
     private Set<String> oauth2Identities;
+
+    private Document lastEvent;
 
     public String getId() {
         return id;
@@ -115,6 +119,14 @@ public class DomainMongo extends Auditable {
 
     public void setOauth2Identities(Set<String> oauth2Identities) {
         this.oauth2Identities = oauth2Identities;
+    }
+
+    public Document getLastEvent() {
+        return lastEvent;
+    }
+
+    public void setLastEvent(Document lastEvent) {
+        this.lastEvent = lastEvent;
     }
 
     @Override

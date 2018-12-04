@@ -16,6 +16,10 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.event.Action;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.*;
@@ -122,6 +126,7 @@ public class DomainServiceImpl implements DomainService {
                         domain.setEnabled(false);
                         domain.setCreatedAt(new Date());
                         domain.setUpdatedAt(domain.getCreatedAt());
+                        domain.setLastEvent(new Event(Type.DOMAIN, new Payload(id, id, Action.CREATE)));
                         return domainRepository.create(domain);
                     }
                 })
@@ -155,6 +160,7 @@ public class DomainServiceImpl implements DomainService {
                     domain.setCreatedAt(oldDomain.getCreatedAt());
                     domain.setUpdatedAt(new Date());
                     domain.setLoginForm(oldDomain.getLoginForm());
+                    domain.setLastEvent(new Event(Type.DOMAIN, new Payload(domainId, domainId, Action.UPDATE)));
 
                     return domainRepository.update(domain);
                 })
@@ -169,25 +175,15 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public Single<Domain> reload(String domainId) {
+    public Single<Domain> reload(String domainId, Event event) {
         LOGGER.debug("Reload a domain: {}", domainId);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .flatMapSingle(oldDomain -> {
-                    Domain domain = new Domain();
-                    domain.setId(domainId);
-                    domain.setPath(oldDomain.getPath());
-                    domain.setName(oldDomain.getName());
-                    domain.setDescription(oldDomain.getDescription());
-                    domain.setEnabled(oldDomain.isEnabled());
-                    domain.setMaster(oldDomain.isMaster());
-                    domain.setCreatedAt(oldDomain.getCreatedAt());
-                    domain.setUpdatedAt(new Date());
-                    domain.setLoginForm(oldDomain.getLoginForm());
-                    domain.setIdentities(oldDomain.getIdentities());
-                    domain.setOauth2Identities(oldDomain.getOauth2Identities());
+                    oldDomain.setUpdatedAt(new Date());
+                    oldDomain.setLastEvent(event);
 
-                    return domainRepository.update(domain);
+                    return domainRepository.update(oldDomain);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -257,7 +253,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete identity providers
                             .andThen(identityProviderService.findByDomain(domainId)
                                     .flatMapCompletable(identityProviders -> {
-                                        List<Completable> deleteIdentityProvidersCompletable = identityProviders.stream().map(i -> identityProviderService.delete(i.getId())).collect(Collectors.toList());
+                                        List<Completable> deleteIdentityProvidersCompletable = identityProviders.stream().map(i -> identityProviderService.delete(domainId, i.getId())).collect(Collectors.toList());
                                         return Completable.concat(deleteIdentityProvidersCompletable);
                                     })
                             )

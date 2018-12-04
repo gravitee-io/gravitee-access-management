@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.login.LoginForm;
 
 import java.util.Date;
@@ -71,6 +72,8 @@ public class Domain {
     private Set<String> identities;
 
     private Set<String> oauth2Identities;
+
+    private Event lastEvent;
 
     public String getId() {
         return id;
@@ -158,6 +161,14 @@ public class Domain {
 
     public void setOauth2Identities(Set<String> oauth2Identities) {
         this.oauth2Identities = oauth2Identities;
+    }
+
+    public Event getLastEvent() {
+        return lastEvent;
+    }
+
+    public void setLastEvent(Event lastEvent) {
+        this.lastEvent = lastEvent;
     }
 
     @Override

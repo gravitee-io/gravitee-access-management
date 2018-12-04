@@ -122,7 +122,7 @@ public class ExtensionGrantServiceTest {
         when(newExtensionGrant.getGrantType()).thenReturn("my-extension-grant");
         when(extensionGrantRepository.findByDomainAndGrantType(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenReturn(Single.just(new ExtensionGrant()));
-        when(domainService.reload(DOMAIN)).thenReturn(Single.just(new Domain()));
+        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = extensionGrantService.create(DOMAIN, newExtensionGrant).test();
         testObserver.awaitTerminalEvent();
@@ -187,7 +187,7 @@ public class ExtensionGrantServiceTest {
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(new ExtensionGrant()));
         when(extensionGrantRepository.findByDomainAndGrantType(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.update(any(ExtensionGrant.class))).thenReturn(Single.just(new ExtensionGrant()));
-        when(domainService.reload(DOMAIN)).thenReturn(Single.just(new Domain()));
+        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = extensionGrantService.update(DOMAIN, "my-extension-grant", updateExtensionGrant).test();
         testObserver.awaitTerminalEvent();
@@ -277,7 +277,7 @@ public class ExtensionGrantServiceTest {
         when(extensionGrantRepository.findByDomainAndGrantType(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.delete("my-extension-grant")).thenReturn(Completable.complete());
         when(clientService.findByExtensionGrant("my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
-        when(domainService.reload(DOMAIN)).thenReturn(Single.just(new Domain()));
+        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = extensionGrantService.delete(DOMAIN, "my-extension-grant").test();
         testObserver.awaitTerminalEvent();

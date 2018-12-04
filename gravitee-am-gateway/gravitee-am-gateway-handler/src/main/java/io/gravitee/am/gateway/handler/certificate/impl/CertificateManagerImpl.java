@@ -18,13 +18,14 @@ package io.gravitee.am.gateway.handler.certificate.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.DefaultKey;
-import io.gravitee.am.gateway.core.event.DomainEvent;
+import io.gravitee.am.gateway.core.event.CertificateEvent;
 import io.gravitee.am.gateway.handler.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.jwt.impl.JJwtBuilder;
 import io.gravitee.am.gateway.handler.jwt.impl.JJwtParser;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.management.api.CertificateRepository;
@@ -61,7 +62,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateManagerImpl extends AbstractService implements CertificateManager, InitializingBean, EventListener<DomainEvent, Domain> {
+public class CertificateManagerImpl extends AbstractService implements CertificateManager, InitializingBean, EventListener<CertificateEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(CertificateManagerImpl.class);
     private static final String defaultDigestAlgorithm = "SHA-256";
@@ -142,38 +143,39 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register certificate manager event listener for cross domain events");
-        eventManager.subscribeForEvents(this, DomainEvent.class);
+        logger.info("Register event listener for certificate events");
+        eventManager.subscribeForEvents(this, CertificateEvent.class);
     }
 
     @Override
-    public void onEvent(Event<DomainEvent, Domain> event) {
-        Domain updatedDomain = event.content();
-        if (!updatedDomain.getId().equals(domain.getId())) {
-            switch (event.type()) {
-                case DEPLOY:
-                case UPDATE:
-                    updateDomainCertificateProviders(updatedDomain);
-                    break;
-                case UNDEPLOY:
-                    domainsCertificateProviders.remove(updatedDomain.getId());
-                    break;
-            }
+    public void onEvent(Event<CertificateEvent, Payload> event) {
+        switch (event.type()) {
+            case DEPLOY:
+            case UPDATE:
+                updateCertificate(event.content().getId(), event.type());
+                break;
+            case UNDEPLOY:
+                removeCertificate(event.content().getId(), event.content().getDomain());
+                break;
         }
     }
 
-    private void updateDomainCertificateProviders(Domain updatedDomain) {
-        logger.info("Domain {} has received domain event from domain {}, update its certificates", domain.getName(), updatedDomain.getName());
-        certificateRepository.findByDomain(updatedDomain.getId())
+    private void updateCertificate(String certificateId, CertificateEvent certificateEvent) {
+        final String eventType = certificateEvent.toString().toLowerCase();
+        logger.info("Domain {} has received {} certificate event for {}", domain.getName(), eventType, certificateId);
+        certificateRepository.findById(certificateId)
                 .subscribe(
-                        certificates -> {
-                            certificates.forEach(certificate -> {
-                                logger.info("\tInitializing certificate: {} [{}]", certificate.getName(), certificate.getType());
-                                updateCertificateProvider(certificate);
-                            });
-                            logger.info("Certificates updated for domain {}", updatedDomain.getName());
+                        certificate -> {
+                            updateCertificateProvider(certificate);
+                            logger.info("Certificate {} {}d for domain {}", certificateId, eventType, domain.getName());
                         },
-                        error -> logger.error("Unable to update certificates for domain {}", updatedDomain.getName(), error));
+                        error -> logger.error("Unable to {} certificate for domain {}", eventType, domain.getName(), error),
+                        () -> logger.error("No certificate found with id {}", certificateId));
+    }
+
+    private void removeCertificate(String certificateId, String domainId) {
+        logger.info("Domain {} has received certificate event, delete certificate {}", domain.getName(), certificateId);
+        domainsCertificateProviders.get(domainId).remove(certificateId);
     }
 
     private void updateCertificateProvider(Certificate certificate) {

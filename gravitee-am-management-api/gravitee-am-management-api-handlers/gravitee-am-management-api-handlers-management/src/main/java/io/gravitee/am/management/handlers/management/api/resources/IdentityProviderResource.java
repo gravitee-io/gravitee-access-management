@@ -110,7 +110,7 @@ public class IdentityProviderResource extends AbstractResource {
     public void delete(@PathParam("domain") String domain,
                        @PathParam("identity") String identity,
                        @Suspended final AsyncResponse response) {
-        identityProviderService.delete(identity)
+        identityProviderService.delete(domain, identity)
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

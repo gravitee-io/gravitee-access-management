@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.impl;
 
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
+import io.gravitee.am.gateway.core.event.ExtensionGrantEvent;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
@@ -24,24 +25,26 @@ import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.ExtensionGra
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.service.UserService;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.gravitee.common.event.Event;
+import io.gravitee.common.event.EventListener;
+import io.gravitee.common.event.EventManager;
+import io.gravitee.common.service.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Optional;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ExtensionGrantManagerImpl implements ExtensionGrantManager, InitializingBean {
+public class ExtensionGrantManagerImpl extends AbstractService implements ExtensionGrantManager, InitializingBean, EventListener<ExtensionGrantEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExtensionGrantManagerImpl.class);
     private TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
@@ -67,62 +70,74 @@ public class ExtensionGrantManagerImpl implements ExtensionGrantManager, Initial
     @Autowired
     private IdentityProviderManager identityProviderManager;
 
+    @Autowired
+    private EventManager eventManager;
+
     @Override
     public void afterPropertiesSet() {
         logger.info("Initializing extension grants for domain {}", domain.getName());
         extensionGrantRepository.findByDomain(domain.getId())
-                .flatMapObservable(extensionGrants -> Observable.fromIterable(extensionGrants))
-                .flatMapSingle(extensionGrant -> {
-                    if (extensionGrant.getIdentityProvider() != null) {
-                        logger.info("\tLooking for extension grant identity provider: {}", extensionGrant.getIdentityProvider());
-                        return identityProviderManager.get(extensionGrant.getIdentityProvider())
-                                .map(authenticationProvider -> Optional.of(authenticationProvider))
-                                .defaultIfEmpty(Optional.empty())
-                                .toSingle()
-                                .map(optAuthenticationProvider -> {
-                                    if (optAuthenticationProvider.isPresent()) {
-                                        logger.info("\tExtension grant identity provider: {}, loaded", extensionGrant.getIdentityProvider());
-                                    }
-                                    ExtensionGrantProvider extensionGrantProvider = extensionGrantPluginManager.create(extensionGrant.getType(), extensionGrant.getConfiguration(), optAuthenticationProvider.get());
-                                    return new ExtensionGrantData(extensionGrant, extensionGrantProvider);
-                                });
-                    } else {
-                        ExtensionGrantProvider extensionGrantProvider = extensionGrantPluginManager.create(extensionGrant.getType(), extensionGrant.getConfiguration(), null);
-                        return Single.just(new ExtensionGrantData(extensionGrant, extensionGrantProvider));
-                    }
-                })
-                .toList()
                 .subscribe(
-                        extensionGrantsData -> {
-                                extensionGrantsData.forEach(extensionGrantData -> {
-                                    ExtensionGrant extensionGrant = extensionGrantData.getExtensionGrant();
-                                    ExtensionGrantProvider extensionGrantProvider = extensionGrantData.getExtensionGrantProvider();
-                                    logger.info("\tInitializing extension grant: {} [{}]", extensionGrant.getName(), extensionGrant.getType());
-                                    ExtensionGrantGranter extensionGrantGranter =
-                                            new ExtensionGrantGranter(extensionGrantProvider, extensionGrant, userService, tokenService, tokenRequestResolver);
-                                    ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrantGranter);
-                                });
-                                logger.info("Extension grants loaded for domain {}", domain.getName());
-                            },
-                        error -> logger.error("Unable to initialize extension grants for domain {}", domain.getName(), error)
-                );
+                        extensionGrants -> {
+                            extensionGrants.forEach(extensionGrant -> updateExtensionGrantProvider(extensionGrant));
+                            logger.info("Extension grants loaded for domain {}", domain.getName());
+                        },
+                        error -> logger.error("Unable to initialize extension grants for domain {}", domain.getName(), error));
     }
 
-    private class ExtensionGrantData {
-        private ExtensionGrant extensionGrant;
-        private ExtensionGrantProvider extensionGrantProvider;
+    @Override
+    protected void doStart() throws Exception {
+        super.doStart();
 
-        public ExtensionGrantData(ExtensionGrant extensionGrant, ExtensionGrantProvider extensionGrantProvider) {
-            this.extensionGrant = extensionGrant;
-            this.extensionGrantProvider = extensionGrantProvider;
+        logger.info("Register event listener for extension grant events");
+        eventManager.subscribeForEvents(this, ExtensionGrantEvent.class);
+    }
+
+    @Override
+    public void onEvent(Event<ExtensionGrantEvent, Payload> event) {
+        if (domain.getId().equals(event.content().getDomain())) {
+            switch (event.type()) {
+                case DEPLOY:
+                case UPDATE:
+                    updateExtensionGrant(event.content().getId(), event.type());
+                    break;
+                case UNDEPLOY:
+                    removeExtensionGrant(event.content().getId());
+                    break;
+            }
+        }
+    }
+
+    private void updateExtensionGrant(String extensionGrantId, ExtensionGrantEvent extensionGrantEvent) {
+        final String eventType = extensionGrantEvent.toString().toLowerCase();
+        logger.info("Domain {} has received {} extension grant event for {}", domain.getName(), eventType, extensionGrantId);
+        extensionGrantRepository.findById(extensionGrantId)
+                .subscribe(
+                        extensionGrant -> {
+                            updateExtensionGrantProvider(extensionGrant);
+                            logger.info("Extension grant {} {}d for domain {}", extensionGrantId, eventType, domain.getName());
+                        },
+                        error -> logger.error("Unable to {} extension grant for domain {}", eventType, domain.getName(), error),
+                        () -> logger.error("No extension grant found with id {}", extensionGrantId));
+    }
+
+    private void removeExtensionGrant(String extensionGrantId) {
+        logger.info("Domain {} has received extension grant event, delete extension grant {}", domain.getName(), extensionGrantId);
+        ((CompositeTokenGranter) tokenGranter).removeTokenGranter(extensionGrantId);
+    }
+
+    private void updateExtensionGrantProvider(ExtensionGrant extensionGrant) {
+        AuthenticationProvider authenticationProvider = null;
+        if (extensionGrant.getIdentityProvider() != null) {
+            logger.info("\tLooking for extension grant identity provider: {}", extensionGrant.getIdentityProvider());
+            authenticationProvider = identityProviderManager.get(extensionGrant.getIdentityProvider()).blockingGet();
+            if (authenticationProvider != null) {
+                logger.info("\tExtension grant identity provider: {}, loaded", extensionGrant.getIdentityProvider());
+            }
         }
 
-        public ExtensionGrant getExtensionGrant() {
-            return extensionGrant;
-        }
-
-        public ExtensionGrantProvider getExtensionGrantProvider() {
-            return extensionGrantProvider;
-        }
+        ExtensionGrantProvider extensionGrantProvider = extensionGrantPluginManager.create(extensionGrant.getType(), extensionGrant.getConfiguration(), authenticationProvider);
+        ExtensionGrantGranter extensionGrantGranter = new ExtensionGrantGranter(extensionGrantProvider, extensionGrant, userService, tokenService, tokenRequestResolver);
+        ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), extensionGrantGranter);
     }
 }

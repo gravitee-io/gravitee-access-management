@@ -29,4 +29,12 @@
     <artifactId>gravitee-am-gateway-core</artifactId>
     <name>Gravitee IO - Access Management - Gateway - Core</name>
 
+    <dependencies>
+        <dependency>
+            <groupId>io.gravitee.am.model</groupId>
+            <artifactId>gravitee-am-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
 </project>

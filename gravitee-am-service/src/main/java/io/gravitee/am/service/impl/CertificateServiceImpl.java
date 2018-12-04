@@ -21,6 +21,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.common.event.Action;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.plugins.certificate.core.CertificateSchema;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.CertificateService;
@@ -152,7 +156,8 @@ public class CertificateServiceImpl implements CertificateService {
                 .flatMap(certificate -> certificateRepository.create(certificate))
                 .flatMap(certificate -> {
                     // Reload domain to take care about certificate create
-                    return domainService.reload(domain).flatMap(domain1 -> Single.just(certificate));
+                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), certificate.getDomain(), Action.CREATE));
+                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(certificate));
                 })
                 .doOnError(ex -> {
                     LOGGER.error("An error occurs while trying to create a certificate", ex);
@@ -216,7 +221,8 @@ public class CertificateServiceImpl implements CertificateService {
                             .flatMap(certificate -> certificateRepository.update(certificate))
                             .flatMap(certificate1 -> {
                                 // Reload domain to take care about certificate update
-                                return domainService.reload(domain).flatMap(domain1 -> Single.just(certificate1));
+                                Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), certificate1.getDomain(), Action.UPDATE));
+                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(certificate1));
                             })
                             .doOnError(ex -> {
                                 LOGGER.error("An error occurs while trying to update a certificate", ex);
@@ -233,7 +239,8 @@ public class CertificateServiceImpl implements CertificateService {
         return certificateRepository.update(certificate)
                 .flatMap(certificate1 -> {
                     // Reload domain to take care about certificate update
-                    return domainService.reload(certificate1.getDomain()).flatMap(domain1 -> Single.just(certificate1));
+                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), certificate1.getDomain(), Action.UPDATE));
+                    return domainService.reload(certificate1.getDomain(), event).flatMap(domain1 -> Single.just(certificate1));
                 })
                 .doOnError(ex -> {
                     LOGGER.error("An error occurs while trying to update a certificate", ex);
@@ -254,7 +261,11 @@ public class CertificateServiceImpl implements CertificateService {
                             return Single.just(certificate);
                         })
                 )
-                .flatMapCompletable(certificate -> certificateRepository.delete(certificateId))
+                .flatMapCompletable(certificate -> {
+                    // Reload domain to take care about delete certificate
+                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), certificate.getDomain(), Action.DELETE));
+                    return certificateRepository.delete(certificateId).andThen(domainService.reload(certificate.getDomain(), event)).toCompletable();
+                })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to delete certificate: {}", certificateId, ex);
                     return Completable.error(new TechnicalManagementException(

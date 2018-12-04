@@ -16,6 +16,10 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.ExtensionGrant;
+import io.gravitee.am.model.common.event.Action;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
@@ -106,7 +110,8 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                             return extensionGrantRepository.create(extensionGrant)
                                     .flatMap(extensionGrant1 -> {
                                         // Reload domain to take care about extension grant create
-                                        return domainService.reload(domain).flatMap(domain1 -> Single.just(extensionGrant1));
+                                        Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant1.getId(), extensionGrant1.getDomain(), Action.CREATE));
+                                        return domainService.reload(domain, event).flatMap(domain1 -> Single.just(extensionGrant1));
                                     });
 
                         }
@@ -148,7 +153,8 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                     return extensionGrantRepository.update(oldExtensionGrant)
                             .flatMap(extensionGrant -> {
                                 // Reload domain to take care about extension grant update
-                                return domainService.reload(domain).flatMap(domain1 -> Single.just(extensionGrant));
+                                Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant.getId(), extensionGrant.getDomain(), Action.UPDATE));
+                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(extensionGrant));
                             });
                 })
                 .onErrorResumeNext(ex -> {
@@ -173,9 +179,11 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                             }
                             return Single.just(clients);
                         }))
-                .flatMapCompletable(irrelevant -> extensionGrantRepository.delete(extensionGrantId)
-                        .andThen(domainService.reload(domain).toCompletable())
-                )
+                .flatMapCompletable(irrelevant -> {
+                    // Reload domain to take care about extension grant create
+                    Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrantId, domain, Action.DELETE));
+                    return extensionGrantRepository.delete(extensionGrantId).andThen(domainService.reload(domain, event).toCompletable());
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

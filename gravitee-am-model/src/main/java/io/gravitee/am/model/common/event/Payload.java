@@ -13,14 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant;
+package io.gravitee.am.model.common.event;
 
-import io.gravitee.common.service.Service;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ExtensionGrantManager extends Service {
+public class Payload extends HashMap<String, Object> {
 
+    private static final String ID = "id";
+    private static final String DOMAIN = "domain";
+    private static final String ACTION = "action";
+
+    public Payload(String id, String domain, Action action) {
+        put(ID, id);
+        put(DOMAIN, domain);
+        put(ACTION, action);
+    }
+
+    public Payload(Map<? extends String, ?> m) {
+        super(m);
+    }
+
+    public String getId() {
+        return (String) get(ID);
+    }
+
+    public String getDomain() {
+        return (String) get(DOMAIN);
+    }
+
+    public Action getAction() {
+        return (Action) get(ACTION);
+    }
 }

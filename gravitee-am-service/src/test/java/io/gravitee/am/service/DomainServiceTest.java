@@ -297,7 +297,7 @@ public class DomainServiceTest {
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, never()).create(any(Domain.class));
     }
-    
+
     @Test
     public void shouldDelete() {
         Client mockClient1 = new Client();
@@ -321,7 +321,7 @@ public class DomainServiceTest {
         when(certificateService.delete(anyString())).thenReturn(Completable.complete());
         when(identityProvider.getId()).thenReturn(IDP_ID);
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(identityProvider)));
-        when(identityProviderService.delete(anyString())).thenReturn(Completable.complete());
+        when(identityProviderService.delete(eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
         when(role.getId()).thenReturn(ROLE_ID);
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(role)));
         when(roleService.delete(anyString())).thenReturn(Completable.complete());
@@ -340,7 +340,7 @@ public class DomainServiceTest {
 
         verify(clientService, times(2)).delete(anyString());
         verify(certificateService, times(1)).delete(CERTIFICATE_ID);
-        verify(identityProviderService, times(1)).delete(IDP_ID);
+        verify(identityProviderService, times(1)).delete(DOMAIN_ID, IDP_ID);
         verify(roleService, times(1)).delete(ROLE_ID);
         verify(userService, times(1)).delete(USER_ID);
         verify(scopeService, times(1)).delete(SCOPE_ID, true);
@@ -365,7 +365,7 @@ public class DomainServiceTest {
 
         verify(clientService, never()).delete(anyString());
         verify(certificateService, never()).delete(anyString());
-        verify(identityProviderService, never()).delete(anyString());
+        verify(identityProviderService, never()).delete(anyString(), anyString());
         verify(roleService, never()).delete(anyString());
         verify(userService, never()).delete(anyString());
         verify(scopeService, never()).delete(anyString(), anyBoolean());
@@ -534,7 +534,7 @@ public class DomainServiceTest {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(new Domain()));
 
-        TestObserver testObserver = domainService.reload(DOMAIN_ID).test();
+        TestObserver testObserver = domainService.reload(DOMAIN_ID, any()).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -547,7 +547,7 @@ public class DomainServiceTest {
     public void shouldReload_domainNotFound() {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = domainService.reload(DOMAIN_ID).test();
+        TestObserver testObserver = domainService.reload(DOMAIN_ID, any()).test();
 
         testObserver.assertError(DomainNotFoundException.class);
         testObserver.assertNotComplete();
@@ -559,7 +559,7 @@ public class DomainServiceTest {
     public void shouldReload_technicalException() {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver testObserver = domainService.reload(DOMAIN_ID).test();
+        TestObserver testObserver = domainService.reload(DOMAIN_ID, any()).test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();

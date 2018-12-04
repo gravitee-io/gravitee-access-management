@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.granter;
 
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
@@ -32,9 +33,9 @@ import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -42,7 +43,7 @@ import java.util.Objects;
  */
 public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
-    private List<TokenGranter> tokenGranters = new ArrayList<>();
+    private ConcurrentMap<String, TokenGranter> tokenGranters = new ConcurrentHashMap<>();
     private TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
 
     @Autowired
@@ -56,21 +57,23 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     public CompositeTokenGranter() { }
 
-    public CompositeTokenGranter(List<TokenGranter> tokenGranters) {
-        this.tokenGranters = new ArrayList<>(tokenGranters);
-    }
-
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return Observable
-                .fromIterable(tokenGranters)
+                .fromIterable(tokenGranters.values())
                 .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType()))
                 .switchIfEmpty(Observable.error(new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
                 .flatMapSingle(tokenGranter -> tokenGranter.grant(tokenRequest, client)).singleOrError();
     }
 
-    public void addTokenGranter(TokenGranter tokenGranter) {
+
+    public void addTokenGranter(String tokenGranterId, TokenGranter tokenGranter) {
+        Objects.requireNonNull(tokenGranterId);
         Objects.requireNonNull(tokenGranter);
-        tokenGranters.add(tokenGranter);
+        tokenGranters.put(tokenGranterId, tokenGranter);
+    }
+
+    public void removeTokenGranter(String tokenGranterId) {
+        tokenGranters.remove(tokenGranterId);
     }
 
     @Override
@@ -80,9 +83,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
-        addTokenGranter(new ClientCredentialsTokenGranter(tokenRequestResolver, tokenService));
-        addTokenGranter(new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
-        addTokenGranter(new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager));
-        addTokenGranter(new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
+        addTokenGranter(GrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenRequestResolver, tokenService));
+        addTokenGranter(GrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
+        addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager));
+        addTokenGranter(GrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
     }
 }

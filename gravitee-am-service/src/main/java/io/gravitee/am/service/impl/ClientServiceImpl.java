@@ -17,6 +17,10 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.event.Action;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.service.ClientService;
@@ -268,7 +272,8 @@ public class ClientServiceImpl implements ClientService {
                             return clientRepository.create(client)
                                     .flatMap(client1 -> {
                                         // Reload domain to take care about client creation
-                                        return domainService.reload(domain).flatMap(domain1 -> Single.just(client1));
+                                        Event event = new Event(Type.CLIENT, new Payload(client1.getId(), client.getDomain(), Action.CREATE));
+                                        return domainService.reload(domain, event).flatMap(domain1 -> Single.just(client1));
                                     });
                         }
                     })
@@ -315,9 +320,10 @@ public class ClientServiceImpl implements ClientService {
                     client.setUpdatedAt(new Date());
 
                     return clientRepository.update(client)
-                            .flatMap(irrelevant -> {
+                            .flatMap(client1 -> {
                                 // Reload domain to take care about client update
-                                return domainService.reload(domain).flatMap(domain1 -> Single.just(irrelevant));
+                                Event event = new Event(Type.CLIENT, new Payload(client1.getId(), client.getDomain(), Action.UPDATE));
+                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(client1));
                             });
                 })
                 .onErrorResumeNext(ex -> {
@@ -335,7 +341,11 @@ public class ClientServiceImpl implements ClientService {
         LOGGER.debug("Delete client {}", clientId);
         return clientRepository.findById(clientId)
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(clientId)))
-                .flatMapCompletable(client -> clientRepository.delete(clientId).andThen(domainService.reload(client.getDomain()).toCompletable()))
+                .flatMapCompletable(client -> {
+                    // Reload domain to take care about delete client
+                    Event event = new Event(Type.CLIENT, new Payload(client.getId(), client.getDomain(), Action.DELETE));
+                    return clientRepository.delete(clientId).andThen(domainService.reload(client.getDomain(), event).toCompletable());
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
