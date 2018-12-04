@@ -46,15 +46,17 @@ public class SyncManager {
         // For AM Management API only admin domain is used
         Domain adminDomain = domainService.findById(ADMIN_DOMAIN).blockingGet();
 
-        // Deploy admin domain
-        if (deployedAdminDomain == null) {
-            eventManager.publishEvent(DomainEvent.DEPLOY, adminDomain);
-            deployedAdminDomain = adminDomain;
-        } else {
-            // Check last update date
-            if (adminDomain.getUpdatedAt().after(deployedAdminDomain.getUpdatedAt())) {
-                eventManager.publishEvent(DomainEvent.UPDATE, adminDomain);
+        if (adminDomain != null) {
+            // Deploy admin domain
+            if (deployedAdminDomain == null) {
+                eventManager.publishEvent(DomainEvent.DEPLOY, adminDomain);
                 deployedAdminDomain = adminDomain;
+            } else {
+                // Check last update date
+                if (adminDomain.getUpdatedAt().after(deployedAdminDomain.getUpdatedAt())) {
+                    eventManager.publishEvent(DomainEvent.UPDATE, adminDomain);
+                    deployedAdminDomain = adminDomain;
+                }
             }
         }
     }
