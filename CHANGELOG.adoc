@@ -1,5 +1,24 @@
 # Change Log
 
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/26?closed=1[2.1.1 (2018-12-05)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- HTTP Error 503 after scope approvals https://github.com/gravitee-io/graviteeio-access-management/issues/467[#467]
+
+*_Oauth2_*
+
+- Null value while retrieving social user https://github.com/gravitee-io/graviteeio-access-management/issues/463[#463]
+
+=== Improvements
+
+*_Gateway_*
+
+- Do not reload the entire domain context for "inner" changes https://github.com/gravitee-io/graviteeio-access-management/issues/465[#465]
+
+
 == https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/23?closed=1[2.1.0 (2018-11-28)]
 
 === Bug fixes
