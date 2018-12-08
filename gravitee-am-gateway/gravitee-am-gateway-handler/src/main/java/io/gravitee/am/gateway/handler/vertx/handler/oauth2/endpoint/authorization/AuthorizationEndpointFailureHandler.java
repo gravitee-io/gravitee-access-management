@@ -53,11 +53,10 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationEndpointFailureHandler implements Handler<RoutingContext> {
+public class AuthorizationEndpointFailureHandler extends AbstractAuthorizationEndpointHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationEndpointFailureHandler.class);
     private static final String CLIENT_CONTEXT_KEY = "client";
-    private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private Domain domain;
     private String defaultErrorPagePath;
 
@@ -117,20 +116,6 @@ public class AuthorizationEndpointFailureHandler implements Handler<RoutingConte
     private void cleanSession(RoutingContext context) {
         // return url param (i.e return url after login process) should not be used after this step
         context.session().remove(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM);
-    }
-
-    private AuthorizationRequest resolveInitialAuthorizeRequest(RoutingContext routingContext) {
-        AuthorizationRequest authorizationRequest = routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
-        // we have the authorization request in session if we come from the approval user page
-        if (authorizationRequest != null) {
-            // remove OAuth2Constants.AUTHORIZATION_REQUEST session value
-            // should not be used after this step
-            routingContext.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
-            return authorizationRequest;
-        }
-
-        // the initial request failed for some reasons, we have the required request parameters to re-create the authorize request
-        return authorizationRequestFactory.create(routingContext.request());
     }
 
     private String buildRedirectUri(OAuth2Exception oAuth2Exception, AuthorizationRequest authorizationRequest) throws URISyntaxException {

@@ -46,11 +46,10 @@ import java.util.Arrays;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationEndpointHandler implements Handler<RoutingContext> {
+public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationEndpointHandler.class);
     private static final String CLIENT_CONTEXT_KEY = "client";
-    private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private Flow flow;
     private Domain domain;
 
@@ -61,7 +60,7 @@ public class AuthorizationEndpointHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        AuthorizationRequest request = authorizationRequestFactory.create(context.request());
+        AuthorizationRequest request = resolveInitialAuthorizeRequest(context);
 
         // The authorization server authenticates the resource owner and obtains
         // an authorization decision (by asking the resource owner or by establishing approval via other means).
