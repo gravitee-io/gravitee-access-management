@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "34dfd549-9129-42ee-ba6f-505e06b6458c",
+		"_postman_id": "4e9924d6-cd64-42de-9fe2-617bf550b80f",
 		"name": "Gravitee.io AM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -79,6 +79,15 @@
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"DCR disabled for domain\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.allowLocalhostRedirectUri).to.eql(false);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.allowHttpSchemeRedirectUri).to.eql(false);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.allowWildCardRedirectUri).to.eql(false);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled).to.eql(false);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled).to.eql(false);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -116,25 +125,48 @@
 					"response": []
 				},
 				{
-					"name": "Configure DCR",
+					"name": "Patch domain for DCR",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4d80e686-0750-477e-b1fe-e379e1442cbb",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"DCR disabled for domain\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.allowLocalhostRedirectUri).to.eql(true);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.allowHttpSchemeRedirectUri).to.eql(true);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.allowWildCardRedirectUri).to.eql(true);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled).to.eql(false);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled).to.eql(false);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "PATCH",
 						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text"
-							},
 							{
 								"key": "Content-Type",
 								"name": "Content-Type",
 								"value": "application/json",
 								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"oidc\": {\n    \"clientRegistrationSettings\": {\n      \"allowLocalhostRedirectUri\": true,\n      \"allowHttpSchemeRedirectUri\": true,\n      \"allowWildCardRedirectUri\": false,\n      \"isOpenDynamicClientRegistrationEnabled\": false,\n      \"isDynamicClientRegistrationEnabled\": true\n    }\n  }\n}"
+							"raw": "{\n  \"oidc\": {\n    \"clientRegistrationSettings\": {\n      \"allowLocalhostRedirectUri\": true,\n      \"allowHttpSchemeRedirectUri\": true,\n      \"allowWildCardRedirectUri\": true,\n      \"isDynamicClientRegistrationEnabled\": false,\n      \"isOpenDynamicClientRegistrationEnabled\": false\n    }\n  }\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/test",
@@ -1392,15 +1424,10 @@
 									"script": {
 										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
 										"exec": [
-											"function parseJwt (token) {",
-											"            var base64Url = token.split('.')[1];",
-											"            var base64 = base64Url.replace('-', '+').replace('_', '/');",
-											"            return JSON.parse(atob(base64));",
-											"        }",
-											"",
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
 											"});",
+											"",
 											"",
 											"pm.test(\"Has an access_token without refresh token\", function () {",
 											"    var body = pm.response.json();",
@@ -1411,10 +1438,6 @@
 											"    pm.expect(body).to.not.have.property('refresh_token');",
 											"    pm.expect(body).to.have.property('scope');",
 											"    pm.expect(body.scope).to.eql('scope1');",
-											"    ",
-											"    let jwt = parseJwt(body.access_token);",
-											"    ",
-											"    tests['Contains a sub claim'] = jwt.sub === 'my-client';",
 											"});"
 										],
 										"type": "text/javascript"
@@ -13882,18 +13905,25 @@
 					"name": "DCR",
 					"item": [
 						{
-							"name": "Configure domain",
+							"name": "Case - non DCR domain",
 							"item": [
 								{
-									"name": "Configure client 2 with DCR",
+									"name": "Non DCR domain",
 									"event": [
 										{
 											"listen": "test",
 											"script": {
-												"id": "576263ed-f6e5-44e3-8519-998efca70a67",
+												"id": "f14af8bd-e84e-480e-b4dc-2c110d1f3761",
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
+													"pm.test(\"Status code is 403\", function () {",
+													"    pm.response.to.have.status(403);",
+													"});",
+													"",
+													"pm.test(\"Non DCR domain\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('registration_forbidden');",
+													"    pm.expect(body.error_description).to.eql('Not allowed to access to this resource.');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -13901,7 +13931,122 @@
 										}
 									],
 									"request": {
-										"method": "PUT",
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Configure domain",
+							"item": [
+								{
+									"name": "Configure DCR",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "286df3a2-0e06-4b00-9614-3b0fd9ceecb9",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"DCR enabled for domain\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled).to.eql(true);",
+													"});",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 5000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"oidc\": {\n    \"clientRegistrationSettings\": {\n      \"allowLocalhostRedirectUri\": false,\n      \"allowHttpSchemeRedirectUri\": false,\n      \"allowWildCardRedirectUri\": false,\n      \"isDynamicClientRegistrationEnabled\": true,\n      \"isOpenDynamicClientRegistrationEnabled\": false\n    }\n  }\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Case - non DCR Token",
+							"item": [
+								{
+									"name": "Create client without DCR enabled",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"var body = JSON.parse(responseBody);",
+													"pm.environment.set('clientDCR', body.id);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
 										"header": [
 											{
 												"key": "Content-Type",
@@ -13914,10 +14059,63 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"redirectUris\": [\"http://localhost:4000/\"],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\"\n  ],\n  \"scopes\": [\"scope1\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"idTokenCustomClaims\": {},\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+											"raw": "{\n  \"clientId\": \"dcr-client\",\n  \"clientSecret\": \"dcr-client-secret\",\n  \"clientName\": \"dcr-client-public-name\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/test/clients/{{client2}}",
+											"raw": "{{management_url}}/management/domains/test/clients",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"clients"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch client without DCR enabled",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "1c063d6b-7120-4fd1-8aea-b04f7defc4d0",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 5000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"authorizedGrantTypes\": [\"client_credentials\"]\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/clients/{{clientDCR}}",
 											"host": [
 												"{{management_url}}"
 											],
@@ -13926,7 +14124,260 @@
 												"domains",
 												"test",
 												"clients",
-												"{{client2}}"
+												"{{clientDCR}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Generate token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has an access_token\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('access_token');",
+													"    ",
+													"    pm.environment.set('access_token', body.access_token);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Basic ZGNyLWNsaWVudDpkY3ItY2xpZW50LXNlY3JldA=="
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "client_credentials",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oauth/token",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oauth",
+												"token"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Non DCR client",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 403\", function () {",
+													"    pm.response.to.have.status(403);",
+													"});",
+													"",
+													"pm.test(\"Non DCR client\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('registration_forbidden');",
+													"    pm.expect(body.error_description).to.eql('Not allowed to access to this resource.');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Configure client",
+							"item": [
+								{
+									"name": "Configure client with DCR enabled",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "576263ed-f6e5-44e3-8519-998efca70a67",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"DCR enabled for client\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.scopes).to.eql(['dcr_admin']);",
+													"});",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 5000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"scopes\": [\"dcr_admin\"]\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/clients/{{clientDCR}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"clients",
+												"{{clientDCR}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Generate token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has an access_token\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('access_token');",
+													"    pm.expect(body.scope).to.eql('dcr_admin');",
+													"    ",
+													"    pm.environment.set('access_token', body.access_token);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Basic ZGNyLWNsaWVudDpkY3ItY2xpZW50LXNlY3JldA=="
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "client_credentials",
+													"type": "text"
+												},
+												{
+													"key": "scope",
+													"value": "dcr_admin",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oauth/token",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oauth",
+												"token"
 											]
 										}
 									},
@@ -13938,143 +14389,6 @@
 						{
 							"name": "Invalid requests",
 							"item": [
-								{
-									"name": "Non DCR client",
-									"item": [
-										{
-											"name": "Generate token",
-											"event": [
-												{
-													"listen": "test",
-													"script": {
-														"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
-														"exec": [
-															"pm.test(\"Status code is 200\", function () {",
-															"    pm.response.to.have.status(200);",
-															"});",
-															"",
-															"",
-															"pm.test(\"Has an access_token\", function () {",
-															"    var body = pm.response.json();",
-															"    pm.expect(body).to.have.property('access_token');",
-															"    ",
-															"    pm.environment.set('access_token', body.access_token);",
-															"});"
-														],
-														"type": "text/javascript"
-													}
-												},
-												{
-													"listen": "prerequest",
-													"script": {
-														"id": "904f0113-b2b9-4645-9511-48bb10791506",
-														"exec": [
-															""
-														],
-														"type": "text/javascript"
-													}
-												}
-											],
-											"request": {
-												"method": "POST",
-												"header": [
-													{
-														"key": "Authorization",
-														"value": "Basic bXktY2xpZW50Om15LWNsaWVudC1zZWNyZXQ="
-													}
-												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "client_credentials",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "scope1",
-															"type": "text"
-														},
-														{
-															"key": "example_parameter",
-															"value": "example_value",
-															"type": "text"
-														}
-													]
-												},
-												"url": {
-													"raw": "{{gateway_url}}/test/oauth/token",
-													"host": [
-														"{{gateway_url}}"
-													],
-													"path": [
-														"test",
-														"oauth",
-														"token"
-													]
-												}
-											},
-											"response": []
-										},
-										{
-											"name": "Non DCR client",
-											"event": [
-												{
-													"listen": "test",
-													"script": {
-														"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
-														"exec": [
-															"pm.test(\"Status code is 403\", function () {",
-															"    pm.response.to.have.status(403);",
-															"});",
-															"",
-															"pm.test(\"Non DCR client\", function () {",
-															"    pm.response.to.be.header('Content-Type', 'application/json');",
-															"    var body = pm.response.json();",
-															"    pm.expect(body.error).to.eql('registration_forbidden');",
-															"    pm.expect(body.error_description).to.eql('Not allowed to access to this resource.');",
-															"});"
-														],
-														"type": "text/javascript"
-													}
-												}
-											],
-											"request": {
-												"method": "POST",
-												"header": [
-													{
-														"key": "Content-Type",
-														"type": "text",
-														"value": "application/json"
-													},
-													{
-														"key": "Authorization",
-														"type": "text",
-														"value": "Bearer {{access_token}}"
-													}
-												],
-												"body": {
-													"mode": "raw",
-													"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"client_name\": \"My Example\",\n   \"client_name#ja-Jpan-JP\":\n     \"クライアント名\",\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"pairwise\",\n   \"sector_identifier_uri\":\n     \"https://other.example.net/file_of_redirect_uris.json\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt\n       #qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
-												},
-												"url": {
-													"raw": "{{gateway_url}}/test/oidc/register",
-													"host": [
-														"{{gateway_url}}"
-													],
-													"path": [
-														"test",
-														"oidc",
-														"register"
-													]
-												}
-											},
-											"response": []
-										}
-									],
-									"_postman_isSubFolder": true
-								},
 								{
 									"name": "Invalid access token",
 									"event": [
@@ -14108,13 +14422,453 @@
 											},
 											{
 												"key": "Authorization",
-												"value": "Bearer blablabla",
+												"value": "Bearer wrong-token",
 												"type": "text"
 											}
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"client_name\": \"My Example\",\n   \"client_name#ja-Jpan-JP\":\n     \"クライアント名\",\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"pairwise\",\n   \"sector_identifier_uri\":\n     \"https://other.example.net/file_of_redirect_uris.json\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt\n       #qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
+											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid redirect uri",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Redirect uris are missing\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_redirect_uri');",
+													"    pm.expect(body.error_description).to.eql('Missing or invalid redirect_uris.');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid redirect uri - localhost",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Redirect uris localhost forbidden\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_redirect_uri');",
+													"    pm.expect(body.error_description).to.eql('localhost is forbidden');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"redirect_uris\": [\n    \"https://localhost/callback\",\n    \"https://localhost/callback2\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid redirect uri - wildcard",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Redirect uris wildcard forbidden\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_redirect_uri');",
+													"    pm.expect(body.error_description).to.eql('Wildcard are forbidden');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/*/callback\",\n    \"https://client.example.org/*/callback2\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid redirect uri - http scheme",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Redirect uris http scheme forbidden\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_redirect_uri');",
+													"    pm.expect(body.error_description).to.eql('Unsecured http scheme is forbidden');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"redirect_uris\": [\n    \"http://client.example.org/callback\",\n    \"http://client.example.org/callback2\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid response type",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Invalid response type\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+													"    pm.expect(body.error_description).to.eql('Invalid response type.');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"response_types\": [\n\t\"unknown\"\n   ],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid grant type",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Invalid grant type\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+													"    pm.expect(body.error_description).to.eql('Missing or invalid grant type.');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"grant_types\": [\n\t\"unknown\"\n   ],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request uri",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Invalid request uri\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+													"    pm.expect(body.error_description).to.eql('request_uris: malformed_url is not valid.');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"request_uris\": [\n\t\"malformed_url\"\n   ],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid scope",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Invalid scope\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+													"    pm.expect(body.error_description).to.eql('scope unkown-domain-scope is not valid.');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"scope\": \"unkown-domain-scope\",\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
 										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oidc/register",
@@ -14159,81 +14913,6 @@
 							"name": "Nominal Case",
 							"item": [
 								{
-									"name": "Generate token",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"",
-													"pm.test(\"Has an access_token\", function () {",
-													"    var body = pm.response.json();",
-													"    pm.expect(body).to.have.property('access_token');",
-													"    ",
-													"    pm.environment.set('access_token', body.access_token);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										},
-										{
-											"listen": "prerequest",
-											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Basic bXktY2xpZW50MjpteS1jbGllbnQtc2VjcmV0Mg=="
-											}
-										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "client_credentials",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "scope1",
-													"type": "text"
-												},
-												{
-													"key": "example_parameter",
-													"value": "example_value",
-													"type": "text"
-												}
-											]
-										},
-										"url": {
-											"raw": "{{gateway_url}}/test/oauth/token",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"token"
-											]
-										}
-									},
-									"response": []
-								},
-								{
 									"name": "Register client",
 									"event": [
 										{
@@ -14241,15 +14920,26 @@
 											"script": {
 												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
 												"exec": [
-													"pm.test(\"Status code is 403\", function () {",
-													"    pm.response.to.have.status(403);",
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
 													"});",
 													"",
-													"pm.test(\"Non DCR client\", function () {",
-													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"pm.test(\"Has default attributes\", function () {",
 													"    var body = pm.response.json();",
-													"    pm.expect(body.error).to.eql('registration_forbidden');",
-													"    pm.expect(body.error_description).to.eql('Not allowed to access to this resource.');",
+													"    pm.expect(body).to.have.property('response_types');",
+													"    pm.expect(body).to.have.property('grant_types');",
+													"    pm.expect(body).to.have.property('scope');",
+													"    pm.expect(body).to.have.property('client_name');",
+													"    pm.expect(body).to.have.property('client_id');",
+													"    pm.expect(body).to.have.property('client_secret');",
+													"    pm.expect(body.response_types).to.eql(['code']);",
+													"    pm.expect(body.grant_types).to.eql(['authorization_code']);",
+													"    pm.expect(body.scope).to.eql('openid');",
+													"    pm.expect(body.client_name).to.eql('Unknown Client');",
+													"    ",
+													"    pm.environment.set('newClientForDCRTests', body.id);",
+													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
 													"});"
 												],
 												"type": "text/javascript"
@@ -14272,7 +14962,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"client_name\": \"My Example\",\n   \"client_name#ja-Jpan-JP\":\n     \"クライアント名\",\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"pairwise\",\n   \"sector_identifier_uri\":\n     \"https://other.example.net/file_of_redirect_uris.json\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt\n       #qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
+											"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"pairwise\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
 										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oidc/register",
@@ -14283,6 +14973,220 @@
 												"test",
 												"oidc",
 												"register"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch client",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Patch client with response types\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property(\"responseTypes\");",
+													"    pm.expect(body).to.have.property(\"authorizedGrantTypes\");",
+													"    pm.expect(body.responseTypes).to.eql(['token', 'code']);",
+													"    pm.expect(body.authorizedGrantTypes).to.eql([ 'implicit', 'authorization_code' ]);",
+													"});",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 5000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"responseTypes\": [\"token\", \"code\"],\n   \"clientName\": \"Client was created via DCR\"\n  }"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/clients/{{newClientForDCRTests}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"clients",
+												"{{newClientForDCRTests}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get client - with registration token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Get client with response types\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property(\"redirect_uris\");",
+													"    pm.expect(body).to.have.property(\"grant_types\");",
+													"    pm.expect(body.response_types).to.eql([ 'token','code' ]);",
+													"    pm.expect(body.grant_types).to.eql([ 'implicit','authorization_code' ]);",
+													"    pm.expect(body.client_name).to.eql('Client was created via DCR');",
+													"    ",
+													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch client - with registration token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Get client with response types\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.client_name).to.eql('Client patched via DCR');",
+													"    ",
+													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"client_name\": \"Client patched via DCR\"\n}"
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete client - with registration token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 204\", function () {",
+													"    pm.response.to.have.status(204);",
+													"});",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
 											]
 										}
 									},
@@ -14329,7 +15233,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"test\",\n  \"description\": \"test domain\",\n  \"path\": \"test\",\n  \"enabled\": true\n}"
+							"raw": ""
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/test",
