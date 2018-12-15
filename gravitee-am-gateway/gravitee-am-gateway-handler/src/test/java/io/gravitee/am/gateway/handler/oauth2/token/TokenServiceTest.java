@@ -30,8 +30,10 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -70,8 +72,10 @@ public class TokenServiceTest {
         Client client = new Client();
         client.setClientId("my-client-id");
 
+        ArgumentCaptor<io.gravitee.am.repository.oauth2.model.AccessToken> accessTokenCaptor = ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.AccessToken.class);
+
         when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
-        when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
+        when(accessTokenRepository.create(accessTokenCaptor.capture())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
         when(tokenEnhancer.enhance(any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
 
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
@@ -81,6 +85,8 @@ public class TokenServiceTest {
         verify(accessTokenRepository, times(1)).create(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
+
+        Assert.assertTrue("client should be client_id", client.getClientId().equals(accessTokenCaptor.getValue().getClient()));
     }
 
     @Test

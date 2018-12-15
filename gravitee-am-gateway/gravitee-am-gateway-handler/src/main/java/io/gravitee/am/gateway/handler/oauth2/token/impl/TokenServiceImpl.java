@@ -168,7 +168,7 @@ public class TokenServiceImpl implements TokenService {
         accessToken.setId(UUID.random().toString());
         accessToken.setToken(UUID.random().toString());
         accessToken.setDomain(client.getDomain());
-        accessToken.setClient(client.getId());
+        accessToken.setClient(client.getClientId());
         accessToken.setSubject(endUser != null ? endUser.getId() : null);
         accessToken.setCreatedAt(new Date());
         accessToken.setExpireAt(new Date(System.currentTimeMillis() + (getAccessTokenValiditySeconds(client) * 1000L)));
@@ -198,7 +198,7 @@ public class TokenServiceImpl implements TokenService {
         refreshToken.setId(UUID.random().toString());
         refreshToken.setToken(UUID.random().toString());
         refreshToken.setDomain(client.getDomain());
-        refreshToken.setClient(client.getId());
+        refreshToken.setClient(client.getClientId());
         refreshToken.setSubject(endUser != null ? endUser.getId() : null);
         refreshToken.setCreatedAt(new Date());
         refreshToken.setExpireAt(new Date(System.currentTimeMillis() + (getRefreshTokenValiditySeconds(client) * 1000L)));
