@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "7020629d-e044-4769-b2ae-7648a5d35520",
+		"_postman_id": "34dfd549-9129-42ee-ba6f-505e06b6458c",
 		"name": "Gravitee.io AM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -1357,10 +1357,15 @@
 									"script": {
 										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
 										"exec": [
+											"function parseJwt (token) {",
+											"            var base64Url = token.split('.')[1];",
+											"            var base64 = base64Url.replace('-', '+').replace('_', '/');",
+											"            return JSON.parse(atob(base64));",
+											"        }",
+											"",
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
 											"});",
-											"",
 											"",
 											"pm.test(\"Has an access_token without refresh token\", function () {",
 											"    var body = pm.response.json();",
@@ -1371,6 +1376,10 @@
 											"    pm.expect(body).to.not.have.property('refresh_token');",
 											"    pm.expect(body).to.have.property('scope');",
 											"    pm.expect(body.scope).to.eql('scope1');",
+											"    ",
+											"    let jwt = parseJwt(body.access_token);",
+											"    ",
+											"    tests['Contains a sub claim'] = jwt.sub === 'my-client';",
 											"});"
 										],
 										"type": "text/javascript"
@@ -2690,7 +2699,10 @@
 												"value": "Basic bXktY2xpZW50Om15LWNsaWVudC1zZWNyZXQ="
 											}
 										],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oauth/token?grant_type=authorization_code&code={{authorization_code}}&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -3131,7 +3143,10 @@
 												"value": "Basic bXktY2xpZW50MjpteS1jbGllbnQtc2VjcmV0Mg=="
 											}
 										],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oauth/token?grant_type=authorization_code&code={{authorization_code}}&redirect_uri=http://localhost:5000/",
 											"host": [
@@ -3580,7 +3595,10 @@
 												"value": "Basic bXktY2xpZW50MjpteS1jbGllbnQtc2VjcmV0Mg=="
 											}
 										],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oauth/token?grant_type=authorization_code&code={{authorization_code}}&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -4674,7 +4692,10 @@
 												"value": "Basic bXktY2xpZW50MjpteS1jbGllbnQtc2VjcmV0Mg=="
 											}
 										],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oauth/token?grant_type=authorization_code&code={{authorization_code}}&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -5128,7 +5149,10 @@
 												"value": "Basic bXktY2xpZW50MjpteS1jbGllbnQtc2VjcmV0Mg=="
 											}
 										],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oauth/token?grant_type=authorization_code&code={{authorization_code}}&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -5582,7 +5606,10 @@
 												"value": "Basic bXktY2xpZW50MjpteS1jbGllbnQtc2VjcmV0Mg=="
 											}
 										],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oauth/token?grant_type=authorization_code&code={{authorization_code}}&redirect_uri=http://localhost:4000/&code_verifier=qsdqsdqsdqsqsd",
 											"host": [
@@ -6040,7 +6067,10 @@
 												"value": "Basic bXktY2xpZW50MjpteS1jbGllbnQtc2VjcmV0Mg=="
 											}
 										],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oauth/token?grant_type=authorization_code&code={{authorization_code}}&redirect_uri=http://localhost:4000/&code_verifier=qsdqsdqsdqsqsd",
 											"host": [
@@ -6501,7 +6531,10 @@
 												"value": "Basic bXktY2xpZW50MjpteS1jbGllbnQtc2VjcmV0Mg=="
 											}
 										],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oauth/token?grant_type=authorization_code&code={{authorization_code}}&redirect_uri=http://localhost:4000/&code_verifier=M25iVXpKU3puUjFaYWg3T1NDTDQtcW1ROUY5YXlwalNoc0hhakxifmZHag",
 											"host": [
@@ -6962,7 +6995,10 @@
 												"value": "Basic bXktY2xpZW50MjpteS1jbGllbnQtc2VjcmV0Mg=="
 											}
 										],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oauth/token?grant_type=authorization_code&code={{authorization_code}}&redirect_uri=http://localhost:4000/&code_verifier=qjrzSW9gMiUgpUvqgEPE4_-8swvyCtfOVvg55o5S_es",
 											"host": [
@@ -7756,7 +7792,10 @@
 												"value": "Basic bXktY2xpZW50MjpteS1jbGllbnQtc2VjcmV0Mg=="
 											}
 										],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oauth/token?grant_type=authorization_code&redirect_uri=http://localhost:5000/",
 											"host": [
@@ -7817,7 +7856,10 @@
 									"request": {
 										"method": "POST",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{gateway_url}}/test/oauth/token?grant_type=authorization_code&redirect_uri=http://localhost:5000/",
 											"host": [
