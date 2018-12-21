@@ -36,6 +36,6 @@ USER 1000
 
 WORKDIR ${GRAVITEEAM_HOME}
 
-EXPOSE 8092
+EXPOSE 8093
 VOLUME ["/opt/graviteeio-am-management-api/logs"]
 CMD ["./bin/gravitee"]
