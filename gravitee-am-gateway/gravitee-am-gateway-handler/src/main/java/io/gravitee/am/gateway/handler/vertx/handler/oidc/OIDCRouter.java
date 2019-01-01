@@ -79,6 +79,7 @@ public class OIDCRouter {
         // OpenID Provider Configuration Information Endpoint
         Handler<RoutingContext> openIDProviderConfigurationEndpoint = new ProviderConfigurationEndpoint();
         ((ProviderConfigurationEndpoint) openIDProviderConfigurationEndpoint).setDiscoveryService(discoveryService);
+        router.route("/.well-known/openid-configuration").handler(CorsHandler.newInstance(corsHandler()));
         router
                 .route(HttpMethod.GET, "/.well-known/openid-configuration")
                 .handler(openIDProviderConfigurationEndpoint);
@@ -100,6 +101,7 @@ public class OIDCRouter {
         // OpenID Provider JWK Set
         Handler<RoutingContext> openIDProviderJWKSetEndpoint = new ProviderJWKSetEndpoint();
         ((ProviderJWKSetEndpoint) openIDProviderJWKSetEndpoint).setJwkSetService(jwkSetService);
+        router.route("/.well-known/jwks.json").handler(CorsHandler.newInstance(corsHandler()));
         router
                 .route(HttpMethod.GET, "/.well-known/jwks.json")
                 .handler(openIDProviderJWKSetEndpoint);
