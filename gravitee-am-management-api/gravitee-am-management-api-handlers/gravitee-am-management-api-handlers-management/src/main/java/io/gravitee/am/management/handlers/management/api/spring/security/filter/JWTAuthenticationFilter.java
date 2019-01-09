@@ -49,6 +49,8 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
     private String jwtSecret;
     @Value("${jwt.cookie-path:/}")
     private String jwtCookiePath;
+    @Value("${jwt.cookie-name:Auth-Graviteeio-AM}")
+    private String authCookieName;
     private Key key;
 
     public JWTAuthenticationFilter(RequestMatcher requiresAuthenticationRequestMatcher) {
@@ -73,7 +75,7 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
                 optionalStringToken = Optional.empty();
             } else {
                 optionalStringToken = Arrays.stream(request.getCookies())
-                        .filter(cookie -> HttpHeaders.AUTHORIZATION.equals(cookie.getName()))
+                        .filter(cookie -> authCookieName.equals(cookie.getName()))
                         .findAny();
             }
 

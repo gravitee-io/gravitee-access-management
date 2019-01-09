@@ -45,6 +45,9 @@ public class JWTGenerator implements InitializingBean {
     @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
     private String signingKeySecret;
 
+    @Value("${jwt.cookie-name:Auth-Graviteeio-AM}")
+    private String authCookieName;
+
     @Autowired
     private Environment environment;
 
@@ -52,7 +55,7 @@ public class JWTGenerator implements InitializingBean {
         Date expirationDate = new Date(System.currentTimeMillis() + JWTGenerator.DEFAULT_JWT_EXPIRE_AFTER);
         String jwtToken  = generateToken(user, expirationDate);
 
-        final Cookie cookie = new Cookie(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken);
+        final Cookie cookie = new Cookie(authCookieName, "Bearer " + jwtToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(environment.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
         cookie.setPath(environment.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
