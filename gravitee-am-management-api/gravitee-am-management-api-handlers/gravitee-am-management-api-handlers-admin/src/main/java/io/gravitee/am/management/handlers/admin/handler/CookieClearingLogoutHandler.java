@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 public class CookieClearingLogoutHandler implements LogoutHandler {
 
     private static final boolean DEFAULT_JWT_COOKIE_SECURE = false;
+    private static final String DEFAULT_JWT_COOKIE_NAME = "Auth-Graviteeio-AM";
     private static final String DEFAULT_JWT_COOKIE_PATH = "/";
     private static final String DEFAULT_JWT_COOKIE_DOMAIN = "";
 
@@ -40,7 +41,7 @@ public class CookieClearingLogoutHandler implements LogoutHandler {
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
-        Cookie cookie = new Cookie(HttpHeaders.AUTHORIZATION, null);
+        Cookie cookie = new Cookie(environment.getProperty("jwt.cookie-name", DEFAULT_JWT_COOKIE_NAME), null);
         cookie.setSecure(environment.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
         cookie.setPath(environment.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
         cookie.setDomain(environment.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));

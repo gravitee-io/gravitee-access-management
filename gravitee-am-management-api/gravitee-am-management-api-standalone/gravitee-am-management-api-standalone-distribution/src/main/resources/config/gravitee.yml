@@ -161,6 +161,8 @@ jwt:
   #expire-after: 604800
   # Allows to define issuer (default gravitee-am-management-auth)
   #issuer: gravitee-am-management-auth
+  # Allows to define cookie name  (default Auth-Graviteeio-AM)
+  #cookie-name: Auth-Graviteeio-AM
   # Allows to define cookie context path (default /)
   #cookie-path: /
   # Allows to define cookie domain (default "")
