@@ -59,6 +59,11 @@ public class SecurityDomainHandlerCollection extends HandlerWrapper implements H
 
         MDC.put("domain", event.content().getName());
 
+        // we wait until the server has been started
+        while(!isStarted()) {
+            logger.debug("The server is not started yet, wait.");
+        }
+
         switch (event.type()) {
             case DEPLOY:
                 create(event.content());
