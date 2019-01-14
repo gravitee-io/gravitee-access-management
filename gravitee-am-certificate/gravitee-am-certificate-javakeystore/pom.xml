@@ -32,10 +32,6 @@
     <version>2.2.0-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Certificate - JavaKeyStore</name>
 
-    <properties>
-        <nimbus.version>5.14</nimbus.version>
-    </properties>
-
     <dependencies>
         <!-- Gravitee.io -->
         <dependency>
@@ -56,7 +52,6 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
-            <version>${nimbus.version}</version>
         </dependency>
     </dependencies>
 

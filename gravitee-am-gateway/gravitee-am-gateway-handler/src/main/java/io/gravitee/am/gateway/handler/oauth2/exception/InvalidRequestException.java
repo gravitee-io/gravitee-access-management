@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
+import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+
 /**
  * The request is missing a required parameter, includes an unsupported parameter value (other than grant type),
  * repeats a parameter, includes multiple credentials, utilizes more than one mechanism for authenticating the client, or is otherwise malformed.

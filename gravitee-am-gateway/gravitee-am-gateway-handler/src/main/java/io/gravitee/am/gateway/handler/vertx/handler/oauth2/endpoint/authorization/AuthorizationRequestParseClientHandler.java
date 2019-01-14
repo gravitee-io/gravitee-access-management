@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
@@ -29,7 +29,9 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
+
 
 /**
  * The authorization server must ensure that the client used for the Authorization Request is registered and
@@ -41,16 +43,17 @@ import java.util.List;
 public class AuthorizationRequestParseClientHandler implements Handler<RoutingContext> {
 
     private static final String CLIENT_CONTEXT_KEY = "client";
-    private ClientService clientService;
+    private ClientSyncService clientSyncService;
 
-    public AuthorizationRequestParseClientHandler(ClientService clientService) {
-        this.clientService = clientService;
+    public AuthorizationRequestParseClientHandler(ClientSyncService clientSyncService) {
+        this.clientSyncService = clientSyncService;
     }
 
     @Override
     public void handle(RoutingContext context) {
         final String clientId = context.request().getParam(OAuth2Constants.CLIENT_ID);
         final String redirectUri = context.request().getParam(OAuth2Constants.REDIRECT_URI);
+        final String responseType = context.request().getParam(OAuth2Constants.RESPONSE_TYPE);
 
         authenticate(clientId, resultHandler -> {
             if (resultHandler.failed()) {
@@ -64,6 +67,7 @@ public class AuthorizationRequestParseClientHandler implements Handler<RoutingCo
             // additional check
             try {
                 checkGrantTypes(client);
+                checkResponseType(responseType, client);
                 checkRedirectUri(redirectUri, client);
                 context.next();
             } catch (Exception ex) {
@@ -73,7 +77,7 @@ public class AuthorizationRequestParseClientHandler implements Handler<RoutingCo
     }
 
     private void authenticate(String clientId, Handler<AsyncResult<Client>> authHandler) {
-        clientService
+        clientSyncService
                 .findByClientId(clientId)
                 .subscribe(
                         client -> authHandler.handle(Future.succeededFuture(client)),
@@ -97,6 +101,16 @@ public class AuthorizationRequestParseClientHandler implements Handler<RoutingCo
         return authorizedGrantTypes.stream()
                 .anyMatch(authorizedGrantType -> OAuth2Constants.AUTHORIZATION_CODE.equals(authorizedGrantType)
                         || OAuth2Constants.IMPLICIT.equals(authorizedGrantType));
+    }
+
+    private void checkResponseType(String responseType, Client client) {
+        // Authorization endpoint implies that the client should have response_type
+        if (client.getResponseTypes() == null) {
+            throw new UnauthorizedClientException("Client should have response_type.");
+        }
+        if(!Arrays.stream(responseType.split("\\s")).allMatch(type -> client.getResponseTypes().contains(type))) {
+            throw new UnauthorizedClientException("Client should have all requested response_type");
+        }
     }
 
     private void checkRedirectUri(String requestedRedirectUri, Client client) {

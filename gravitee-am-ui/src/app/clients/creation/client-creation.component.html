@@ -37,6 +37,14 @@
             The client secret must be kept confidential.
           You can specify a value or leave it blank to generate a random one.</mat-hint>
       </mat-form-field>
+
+      <mat-form-field fxFlex>
+        <input matInput type="text" placeholder="Client name" name="client_name" [(ngModel)]="client.clientName">
+        <mat-hint>Human-readable name of the client to be presented to the end-user during authorization.
+          If omitted, the authorization server MAY display the raw "client_id" value to the end-user instead.
+          It is RECOMMENDED to fill this field.</mat-hint>
+      </mat-form-field>
+
       <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;">
         <a mat-button [routerLink]="['']" style="margin-right: 20px;">CANCEL</a>
         <button mat-raised-button [disabled]="!clientForm.valid || clientForm.pristine" type="submit">CREATE</button>

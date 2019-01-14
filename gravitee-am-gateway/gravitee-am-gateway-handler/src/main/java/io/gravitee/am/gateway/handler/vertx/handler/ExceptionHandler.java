@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler;
 
-import io.gravitee.am.gateway.handler.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.response.OAuth2ErrorResponse;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;

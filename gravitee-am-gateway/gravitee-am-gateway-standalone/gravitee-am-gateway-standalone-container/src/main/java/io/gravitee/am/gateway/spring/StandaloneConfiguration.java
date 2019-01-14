@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.event.EventManagerImpl;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.reactor.spring.ReactorConfiguration;
 import io.gravitee.am.gateway.vertx.VertxServerConfiguration;
@@ -28,6 +29,7 @@ import io.gravitee.node.api.Node;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.Json;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -66,6 +68,10 @@ public class StandaloneConfiguration {
 
     @Bean
     public ObjectMapper objectMapper() {
-        return new ObjectMapper();
+        ObjectMapper mapper = new ObjectMapper();
+        //Enable ObjectMapper to manage Optional type.
+        Json.mapper.registerModule(new Jdk8Module());//Manage Optional java type
+        //Json.mapper.enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);//Reject duplicated keys
+        return mapper;
     }
 }

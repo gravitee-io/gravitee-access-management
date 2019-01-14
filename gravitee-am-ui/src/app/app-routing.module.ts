@@ -22,6 +22,7 @@ import {DomainComponent} from "./domain/domain.component";
 import {DomainDashboardComponent} from "./domain/dashboard/dashboard.component";
 import {DomainSettingsComponent} from "./domain/settings/settings.component";
 import {DomainSettingsGeneralComponent} from "./domain/settings/general/general.component";
+import {DomainSettingsOpenidClientRegistrationComponent} from "./domain/settings/openid/client-registration/client-registration.component";
 import {DomainSettingsLoginComponent} from "./domain/settings/login/login.component";
 import {DomainSettingsCertificatesComponent} from "./domain/settings/certificates/certificates.component";
 import {DomainSettingsProvidersComponent} from "./domain/settings/providers/providers.component";
@@ -392,6 +393,15 @@ const routes: Routes = [
             component: ScopeComponent,
             resolve: {
               scope: ScopeResolver
+            }
+          },
+          { path: 'openid/clientRegistration',
+            component: DomainSettingsOpenidClientRegistrationComponent,
+            data: {
+              menu: {
+                label: 'Client Registration',
+                section: 'Openid'
+              }
             }
           },
           { path: 'providers',

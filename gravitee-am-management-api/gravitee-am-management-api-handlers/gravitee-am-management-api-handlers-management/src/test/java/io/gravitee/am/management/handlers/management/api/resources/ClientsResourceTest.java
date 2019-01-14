@@ -24,6 +24,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Test;
+import org.mockito.Matchers;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -97,7 +98,7 @@ public class ClientsResourceTest extends JerseySpringTest {
         client.setClientSecret("client-secret");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(client)).when(clientService).create(eq(domainId), any());
+        doReturn(Single.just(client)).when(clientService).create(eq(domainId), any(NewClient.class));
 
         final Response response = target("domains")
                 .path(domainId)

@@ -82,6 +82,7 @@ import { DomainResolver } from "./resolvers/domain.resolver";
 import { DomainDashboardComponent } from "./domain/dashboard/dashboard.component";
 import { DomainSettingsComponent } from './domain/settings/settings.component';
 import { DomainSettingsGeneralComponent } from "./domain/settings/general/general.component";
+import { DomainSettingsOpenidClientRegistrationComponent } from "./domain/settings/openid/client-registration/client-registration.component";
 import { DomainSettingsLoginComponent, DomainSettingsLoginInfoDialog } from "./domain/settings/login/login.component";
 import { DomainSettingsRolesComponent } from "./domain/settings/roles/roles.component";
 import { DomainSettingsScopesComponent } from "./domain/settings/scopes/scopes.component";
@@ -159,6 +160,7 @@ import { ManagementGeneralComponent } from "./settings/management/general/genera
     DomainSettingsComponent,
     DomainSettingsLoginComponent,
     DomainSettingsGeneralComponent,
+    DomainSettingsOpenidClientRegistrationComponent,
     DomainSettingsProvidersComponent,
     DomainSettingsScopesComponent,
     DomainSettingsRolesComponent,

@@ -86,7 +86,7 @@ public class OAuth2Request extends BaseRequest {
                 && (ResponseType.CODE_ID_TOKEN_TOKEN.equals(getResponseType()) || ResponseType.ID_TOKEN_TOKEN.equals(getResponseType()))) {
             return true;
         }
-        if (getScopes() != null && getScopes().contains(Scope.OPENID.getName())) {
+        if (getScopes() != null && getScopes().contains(Scope.OPENID.getKey())) {
             return true;
         }
         return false;

@@ -99,7 +99,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\"name\": \"test\", \"description\": \"test domain\"}"
+							"raw": "{\n\t\"name\": \"test\", \n\t\"description\": \"test domain\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/",
@@ -110,6 +110,41 @@
 								"management",
 								"domains",
 								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Configure DCR",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"oidc\": {\n    \"clientRegistrationSettings\": {\n      \"allowLocalhostRedirectUri\": true,\n      \"allowHttpSchemeRedirectUri\": true,\n      \"allowWildCardRedirectUri\": false,\n      \"isOpenDynamicClientRegistrationEnabled\": false,\n      \"isDynamicClientRegistrationEnabled\": true\n    }\n  }\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/test",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"test"
 							]
 						}
 					},
@@ -411,7 +446,7 @@
 				{
 					"name": "Start domain",
 					"request": {
-						"method": "PUT",
+						"method": "PATCH",
 						"header": [
 							{
 								"key": "Content-Type",
@@ -424,7 +459,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"test\",\n  \"description\": \"test domain\",\n  \"path\": \"test\",\n  \"enabled\": true\n}"
+							"raw": "{\n  \"enabled\": true\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/test",
@@ -11195,7 +11230,7 @@
 													"    pm.response.to.be.header('Content-Type', 'application/json');",
 													"    var body = pm.response.json();",
 													"    pm.expect(body.error).to.eql('invalid_request');",
-													"    pm.expect(body.error_description).to.eql('The access token must be sent using the Authorization header field');",
+													"    pm.expect(body.error_description).to.eql('The access token must be sent using the Authorization header with as value \\\"Bearer xxxx\\\"');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -13836,6 +13871,422 @@
 											""
 										]
 									}
+								}
+							],
+							"_postman_isSubFolder": true
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "DCR",
+					"item": [
+						{
+							"name": "Configure domain",
+							"item": [
+								{
+									"name": "Configure client 2 with DCR",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "576263ed-f6e5-44e3-8519-998efca70a67",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"redirectUris\": [\"http://localhost:4000/\"],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\"\n  ],\n  \"scopes\": [\"scope1\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"idTokenCustomClaims\": {},\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/clients/{{client2}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"clients",
+												"{{client2}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Invalid requests",
+							"item": [
+								{
+									"name": "Non DCR client",
+									"item": [
+										{
+											"name": "Generate token",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+														"exec": [
+															"pm.test(\"Status code is 200\", function () {",
+															"    pm.response.to.have.status(200);",
+															"});",
+															"",
+															"",
+															"pm.test(\"Has an access_token\", function () {",
+															"    var body = pm.response.json();",
+															"    pm.expect(body).to.have.property('access_token');",
+															"    ",
+															"    pm.environment.set('access_token', body.access_token);",
+															"});"
+														],
+														"type": "text/javascript"
+													}
+												},
+												{
+													"listen": "prerequest",
+													"script": {
+														"id": "904f0113-b2b9-4645-9511-48bb10791506",
+														"exec": [
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"request": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Basic bXktY2xpZW50Om15LWNsaWVudC1zZWNyZXQ="
+													}
+												],
+												"body": {
+													"mode": "urlencoded",
+													"urlencoded": [
+														{
+															"key": "grant_type",
+															"value": "client_credentials",
+															"type": "text"
+														},
+														{
+															"key": "scope",
+															"value": "scope1",
+															"type": "text"
+														},
+														{
+															"key": "example_parameter",
+															"value": "example_value",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{gateway_url}}/test/oauth/token",
+													"host": [
+														"{{gateway_url}}"
+													],
+													"path": [
+														"test",
+														"oauth",
+														"token"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Non DCR client",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+														"exec": [
+															"pm.test(\"Status code is 403\", function () {",
+															"    pm.response.to.have.status(403);",
+															"});",
+															"",
+															"pm.test(\"Non DCR client\", function () {",
+															"    pm.response.to.be.header('Content-Type', 'application/json');",
+															"    var body = pm.response.json();",
+															"    pm.expect(body.error).to.eql('registration_forbidden');",
+															"    pm.expect(body.error_description).to.eql('Not allowed to access to this resource.');",
+															"});"
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"request": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"type": "text",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"type": "text",
+														"value": "Bearer {{access_token}}"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"client_name\": \"My Example\",\n   \"client_name#ja-Jpan-JP\":\n     \"クライアント名\",\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"pairwise\",\n   \"sector_identifier_uri\":\n     \"https://other.example.net/file_of_redirect_uris.json\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt\n       #qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
+												},
+												"url": {
+													"raw": "{{gateway_url}}/test/oidc/register",
+													"host": [
+														"{{gateway_url}}"
+													],
+													"path": [
+														"test",
+														"oidc",
+														"register"
+													]
+												}
+											},
+											"response": []
+										}
+									],
+									"_postman_isSubFolder": true
+								},
+								{
+									"name": "Invalid access token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "14381377-d0fe-4741-9c07-a53a31803ddd",
+												"exec": [
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
+													"});",
+													"",
+													"pm.test(\"Invalid bearer\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_token');",
+													"    pm.expect(body.error_description).to.eql('The access token is invalid');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer blablabla",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"client_name\": \"My Example\",\n   \"client_name#ja-Jpan-JP\":\n     \"クライアント名\",\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"pairwise\",\n   \"sector_identifier_uri\":\n     \"https://other.example.net/file_of_redirect_uris.json\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt\n       #qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "6344fd45-5776-4bab-a90c-033893e6debb",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"id": "03904ca6-6d82-43ab-8190-f3210787a262",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Nominal Case",
+							"item": [
+								{
+									"name": "Generate token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has an access_token\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('access_token');",
+													"    ",
+													"    pm.environment.set('access_token', body.access_token);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Basic bXktY2xpZW50MjpteS1jbGllbnQtc2VjcmV0Mg=="
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "client_credentials",
+													"type": "text"
+												},
+												{
+													"key": "scope",
+													"value": "scope1",
+													"type": "text"
+												},
+												{
+													"key": "example_parameter",
+													"value": "example_value",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oauth/token",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oauth",
+												"token"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Register client",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 403\", function () {",
+													"    pm.response.to.have.status(403);",
+													"});",
+													"",
+													"pm.test(\"Non DCR client\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('registration_forbidden');",
+													"    pm.expect(body.error_description).to.eql('Not allowed to access to this resource.');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"client_name\": \"My Example\",\n   \"client_name#ja-Jpan-JP\":\n     \"クライアント名\",\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"pairwise\",\n   \"sector_identifier_uri\":\n     \"https://other.example.net/file_of_redirect_uris.json\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt\n       #qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
 								}
 							],
 							"_postman_isSubFolder": true

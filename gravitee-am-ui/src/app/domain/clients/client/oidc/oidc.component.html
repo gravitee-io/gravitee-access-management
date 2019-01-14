@@ -16,13 +16,16 @@
 
 -->
 <div fxLayout="column">
-  <div class="idtoken-description">
-    <p>
-      The ID Token is a JSON Web Token (JWT) that contains claims (user profile information) about the End-User.
-      You must provide the OAuth 2 scope <span class="code">openid</span> in order to get the <span class="code">id_token</span> which contains the following default claims :
-    </p>
-    <table>
-      <tbody>
+
+  <form #clientForm="ngForm" (keydown.enter)="false" (ngSubmit)="update('Client updated')" fxLayout="column">
+    <h4>ID Token</h4>
+    <div class="idtoken-description">
+      <p>
+        The ID Token is a JSON Web Token (JWT) that contains claims (user profile information) about the End-User.
+        You must provide the OAuth 2 scope <span class="code">openid</span> in order to get the <span class="code">id_token</span> which contains the following default claims :
+      </p>
+      <table>
+        <tbody>
         <tr>
           <td><span class="code">iss</span></td>
           <td>Issuer Identifier for the Issuer of the response.</td>
@@ -43,20 +46,20 @@
           <td><span class="code">iat</span></td>
           <td>Time at which the JWT was issued.</td>
         </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <form #clientForm="ngForm" (keydown.enter)="false" (ngSubmit)="update('Client updated')" fxLayout="column">
-    <h4>ID Token</h4>
-    <mat-form-field fxFlex>
-      <mat-icon matPrefix>timer</mat-icon>
-      <input matInput type="number" placeholder="ID token validity" name="idTokenValidity" [(ngModel)]="client.idTokenValiditySeconds" />
-      <span matSuffix>seconds</span>
-    </mat-form-field>
+        </tbody>
+      </table>
+    </div>
+    <div class="idtoken-validity">
+      <mat-form-field fxFlex>
+        <mat-icon matPrefix>timer</mat-icon>
+        <input matInput type="number" placeholder="ID token validity" name="idTokenValidity" [(ngModel)]="client.idTokenValiditySeconds" />
+        <span matSuffix>seconds</span>
+      </mat-form-field>
+    </div>
     <div fxLayout="row">
       <button mat-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>
     </div>
+
   </form>
 
   <h4>Custom Claims</h4>

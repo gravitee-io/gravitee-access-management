@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
+import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+
 /**
  * The authorization server encountered an unexpected condition that prevented it from fulfilling the request.
  * (This error code is needed because a 500 Internal Server Error HTTP status code cannot be returned to the client via an HTTP redirect.)

@@ -50,6 +50,7 @@
     </appender>
 
     <logger name="io.gravitee" level="INFO" />
+    <logger name="io.gravitee.am.gateway.services.sync" level="WARN" />
     <logger name="org.reflections" level="WARN" />
     <logger name="org.springframework" level="WARN" />
     <logger name="org.eclipse.jetty" level="WARN" />

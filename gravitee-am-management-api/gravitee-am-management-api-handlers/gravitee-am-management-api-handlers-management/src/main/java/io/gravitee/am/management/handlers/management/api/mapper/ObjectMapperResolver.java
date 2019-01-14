@@ -16,17 +16,20 @@
 package io.gravitee.am.management.handlers.management.api.mapper;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -60,8 +63,11 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
                 jgen.writeString(value.name().toLowerCase());
             }
         });
+        mapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
+        mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.registerModule(module);
+        mapper.registerModule(new Jdk8Module());
     }
 
     @Override

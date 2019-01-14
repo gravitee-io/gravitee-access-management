@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx.handler.login;
 
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.FormLoginHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.OAuth2ClientAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.OAuth2ClientAuthenticationProvider;
@@ -24,7 +24,7 @@ import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LoginCallback
 import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LoginEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LoginRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LogoutEndpointHandler;
-import io.gravitee.am.gateway.service.UserService;
+import io.gravitee.am.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.AuthProvider;
@@ -42,7 +42,7 @@ public class LoginRouter {
     private IdentityProviderManager identityProviderManager;
 
     @Autowired
-    private ClientService clientService;
+    private ClientSyncService clientSyncService;
 
     @Autowired
     private ThymeleafTemplateEngine thymeleafTemplateEngine;
@@ -61,11 +61,13 @@ public class LoginRouter {
         final Router router = Router.router(vertx);
 
         // create authentication handlers
-        final AuthProvider identityProviderAuthProvider = new AuthProvider(new OAuth2ClientAuthenticationProvider(identityProviderManager, userService));
+        final AuthProvider identityProviderAuthProvider = new AuthProvider(
+                new OAuth2ClientAuthenticationProvider(identityProviderManager, userService, domain)
+        );
 
         // login handler
         router.get("/login")
-                .handler(new LoginRequestParseHandler(clientService))
+                .handler(new LoginRequestParseHandler(clientSyncService))
                 .handler(new LoginEndpointHandler(thymeleafTemplateEngine, domain, identityProviderManager));
         router.post("/login").handler(FormLoginHandler.create(userAuthProvider.getDelegate()));
 

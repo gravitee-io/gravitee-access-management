@@ -24,11 +24,13 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
+import java.util.List;
 import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 public interface ScopeService {
@@ -46,4 +48,10 @@ public interface ScopeService {
     Single<Scope> update(String domain, String id, UpdateSystemScope updateScope);
 
     Completable delete(String scopeId, boolean force);
+
+    /**
+     * Throw InvalidClientMetadataException if null or empty, or contains unknown scope.
+     * @param scopes Array of scope to validate.
+     */
+    Single<Boolean> validateScope(String domain, List<String> scopes);
 }

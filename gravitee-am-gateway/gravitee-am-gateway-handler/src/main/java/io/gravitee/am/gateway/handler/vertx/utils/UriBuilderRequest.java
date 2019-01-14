@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.utils;
 
-import io.gravitee.am.gateway.handler.utils.UriBuilder;
+import io.gravitee.am.service.utils.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 

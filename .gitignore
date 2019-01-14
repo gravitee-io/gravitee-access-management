@@ -16,3 +16,6 @@ gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalon
 gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/src/main/resources/plugins/*
 gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/src/main/resources/plugins/
 gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/src/main/resources/logs/
+
+# used in makefile as working directory
+.working

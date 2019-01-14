@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
@@ -37,11 +37,11 @@ import java.util.Set;
 public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
 
     private ThymeleafTemplateEngine engine;
-    private ClientService clientService;
+    private ClientSyncService clientSyncService;
     private ScopeService scopeService;
 
-    public UserApprovalEndpointHandler(ClientService clientService, ScopeService scopeService, ThymeleafTemplateEngine engine) {
-        this.clientService = clientService;
+    public UserApprovalEndpointHandler(ClientSyncService clientSyncService, ScopeService scopeService, ThymeleafTemplateEngine engine) {
+        this.clientSyncService = clientSyncService;
         this.scopeService = scopeService;
         this.engine = engine;
     }
@@ -56,7 +56,7 @@ public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
             return;
         }
 
-        clientService.findByClientId(authorizationRequest.getClientId())
+        clientSyncService.findByClientId(authorizationRequest.getClientId())
                 .toSingle()
                 .zipWith(scopeService.getAll(), (client, domainScopes) -> {
                     // fetch scope information (name + description) from the authorization request
@@ -87,8 +87,8 @@ public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
                     error -> routingContext.fail(error));
     }
 
-    public void setClientService(ClientService clientService) {
-        this.clientService = clientService;
+    public void setClientSyncService(ClientSyncService clientSyncService) {
+        this.clientSyncService = clientSyncService;
     }
 
     private class ApprovalData {

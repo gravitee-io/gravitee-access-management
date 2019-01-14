@@ -18,7 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.model.UpdateDomain;
+import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
@@ -30,7 +30,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PATCH;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
@@ -66,6 +73,7 @@ public class DomainResource extends AbstractResource {
                         error -> response.resume(error));
     }
 
+
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -74,10 +82,28 @@ public class DomainResource extends AbstractResource {
             @ApiResponse(code = 200, message = "Domain successfully updated", response = Domain.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void update(
-            @ApiParam(name = "domain", required = true) @Valid @NotNull final UpdateDomain domainToUpdate,
+            @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
             @PathParam("domain") String domainId,
             @Suspended final AsyncResponse response) {
-         domainService.update(domainId, domainToUpdate)
+         domainService.patch(domainId, domainToPatch)
+                .subscribe(
+                        domain -> response.resume(Response.ok(domain).build()),
+                        error -> response.resume(error));
+    }
+
+
+    @PATCH
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Patch the security domain")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Domain successfully patched", response = Domain.class),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void patch(
+            @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
+            @PathParam("domain") String domainId,
+            @Suspended final AsyncResponse response) {
+        domainService.patch(domainId, domainToPatch)
                 .subscribe(
                         domain -> response.resume(Response.ok(domain).build()),
                         error -> response.resume(error));

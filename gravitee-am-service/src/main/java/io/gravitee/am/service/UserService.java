@@ -46,4 +46,14 @@ public interface UserService {
 
     Completable delete(String userId);
 
+    /**
+     * Moved from io.gravitee.am.gateway.service.UserService to current interface.
+     *
+     * Used after a successful authentication.
+     * Perhaps not the best place to put this method.
+     *
+     * @param user
+     * @return
+     */
+    Single<User> findOrCreate(String domain, io.gravitee.am.identityprovider.api.User user);
 }

@@ -27,6 +27,8 @@ public class ClientListItem {
 
     private String clientId;
 
+    private String clientName;
+
     private String domainId;
 
     private String domainName;
@@ -51,6 +53,14 @@ public class ClientListItem {
 
     public void setClientId(String clientId) {
         this.clientId = clientId;
+    }
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
     }
 
     public String getDomainId() {

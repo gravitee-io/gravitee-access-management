@@ -23,14 +23,19 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.gateway.handler.oauth2.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequest;
-import io.gravitee.am.gateway.service.UserService;
+import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -47,9 +52,6 @@ import java.util.stream.Collectors;
 public class UserInfoEndpoint implements Handler<RoutingContext> {
 
     private UserService userService;
-
-    public UserInfoEndpoint() {
-    }
 
     public UserInfoEndpoint(UserService userService) {
         this.userService = userService;
@@ -80,7 +82,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                     // processing claims list
                     // 1. process the request using scope values
                     if (accessToken.getScope() != null) {
-                        final Set<String> scopes = new HashSet(Arrays.asList(accessToken.getScope().split("\\s+")));
+                        final Set<String> scopes = new HashSet<>(Arrays.asList(accessToken.getScope().split("\\s+")));
                         requestForSpecificClaims = processScopesRequest(scopes, userClaims, requestedClaims);
                     }
                     // 2. process the request using the claims values (If present, the listed Claims are being requested to be added to any Claims that are being requested using scope values.

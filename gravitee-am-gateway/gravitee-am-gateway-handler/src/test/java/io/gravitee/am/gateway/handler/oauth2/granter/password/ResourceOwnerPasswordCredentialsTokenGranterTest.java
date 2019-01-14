@@ -35,6 +35,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Arrays;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
@@ -73,6 +75,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
 
         Client client = new Client();
         client.setClientId("my-client-id");
+        client.setAuthorizedGrantTypes(Arrays.asList(new String[]{"password"}));
 
         Token accessToken = new AccessToken("test-token");
 

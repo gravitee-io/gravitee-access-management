@@ -19,6 +19,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { DialogService } from "../../../../services/dialog.service";
 import { ClientService } from "../../../../services/client.service";
+import { DomainService } from "../../../../services/domain.service";
 
 @Component({
   selector: 'app-oidc',
@@ -33,7 +34,7 @@ export class ClientOIDCComponent implements OnInit {
   formChanged: boolean = false;
 
   constructor(private route: ActivatedRoute, private dialog: MatDialog, private clientService: ClientService,
-              private snackbarService: SnackbarService, private dialogService: DialogService) { }
+              private snackbarService: SnackbarService, private dialogService: DialogService, private domainService: DomainService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];

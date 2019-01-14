@@ -15,17 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
-import io.gravitee.am.common.oidc.ResponseType;
-import io.gravitee.am.gateway.handler.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.utils.UriBuilder;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
-import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.utils.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
@@ -38,6 +36,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
+import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 
 /**
  * If the request fails due to a missing, invalid, or mismatching redirection URI, or if the client identifier is missing or invalid,
@@ -129,21 +130,9 @@ public class AuthorizationEndpointFailureHandler extends AbstractAuthorizationEn
             query.put(OAuth2Constants.STATE, authorizationRequest.getState());
         }
 
-        boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri()) && (isImplicitFlow(authorizationRequest.getResponseType()) || isHybridFlow(authorizationRequest.getResponseType()));
+        boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri()) &&
+                (isImplicitFlow(authorizationRequest.getResponseType()) || isHybridFlow(authorizationRequest.getResponseType()));
         return append(authorizationRequest.getRedirectUri(), query, fragment);
-    }
-
-    private boolean isImplicitFlow(String responseType) {
-        return responseType != null &&
-                (io.gravitee.am.common.oauth2.ResponseType.TOKEN.equals(responseType)
-                        || ResponseType.ID_TOKEN.equals(responseType)
-                        || ResponseType.ID_TOKEN_TOKEN.equals(responseType));
-    }
-
-    private boolean isHybridFlow(String responseType) {
-        return responseType != null && (ResponseType.CODE_ID_TOKEN.equals(responseType)
-                || ResponseType.CODE_TOKEN.equals(responseType)
-                || ResponseType.CODE_ID_TOKEN_TOKEN.equals(responseType));
     }
 
     private boolean isDefaultErrorPage(String redirectUri) {

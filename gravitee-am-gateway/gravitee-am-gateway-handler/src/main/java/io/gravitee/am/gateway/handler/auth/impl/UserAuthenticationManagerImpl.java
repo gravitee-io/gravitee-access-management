@@ -18,12 +18,13 @@ package io.gravitee.am.gateway.handler.auth.impl;
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.service.RoleService;
-import io.gravitee.am.gateway.service.UserService;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.gravitee.am.service.exception.authentication.InternalAuthenticationServiceException;
@@ -49,6 +50,9 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private Domain domain;
 
     @Autowired
     private RoleService roleService;
@@ -88,7 +92,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                             return Single.error(new BadCredentialsException("No user found for registered providers"));
                         }
                     } else {
-                        return userService.findOrCreate(user);
+                        return userService.findOrCreate(domain.getId(), user);
                     }
                 });
     }

@@ -19,6 +19,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.service.model.NewDomain;
+import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.am.service.model.UpdateLoginForm;
 import io.reactivex.Completable;
@@ -47,6 +48,8 @@ public interface DomainService {
 
     Single<Domain> reload(String domainId, Event event);
 
+    Single<Domain> patch(String domainId, PatchDomain domain);
+
     Single<Domain> setMasterDomain(String domainId, boolean isMaster);
 
     Single<LoginForm> updateLoginForm(String domainId, UpdateLoginForm loginForm);
@@ -54,5 +57,4 @@ public interface DomainService {
     Single<Domain> deleteLoginForm(String domainId);
 
     Completable delete(String domain);
-
 }

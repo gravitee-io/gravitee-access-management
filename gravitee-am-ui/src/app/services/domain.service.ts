@@ -39,14 +39,31 @@ export class DomainService {
     return this.http.post(this.domainsURL, domain);
   }
 
-  update(id, domain): Observable<Response> {
-    return this.http.put(this.domainsURL + id, {
+  enable(id, domain): Observable<Response> {
+    return this.http.patch(this.domainsURL + id, {
+      'enabled': domain.enabled,
+    });
+  }
+
+  patchGeneralSettings(id, domain): Observable<Response> {
+    return this.http.patch(this.domainsURL + id, {
       'name': domain.name,
       'description': domain.description,
       'path': domain.path,
-      'enabled': domain.enabled,
+      'enabled': domain.enabled
+    });
+  }
+
+  patchIdentityProviders(id, domain): Observable<Response> {
+    return this.http.patch(this.domainsURL + id, {
       'identities' : domain.identities,
       'oauth2Identities': domain.oauth2Identities
+    });
+  }
+
+  patchOpenidDCRSettings(id, domain): Observable<Response> {
+    return this.http.patch(this.domainsURL + id, {
+       'oidc':domain.oidc
     });
   }
 

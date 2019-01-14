@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
@@ -36,6 +37,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -53,6 +57,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RoleService roleService;
 
     private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -179,5 +186,63 @@ public class UserServiceImpl implements UserService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete user: %s", userId), ex));
                 });
+    }
+
+
+    /**
+     * Moved from io.gravitee.am.gateway.service.impl.UserServiceImpl to current implementation.
+     */
+    @Override
+    public Single<User> findOrCreate(String domain,io.gravitee.am.identityprovider.api.User user) {
+        return userRepository.findByUsernameAndDomain(domain, user.getUsername())
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                .flatMapSingle(existingUser -> {
+                    LOGGER.debug("Updating user: username[%s]", user.getUsername());
+                    existingUser.setLoggedAt(new Date());
+                    existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
+                    existingUser.setRoles(user.getRoles());
+                    Map<String, Object> additionalInformation = user.getAdditionalInformation();
+                    extractAdditionalInformation(existingUser, additionalInformation);
+                    return userRepository.update(existingUser);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof UserNotFoundException) {
+                        LOGGER.debug("Creating a new user: username[%s]", user.getUsername());
+                        final User newUser = new User();
+                        newUser.setUsername(user.getUsername());
+                        newUser.setDomain(domain);
+                        newUser.setCreatedAt(new Date());
+                        newUser.setLoggedAt(new Date());
+                        newUser.setLoginsCount(1L);
+                        newUser.setRoles(user.getRoles());
+
+                        Map<String, Object> additionalInformation = user.getAdditionalInformation();
+                        extractAdditionalInformation(newUser, additionalInformation);
+                        return userRepository.create(newUser);
+                    }
+                    return Single.error(ex);
+                })
+                .flatMap(user1 -> enhanceUserWithRoles(user1));
+    }
+
+    private Single<User> enhanceUserWithRoles(User user) {
+        List<String> userRoles = user.getRoles();
+        if (userRoles != null && !userRoles.isEmpty()) {
+            return roleService.findByIdIn(userRoles)
+                    .map(roles -> {
+                        user.setRolesPermissions(roles);
+                        return user;
+                    });
+        }
+        return Single.just(user);
+    }
+
+    private void extractAdditionalInformation(User user, Map<String, Object> additionalInformation) {
+        if (additionalInformation != null) {
+            Map<String, Object> extraInformation = new HashMap<>(additionalInformation);
+            user.setSource((String) extraInformation.remove("source"));
+            user.setClient((String) extraInformation.remove("client_id"));
+            user.setAdditionalInformation(extraInformation);
+        }
     }
 }

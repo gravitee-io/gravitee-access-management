@@ -17,6 +17,7 @@ package io.gravitee.am.model;
 
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.login.LoginForm;
+import io.gravitee.am.model.oidc.OIDCSettings;
 
 import java.util.Date;
 import java.util.Set;
@@ -74,6 +75,8 @@ public class Domain {
     private Set<String> oauth2Identities;
 
     private Event lastEvent;
+
+    private OIDCSettings oidc;
 
     public String getId() {
         return id;
@@ -169,6 +172,45 @@ public class Domain {
 
     public void setLastEvent(Event lastEvent) {
         this.lastEvent = lastEvent;
+    }
+
+    public OIDCSettings getOidc() {
+        return oidc;
+    }
+
+    public void setOidc(OIDCSettings oidc) {
+        this.oidc = oidc;
+    }
+
+    public boolean isDynamicClientRegistrationEnabled() {
+        return this.getOidc()!=null &&
+                this.getOidc().getClientRegistrationSettings()!=null &&
+                this.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled();
+    }
+
+    public boolean isOpenDynamicClientRegistrationEnabled() {
+        return this.getOidc()!=null &&
+                this.getOidc().getClientRegistrationSettings()!=null &&
+                this.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled() &&
+                this.getOidc().getClientRegistrationSettings().isOpenDynamicClientRegistrationEnabled();
+    }
+
+    public boolean isRedirectUriLocalhostAllowed() {
+        return this.getOidc()!=null &&
+                this.getOidc().getClientRegistrationSettings()!=null &&
+                this.getOidc().getClientRegistrationSettings().isAllowLocalhostRedirectUri();
+    }
+
+    public boolean isRedirectUriUnsecuredHttpSchemeAllowed() {
+        return this.getOidc()!=null &&
+                this.getOidc().getClientRegistrationSettings()!=null &&
+                this.getOidc().getClientRegistrationSettings().isAllowHttpSchemeRedirectUri();
+    }
+
+    public boolean isRedirectUriWildcardAllowed() {
+        return this.getOidc()!=null &&
+                this.getOidc().getClientRegistrationSettings()!=null &&
+                this.getOidc().getClientRegistrationSettings().isAllowWildCardRedirectUri();
     }
 
     @Override

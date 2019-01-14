@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler;
 
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
 import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.ExtensionGrantManager;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.spring.HandlerConfiguration;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.model.Domain;
@@ -88,7 +88,7 @@ public class SecurityDomainRouterFactory {
     private void startComponents(ApplicationContext applicationContext) {
         // register components that require event listener feature
         List<Class<? extends LifecycleComponent>> components = new ArrayList<>();
-        components.add(ClientService.class);
+        components.add(ClientSyncService.class);
         components.add(CertificateManager.class);
         components.add(IdentityProviderManager.class);
         components.add(ExtensionGrantManager.class);

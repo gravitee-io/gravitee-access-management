@@ -22,6 +22,7 @@ import io.gravitee.am.model.User;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

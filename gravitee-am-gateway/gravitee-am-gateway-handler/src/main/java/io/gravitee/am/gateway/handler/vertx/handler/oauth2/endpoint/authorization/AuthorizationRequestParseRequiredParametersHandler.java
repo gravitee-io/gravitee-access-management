@@ -15,22 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
-import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
-import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequestResolver;
-import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Set;
+
+import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
 
 /**
  * The authorization server validates the request to ensure that all required parameters are present and valid.
@@ -114,16 +111,8 @@ public class AuthorizationRequestParseRequiredParametersHandler implements Handl
         String nonce = context.request().getParam(OIDCParameters.NONCE);
         String responseType = context.request().getParam(OAuth2Constants.RESPONSE_TYPE);
         // nonce parameter is required for the Hybrid flow
-        if (nonce == null && (isHybridFlow(responseType) || isImplicitFlow(responseType))) {
+        if (nonce == null && requireNonce(responseType)) {
             throw new InvalidRequestException("Missing parameter: nonce is required for Implicit and Hybrid Flow");
         }
-    }
-
-    private boolean isHybridFlow(String responseType) {
-        return (ResponseType.CODE_ID_TOKEN.equals(responseType) || ResponseType.CODE_TOKEN.equals(responseType) || ResponseType.CODE_ID_TOKEN_TOKEN.equals(responseType));
-    }
-
-    private boolean isImplicitFlow(String responseType) {
-        return (ResponseType.ID_TOKEN.equals(responseType) || ResponseType.ID_TOKEN_TOKEN.equals(responseType));
     }
 }

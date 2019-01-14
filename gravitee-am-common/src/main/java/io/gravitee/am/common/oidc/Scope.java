@@ -29,27 +29,44 @@ import java.util.List;
  */
 public enum Scope {
 
-    PROFILE("profile", Arrays.asList(
+    PROFILE("profile","Profile","Access to the End-User default profile Claims", Arrays.asList(
             StandardClaims.NAME, StandardClaims.FAMILY_NAME, StandardClaims.GIVEN_NAME, StandardClaims.MIDDLE_NAME,
             StandardClaims.NICKNAME, StandardClaims.PREFERRED_USERNAME, StandardClaims.PROFILE, StandardClaims.PICTURE,
             StandardClaims.WEBSITE, StandardClaims.GENDER, StandardClaims.BIRTHDATE, StandardClaims.ZONEINFO, StandardClaims.LOCALE,
             StandardClaims.UPDATED_AT)),
-    EMAIL("email", Arrays.asList(StandardClaims.EMAIL, StandardClaims.EMAIL_VERIFIED)),
-    ADDRESS("address", Arrays.asList(StandardClaims.ADDRESS)),
-    PHONE("phone", Arrays.asList(StandardClaims.PHONE_NUMBER, StandardClaims.PHONE_NUMBER_VERIFIED)),
-    OPENID("openid", Collections.emptyList()),
-    OFFLINE_ACCESS("offline_access", Collections.emptyList());
+    EMAIL("email","Email","Access to the email and email_verified Claims", Arrays.asList(StandardClaims.EMAIL, StandardClaims.EMAIL_VERIFIED)),
+    ADDRESS("address", "Address","Access to the address Claim", Arrays.asList(StandardClaims.ADDRESS)),
+    PHONE("phone", "Phone", "Access to the phone_number and phone_number_verified Claims", Arrays.asList(StandardClaims.PHONE_NUMBER, StandardClaims.PHONE_NUMBER_VERIFIED)),
+    OPENID("openid","Openid","Used to perform Openid requests", Collections.emptyList()),
+    OFFLINE_ACCESS("offline_access", "Offline_access","Access to End-User UserInfo even when he is not logged in.", Collections.emptyList()),
+    DCR("dcr", "Client_registration", "Access to client information through openid register endpoint.", Collections.emptyList()),
+    DCR_ADMIN("dcr_admin", "Client_registration_admin", "Access to Dynamic Client Registration endpoint.", Collections.emptyList());
 
-    private final String name;
+    private final String key;
+    private final String label;
+    private final String description;
     private final List<String> claims;
 
-    Scope(String name, List<String> claims) {
-        this.name = name;
+    //See https://tools.ietf.org/html/rfc6749#section-3.3
+    public final static String SCOPE_DELIMITER = " ";
+
+    Scope(String key, String label, String description, List<String> claims) {
+        this.key = key;
+        this.label = label;
+        this.description = description;
         this.claims = claims;
     }
 
-    public String getName() {
-        return name;
+    public String getKey() {
+        return key;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public List<String> getClaims() {

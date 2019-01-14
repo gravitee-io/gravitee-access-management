@@ -17,7 +17,10 @@ package io.gravitee.am.gateway.handler.oauth2.token;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.jwt.JwtService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
@@ -31,11 +34,14 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Assert;
+import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Date;
@@ -64,6 +70,9 @@ public class TokenServiceTest {
 
     @Mock
     private JwtService jwtService;
+
+    @Mock
+    private ClientSyncService clientSyncService;
 
     @Test
     public void shouldCreate() {

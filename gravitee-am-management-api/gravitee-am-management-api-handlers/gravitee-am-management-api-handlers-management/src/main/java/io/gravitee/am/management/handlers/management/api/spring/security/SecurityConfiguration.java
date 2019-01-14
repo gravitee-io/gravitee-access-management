@@ -91,7 +91,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         config.setAllowCredentials(true);
         config.setAllowedOrigins(getPropertiesAsList("http.cors.allow-origin", "*"));
         config.setAllowedHeaders(getPropertiesAsList("http.cors.allow-headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, x-xsrf-token"));
-        config.setAllowedMethods(getPropertiesAsList("http.cors.allow-methods", "OPTIONS, GET, POST, PUT, DELETE"));
+        config.setAllowedMethods(getPropertiesAsList("http.cors.allow-methods", "OPTIONS, GET, POST, PUT, PATCH, DELETE"));
         config.setMaxAge(environment.getProperty("http.cors.max-age", Long.class, 1728000L));
 
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

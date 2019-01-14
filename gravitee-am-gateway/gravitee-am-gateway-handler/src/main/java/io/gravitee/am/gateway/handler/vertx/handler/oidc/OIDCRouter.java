@@ -16,15 +16,22 @@
 package io.gravitee.am.gateway.handler.vertx.handler.oidc;
 
 import io.gravitee.am.gateway.handler.jwt.JwtService;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.oidc.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.jwk.JWKSetService;
+import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.DynamicClientAccessEndpoint;
+import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.DynamicClientRegistrationEndpoint;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.ProviderConfigurationEndpoint;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.ProviderJWKSetEndpoint;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.UserInfoEndpoint;
+import io.gravitee.am.gateway.handler.vertx.handler.oidc.handler.DynamicClientAccessHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oidc.handler.DynamicClientRegistrationHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.handler.UserInfoRequestParseHandler;
-import io.gravitee.am.gateway.service.UserService;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
@@ -40,6 +47,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
+import static io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants.CLIENT_ID;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -52,6 +60,9 @@ public class OIDCRouter {
     private OpenIDDiscoveryService discoveryService;
 
     @Autowired
+    private DynamicClientRegistrationService dcrService;
+
+    @Autowired
     private JWKSetService jwkSetService;
 
     @Autowired
@@ -61,13 +72,19 @@ public class OIDCRouter {
     private UserService userService;
 
     @Autowired
-    private ClientService clientService;
-
-    @Autowired
-    private JwtService jwtService;
+    private ClientSyncService clientSyncService;
 
     @Autowired
     private Environment environment;
+
+    @Autowired
+    private ClientService clientService;
+
+    @Autowired
+    private Domain domain;
+
+    @Autowired
+    private JwtService jwtService;
 
     @Autowired
     private Vertx vertx;
@@ -86,7 +103,7 @@ public class OIDCRouter {
 
         // UserInfo Endpoint
         Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userService);
-        Handler<RoutingContext> userInfoRequestParseHandler = new UserInfoRequestParseHandler(tokenService, clientService, jwtService);
+        Handler<RoutingContext> userInfoRequestParseHandler = new UserInfoRequestParseHandler(tokenService, clientSyncService, jwtService);
         router.route("/userinfo").handler(CorsHandler.newInstance(corsHandler()));
         router
                 .route(HttpMethod.GET, "/userinfo")
@@ -106,6 +123,30 @@ public class OIDCRouter {
                 .route(HttpMethod.GET, "/.well-known/jwks.json")
                 .handler(openIDProviderJWKSetEndpoint);
 
+        // Dynamic Client Registration
+        DynamicClientRegistrationHandler dynamicClientRegistrationHandler = new DynamicClientRegistrationHandler(tokenService, clientSyncService, jwtService, domain);
+        DynamicClientRegistrationEndpoint dynamicClientRegistrationEndpoint = new DynamicClientRegistrationEndpoint(dcrService, clientService, clientSyncService);
+        router
+                .route(HttpMethod.POST, "/register")
+                .consumes(MediaType.APPLICATION_JSON)
+                .handler(dynamicClientRegistrationHandler)
+                .handler(dynamicClientRegistrationEndpoint);
+
+        DynamicClientAccessHandler dynamicClientAccessHandler = new DynamicClientAccessHandler(clientSyncService, jwtService, domain);
+        DynamicClientAccessEndpoint dynamicClientAccessEndpoint = new DynamicClientAccessEndpoint(dcrService, clientService, clientSyncService);
+        router
+                .route(HttpMethod.GET, "/register/:"+CLIENT_ID)
+                .handler(dynamicClientAccessHandler)
+                .handler(dynamicClientAccessEndpoint::read);
+        router
+                .route(HttpMethod.PATCH, "/register/:"+CLIENT_ID)
+                .consumes(MediaType.APPLICATION_JSON)
+                .handler(dynamicClientAccessHandler)
+                .handler(dynamicClientAccessEndpoint::patch);
+        router
+                .route(HttpMethod.DELETE, "/register/:"+CLIENT_ID)
+                .handler(dynamicClientAccessHandler)
+                .handler(dynamicClientAccessEndpoint::delete);
         return router;
     }
 

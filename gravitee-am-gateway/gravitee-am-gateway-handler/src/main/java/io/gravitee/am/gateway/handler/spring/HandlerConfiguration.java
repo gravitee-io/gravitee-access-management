@@ -19,12 +19,15 @@ import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.auth.idp.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.gateway.handler.jwk.JwkService;
+import io.gravitee.am.gateway.handler.jwk.impl.JwkServiceImpl;
+import io.gravitee.am.gateway.handler.jws.JwsService;
+import io.gravitee.am.gateway.handler.jws.impl.JwsServiceImpl;
 import io.gravitee.am.gateway.handler.jwt.JwtService;
 import io.gravitee.am.gateway.handler.jwt.impl.JwtServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
 import io.gravitee.am.gateway.handler.oidc.spring.OpenIDConfiguration;
 import io.gravitee.am.gateway.handler.vertx.spring.SecurityDomainRouterConfiguration;
-import io.gravitee.am.gateway.service.spring.ServiceConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -35,7 +38,6 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @Import({
-        ServiceConfiguration.class,
         OAuth2Configuration.class,
         OpenIDConfiguration.class,
         SecurityDomainRouterConfiguration.class
@@ -55,5 +57,15 @@ public class HandlerConfiguration {
     @Bean
     public JwtService jwtService() {
         return new JwtServiceImpl();
+    }
+
+    @Bean
+    public JwsService jwsService() {
+        return new JwsServiceImpl();
+    }
+
+    @Bean
+    public JwkService jwkService() {
+        return new JwkServiceImpl();
     }
 }

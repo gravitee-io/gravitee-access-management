@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.vertx.auth.handler.impl;
 
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.utils.UriBuilder;
+import io.gravitee.am.service.utils.UriBuilder;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
@@ -29,8 +29,6 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.impl.AuthHandlerImpl;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,24 +49,11 @@ public class OAuth2ClientAuthHandlerImpl extends AuthHandlerImpl {
     private final static String PASSWORD_PARAMETER = "password";
     private static final String PROVIDER_PARAMETER = "provider";
     private static final String OAUTH2_IDENTIFIER = "_oauth2_";
-    private static final HttpStatusException UNAUTHORIZED = new HttpStatusException(401);
     private IdentityProviderManager identityProviderManager;
 
     public OAuth2ClientAuthHandlerImpl(AuthProvider authProvider, IdentityProviderManager identityProviderManager) {
         super(authProvider);
         this.identityProviderManager = identityProviderManager;
-    }
-
-    @Override
-    public void parseCredentials(RoutingContext context, Handler<AsyncResult<JsonObject>> handler) {
-        parseAuthorization(context, parseAuthorization -> {
-            if (parseAuthorization.failed()) {
-                handler.handle(Future.failedFuture(parseAuthorization.cause()));
-                return;
-            }
-
-            handler.handle(Future.succeededFuture(parseAuthorization.result()));
-        });
     }
 
     protected final void parseAuthorization(RoutingContext context, Handler<AsyncResult<JsonObject>> handler) {

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
+import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
 import io.gravitee.common.http.HttpStatusCode;
 
 /**

@@ -17,7 +17,8 @@ package io.gravitee.am.gateway.handler.auth;
 
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
-import io.gravitee.am.gateway.service.UserService;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -56,6 +57,9 @@ public class UserAuthenticationManagerTest {
     private UserService userService;
 
     @Mock
+    private Domain domain;
+
+    @Mock
     private IdentityProviderManager identityProviderManager;
 
     @Test
@@ -76,8 +80,8 @@ public class UserAuthenticationManagerTest {
         client.setClientId("client-id");
         client.setIdentities(Collections.singleton("idp-1"));
 
-        when(userService.findOrCreate(any())).then(invocation -> {
-            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgumentAt(0, io.gravitee.am.identityprovider.api.User.class);
+        when(userService.findOrCreate(any(),any())).then(invocation -> {
+            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgumentAt(1, io.gravitee.am.identityprovider.api.User.class);
             User user = new User();
             user.setUsername(idpUser.getUsername());
             return Single.just(user);
@@ -162,8 +166,8 @@ public class UserAuthenticationManagerTest {
         client.setClientId("client-id");
         client.setIdentities(new LinkedHashSet<>(Arrays.asList("idp-1", "idp-2")));
 
-        when(userService.findOrCreate(any())).then(invocation -> {
-            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgumentAt(0, io.gravitee.am.identityprovider.api.User.class);
+        when(userService.findOrCreate(any(),any())).then(invocation -> {
+            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgumentAt(1, io.gravitee.am.identityprovider.api.User.class);
             User user = new User();
             user.setUsername(idpUser.getUsername());
             return Single.just(user);

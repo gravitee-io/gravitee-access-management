@@ -21,7 +21,7 @@
     <mat-icon mat-list-icon>web_asset</mat-icon>
     <h4 matLine>
       <a [routerLink]="['/domains', client.domainId]">{{client.domainName}}</a> /
-      <a [routerLink]="['/domains', client.domainId, 'clients', client.id]">{{client.clientId}}</a>
+      <a [routerLink]="['/domains', client.domainId, 'clients', client.id]">{{client.clientName}}</a>
     </h4>
     <p matLine><small>{{client.updatedAt | humanDate}}</small></p>
   </mat-list-item>

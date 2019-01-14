@@ -15,20 +15,17 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.login.endpoint;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Domain;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Login page must be call after user being redirected here from restricted endpoint (i.e Authorization Endpoint)
@@ -40,10 +37,10 @@ import org.slf4j.LoggerFactory;
 public class LoginRequestParseHandler implements Handler<RoutingContext> {
 
     private static final String CLIENT_CONTEXT_KEY = "client";
-    private ClientService clientService;
+    private ClientSyncService clientSyncService;
 
-    public LoginRequestParseHandler(ClientService clientService) {
-        this.clientService = clientService;
+    public LoginRequestParseHandler(ClientSyncService clientSyncService) {
+        this.clientSyncService = clientSyncService;
     }
 
     @Override
@@ -70,7 +67,7 @@ public class LoginRequestParseHandler implements Handler<RoutingContext> {
     }
 
     private void authenticate(String clientId, Handler<AsyncResult<Client>> authHandler) {
-        clientService
+        clientSyncService
                 .findByClientId(clientId)
                 .subscribe(
                         client -> authHandler.handle(Future.succeededFuture(client)),

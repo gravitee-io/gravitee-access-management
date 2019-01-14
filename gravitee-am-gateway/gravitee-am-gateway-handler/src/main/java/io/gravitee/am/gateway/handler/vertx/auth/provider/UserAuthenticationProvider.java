@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.vertx.auth.provider;
 
 import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
@@ -41,13 +41,13 @@ public class UserAuthenticationProvider implements AuthProvider {
     private final static String USERNAME_PARAMETER = "username";
     private final static String PASSWORD_PARAMETER = "password";
     private UserAuthenticationManager userAuthenticationManager;
-    private ClientService clientService;
+    private ClientSyncService clientSyncService;
 
     public UserAuthenticationProvider() {}
 
-    public UserAuthenticationProvider(UserAuthenticationManager userAuthenticationManager, ClientService clientService) {
+    public UserAuthenticationProvider(UserAuthenticationManager userAuthenticationManager, ClientSyncService clientSyncService) {
         this.userAuthenticationManager = userAuthenticationManager;
-        this.clientService = clientService;
+        this.clientSyncService = clientSyncService;
     }
 
     @Override
@@ -75,7 +75,7 @@ public class UserAuthenticationProvider implements AuthProvider {
     private void parseClient(String clientId, Handler<AsyncResult<Client>> authHandler) {
         logger.debug("Attempt authentication with client " + clientId);
 
-        clientService
+        clientSyncService
                 .findByClientId(clientId)
                 .subscribe(
                         client -> authHandler.handle(Future.succeededFuture(client)),
