@@ -21,12 +21,14 @@ import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.ScopeAlreadyExistsException;
 import io.gravitee.am.service.exception.ScopeNotFoundException;
 import io.gravitee.am.service.exception.SystemScopeDeleteException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ScopeServiceImpl;
 import io.gravitee.am.service.model.NewScope;
+import io.gravitee.am.service.model.PatchClient;
 import io.gravitee.am.service.model.UpdateClient;
 import io.gravitee.am.service.model.UpdateRole;
 import io.reactivex.Completable;
@@ -52,6 +54,7 @@ import static org.mockito.Mockito.*;
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
@@ -281,7 +284,7 @@ public class ScopeServiceTest {
         when(roleService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(role)));
         when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(client)));
         when(roleService.update(anyString(), anyString(), any(UpdateRole.class))).thenReturn(Single.just(new Role()));
-        when(clientService.update(anyString(), anyString(), any(UpdateClient.class))).thenReturn(Single.just(new Client()));
+        when(clientService.patch(anyString(),anyString(),any(PatchClient.class))).thenReturn(Single.just(new Client()));
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(scope));
         when(scopeRepository.delete("my-scope")).thenReturn(Completable.complete());
         when(scopeApprovalRepository.delete(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
@@ -295,7 +298,7 @@ public class ScopeServiceTest {
         verify(roleService, times(1)).findByDomain(DOMAIN);
         verify(clientService, times(1)).findByDomain(DOMAIN);
         verify(roleService, times(1)).update(anyString(), anyString(), any(UpdateRole.class));
-        verify(clientService, times(1)).update(anyString(), anyString(), any(UpdateClient.class));
+        verify(clientService, times(1)).patch(anyString(), anyString(), any(PatchClient.class));
         verify(scopeRepository, times(1)).delete("my-scope");
     }
 
@@ -311,4 +314,27 @@ public class ScopeServiceTest {
         testObserver.assertNotComplete();
     }
 
+    @Test
+    public void validateScope_nullList() {
+        TestObserver<Boolean> testObserver = scopeService.validateScope(DOMAIN,null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(isValid -> isValid);
+    }
+
+    @Test
+    public void validateScope_unknownScope() {
+        when(scopeRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(new Scope("valid"))));
+        TestObserver<Boolean> testObserver = scopeService.validateScope(DOMAIN,Arrays.asList("unknown")).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    public void validateScope_validScope() {
+        when(scopeRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(new Scope("valid"))));
+        TestObserver<Boolean> testObserver = scopeService.validateScope(DOMAIN,Arrays.asList("valid")).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(isValid -> isValid);
+    }
 }

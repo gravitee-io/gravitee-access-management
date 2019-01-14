@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.login.endpoint.LoginEndpointHandler;
@@ -43,14 +43,14 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     private LoginEndpointHandler loginEndpointHandler = new LoginEndpointHandler();
 
     @Mock
-    private ClientService clientService;
+    private ClientSyncService clientSyncService;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         router.route(HttpMethod.GET, "/login")
-                .handler(new LoginRequestParseHandler(clientService))
+                .handler(new LoginRequestParseHandler(clientSyncService))
                 .handler(loginEndpointHandler);
         router.route().failureHandler(new ExceptionHandler());
     }
@@ -64,7 +64,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeLoginEndpoint_noClient() throws Exception {
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.empty());
+        when(clientSyncService.findByClientId(anyString())).thenReturn(Maybe.empty());
 
         testRequest(
                 HttpMethod.GET, "/login?client_id=test",

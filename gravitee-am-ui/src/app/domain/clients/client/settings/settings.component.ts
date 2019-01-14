@@ -45,12 +45,18 @@ export class ClientSettingsComponent implements OnInit {
   identityProviders: any[] = [];
   certificates: any[] = [];
   scopes: any[] = [];
+  //responseTypes: any[] = ['code','token','id_token','id_token token','code token','code token id_token'];
+  responseTypes: any[] = [
+    { value:'code', checked:false },
+    { value:'token', checked:false },
+    { value:'id_token', checked:false }
+  ];
   grantTypes: any[] = [
-    { name:'CLIENT CREDENTIALS', value:'client_credentials', checked:false },
-    { name:'PASSWORD', value:'password', checked:false },
     { name:'AUTHORIZATION CODE', value:'authorization_code', checked:false },
+    { name:'IMPLICIT', value:'implicit', checked:false },
     { name:'REFRESH TOKEN', value:'refresh_token', checked:false },
-    { name:'IMPLICIT', value:'implicit', checked:false }
+    { name:'PASSWORD', value:'password', checked:false },
+    { name:'CLIENT CREDENTIALS', value:'client_credentials', checked:false }
   ];
   customGrantTypes: any[];
 
@@ -68,15 +74,10 @@ export class ClientSettingsComponent implements OnInit {
     (!this.client.scopes) ? this.client.scopes = [] : this.client.scopes = this.client.scopes;
     this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.identityProviders = data);
     this.certificateService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.certificates = data);
-    this.initGrantTypes();
     this.initScopes();
+    this.initGrantTypes();
+    this.initResponseTypes();
     this.initCustomGrantTypes();
-  }
-
-  initGrantTypes() {
-    this.grantTypes.forEach(grantType => {
-      grantType.checked = _.some(this.client.authorizedGrantTypes, authorizedGrantType => authorizedGrantType.toLowerCase() === grantType.value.toLowerCase());
-    })
   }
 
   initScopes() {
@@ -92,7 +93,18 @@ export class ClientSettingsComponent implements OnInit {
     });
 
     this.scopes = _.difference(this.scopes, this.selectedScopes);
+  }
 
+  initGrantTypes() {
+    this.grantTypes.forEach(grantType => {
+      grantType.checked = _.some(this.client.authorizedGrantTypes, authorizedGrantType => authorizedGrantType.toLowerCase() === grantType.value.toLowerCase());
+    })
+  }
+
+  initResponseTypes() {
+    this.responseTypes.forEach(responseType => {
+      responseType.checked = _.some(this.client.responseTypes, clientResponseType => clientResponseType.toLowerCase() === responseType.value.toLowerCase());
+    })
   }
 
   initCustomGrantTypes() {
@@ -106,6 +118,7 @@ export class ClientSettingsComponent implements OnInit {
     this.grantTypes
       .filter(grantType => grantType.value === event.source.value)
       .map(grantType => grantType.checked = event.checked);
+    this.updateResponseTypeAccordingGrantType(event);
     this.formChanged = true;
   }
 
@@ -114,6 +127,58 @@ export class ClientSettingsComponent implements OnInit {
       .filter(grantType => grantType.value === event.source.value)
       .map(grantType => grantType.checked = event.checked);
     this.formChanged = true;
+  }
+
+  selectedResponseType(event) {
+    this.responseTypes
+      .filter(responseType => responseType.value === event.source.value)
+      .map(responseType => responseType.checked = event.checked);
+    this.updateGrantTypeAccordingResponseType(event);
+    this.formChanged = true;
+  }
+
+  updateResponseTypeAccordingGrantType(event) {
+    if('authorization_code' === event.source.value) {
+      this.responseTypes
+        .filter(responseType => responseType.value === 'code')
+        .map(responseType => responseType.checked = event.checked);
+    }
+    else if('implicit' === event.source.value) {
+      if(event.checked) {
+        if(this.responseTypes
+          .filter(responseType => responseType.value === 'token' || responseType.value === 'id_token')
+          .filter(responseType => responseType.checked == true)
+          .length == 0)
+        {
+          //select at leas token
+          this.responseTypes
+            .filter(responseType => responseType.value === 'token')
+            .map(responseType => responseType.checked = true);
+        }
+      } else {
+        //disable token & id_token
+        this.responseTypes
+          .filter(responseType => responseType.value === 'token' || responseType.value === 'id_token')
+          .map(responseType => responseType.checked = false);
+      }
+    }
+  }
+
+  updateGrantTypeAccordingResponseType(event) {
+    if('code' === event.source.value) {
+      this.grantTypes
+        .filter(grantType => grantType.value === 'authorization_code')
+        .map(grantType => grantType.checked = event.checked);
+    }
+    else {
+      let enableImplicit = this.responseTypes
+        .filter(responseType => responseType.value === 'token' || responseType.value === 'id_token')
+        .filter(responseType => responseType.checked == true)
+        .length > 0 ;
+      this.grantTypes
+        .filter(grantType => grantType.value === 'implicit')
+        .map(grantType => grantType.checked = enableImplicit);
+    }
   }
 
   enableClient(event) {
@@ -156,10 +221,14 @@ export class ClientSettingsComponent implements OnInit {
 
   update() {
     this.client.authorizedGrantTypes = this.selectedGrantTypes.concat(this.selectedCustomGrantTypes);
+    this.client.responseTypes = this.selectedResponseTypes;
     this.client.scopes = _.map(this.selectedScopes, scope => scope.key);
     this.clientService.update(this.domainId, this.client.id, this.client).map(res => res.json()).subscribe(data => {
       this.client = data;
       this.snackbarService.open("Client updated");
+      this.initGrantTypes();
+      this.initResponseTypes();
+      this.initCustomGrantTypes();
     });
   }
 
@@ -175,13 +244,11 @@ export class ClientSettingsComponent implements OnInit {
       .map(grantType => grantType.value)
   }
 
-  /*
-  get selectedScopes() {
-    return this.scopes
-      .filter(scope => scope.checked)
-      .map(scope => scope.key)
+  get selectedResponseTypes() {
+    return this.responseTypes
+      .filter(responseType => responseType.checked)
+      .map(responseType => responseType.value)
   }
-  */
 
   addRedirectURI(event, input: HTMLInputElement) {
     this.addElement(input, this.client.redirectUris, event);
@@ -190,16 +257,6 @@ export class ClientSettingsComponent implements OnInit {
   removeRedirectURI(redirectURI, event) {
     this.removeElement(redirectURI, this.client.redirectUris, event);
   }
-
-  /*
-  addScope(input: HTMLInputElement, event) {
-    this.addElement(input, this.client.scopes, event);
-  }
-
-  removeScope(scope, event) {
-    this.removeElement(scope, this.client.scopes, event);
-  }
-  */
 
   addElement(input: HTMLInputElement, list: any[], event: any) {
     event.preventDefault();

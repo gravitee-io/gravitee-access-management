@@ -29,7 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -62,30 +61,30 @@ public class OpenIDScopeUpgrader implements Upgrader, Ordered {
 
     private Single<Domain> createOrUpdateSystemScopes(Domain domain) {
         return Observable.fromArray(io.gravitee.am.common.oidc.Scope.values())
-                .flatMapSingle(scope -> createSystemScope(domain.getId(), scope.getName(), scope.getClaims()))
+                .flatMapSingle(scope -> createSystemScope(domain.getId(), scope))
                 .lastOrError()
                 .map(scope -> domain);
     }
 
-    private Single<Scope> createSystemScope(String domain, String scopeKey, List<String> claims) {
+    private Single<Scope> createSystemScope(String domain, io.gravitee.am.common.oidc.Scope systemScope) {
         return scopeService.findByDomain(domain)
                 .flatMap(scopes -> {
-                    Optional<Scope> optScope = scopes.stream().filter(scope -> scope.getKey().equalsIgnoreCase(scopeKey)).findFirst();
+                    Optional<Scope> optScope = scopes.stream().filter(scope -> scope.getKey().equalsIgnoreCase(systemScope.getKey())).findFirst();
                     if (!optScope.isPresent()) {
-                        logger.info("Create a new system scope key[{}] for domain[{}]", scopeKey, domain);
+                        logger.info("Create a new system scope key[{}] for domain[{}]", systemScope.getKey(), domain);
                         NewSystemScope scope = new NewSystemScope();
-                        scope.setKey(scopeKey);
-                        scope.setClaims(claims);
-                        scope.setName(Character.toUpperCase(scopeKey.charAt(0)) + scopeKey.substring(1));
-                        scope.setDescription("Default description for scope " + scopeKey);
+                        scope.setKey(systemScope.getKey());
+                        scope.setClaims(systemScope.getClaims());
+                        scope.setName(systemScope.getLabel());
+                        scope.setDescription(systemScope.getDescription());
                         return scopeService.create(domain, scope);
                     } else if (!optScope.get().isSystem()){
-                        logger.info("Update a system scope key[{}] for domain[{}]", scopeKey, domain);
+                        logger.info("Update a system scope key[{}] for domain[{}]", systemScope.getKey(), domain);
                         final Scope existingScope = optScope.get();
                         UpdateSystemScope scope = new UpdateSystemScope();
-                        scope.setName(existingScope.getName() != null ? existingScope.getName() : Character.toUpperCase(scopeKey.charAt(0)) + scopeKey.substring(1));
-                        scope.setDescription(existingScope.getDescription() != null ? existingScope.getDescription() : "Default description for scope " + scopeKey);
-                        scope.setClaims(claims);
+                        scope.setName(existingScope.getName() != null ? existingScope.getName() : systemScope.getLabel());
+                        scope.setDescription(existingScope.getDescription() != null ? existingScope.getDescription() : systemScope.getDescription());
+                        scope.setClaims(systemScope.getClaims());
                         return scopeService.update(domain, optScope.get().getId(), scope);
                     }
                     return Single.just(optScope.get());

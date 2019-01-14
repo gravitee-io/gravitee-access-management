@@ -21,7 +21,7 @@ import io.gravitee.am.gateway.handler.vertx.handler.oauth2.request.Authorization
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
- * @author Alexandre FARIA (lusoalex at github.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 public abstract class AbstractAuthorizationEndpointHandler {

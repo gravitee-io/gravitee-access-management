@@ -24,8 +24,8 @@ import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.ExtensionGra
 import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.ExtensionGrantManager;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
-import io.gravitee.am.gateway.service.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.common.event.Payload;
@@ -137,7 +137,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         }
 
         ExtensionGrantProvider extensionGrantProvider = extensionGrantPluginManager.create(extensionGrant.getType(), extensionGrant.getConfiguration(), authenticationProvider);
-        ExtensionGrantGranter extensionGrantGranter = new ExtensionGrantGranter(extensionGrantProvider, extensionGrant, userService, tokenService, tokenRequestResolver);
+        ExtensionGrantGranter extensionGrantGranter = new ExtensionGrantGranter(extensionGrantProvider, extensionGrant, userService, tokenService, tokenRequestResolver, domain);
         ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), extensionGrantGranter);
     }
 }

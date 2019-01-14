@@ -18,8 +18,10 @@ package io.gravitee.am.gateway.handler.oauth2.utils;
 /**
  * See <a href="https://www.iana.org/assignments/oauth-parameters/oauth-parameters.xhtml">OAuth 2.0 parameters</a>
  * See <a href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">3.1.2.1.  Authentication Request</a>
+ * See <a href="https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication">9 Client Authentication</a>
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 public interface OIDCParameters {
@@ -42,4 +44,14 @@ public interface OIDCParameters {
      * OPTIONAL. This parameter is used to request that specific Claims be returned. The value is a JSON object listing the requested Claims.
      */
     String CLAIMS = "claims";
+
+    /**
+     *
+     */
+    String CLIENT_ASSERTION_TYPE = "client_assertion_type";
+
+    /**
+     *
+     */
+    String CLIENT_ASSERTION = "client_assertion";
 }

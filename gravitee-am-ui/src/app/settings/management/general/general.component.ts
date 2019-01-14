@@ -43,7 +43,7 @@ export class ManagementGeneralComponent implements OnInit {
   }
 
   update() {
-    this.domainService.update(this.domain.id, this.domain).subscribe(response => {
+    this.domainService.patchIdentityProviders(this.domain.id, this.domain).subscribe(response => {
       this.domain = response.json();
       this.snackbarService.open("Settings updated");
     });

@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.approval;
 
 import io.gravitee.am.gateway.handler.oauth2.approval.impl.ApprovalServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
@@ -53,7 +53,7 @@ public class ApprovalServiceTest {
     private ScopeApprovalRepository scopeApprovalRepository;
 
     @Mock
-    private ClientService clientService;
+    private ClientSyncService clientSyncService;
 
     @Mock
     private Domain domain;
@@ -71,7 +71,7 @@ public class ApprovalServiceTest {
         authorizationRequest.setClientId(clientId);
         authorizationRequest.setScopes(Collections.singleton(autoApproveScope));
 
-        when(clientService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
 
         TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, userId).test();
         testObserver.awaitTerminalEvent();
@@ -94,7 +94,7 @@ public class ApprovalServiceTest {
         authorizationRequest.setClientId(clientId);
         authorizationRequest.setScopes(Collections.singleton(autoApproveScope));
 
-        when(clientService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(anyString(), anyString(), anyString())).thenReturn(Single.just(Collections.emptySet()));
 
         approvalService.checkApproval(authorizationRequest, client, userId).test().assertError(AccessDeniedException.class);
@@ -123,7 +123,7 @@ public class ApprovalServiceTest {
         authorizationRequest.setScopes(Collections.singleton(autoApproveScope));
 
         when(domain.getId()).thenReturn(domainId);
-        when(clientService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(domainId, userId, clientId)).thenReturn(Single.just(Collections.singleton(userScopeApproval)));
 
         TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, userId).test();
@@ -157,7 +157,7 @@ public class ApprovalServiceTest {
         authorizationRequest.setScopes(Collections.singleton(autoApproveScope));
 
         when(domain.getId()).thenReturn(domainId);
-        when(clientService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(domainId, userId, clientId)).thenReturn(Single.just(Collections.singleton(userScopeApproval)));
 
         approvalService.checkApproval(authorizationRequest, client, userId).test().assertError(AccessDeniedException.class);

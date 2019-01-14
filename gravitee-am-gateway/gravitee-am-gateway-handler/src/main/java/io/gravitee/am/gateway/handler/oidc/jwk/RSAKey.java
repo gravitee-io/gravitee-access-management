@@ -56,4 +56,12 @@ public class RSAKey extends JWK {
     public void setN(String n) {
         this.n = n;
     }
+
+    public static RSAKey from(io.gravitee.am.model.jose.RSAKey source) {
+        RSAKey rsaKey = new RSAKey();
+        rsaKey.setE(source.getE());
+        rsaKey.setN(source.getN());
+        rsaKey.copy(source);
+        return rsaKey;
+    }
 }

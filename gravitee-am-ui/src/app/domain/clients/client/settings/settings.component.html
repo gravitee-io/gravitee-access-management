@@ -38,15 +38,34 @@
       <button mat-icon-button matTooltip="Copy Client Secret" ngxClipboard [cbContent]="client.clientSecret" (cbOnSuccess)="valueCopied('Client Secret copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
     </div>
 
-    <h4 style="margin-bottom: 5px;">Grant types</h4>
-    <mat-hint style="font-size: 75%; margin-bottom: 20px;">OAuth 2.0 grant types used by the client to obtain an access token. Each grant type is specific to a type of application.</mat-hint>
-    <mat-checkbox *ngFor="let grantType of grantTypes"
-                 name="grantTypes"
-                 value="{{grantType.value}}"
-                 [checked]="grantType.checked"
-                 (change)="selectedGrantType($event)">
-      {{grantType.name}}
-    </mat-checkbox>
+    <mat-form-field fxFlex>
+      <input matInput type="text" placeholder="Client name" name="client_name" [(ngModel)]="client.clientName">
+      <mat-hint>The client human readable name.</mat-hint>
+    </mat-form-field>
+    <div fxLayout="row">
+      <section class="type-section">
+        <h4 style="margin-bottom: 5px;">Grant types</h4>
+        <mat-hint style="font-size: 75%; margin-bottom: 20px;">OAuth 2.0 grant types used by the client to obtain an access token.<br> Each grant type is specific to a type of application.</mat-hint>
+        <mat-checkbox class="type-selection" *ngFor="let grantType of grantTypes"
+                      name="grantTypes"
+                      value="{{grantType.value}}"
+                      [checked]="grantType.checked"
+                      (change)="selectedGrantType($event)">
+              {{grantType.name}}
+        </mat-checkbox>
+      </section>
+      <section class="type-section">
+        <h4 style="margin-bottom: 5px;">Response types</h4>
+        <mat-hint style="font-size: 75%; margin-bottom: 20px;">OAuth 2.0 response types used by the client to obtain an access token.<br> Each response type must correspond to a selected grant type</mat-hint>
+        <mat-checkbox class="type-selection" *ngFor="let responseType of responseTypes"
+                      name="responseTypes"
+                      value="{{responseType.value}}"
+                      [checked]="responseType.checked"
+                      (change)="selectedResponseType($event)">
+          {{responseType.value | uppercase}}
+        </mat-checkbox>
+      </section>
+    </div>
     <div>
       <h5>Extension grants</h5>
       <div fxLayout="column">
@@ -78,22 +97,22 @@
     <br>
 
     <h4 style="margin-bottom: 5px;">Scopes</h4>
-    <mat-hint style="font-size: 75%; margin-bottom: 20px;">Let you limit client's access to protected resources/APIs.</mat-hint>
-    <mat-form-field>
-      <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" #chipListPermissions>
-        <mat-chip *ngFor="let scope of selectedScopes" color="accent"
-                  selected="true" (remove)="removeScope(scope)">
-          <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
-          &nbsp;<span>{{scope.key}}</span>&nbsp;|&nbsp;<small>{{scope.name}}</small>
-          <mat-icon matChipRemove>cancel</mat-icon>
-        </mat-chip>
-        <input matInput
-               placeholder="Permissions"
-               aria-label="Permissions"
-               [matAutocomplete]="auto"
-               [matChipInputFor]="chipListPermissions"
-               #chipInput>
-      </mat-chip-list>
+      <mat-hint style="font-size: 75%; margin-bottom: 20px;">Let you limit client's access to protected resources/APIs.</mat-hint>
+      <mat-form-field>
+        <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" #chipListPermissions>
+          <mat-chip *ngFor="let scope of selectedScopes" color="accent"
+                    selected="true" (remove)="removeScope(scope)">
+            <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
+            &nbsp;<span>{{scope.key}}</span>&nbsp;|&nbsp;<small>{{scope.name}}</small>
+            <mat-icon matChipRemove>cancel</mat-icon>
+          </mat-chip>
+          <input matInput
+                 placeholder="Permissions"
+                 aria-label="Permissions"
+                 [matAutocomplete]="auto"
+                 [matChipInputFor]="chipListPermissions"
+                 #chipInput>
+        </mat-chip-list>
 
       <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addScope($event)">
         <mat-option *ngFor="let scope of scopes" [value]="scope.key">
@@ -162,5 +181,35 @@
       Configure your client's settings to interact with the authorization server to request for access tokens and gain access to protected resources.
     </p>
     <small>The authorization server relies on OAuth 2.0 and lots of these settings are required for this protocol.</small>
+  </div>
+  <h3>Grant types</h3>
+  <div class="client-settings-description-content">
+    <p>
+      To authenticate an user, the application must first decide which oauth2 flow must be used. Oauth2 flows are enabled on the client through the grant_type.
+      You should select the grant_type according to your application type.
+    </p>
+    <small>
+        <b><i>authorization_code</i></b> for server side applications (web) or native applications (then combined with PKCE).<br>
+        <b><i>implicit</i></b> must be used for Single Page Applications.<br>
+        <b><i>password</i></b> should only be used for trusted applications <i>(means application and authorization server are managed within the same organization.)</i><br>
+        <b><i>client_credentials</i></b> should be used for server to server communications.<br>
+    </small>
+  </div>
+  <h3>Response types</h3>
+  <div class="client-settings-description-content">
+    <p>
+      A combination of <i>code, token and id_token</i> values that must corresponds to the selected grant types.
+      <i>ID token are used to provide information about the connected end user, it can't be used with client_credentials grant type.</i>
+    </p>
+    <small>
+      <b><i>code:</i></b> authorization_code<br>
+      <b><i>token:</i></b> implicit<br>
+      <b><i>id_token:</i></b> implicit<br>
+      <b><i>token id_token:</i></b> implicit<br>
+      <b><i>code id_token:</i></b> authorization_code, implicit<br>
+      <b><i>code token:</i></b> authorization_code, implicit<br>
+      <b><i>code token id_token:</i></b> authorization_code, implicit<br>
+    </small>
+
   </div>
 </div>

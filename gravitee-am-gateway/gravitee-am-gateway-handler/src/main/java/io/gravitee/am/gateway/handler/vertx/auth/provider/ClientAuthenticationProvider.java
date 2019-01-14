@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.provider;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.BadClientCredentialsException;
 import io.gravitee.am.gateway.handler.vertx.auth.user.Client;
 import io.vertx.core.AsyncResult;
@@ -37,12 +37,12 @@ public class ClientAuthenticationProvider implements AuthProvider {
     private static final String USERNAME_FIELD = "username";
     private static final String PASSWORD_FIELD = "password";
 
-    private ClientService clientService;
+    private ClientSyncService clientSyncService;
 
     public ClientAuthenticationProvider() {}
 
-    public ClientAuthenticationProvider(ClientService clientService) {
-        this.clientService = clientService;
+    public ClientAuthenticationProvider(ClientSyncService clientSyncService) {
+        this.clientSyncService = clientSyncService;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class ClientAuthenticationProvider implements AuthProvider {
 
         logger.debug("Trying to authenticate a client: clientId[{}]", clientId);
 
-        clientService
+        clientSyncService
                 .findByClientId(clientId)
                 .subscribe(
                         client -> {
@@ -70,7 +70,7 @@ public class ClientAuthenticationProvider implements AuthProvider {
                 );
     }
 
-    public void setClientService(ClientService clientService) {
-        this.clientService = clientService;
+    public void setClientSyncService(ClientSyncService clientSyncService) {
+        this.clientSyncService = clientSyncService;
     }
 }

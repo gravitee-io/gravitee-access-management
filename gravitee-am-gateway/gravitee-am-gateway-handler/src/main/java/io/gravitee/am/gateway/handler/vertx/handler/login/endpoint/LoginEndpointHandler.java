@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.handler.login.endpoint;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.utils.UriBuilder;
+import io.gravitee.am.service.utils.UriBuilder;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProviderConfiguration;
@@ -41,6 +41,8 @@ import org.slf4j.LoggerFactory;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -159,7 +161,7 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
                     builder.addParameter(OAuth2Constants.REDIRECT_URI, buildRedirectUri(request, identityProviderId));
                     builder.addParameter(OAuth2Constants.RESPONSE_TYPE, OAuth2Constants.CODE);
                     if (configuration.getScopes() != null && !configuration.getScopes().isEmpty()) {
-                        builder.addParameter(OAuth2Constants.SCOPE, String.join(" ", configuration.getScopes()));
+                        builder.addParameter(OAuth2Constants.SCOPE, String.join(SCOPE_DELIMITER, configuration.getScopes()));
                     }
                     return builder.build().toString();
                 }).toSingle();

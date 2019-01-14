@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.provider;
 
+import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.service.exception.AbstractManagementException;
 
@@ -27,6 +28,10 @@ import javax.ws.rs.ext.ExceptionMapper;
 public abstract class AbstractExceptionMapper<T extends Throwable> implements ExceptionMapper<T> {
 
     protected ErrorEntity convert(AbstractManagementException e) {
+        return convert(e, e.getHttpStatusCode());
+    }
+
+    protected ErrorEntity convert(OAuth2Exception e) {
         return convert(e, e.getHttpStatusCode());
     }
 

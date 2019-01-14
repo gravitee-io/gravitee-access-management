@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.vertx.handler.login.LoginRouter;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.OAuth2Router;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.OIDCRouter;
 import io.gravitee.am.gateway.handler.vertx.view.ThymeleafConfiguration;
+import io.gravitee.am.service.spring.ServiceConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -28,7 +29,10 @@ import org.springframework.context.annotation.Import;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Import(ThymeleafConfiguration.class)
+@Import({
+        ThymeleafConfiguration.class,
+        ServiceConfiguration.class
+})
 @Configuration
 public class SecurityDomainRouterConfiguration {
 

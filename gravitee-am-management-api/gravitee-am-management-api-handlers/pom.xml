@@ -41,5 +41,10 @@
             <artifactId>gravitee-am-management-api-service</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jdk8</artifactId>
+            <version>${com.fasterxml.jackson.version}</version>
+        </dependency>
     </dependencies>
 </project>

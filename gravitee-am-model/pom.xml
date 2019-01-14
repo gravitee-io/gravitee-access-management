@@ -31,4 +31,12 @@
     <packaging>jar</packaging>
 
     <name>Gravitee IO - Access Management - Model</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.gravitee.am.common</groupId>
+            <artifactId>gravitee-am-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 </project>

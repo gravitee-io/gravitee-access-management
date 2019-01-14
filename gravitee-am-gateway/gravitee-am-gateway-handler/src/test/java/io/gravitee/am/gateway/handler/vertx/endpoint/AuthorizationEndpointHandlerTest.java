@@ -15,8 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
@@ -50,6 +51,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
+import static io.gravitee.am.common.oauth2.ResponseType.CODE;
+import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
@@ -70,7 +75,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
     private Domain domain;
 
     @Mock
-    private ClientService clientService;
+    private ClientSyncService clientSyncService;
 
     @Mock
     private OpenIDDiscoveryService openIDDiscoveryService;
@@ -102,7 +107,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 .handler(sessionHandler);
         router.route(HttpMethod.GET, "/oauth/authorize")
                 .handler(new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService))
-                .handler(new AuthorizationRequestParseClientHandler(clientService))
+                .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(authorizationEndpointHandler);
         router.route()
@@ -116,7 +121,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -137,7 +142,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -158,7 +163,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(CLIENT_CONTEXT_KEY, client);
@@ -189,7 +194,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.error(new InvalidScopeException("Invalid scope(s): unknown")));
 
         testRequest(
@@ -215,7 +220,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         authorizationRequest.setApproved(true);
         authorizationRequest.setResponseType(OAuth2Constants.CODE);
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -242,7 +247,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         authorizationRequest.setResponseType(OAuth2Constants.CODE);
 
         when(domain.getPath()).thenReturn("test");
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -269,7 +274,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         authorizationRequest.setResponseType(OAuth2Constants.CODE);
         authorizationRequest.setRedirectUri("http://localhost:9999/wrong/callback");
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -291,7 +296,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -315,7 +320,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(CLIENT_CONTEXT_KEY, new Client());
@@ -360,7 +365,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
         testRequest(
@@ -376,10 +381,11 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
     }
 
     @Test
-    public void shouldInvokeAuthorizationEndpoint_responseTypeToken() throws Exception {
+    public void shouldInvokeAuthorizationEndpoint_noClientResponseType() throws Exception {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
+        client.setResponseTypes(null);
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
@@ -398,12 +404,91 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize?response_type=token&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                "/oauth/authorize?response_type=token&client_id=client-id&nonce=123&redirect_uri=http://localhost:9999/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback#error=unauthorized_client&error_description=Client+should+have+response_type.", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_missingClientResponseType() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setResponseTypes(Arrays.asList(ID_TOKEN));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(OAuth2Constants.TOKEN);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        Token accessToken = new AccessToken("token");
+
+        AuthorizationResponse authorizationResponse = new ImplicitResponse();
+        authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
+        ((ImplicitResponse) authorizationResponse).setAccessToken(accessToken);
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(new io.gravitee.am.model.User())));
+            routingContext.next();
+        });
+
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=token&client_id=client-id&nonce=123&redirect_uri=http://localhost:9999/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback#error=unauthorized_client&error_description=Client+should+have+all+requested+response_type", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_responseTypeToken() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+        client.setAuthorizedGrantTypes(Arrays.asList(GrantType.IMPLICIT));
+        client.setResponseTypes(Arrays.asList(TOKEN));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(OAuth2Constants.TOKEN);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        Token accessToken = new AccessToken("token");
+
+        AuthorizationResponse authorizationResponse = new ImplicitResponse();
+        authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
+        ((ImplicitResponse) authorizationResponse).setAccessToken(accessToken);
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(new io.gravitee.am.model.User())));
+            routingContext.next();
+        });
+
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=token&client_id=client-id&nonce=123&redirect_uri=http://localhost:9999/callback",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
@@ -420,7 +505,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(CLIENT_CONTEXT_KEY, client);
@@ -450,7 +535,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setApproved(false);
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
@@ -483,7 +568,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setApproved(false);
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
@@ -529,7 +614,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
 
@@ -553,7 +638,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(CLIENT_CONTEXT_KEY, client);
@@ -579,7 +664,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(CLIENT_CONTEXT_KEY, client);
@@ -605,7 +690,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(CLIENT_CONTEXT_KEY, client);
@@ -645,7 +730,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
         testRequest(
@@ -685,7 +770,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             }
         });
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
         testRequest(
@@ -708,7 +793,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.setUser(new User(new io.gravitee.am.gateway.handler.vertx.auth.user.User(new io.gravitee.am.model.User())));
@@ -729,7 +814,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeAuthorizationEndpoint_invalidClient() throws Exception {
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.empty());
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.empty());
 
         testRequest(
                 HttpMethod.GET,
@@ -751,7 +836,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -773,7 +858,7 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -829,6 +914,8 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+        client.setAuthorizedGrantTypes(Arrays.asList(OAuth2Constants.AUTHORIZATION_CODE,OAuth2Constants.IMPLICIT));
+        client.setResponseTypes(Arrays.asList(CODE,TOKEN,ID_TOKEN));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setApproved(true);
@@ -851,12 +938,12 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize?response_type=token&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                "/oauth/authorize?response_type=token&client_id=client-id&nonce=123&redirect_uri=http://localhost:9999/callback",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
@@ -872,6 +959,8 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+        client.setAuthorizedGrantTypes(Arrays.asList(GrantType.IMPLICIT));
+        client.setResponseTypes(Arrays.asList(responseType.split("\\s")));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setApproved(true);
@@ -894,12 +983,12 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(clientService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize?response_type=token&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                "/oauth/authorize?response_type="+responseType.replaceAll("\\s","%20")+"&client_id=client-id&nonce=123&redirect_uri=http://localhost:9999/callback",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
@@ -908,5 +997,4 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
-
 }

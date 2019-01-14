@@ -19,7 +19,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.exception.JwtException;
 import io.gravitee.am.gateway.handler.jwt.JwtService;
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
@@ -71,7 +71,7 @@ public class TokenServiceImpl implements TokenService {
     private JwtService jwtService;
 
     @Autowired
-    private ClientService clientService;
+    private ClientSyncService clientSyncService;
 
     @Override
     public Maybe<Token> getAccessToken(String token, Client client) {
@@ -101,7 +101,7 @@ public class TokenServiceImpl implements TokenService {
     public Maybe<Token> introspect(String token) {
         // any client can introspect a token, we first need to decode the token to get the client's certificate to verify the token
         return jwtService.decode(token)
-                .flatMapMaybe(jwt -> clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud()))
+                .flatMapMaybe(jwt -> clientSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud()))
                 .switchIfEmpty(Maybe.error(new InvalidTokenException("Invalid or unknown client for this token")))
                 .flatMap(client -> getAccessToken(token, client));
     }

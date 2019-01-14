@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oidc.spring;
 
+import io.gravitee.am.gateway.handler.oidc.clientregistration.DynamicClientRegistrationService;
+import io.gravitee.am.gateway.handler.oidc.clientregistration.impl.DynamicClientRegistrationServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.discovery.impl.OpenIDDiscoveryServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.flow.CompositeFlow;
 import io.gravitee.am.gateway.handler.oidc.flow.Flow;
-import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
-import io.gravitee.am.gateway.handler.oidc.idtoken.impl.IDTokenServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.idtoken.impl.IDTokenServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.jwk.JWKSetService;
@@ -38,6 +38,11 @@ public class OpenIDConfiguration {
     @Bean
     public OpenIDDiscoveryService openIDConfigurationService() {
         return new OpenIDDiscoveryServiceImpl();
+    }
+
+    @Bean
+    public DynamicClientRegistrationService dcrService() {
+        return new DynamicClientRegistrationServiceImpl();
     }
 
     @Bean

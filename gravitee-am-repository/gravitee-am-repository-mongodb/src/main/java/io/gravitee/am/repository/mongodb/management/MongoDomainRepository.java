@@ -22,10 +22,14 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.model.login.LoginForm;
+import io.gravitee.am.model.oidc.ClientRegistrationSettings;
+import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginFormMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -112,12 +116,14 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setLoginForm(convert(domainMongo.getLoginForm()));
         domain.setIdentities(domainMongo.getIdentities());
         domain.setOauth2Identities(domainMongo.getOauth2Identities());
+        domain.setOidc(convert(domainMongo.getOidc()));
 
         // set last event
         Document document = domainMongo.getLastEvent();
         if (document != null) {
             domain.setLastEvent(convert(document));
         }
+
         return domain;
     }
 
@@ -138,12 +144,14 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setLoginForm(convert(domain.getLoginForm()));
         domainMongo.setIdentities(domain.getIdentities());
         domainMongo.setOauth2Identities(domain.getOauth2Identities());
+        domainMongo.setOidc(convert(domain.getOidc()));
 
         // save last event
         Event event = domain.getLastEvent();
         if (event != null) {
             domainMongo.setLastEvent(convert(event));
         }
+
         return domainMongo;
     }
 
@@ -188,5 +196,57 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         document.put("content", payload);
 
         return document;
+    }
+
+    private OIDCSettings convert(OIDCSettingsMongo oidcMongo) {
+        if(oidcMongo==null) {
+            return null;
+        }
+
+        OIDCSettings oidcSettings = new OIDCSettings();
+        oidcSettings.setClientRegistrationSettings(convert(oidcMongo.getClientRegistrationSettings()));
+
+        return oidcSettings;
+    }
+
+    private ClientRegistrationSettings convert(ClientRegistrationSettingsMongo dcrMongo) {
+        if(dcrMongo==null) {
+            return null;
+        }
+
+        ClientRegistrationSettings result = new ClientRegistrationSettings();
+        result.setAllowHttpSchemeRedirectUri(dcrMongo.isAllowHttpSchemeRedirectUri());
+        result.setAllowLocalhostRedirectUri(dcrMongo.isAllowLocalhostRedirectUri());
+        result.setAllowWildCardRedirectUri(dcrMongo.isAllowWildCardRedirectUri());
+        result.setDynamicClientRegistrationEnabled(dcrMongo.isDynamicClientRegistrationEnabled());
+        result.setOpenDynamicClientRegistrationEnabled(dcrMongo.isOpenDynamicClientRegistrationEnabled());
+
+        return result;
+    }
+
+    private OIDCSettingsMongo convert(OIDCSettings oidc) {
+        if(oidc==null) {
+            return null;
+        }
+
+        OIDCSettingsMongo oidcSettings = new OIDCSettingsMongo();
+        oidcSettings.setClientRegistrationSettings(convert(oidc.getClientRegistrationSettings()));
+
+        return oidcSettings;
+    }
+
+    private ClientRegistrationSettingsMongo convert(ClientRegistrationSettings dcr) {
+        if(dcr==null) {
+            return null;
+        }
+
+        ClientRegistrationSettingsMongo result = new ClientRegistrationSettingsMongo();
+        result.setAllowHttpSchemeRedirectUri(dcr.isAllowHttpSchemeRedirectUri());
+        result.setAllowLocalhostRedirectUri(dcr.isAllowLocalhostRedirectUri());
+        result.setAllowWildCardRedirectUri(dcr.isAllowWildCardRedirectUri());
+        result.setDynamicClientRegistrationEnabled(dcr.isDynamicClientRegistrationEnabled());
+        result.setOpenDynamicClientRegistrationEnabled(dcr.isOpenDynamicClientRegistrationEnabled());
+
+        return result;
     }
 }

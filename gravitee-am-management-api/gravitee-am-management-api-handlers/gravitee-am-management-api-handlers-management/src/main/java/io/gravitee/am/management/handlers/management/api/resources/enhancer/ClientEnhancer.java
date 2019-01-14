@@ -56,6 +56,7 @@ public class ClientEnhancer {
                 clientListItem.setDomainId("unkown-domain");
                 clientListItem.setDomainName("Unknown domain");
             }
+            clientListItem.setClientName(client.getClientName());
             clientListItem.setEnabled(client.isEnabled());
             clientListItem.setCreatedAt(client.getCreatedAt());
             clientListItem.setUpdatedAt(client.getUpdatedAt());

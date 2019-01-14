@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.session;
 
-import io.gravitee.am.gateway.handler.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;

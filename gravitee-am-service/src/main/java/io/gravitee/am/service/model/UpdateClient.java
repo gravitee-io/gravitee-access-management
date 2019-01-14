@@ -29,6 +29,8 @@ public class UpdateClient {
 
     private List<String> authorizedGrantTypes;
 
+    private String clientName;
+
     private List<String> scopes;
 
     private List<String> autoApproveScopes;
@@ -65,6 +67,14 @@ public class UpdateClient {
 
     public void setAuthorizedGrantTypes(List<String> authorizedGrantTypes) {
         this.authorizedGrantTypes = authorizedGrantTypes;
+    }
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
     }
 
     public List<String> getScopes() {

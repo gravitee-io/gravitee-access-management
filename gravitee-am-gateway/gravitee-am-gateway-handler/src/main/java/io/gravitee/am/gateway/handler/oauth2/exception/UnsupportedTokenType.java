@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
+import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+
 /**
  *
  * https://tools.ietf.org/html/rfc7009#section-2.2.1

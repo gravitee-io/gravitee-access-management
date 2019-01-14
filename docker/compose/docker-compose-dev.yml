@@ -1,0 +1,73 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+version: '2'
+
+services:
+
+  mongodb:
+    image: mongo:3.4
+    container_name: gio_am_mongodb
+    ports:
+    - 27017:27017
+    volumes:
+      - ./data/am-mongodb:/data/db
+      - ./logs/am-mongodb:/var/log/mongodb
+
+  gateway:
+    image: graviteeio/am-gateway:${GIO_AM_VERSION}
+    container_name: gio_am_gateway
+    ports:
+    - 8092:8092
+    - 5092:5005
+    links:
+      - mongodb
+    depends_on:
+      - mongodb
+    volumes:
+      - ./logs/am-gateway:/etc/gravitee.io/log
+    environment:
+      - gravitee_management_mongodb_uri=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      - gravitee_oauth2_mongodb_uri=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      - JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+
+  management:
+    image: graviteeio/am-management-api:${GIO_AM_VERSION}
+    container_name: gio_am_management
+    ports:
+      - 8093:8093
+      - 5093:5005
+    links:
+      - mongodb
+    depends_on:
+      - mongodb
+    volumes:
+      - ./logs/am-management-api:/etc/gravitee.io/log
+    environment:
+      - gravitee_management_mongodb_uri=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      - gravitee_oauth2_mongodb_uri=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      - JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+
+  webui:
+    image: graviteeio/am-management-ui:${GIO_AM_VERSION}
+    container_name: gio_am_webui
+    depends_on:
+      - management
+    environment:
+      - MGMT_API_URL=http://localhost:${NGINX_PORT}/am/
+      - MGMT_UI_URL=http://localhost:${NGINX_PORT}/am/ui/
+    volumes:
+      - ./logs/am-webui:/var/log/httpd

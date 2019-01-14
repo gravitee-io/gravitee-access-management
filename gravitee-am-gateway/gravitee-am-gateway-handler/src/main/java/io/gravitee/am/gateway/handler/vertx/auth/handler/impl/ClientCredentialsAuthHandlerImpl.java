@@ -22,8 +22,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.impl.AuthHandlerImpl;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -32,24 +30,11 @@ import io.vertx.ext.web.handler.impl.HttpStatusException;
  */
 public class ClientCredentialsAuthHandlerImpl extends AuthHandlerImpl {
 
-    private static final HttpStatusException UNAUTHORIZED = new HttpStatusException(401);
     private static final String USERNAME_FIELD = "username";
     private static final String PASSWORD_FIELD = "password";
 
     public ClientCredentialsAuthHandlerImpl(AuthProvider authProvider) {
         super(authProvider);
-    }
-
-    @Override
-    public void parseCredentials(RoutingContext context, Handler<AsyncResult<JsonObject>> handler) {
-        parseAuthorization(context, parseAuthorization -> {
-            if (parseAuthorization.failed()) {
-                handler.handle(Future.failedFuture(parseAuthorization.cause()));
-                return;
-            }
-
-            handler.handle(Future.succeededFuture(parseAuthorization.result()));
-        });
     }
 
     protected final void parseAuthorization(RoutingContext context, Handler<AsyncResult<JsonObject>> handler) {

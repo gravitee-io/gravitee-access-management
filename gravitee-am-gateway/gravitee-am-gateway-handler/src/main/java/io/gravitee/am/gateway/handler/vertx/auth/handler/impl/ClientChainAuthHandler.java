@@ -20,6 +20,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.impl.ChainAuthHandlerImpl;
 import io.vertx.ext.web.handler.impl.HttpStatusException;
+import io.vertx.reactivex.ext.web.handler.ChainAuthHandler;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -50,5 +51,9 @@ public class ClientChainAuthHandler extends ChainAuthHandlerImpl {
     @Override
     protected String authenticateHeader(RoutingContext context) {
         return context.request().headers().contains(HttpHeaders.AUTHORIZATION) ?  "Basic realm=\"gravitee-io\"" : null;
+    }
+
+    public static ChainAuthHandler newInstance(io.vertx.ext.web.handler.ChainAuthHandler arg) {
+        return arg != null ? new ChainAuthHandler(arg) : null;
     }
 }

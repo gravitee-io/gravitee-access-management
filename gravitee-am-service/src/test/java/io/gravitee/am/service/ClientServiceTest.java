@@ -23,17 +23,22 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.service.exception.ClientAlreadyExistsException;
 import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ClientServiceImpl;
 import io.gravitee.am.service.model.NewClient;
+import io.gravitee.am.service.model.PatchClient;
 import io.gravitee.am.service.model.TotalClient;
 import io.gravitee.am.service.model.UpdateClient;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -42,14 +47,16 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
@@ -60,6 +67,9 @@ public class ClientServiceTest {
 
     @Mock
     private DomainService domainService;
+
+    @Mock
+    private ScopeService scopeService;
 
     @Mock
     private IdentityProviderService identityProviderService;
@@ -334,10 +344,14 @@ public class ClientServiceTest {
     @Test
     public void shouldCreate() {
         NewClient newClient = Mockito.mock(NewClient.class);
+        Client createClient = Mockito.mock(Client.class);
+
         when(newClient.getClientId()).thenReturn("my-client");
         when(clientRepository.findByClientIdAndDomain("my-client", DOMAIN)).thenReturn(Maybe.empty());
-        when(clientRepository.create(any(Client.class))).thenReturn(Single.just(new Client()));
+        when(clientRepository.create(any(Client.class))).thenReturn(Single.just(createClient));
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
 
         TestObserver testObserver = clientService.create(DOMAIN, newClient).test();
         testObserver.awaitTerminalEvent();
@@ -368,6 +382,8 @@ public class ClientServiceTest {
     public void shouldCreate2_technicalException() {
         NewClient newClient = Mockito.mock(NewClient.class);
         when(newClient.getClientId()).thenReturn("my-client");
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
         when(clientRepository.findByClientIdAndDomain("my-client", DOMAIN)).thenReturn(Maybe.empty());
         when(clientRepository.create(any(Client.class))).thenReturn(Single.error(TechnicalException::new));
 
@@ -397,14 +413,47 @@ public class ClientServiceTest {
     }
 
     @Test
+    public void create_failWithNoDomain() {
+        TestObserver testObserver = clientService.create(new Client()).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    public void create_generateUuidAsClientId() {
+        Client createClient = Mockito.mock(Client.class);
+
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
+        when(clientRepository.create(any(Client.class))).thenReturn(Single.just(createClient));
+
+        Client toCreate = new Client();
+        toCreate.setDomain(DOMAIN);
+        TestObserver testObserver = clientService.create(toCreate).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<Client> captor = ArgumentCaptor.forClass(Client.class);
+        verify(clientRepository, times(1)).create(captor.capture());
+        Assert.assertTrue("client_id must be generated",captor.getValue().getClientId()!=null);
+        Assert.assertTrue("client_secret must be generated",captor.getValue().getClientSecret()!=null);
+    }
+
+    @Test
     public void shouldUpdate() {
-        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
-        when(updateClient.getIdentities()).thenReturn(new HashSet<>(Arrays.asList("id1", "id2")));
+        UpdateClient updateClient = new UpdateClient();
+        updateClient.setIdentities(new HashSet<>(Arrays.asList("id1", "id2")));
+        updateClient.setAuthorizedGrantTypes(Arrays.asList("authorization_code"));
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
         when(identityProviderService.findById("id1")).thenReturn(Maybe.just(new IdentityProvider()));
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(new IdentityProvider()));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
 
         TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
         testObserver.awaitTerminalEvent();
@@ -435,6 +484,8 @@ public class ClientServiceTest {
         UpdateClient updateClient = Mockito.mock(UpdateClient.class);
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.error(TechnicalException::new));
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(DOMAIN,Collections.emptyList())).thenReturn(Single.just(true));
 
         TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
         testObserver.assertError(TechnicalManagementException.class);
@@ -471,6 +522,57 @@ public class ClientServiceTest {
 
         verify(clientRepository, times(1)).findById(anyString());
         verify(clientRepository, never()).update(any(Client.class));
+    }
+
+    @Test
+    public void update_failWithNoDomain() {
+        TestObserver testObserver = clientService.update(new Client()).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+
+    @Test
+    public void update_ok() {
+
+        when(clientRepository.findById(any())).thenReturn(Maybe.just(new Client()));
+        when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
+        when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
+        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(scopeService.validateScope(any(),any())).thenReturn(Single.just(true));
+
+        Client toUpdate = new Client();
+        toUpdate.setDomain(DOMAIN);
+        TestObserver testObserver = clientService.update(toUpdate).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(clientRepository, times(1)).findById(anyString());
+        verify(clientRepository, times(1)).update(any(Client.class));
+    }
+
+
+    @Test
+    public void shouldPatch() {
+        PatchClient patchClient = Mockito.mock(PatchClient.class);
+        when(patchClient.patch(any())).thenReturn(new Client());
+        when(patchClient.getRedirectUris()).thenReturn(Optional.of(Arrays.asList("https://gravitee.io/callback")));
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
+        when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
+        when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
+
+        TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(clientRepository, times(1)).findById(anyString());
+        verify(clientRepository, times(1)).update(any(Client.class));
     }
 
     @Test
@@ -524,5 +626,85 @@ public class ClientServiceTest {
         testObserver.assertNotComplete();
 
         verify(clientRepository, never()).delete("my-client");
+    }
+
+    @Test
+    public void validateClientMetadata_invalidRedirectUriException_forbidLocalhost() {
+        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
+        when(updateClient.getRedirectUris()).thenReturn(Arrays.asList("http://localhost/callback"));
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
+
+        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        testObserver.assertError(InvalidRedirectUriException.class);
+        testObserver.assertNotComplete();
+
+        verify(clientRepository, times(1)).findById(anyString());
+        verify(clientRepository, never()).update(any(Client.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidRedirectUriException_forbidHttp() {
+        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
+        when(updateClient.getRedirectUris()).thenReturn(Arrays.asList("http://gravitee.io/callback"));
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
+
+        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        testObserver.assertError(InvalidRedirectUriException.class);
+        testObserver.assertNotComplete();
+
+        verify(clientRepository, times(1)).findById(anyString());
+        verify(clientRepository, never()).update(any(Client.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidRedirectUriException_forbidWildcard() {
+        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
+        when(updateClient.getRedirectUris()).thenReturn(Arrays.asList("https://gravitee.io/*"));
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
+
+        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        testObserver.assertError(InvalidRedirectUriException.class);
+        testObserver.assertNotComplete();
+
+        verify(clientRepository, times(1)).findById(anyString());
+        verify(clientRepository, never()).update(any(Client.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidClientMetadataException_unknownScope() {
+        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
+        when(scopeService.validateScope(DOMAIN,Collections.emptyList())).thenReturn(Single.just(false));
+
+        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertNotComplete();
+
+        verify(clientRepository, times(1)).findById(anyString());
+        verify(clientRepository, never()).update(any(Client.class));
+    }
+
+    @Test
+    public void validateClientMetadata_validMetadata() {
+        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
+        when(updateClient.getRedirectUris()).thenReturn(Arrays.asList("https://gravitee.io/callback"));
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
+        when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
+        when(scopeService.validateScope(DOMAIN,Collections.emptyList())).thenReturn(Single.just(true));
+
+        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(clientRepository, times(1)).findById(anyString());
+        verify(clientRepository, times(1)).update(any(Client.class));
     }
 }

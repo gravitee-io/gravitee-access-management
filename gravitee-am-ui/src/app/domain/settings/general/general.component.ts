@@ -44,7 +44,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
   }
 
   update() {
-    this.domainService.update(this.domain.id, this.domain).subscribe(response => {
+    this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe(response => {
       this.domain = response.json();
       this.domainService.notify(this.domain);
       this.sidenavService.notify(this.domain);

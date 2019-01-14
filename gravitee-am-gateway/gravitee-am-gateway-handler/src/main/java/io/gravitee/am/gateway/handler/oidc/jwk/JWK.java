@@ -154,4 +154,16 @@ public abstract class JWK {
     public void setX5tS256(String x5tS256) {
         this.x5tS256 = x5tS256;
     }
+
+    public void copy(io.gravitee.am.model.jose.JWK source) {
+        this.setKty(source.getKty());
+        this.setUse(source.getUse());
+        this.setKeyOps(source.getKeyOps());
+        this.setAlg(source.getAlg());
+        this.setKid(source.getKid());
+        this.setX5u(source.getX5u());
+        this.setX5c(source.getX5c());
+        this.setX5t(source.getX5t());
+        this.setX5tS256(source.getX5tS256());
+    }
 }

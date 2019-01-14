@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.endpoint;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.Token;
@@ -43,7 +43,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Collections;
-import java.util.Map;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -62,7 +61,7 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
     private TokenGranter tokenGranter;
 
     @Mock
-    private ClientService clientService;
+    private ClientSyncService clientSyncService;
 
     @Override
     public void setUp() throws Exception {
@@ -178,7 +177,7 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
         // Jackson is unable to generate a JSON from a mocked interface.
         Token accessToken = new AccessToken("my-token");
 
-        when(clientService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(tokenGranter.grant(any(TokenRequest.class), any(io.gravitee.am.model.Client.class))).thenReturn(Single.just(accessToken));
 
         testRequest(

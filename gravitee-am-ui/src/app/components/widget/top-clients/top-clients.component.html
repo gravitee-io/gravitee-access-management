@@ -21,7 +21,7 @@
     <mat-icon mat-list-icon>web_asset</mat-icon>
     <h4 matLine>
       <a [routerLink]="['/domains', topClient.domainId]">{{topClient.domainName}}</a> /
-      <a [routerLink]="['/domains', topClient.domainId, 'clients', topClient.id]">{{topClient.clientId}}</a>
+      <a [routerLink]="['/domains', topClient.domainId, 'clients', topClient.id]">{{topClient.clientName}}</a>
     </h4>
     <p matLine><small>{{topClient.accessTokens}} access tokens</small></p>
   </mat-list-item>
