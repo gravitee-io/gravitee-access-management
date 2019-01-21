@@ -108,13 +108,18 @@ paths:
     post:
       tags:
       - OpenID Connect
-      summary: Create a new client_id.
-      description: The Client Registration Endpoint is an OAuth 2.0 Protected Resource through which a new Client registration can be requested.
+      summary: Register (create) a new client.
+      description: The Dynamic Client Registration (dcr) Endpoint is an OAuth 2.0 Protected Resource through which a new Client registration can be requested.
       consumes:
       - application/json
       produces:
       - application/json
       parameters:
+      - in: header
+        name: Authorization
+        description: Bearer token obtained through client crendentials flow with as mandatory scope "dcr_admin". Token required unless open dynamic client registration is enabled.
+        type: string
+        required: false
       - in: body
         name: request
         schema:
@@ -125,56 +130,103 @@ paths:
           description: Invalid Request
         '401':
           description: Invalid Token
-        '200':
-          description: Claims about the authenticated End-User
+        '403':
+          description: Registration forbidden
+        '201':
+          description: Claims about the registred client
           schema:
             $ref: '#/definitions/ClientRegistrationResponse'
-    put:
+  /register/{client_id}:
+    get:
       tags:
       - OpenID Connect
-      summary: Update a client application.
-      description: The Client Registration Endpoint is an OAuth 2.0 Protected Resource through which a new Client registration can be requested.
-      consumes:
-      - application/json
+      summary: Get a registred client.
+      description: See information about a registred client.
       produces:
       - application/json
       parameters:
-      - in: body
-        name: request
-        schema:
-          $ref: '#/definitions/ClientRegistrationRequest'
-        required: true
+        - in: header
+          name: Authorization
+          description: Bearer token obtained on the register process through the registration_access_token property giving access only to one client matching the client_id path parameter. An admin token can be also obtained through the client crendentials flow with as mandatory scope "dcr_admin".
+          type: string
+          required: true
+        - in: path
+          name: client_id
+          type: string
+          required: true
+          description: ID of the client
       responses:
         '400':
           description: Invalid Request
         '401':
           description: Invalid Token
+        '403':
+          description: Access forbidden
         '200':
-          description: Claims about the authenticated End-User
+          description: Claims about the registred client.
           schema:
             $ref: '#/definitions/ClientRegistrationResponse'
     patch:
       tags:
       - OpenID Connect
-      summary: Patch a client application.
-      description: The Client Registration Endpoint is an OAuth 2.0 Protected Resource through which a new Client registration can be requested.
+      summary: Patch a registred client.
+      description: Update information about a registred client.
       consumes:
       - application/json
       produces:
       - application/json
       parameters:
-      - in: body
-        name: request
-        schema:
-          $ref: '#/definitions/ClientRegistrationRequest'
-        required: true
+        - in: header
+          name: Authorization
+          description: Bearer token obtained on the register process through the registration_access_token property giving access only to one client matching the client_id path parameter. An admin token can be also obtained through the client crendentials flow with as mandatory scope "dcr_admin".
+          type: string
+          required: true
+        - in: path
+          name: client_id
+          type: string
+          required: true
+          description: ID of the client
+        - in: body
+          name: request
+          schema:
+            $ref: '#/definitions/ClientRegistrationRequest'
+          required: true
       responses:
         '400':
           description: Invalid Request
         '401':
           description: Invalid Token
+        '403':
+          description: Access forbidden
         '200':
-          description: Claims about the authenticated End-User
+          description: Claims about the updated client.
+          schema:
+            $ref: '#/definitions/ClientRegistrationResponse'
+    delete:
+      tags:
+      - OpenID Connect
+      summary: Delete a registred client.
+      description: Delete a registred client.
+      parameters:
+        - in: header
+          name: Authorization
+          description: Bearer token obtained on the register process through the registration_access_token property giving access only to one client matching the client_id path parameter. An admin token can be also obtained through the client crendentials flow with as mandatory scope "dcr_admin".
+          type: string
+          required: true
+        - in: path
+          name: client_id
+          type: string
+          required: true
+          description: ID of the client
+      responses:
+        '400':
+          description: Invalid Request
+        '401':
+          description: Invalid Token
+        '403':
+          description: Access forbidden
+        '204':
+          description: Client deleted
           schema:
             $ref: '#/definitions/ClientRegistrationResponse'
 securityDefinitions:
