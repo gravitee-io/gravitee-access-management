@@ -26,7 +26,7 @@ import { ProviderService } from "../../../../services/provider.service";
 })
 export class ClientIdPComponent implements OnInit {
   private domainId: string;
-  private loadIdentities: boolean = true;
+  loadIdentities: boolean = true;
   client: any;
   identityProviders: any[];
   oauth2IdentityProviders: any[];

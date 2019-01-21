@@ -41,10 +41,10 @@
       </div>
       <div fxLayout="row">
         <mat-form-field style="margin-right: 20px;">
-          <input matInput placeholder="Username" #username="ngModel" name="username" [(ngModel)]="user.username" [disabled]="userEmailAsUsername" required>
+          <input matInput placeholder="Username" #username="ngModel" name="username" [(ngModel)]="user.username" [disabled]="useEmailAsUsername" required>
           <mat-error *ngIf="username.errors?.required">Enter username</mat-error>
         </mat-form-field>
-        <mat-checkbox [checked]="userEmailAsUsername" (change)="toggleUseEmailAsUsername($event)" [disabled]="email.invalid" style="margin-top: 20px;"><mat-hint style="font-size: 75%;">Use email as username</mat-hint></mat-checkbox>
+        <mat-checkbox [checked]="useEmailAsUsername" (change)="toggleUseEmailAsUsername($event)" [disabled]="email.invalid" style="margin-top: 20px;"><mat-hint style="font-size: 75%;">Use email as username</mat-hint></mat-checkbox>
       </div>
       <div fxLayout="column" class="additional-information">
         <h4>Additional information</h4>
