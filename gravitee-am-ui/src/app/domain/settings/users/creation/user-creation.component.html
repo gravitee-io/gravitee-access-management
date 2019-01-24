@@ -46,13 +46,7 @@
         </mat-form-field>
         <mat-checkbox [checked]="useEmailAsUsername" (change)="toggleUseEmailAsUsername($event)" [disabled]="email.invalid" style="margin-top: 20px;"><mat-hint style="font-size: 75%;">Use email as username</mat-hint></mat-checkbox>
       </div>
-      <div fxLayout="column" class="additional-information">
-        <h4>Additional information</h4>
-        <span>Custom information about the user. These details will be available in the user's profile.</span>
-        <a (click)="addDynamicComponent()">(+) add user attribute</a>
-        <template #dynamic></template>
-      </div>
-      <div fxLayout="column" style="margin-top: 30px;">
+      <div fxLayout="column">
         <mat-slide-toggle (change)="preRegistration = !preRegistration">Enable pre-registration</mat-slide-toggle>
         <mat-hint style="font-size: 75%;">The user will receive an email to complete his profile and activate account.</mat-hint>
       </div>
@@ -65,6 +59,12 @@
             <mat-error *ngIf="password.errors?.required">Enter password</mat-error>
           </mat-form-field>
         </div>
+      </div>
+      <div fxLayout="column" class="additional-information">
+        <h4>Additional information</h4>
+        <span>Custom information about the user. These details will be available in the user's profile.</span>
+        <a (click)="addDynamicComponent()">(+) add user attribute</a>
+        <template #dynamic></template>
       </div>
       <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;">
         <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
