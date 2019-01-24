@@ -1,5 +1,39 @@
 # Change Log
 
+== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/25?closed=1[2.2.0 (2019-01-24)]
+
+=== Bug fixes
+
+*_Management_*
+
+- Change auth cookie name to avoid potential cookies collision  https://github.com/gravitee-io/graviteeio-access-management/issues/489[#489]
+- Sometimes the /admin context is not well deployed https://github.com/gravitee-io/graviteeio-access-management/issues/488[#488]
+
+*_Oauth2_*
+
+- Authorization request is not retrieved from session when available. https://github.com/gravitee-io/graviteeio-access-management/issues/472[#472]
+
+=== Features
+
+*_Global_*
+
+- User management https://github.com/gravitee-io/graviteeio-access-management/issues/145[#145]
+
+*_Oauth2_*
+
+- Add claims mapping to the JWT Bearer extension grant https://github.com/gravitee-io/graviteeio-access-management/issues/491[#491]
+
+*_Openid_*
+
+- Dynamic client registration https://github.com/gravitee-io/graviteeio-access-management/issues/191[#191]
+
+=== Improvements
+
+*_Oidc_*
+
+- Set default "sub" claim for LDAP Provider if custom mapping is enable https://github.com/gravitee-io/graviteeio-access-management/issues/479[#479]
+
+
 == https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/26?closed=1[2.1.1 (2018-12-05)]
 
 === Bug fixes
