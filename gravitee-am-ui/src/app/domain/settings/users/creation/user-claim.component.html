@@ -17,10 +17,10 @@
 -->
 <div fxLayout="row">
   <mat-form-field fxFlex="40" style="margin-right: 20px;">
-    <input matInput type="text" placeholder="Claim name" name="claimName" [(ngModel)]="claim.name" (blur)="addClaim($event)" required>
+    <input matInput type="text" placeholder="Attribute name" name="claimName" [(ngModel)]="claim.name" (blur)="addClaim($event)" required>
   </mat-form-field>
   <mat-form-field>
-    <input matInput type="text" placeholder="Claim value" name="claimValue" [(ngModel)]="claim.value" (blur)="addClaim($event)"  required>
+    <input matInput type="text" placeholder="Attribute value" name="claimValue" [(ngModel)]="claim.value" (blur)="addClaim($event)"  required>
   </mat-form-field>
   <button mat-icon-button (click)="removeClaim(claim, $event)"><mat-icon>clear</mat-icon></button>
 </div>

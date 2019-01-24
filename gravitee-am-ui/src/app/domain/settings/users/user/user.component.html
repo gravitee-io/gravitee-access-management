@@ -71,8 +71,8 @@
 
         <div fxLayout="column" class="additional-information" *ngIf="!isEmptyObject(user.additionalInformation) || editMode()">
           <h4>Additional information</h4>
-          <span>Custom details also known as 'Claims' about the user. These details are available in the user's profile.</span>
-          <a (click)="addDynamicComponent()" *ngIf="editMode()">(+) add claim</a>
+          <span>Custom information about the user. These details are available in the user's profile.</span>
+          <a (click)="addDynamicComponent()" *ngIf="editMode()">(+) add user attribute</a>
           <template #dynamic></template>
           <div *ngFor="let keyValuePair of userAdditionalInformation | mapToIterable">
             <div *ngIf="keyValuePair.value" fxLayout="row">
