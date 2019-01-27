@@ -1,0 +1,606 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+swagger: '2.0'
+info:
+  description: >-
+    Gravitee.io - Access Management - SCIM 2.0 API.
+    Defines The SCIM 2.0 Endpoints exposed by AM server.
+  version: 2.2.0
+  title: Gravitee.io - Access Management - SCIM 2.0 API
+  contact:
+    email: contact@graviteesource.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+host: auth.gravitee.io
+basePath: /{domain}/scim
+schemes:
+- https
+paths:
+  /ServiceProviderConfig:
+    get:
+      tags:
+      - SCIM 2.0
+      summary: Get SCIM 2.0 Provider configuration information
+      description: Endpoint to facilitate discovery of SCIM service provider feature.
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: The SCIM specification features
+          schema:
+            $ref: '#/definitions/SCIMProviderMetadataResponse'
+  /Users:
+    get:
+      tags:
+      - SCIM 2.0
+      summary: List User resources
+      description: SCIM 2.0 endpoint to retrieve User resources.
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: startIndex
+        type: integer
+        description: The 1-based index of the first query result.
+        default: 1
+      - in: query
+        name: count
+        type: integer
+        description: Non-negative integer. Specifies the desired results per page, e.g., 10.
+      responses:
+        '200':
+          description: A JSON object that represents a set of User resources
+          schema:
+            $ref: '#/definitions/Users'
+        '401':
+          description: Invalid Token
+    post:
+      tags:
+      - SCIM 2.0
+      summary: Create User resource
+      description: SCIM 2.0 endpoint to create User resource.
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: user
+        description: The user to create.
+        schema:
+          $ref: '#/definitions/User'
+      responses:
+        '201':
+          description: A JSON object that represents the user created
+          schema:
+            $ref: '#/definitions/User'
+        '401':
+          description: Invalid Token
+        '400':
+          description: Bad request
+  /Users/{userId}:
+    get:
+      tags:
+      - SCIM 2.0
+      summary: Get User resource
+      description: SCIM 2.0 endpoint to get User
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: userId
+        type: string
+        required: true
+        description: Unique identifier for the User
+      responses:
+        '200':
+          description: A JSON object that represents the user updated
+          schema:
+            $ref: '#/definitions/User'
+        '401':
+          description: Invalid Token
+        '404':
+          description: User not found
+    put:
+      tags:
+      - SCIM 2.0
+      summary: Replace User resource
+      description: SCIM 2.0 endpoint to replace User's attributes
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: userId
+        type: string
+        required: true
+        description: Unique identifier for the User
+      - in: body
+        name: user
+        description: The user's attributes to update.
+        schema:
+          $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: A JSON object that represents the user updated
+          schema:
+            $ref: '#/definitions/User'
+        '401':
+          description: Invalid Token
+        '400':
+          description: Bad request
+        '404':
+          description: User not found
+    delete:
+      tags:
+      - SCIM 2.0
+      summary: Delete User resource
+      description: SCIM 2.0 endpoint to delete User
+      parameters:
+      - in: path
+        name: userId
+        type: string
+        required: true
+        description: Unique identifier for the User
+      responses:
+        '204':
+          description: User is deleted
+        '401':
+          description: Invalid Token
+        '404':
+          description: User not found
+  /Groups:
+    get:
+      tags:
+      - SCIM 2.0
+      summary: List Group resources
+      description: SCIM 2.0 endpoint to retrieve Group resources.
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: startIndex
+        type: integer
+        description: The 1-based index of the first query result.
+        default: 1
+      - in: query
+        name: count
+        type: integer
+        description: Non-negative integer. Specifies the desired results per page, e.g., 10.
+      responses:
+        '200':
+          description: A JSON object that represents a set of Group resources
+          schema:
+            $ref: '#/definitions/Groups'
+        '401':
+          description: Invalid Token
+    post:
+      tags:
+      - SCIM 2.0
+      summary: Create Group resource
+      description: SCIM 2.0 endpoint to create Group resource.
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: group
+        description: The group to create.
+        schema:
+          $ref: '#/definitions/Group'
+      responses:
+        '201':
+          description: A JSON object that represents the group created
+          schema:
+            $ref: '#/definitions/Group'
+        '401':
+          description: Invalid Token
+        '400':
+          description: Bad request
+  /Groups/{groupId}:
+    get:
+      tags:
+      - SCIM 2.0
+      summary: Get Group resource
+      description: SCIM 2.0 endpoint to get a Group
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: groupId
+        type: string
+        required: true
+        description: Unique identifier for the Group
+      responses:
+        '200':
+          description: A JSON object that represents the group updated
+          schema:
+            $ref: '#/definitions/Group'
+        '401':
+          description: Invalid Token
+        '404':
+          description: Group not found
+    put:
+      tags:
+      - SCIM 2.0
+      summary: Replace Group resource
+      description: SCIM 2.0 endpoint to replace Group's attributes
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: groupId
+        type: string
+        required: true
+        description: Unique identifier for the Group
+      - in: body
+        name: group
+        description: The group's attributes to update.
+        schema:
+          $ref: '#/definitions/Group'
+      responses:
+        '200':
+          description: A JSON object that represents the group updated
+          schema:
+            $ref: '#/definitions/Group'
+        '401':
+          description: Invalid Token
+        '400':
+          description: Bad request
+        '404':
+          description: Group not found
+    delete:
+      tags:
+      - SCIM 2.0
+      summary: Delete Group resource
+      description: SCIM 2.0 endpoint to delete Group
+      parameters:
+      - in: path
+        name: groupId
+        type: string
+        required: true
+        description: Unique identifier for the Group
+      responses:
+        '204':
+          description: Group is deleted
+        '401':
+          description: Invalid Token
+        '404':
+          description: Group not found
+securityDefinitions:
+  bearerAuth:
+    type: oauth2
+    flow: client_credentials
+    tokenUrl: https://auth.gravitee.io/{domain}/oauth/token
+    scopes:
+      scim: Grants SCIM access
+definitions:
+  SCIMProviderMetadataResponse:
+    type: object
+    properties:
+      schemas:
+        type: array
+        description: REQUIRED. Array of Strings containing URIs that are used to indicate the namespaces of the SCIM schemas.
+        items:
+          type: string
+      documentationUri:
+        type: string
+        description: OPTIONAL. An HTTP-addressable URL pointing to the service provider's human-consumable help documentation.
+      patch:
+        $ref: '#/definitions/ComplexType'
+        description: REQUIRED. A complex type that specifies PATCH configuration options.
+      bulk:
+        $ref: '#/definitions/ComplexType'
+        description: REQUIRED. A complex type that specifies bulk configuration options.
+      filter:
+        $ref: '#/definitions/ComplexType'
+        description: REQUIRED. A complex type that specifies FILTER options.
+      changePassword:
+        $ref: '#/definitions/ComplexType'
+        description: REQUIRED. A complex type that specifies configuration options related to changing a password.
+      sort:
+        $ref: '#/definitions/ComplexType'
+        description: REQUIRED. A complex type that specifies Sort configuration options.
+      etag:
+        $ref: '#/definitions/ComplexType'
+        description: REQUIRED. A complex type that specifies ETag configuration options.
+      authenticationSchemes:
+        type: array
+        description: REQUIRED. A multi-valued complex type that specifies supported authentication scheme properties.
+        items:
+          $ref: '#/definitions/AuthenticationScheme'
+  ComplexType:
+    type: object
+    properties:
+      supported:
+        type: boolean
+        description: REQUIRED. A Boolean value specifying whether or not the operation is supported
+      maxOperations:
+        type: integer
+        description: REQUIRED. An integer value specifying the maximum number of operations.
+      maxPayloadSize:
+        type: integer
+        description: REQUIRED. An integer value specifying the maximum number of resources returned in a response.
+  AuthenticationScheme:
+    type: object
+    properties:
+      type:
+        type: string
+        description: REQUIRED. The authentication scheme.
+        enum: [oauth, oauth2, oauthbearertoken, httpbasic, httpdigest]
+      name:
+        type: string
+        description: REQUIRED. The common authentication scheme name, e.g., HTTP Basic.
+      description:
+        type: string
+        description: REQUIRED. A description of the authentication scheme.
+      specUri:
+        type: string
+        description: OPTIONAL. An HTTP-addressable URL pointing to the authentication scheme's specification.
+      documentationUri:
+        type: string
+        description: OPTIONAL. An HTTP-addressable URL pointing to the authentication scheme's usage documentation.
+  Users:
+    type: object
+    properties:
+      schemas:
+        type: array
+        description: REQUIRED. Array of Strings containing URIs that are used to indicate the namespaces of the SCIM schemas.
+        items:
+          type: string
+      totalResults:
+        type: integer
+        description: REQUIRED. The total number of results returned by the list or query operation.
+      Resources:
+        type: array
+        description: REQUIRED. A multi-valued list of complex objects containing the requested resources.
+        items:
+          $ref: '#/definitions/User'
+  User:
+    type: object
+    properties:
+      schemas:
+        type: array
+        description: REQUIRED. Array of Strings containing URIs that are used to indicate the namespaces of the SCIM schemas.
+        items:
+          type: string
+      id:
+        type: string
+        description: REQUIRED. A unique identifier for a SCIM resource as defined by the service provider.
+      externalId:
+        type: string
+        description: OPTIONAL. A String that is an identifier for the resource as defined by the provisioning client.
+      meta:
+        $ref: '#/definitions/Meta'
+        description: A complex attribute containing resource metadata.
+      userName:
+        type: string
+        description: REQUIRED. A service provider's unique identifier for the user, typically used by the user to directly authenticate to the service provider.
+      name:
+        $ref: '#/definitions/Name'
+        description: The components of the user's name.
+      displayName:
+        type: string
+        description: The name of the user, suitable for display to end-users.
+      nickName:
+        type: string
+        description: The casual way to address the user in real life, e.g., "Bob" or "Bobby" instead of "Robert".
+      profileUrl:
+        type: string
+        description: A URI that is a uniform resource locator and that points to a location representing the user's online profile (e.g., a web page).
+      title:
+        type: string
+        description: The user's title, such as "Vice President".
+      userType:
+        type: string
+        description: Used to identify the relationship between the organization and the user.
+      preferredLanguage:
+        type: string
+        description: Indicates the user's preferred written or spoken languages and is generally used for selecting a localized user interface.
+      locale:
+        type: string
+        description: Used to indicate the User's default location for purposes of localizing such items as currency, date time format, or numerical representations.
+      timezone:
+        type: string
+        description: The User's time zone, in IANA Time Zone database format [RFC6557], also known as the "Olson" time zone database format [Olson-TZ] (e.g., "America/Los_Angeles").
+      active:
+        type: boolean
+        description: A Boolean value indicating the user's administrative status.
+      password:
+        type: string
+        description: This attribute is intended to be used as a means to set, replace or compare (i.e., filter for equality) a password.
+      emails:
+        type: array
+        description: Email addresses for the User.
+        items:
+          $ref: '#/definitions/Attribute'
+      phoneNumbers:
+        type: array
+        description: Phone numbers for the user.
+        items:
+          $ref: '#/definitions/Attribute'
+      ims:
+        type: array
+        description: Instant messaging address for the user.
+        items:
+          $ref: '#/definitions/Attribute'
+      photos:
+        type: array
+        description: A URI that is a uniform resource locator (as defined in Section 1.1.3 of [RFC3986]) that points to a resource location representing the user's image.
+        items:
+          $ref: '#/definitions/Attribute'
+      addresses:
+        type: array
+        description: A physical mailing address for this user.
+        items:
+          $ref: '#/definitions/Address'
+      groups:
+        type: array
+        description: A list of groups to which the user belongs, either through direct membership, through nested groups, or dynamically calculated.
+        items:
+          $ref: '#/definitions/Member'
+      entitlements:
+        type: array
+        description: A list of entitlements for the user that represent a thing the user has.
+        items:
+          type: string
+      roles:
+        type: array
+        description: A list of roles for the user that collectively represent who the user is, e.g., "Student", "Faculty".
+        items:
+          type: string
+      x509Certificates:
+        type: array
+        description: A list of certificates associated with the resource.
+        items:
+          $ref: '#/definitions/Certificate'
+  Groups:
+    type: object
+    properties:
+      schemas:
+        type: array
+        description: REQUIRED. Array of Strings containing URIs that are used to indicate the namespaces of the SCIM schemas.
+        items:
+          type: string
+      totalResults:
+        type: integer
+        description: REQUIRED. The total number of results returned by the list or query operation.
+      Resources:
+        type: array
+        description: REQUIRED. A multi-valued list of complex objects containing the requested resources.
+        items:
+          $ref: '#/definitions/Group'
+  Group:
+    type: object
+    properties:
+      schemas:
+        type: array
+        description: REQUIRED. Array of Strings containing URIs that are used to indicate the namespaces of the SCIM schemas.
+        items:
+          type: string
+      id:
+        type: string
+        description: REQUIRED. A unique identifier for a SCIM resource as defined by the service provider.
+      externalId:
+        type: string
+        description: OPTIONAL. A String that is an identifier for the resource as defined by the provisioning client.
+      meta:
+        $ref: '#/definitions/Meta'
+        description: A complex attribute containing resource metadata.
+      displayName:
+        type: string
+        description: REQUIRED. A human-readable name for the Group.
+      members:
+        type: array
+        description: A list of members of the Group.
+        items:
+          $ref: '#/definitions/Member'
+  Meta:
+    type: object
+    properties:
+      resourceType:
+        type: string
+        description: The name of the resource type of the resource.
+      created:
+        type: string
+        description: The "DateTime" that the resource was added to the service provider.
+      lastModified:
+        type: string
+        description: The most recent DateTime that the details of this resource were updated at the service provider.
+      location:
+        type: string
+        description: The URI of the resource being returned.
+      version:
+        type: string
+        description: The version of the resource being returned.
+  Name:
+    type: object
+    properties:
+      formatted:
+        type: string
+        description: The full name, including all middle names, titles, and suffixes as appropriate, formatted for display (e.g., "Ms. Barbara Jane Jensen, III").
+      familyName:
+        type: string
+        description: The family name of the User, or last name in most Western languages (e.g., "Jensen" given the full name "Ms. Barbara Jane Jensen, III").
+      givenName:
+        type: string
+        description: The given name of the User, or first name in most Western languages (e.g., "Barbara" given the full name" Ms. Barbara Jane Jensen, III").
+      middleName:
+        type: string
+        description: The middle name(s) of the User (e.g., "Jane" given the full name "Ms. Barbara Jane Jensen, III").
+      honorificPrefix:
+        type: string
+        description: The honorific prefix(es) of the User, or title in most Western languages (e.g., "Ms." given the full name "Ms. Barbara Jane Jensen, III").
+      honorificSuffix:
+        type: string
+        description: The honorific suffix(es) of the User, or suffix in most Western languages (e.g., "III" given the full name "Ms. Barbara Jane Jensen, III").
+  Attribute:
+    type: object
+    properties:
+      value:
+        type: string
+        description: The attribute's significant value, e.g., email address, phone number.
+      type:
+        type: string
+        description: A label indicating the attribute's function, e.g., "work" or "home".
+      primary:
+        type: boolean
+        description: A Boolean value indicating the 'primary' or preferred attribute value for this attribute, e.g., the preferred mailing address or the primary email address.
+  Address:
+    type: object
+    properties:
+      formatted:
+        type: string
+        description: The full mailing address, formatted for display or use with a mailing label.
+      streetAddress:
+        type: string
+        description: The full street address component, which may include house number, street name, P.O. box, and multi-line extended street address information.
+      locality:
+        type: string
+        description: The city or locality component.
+      region:
+        type: string
+        description: The state or region component.
+      postalCode:
+        type: string
+        description: The zip code or postal code component.
+      country:
+        type: string
+        description: The country name component.
+  Member:
+    type: object
+    properties:
+      value:
+        type: string
+        description: id attribute of a SCIM resource
+      $ref:
+        type: string
+        description: The URI of a SCIM resource.
+      display:
+        trype: string
+        description: A human-readable name for the member
+  Certificate:
+    type: object
+    properties:
+      value:
+        type: string
+        description: DER-encoded X.509 certificate
