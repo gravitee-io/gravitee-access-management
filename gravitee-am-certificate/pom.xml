@@ -35,6 +35,7 @@
     <modules>
         <module>gravitee-am-certificate-api</module>
         <module>gravitee-am-certificate-javakeystore</module>
+        <module>gravitee-am-certificate-pkcs12</module>
     </modules>
 
     <dependencies>
