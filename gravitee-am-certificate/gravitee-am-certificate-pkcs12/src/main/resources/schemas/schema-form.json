@@ -1,0 +1,33 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:certificate:pkcs12:PKCS12Configuration",
+  "properties" : {
+    "content" : {
+      "title": "PKCS#12 file",
+      "description": "PKCS file",
+      "type" : "string",
+      "widget" : "file"
+    },
+    "storepass" : {
+      "title": "Keystore password",
+      "description": "The password which is used to protect the integrity of the keystore.",
+      "type" : "string"
+    },
+    "alias" : {
+      "title": "Key alias",
+      "description": "Alias which identify the keystore entry.",
+      "type" : "string"
+    },
+    "keypass" : {
+      "title": "Key password",
+      "description": "The password used to protect the private key of the generated key pair.",
+      "type" : "string"
+    }
+  },
+  "required": [
+    "content",
+    "storepass",
+    "alias",
+    "keypass"
+  ]
+}
