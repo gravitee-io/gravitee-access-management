@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.common.event;
+import { TestBed, inject } from '@angular/core/testing';
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum Type {
+import { EmailResolver } from './email.resolver';
 
-    DOMAIN,
-    CLIENT,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL
-}
+describe('EmailResolver', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [EmailResolver]
+    });
+  });
+
+  it('should ...', inject([EmailResolver], (service: EmailResolver) => {
+    expect(service).toBeTruthy();
+  }));
+});

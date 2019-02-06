@@ -33,13 +33,12 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.lang.String.format;
-import static java.util.Objects.isNull;
 import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
 
 /**
@@ -53,14 +52,8 @@ public class EmailServiceImpl implements EmailService {
     @Value("${templates.path:${gravitee.home}/templates}")
     private String templatesPath;
 
-    @Value("${email.subject:[Gravitee.io] %s}")
-    private String subject;
-
     @Value("${email.enabled:false}")
     private boolean enabled;
-
-    @Value("${email.from}")
-    private String defaultFrom;
 
     @Autowired
     private JavaMailSender mailSender;
@@ -73,26 +66,27 @@ public class EmailServiceImpl implements EmailService {
         if (enabled) {
             try {
                 final MimeMessageHelper mailMessage = new MimeMessageHelper(mailSender.createMimeMessage(), true, StandardCharsets.UTF_8.name());
-
                 final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
-                final String content = processTemplateIntoString(template, email.getParams());
+                final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
 
-                final String from = isNull(email.getFrom()) || email.getFrom().isEmpty() ? defaultFrom : email.getFrom();
+                // compute email subject
+                final String subject = processTemplateIntoString(plainTextTemplate, email.getParams());
+                // compute email content
+                final String content = processTemplateIntoString(template, email.getParams());
+                final String from = email.getFrom();
 
                 String fromName = email.getFromName();
                 if (fromName == null || fromName.isEmpty()) {
                     mailMessage.setFrom(from);
                 } else {
-                    mailMessage.setFrom(from, email.getFromName());
+                    mailMessage.setFrom(from, fromName);
                 }
 
                 mailMessage.setTo(email.getTo());
-                mailMessage.setSubject(format(subject, email.getSubject()));
+                mailMessage.setSubject(subject);
 
                 final String html = addResourcesInMessage(mailMessage, content);
-
                 LOGGER.debug("Sending an email to: {}\nSubject: {}\nMessage: {}", email.getTo(), email.getSubject(), html);
-
                 mailSender.send(mailMessage.getMimeMessage());
             } catch (final Exception ex) {
                 LOGGER.error("Error while sending email", ex);

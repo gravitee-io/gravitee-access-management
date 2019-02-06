@@ -13,21 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.common.event;
+package io.gravitee.am.service;
+
+import io.gravitee.am.model.Email;
+import io.gravitee.am.service.model.NewEmail;
+import io.gravitee.am.service.model.UpdateEmail;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
+
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public interface EmailTemplateService {
 
-    DOMAIN,
-    CLIENT,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL
+    Single<List<Email>> findAll();
+
+    Maybe<Email> findByDomainAndTemplate(String domain, String template);
+
+    Single<Email> create(String domain, NewEmail newEmail);
+
+    Single<Email> update(String domain, String id, UpdateEmail updateEmail);
+
+    Completable delete(String emailId);
+
 }

@@ -86,6 +86,9 @@ import {GroupSettingsComponent} from "./domain/settings/groups/group/settings/se
 import {GroupMembersComponent} from "./domain/settings/groups/group/members/members.component";
 import {ScimComponent} from "./domain/settings/scim/scim.component";
 import {DomainSettingsLoginComponent} from "./domain/settings/login/login.component";
+import {DomainSettingsEmailsComponent} from "./domain/settings/emails/emails.component";
+import {EmailComponent} from "./domain/settings/emails/email/email.component";
+import {EmailResolver} from "./resolvers/email.resolver";
 
 const routes: Routes = [
   { path: 'dashboard',
@@ -497,6 +500,21 @@ const routes: Routes = [
             component: FormComponent,
             resolve: {
               form: FormResolver
+            },
+          },
+          { path: 'emails',
+            component: DomainSettingsEmailsComponent,
+            data: {
+              menu: {
+                label: 'Emails',
+                section: 'User Management'
+              }
+            }
+          },
+          { path: 'emails/email',
+            component: EmailComponent,
+            resolve: {
+              email: EmailResolver
             },
           },
           { path: 'users', component: UsersComponent,

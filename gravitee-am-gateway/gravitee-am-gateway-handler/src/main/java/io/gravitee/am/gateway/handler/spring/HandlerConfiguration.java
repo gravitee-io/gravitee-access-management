@@ -19,6 +19,8 @@ import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.auth.idp.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.gateway.handler.auth.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.gateway.handler.email.EmailManager;
+import io.gravitee.am.gateway.handler.email.impl.EmailManagerImpl;
 import io.gravitee.am.gateway.handler.jwk.JwkService;
 import io.gravitee.am.gateway.handler.jwk.impl.JwkServiceImpl;
 import io.gravitee.am.gateway.handler.jws.JwsService;
@@ -92,5 +94,10 @@ public class HandlerConfiguration {
     @Bean
     public FormManager pageManager() {
         return new FormManagerImpl();
+    }
+
+    @Bean
+    public EmailManager emailManager() {
+        return new EmailManagerImpl();
     }
 }

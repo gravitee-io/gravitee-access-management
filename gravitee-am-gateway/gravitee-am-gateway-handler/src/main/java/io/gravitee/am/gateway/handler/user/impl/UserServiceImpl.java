@@ -21,12 +21,14 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.email.EmailManager;
 import io.gravitee.am.gateway.handler.email.EmailService;
 import io.gravitee.am.gateway.handler.jwt.JwtBuilder;
 import io.gravitee.am.gateway.handler.jwt.JwtParser;
 import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
@@ -76,6 +78,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    private EmailManager emailManager;
 
     @Override
     public Maybe<User> verifyToken(String token) {
@@ -155,33 +160,36 @@ public class UserServiceImpl implements UserService {
                 .map(users -> users.stream().filter(user -> user.isInternal()).findFirst())
                 .flatMapMaybe(optionalUser -> optionalUser.isPresent() ? Maybe.just(optionalUser.get()) : Maybe.empty())
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(email)))
-                .map(user ->
-                        convert(user,
-                                resetPasswordSubject,
-                                EmailBuilder.EmailTemplate.RESET_PASSWORD,
-                                "/resetPassword",
-                                "resetPasswordUrl"))
-                .doOnSuccess(email1 -> new Thread(() -> emailService.send(email1)).start())
-                .toSingle().toCompletable();
+                .toSingle()
+                .doOnSuccess(user -> new Thread(() -> completeForgotPassword(user)).start())
+                .toCompletable();
 
     }
 
-    private Email convert(User user, String title, EmailBuilder.EmailTemplate template, String redirectUri, String redirectUriName) {
-        Map<String, Object> params = prepareEmail(user, redirectUri, redirectUriName);
-        Email email = new EmailBuilder()
+    private void completeForgotPassword(User user) {
+        io.gravitee.am.model.Email email = emailManager.getEmail(Template.RESET_PASSWORD.template(), resetPasswordSubject, expireAfter);
+        Email email1 = convert(user, email, "/resetPassword", "resetPasswordUrl");
+        emailService.send(email1);
+    }
+
+    private Email convert(User user, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {
+        Map<String, Object> params = prepareEmail(user, email.getExpiresAfter(), redirectUri, redirectUriName);
+        Email email1 = new EmailBuilder()
                 .to(user.getEmail())
-                .subject(title)
-                .template(template)
+                .from(email.getFrom())
+                .fromName(email.getFromName())
+                .subject(email.getSubject())
+                .template(email.getTemplate())
                 .params(params)
                 .build();
-        return email;
+        return email1;
     }
 
-    private Map<String, Object> prepareEmail(User user, String redirectUri, String redirectUriName) {
+    private Map<String, Object> prepareEmail(User user, int expiresAfter, String redirectUri, String redirectUriName) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
         claims.put(Claims.iat, new Date().getTime() / 1000);
-        claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expireAfter * 1000)).getTime() / 1000);
+        claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expiresAfter * 1000)).getTime() / 1000);
         claims.put(Claims.sub, user.getId());
         claims.put(StandardClaims.EMAIL, user.getEmail());
         claims.put(StandardClaims.GIVEN_NAME, user.getFirstName());

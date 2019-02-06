@@ -16,10 +16,7 @@
 package io.gravitee.am.management.handlers.management.api;
 
 import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
-import io.gravitee.am.management.service.CertificatePluginService;
-import io.gravitee.am.management.service.ExtensionGrantPluginService;
-import io.gravitee.am.management.service.IdentityProviderManager;
-import io.gravitee.am.management.service.IdentityProviderPluginService;
+import io.gravitee.am.management.service.*;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.*;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -90,6 +87,12 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    protected EmailTemplateService emailTemplateService;
+
+    @Autowired
+    protected EmailManager emailManager;
 
     @Configuration
     @ComponentScan("io.gravitee.am.management.handlers.management.api.resources.enhancer")
@@ -167,6 +170,16 @@ public abstract class JerseySpringTest {
         @Bean
         public IdentityProviderManager identityProviderManager() {
             return mock(IdentityProviderManager.class);
+        }
+
+        @Bean
+        public EmailTemplateService emailTemplateService() {
+            return mock(EmailTemplateService.class);
+        }
+
+        @Bean
+        public EmailManager emailManager() {
+            return mock(EmailManager.class);
         }
     }
 

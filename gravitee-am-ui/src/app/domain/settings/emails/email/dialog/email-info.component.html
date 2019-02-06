@@ -1,0 +1,61 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div>
+  <h1 matDialogTitle>Write your own {{data.template}} email template</h1>
+  <mat-dialog-content>
+    <p>This is the minimal HTML element required to perform {{data.template}}.</p>
+    <pre *ngIf="data.rawTemplate === 'RESET_PASSWORD'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Reset password custom</title>
+        </head>
+        <body>
+          <div>
+            <h3>Hi ${user.firstName} ${user.lastName},</h3>
+            <p>You have requested to reset your password.</p>
+            <p><a href="${resetPasswordUrl}">Click here</a> to change it.</p>
+          </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
+    <pre *ngIf="data.rawTemplate === 'REGISTRATION_CONFIRMATION'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html>
+         <head>
+          <title>Registration confirmation custom</title>
+        </head>
+        <body>
+          <div>
+            <h3>Hi ${user.firstName} ${user.lastName},</h3>
+            <p>You have been successfully registered.</p>
+            <p><a href="${registrationUrl}">Click here</a> to confirm your registration.</p>
+          </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <span fxFlex></span>
+    <button type="button" mat-raised-button (click)="dialogRef.close()" class="dialog-cancel">Close</button>
+  </mat-dialog-actions>
+</div>
