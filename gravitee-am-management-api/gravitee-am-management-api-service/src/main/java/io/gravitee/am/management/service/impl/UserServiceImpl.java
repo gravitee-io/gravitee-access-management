@@ -20,9 +20,11 @@ import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.UserRepository;
@@ -76,6 +78,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private JwtBuilder jwtBuilder;
+
+    @Autowired
+    private EmailManager emailManager;
 
     @Override
     public Single<Page<User>> search(String domain, String query, int limit) {
@@ -217,23 +222,30 @@ public class UserServiceImpl implements UserService {
     }
 
     private void completeUserRegistration(User user) {
-        Map<String, Object> params = prepareUserRegistration(user);
-
-        Email email = new EmailBuilder()
-                .to(user.getEmail())
-                .subject(registrationSubject)
-                .template(EmailBuilder.EmailTemplate.USER_REGISTRATION)
-                .params(params)
-                .build();
-
-        emailService.send(email);
+        final String templateName = Template.REGISTRATION_CONFIRMATION.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + user.getDomain();
+        io.gravitee.am.model.Email email = emailManager.getEmail(templateName, registrationSubject, expireAfter);
+        Email email1 = convert(user, email, "/confirmRegistration", "registrationUrl");
+        emailService.send(email1);
     }
 
-    private Map<String, Object> prepareUserRegistration(User user) {
+    private Email convert(User user, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {
+        Map<String, Object> params = prepareEmail(user, email.getExpiresAfter(), redirectUri, redirectUriName);
+        Email email1 = new EmailBuilder()
+                .to(user.getEmail())
+                .from(email.getFrom())
+                .fromName(email.getFromName())
+                .subject(email.getSubject())
+                .template(email.getTemplate())
+                .params(params)
+                .build();
+        return email1;
+    }
+
+    private Map<String, Object> prepareEmail(User user, int expiresAfter, String redirectUri, String redirectUriName) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
         claims.put(Claims.iat, new Date().getTime() / 1000);
-        claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expireAfter * 1000)).getTime() / 1000);
+        claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expiresAfter * 1000)).getTime() / 1000);
         claims.put(Claims.sub, user.getId());
         claims.put(StandardClaims.EMAIL, user.getEmail());
         claims.put(StandardClaims.GIVEN_NAME, user.getFirstName());
@@ -246,11 +258,11 @@ public class UserServiceImpl implements UserService {
             entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
         }
 
-        String registrationUrl = entryPoint + "/" + user.getDomain() + "/confirmRegistration?token=" + token;
+        String redirectUrl = entryPoint + "/" + user.getDomain() + redirectUri + "?token=" + token;
 
         Map<String, Object> params = new HashMap<>();
         params.put("user", user);
-        params.put("registrationUrl", registrationUrl);
+        params.put(redirectUriName, redirectUrl);
         params.put("token", token);
 
         return params;

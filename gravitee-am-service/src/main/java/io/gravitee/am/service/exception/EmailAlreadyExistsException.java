@@ -13,21 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.common.event;
+package io.gravitee.am.service.exception;
+
+import io.gravitee.common.http.HttpStatusCode;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public class EmailAlreadyExistsException extends AbstractManagementException {
 
-    DOMAIN,
-    CLIENT,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL
+    private final String template;
+
+    public EmailAlreadyExistsException(String template) {
+        this.template = template;
+    }
+
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.BAD_REQUEST_400;
+    }
+
+    @Override
+    public String getMessage() {
+        return "A email with template [" + template + "] already exists.";
+    }
 }

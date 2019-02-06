@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.common.event;
+package io.gravitee.am.management.service;
+
+import io.gravitee.am.model.Email;
+import io.reactivex.Completable;
+import io.reactivex.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public interface EmailManager {
 
-    DOMAIN,
-    CLIENT,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL
+    String TEMPLATE_NAME_SEPARATOR = "|";
+
+    Single<Email> reloadEmail(Email email);
+
+    Completable deleteEmail(String email);
+
+    Email getEmail(String template, String defaultSubject, int defaultExpiresAfter);
 }

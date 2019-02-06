@@ -90,6 +90,7 @@ import { DomainSettingsProvidersComponent } from "./domain/settings/providers/pr
 import { DomainSettingsExtensionGrantsComponent } from "./domain/settings/extension-grants/extension-grants.component";
 import { DomainSettingsFormsComponent } from "./domain/settings/forms/forms.component";
 import { DomainSettingsLoginComponent } from "./domain/settings/login/login.component";
+import { DomainSettingsEmailsComponent } from "./domain/settings/emails/emails.component";
 import { ClientsResolver } from "./resolvers/clients.resolver";
 import { ClientResolver } from "./resolvers/client.resolver";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
@@ -160,6 +161,9 @@ import { GroupService } from "./services/group.service";
 import { GroupsResolver } from "./resolvers/groups.resolver";
 import { GroupResolver } from "./resolvers/group.resolver";
 import { ScimComponent } from "./domain/settings/scim/scim.component";
+import { EmailComponent, EmailInfoDialog } from "./domain/settings/emails/email/email.component";
+import { EmailService } from "./services/email.service";
+import { EmailResolver } from "./resolvers/email.resolver";
 
 @NgModule({
   declarations: [
@@ -181,6 +185,7 @@ import { ScimComponent } from "./domain/settings/scim/scim.component";
     DomainSettingsExtensionGrantsComponent,
     DomainSettingsFormsComponent,
     DomainSettingsLoginComponent,
+    DomainSettingsEmailsComponent,
     ClientsComponent,
     ConfirmComponent,
     EmptystateComponent,
@@ -245,7 +250,9 @@ import { ScimComponent } from "./domain/settings/scim/scim.component";
     GroupSettingsComponent,
     GroupMembersComponent,
     AddMemberComponent,
-    ScimComponent
+    ScimComponent,
+    EmailComponent,
+    EmailInfoDialog
   ],
   imports: [
     BrowserModule,
@@ -299,6 +306,8 @@ import { ScimComponent } from "./domain/settings/scim/scim.component";
     GroupService,
     GroupsResolver,
     GroupResolver,
+    EmailService,
+    EmailResolver,
     { provide: Http, useClass: HttpService }
   ],
   entryComponents: [
@@ -311,7 +320,8 @@ import { ScimComponent } from "./domain/settings/scim/scim.component";
     MaterialFileComponent,
     UserClaimComponent,
     FormInfoDialog,
-    AddMemberComponent
+    AddMemberComponent,
+    EmailInfoDialog
   ],
   bootstrap: [AppComponent]
 })

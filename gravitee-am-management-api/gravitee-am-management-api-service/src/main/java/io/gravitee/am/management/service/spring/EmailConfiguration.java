@@ -16,6 +16,9 @@
 package io.gravitee.am.management.service.spring;
 
 import freemarker.cache.FileTemplateLoader;
+import freemarker.cache.MultiTemplateLoader;
+import freemarker.cache.StringTemplateLoader;
+import freemarker.cache.TemplateLoader;
 import io.gravitee.common.util.EnvironmentUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,13 +98,19 @@ public class EmailConfiguration {
     public freemarker.template.Configuration getConfiguration() {
         final freemarker.template.Configuration configuration =
                 new freemarker.template.Configuration(freemarker.template.Configuration.VERSION_2_3_22);
+        configuration.setLocalizedLookup(false);
         try {
-            configuration.setTemplateLoader(new FileTemplateLoader(new File(templatesPath)));
+            TemplateLoader[] templateLoaders = { overrideTemplateLoader(), new FileTemplateLoader(new File(templatesPath)) };
+            configuration.setTemplateLoader(new MultiTemplateLoader(templateLoaders));
         } catch (final IOException e) {
-            LOGGER.warn("Error occurred while trying to read email templates directory", e);
+            LOGGER.warn("Error occurred while trying to read email templates", e);
         }
         return configuration;
     }
 
+    @Bean
+    public StringTemplateLoader overrideTemplateLoader() {
+        return new StringTemplateLoader();
+    }
 
 }

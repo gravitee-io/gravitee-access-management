@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.common.event;
+package io.gravitee.am.gateway.handler.email;
+
+import io.gravitee.am.model.Email;
+import io.gravitee.common.service.Service;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public interface EmailManager extends Service {
 
-    DOMAIN,
-    CLIENT,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL
+    Email getEmail(String template, String defaultSubject, int defaultExpiresAfter);
 }

@@ -48,6 +48,9 @@ public abstract class Event {
             case FORM:
                 event1 =  FormEvent.actionOf(event.getPayload().getAction());
                 break;
+            case EMAIL:
+                event1 =  EmailEvent.actionOf(event.getPayload().getAction());
+                break;
         }
 
         return event1;

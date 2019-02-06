@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.common.event;
+package io.gravitee.am.repository.management.api;
+
+import io.gravitee.am.model.Email;
+import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
+
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public interface EmailRepository extends CrudRepository<Email, String> {
 
-    DOMAIN,
-    CLIENT,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL
+    Single<List<Email>> findAll();
+
+    Single<List<Email>> findByDomain(String domain);
+
+    Maybe<Email> findByDomainAndTemplate(String domain, String template);
+
+    Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template);
 }

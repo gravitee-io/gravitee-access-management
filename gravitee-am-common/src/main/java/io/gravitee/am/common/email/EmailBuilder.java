@@ -24,6 +24,7 @@ import java.util.Map;
 public class EmailBuilder {
 
     private final Email email = new Email();
+    private static final String TEMPLATE_SUFFIX = ".html";
 
     public EmailBuilder from(String from) {
         this.email.setFrom(from);
@@ -40,8 +41,8 @@ public class EmailBuilder {
         return this;
     }
 
-    public EmailBuilder template(EmailTemplate emailTemplate) {
-        this.email.setTemplate(emailTemplate.getTemplate());
+    public EmailBuilder template(String template) {
+        this.email.setTemplate(template.endsWith(TEMPLATE_SUFFIX) ? template : template + TEMPLATE_SUFFIX);
         return this;
     }
 
@@ -62,21 +63,5 @@ public class EmailBuilder {
 
     public Email build() {
         return this.email;
-    }
-
-    public enum EmailTemplate {
-
-        USER_REGISTRATION("userRegistration.html"),
-        RESET_PASSWORD("passwordReset.html");
-
-        private String template;
-
-        EmailTemplate(String template) {
-            this.template = template;
-        }
-
-        public String getTemplate() {
-            return template;
-        }
     }
 }
