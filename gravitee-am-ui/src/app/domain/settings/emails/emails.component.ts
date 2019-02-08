@@ -13,40 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-domain-emails',
   templateUrl: './emails.component.html',
   styleUrls: ['./emails.component.scss']
 })
-export class DomainSettingsEmailsComponent implements OnInit {
-  emails: any[];
-  domainId: string;
+export class DomainSettingsEmailsComponent {
 
   constructor() { }
-
-
-  ngOnInit() {
-    this.emails = this.getEmails();
-  }
-
-  get isEmpty() {
-    return !this.emails || this.emails.length == 0;
-  }
-
-  getEmails() {
-    return [
-      {
-        'name': 'Registration confirmation',
-        'description': 'Registration email to confirm user account',
-        'template': 'REGISTRATION_CONFIRMATION'
-      },
-      {
-        'name': 'Reset password',
-        'description': 'Reset password email to ask for a new password',
-        'template': 'RESET_PASSWORD'
-      }
-    ]
-  }
 }

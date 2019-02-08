@@ -138,6 +138,7 @@ public class UserServiceImpl implements UserService {
                         user.setId(userId);
                         user.setExternalId(newUser.getExternalId());
                         user.setDomain(domain);
+                        user.setClient(newUser.getClient());
                         user.setUsername(newUser.getUsername());
                         user.setFirstName(newUser.getFirstName());
                         user.setLastName(newUser.getLastName());
@@ -169,6 +170,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
                 .flatMapSingle(oldUser -> {
+                    oldUser.setClient(updateUser.getClient());
                     oldUser.setExternalId(updateUser.getExternalId());
                     oldUser.setFirstName(updateUser.getFirstName());
                     oldUser.setLastName(updateUser.getLastName());

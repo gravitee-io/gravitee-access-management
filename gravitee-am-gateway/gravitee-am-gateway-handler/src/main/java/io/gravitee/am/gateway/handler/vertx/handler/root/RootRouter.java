@@ -22,7 +22,10 @@ import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.FormLoginHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.OAuth2ClientAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.OAuth2ClientAuthenticationProvider;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.ErrorHandlerEndpoint;
+import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.login.LoginCallbackEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.login.LoginCallbackParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.login.LoginEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.login.LoginRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.logout.LogoutEndpointHandler;
@@ -77,6 +80,7 @@ public class RootRouter {
 
         // create user management handler
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
+        Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
         Handler<RoutingContext> registerHandler = new RegisterEndpointHandler(thymeleafTemplateEngine);
         Handler<RoutingContext> registerSubmissionRequestHandler = new RegisterSubmissionRequestParseHandler();
         Handler<RoutingContext> registerSubmissionHandler = new RegisterSubmissionEndpointHandler(userService);
@@ -94,17 +98,23 @@ public class RootRouter {
 
         // login route
         router.get("/login")
-                .handler(new LoginRequestParseHandler(clientSyncService))
+                .handler(new LoginRequestParseHandler())
+                .handler(clientRequestParseHandler)
                 .handler(new LoginEndpointHandler(thymeleafTemplateEngine, domain, identityProviderManager));
         router.post("/login").handler(FormLoginHandler.create(userAuthProvider.getDelegate()));
 
         // oauth 2.0 login callback route
         router.get("/login/callback")
+                .handler(new LoginCallbackParseHandler(clientSyncService))
                 .handler(OAuth2ClientAuthHandler.create(identityProviderAuthProvider.getDelegate(), identityProviderManager))
                 .handler(new LoginCallbackEndpointHandler());
 
         // logout route
         router.route("/logout").handler(LogoutEndpointHandler.create());
+
+        // error route
+        router.route(HttpMethod.GET, "/error")
+                .handler(new ErrorHandlerEndpoint(thymeleafTemplateEngine));
 
         // mount forgot/reset registration pages only if the option is enabled
         if (domain.getLoginSettings() != null && domain.getLoginSettings().isRegisterEnabled()) {
@@ -126,9 +136,11 @@ public class RootRouter {
         // mount forgot/reset password pages only if the option is enabled
         if (domain.getLoginSettings() != null && domain.getLoginSettings().isForgotPasswordEnabled()) {
             router.route(HttpMethod.GET, "/forgotPassword")
+                    .handler(clientRequestParseHandler)
                     .handler(forgotPasswordEndpointHandler);
             router.route(HttpMethod.POST, "/forgotPassword")
                     .handler(forgotPasswordSubmissionRequestParseHandler)
+                    .handler(clientRequestParseHandler)
                     .handler(forgotPasswordSubmissionEndpointHandler);
             router.route(HttpMethod.GET, "/resetPassword")
                     .handler(resetPasswordRequestParseHandler)

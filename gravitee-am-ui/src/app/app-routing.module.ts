@@ -28,6 +28,10 @@ import {DomainSettingsProvidersComponent} from "./domain/settings/providers/prov
 import {DomainSettingsRolesComponent} from "./domain/settings/roles/roles.component";
 import {DomainSettingsScopesComponent} from "./domain/settings/scopes/scopes.component";
 import {DomainSettingsFormsComponent} from "./domain/settings/forms/forms.component";
+import {DomainSettingsLoginComponent} from "./domain/settings/login/login.component";
+import {DomainSettingsEmailsComponent} from "./domain/settings/emails/emails.component";
+import {DomainSettingsEmailComponent} from "./domain/settings/emails/email/email.component";
+import {DomainSettingsExtensionGrantsComponent} from "./domain/settings/extension-grants/extension-grants.component";
 import {ClientsComponent} from "./clients/clients.component";
 import {ClientComponent} from "./domain/clients/client/client.component";
 import {ClientCreationComponent} from "./clients/creation/client-creation.component";
@@ -48,6 +52,8 @@ import {ProviderMappersComponent} from "./domain/settings/providers/provider/map
 import {ClientOIDCComponent} from "./domain/clients/client/oidc/oidc.component";
 import {ClientSettingsComponent} from "./domain/clients/client/settings/settings.component";
 import {ClientIdPComponent} from "./domain/clients/client/idp/idp.component";
+import {ClientEmailsComponent} from "./domain/clients/client/emails/emails.component";
+import {ClientEmailComponent} from "./domain/clients/client/emails/email/email.component";
 import {CertificatesResolver} from "./resolvers/certificates.resolver";
 import {CertificateCreationComponent} from "./domain/settings/certificates/creation/certificate-creation.component";
 import {CertificateComponent} from "./domain/settings/certificates/certificate/certificate.component";
@@ -68,7 +74,6 @@ import {UsersResolver} from "./resolvers/users.resolver";
 import {UserComponent} from "./domain/settings/users/user/user.component";
 import {UserResolver} from "./resolvers/user.resolver";
 import {UserCreationComponent} from "./domain/settings/users/creation/user-creation.component";
-import {DomainSettingsExtensionGrantsComponent} from "./domain/settings/extension-grants/extension-grants.component";
 import {ExtensionGrantCreationComponent} from "./domain/settings/extension-grants/creation/extension-grant-creation.component";
 import {ExtensionGrantComponent} from "./domain/settings/extension-grants/extension-grant/extension-grant.component";
 import {ExtensionGrantsResolver} from "./resolvers/extension-grants.resolver";
@@ -85,9 +90,6 @@ import {GroupComponent} from "./domain/settings/groups/group/group.component";
 import {GroupSettingsComponent} from "./domain/settings/groups/group/settings/settings.component";
 import {GroupMembersComponent} from "./domain/settings/groups/group/members/members.component";
 import {ScimComponent} from "./domain/settings/scim/scim.component";
-import {DomainSettingsLoginComponent} from "./domain/settings/login/login.component";
-import {DomainSettingsEmailsComponent} from "./domain/settings/emails/emails.component";
-import {EmailComponent} from "./domain/settings/emails/email/email.component";
 import {EmailResolver} from "./resolvers/email.resolver";
 
 const routes: Routes = [
@@ -335,7 +337,9 @@ const routes: Routes = [
             }
           },
           { path: 'idp', component: ClientIdPComponent },
-          { path: 'oidc', component: ClientOIDCComponent }
+          { path: 'oidc', component: ClientOIDCComponent },
+          { path: 'emails', component: ClientEmailsComponent },
+          { path: 'emails/email', component: ClientEmailComponent, resolve: { email: EmailResolver} }
         ]
       },
       { path: 'settings', component: DomainSettingsComponent,
@@ -512,7 +516,7 @@ const routes: Routes = [
             }
           },
           { path: 'emails/email',
-            component: EmailComponent,
+            component: DomainSettingsEmailComponent,
             resolve: {
               email: EmailResolver
             },

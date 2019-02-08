@@ -15,14 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.login;
 
-import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
-import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
-import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
-import io.gravitee.am.model.Client;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
@@ -36,13 +30,6 @@ import io.vertx.reactivex.ext.web.Session;
  */
 public class LoginRequestParseHandler implements Handler<RoutingContext> {
 
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private ClientSyncService clientSyncService;
-
-    public LoginRequestParseHandler(ClientSyncService clientSyncService) {
-        this.clientSyncService = clientSyncService;
-    }
-
     @Override
     public void handle(RoutingContext context) {
         Session session = context.session();
@@ -50,29 +37,6 @@ public class LoginRequestParseHandler implements Handler<RoutingContext> {
             throw new InvalidRequestException("User cannot log in directly from the login page");
         }
 
-        final String clientId = context.request().getParam(OAuth2Constants.CLIENT_ID);
-        if (clientId == null || clientId.isEmpty()) {
-            throw new InvalidRequestException("Missing parameter: client_id is required");
-        }
-
-        authenticate(clientId, authHandler -> {
-            if (authHandler.failed()) {
-                context.fail(authHandler.cause());
-                return;
-            }
-
-            context.put(CLIENT_CONTEXT_KEY, authHandler.result());
-            context.next();
-        });
-    }
-
-    private void authenticate(String clientId, Handler<AsyncResult<Client>> authHandler) {
-        clientSyncService
-                .findByClientId(clientId)
-                .subscribe(
-                        client -> authHandler.handle(Future.succeededFuture(client)),
-                        error -> authHandler.handle(Future.failedFuture(new ServerErrorException("Server error: unable to find client with client_id " + clientId))),
-                        () -> authHandler.handle(Future.failedFuture(new InvalidRequestException("No client found for client_id " + clientId)))
-                );
+        context.next();
     }
 }

@@ -33,9 +33,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 /**
@@ -43,9 +41,6 @@ import javax.ws.rs.core.Response;
  * @author GraviteeSource Team
  */
 public class EmailResource {
-
-    @Context
-    private ResourceContext resourceContext;
 
     @Autowired
     private EmailTemplateService emailTemplateService;

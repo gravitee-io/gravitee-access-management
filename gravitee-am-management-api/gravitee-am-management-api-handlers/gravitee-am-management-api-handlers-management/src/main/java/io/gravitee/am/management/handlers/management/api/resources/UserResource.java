@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.handlers.management.api.model.ClientEntity;
 import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
+import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -58,11 +61,14 @@ public class UserResource {
     @Autowired
     private IdentityProviderService identityProviderService;
 
+    @Autowired
+    private ClientService clientService;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a user")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "User successfully fetched", response = User.class),
+            @ApiResponse(code = 200, message = "User successfully fetched", response = UserEntity.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void get(
             @PathParam("domain") String domain,
@@ -76,19 +82,10 @@ public class UserResource {
                     if (!user1.getDomain().equalsIgnoreCase(domain)) {
                         throw new BadRequestException("User does not belong to domain");
                     }
-                    return Maybe.just(user1);
+                    return Maybe.just(new UserEntity(user1));
                 })
-                .flatMap(user1 -> {
-                    if (user1.getSource() != null){
-                        return identityProviderService.findById(user1.getSource())
-                                .map(idP -> {
-                                    user1.setSource(idP.getName());
-                                    return user1;
-                                })
-                                .defaultIfEmpty(user1);
-                    }
-                    return Maybe.just(user1);
-                })
+                .flatMap(this::enhanceIdentityProvider)
+                .flatMap(this::enhanceClient)
                 .map(user1 -> Response.ok(user1).build())
                 .subscribe(
                         result -> response.resume(result),
@@ -123,8 +120,8 @@ public class UserResource {
             @ApiResponse(code = 204, message = "User successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void delete(@PathParam("domain") String domain,
-                           @PathParam("user") String user,
-                           @Suspended final AsyncResponse response) {
+                       @PathParam("user") String user,
+                       @Suspended final AsyncResponse response) {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
@@ -141,9 +138,9 @@ public class UserResource {
             @ApiResponse(code = 200, message = "Password reset"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void resetPassword(@PathParam("domain") String domain,
-                                             @PathParam("user") String user,
-                                             @ApiParam(name = "password", required = true) @Valid @NotNull PasswordValue password,
-                                             @Suspended final AsyncResponse response) {
+                              @PathParam("user") String user,
+                              @ApiParam(name = "password", required = true) @Valid @NotNull PasswordValue password,
+                              @Suspended final AsyncResponse response) {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapCompletable(user1 -> userService.resetPassword(domain, user, password.getPassword()))
@@ -169,5 +166,30 @@ public class UserResource {
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
 
+    }
+
+    private Maybe<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {
+        if (userEntity.getSource() != null) {
+            return identityProviderService.findById(userEntity.getSource())
+                    .map(idP -> {
+                        userEntity.setSource(idP.getName());
+                        return userEntity;
+                    })
+                    .defaultIfEmpty(userEntity);
+        }
+        return Maybe.just(userEntity);
+    }
+
+    private Maybe<UserEntity> enhanceClient(UserEntity userEntity) {
+        if (userEntity.getClient() != null) {
+            return clientService.findById(userEntity.getClient())
+                    .switchIfEmpty(clientService.findByDomainAndClientId(userEntity.getDomain(), userEntity.getClient()))
+                    .map(client -> {
+                        userEntity.setClientEntity(new ClientEntity(client));
+                        return userEntity;
+                    })
+                    .defaultIfEmpty(userEntity);
+        }
+        return Maybe.just(userEntity);
     }
 }

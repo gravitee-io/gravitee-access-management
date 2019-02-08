@@ -153,7 +153,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                     logger.debug("Successfully Authenticated: " + authentication.getPrincipal() + " with provider authentication provider " + authProvider);
                     Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
                     additionalInformation.put("source", authProvider);
-                    additionalInformation.put(OAuth2Constants.CLIENT_ID, client.getClientId());
+                    additionalInformation.put(OAuth2Constants.CLIENT_ID, client.getId());
                     ((DefaultUser ) user).setAdditionalInformation(additionalInformation);
                     return new UserAuthentication(user, null);
                 })

@@ -162,4 +162,19 @@ export class UserComponent implements OnInit {
     this.userAdditionalInformation = Object.assign({}, this.user.additionalInformation);
     this.formChanged = true;
   }
+
+  onClientSelectionChanged(event) {
+    this.user.client = event.id;
+  }
+
+  onClientDeleted(event) {
+    this.user.client = null;
+  }
+
+  displayClientName() {
+    if (this.user.clientEntity != null) {
+      return (this.user.clientEntity.clientName) ? this.user.clientEntity.clientName : this.user.clientEntity.clientId;
+    }
+    return this.user.client;
+  }
 }

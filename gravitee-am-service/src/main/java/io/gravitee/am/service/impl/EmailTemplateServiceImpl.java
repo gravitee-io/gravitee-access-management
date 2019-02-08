@@ -78,17 +78,72 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     }
 
     @Override
+    public Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template) {
+        LOGGER.debug("Find email by domain {}, client {} and template {}", domain, client, template);
+        return emailRepository.findByDomainAndClientAndTemplate(domain, client, template)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a email using its domain {} its client {} and template {}", domain, client, template, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a email using its domain %s its client %s and template %s", domain, client, template), ex));
+                });
+    }
+
+    @Override
     public Single<Email> create(String domain, NewEmail newEmail) {
         LOGGER.debug("Create a new email {} for domain {}", newEmail, domain);
+        return create0(domain, null, newEmail);
+    }
 
+    @Override
+    public Single<Email> create(String domain, String client, NewEmail newEmail) {
+        LOGGER.debug("Create a new email {} for domain {} and client {}", newEmail, domain, client);
+        return create0(domain, client, newEmail);
+    }
+
+    @Override
+    public Single<Email> update(String domain, String id, UpdateEmail updateEmail) {
+        LOGGER.debug("Update an email {} for domain {}", id, domain);
+        return update0(domain, id, updateEmail);
+    }
+
+    @Override
+    public Single<Email> update(String domain, String client, String id, UpdateEmail updateEmail) {
+        LOGGER.debug("Update an email {} for domain {} and client {}", id, domain, client);
+        return update0(domain, id, updateEmail);
+    }
+
+    @Override
+    public Completable delete(String emailId) {
+        LOGGER.debug("Delete email {}", emailId);
+        return emailRepository.findById(emailId)
+                .switchIfEmpty(Maybe.error(new EmailNotFoundException(emailId)))
+                .flatMapCompletable(page -> {
+                    // Reload domain to take care about delete email
+                    Event event = new Event(Type.EMAIL, new Payload(page.getId(), page.getDomain(), Action.DELETE));
+                    return emailRepository.delete(emailId).andThen(domainService.reload(page.getDomain(), event)).toCompletable();
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Completable.error(ex);
+                    }
+
+                    LOGGER.error("An error occurs while trying to delete email: {}", emailId, ex);
+                    return Completable.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete email: %s", emailId), ex));
+                });
+    }
+
+
+    private Single<Email> create0(String domain, String client, NewEmail newEmail) {
         String emailId = UUID.toString(UUID.random());
 
         // check if email is unique
-        return checkEmailUniqueness(domain, newEmail.getTemplate().template())
+        return checkEmailUniqueness(domain, client, newEmail.getTemplate().template())
                 .flatMap(irrelevant -> {
                     Email email = new Email();
                     email.setId(emailId);
                     email.setDomain(domain);
+                    email.setClient(client);
                     email.setEnabled(newEmail.isEnabled());
                     email.setTemplate(newEmail.getTemplate().template());
                     email.setFrom(newEmail.getFrom());
@@ -115,9 +170,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                 });
     }
 
-    @Override
-    public Single<Email> update(String domain, String id, UpdateEmail updateEmail) {
-        LOGGER.debug("Update an email {} for domain {}", id, domain);
+    private Single<Email> update0(String domain, String id, UpdateEmail updateEmail) {
         return emailRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new EmailNotFoundException(id)))
                 .flatMapSingle(oldEmail -> {
@@ -146,29 +199,12 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                 });
     }
 
-    @Override
-    public Completable delete(String emailId) {
-        LOGGER.debug("Delete email {}", emailId);
-        return emailRepository.findById(emailId)
-                .switchIfEmpty(Maybe.error(new EmailNotFoundException(emailId)))
-                .flatMapCompletable(page -> {
-                    // Reload domain to take care about delete email
-                    Event event = new Event(Type.EMAIL, new Payload(page.getId(), page.getDomain(), Action.DELETE));
-                    return emailRepository.delete(emailId).andThen(domainService.reload(page.getDomain(), event)).toCompletable();
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Completable.error(ex);
-                    }
+    private Single<Boolean> checkEmailUniqueness(String domain, String client, String emailTemplate) {
+        Maybe<Email> maybeSource = client == null ?
+                findByDomainAndTemplate(domain, emailTemplate) :
+                findByDomainAndClientAndTemplate(domain, client, emailTemplate);
 
-                    LOGGER.error("An error occurs while trying to delete email: {}", emailId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete email: %s", emailId), ex));
-                });
-    }
-
-    private Single<Boolean> checkEmailUniqueness(String domain, String emailTemplate) {
-        return findByDomainAndTemplate(domain, emailTemplate)
+        return maybeSource
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {

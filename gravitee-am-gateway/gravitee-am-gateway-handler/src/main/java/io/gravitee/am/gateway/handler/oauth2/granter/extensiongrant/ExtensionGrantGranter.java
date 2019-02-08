@@ -75,7 +75,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                         Map<String, Object> additionalInformation = endUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(endUser.getAdditionalInformation());
                         // set source provider
                         additionalInformation.put("source", extensionGrant.getIdentityProvider() != null ? extensionGrant.getIdentityProvider() : extensionGrant.getId());
-                        additionalInformation.put("client_id", client.getClientId());
+                        additionalInformation.put("client_id", client.getId());
                         ((DefaultUser) endUser).setAdditionalInformation(additionalInformation);
                         return userAuthenticationManager.loadUser(endUser).toMaybe();
                     } else {

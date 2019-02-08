@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 
@@ -111,21 +112,31 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
 
     @Override
     public Email getEmail(String template, String defaultSubject, int defaultExpiresAfter) {
-        if (emailTemplates.containsKey(template)) {
-            return emailTemplates.get(template);
+        boolean templateFound = emailTemplates.containsKey(template);
+        String[] templateParts = template.split(Pattern.quote(TEMPLATE_NAME_SEPARATOR));
+
+        // template not found for the client, try at domain level
+        if (!templateFound && templateParts.length == 2) {
+            template = templateParts[0];
+            templateFound = emailTemplates.containsKey(template);
+        }
+
+        if (templateFound) {
+            Email customEmail = emailTemplates.get(template);
+            return create(template, customEmail.getFrom(), customEmail.getFromName(), customEmail.getSubject(), customEmail.getExpiresAfter());
         } else {
-            return defaultEmail(template, defaultSubject, defaultExpiresAfter);
+            return create(template, defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter);
         }
     }
 
-    private Email defaultEmail(String template, String defaultSubject, Integer defaultExpiresAfter) {
-        Email defaultEmail = new Email();
-        defaultEmail.setTemplate(template);
-        defaultEmail.setFrom(defaultFrom);
-        defaultEmail.setSubject(format(subject, defaultSubject));
-        defaultEmail.setExpiresAfter(defaultExpiresAfter);
-
-        return defaultEmail;
+    private Email create(String template, String from, String fromName, String subject, int expiresAt) {
+        Email email = new Email();
+        email.setTemplate(template);
+        email.setFrom(from);
+        email.setFromName(fromName);
+        email.setSubject(subject);
+        email.setExpiresAfter(expiresAt);
+        return email;
     }
 
     private void updateEmail(String emailId, EmailEvent emailEvent) {
@@ -149,8 +160,8 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
     private void removeEmail(String emailId) {
         logger.info("Domain {} has received email event, delete email {}", domain.getName(), emailId);
         Email deletedEmail = emails.remove(emailId);
-        emailTemplates.remove(deletedEmail.getTemplate());
-        ((DomainBasedEmailTemplateLoader) templateLoader).removeTemplate(deletedEmail.getTemplate() + TEMPLATE_SUFFIX);
+        emailTemplates.remove(getTemplateName(deletedEmail));
+        ((DomainBasedEmailTemplateLoader) templateLoader).removeTemplate(getTemplateName(deletedEmail) + TEMPLATE_SUFFIX);
     }
 
     private void updateEmails(List<Email> emails) {
@@ -158,15 +169,33 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
                 .stream()
                 .filter(Email::isEnabled)
                 .forEach(email -> {
+                    String templateName = getTemplateName(email);
                     this.emails.put(email.getId(), email);
-                    this.emailTemplates.put(email.getTemplate(), email);
-                    reloadTemplate(email.getTemplate() + TEMPLATE_SUFFIX, email.getContent());
-                    logger.info("Email {} loaded for domain {}", email.getTemplate(), domain.getName());
+                    this.emailTemplates.put(templateName, email);
+                    reloadTemplate(templateName + TEMPLATE_SUFFIX, email.getContent());
+                    logger.info("Email {} loaded for domain {}", templateName, domain.getName());
                 });
     }
 
     private void reloadTemplate(String templateName, String content) {
         ((DomainBasedEmailTemplateLoader) templateLoader).putTemplate(templateName, content, System.currentTimeMillis());
         configuration.clearTemplateCache();
+    }
+
+    private String getTemplateName(Email email) {
+        return email.getTemplate()
+                + ((email.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + email.getClient() : "");
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public void setDefaultFrom(String defaultFrom) {
+        this.defaultFrom = defaultFrom;
+    }
+
+    public void setEmailTemplates(ConcurrentMap<String, Email> emailTemplates) {
+        this.emailTemplates = emailTemplates;
     }
 }

@@ -60,6 +60,9 @@
           </mat-form-field>
         </div>
       </div>
+      <div>
+        <app-select-clients (onSelectClient)="onClientSelectionChanged($event)" (onRemoveClient)="onClientDeleted($event)"></app-select-clients>
+      </div>
       <div fxLayout="column" class="additional-information">
         <h4>Additional information</h4>
         <span>Custom information about the user. These details will be available in the user's profile.</span>

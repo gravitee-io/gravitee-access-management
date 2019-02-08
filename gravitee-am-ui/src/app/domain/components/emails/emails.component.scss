@@ -1,0 +1,15 @@
+.emails-content {
+  ngx-datatable {
+    font-size: 14px;
+    box-shadow: none;
+  }
+}
+
+.emails-actions {
+  margin-left: -10px;
+
+  button, a {
+    top: -9px;
+    color: grey;
+  }
+}

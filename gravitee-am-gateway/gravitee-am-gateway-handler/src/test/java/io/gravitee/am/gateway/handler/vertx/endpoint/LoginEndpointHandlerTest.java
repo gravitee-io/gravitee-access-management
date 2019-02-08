@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.endpoint;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.login.LoginEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.login.LoginRequestParseHandler;
 import io.gravitee.common.http.HttpStatusCode;
@@ -50,7 +51,8 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
         super.setUp();
 
         router.route(HttpMethod.GET, "/login")
-                .handler(new LoginRequestParseHandler(clientSyncService))
+                .handler(new LoginRequestParseHandler())
+                .handler(new ClientRequestParseHandler(clientSyncService))
                 .handler(loginEndpointHandler);
         router.route().failureHandler(new ExceptionHandler());
     }

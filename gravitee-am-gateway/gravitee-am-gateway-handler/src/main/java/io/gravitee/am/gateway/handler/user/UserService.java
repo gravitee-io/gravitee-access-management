@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.user;
 
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -29,10 +30,10 @@ public interface UserService {
     Maybe<User> verifyToken(String token);
 
     Single<User> register(User user);
-    
+
     Completable confirmRegistration(User user);
 
     Completable resetPassword(User user);
 
-    Completable forgotPassword(String email);
+    Completable forgotPassword(String email, Client client);
 }

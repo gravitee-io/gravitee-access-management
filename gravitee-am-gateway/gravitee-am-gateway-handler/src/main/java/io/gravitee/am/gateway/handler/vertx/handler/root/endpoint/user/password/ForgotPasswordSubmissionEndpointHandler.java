@@ -15,12 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.password;
 
+import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.user.UserService;
+import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.UserRequestHandler;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -38,14 +42,23 @@ public class ForgotPasswordSubmissionEndpointHandler extends UserRequestHandler 
     @Override
     public void handle(RoutingContext context) {
         final String email = context.request().getParam(emailParam);
-        userService.forgotPassword(email)
+        final Client client = context.get(ClientRequestParseHandler.CLIENT_CONTEXT_KEY);
+        Map<String, String> requestParams = new HashMap<>();
+        requestParams.put(OAuth2Constants.CLIENT_ID, client.getClientId());
+
+        userService.forgotPassword(email, client)
                 .subscribe(
-                        () -> redirectToPage(context, Collections.singletonMap("success", "forgot_password_completed")),
+                        () -> {
+                            requestParams.put("success", "forgot_password_completed");
+                            redirectToPage(context, requestParams);
+                        },
                         error -> {
                             if (error instanceof UserNotFoundException) {
-                                redirectToPage(context, Collections.singletonMap("warning", "user_not_found"));
+                                requestParams.put("warning", "user_not_found");
+                                redirectToPage(context, requestParams);
                             } else {
-                                redirectToPage(context, Collections.singletonMap("error", error.getMessage()), error);
+                                requestParams.put("error", error.getMessage());
+                                redirectToPage(context, requestParams, error);
                             }
                         });
     }
