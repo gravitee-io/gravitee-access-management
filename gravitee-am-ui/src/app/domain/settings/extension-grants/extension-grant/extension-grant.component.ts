@@ -75,4 +75,9 @@ export class ExtensionGrantComponent implements OnInit {
     this.formChanged = true;
   }
 
+  enableCheckUser(event) {
+    this.extensionGrant.userExists = event.checked;
+    this.formChanged = true;
+  }
+
 }

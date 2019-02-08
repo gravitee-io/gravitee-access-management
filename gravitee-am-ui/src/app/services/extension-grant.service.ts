@@ -42,7 +42,8 @@ export class ExtensionGrantService {
       'configuration' : tokenGranter.configuration,
       'grantType': tokenGranter.grantType,
       'identityProvider': tokenGranter.identityProvider,
-      'createUser': tokenGranter.createUser
+      'createUser': tokenGranter.createUser,
+      'userExists': tokenGranter.userExists
     });
   }
 

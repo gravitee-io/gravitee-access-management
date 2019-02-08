@@ -41,6 +41,8 @@ public class NewExtensionGrant {
 
     private boolean createUser;
 
+    private boolean userExists;
+
     public String getType() {
         return type;
     }
@@ -89,6 +91,14 @@ public class NewExtensionGrant {
         this.createUser = createUser;
     }
 
+    public boolean isUserExists() {
+        return userExists;
+    }
+
+    public void setUserExists(boolean userExists) {
+        this.userExists = userExists;
+    }
+
     @Override
     public String toString() {
         return "NewExtensionGrant{" +
@@ -96,7 +106,8 @@ public class NewExtensionGrant {
                 ", name='" + name + '\'' +
                 ", grantType='" + grantType + '\'' +
                 ", identityProvider='" + identityProvider + '\'' +
-                ", createUser='" + createUser +
+                ", createUser='" + createUser + '\'' +
+                ", userExists='" + userExists +
                 '}';
     }
 }

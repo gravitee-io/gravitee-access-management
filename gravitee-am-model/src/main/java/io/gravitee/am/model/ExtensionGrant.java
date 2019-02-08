@@ -39,6 +39,8 @@ public class ExtensionGrant {
 
     private boolean createUser;
 
+    private boolean userExists;
+
     private Date createdAt;
 
     private Date updatedAt;
@@ -121,5 +123,13 @@ public class ExtensionGrant {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isUserExists() {
+        return userExists;
+    }
+
+    public void setUserExists(boolean userExists) {
+        this.userExists = userExists;
     }
 }
