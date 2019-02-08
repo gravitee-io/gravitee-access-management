@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.password;
 
+import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -23,6 +24,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -34,6 +37,7 @@ public class ForgotPasswordEndpointHandler implements Handler<RoutingContext> {
     private static final String ERROR_PARAM = "error";
     private static final String SUCCESS_PARAM = "success";
     private static final String WARNING_PARAM = "warning";
+    private static final String PARAM_CONTEXT_KEY = "param";
     private ThymeleafTemplateEngine engine;
 
     public ForgotPasswordEndpointHandler(ThymeleafTemplateEngine engine) {
@@ -50,6 +54,7 @@ public class ForgotPasswordEndpointHandler implements Handler<RoutingContext> {
         routingContext.put(ERROR_PARAM, error);
         routingContext.put(SUCCESS_PARAM, success);
         routingContext.put(WARNING_PARAM, warning);
+        routingContext.put(PARAM_CONTEXT_KEY, Collections.singletonMap(OAuth2Constants.CLIENT_ID, request.getParam(OAuth2Constants.CLIENT_ID)));
 
         // render the forgot password page
         engine.render(routingContext, "forgot_password", res -> {

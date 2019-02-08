@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.jwt.JwtBuilder;
 import io.gravitee.am.gateway.handler.jwt.JwtParser;
 import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
@@ -155,19 +156,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Completable forgotPassword(String email) {
+    public Completable forgotPassword(String email, Client client) {
         return userRepository.findByDomainAndEmail(domain.getId(), email)
                 .map(users -> users.stream().filter(user -> user.isInternal()).findFirst())
                 .flatMapMaybe(optionalUser -> optionalUser.isPresent() ? Maybe.just(optionalUser.get()) : Maybe.empty())
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(email)))
                 .toSingle()
-                .doOnSuccess(user -> new Thread(() -> completeForgotPassword(user)).start())
+                .doOnSuccess(user -> new Thread(() -> completeForgotPassword(user, client)).start())
                 .toCompletable();
 
     }
 
-    private void completeForgotPassword(User user) {
-        io.gravitee.am.model.Email email = emailManager.getEmail(Template.RESET_PASSWORD.template(), resetPasswordSubject, expireAfter);
+    private void completeForgotPassword(User user, Client client) {
+        io.gravitee.am.model.Email email = emailManager.getEmail(getTemplateName(client), resetPasswordSubject, expireAfter);
         Email email1 = convert(user, email, "/resetPassword", "resetPasswordUrl");
         emailService.send(email1);
     }
@@ -211,6 +212,12 @@ public class UserServiceImpl implements UserService {
 
         return params;
     }
+
+    private String getTemplateName(Client client) {
+        return Template.RESET_PASSWORD.template()
+                + ((client != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR +  client.getId() : "");
+    }
+
 
     private io.gravitee.am.identityprovider.api.User convert(User user) {
         DefaultUser idpUser = new DefaultUser(user.getUsername());

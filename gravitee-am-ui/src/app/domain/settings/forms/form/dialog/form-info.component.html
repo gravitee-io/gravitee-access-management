@@ -34,7 +34,7 @@
             <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
             <p th:if="${param.error}">Wrong user or password</p>
             <button type="submit">login</button>
-            <a th:if="${allowForgotPassword}" th:href="@{forgotPassword}">Forgot Password ?</a>
+            <a th:if="${allowForgotPassword}" th:href="@{forgotPassword(client_id=${param.client_id})}">Forgot Password ?</a>
              <a th:if="${allowRegister}" th:href="@{register(client_id=${param.client_id})}">Register</a>
           </form>
         </body>
@@ -101,6 +101,7 @@
             </div>
             <form th:action="@{forgotPassword}" method="post">
               <input type="email" id="email" name="email" required/>
+              <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
               <button type="submit">Reset password</button>
             </form>
           </div>

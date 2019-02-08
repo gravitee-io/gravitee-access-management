@@ -43,7 +43,7 @@
 
                     <div class="login-actions" th:style="${allowForgotPassword and allowRegister} ? 'display:flex; flex-direction: row; margin-top: 10px; text-align: center;' : 'display:block; margin-top: 10px; text-align: center;'">
                         <div th:if="${allowForgotPassword}">
-                            <a th:href="@{forgotPassword}">Forgot Password ?</a>
+                            <a th:href="@{forgotPassword(client_id=${param.client_id})}">Forgot Password ?</a>
                         </div>
                         <span th:if="${allowForgotPassword and allowRegister}" style="display: flex; flex: 1;"></span>
                         <div th:if="${allowRegister}">

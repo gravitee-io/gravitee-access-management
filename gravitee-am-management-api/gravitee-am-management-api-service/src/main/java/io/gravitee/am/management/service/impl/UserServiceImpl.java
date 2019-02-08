@@ -222,7 +222,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private void completeUserRegistration(User user) {
-        final String templateName = Template.REGISTRATION_CONFIRMATION.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + user.getDomain();
+        final String templateName = getTemplateName(user);
         io.gravitee.am.model.Email email = emailManager.getEmail(templateName, registrationSubject, expireAfter);
         Email email1 = convert(user, email, "/confirmRegistration", "registrationUrl");
         emailService.send(email1);
@@ -266,6 +266,13 @@ public class UserServiceImpl implements UserService {
         params.put("token", token);
 
         return params;
+    }
+
+    private String getTemplateName(User user) {
+        return Template.REGISTRATION_CONFIRMATION.template()
+                + EmailManager.TEMPLATE_NAME_SEPARATOR
+                + user.getDomain()
+                + ((user.getClient() != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR +  user.getClient() : "");
     }
 
     private io.gravitee.am.identityprovider.api.User convert(NewUser newUser) {

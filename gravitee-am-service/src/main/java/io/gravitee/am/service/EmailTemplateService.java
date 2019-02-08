@@ -34,9 +34,15 @@ public interface EmailTemplateService {
 
     Maybe<Email> findByDomainAndTemplate(String domain, String template);
 
+    Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template);
+
     Single<Email> create(String domain, NewEmail newEmail);
 
+    Single<Email> create(String domain, String client, NewEmail newEmail);
+
     Single<Email> update(String domain, String id, UpdateEmail updateEmail);
+
+    Single<Email> update(String domain, String client, String id, UpdateEmail updateEmail);
 
     Completable delete(String emailId);
 

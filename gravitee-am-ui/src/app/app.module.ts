@@ -64,6 +64,8 @@ import { ClientComponent } from './domain/clients/client/client.component';
 import { ClientCreationComponent } from './clients/creation/client-creation.component';
 import { ClientSettingsComponent } from './domain/clients/client/settings/settings.component';
 import { ClientOIDCComponent, CreateClaimComponent } from './domain/clients/client/oidc/oidc.component';
+import { ClientEmailsComponent } from './domain/clients/client/emails/emails.component';
+import { ClientEmailComponent } from './domain/clients/client/emails/email/email.component';
 import { ProviderCreationStep1Component } from './domain/settings/providers/creation/steps/step1/step1.component';
 import { ProviderCreationStep2Component } from './domain/settings/providers/creation/steps/step2/step2.component';
 import { ProviderComponent } from './domain/settings/providers/provider/provider.component';
@@ -91,6 +93,7 @@ import { DomainSettingsExtensionGrantsComponent } from "./domain/settings/extens
 import { DomainSettingsFormsComponent } from "./domain/settings/forms/forms.component";
 import { DomainSettingsLoginComponent } from "./domain/settings/login/login.component";
 import { DomainSettingsEmailsComponent } from "./domain/settings/emails/emails.component";
+import { DomainSettingsEmailComponent } from "./domain/settings/emails/email/email.component";
 import { ClientsResolver } from "./resolvers/clients.resolver";
 import { ClientResolver } from "./resolvers/client.resolver";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
@@ -161,9 +164,11 @@ import { GroupService } from "./services/group.service";
 import { GroupsResolver } from "./resolvers/groups.resolver";
 import { GroupResolver } from "./resolvers/group.resolver";
 import { ScimComponent } from "./domain/settings/scim/scim.component";
-import { EmailComponent, EmailInfoDialog } from "./domain/settings/emails/email/email.component";
+import { EmailsComponent } from "./domain/components/emails/emails.component";
+import { EmailComponent, EmailInfoDialog } from "./domain/components/emails/email/email.component";
 import { EmailService } from "./services/email.service";
 import { EmailResolver } from "./resolvers/email.resolver";
+import { SelectClientsComponent } from "./domain/components/clients/select-clients.component";
 
 @NgModule({
   declarations: [
@@ -186,6 +191,7 @@ import { EmailResolver } from "./resolvers/email.resolver";
     DomainSettingsFormsComponent,
     DomainSettingsLoginComponent,
     DomainSettingsEmailsComponent,
+    DomainSettingsEmailComponent,
     ClientsComponent,
     ConfirmComponent,
     EmptystateComponent,
@@ -196,6 +202,8 @@ import { EmailResolver } from "./resolvers/email.resolver";
     ClientSettingsComponent,
     ClientOIDCComponent,
     ClientIdPComponent,
+    ClientEmailsComponent,
+    ClientEmailComponent,
     ProviderCreationStep1Component,
     ProviderCreationStep2Component,
     ProviderComponent,
@@ -251,8 +259,10 @@ import { EmailResolver } from "./resolvers/email.resolver";
     GroupMembersComponent,
     AddMemberComponent,
     ScimComponent,
+    EmailsComponent,
     EmailComponent,
-    EmailInfoDialog
+    EmailInfoDialog,
+    SelectClientsComponent
   ],
   imports: [
     BrowserModule,

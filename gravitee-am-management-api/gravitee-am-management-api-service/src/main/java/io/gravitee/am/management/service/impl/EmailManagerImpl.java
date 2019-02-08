@@ -57,13 +57,14 @@ public class EmailManagerImpl implements EmailManager {
 
     @Override
     public Single<Email> reloadEmail(Email email) {
-        final String templateName = email.getTemplate() + TEMPLATE_NAME_SEPARATOR + email.getDomain();
+        final String templateName = getTemplateName(email);
         if (email.isEnabled()) {
             reloadTemplate(templateName + TEMPLATE_SUFFIX, email.getContent());
             emailTemplates.put(templateName, email);
         } else {
             // remove email who has been disabled
             emailTemplates.remove(templateName);
+            ((StringTemplateLoader) templateLoader).removeTemplate(templateName + TEMPLATE_SUFFIX);
         }
         return Single.just(email);
     }
@@ -73,19 +74,30 @@ public class EmailManagerImpl implements EmailManager {
         Optional<Email> emailOptional = emailTemplates.values().stream().filter(email1 -> email.equals(email1.getId())).findFirst();
         if (emailOptional.isPresent()) {
             Email emailToRemove = emailOptional.get();
-            emailTemplates.remove(emailToRemove.getTemplate() + TEMPLATE_NAME_SEPARATOR + emailToRemove.getDomain());
+            emailTemplates.remove(getTemplateName(emailToRemove));
+            ((StringTemplateLoader) templateLoader).removeTemplate(getTemplateName(emailToRemove) + TEMPLATE_SUFFIX);
         }
         return Completable.complete();
     }
 
     @Override
     public Email getEmail(String template, String defaultSubject, int defaultExpiresAfter) {
-        if (emailTemplates.containsKey(template)) {
+        boolean templateFound = emailTemplates.containsKey(template);
+        String[] templateParts = template.split(Pattern.quote(TEMPLATE_NAME_SEPARATOR));
+
+        // template not found for the client, try at domain level
+        if (!templateFound && templateParts.length == 3) {
+            template = templateParts[0] + TEMPLATE_NAME_SEPARATOR + templateParts[1];
+            templateFound = emailTemplates.containsKey(template);
+        }
+
+        if (templateFound) {
             Email customEmail = emailTemplates.get(template);
             return create(template, customEmail.getFrom(), customEmail.getFromName(), customEmail.getSubject(), customEmail.getExpiresAfter());
         } else {
-            String defaultTemplate = template.split(Pattern.quote(TEMPLATE_NAME_SEPARATOR))[0];
-            return create(defaultTemplate, defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter);
+            // template not found, return default template
+            template = templateParts[0];
+            return create(template, defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter);
         }
     }
 
@@ -104,4 +116,18 @@ public class EmailManagerImpl implements EmailManager {
         configuration.clearTemplateCache();
     }
 
+    private String getTemplateName(Email email) {
+        return email.getTemplate()
+                + TEMPLATE_NAME_SEPARATOR
+                + email.getDomain()
+                + ((email.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + email.getClient() : "");
+    }
+
+    public void setDefaultFrom(String defaultFrom) {
+        this.defaultFrom = defaultFrom;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
 }

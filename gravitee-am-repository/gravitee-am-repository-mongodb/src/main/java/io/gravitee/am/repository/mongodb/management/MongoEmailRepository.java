@@ -33,8 +33,7 @@ import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -76,7 +75,8 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
                 emailsCollection.find(
                         and(
                                 eq(FIELD_DOMAIN, domain),
-                                eq(FIELD_TEMPLATE, template)))
+                                eq(FIELD_TEMPLATE, template),
+                                exists(FIELD_CLIENT, false)))
                         .first())
                 .firstElement().map(this::convert);
     }

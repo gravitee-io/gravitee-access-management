@@ -25,7 +25,12 @@ import { BreadcrumbService } from "../../../../libraries/ng2-breadcrumb/componen
 export class ClientComponent implements OnInit {
   private domainId: string;
   client: any;
-  navLinks: any = [{'href': 'settings' , 'label': 'Settings'}, {'href': 'idp' , 'label': 'Identity Providers'}, {'href': 'oidc' , 'label': 'OpenID Connect'}];
+  navLinks: any = [
+    {'href': 'settings' , 'label': 'Settings'},
+    {'href': 'idp' , 'label': 'Identity Providers'},
+    {'href': 'oidc' , 'label': 'OpenID Connect'},
+    {'href': 'emails' , 'label': 'Emails'}
+  ];
 
   constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) {
   }
@@ -40,5 +45,6 @@ export class ClientComponent implements OnInit {
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/clients/'+this.client.id+'$', this.client.clientId);
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/clients/'+this.client.id+'/idp$', 'IdP');
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/clients/'+this.client.id+'/oidc$', 'OIDC');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/clients/'+this.client.id+'/emails$', 'Emails');
   }
 }

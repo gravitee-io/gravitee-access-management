@@ -80,11 +80,7 @@ public class VertxSecurityDomainHandler {
         final Router router = Router.router(vertx);
 
         // failure handler
-        Handler<RoutingContext> authorizationEndpointFailureHandler = new AuthorizationEndpointFailureHandler(domain);
-        router.route("/login").failureHandler(authorizationEndpointFailureHandler);
-        router.route("/oauth/authorize").failureHandler(authorizationEndpointFailureHandler);
-        router.routeWithRegex("/scim/(.*)").failureHandler(new ErrorHandler());
-        router.route().failureHandler(new ExceptionHandler());
+        failureHandler(router);
 
         // user authentication handler
         final AuthProvider userAuthProvider = new AuthProvider(new UserAuthenticationProvider(userAuthenticationManager, clientSyncService));
@@ -128,6 +124,16 @@ public class VertxSecurityDomainHandler {
 
     public void setDomain(Domain domain) {
         this.domain = domain;
+    }
+
+    private void failureHandler(Router router) {
+        Handler<RoutingContext> authorizationEndpointFailureHandler = new AuthorizationEndpointFailureHandler(domain);
+        Handler<RoutingContext> rootErrorFailureHandler = new io.gravitee.am.gateway.handler.vertx.handler.root.handler.ErrorHandler("/" + domain.getPath() + "/error");
+        router.route("/login").failureHandler(authorizationEndpointFailureHandler);
+        router.route("/forgotPassword").failureHandler(rootErrorFailureHandler);
+        router.route("/oauth/authorize").failureHandler(authorizationEndpointFailureHandler);
+        router.routeWithRegex("/scim/(.*)").failureHandler(new ErrorHandler());
+        router.route().failureHandler(new ExceptionHandler());
     }
 
     private void staticHandler(Router router) {

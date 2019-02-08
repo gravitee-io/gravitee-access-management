@@ -59,6 +59,9 @@
           <span>An email will be sent to the user asking to complete his account.</span>
           <a (click)="resendConfirmationRegistration()">Resend confirmation e-mail</a>
         </div>
+        <div>
+          <app-select-clients [selectedClient]="user.clientEntity" (onSelectClient)="onClientSelectionChanged($event)" (onRemoveClient)="onClientDeleted($event)"></app-select-clients>
+        </div>
         <div *ngIf="editMode()" fxLayout="column" class="additional-information">
           <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" fxLayout="row" style="background: #f1f1f1; border: none;">
             <mat-form-field style="margin-right: 20px" fxFlex="75">
@@ -68,7 +71,6 @@
             <button style="height:36px; margin-top: 20px;" mat-raised-button color="primary" [disabled]="!passwordForm.valid || passwordForm.pristine" type="submit">RESET PASSWORD</button>
           </form>
         </div>
-
         <div fxLayout="column" class="additional-information" *ngIf="!isEmptyObject(user.additionalInformation) || editMode()">
           <h4>Additional information</h4>
           <span>Custom information about the user. These details are available in the user's profile.</span>
@@ -126,7 +128,7 @@
           <mat-list-item>
             <mat-icon mat-list-icon>dock</mat-icon>
             <h4 matLine>Last client</h4>
-            <p matLine>{{user.client}}</p>
+            <p matLine>{{displayClientName()}}</p>
           </mat-list-item>
           <mat-list-item>
             <mat-icon mat-list-icon>device_hub</mat-icon>

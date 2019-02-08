@@ -18,13 +18,14 @@ package io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.login;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.service.utils.UriBuilder;
+import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProviderConfiguration;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.service.utils.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Observable;
@@ -53,7 +54,6 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(LoginEndpointHandler.class);
     private final static List<String> socialProviders = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket");
     private static final String DOMAIN_CONTEXT_KEY = "domain";
-    private static final String CLIENT_CONTEXT_KEY = "client";
     private static final String PARAM_CONTEXT_KEY = "param";
     private static final String ERROR_PARAM_KEY = "error";
     private static final String OAUTH2_PROVIDER_CONTEXT_KEY = "oauth2Providers";
@@ -76,7 +76,7 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext routingContext) {
-        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+        final Client client = routingContext.get(ClientRequestParseHandler.CLIENT_CONTEXT_KEY);
         final Set<String> oauth2Identities = client.getOauth2Identities();
 
         // no OAuth2/Social provider render login page
@@ -106,7 +106,7 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
 
     private void renderLoginPage(RoutingContext routingContext) {
         // remove client context to avoid any leaks from custom login pages
-        routingContext.remove(CLIENT_CONTEXT_KEY);
+        routingContext.remove(ClientRequestParseHandler.CLIENT_CONTEXT_KEY);
         // put domain in context data
         routingContext.put(DOMAIN_CONTEXT_KEY, domain);
         // put domain login settings in context data

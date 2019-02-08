@@ -13,176 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild } from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
+import { Component, OnInit } from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { AppConfig } from "../../../../../config/app.config";
-import { SnackbarService } from "../../../../services/snackbar.service";
-import { DialogService } from "../../../../services/dialog.service";
-import { EmailService } from "../../../../services/email.service";
-import { NgForm } from "@angular/forms";
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material";
-
-export interface DialogData {
-  rawTemplate: string;
-  template: string;
-}
 
 @Component({
-  selector: 'app-email',
+  selector: 'app-domain-email',
   templateUrl: './email.component.html',
   styleUrls: ['./email.component.scss']
 })
-export class EmailComponent implements OnInit, AfterViewInit {
+export class DomainSettingsEmailComponent implements OnInit {
   private domainId: string;
-  private defaultEmailContent: string = `// Custom email...`;
   template: string;
   rawTemplate: string;
-  email: any;
   emailName: string;
-  emailContent: string = (' ' + this.defaultEmailContent).slice(1);
-  originalEmailContent: string = (' ' + this.emailContent).slice(1);
-  emailFound: boolean = false;
-  formChanged: boolean = false;
-  config: any = { lineNumbers: true, readOnly: true};
-  @ViewChild('editor') editor: any;
-  @ViewChild('preview') preview: ElementRef;
-  @ViewChild('emailForm') public emailForm: NgForm;
 
-  constructor(private router: Router,
-              private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService,
-              private emailService: EmailService,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              public dialog: MatDialog) { }
+  constructor(private route: ActivatedRoute,
+              private breadcrumbService: BreadcrumbService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
-      this.rawTemplate = 'LOGIN';
-    } else {
-      this.rawTemplate = this.route.snapshot.queryParams['template'];
-    }
-
-    this.email = this.route.snapshot.data['email'];
-    if (this.email && this.email.content) {
-      this.emailContent = this.email.content;
-      this.originalEmailContent = (' ' + this.emailContent).slice(1);
-      this.emailFound = true;
-    } else {
-      this.email = {};
-      this.email.template = this.rawTemplate
-      this.email.expiresAfter = 86400;
-    }
-
+    this.rawTemplate = this.route.snapshot.queryParams['template'];
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');;
-    this.emailName = this.template.charAt(0).toUpperCase() + this.template.slice(1);
     this.initBreadcrumb();
-  }
-
-  ngAfterViewInit(): void {
-    this.enableCodeMirror();
   }
 
   initBreadcrumb() {
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/emails/email*', this.template);
   }
-
-  isEnabled() {
-    return this.email && this.email.enabled;
-  }
-
-  enableEmail(event) {
-    this.email.enabled = event.checked;
-    this.enableCodeMirror();
-    this.formChanged = true;
-  }
-
-  onTabSelectedChanged(e) {
-    if (e.index === 1) {
-      this.refreshPreview();
-    }
-  }
-
-  refreshPreview() {
-    let doc =  this.preview.nativeElement.contentDocument || this.preview.nativeElement.contentWindow;
-    doc.open();
-    doc.write(this.emailContent);
-    doc.close();
-  }
-
-  onContentChanges(e) {
-    if (e !== this.originalEmailContent) {
-      this.formChanged = true;
-    }
-  }
-
-  resizeIframe() {
-    this.preview.nativeElement.style.height = this.preview.nativeElement.contentWindow.document.body.scrollHeight + 'px';
-  }
-
-  create() {
-    this.email['content'] = this.emailContent;
-    this.emailService.create(this.domainId, this.email).map(res => res.json()).subscribe(data => {
-      this.snackbarService.open("Email created");
-      this.emailFound = true;
-      this.email = data;
-      this.formChanged = false;
-      this.emailForm.reset(this.email);
-    })
-  }
-
-  update() {
-    this.email['content'] = this.emailContent;
-    this.emailService.update(this.domainId, this.email.id, this.email).map(res => res.json()).subscribe(data => {
-      this.snackbarService.open("Email updated");
-      this.emailFound = true;
-      this.email = data;
-      this.formChanged = false;
-      this.emailForm.reset(this.email);
-    })
-  }
-
-  delete(event) {
-    event.preventDefault();
-    this.dialogService
-      .confirm('Delete email', 'Are you sure you want to delete this email ?')
-      .subscribe(res => {
-        if (res) {
-          this.emailService.delete(this.domainId, this.email.id).subscribe(response => {
-            this.snackbarService.open("Email deleted");
-            this.email = {};
-            this.email.template = this.route.snapshot.queryParams['template'];
-            this.email.expiresAfter = 86400;
-            this.emailContent =  (' ' + this.defaultEmailContent).slice(1);
-            this.emailFound = false;
-            this.enableCodeMirror();
-          });
-        }
-      });
-  }
-
-  openDialog() {
-    this.dialog.open(EmailInfoDialog, {
-      data: {rawTemplate: this.rawTemplate, template: this.template}
-    });
-  }
-
-  isFormInvalid() {
-    return (this.emailForm.pristine || !this.emailForm.valid) && !this.formChanged;
-  }
-
-  private enableCodeMirror(): void {
-    this.editor.instance.setOption('readOnly', !this.email.enabled);
-  }
-}
-
-@Component({
-  selector: 'email-info-dialog',
-  templateUrl: './dialog/email-info.component.html',
-})
-export class EmailInfoDialog {
-  constructor(public dialogRef: MatDialogRef<EmailInfoDialog>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {}
 }

@@ -21,6 +21,8 @@ import {AppConfig} from "../../../../../config/app.config";
 import {animate, style, transition, trigger} from "@angular/animations";
 import {UserClaimComponent} from "./user-claim.component";
 import * as _ from 'lodash';
+import {FormControl} from "@angular/forms";
+import {ClientService} from "../../../../services/client.service";
 
 @Component({
   selector: 'user-creation',
@@ -44,10 +46,18 @@ export class UserCreationComponent implements OnInit {
   useEmailAsUsername: boolean = false;
   user: any = {};
   userClaims: any = {};
+  clientCtrl = new FormControl();
+  filteredClients: any[];
+  selectedClient: any;
   @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
 
-  constructor(private userService: UserService, private router: Router, private route: ActivatedRoute,
-              private snackbarService: SnackbarService, private factoryResolver: ComponentFactoryResolver) { }
+  constructor(private userService: UserService,
+              private router: Router,
+              private route: ActivatedRoute,
+              private snackbarService: SnackbarService,
+              private factoryResolver: ComponentFactoryResolver,
+              private clientService: ClientService) {
+  }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
@@ -55,6 +65,13 @@ export class UserCreationComponent implements OnInit {
       this.domainId = AppConfig.settings.authentication.domainId;
       this.adminContext = true;
     }
+
+    this.clientCtrl.valueChanges
+      .subscribe(searchTerm => {
+        this.clientService.findByDomain(this.domainId).map(res => res.json()).subscribe(response => {
+          this.filteredClients = response.filter(client => client.clientId.toLowerCase().indexOf(searchTerm.toLowerCase()) === 0);;
+        });
+      });
   }
 
   create() {
@@ -112,5 +129,13 @@ export class UserCreationComponent implements OnInit {
         that.snackbarService.open('Claim ' + claim.name + ' deleted');
       }
     });
+  }
+
+  onClientSelectionChanged(event) {
+    this.user.client = event.id;
+  }
+
+  onClientDeleted(event) {
+    this.user.client = null;
   }
 }

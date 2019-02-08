@@ -33,16 +33,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PATCH;
-import javax.ws.rs.PUT;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.Optional;
 import java.util.Set;
@@ -60,6 +55,9 @@ public class ClientResource extends AbstractResource {
 
     @Autowired
     private DomainService domainService;
+
+    @Context
+    private ResourceContext resourceContext;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -129,19 +127,6 @@ public class ClientResource extends AbstractResource {
                         error -> response.resume(error));
     }
 
-    /**
-     * Before dynamic client registration feature, response_type field was not managed.
-     * In order to protect those who were using the PUT API without this new field, we'll add default value.
-     * Only if the authorized grant types are informed and not the response_type.
-     */
-    private Single<PatchClient> applyDefaultResponseType(PatchClient patch) {
-        if(patch.getAuthorizedGrantTypes()!=null && patch.getAuthorizedGrantTypes().isPresent() && patch.getResponseTypes()==null) {
-            Set<String> responseTypes = ResponseTypeUtils.applyDefaultResponseType(patch.getAuthorizedGrantTypes().get());
-            patch.setResponseTypes(Optional.of(responseTypes.stream().collect(Collectors.toList())));
-        }
-        return Single.just(patch);
-    }
-
     @DELETE
     @ApiOperation(value = "Delete a client")
     @ApiResponses({
@@ -154,5 +139,23 @@ public class ClientResource extends AbstractResource {
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
+    }
+
+    @Path("emails")
+    public ClientEmailsResource getEmailsResource() {
+        return resourceContext.getResource(ClientEmailsResource.class);
+    }
+
+    /**
+     * Before dynamic client registration feature, response_type field was not managed.
+     * In order to protect those who were using the PUT API without this new field, we'll add default value.
+     * Only if the authorized grant types are informed and not the response_type.
+     */
+    private Single<PatchClient> applyDefaultResponseType(PatchClient patch) {
+        if(patch.getAuthorizedGrantTypes()!=null && patch.getAuthorizedGrantTypes().isPresent() && patch.getResponseTypes()==null) {
+            Set<String> responseTypes = ResponseTypeUtils.applyDefaultResponseType(patch.getAuthorizedGrantTypes().get());
+            patch.setResponseTypes(Optional.of(responseTypes.stream().collect(Collectors.toList())));
+        }
+        return Single.just(patch);
     }
 }
