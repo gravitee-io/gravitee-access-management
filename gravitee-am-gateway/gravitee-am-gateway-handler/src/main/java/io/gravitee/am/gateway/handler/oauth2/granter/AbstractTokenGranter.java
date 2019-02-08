@@ -59,9 +59,9 @@ public class AbstractTokenGranter implements TokenGranter {
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return parseRequest(tokenRequest, client)
                 .flatMapMaybe(tokenRequest1 -> resolveResourceOwner(tokenRequest1, client))
-                .map(user -> Optional.of(user))
+                .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
-                .flatMapSingle(user -> handleRequest(tokenRequest, client, user.isPresent() ? user.get() : null));
+                .flatMapSingle(user -> handleRequest(tokenRequest, client, user.orElse(null)));
     }
 
     /**

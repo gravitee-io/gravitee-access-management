@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "baa5848d-e14f-48bd-bb7e-fac6379e917b",
+		"_postman_id": "dcdc899b-5b75-4887-8eb8-19b7170d8d0d",
 		"name": "Gravitee.io AM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -19950,7 +19950,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"type\": \"jwtbearer-am-extension-grant\",\n  \"configuration\": \"{\\\"publicKey\\\":\\\"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCrviVm3+KD98U899xIF5w9I4C/3JTv/ZVduRhcMoGkfBe6sz2pJ2kf6bMjtWnEb91H63GHWdv554ez3HIYxBZsYddaU93YtiqrsbCCQc3GMmFB120WgUWfjqsvPOMcz3PyFy3yw+XLAiND0Pl2lv8K6ejJvfwmTRhy1DI5PQGvRWz57IdoCxjZE8H+Lr79dc/eFhcu6Fksxa2tugv86tyO38sA9v1L2CCQjsqQL8TnMHbDV8ahGK6Abv43KMjHV6tgFhOhHc1a2YaYCtEI0yKKH2t0K3hrHRwUfgqu4Q5xqWpBkEFX05YW8ygrWivXfDwGjqcMyiHEYlRvDcrRP0Jh test@test.com\\\",\\\"claimsMapper\\\":[{\\\"assertion_claim\\\":\\\"email\\\",\\\"token_claim\\\":\\\"email\\\"}]}\",\n  \"name\": \"JWT BEARER\",\n  \"grantType\": \"urn:ietf:params:oauth:grant-type:jwt-bearer\"\n}"
+									"raw": "{\n  \"type\": \"jwtbearer-am-extension-grant\",\n  \"configuration\": \"{\\\"publicKey\\\":\\\"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDI6xahwspOwhzSHrga3SFif04FITcAhyygXoeS+GwUSx6HaMCMkULTQVMgQoU/7VAUf32uoiVgLDo1FI6vWvBGbp1Zbf7MRVpqK98PvhTK4PN5py2OAmpd3i3z5SgGZCP1oxJE/uF+mMUkvtQOJ+RL32pU8oaAwzPuBLKX/jA5OZPouq6Y5e7abrgValYyGCI8aZK5SfukZTMq14mDc84Y2t4IvwS/GqSUiRsTp7r6aj5F+lwD0vyUBo3eH5v5J1R+t7F8T/B2Jl+oJQTPLFxBwcN/2AGC5aqrn7BDoGUG2NZtb6WTolZsBUYjgL7MdYEQHMz/N4WoPCXCEbUQU5rZ test@test.com\\\",\\\"claimsMapper\\\":[{\\\"assertion_claim\\\":\\\"email\\\",\\\"token_claim\\\":\\\"email\\\"}]}\",\n  \"name\": \"JWT BEARER\",\n  \"userExists\": true,\n  \"identityProvider\": \"default-idp-test\",\n  \"grantType\": \"urn:ietf:params:oauth:grant-type:jwt-bearer\"\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/domains/test/extensionGrants",
@@ -20083,7 +20083,7 @@
 											"    pm.response.to.have.status(201);",
 											"});",
 											"",
-											"pm.test(\"Extension grant - create user\", function () {",
+											"pm.test(\"UM - create user\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData).to.have.property('id');",
 											"    pm.expect(jsonData.internal).to.eql(true);",
@@ -20103,14 +20103,14 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"type": "text",
-										"value": "Bearer {{token}}"
+										"value": "Bearer {{token}}",
+										"type": "text"
 									},
 									{
 										"key": "Content-Type",
 										"name": "Content-Type",
-										"type": "text",
-										"value": "application/json"
+										"value": "application/json",
+										"type": "text"
 									}
 								],
 								"body": {
@@ -20133,21 +20133,21 @@
 							"response": []
 						},
 						{
-							"name": "Authenticate User",
+							"name": "JWT Bearer extension grant - Unknow User",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+										"id": "f4cec8d7-bd2c-44cc-8423-ae8cc21cc068",
 										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
 											"});",
 											"",
-											"pm.test(\"Extension grant - authenticate - success\", function () {",
+											"pm.test(\"Unknown user\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
 											"    var body = pm.response.json();",
-											"    pm.expect(body).to.have.property('access_token');",
-											"    pm.environment.set('assertionToken', body.id_token);",
+											"    pm.expect(body.error).to.eql('invalid_grant');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -20156,8 +20156,54 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"id": "f8395e2f-4a01-4837-baf6-0230541542ac",
 										"exec": [
+											"pm.environment.set('assertionToken', 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbm9ueW1vdXMtdXNlciIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjp0cnVlLCJpYXQiOjE1MTYyMzkwMjJ9.ALneslMoGJc4l0EEaH4JDHkZeG6nneBe1tD0IOyo9xXC6zs8HPd6RVr3lYgMsQxRVg8V1pZMvfxCHqqopHoirCgoklpnsM7Kcjve8c4KROrWMk5nbcjG5rozsO1hhJWWEtSCZeZ14GpDewM41StUSliOb9c-j5khSxJ-AD-F1zpOM1O7HwxzflOUvO_7BbYSOv1K768EBljXTIeVojniLa0griDMIzlX4YxF-OR1qoANtA6Bpj5jlGi722LsSKKJ-bldy2pURf-Z8-vk5RYcGvcTBjXp2ulMU_S8X0QKzMJ0wjLFofoZ-kY12WgoOejAF1cVTUGZ8KHSA1b8GRKCcQ');",
+											"",
+											"// Private key",
+											"/*",
+											"-----BEGIN PRIVATE KEY-----",
+											"MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDI6xahwspOwhzS",
+											"Hrga3SFif04FITcAhyygXoeS+GwUSx6HaMCMkULTQVMgQoU/7VAUf32uoiVgLDo1",
+											"FI6vWvBGbp1Zbf7MRVpqK98PvhTK4PN5py2OAmpd3i3z5SgGZCP1oxJE/uF+mMUk",
+											"vtQOJ+RL32pU8oaAwzPuBLKX/jA5OZPouq6Y5e7abrgValYyGCI8aZK5SfukZTMq",
+											"14mDc84Y2t4IvwS/GqSUiRsTp7r6aj5F+lwD0vyUBo3eH5v5J1R+t7F8T/B2Jl+o",
+											"JQTPLFxBwcN/2AGC5aqrn7BDoGUG2NZtb6WTolZsBUYjgL7MdYEQHMz/N4WoPCXC",
+											"EbUQU5rZAgMBAAECggEBAL+ZOEbgPA7pG5TgyI6Nq8WDQ0KvDwWI4my4WK82CdM8",
+											"Y4ubwGsMJ17QH9ZWuT1iMIirn44GgH/7DTMLPJpKrXFtEM50j5P62yL+XURk7u0d",
+											"ofG0FEQlV4vWUZoRQJ7/pi8b6FM1gJI6W14UQKKTNimIj50cflmSTRZBEpLRSul1",
+											"pTlsPypRgtj9clUgPBt1iKehoJmUu9S9nYAJFJo9wn97QKd6erkkqhJfEmXPWoXQ",
+											"X5O2BJTTappN7SxLoP2Dhdss4zbvwZJD10Q5dDj3KH4vWjR4W3LuoH64ug74H2lh",
+											"oFTT/xrWDCFFfWpjfkAXWzCh83DNI7z3c54sQXU2YGUCgYEA+qCRwmvwyf4+8wW0",
+											"0AdsuQ0TDwZEf8LayPUchiILGKGCX5I9Qtfwm2XCsfOVtbX6FiEGPVIYT5i3S4le",
+											"GMl7uO35/LsYPWX6MVGLeMnAQxkorxVM6iqZQu8fF1pcvxfVgvxpmPEko+veLTBq",
+											"XPJ7HLiTkuuq+5P0YYZxW5iJ25MCgYEAzTm4BVHhzRKM1Hb+Cs2C4OhqTV7fNAkv",
+											"melZt70jRGCd7ZXslNFUc3uju7JnaJVBqdNThOUevnk8n6EV0sMvP+483vNNSMqW",
+											"u7KgR36DMNVMYHqr/f8YY9TLxHvSQoI53jPQFQ2X+GzrJZUtq6u1hX4UpySIlZbP",
+											"GCMIh5GWK2MCgYABowLQrjvIVey7UZI4uZOwMbGqK3RPEUq0fUVOavJ/mq5rSV01",
+											"Dov3t9ZpqxmTMjkL4/NSezLFck3gJGmE5+vy7Trwt5gU7pGPuOScSVUEGyn02sLB",
+											"1L1jfoRJdsGcTd+LF3LpGMoQd/3fda18Jek/6sSr9PYM5o52BJbA7mIYGQKBgCo3",
+											"131wrMztJf+HQxeh02zFIykrfStNQHefI4/C3wBwB80abILo1UC0jKhOOSuwmMOA",
+											"78uE/uAcPLZyAvVKpeu27NrInnt9Aak3Q/WxNvfSyVWHpt4nnjLbUdfnyQdZluH5",
+											"MrNCCqNWdMFUgQKx3jPKDiGcSGTNk2jZvCV3c7cVAoGBALoOfXLssZW7Kp5CcY/q",
+											"60JP8QHm889KykmBvda5MZySENt42i5Bp6a8rNTR6TmJkKGiY780I16+JDhPoQHd",
+											"+pJeVNzWPoTAdg5ftvMoYr95wOqsraUtd+4wQcpjMKC4+FxAuSChhqfBrOktoigf",
+											"TaAE0xuL1DO9Fqp1nNZY0q1m",
+											"-----END PRIVATE KEY-----",
+											"*/",
+											"",
+											"// Public key",
+											"/*",
+											"-----BEGIN PUBLIC KEY-----",
+											"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyOsWocLKTsIc0h64Gt0h",
+											"Yn9OBSE3AIcsoF6HkvhsFEseh2jAjJFC00FTIEKFP+1QFH99rqIlYCw6NRSOr1rw",
+											"Rm6dWW3+zEVaaivfD74UyuDzeactjgJqXd4t8+UoBmQj9aMSRP7hfpjFJL7UDifk",
+											"S99qVPKGgMMz7gSyl/4wOTmT6LqumOXu2m64FWpWMhgiPGmSuUn7pGUzKteJg3PO",
+											"GNreCL8EvxqklIkbE6e6+mo+RfpcA9L8lAaN3h+b+SdUfrexfE/wdiZfqCUEzyxc",
+											"QcHDf9gBguWqq5+wQ6BlBtjWbW+lk6JWbAVGI4C+zHWBEBzM/zeFqDwlwhG1EFOa",
+											"2QIDAQAB",
+											"-----END PUBLIC KEY-----",
+											"*/",
 											""
 										],
 										"type": "text/javascript"
@@ -20168,8 +20214,15 @@
 								"method": "POST",
 								"header": [
 									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/x-www-form-urlencoded",
+										"type": "text"
+									},
+									{
 										"key": "Authorization",
-										"value": "Basic Y2xpZW50LXVtOmNsaWVudC11bS1zZWNyZXQ="
+										"value": "Basic Y2xpZW50LWp3dC1iZWFyZXI6Y2xpZW50LWp3dC1iZWFyZXItc2VjcmV0",
+										"type": "text"
 									}
 								],
 								"body": {
@@ -20177,17 +20230,12 @@
 									"urlencoded": [
 										{
 											"key": "grant_type",
-											"value": "password",
+											"value": "urn:ietf:params:oauth:grant-type:jwt-bearer",
 											"type": "text"
 										},
 										{
-											"key": "username",
-											"value": "jensen.barbara",
-											"type": "text"
-										},
-										{
-											"key": "password",
-											"value": "password",
+											"key": "assertion",
+											"value": "{{assertionToken}}",
 											"type": "text"
 										},
 										{
@@ -20212,7 +20260,7 @@
 							"response": []
 						},
 						{
-							"name": "JWT Bearer extension grant",
+							"name": "JWT Bearer extension grant - Valid User",
 							"event": [
 								{
 									"listen": "test",
@@ -20237,6 +20285,62 @@
 										],
 										"type": "text/javascript"
 									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "f8395e2f-4a01-4837-baf6-0230541542ac",
+										"exec": [
+											"pm.environment.set('assertionToken', 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZW5zZW4uYmFyYmFyYSIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjp0cnVlLCJtYWlsIjoiamVuc2VuLmJhcmJhcmFAbWFpbC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.oUvmrRITBVrrWBRQAIKSkDbpwwombEbDp24PXrx9s111o3M2dTQ7bcrIkXWhgiWGdoIYVhZEaYV3bTXmv2fHH80DLAOstq-ibkiKmPkoPWn7ea1VpLixcVCft_YSO_mtf4YMxdY-WFFB896z0Y_5M5S2iMvx4HKj7OCxKZqF1jkxeNCSMqI1KbMketk7SZxFlycgTXJBx5ysQ-z9VfGck3Vnf_pGV_RYPMgOMp0zqvPBPIbtOj1viFQ3lSNBss98OInnsecsaCQcFJGshVG-MNLGWDwljsz5-Rozckveg9g5orWTS86jjEqrNTQmA0alvLEnXnmJVaGJyTrW_2Qwng');",
+											"",
+											"// Private key",
+											"/*",
+											"-----BEGIN PRIVATE KEY-----",
+											"MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDI6xahwspOwhzS",
+											"Hrga3SFif04FITcAhyygXoeS+GwUSx6HaMCMkULTQVMgQoU/7VAUf32uoiVgLDo1",
+											"FI6vWvBGbp1Zbf7MRVpqK98PvhTK4PN5py2OAmpd3i3z5SgGZCP1oxJE/uF+mMUk",
+											"vtQOJ+RL32pU8oaAwzPuBLKX/jA5OZPouq6Y5e7abrgValYyGCI8aZK5SfukZTMq",
+											"14mDc84Y2t4IvwS/GqSUiRsTp7r6aj5F+lwD0vyUBo3eH5v5J1R+t7F8T/B2Jl+o",
+											"JQTPLFxBwcN/2AGC5aqrn7BDoGUG2NZtb6WTolZsBUYjgL7MdYEQHMz/N4WoPCXC",
+											"EbUQU5rZAgMBAAECggEBAL+ZOEbgPA7pG5TgyI6Nq8WDQ0KvDwWI4my4WK82CdM8",
+											"Y4ubwGsMJ17QH9ZWuT1iMIirn44GgH/7DTMLPJpKrXFtEM50j5P62yL+XURk7u0d",
+											"ofG0FEQlV4vWUZoRQJ7/pi8b6FM1gJI6W14UQKKTNimIj50cflmSTRZBEpLRSul1",
+											"pTlsPypRgtj9clUgPBt1iKehoJmUu9S9nYAJFJo9wn97QKd6erkkqhJfEmXPWoXQ",
+											"X5O2BJTTappN7SxLoP2Dhdss4zbvwZJD10Q5dDj3KH4vWjR4W3LuoH64ug74H2lh",
+											"oFTT/xrWDCFFfWpjfkAXWzCh83DNI7z3c54sQXU2YGUCgYEA+qCRwmvwyf4+8wW0",
+											"0AdsuQ0TDwZEf8LayPUchiILGKGCX5I9Qtfwm2XCsfOVtbX6FiEGPVIYT5i3S4le",
+											"GMl7uO35/LsYPWX6MVGLeMnAQxkorxVM6iqZQu8fF1pcvxfVgvxpmPEko+veLTBq",
+											"XPJ7HLiTkuuq+5P0YYZxW5iJ25MCgYEAzTm4BVHhzRKM1Hb+Cs2C4OhqTV7fNAkv",
+											"melZt70jRGCd7ZXslNFUc3uju7JnaJVBqdNThOUevnk8n6EV0sMvP+483vNNSMqW",
+											"u7KgR36DMNVMYHqr/f8YY9TLxHvSQoI53jPQFQ2X+GzrJZUtq6u1hX4UpySIlZbP",
+											"GCMIh5GWK2MCgYABowLQrjvIVey7UZI4uZOwMbGqK3RPEUq0fUVOavJ/mq5rSV01",
+											"Dov3t9ZpqxmTMjkL4/NSezLFck3gJGmE5+vy7Trwt5gU7pGPuOScSVUEGyn02sLB",
+											"1L1jfoRJdsGcTd+LF3LpGMoQd/3fda18Jek/6sSr9PYM5o52BJbA7mIYGQKBgCo3",
+											"131wrMztJf+HQxeh02zFIykrfStNQHefI4/C3wBwB80abILo1UC0jKhOOSuwmMOA",
+											"78uE/uAcPLZyAvVKpeu27NrInnt9Aak3Q/WxNvfSyVWHpt4nnjLbUdfnyQdZluH5",
+											"MrNCCqNWdMFUgQKx3jPKDiGcSGTNk2jZvCV3c7cVAoGBALoOfXLssZW7Kp5CcY/q",
+											"60JP8QHm889KykmBvda5MZySENt42i5Bp6a8rNTR6TmJkKGiY780I16+JDhPoQHd",
+											"+pJeVNzWPoTAdg5ftvMoYr95wOqsraUtd+4wQcpjMKC4+FxAuSChhqfBrOktoigf",
+											"TaAE0xuL1DO9Fqp1nNZY0q1m",
+											"-----END PRIVATE KEY-----",
+											"*/",
+											"",
+											"// Public key",
+											"/*",
+											"-----BEGIN PUBLIC KEY-----",
+											"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyOsWocLKTsIc0h64Gt0h",
+											"Yn9OBSE3AIcsoF6HkvhsFEseh2jAjJFC00FTIEKFP+1QFH99rqIlYCw6NRSOr1rw",
+											"Rm6dWW3+zEVaaivfD74UyuDzeactjgJqXd4t8+UoBmQj9aMSRP7hfpjFJL7UDifk",
+											"S99qVPKGgMMz7gSyl/4wOTmT6LqumOXu2m64FWpWMhgiPGmSuUn7pGUzKteJg3PO",
+											"GNreCL8EvxqklIkbE6e6+mo+RfpcA9L8lAaN3h+b+SdUfrexfE/wdiZfqCUEzyxc",
+											"QcHDf9gBguWqq5+wQ6BlBtjWbW+lk6JWbAVGI4C+zHWBEBzM/zeFqDwlwhG1EFOa",
+											"2QIDAQAB",
+											"-----END PUBLIC KEY-----",
+											"*/",
+											""
+										],
+										"type": "text/javascript"
+									}
 								}
 							],
 							"request": {
@@ -20245,13 +20349,206 @@
 									{
 										"key": "Content-Type",
 										"name": "Content-Type",
-										"value": "application/x-www-form-urlencoded",
-										"type": "text"
+										"type": "text",
+										"value": "application/x-www-form-urlencoded"
 									},
 									{
 										"key": "Authorization",
-										"value": "Basic Y2xpZW50LWp3dC1iZWFyZXI6Y2xpZW50LWp3dC1iZWFyZXItc2VjcmV0",
-										"type": "text"
+										"type": "text",
+										"value": "Basic Y2xpZW50LWp3dC1iZWFyZXI6Y2xpZW50LWp3dC1iZWFyZXItc2VjcmV0"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+											"type": "text"
+										},
+										{
+											"key": "assertion",
+											"value": "{{assertionToken}}",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "openid",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/oauth/token",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"oauth",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update extension grant - Uncheck userExists",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "a1ab79e9-b254-47f9-8af9-e6ab3e47ab58",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Extension Grant - update jwt bearer\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.have.property('id');",
+											"    pm.environment.set('jwtBearerExtensionGrant', jsonData.id);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 5000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"JWT BEARER\",\n  \"configuration\": \"{\\\"publicKey\\\":\\\"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDI6xahwspOwhzSHrga3SFif04FITcAhyygXoeS+GwUSx6HaMCMkULTQVMgQoU/7VAUf32uoiVgLDo1FI6vWvBGbp1Zbf7MRVpqK98PvhTK4PN5py2OAmpd3i3z5SgGZCP1oxJE/uF+mMUkvtQOJ+RL32pU8oaAwzPuBLKX/jA5OZPouq6Y5e7abrgValYyGCI8aZK5SfukZTMq14mDc84Y2t4IvwS/GqSUiRsTp7r6aj5F+lwD0vyUBo3eH5v5J1R+t7F8T/B2Jl+oJQTPLFxBwcN/2AGC5aqrn7BDoGUG2NZtb6WTolZsBUYjgL7MdYEQHMz/N4WoPCXCEbUQU5rZ test@test.com\\\",\\\"claimsMapper\\\":[{\\\"assertion_claim\\\":\\\"email\\\",\\\"token_claim\\\":\\\"email\\\"}]}\",\n  \"grantType\": \"urn:ietf:params:oauth:grant-type:jwt-bearer\",\n  \"identityProvider\": \"default-idp-test\",\n  \"createUser\": false,\n  \"userExists\": false\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/test/extensionGrants/{{jwtBearerExtensionGrant}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"test",
+										"extensionGrants",
+										"{{jwtBearerExtensionGrant}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "JWT Bearer extension grant - Unknow User is valid",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f4cec8d7-bd2c-44cc-8423-ae8cc21cc068",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Extension grant - jwt bearer grant - success\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('access_token');",
+											"    var claims = jwt_decode(body.id_token);",
+											"    pm.expect(claims).to.have.property('email');",
+											"});",
+											"",
+											"function jwt_decode(jwt) {",
+											"    var parts = jwt.split('.'); // header, payload, signature",
+											"    return JSON.parse(atob(parts[1]));",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "f8395e2f-4a01-4837-baf6-0230541542ac",
+										"exec": [
+											"pm.environment.set('assertionToken', 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbm9ueW1vdXMtdXNlciIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjp0cnVlLCJpYXQiOjE1MTYyMzkwMjIsImVtYWlsIjoiam9obi5kb2VAZ21haWwuY29tIn0.dDmLFEfCDtxHUF771Q8AWQs4AoImZSZKlnlEp91iT2K0d7glZHMasE8HsfU7ozL-T9SATSQi_xvsc3Uitabna95v_nbOmu9fLeodmzYkPgXoD4Fxk8wPtHqTETHNN_kDbCxBXX0iqGhB-Et-9QJ2rGUDmMCXcj-K1PwsuBYYch0G3Zc60HM8hM3mm51pH8j1vKUr1pBSrAudPANhhQof_sOwohRiiubJIT4qDpjKxp6IvqmVusAU4SDeAPaoQDdr3KH2Hd29TWviB8OGw8pj3SLxKkaMKG0u94HBPcOaC-v0p-afq7N0jgoS2KfO9CtpmEMiItfLKWqkEFggWJtL4w');",
+											"",
+											"// Private key",
+											"/*",
+											"-----BEGIN PRIVATE KEY-----",
+											"MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDI6xahwspOwhzS",
+											"Hrga3SFif04FITcAhyygXoeS+GwUSx6HaMCMkULTQVMgQoU/7VAUf32uoiVgLDo1",
+											"FI6vWvBGbp1Zbf7MRVpqK98PvhTK4PN5py2OAmpd3i3z5SgGZCP1oxJE/uF+mMUk",
+											"vtQOJ+RL32pU8oaAwzPuBLKX/jA5OZPouq6Y5e7abrgValYyGCI8aZK5SfukZTMq",
+											"14mDc84Y2t4IvwS/GqSUiRsTp7r6aj5F+lwD0vyUBo3eH5v5J1R+t7F8T/B2Jl+o",
+											"JQTPLFxBwcN/2AGC5aqrn7BDoGUG2NZtb6WTolZsBUYjgL7MdYEQHMz/N4WoPCXC",
+											"EbUQU5rZAgMBAAECggEBAL+ZOEbgPA7pG5TgyI6Nq8WDQ0KvDwWI4my4WK82CdM8",
+											"Y4ubwGsMJ17QH9ZWuT1iMIirn44GgH/7DTMLPJpKrXFtEM50j5P62yL+XURk7u0d",
+											"ofG0FEQlV4vWUZoRQJ7/pi8b6FM1gJI6W14UQKKTNimIj50cflmSTRZBEpLRSul1",
+											"pTlsPypRgtj9clUgPBt1iKehoJmUu9S9nYAJFJo9wn97QKd6erkkqhJfEmXPWoXQ",
+											"X5O2BJTTappN7SxLoP2Dhdss4zbvwZJD10Q5dDj3KH4vWjR4W3LuoH64ug74H2lh",
+											"oFTT/xrWDCFFfWpjfkAXWzCh83DNI7z3c54sQXU2YGUCgYEA+qCRwmvwyf4+8wW0",
+											"0AdsuQ0TDwZEf8LayPUchiILGKGCX5I9Qtfwm2XCsfOVtbX6FiEGPVIYT5i3S4le",
+											"GMl7uO35/LsYPWX6MVGLeMnAQxkorxVM6iqZQu8fF1pcvxfVgvxpmPEko+veLTBq",
+											"XPJ7HLiTkuuq+5P0YYZxW5iJ25MCgYEAzTm4BVHhzRKM1Hb+Cs2C4OhqTV7fNAkv",
+											"melZt70jRGCd7ZXslNFUc3uju7JnaJVBqdNThOUevnk8n6EV0sMvP+483vNNSMqW",
+											"u7KgR36DMNVMYHqr/f8YY9TLxHvSQoI53jPQFQ2X+GzrJZUtq6u1hX4UpySIlZbP",
+											"GCMIh5GWK2MCgYABowLQrjvIVey7UZI4uZOwMbGqK3RPEUq0fUVOavJ/mq5rSV01",
+											"Dov3t9ZpqxmTMjkL4/NSezLFck3gJGmE5+vy7Trwt5gU7pGPuOScSVUEGyn02sLB",
+											"1L1jfoRJdsGcTd+LF3LpGMoQd/3fda18Jek/6sSr9PYM5o52BJbA7mIYGQKBgCo3",
+											"131wrMztJf+HQxeh02zFIykrfStNQHefI4/C3wBwB80abILo1UC0jKhOOSuwmMOA",
+											"78uE/uAcPLZyAvVKpeu27NrInnt9Aak3Q/WxNvfSyVWHpt4nnjLbUdfnyQdZluH5",
+											"MrNCCqNWdMFUgQKx3jPKDiGcSGTNk2jZvCV3c7cVAoGBALoOfXLssZW7Kp5CcY/q",
+											"60JP8QHm889KykmBvda5MZySENt42i5Bp6a8rNTR6TmJkKGiY780I16+JDhPoQHd",
+											"+pJeVNzWPoTAdg5ftvMoYr95wOqsraUtd+4wQcpjMKC4+FxAuSChhqfBrOktoigf",
+											"TaAE0xuL1DO9Fqp1nNZY0q1m",
+											"-----END PRIVATE KEY-----",
+											"*/",
+											"",
+											"// Public key",
+											"/*",
+											"-----BEGIN PUBLIC KEY-----",
+											"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyOsWocLKTsIc0h64Gt0h",
+											"Yn9OBSE3AIcsoF6HkvhsFEseh2jAjJFC00FTIEKFP+1QFH99rqIlYCw6NRSOr1rw",
+											"Rm6dWW3+zEVaaivfD74UyuDzeactjgJqXd4t8+UoBmQj9aMSRP7hfpjFJL7UDifk",
+											"S99qVPKGgMMz7gSyl/4wOTmT6LqumOXu2m64FWpWMhgiPGmSuUn7pGUzKteJg3PO",
+											"GNreCL8EvxqklIkbE6e6+mo+RfpcA9L8lAaN3h+b+SdUfrexfE/wdiZfqCUEzyxc",
+											"QcHDf9gBguWqq5+wQ6BlBtjWbW+lk6JWbAVGI4C+zHWBEBzM/zeFqDwlwhG1EFOa",
+											"2QIDAQAB",
+											"-----END PUBLIC KEY-----",
+											"*/",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/x-www-form-urlencoded"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Basic Y2xpZW50LWp3dC1iZWFyZXI6Y2xpZW50LWp3dC1iZWFyZXItc2VjcmV0"
 									}
 								],
 								"body": {

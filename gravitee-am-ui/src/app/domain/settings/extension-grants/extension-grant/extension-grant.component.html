@@ -38,6 +38,13 @@
       </mat-slide-toggle>
       <mat-hint style="font-size: 75%;">Allow to store user information. Used for user account activity and OAuth 2.0 refresh token flow.</mat-hint>
 
+      <h4 style="margin: 10px 0 10px 0;">Check user</h4>
+      <mat-slide-toggle
+        (change)="enableCheckUser($event)"
+        [checked]="extensionGrant.userExists">
+      </mat-slide-toggle>
+      <mat-hint style="font-size: 75%;">Check that the user is existing in the identity provider.</mat-hint>
+
       <h4 style="margin: 10px 0 20px 0;">Identity provider</h4>
       <mat-form-field>
         <mat-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider">

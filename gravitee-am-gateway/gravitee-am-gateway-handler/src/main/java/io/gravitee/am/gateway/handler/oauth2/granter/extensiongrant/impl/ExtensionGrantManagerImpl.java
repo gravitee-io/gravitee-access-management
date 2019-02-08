@@ -137,7 +137,8 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         }
 
         ExtensionGrantProvider extensionGrantProvider = extensionGrantPluginManager.create(extensionGrant.getType(), extensionGrant.getConfiguration(), authenticationProvider);
-        ExtensionGrantGranter extensionGrantGranter = new ExtensionGrantGranter(extensionGrantProvider, extensionGrant, userAuthenticationManager, tokenService, tokenRequestResolver);
+        ExtensionGrantGranter extensionGrantGranter = new ExtensionGrantGranter(extensionGrantProvider, extensionGrant,
+                userAuthenticationManager, tokenService, tokenRequestResolver, identityProviderManager);
         ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), extensionGrantGranter);
     }
 }

@@ -41,6 +41,8 @@ public class ExtensionGrantMongo extends Auditable {
 
     private boolean createUser;
 
+    private boolean userExists;
+
     public String getId() {
         return id;
     }
@@ -103,6 +105,14 @@ public class ExtensionGrantMongo extends Auditable {
 
     public void setCreateUser(boolean createUser) {
         this.createUser = createUser;
+    }
+
+    public boolean isUserExists() {
+        return userExists;
+    }
+
+    public void setUserExists(boolean userExists) {
+        this.userExists = userExists;
     }
 
     @Override
