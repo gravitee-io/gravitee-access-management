@@ -41,9 +41,15 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     private String groupRoleAttribute = "cn";
 
+    private String passwordAlgorithm;
+
     private Long connectTimeout = 5000l;
 
     private Long responseTimeout = 5000l;
+
+    private String passwordEncoding;
+
+    private boolean hashEncodedByThirdParty;
 
     public String getContextSourceUrl() {
         return contextSourceUrl;
@@ -131,5 +137,29 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     public void setResponseTimeout(Long responseTimeout) {
         this.responseTimeout = responseTimeout;
+    }
+
+    public String getPasswordAlgorithm() {
+        return passwordAlgorithm;
+    }
+
+    public void setPasswordAlgorithm(String passwordAlgorithm) {
+        this.passwordAlgorithm = passwordAlgorithm;
+    }
+
+    public String getPasswordEncoding() {
+        return passwordEncoding;
+    }
+
+    public void setPasswordEncoding(String passwordEncoding) {
+        this.passwordEncoding = passwordEncoding;
+    }
+
+    public boolean isHashEncodedByThirdParty() {
+        return hashEncodedByThirdParty;
+    }
+
+    public void setHashEncodedByThirdParty(boolean hashEncodedByThirdParty) {
+        this.hashEncodedByThirdParty = hashEncodedByThirdParty;
     }
 }

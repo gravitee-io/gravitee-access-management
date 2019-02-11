@@ -16,7 +16,10 @@
 package io.gravitee.am.identityprovider.ldap.authentication.spring;
 
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.ldap.authentication.CompareAuthenticationHandler;
+import io.gravitee.am.identityprovider.ldap.authentication.encoding.*;
 import org.ldaptive.*;
+import org.ldaptive.auth.AbstractAuthenticationHandler;
 import org.ldaptive.auth.Authenticator;
 import org.ldaptive.auth.BindAuthenticationHandler;
 import org.ldaptive.auth.SearchDnResolver;
@@ -27,6 +30,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
+import java.util.regex.Pattern;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -90,11 +94,56 @@ public class LdapAuthenticationProviderConfiguration {
         dnResolver.setBaseDn(configuration.getContextSourceBase());
         dnResolver.setUserFilter(configuration.getUserSearchFilter());
         dnResolver.setSubtreeSearch(true);
-        BindAuthenticationHandler authHandler = new BindAuthenticationHandler(connectionFactory());
-        authHandler.setAuthenticationControls(new PasswordPolicyControl());
 
+        AbstractAuthenticationHandler authHandler =
+                (configuration.getPasswordAlgorithm() == null)
+                        ? new BindAuthenticationHandler(connectionFactory())
+                        : new CompareAuthenticationHandler(connectionFactory(), passwordEncoder(configuration.getPasswordAlgorithm()), binaryToTextEncoder(), configuration);
+
+        authHandler.setAuthenticationControls(new PasswordPolicyControl());
         Authenticator auth = new Authenticator(dnResolver, authHandler);
         auth.setAuthenticationResponseHandlers(new PasswordPolicyAuthenticationResponseHandler());
         return auth;
+    }
+
+    @Bean
+    public BinaryToTextEncoder binaryToTextEncoder() {
+        if (configuration.getPasswordEncoding() != null) {
+            switch (configuration.getPasswordEncoding()) {
+                case "Base64":
+                    return new Base64Encoder();
+                case "Hex":
+                    return new HexEncoder();
+            }
+        }
+        return new NoneEncoder();
+    }
+
+    private PasswordEncoder passwordEncoder(String passwordAlgorithm) {
+        if ("MD5".equals(passwordAlgorithm)) {
+            return new MD5PasswordEncoder();
+        }
+
+        if ("SHA".equals(passwordAlgorithm)) {
+            return new SHAPasswordEncoder();
+        }
+
+        if (passwordAlgorithm.startsWith("SHA")) {
+            if (passwordAlgorithm.endsWith("+MD5")) {
+                PasswordEncoder passwordEncoder = new SHAMD5PasswordEncoder();
+                String parts = passwordAlgorithm.split(Pattern.quote("+"))[0];
+                String[] strengthParts = parts.split("-");
+                if (strengthParts.length == 2) {
+                    ((SHAMD5PasswordEncoder) passwordEncoder).setStrength(Integer.valueOf(parts.split("-")[1]));
+                }
+                // set Password encoding if exists
+                ((SHAMD5PasswordEncoder) passwordEncoder).setBinaryToTextEncoder(binaryToTextEncoder());
+                return passwordEncoder;
+            } else {
+                return new SHAPasswordEncoder(Integer.valueOf(passwordAlgorithm.split("-")[1]));
+            }
+        }
+
+        throw new IllegalArgumentException("Unknown password encoder algorithm");
     }
 }
