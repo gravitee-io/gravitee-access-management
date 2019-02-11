@@ -111,21 +111,7 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
                 if (response.getResult()) { // authentication succeeded
                     LdapEntry userEntry = response.getLdapEntry();
                     // fetch user groups
-                    try {
-                        groupSearchExecutor.getSearchFilter().setParameter(0, userEntry.getDn());
-                        SearchResult searchResult = groupSearchExecutor.search(connectionFactory).getResult();
-                        Collection<LdapEntry> groupEntries = searchResult.getEntries();
-                        String[] groups = groupEntries.stream()
-                                .map(groupEntry -> groupEntry.getAttributes()
-                                        .stream()
-                                        .map(ldapAttribute -> ldapAttribute.getStringValue())
-                                        .collect(Collectors.toList()))
-                                .flatMap(List::stream)
-                                .toArray(size -> new String[size]);
-                        userEntry.addAttribute(new LdapAttribute(MEMBEROF_ATTRIBUTE, groups));
-                    } catch (Exception e) {
-                        LOGGER.warn("No group found for user {}", userEntry.getDn(), e);
-                    }
+                    fetchUserGroups(userEntry);
                     // return user
                     emitter.onSuccess(createUser(userEntry));
                 } else { // authentication failed
@@ -151,21 +137,7 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
                 LdapEntry userEntry = userSearchResult.getEntry();
                 if (userEntry != null) {
                     // fetch user groups
-                    try {
-                        groupSearchExecutor.getSearchFilter().setParameter(0, userEntry.getDn());
-                        SearchResult searchResult = groupSearchExecutor.search(connectionFactory).getResult();
-                        Collection<LdapEntry> groupEntries = searchResult.getEntries();
-                        String[] groups = groupEntries.stream()
-                                .map(groupEntry -> groupEntry.getAttributes()
-                                        .stream()
-                                        .map(ldapAttribute -> ldapAttribute.getStringValue())
-                                        .collect(Collectors.toList()))
-                                .flatMap(List::stream)
-                                .toArray(size -> new String[size]);
-                        userEntry.addAttribute(new LdapAttribute(MEMBEROF_ATTRIBUTE, groups));
-                    } catch (Exception e) {
-                        LOGGER.warn("No group found for user {}", userEntry.getDn(), e);
-                    }
+                    fetchUserGroups(userEntry);
                     // return user
                     emitter.onSuccess(createUser(userEntry));
                 } else { // failed to find user
@@ -178,6 +150,24 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
         });
 
         return userSource;
+    }
+
+    private void fetchUserGroups(LdapEntry userEntry) {
+        try {
+            groupSearchExecutor.getSearchFilter().setParameter(0, userEntry.getDn());
+            SearchResult searchResult = groupSearchExecutor.search(connectionFactory).getResult();
+            Collection<LdapEntry> groupEntries = searchResult.getEntries();
+            String[] groups = groupEntries.stream()
+                    .map(groupEntry -> groupEntry.getAttributes()
+                            .stream()
+                            .map(ldapAttribute -> ldapAttribute.getStringValue())
+                            .collect(Collectors.toList()))
+                    .flatMap(List::stream)
+                    .toArray(size -> new String[size]);
+            userEntry.addAttribute(new LdapAttribute(MEMBEROF_ATTRIBUTE, groups));
+        } catch (Exception e) {
+            LOGGER.warn("No group found for user {}", userEntry.getDn(), e);
+        }
     }
 
     private User createUser(LdapEntry ldapEntry) {

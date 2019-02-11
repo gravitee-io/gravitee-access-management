@@ -63,6 +63,22 @@
       "minimum": 0,
       "title": "Response timeout",
       "description": "Duration of time in milliseconds to wait for responses. (default 5000 ms)"
+    },
+    "passwordAlgorithm" : {
+      "type" : "string",
+      "title": "Password encoder algorithm",
+      "description": "If your LDAP does not support Bind authentication or third party encode passwords before storing them in the server",
+      "enum" : ["SHA", "SHA-1", "SHA-256", "SHA-384", "SHA-512", "MD5", "SHA-256+MD5"]
+    },
+    "passwordEncoding" : {
+      "type": "string",
+      "title": "Password binary-to-text encoding",
+      "description": "This property will cause the encoded pass to be returned as encoding text representation",
+      "enum" : ["Base64", "Hex"]
+    },
+    "hashEncodedByThirdParty" : {
+      "type": "boolean",
+      "title": "Are the passwords encrypted before storing them in the server ?"
     }
   },
   "required": [

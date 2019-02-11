@@ -54,6 +54,16 @@ sn: Hamilton
 uid: bob
 userPassword: bobspassword
 
+dn: uid=john,ou=people,dc=example,dc=org
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+cn: John Doe
+sn: John
+uid: john
+userPassword: 58390ecba4e1fc13abe2c2f3de34b9e8ce29076e01298f11215e580769b1993b
+
 dn: uid=joe,ou=otherpeople,dc=example,dc=org
 objectclass: top
 objectclass: person
