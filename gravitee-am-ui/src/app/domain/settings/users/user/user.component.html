@@ -59,7 +59,7 @@
           <span>An email will be sent to the user asking to complete his account.</span>
           <a (click)="resendConfirmationRegistration()">Resend confirmation e-mail</a>
         </div>
-        <div>
+        <div *ngIf="editMode()">
           <app-select-clients [selectedClient]="user.clientEntity" (onSelectClient)="onClientSelectionChanged($event)" (onRemoveClient)="onClientDeleted($event)"></app-select-clients>
         </div>
         <div *ngIf="editMode()" fxLayout="column" class="additional-information">
