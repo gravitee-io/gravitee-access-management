@@ -264,6 +264,7 @@ public class UserServiceImpl implements UserService {
         params.put("user", user);
         params.put(redirectUriName, redirectUrl);
         params.put("token", token);
+        params.put("expireAfterSeconds", expiresAfter);
 
         return params;
     }
