@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.register;
 
+import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.ClientRequestParseHandler;
+import io.gravitee.am.model.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -53,6 +56,7 @@ public class RegisterEndpointHandler implements Handler<RoutingContext> {
         final String success = request.getParam(SUCCESS_PARAM);
         final String warning = request.getParam(WARNING_PARAM);
         final String token = request.getParam(TOKEN_PARAM);
+        final Client client = routingContext.get(ClientRequestParseHandler.CLIENT_CONTEXT_KEY);
         // add query params to context
         routingContext.put(ERROR_PARAM, error);
         routingContext.put(SUCCESS_PARAM, success);
@@ -65,7 +69,7 @@ public class RegisterEndpointHandler implements Handler<RoutingContext> {
         routingContext.put(PARAM_CONTEXT_KEY, params);
 
         // render the registration confirmation page
-        engine.render(routingContext, "registration", res -> {
+        engine.render(routingContext, getTemplateFileName(client), res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 routingContext.response().end(res.result());
@@ -74,5 +78,9 @@ public class RegisterEndpointHandler implements Handler<RoutingContext> {
                 routingContext.fail(res.cause());
             }
         });
+    }
+
+    private String getTemplateFileName(Client client) {
+        return "registration" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
     }
 }

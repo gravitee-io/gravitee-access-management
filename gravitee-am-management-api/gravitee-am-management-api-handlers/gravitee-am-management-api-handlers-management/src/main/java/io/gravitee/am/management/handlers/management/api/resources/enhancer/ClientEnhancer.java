@@ -53,7 +53,7 @@ public class ClientEnhancer {
                 clientListItem.setDomainId(domains.get(client.getDomain()).getId());
                 clientListItem.setDomainName(domains.get(client.getDomain()).getName());
             } else {
-                clientListItem.setDomainId("unkown-domain");
+                clientListItem.setDomainId("unknown-domain");
                 clientListItem.setDomainName("Unknown domain");
             }
             clientListItem.setClientName(client.getClientName());

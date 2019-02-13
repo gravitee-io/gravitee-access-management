@@ -25,6 +25,8 @@ import io.reactivex.Maybe;
  */
 public interface ClientSyncService extends Service {
 
+    Maybe<Client> findById(String id);
+
     Maybe<Client> findByClientId(String clientId);
 
     Maybe<Client> findByDomainAndClientId(String domain, String clientId);

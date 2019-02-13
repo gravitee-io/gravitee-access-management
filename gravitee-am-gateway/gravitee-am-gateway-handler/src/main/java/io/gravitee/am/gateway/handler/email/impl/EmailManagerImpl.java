@@ -19,7 +19,7 @@ import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
 import io.gravitee.am.gateway.core.event.EmailEvent;
 import io.gravitee.am.gateway.handler.email.EmailManager;
-import io.gravitee.am.gateway.handler.vertx.view.DomainBasedEmailTemplateLoader;
+import io.gravitee.am.gateway.handler.vertx.view.freemarker.DomainBasedEmailTemplateLoader;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.common.event.Payload;

@@ -58,7 +58,7 @@ public class ErrorHandler implements Handler<RoutingContext> {
                 OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
                 handleException(routingContext, oAuth2Exception.getOAuth2ErrorCode(), oAuth2Exception.getMessage());
             } else {
-                logger.error(throwable.getMessage(), throwable);
+                logger.error("An exception occurs while handling incoming request", throwable);
                 if (routingContext.statusCode() != -1) {
                     routingContext
                             .response()

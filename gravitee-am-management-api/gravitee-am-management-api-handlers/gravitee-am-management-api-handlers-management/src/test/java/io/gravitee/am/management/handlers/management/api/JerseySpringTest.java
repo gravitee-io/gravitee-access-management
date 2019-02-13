@@ -94,6 +94,9 @@ public abstract class JerseySpringTest {
     @Autowired
     protected EmailManager emailManager;
 
+    @Autowired
+    protected FormService formService;
+
     @Configuration
     @ComponentScan("io.gravitee.am.management.handlers.management.api.resources.enhancer")
     static class ContextConfiguration {
@@ -180,6 +183,11 @@ public abstract class JerseySpringTest {
         @Bean
         public EmailManager emailManager() {
             return mock(EmailManager.class);
+        }
+
+        @Bean
+        public FormService formService() {
+            return mock(FormService.class);
         }
     }
 

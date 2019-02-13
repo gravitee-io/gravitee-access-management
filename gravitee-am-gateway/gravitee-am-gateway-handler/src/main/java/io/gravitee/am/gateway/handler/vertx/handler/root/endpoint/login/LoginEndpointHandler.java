@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.login;
 
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.ClientRequestParseHandler;
@@ -81,7 +82,7 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
 
         // no OAuth2/Social provider render login page
         if (oauth2Identities == null || oauth2Identities.isEmpty()) {
-            renderLoginPage(routingContext);
+            renderLoginPage(routingContext, client);
             return;
         }
 
@@ -100,11 +101,11 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
             routingContext.put(OAUTH2_AUTHORIZE_URL_CONTEXT_KEY, oAuth2ProviderData.stream().collect(Collectors.toMap(o -> o.getIdentityProvider().getId(), o -> o.getAuthorizeUrl())));
 
             // render login page
-            renderLoginPage(routingContext);
+            renderLoginPage(routingContext, client);
         });
     }
 
-    private void renderLoginPage(RoutingContext routingContext) {
+    private void renderLoginPage(RoutingContext routingContext, Client client) {
         // remove client context to avoid any leaks from custom login pages
         routingContext.remove(ClientRequestParseHandler.CLIENT_CONTEXT_KEY);
         // put domain in context data
@@ -123,7 +124,7 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
         routingContext.put(PARAM_CONTEXT_KEY, params);
 
         // render the login page
-        engine.render(routingContext, "login", res -> {
+        engine.render(routingContext, getTemplateFileName(client), res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 routingContext.response().end(res.result());
@@ -177,6 +178,10 @@ public class LoginEndpointHandler implements Handler<RoutingContext> {
                 request,
                 "/" + domain.getPath() + "/login/callback",
                 Collections.singletonMap("provider", identity));
+    }
+
+    private String getTemplateFileName(Client client) {
+        return "login" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
     }
 
     private class OAuth2ProviderData {

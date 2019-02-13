@@ -31,6 +31,8 @@ public interface ClientRepository extends CrudRepository<Client, String> {
 
     Single<Set<Client>> findByDomain(String domain);
 
+    Single<Set<Client>> search(String domain, String query);
+
     Single<Page<Client>> findByDomain(String domain, int page, int size);
 
     Maybe<Client> findByClientIdAndDomain(String clientId, String domain);

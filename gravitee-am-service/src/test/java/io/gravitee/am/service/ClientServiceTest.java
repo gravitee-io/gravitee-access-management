@@ -15,17 +15,11 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
-import io.gravitee.am.service.exception.ClientAlreadyExistsException;
-import io.gravitee.am.service.exception.ClientNotFoundException;
-import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.gravitee.am.service.exception.InvalidRedirectUriException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.ClientServiceImpl;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.am.service.model.PatchClient;
@@ -44,14 +38,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.eq;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -76,6 +66,12 @@ public class ClientServiceTest {
 
     @Mock
     private ClientRepository clientRepository;
+
+    @Mock
+    private FormService formService;
+
+    @Mock
+    private EmailTemplateService emailTemplateService;
 
     private final static String DOMAIN = "domain1";
 
@@ -582,6 +578,10 @@ public class ClientServiceTest {
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(existingClient));
         when(clientRepository.delete("my-client")).thenReturn(Completable.complete());
         when(domainService.reload(eq("my-domain"), any())).thenReturn(Single.just(new Domain()));
+        when(formService.findByDomain("my-domain")).thenReturn(Single.just(Collections.singletonList(new Form())));
+        when(formService.delete(anyString())).thenReturn(Completable.complete());
+        when(emailTemplateService.findByDomain("my-domain")).thenReturn(Single.just(Collections.singletonList(new Email())));
+        when(emailTemplateService.delete(anyString())).thenReturn(Completable.complete());
 
         TestObserver testObserver = clientService.delete("my-client").test();
         testObserver.awaitTerminalEvent();
@@ -590,6 +590,29 @@ public class ClientServiceTest {
         testObserver.assertNoErrors();
 
         verify(clientRepository, times(1)).delete("my-client");
+        verify(formService, times(1)).delete(anyString());
+        verify(emailTemplateService, times(1)).delete(anyString());
+    }
+
+    @Test
+    public void shouldDelete_withoutRelatedData() {
+        Client existingClient = Mockito.mock(Client.class);
+        when(existingClient.getDomain()).thenReturn("my-domain");
+        when(clientRepository.findById("my-client")).thenReturn(Maybe.just(existingClient));
+        when(clientRepository.delete("my-client")).thenReturn(Completable.complete());
+        when(domainService.reload(eq("my-domain"), any())).thenReturn(Single.just(new Domain()));
+        when(formService.findByDomain("my-domain")).thenReturn(Single.just(Collections.emptyList()));
+        when(emailTemplateService.findByDomain("my-domain")).thenReturn(Single.just(Collections.emptyList()));
+
+        TestObserver testObserver = clientService.delete("my-client").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(clientRepository, times(1)).delete("my-client");
+        verify(formService, never()).delete(anyString());
+        verify(emailTemplateService, never()).delete(anyString());
     }
 
     @Test

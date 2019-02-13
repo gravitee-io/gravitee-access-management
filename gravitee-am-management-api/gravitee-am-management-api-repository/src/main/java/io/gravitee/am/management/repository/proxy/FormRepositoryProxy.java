@@ -37,6 +37,11 @@ public class FormRepositoryProxy extends AbstractProxy<FormRepository> implement
     }
 
     @Override
+    public Single<List<Form>> findByDomainAndClient(String domain, String client) {
+        return target.findByDomainAndClient(domain, client);
+    }
+
+    @Override
     public Maybe<Form> findByDomainAndTemplate(String domain, String template) {
         return target.findByDomainAndTemplate(domain, template);
     }

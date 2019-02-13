@@ -15,8 +15,15 @@
     limitations under the License.
 
 -->
-<div class="emails-content">
-  <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]='emails'>
+<div class="emails-content" *ngIf="!isEmpty()">
+  <ngx-datatable class="material"
+                 [columnMode]="'flex'"
+                 [headerHeight]="40"
+                 [footerHeight]="40"
+                 [rowHeight]="50"
+                 [rows]='emails'
+                 [sorts]="[{prop: 'enabled', dir: 'desc'}]"
+                 [rowClass]="getRowClass">
     <ngx-datatable-column name="Name" [flexGrow]="1">
       <ng-template let-row="row" ngx-datatable-cell-template>
         {{row.name}}
@@ -30,7 +37,8 @@
     <ngx-datatable-column name="Actions" [flexGrow]="1">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <div fxLayout="row" class="emails-actions">
-          <a mat-icon-button [routerLink]="['email']" [queryParams]="{template: row.template}"><mat-icon matTooltip="Settings">settings</mat-icon></a>
+          <mat-icon *ngIf="!row.enabled" matTooltip="Domain settings {{clientId ? 'or client type ' : ''}} do not allow '{{row.name}}' email template customisation">block</mat-icon>
+          <a  *ngIf="row.enabled" mat-icon-button [routerLink]="['email']" [queryParams]="{template: row.template}"><mat-icon matTooltip="Edit email template">edit</mat-icon></a>
         </div>
       </ng-template>
     </ngx-datatable-column>

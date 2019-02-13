@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.user;
 
+import io.gravitee.am.gateway.handler.user.model.UserToken;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Completable;
@@ -27,7 +28,7 @@ import io.reactivex.Single;
  */
 public interface UserService {
 
-    Maybe<User> verifyToken(String token);
+    Maybe<UserToken> verifyToken(String token);
 
     Single<User> register(User user);
 

@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import {FormControl} from "@angular/forms";
-import {ClientService} from "../../../services/client.service";
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ActivatedRoute } from "@angular/router";
+import { FormControl } from "@angular/forms";
+import { ClientService } from "../../../services/client.service";
 
 @Component({
   selector: 'app-select-clients',
@@ -39,8 +39,8 @@ export class SelectClientsComponent implements OnInit {
     this.clientCtrl.valueChanges
       .subscribe(searchTerm => {
         if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
-          this.clientService.findByDomain(this.domainId).map(res => res.json()).subscribe(response => {
-            this.filteredClients = response.filter(client => client.clientId.indexOf(searchTerm) === 0);
+          this.clientService.search(this.domainId, searchTerm).map(res => res.json()).subscribe(response => {
+            this.filteredClients = response;
           });
         }
       });

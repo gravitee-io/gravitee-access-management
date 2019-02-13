@@ -15,7 +15,7 @@
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DomainSettingsFormsComponent } from './pages.component';
+import { DomainSettingsFormsComponent } from './forms.component';
 
 describe('DomainSettingsFormsComponent', () => {
   let component: DomainSettingsFormsComponent;

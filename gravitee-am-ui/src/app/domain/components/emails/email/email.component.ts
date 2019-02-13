@@ -145,7 +145,9 @@ export class EmailComponent implements OnInit, AfterViewInit {
             this.email.template = this.route.snapshot.queryParams['template'];
             this.email.expiresAfter = 86400;
             this.emailContent =  (' ' + this.defaultEmailContent).slice(1);
+            this.originalEmailContent = (' ' + this.emailContent).slice(1);
             this.emailFound = false;
+            this.formChanged = false;
             this.enableCodeMirror();
           });
         }

@@ -186,6 +186,20 @@ public class VertxSecurityDomainHandler {
                 .handler(cookieHandler)
                 .handler(sessionHandler)
                 .handler(userSessionHandler);
+
+        // Registration confirmation endpoint
+        router
+                .route("/confirmRegistration")
+                .handler(cookieHandler)
+                .handler(sessionHandler)
+                .handler(userSessionHandler);
+
+        // Reset password endpoint
+        router
+                .route("/resetPassword")
+                .handler(cookieHandler)
+                .handler(sessionHandler)
+                .handler(userSessionHandler);
     }
 
     private void csrfHandler(Router router) {
@@ -194,6 +208,8 @@ public class VertxSecurityDomainHandler {
         csrfHandler.setCookiePath("/" + domain.getPath());
         io.gravitee.am.gateway.handler.vertx.handler.CSRFHandler csrfHandler1 = io.gravitee.am.gateway.handler.vertx.handler.CSRFHandler.create();
         router.route("/login").handler(csrfHandler).handler(csrfHandler1);
+        router.route("/resetPassword").handler(csrfHandler).handler(csrfHandler1);
+        router.route("/confirmRegistration").handler(csrfHandler).handler(csrfHandler1);
         router.route("/oauth/confirm_access").handler(csrfHandler).handler(csrfHandler1);
     }
 

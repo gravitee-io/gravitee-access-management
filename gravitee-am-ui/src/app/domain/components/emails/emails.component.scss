@@ -1,3 +1,15 @@
+:host {
+  /deep/ .row-disabled {
+    background: #f1f1f1;
+    border: 1px solid #fafafa;
+    datatable-body-cell {
+      color: grey !important;
+      font-size: 85% !important;
+      font-style: italic !important;
+    }
+  }
+}
+
 .emails-content {
   ngx-datatable {
     font-size: 14px;

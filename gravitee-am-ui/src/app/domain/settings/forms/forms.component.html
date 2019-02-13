@@ -16,26 +16,6 @@
 
 -->
 <div class="forms-container">
-  <h1 *ngIf="!isEmpty">Forms</h1>
-  <div class="forms-content" *ngIf="!isEmpty">
-    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]='forms'>
-      <ngx-datatable-column name="Name" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.name}}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Description" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.description}}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Actions" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="forms-actions">
-            <a mat-icon-button [routerLink]="['form']" [queryParams]="{template: row.template}"><mat-icon matTooltip="Settings">settings</mat-icon></a>
-          </div>
-        </ng-template>
-      </ngx-datatable-column>
-    </ngx-datatable>
-  </div>
+  <h1>Forms</h1>
+  <app-forms [forms]="forms"></app-forms>
 </div>

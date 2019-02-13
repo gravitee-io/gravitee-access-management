@@ -33,8 +33,7 @@ import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -66,12 +65,23 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
+    public Single<List<Form>> findByDomainAndClient(String domain, String client) {
+        return Observable.fromPublisher(
+                formsCollection.find(
+                        and(
+                                eq(FIELD_DOMAIN, domain),
+                                eq(FIELD_CLIENT, client))
+                        )).map(this::convert).collect(ArrayList::new, List::add);
+    }
+
+    @Override
     public Maybe<Form> findByDomainAndTemplate(String domain, String template) {
         return Observable.fromPublisher(
                 formsCollection.find(
                         and(
                                 eq(FIELD_DOMAIN, domain),
-                                eq(FIELD_TEMPLATE, template)))
+                                eq(FIELD_TEMPLATE, template),
+                                exists(FIELD_CLIENT, false)))
                         .first())
                 .firstElement().map(this::convert);
     }

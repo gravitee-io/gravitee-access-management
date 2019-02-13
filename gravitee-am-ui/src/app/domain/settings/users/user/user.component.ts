@@ -165,10 +165,12 @@ export class UserComponent implements OnInit {
 
   onClientSelectionChanged(event) {
     this.user.client = event.id;
+    this.formChanged = true;
   }
 
   onClientDeleted(event) {
     this.user.client = null;
+    this.formChanged = true;
   }
 
   displayClientName() {

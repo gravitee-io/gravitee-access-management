@@ -29,6 +29,7 @@ export class ClientComponent implements OnInit {
     {'href': 'settings' , 'label': 'Settings'},
     {'href': 'idp' , 'label': 'Identity Providers'},
     {'href': 'oidc' , 'label': 'OpenID Connect'},
+    {'href': 'forms' , 'label': 'Forms'},
     {'href': 'emails' , 'label': 'Emails'}
   ];
 
@@ -45,6 +46,7 @@ export class ClientComponent implements OnInit {
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/clients/'+this.client.id+'$', this.client.clientId);
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/clients/'+this.client.id+'/idp$', 'IdP');
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/clients/'+this.client.id+'/oidc$', 'OIDC');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/clients/'+this.client.id+'/forms', 'Forms');
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/clients/'+this.client.id+'/emails$', 'Emails');
   }
 }

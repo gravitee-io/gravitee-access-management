@@ -15,9 +15,9 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import { FormResolver } from './page.resolver';
+import { FormResolver } from './form.resolver';
 
-describe('PageResolver', () => {
+describe('FormResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [FormResolver]

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.view;
+package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 
-import io.gravitee.am.model.Form;
+import io.gravitee.am.gateway.handler.form.FormManager;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templateresolver.AbstractConfigurableTemplateResolver;
@@ -25,6 +25,7 @@ import org.thymeleaf.templateresource.StringTemplateResource;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Pattern;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -33,26 +34,36 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class DomainBasedTemplateResolver extends AbstractConfigurableTemplateResolver {
 
-    private ConcurrentMap<String, String> templates = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, StringTemplateResource> templates = new ConcurrentHashMap<>();
 
     private TemplateEngine templateEngine;
 
     @Override
     protected ITemplateResource computeTemplateResource(IEngineConfiguration configuration, String ownerTemplate, String template, String resourceName, String characterEncoding, Map<String, Object> templateResolutionAttributes) {
-        if (templates.containsKey(resourceName)) {
-            return new StringTemplateResource(templates.get(resourceName));
+        boolean templateFound = templates.containsKey(resourceName);
+        String[] templateParts = resourceName.split(Pattern.quote(FormManager.TEMPLATE_NAME_SEPARATOR));
+
+        // template not found for the client, try at domain level
+        if (!templateFound && templateParts.length == 2) {
+            resourceName = templateParts[0];
+            templateFound = templates.containsKey(resourceName);
         }
+
+        if (templateFound) {
+            return templates.get(resourceName);
+        }
+
         return null;
     }
 
-    public void addPage(Form page) {
-        templates.put(page.getTemplate(), page.getContent());
-        templateEngine.clearTemplateCacheFor(page.getTemplate());
+    public void addForm(String templateName, String templateContent) {
+        templates.put(templateName, new StringTemplateResource(templateContent));
+        templateEngine.getCacheManager().clearAllCaches();
     }
 
-    public void removePage(Form page) {
-        templates.remove(page.getTemplate());
-        templateEngine.clearTemplateCacheFor(page.getTemplate());
+    public void removeForm(String templateName) {
+        templates.remove(templateName);
+        templateEngine.getCacheManager().clearAllCaches();
     }
 
     public void setTemplateEngine(TemplateEngine templateEngine) {

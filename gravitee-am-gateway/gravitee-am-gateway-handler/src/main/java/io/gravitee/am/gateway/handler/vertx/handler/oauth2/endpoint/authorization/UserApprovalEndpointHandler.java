@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
 
+import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
@@ -70,12 +71,14 @@ public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
 
                         requestedScopes.add(requestedScope);
                     }
+                    // Remove client_secret if present to prevent leaks
+                    client.setClientSecret(null);
                     return new ApprovalData(client, requestedScopes);
                 })
                 .subscribe(approvalData -> {
                         routingContext.put("client", approvalData.getClient());
                         routingContext.put("scopes", approvalData.getScopes());
-                        engine.render(routingContext, "oauth2_user_consent", res -> {
+                        engine.render(routingContext, getTemplateFileName(approvalData.getClient()), res -> {
                             if (res.succeeded()) {
                                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                                 routingContext.response().end(res.result());
@@ -89,6 +92,10 @@ public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
 
     public void setClientSyncService(ClientSyncService clientSyncService) {
         this.clientSyncService = clientSyncService;
+    }
+
+    private String getTemplateFileName(Client client) {
+        return "oauth2_user_consent" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
     }
 
     private class ApprovalData {

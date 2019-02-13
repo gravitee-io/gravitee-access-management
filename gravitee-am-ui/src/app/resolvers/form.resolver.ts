@@ -26,12 +26,13 @@ export class FormResolver implements Resolve<any> {
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     let domainId = AppConfig.settings.authentication.domainId;
+    let clientId = route.parent.paramMap.get('clientId');
     let pageTemplate = 'LOGIN';
     if (!state.url.startsWith('/settings')) {
       pageTemplate = route.queryParams['template'];
       domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
     }
-    return this.formService.get(domainId, pageTemplate)
+    return this.formService.get(domainId, clientId, pageTemplate)
       .map(res => res.json())
       .catch(res => {
         return Observable.of({});

@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.resources.enhancer.ClientEnhancer;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.ClientListItem;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
@@ -23,6 +24,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -37,6 +39,7 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -67,10 +70,11 @@ public class ClientsResource extends AbstractResource {
                     response = ClientListItem.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(@PathParam("domain") String _domain,
-                            @Suspended final AsyncResponse response) {
+                     @QueryParam("q") String query,
+                     @Suspended final AsyncResponse response) {
         domainService.findById(_domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(_domain)))
-                .flatMapSingle(domain -> clientService.findByDomain(_domain)
+                .flatMapSingle(domain -> getDomains(_domain, query)
                         .map(clients -> {
                             List<ClientListItem> sortedClients = clients.stream()
                                     .map(clientEnhancer.enhanceClient(Collections.singletonMap(_domain, domain)))
@@ -112,5 +116,13 @@ public class ClientsResource extends AbstractResource {
     @Path("{client}")
     public ClientResource getClientResource() {
         return resourceContext.getResource(ClientResource.class);
+    }
+
+    private Single<Set<Client>> getDomains(String domainId, String query) {
+        if (query != null) {
+            return clientService.search(domainId, query);
+        } else {
+            return clientService.findByDomain(domainId);
+        }
     }
 }

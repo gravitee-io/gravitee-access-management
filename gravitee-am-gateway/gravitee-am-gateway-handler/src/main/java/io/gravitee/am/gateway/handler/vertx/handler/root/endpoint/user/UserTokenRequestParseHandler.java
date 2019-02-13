@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.gateway.handler.user.UserService;
-import io.gravitee.am.model.User;
+import io.gravitee.am.gateway.handler.user.model.UserToken;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -80,16 +80,18 @@ public class UserTokenRequestParseHandler extends UserRequestHandler {
                 return;
             }
 
-            // put user in context
-            context.put("user", handler.result());
+            // put user and client in context
+            UserToken userToken = handler.result();
+            context.put("user", userToken.getUser());
+            context.put("client", userToken.getClient());
             context.next();
         });
     }
 
-    private void parseToken(String token, Handler<AsyncResult<User>> handler) {
+    private void parseToken(String token, Handler<AsyncResult<UserToken>> handler) {
         userService.verifyToken(token)
                 .subscribe(
-                        user -> handler.handle(Future.succeededFuture(user)),
+                        userToken -> handler.handle(Future.succeededFuture(userToken)),
                         error -> handler.handle(Future.failedFuture(error)),
                         () -> handler.handle(Future.failedFuture(new InvalidTokenException("The JWT token is invalid"))));
     }

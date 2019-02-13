@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.password;
 
+import io.gravitee.am.gateway.handler.form.FormManager;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -56,8 +58,11 @@ public class ResetPasswordEndpointHandler implements Handler<RoutingContext> {
         User user = routingContext.get("user");
         routingContext.put("user", user);
 
+        // retrieve client (if exists)
+        Client client = routingContext.get("client");
+
         // render the reset password page
-        engine.render(routingContext, "reset_password", res -> {
+        engine.render(routingContext, getTemplateFileName(client), res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 routingContext.response().end(res.result());
@@ -66,5 +71,9 @@ public class ResetPasswordEndpointHandler implements Handler<RoutingContext> {
                 routingContext.fail(res.cause());
             }
         });
+    }
+
+    private String getTemplateFileName(Client client) {
+        return "reset_password" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId(): "");
     }
 }
