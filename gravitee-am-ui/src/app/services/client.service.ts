@@ -28,6 +28,10 @@ export class ClientService {
     return this.http.get(this.clientsURL + domainId + "/clients");
   }
 
+  search(domainId, searchTerm) {
+    return this.http.get(this.clientsURL + domainId + "/clients?q=" + searchTerm);
+  }
+
   get(domainId, id): Observable<Response> {
     return this.http.get(this.clientsURL + domainId + "/clients/" + id);
   }

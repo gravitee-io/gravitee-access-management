@@ -67,6 +67,17 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     }
 
     @Override
+    public Single<List<Email>> findByDomain(String domain) {
+        LOGGER.debug("Find email by domain {}", domain);
+        return emailRepository.findByDomain(domain)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a email using its domain {}", domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a email using its domain %s", domain), ex));
+                });
+    }
+
+    @Override
     public Maybe<Email> findByDomainAndTemplate(String domain, String template) {
         LOGGER.debug("Find email by domain {} and template {}", domain, template);
         return emailRepository.findByDomainAndTemplate(domain, template)
@@ -76,6 +87,18 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                             String.format("An error occurs while trying to find a email using its domain %s and template %s", domain, template), ex));
                 });
     }
+
+    @Override
+    public Single<List<Email>> findByDomainAndClient(String domain, String client) {
+        LOGGER.debug("Find email by domain {} and client {}", domain, client);
+        return emailRepository.findByDomainAndClient(domain, client)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a email using its domain {} and client {}", domain, client, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a email using its domain %s and client %s", domain, client), ex));
+                });
+    }
+
 
     @Override
     public Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template) {

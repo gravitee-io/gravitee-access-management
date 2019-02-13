@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.form.impl;
 
 import io.gravitee.am.gateway.core.event.FormEvent;
 import io.gravitee.am.gateway.handler.form.FormManager;
-import io.gravitee.am.gateway.handler.vertx.view.DomainBasedTemplateResolver;
+import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.DomainBasedTemplateResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.common.event.Payload;
@@ -64,7 +64,7 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
         formRepository.findByDomain(domain.getId())
                 .subscribe(
                         forms -> {
-                            updatePages(forms);
+                            updateForms(forms);
                             logger.info("Forms loaded for domain {}", domain.getName());
                         },
                         error -> logger.error("Unable to initialize forms for domain {}", domain.getName(), error));
@@ -93,38 +93,43 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
         }
     }
 
-    private void updateForm(String pageId, FormEvent formEvent) {
+    private void updateForm(String formId, FormEvent formEvent) {
         final String eventType = formEvent.toString().toLowerCase();
-        logger.info("Domain {} has received {} form event for {}", domain.getName(), eventType, pageId);
-        formRepository.findById(pageId)
+        logger.info("Domain {} has received {} form event for {}", domain.getName(), eventType, formId);
+        formRepository.findById(formId)
                 .subscribe(
-                        page -> {
-                            // check if page has been disabled
-                            if (forms.containsKey(pageId) && !page.isEnabled()) {
-                                removeForm(pageId);
+                        form -> {
+                            // check if form has been disabled
+                            if (forms.containsKey(formId) && !form.isEnabled()) {
+                                removeForm(formId);
                             } else {
-                                updatePages(Collections.singletonList(page));
+                                updateForms(Collections.singletonList(form));
                             }
-                            logger.info("Page {} {}d for domain {}", pageId, eventType, domain.getName());
+                            logger.info("Form {} {}d for domain {}", formId, eventType, domain.getName());
                         },
-                        error -> logger.error("Unable to {} page for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No page found with id {}", pageId));
+                        error -> logger.error("Unable to {} form for domain {}", eventType, domain.getName(), error),
+                        () -> logger.error("No form found with id {}", formId));
     }
 
     private void removeForm(String formId) {
         logger.info("Domain {} has received form event, delete form {}", domain.getName(), formId);
         Form deletedForm = forms.remove(formId);
-        ((DomainBasedTemplateResolver) templateResolver).removePage(deletedForm);
+        ((DomainBasedTemplateResolver) templateResolver).removeForm(getTemplateName(deletedForm));
     }
 
-    private void updatePages(List<Form> forms) {
+    private void updateForms(List<Form> forms) {
         forms
                 .stream()
                 .filter(Form::isEnabled)
                 .forEach(form -> {
                     this.forms.put(form.getId(), form);
-                    ((DomainBasedTemplateResolver) templateResolver).addPage(form);
-                    logger.info("Form {} loaded for domain {}", form.getTemplate(), domain.getName());
+                    ((DomainBasedTemplateResolver) templateResolver).addForm(getTemplateName(form), form.getContent());
+                    logger.info("Form {} loaded for domain {} " + (form.getClient() != null ? "and client {}" : ""), form.getTemplate(), domain.getName(), form.getClient());
                 });
+    }
+
+    private String getTemplateName(Form form) {
+        return form.getTemplate()
+                + ((form.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + form.getClient() : "");
     }
 }

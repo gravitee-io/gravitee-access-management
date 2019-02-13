@@ -146,6 +146,11 @@ public class ClientResource extends AbstractResource {
         return resourceContext.getResource(ClientEmailsResource.class);
     }
 
+    @Path("forms")
+    public ClientFormsResource getFormsResource() {
+        return resourceContext.getResource(ClientFormsResource.class);
+    }
+
     /**
      * Before dynamic client registration feature, response_type field was not managed.
      * In order to protect those who were using the PUT API without this new field, we'll add default value.

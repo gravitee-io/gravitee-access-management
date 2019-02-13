@@ -33,6 +33,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -40,6 +41,7 @@ import javax.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.*;
@@ -78,6 +80,16 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     @Override
     public Single<Set<Client>> findByDomain(String domain) {
         return Observable.fromPublisher(clientsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
+    public Single<Set<Client>> search(String domain, String query) {
+        // currently search on client_id field
+        Bson mongoQuery = and(
+                eq(FIELD_DOMAIN, domain),
+                regex(FIELD_CLIENT_ID, "^(?)" + Pattern.quote(query), "i"));
+
+        return Observable.fromPublisher(clientsCollection.find(mongoQuery)).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override

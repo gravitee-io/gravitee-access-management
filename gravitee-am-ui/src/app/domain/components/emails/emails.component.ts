@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
+import {ActivatedRoute} from "@angular/router";
 
 @Component({
   selector: 'app-emails',
@@ -21,28 +22,22 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./emails.component.scss']
 })
 export class EmailsComponent implements OnInit {
-  emails: any[];
-  domainId: string;
+  clientId: string;
+  @Input() emails: any[];
 
-  constructor() { }
-
+  constructor(private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.emails = this.getEmails();
+    this.clientId = this.route.snapshot.parent.params['clientId'];
   }
 
-  getEmails() {
-    return [
-      {
-        'name': 'Registration confirmation',
-        'description': 'Registration email to confirm user account',
-        'template': 'REGISTRATION_CONFIRMATION'
-      },
-      {
-        'name': 'Reset password',
-        'description': 'Reset password email to ask for a new one',
-        'template': 'RESET_PASSWORD'
-      }
-    ]
+  isEmpty() {
+    return !this.emails || this.emails.length == 0;
+  }
+
+  getRowClass(row) {
+    return {
+      'row-disabled': !row.enabled
+    };
   }
 }

@@ -64,6 +64,8 @@ public class DomainServiceTest {
     private static final String USER_ID = "id-user";
     private static final String SCOPE_ID = "id-scope";
     private static final String GROUP_ID = "id-group";
+    private static final String FORM_ID = "id-form";
+    private static final String EMAIL_ID = "id-email";
 
     @InjectMocks
     private DomainService domainService = new DomainServiceImpl();
@@ -93,6 +95,12 @@ public class DomainServiceTest {
     private Group group;
 
     @Mock
+    private Form form;
+
+    @Mock
+    private Email email;
+
+    @Mock
     private DomainRepository domainRepository;
 
     @Mock
@@ -118,6 +126,13 @@ public class DomainServiceTest {
 
     @Mock
     private GroupService groupService;
+
+    @Mock
+    private FormService formService;
+
+    @Mock
+    private EmailTemplateService emailTemplateService;
+
 
     @Test
     public void shouldFindById() {
@@ -396,6 +411,12 @@ public class DomainServiceTest {
         when(group.getId()).thenReturn(GROUP_ID);
         when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(group)));
         when(groupService.delete(anyString())).thenReturn(Completable.complete());
+        when(form.getId()).thenReturn(FORM_ID);
+        when(formService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(form)));
+        when(formService.delete(anyString())).thenReturn(Completable.complete());
+        when(email.getId()).thenReturn(EMAIL_ID);
+        when(emailTemplateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(email)));
+        when(emailTemplateService.delete(anyString())).thenReturn(Completable.complete());
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -411,6 +432,8 @@ public class DomainServiceTest {
         verify(userService, times(1)).delete(USER_ID);
         verify(scopeService, times(1)).delete(SCOPE_ID, true);
         verify(groupService, times(1)).delete(GROUP_ID);
+        verify(formService, times(1)).delete(FORM_ID);
+        verify(emailTemplateService, times(1)).delete(EMAIL_ID);
     }
 
     @Test
@@ -425,6 +448,8 @@ public class DomainServiceTest {
         when(userService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(scopeService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(formService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(emailTemplateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -439,6 +464,8 @@ public class DomainServiceTest {
         verify(roleService, never()).delete(anyString());
         verify(userService, never()).delete(anyString());
         verify(scopeService, never()).delete(anyString(), anyBoolean());
+        verify(formService, never()).delete(anyString());
+        verify(emailTemplateService, never()).delete(anyString());
     }
 
     @Test

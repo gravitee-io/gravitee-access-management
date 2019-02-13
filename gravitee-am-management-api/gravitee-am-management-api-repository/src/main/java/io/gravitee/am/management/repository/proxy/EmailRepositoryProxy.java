@@ -42,6 +42,11 @@ public class EmailRepositoryProxy extends AbstractProxy<EmailRepository> impleme
     }
 
     @Override
+    public Single<List<Email>> findByDomainAndClient(String domain, String client) {
+        return target.findByDomainAndClient(domain, client);
+    }
+
+    @Override
     public Maybe<Email> findByDomainAndTemplate(String domain, String template) {
         return target.findByDomainAndTemplate(domain, template);
     }

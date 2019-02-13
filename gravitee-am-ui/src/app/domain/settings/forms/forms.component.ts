@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
+import {ActivatedRoute} from "@angular/router";
 
 @Component({
   selector: 'app-domain-forms',
   templateUrl: './forms.component.html',
   styleUrls: ['./forms.component.scss']
 })
-export class DomainSettingsFormsComponent implements OnInit {
+export class DomainSettingsFormsComponent {
   forms: any[];
-  domainId: string;
+  domain: any;
 
-  constructor() { }
-
+  constructor(private route: ActivatedRoute) { }
 
   ngOnInit() {
+    this.domain = this.route.snapshot.data['domain'];
     this.forms = this.getForms();
-  }
-
-  get isEmpty() {
-    return !this.forms || this.forms.length == 0;
   }
 
   getForms() {
@@ -40,33 +37,47 @@ export class DomainSettingsFormsComponent implements OnInit {
       {
         'name': 'Login',
         'description': 'Login page to authenticate users',
-        'template': 'LOGIN'
+        'template': 'LOGIN',
+        'enabled': true
       },
       {
         'name': 'Registration',
         'description': 'Registration page to create an account',
-        'template': 'REGISTRATION'
+        'template': 'REGISTRATION',
+        'enabled': this.allowRegister()
       },
       {
         'name': 'Registration confirmation',
         'description': 'Register page to confirm user account',
-        'template': 'REGISTRATION_CONFIRMATION'
+        'template': 'REGISTRATION_CONFIRMATION',
+        'enabled': true
       },
       {
         'name': 'Forgot password',
         'description': 'Forgot password to recover account',
-        'template': 'FORGOT_PASSWORD'
+        'template': 'FORGOT_PASSWORD',
+        'enabled': this.allowResetPassword()
       },
       {
         'name': 'Reset password',
         'description': 'Reset password page to make a new password',
-        'template': 'RESET_PASSWORD'
+        'template': 'RESET_PASSWORD',
+        'enabled': this.allowResetPassword()
       },
       {
         'name': 'User consent',
         'description': 'User consent to acknowledge and accept data access',
-        'template': 'OAUTH2_USER_CONSENT'
+        'template': 'OAUTH2_USER_CONSENT',
+        'enabled': true
       }
     ]
+  }
+
+  allowRegister() {
+    return this.domain.loginSettings && this.domain.loginSettings.registerEnabled;
+  }
+
+  allowResetPassword() {
+    return this.domain.loginSettings && this.domain.loginSettings.forgotPasswordEnabled;
   }
 }

@@ -24,10 +24,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ClientAlreadyExistsException;
 import io.gravitee.am.service.exception.ClientNotFoundException;
@@ -56,6 +53,7 @@ import org.springframework.stereotype.Component;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -84,6 +82,12 @@ public class ClientServiceImpl implements ClientService {
 
     @Autowired
     private ScopeService scopeService;
+
+    @Autowired
+    private EmailTemplateService emailTemplateService;
+
+    @Autowired
+    private FormService formService;
 
     @Override
     public Maybe<Client> findById(String id) {
@@ -122,6 +126,17 @@ public class ClientServiceImpl implements ClientService {
                     LOGGER.error("An error occurs while trying to find clients by domain: {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find clients by domain: %s", domain), ex));
+                });
+    }
+
+    @Override
+    public Single<Set<Client>> search(String domain, String query) {
+        LOGGER.debug("Search clients for domain {} and with query {}", domain, query);
+        return clientRepository.search(domain, query)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find clients for domain {} and query {}", domain, query, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find clients for domain %s and query %s", domain, query), ex));
                 });
     }
 
@@ -399,7 +414,22 @@ public class ClientServiceImpl implements ClientService {
                 .flatMapCompletable(client -> {
                     // Reload domain to take care about delete client
                     Event event = new Event(Type.CLIENT, new Payload(client.getId(), client.getDomain(), Action.DELETE));
-                    return clientRepository.delete(clientId).andThen(domainService.reload(client.getDomain(), event).toCompletable());
+                    return clientRepository.delete(clientId)
+                            .andThen(domainService.reload(client.getDomain(), event).toCompletable())
+                            // delete email templates
+                            .andThen(emailTemplateService.findByDomain(client.getDomain())
+                                    .flatMapCompletable(scopes -> {
+                                        List<Completable> deleteEmailsCompletable = scopes.stream().map(e -> emailTemplateService.delete(e.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteEmailsCompletable);
+                                    })
+                            )
+                            // delete form templates
+                            .andThen(formService.findByDomain(client.getDomain())
+                                    .flatMapCompletable(scopes -> {
+                                        List<Completable> deleteFormsCompletable = scopes.stream().map(f -> formService.delete(f.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteFormsCompletable);
+                                    })
+                            );
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

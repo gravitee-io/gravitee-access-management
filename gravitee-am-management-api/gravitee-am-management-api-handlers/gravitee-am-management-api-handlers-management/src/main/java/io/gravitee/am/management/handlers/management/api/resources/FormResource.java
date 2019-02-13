@@ -67,7 +67,7 @@ public class FormResource {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapSingle(irrelevant -> formService.update(domain, form, updateForm))
-                .map(page1 -> Response.ok(page1).build())
+                .map(form1 -> Response.ok(form1).build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

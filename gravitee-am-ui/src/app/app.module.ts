@@ -63,9 +63,12 @@ import { ProviderCreationComponent } from './domain/settings/providers/creation/
 import { ClientComponent } from './domain/clients/client/client.component';
 import { ClientCreationComponent } from './clients/creation/client-creation.component';
 import { ClientSettingsComponent } from './domain/clients/client/settings/settings.component';
+import { ClientIdPComponent } from './domain/clients/client/idp/idp.component';
 import { ClientOIDCComponent, CreateClaimComponent } from './domain/clients/client/oidc/oidc.component';
 import { ClientEmailsComponent } from './domain/clients/client/emails/emails.component';
 import { ClientEmailComponent } from './domain/clients/client/emails/email/email.component';
+import { ClientFormsComponent } from './domain/clients/client/forms/forms.component';
+import { ClientFormComponent } from './domain/clients/client/forms/form/form.component';
 import { ProviderCreationStep1Component } from './domain/settings/providers/creation/steps/step1/step1.component';
 import { ProviderCreationStep2Component } from './domain/settings/providers/creation/steps/step2/step2.component';
 import { ProviderComponent } from './domain/settings/providers/provider/provider.component';
@@ -91,6 +94,7 @@ import { DomainSettingsCertificatesComponent, CertitificatePublicKeyDialog } fro
 import { DomainSettingsProvidersComponent } from "./domain/settings/providers/providers.component";
 import { DomainSettingsExtensionGrantsComponent } from "./domain/settings/extension-grants/extension-grants.component";
 import { DomainSettingsFormsComponent } from "./domain/settings/forms/forms.component";
+import { DomainSettingsFormComponent } from "./domain/settings/forms/form/form.component";
 import { DomainSettingsLoginComponent } from "./domain/settings/login/login.component";
 import { DomainSettingsEmailsComponent } from "./domain/settings/emails/emails.component";
 import { DomainSettingsEmailComponent } from "./domain/settings/emails/email/email.component";
@@ -122,7 +126,6 @@ import { ScopeResolver } from "./resolvers/scope.resolver";
 import { ScopeCreationComponent } from './domain/settings/scopes/creation/scope-creation.component';
 import { ScopeComponent } from './domain/settings/scopes/scope/scope.component';
 import { SnackbarComponent } from "./components/snackbar/snackbar.component";
-import { ClientIdPComponent } from './domain/clients/client/idp/idp.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DashboardService} from "./services/dashboard.service";
@@ -152,7 +155,8 @@ import { ExtensionGrantCreationStep2Component } from "./domain/settings/extensio
 import { MaterialFileComponent } from "./components/json-schema-form/material-file.component";
 import { ManagementComponent } from "./settings/management/management.component";
 import { ManagementGeneralComponent } from "./settings/management/general/general.component";
-import { FormComponent, FormInfoDialog } from "./domain/settings/forms/form/form.component";
+import { FormsComponent } from "./domain/components/forms/forms.component";
+import { FormComponent, FormInfoDialog } from "./domain/components/forms/form/form.component";
 import { FormService } from "./services/form.service";
 import { FormResolver } from "./resolvers/form.resolver";
 import { GroupsComponent } from "./domain/settings/groups/groups.component";
@@ -189,6 +193,7 @@ import { SelectClientsComponent } from "./domain/components/clients/select-clien
     DomainSettingsCertificatesComponent,
     DomainSettingsExtensionGrantsComponent,
     DomainSettingsFormsComponent,
+    DomainSettingsFormComponent,
     DomainSettingsLoginComponent,
     DomainSettingsEmailsComponent,
     DomainSettingsEmailComponent,
@@ -204,6 +209,8 @@ import { SelectClientsComponent } from "./domain/components/clients/select-clien
     ClientIdPComponent,
     ClientEmailsComponent,
     ClientEmailComponent,
+    ClientFormsComponent,
+    ClientFormComponent,
     ProviderCreationStep1Component,
     ProviderCreationStep2Component,
     ProviderComponent,
@@ -250,6 +257,7 @@ import { SelectClientsComponent } from "./domain/components/clients/select-clien
     MaterialFileComponent,
     ManagementComponent,
     ManagementGeneralComponent,
+    FormsComponent,
     FormComponent,
     FormInfoDialog,
     GroupsComponent,

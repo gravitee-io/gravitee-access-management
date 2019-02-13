@@ -42,6 +42,7 @@ export class UserService {
       'lastName' : user.lastName,
       'email' : user.email,
       'enabled': user.enabled,
+      'client' : user.client,
       'additionalInformation' : user.additionalInformation
     });
   }

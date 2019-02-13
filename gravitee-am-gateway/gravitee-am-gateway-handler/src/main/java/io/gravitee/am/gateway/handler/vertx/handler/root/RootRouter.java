@@ -119,6 +119,7 @@ public class RootRouter {
         // mount forgot/reset registration pages only if the option is enabled
         if (domain.getLoginSettings() != null && domain.getLoginSettings().isRegisterEnabled()) {
             router.route(HttpMethod.GET, "/register")
+                    .handler(clientRequestParseHandler)
                     .handler(registerHandler);
             router.route(HttpMethod.POST, "/register")
                     .handler(registerSubmissionRequestHandler)

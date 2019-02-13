@@ -247,6 +247,9 @@ public class UserServiceImpl implements UserService {
         claims.put(Claims.iat, new Date().getTime() / 1000);
         claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expiresAfter * 1000)).getTime() / 1000);
         claims.put(Claims.sub, user.getId());
+        if (user.getClient() != null) {
+            claims.put(Claims.aud, user.getClient());
+        }
         claims.put(StandardClaims.EMAIL, user.getEmail());
         claims.put(StandardClaims.GIVEN_NAME, user.getFirstName());
         claims.put(StandardClaims.FAMILY_NAME, user.getLastName());

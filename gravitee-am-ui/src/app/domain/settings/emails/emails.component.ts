@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { Component } from '@angular/core';
+import {ActivatedRoute} from "@angular/router";
 
 @Component({
   selector: 'app-domain-emails',
@@ -21,6 +22,34 @@ import { Component } from '@angular/core';
   styleUrls: ['./emails.component.scss']
 })
 export class DomainSettingsEmailsComponent {
+  domain: any;
+  emails: any[];
 
-  constructor() { }
+  constructor(private route: ActivatedRoute) { }
+
+  ngOnInit() {
+    this.domain = this.route.snapshot.data['domain'];
+    this.emails = this.getEmails();
+  }
+
+  getEmails() {
+    return [
+      {
+        'name': 'Registration confirmation',
+        'description': 'Registration email to confirm user account',
+        'template': 'REGISTRATION_CONFIRMATION',
+        'enabled': true
+      },
+      {
+        'name': 'Reset password',
+        'description': 'Reset password email to ask for a new one',
+        'template': 'RESET_PASSWORD',
+        'enabled': this.allowResetPassword()
+      }
+    ]
+  }
+
+  allowResetPassword() {
+    return this.domain.loginSettings && this.domain.loginSettings.forgotPasswordEnabled;
+  }
 }

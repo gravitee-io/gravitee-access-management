@@ -59,6 +59,13 @@ public class ClientSyncServiceImpl extends AbstractService implements ClientSync
     private EventManager eventManager;
 
     @Override
+    public Maybe<Client> findById(String id) {
+        return Observable.fromIterable(domainsClients.get(domain.getId()))
+                .filter(client -> client.getId().equals(id))
+                .firstElement();
+    }
+
+    @Override
     public Maybe<Client> findByClientId(String clientId) {
         return findByDomainAndClientId(domain.getId(), clientId);
     }

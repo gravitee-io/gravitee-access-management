@@ -38,6 +38,11 @@ public class ClientRepositoryProxy extends AbstractProxy<ClientRepository> imple
     }
 
     @Override
+    public Single<Set<Client>> search(String domain, String query) {
+        return target.search(domain, query);
+    }
+
+    @Override
     public Single<Page<Client>> findByDomain(String domain, int page, int size) {
         return target.findByDomain(domain, page, size);
     }

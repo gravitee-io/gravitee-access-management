@@ -30,6 +30,8 @@ public interface FormRepository extends CrudRepository<Form, String> {
 
     Single<List<Form>> findByDomain(String domain);
 
+    Single<List<Form>> findByDomainAndClient(String domain, String client);
+
     Maybe<Form> findByDomainAndTemplate(String domain, String template);
 
     Maybe<Form> findByDomainAndClientAndTemplate(String domain, String client, String template);

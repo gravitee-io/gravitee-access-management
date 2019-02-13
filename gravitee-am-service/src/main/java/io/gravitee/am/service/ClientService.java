@@ -38,6 +38,8 @@ public interface ClientService {
 
     Single<Page<Client>> findByDomain(String domain, int page, int size);
 
+    Single<Set<Client>> search(String domain, String query);
+
     Single<Set<Client>> findByDomain(String domain);
 
     Single<Client> create(String domain, NewClient newClient);

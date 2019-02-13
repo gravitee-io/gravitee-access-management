@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.view;
+package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 
 import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
 import org.springframework.context.annotation.Bean;
@@ -50,7 +50,7 @@ public class ThymeleafConfiguration {
 
     }
     private ITemplateResolver defaultTemplateResolver() {
-        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
+        ClassLoaderTemplateResolver templateResolver = new CustomClassLoaderTemplateResolver();
         templateResolver.setPrefix("/webroot/views/");
         templateResolver.setSuffix(".html");
         templateResolver.setTemplateMode("HTML");

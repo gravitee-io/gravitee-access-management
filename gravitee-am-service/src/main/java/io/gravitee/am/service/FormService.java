@@ -22,17 +22,29 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
+import java.util.List;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface FormService {
 
+    Single<List<Form>> findByDomain(String domain);
+
+    Single<List<Form>> findByDomainAndClient(String domain, String client);
+
     Maybe<Form> findByDomainAndTemplate(String domain, String template);
+
+    Maybe<Form> findByDomainAndClientAndTemplate(String domain, String client, String template);
 
     Single<Form> create(String domain, NewForm form);
 
+    Single<Form> create(String domain, String client, NewForm form);
+
     Single<Form> update(String domain, String id, UpdateForm form);
+
+    Single<Form> update(String domain, String client, String id, UpdateForm form);
 
     Completable delete(String pageId);
 

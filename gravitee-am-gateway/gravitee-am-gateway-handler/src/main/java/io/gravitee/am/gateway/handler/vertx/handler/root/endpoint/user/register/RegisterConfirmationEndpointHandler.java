@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.register;
 
+import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.UserRequestHandler;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -58,6 +60,9 @@ public class RegisterConfirmationEndpointHandler extends UserRequestHandler {
         User user = routingContext.get("user");
         routingContext.put("user", user);
 
+        // retrieve client (if exists)
+        Client client = routingContext.get("client");
+
         // check if user has already completed its registration
         if (user != null && user.isPreRegistration() && user.isRegistrationCompleted()) {
             redirectToPage(routingContext, Collections.singletonMap("error", "invalid_registration_context"));
@@ -65,7 +70,7 @@ public class RegisterConfirmationEndpointHandler extends UserRequestHandler {
         }
 
         // render the registration confirmation page
-        engine.render(routingContext, "registration_confirmation", res -> {
+        engine.render(routingContext, getTemplateFileName(client), res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 routingContext.response().end(res.result());
@@ -74,5 +79,9 @@ public class RegisterConfirmationEndpointHandler extends UserRequestHandler {
                 routingContext.fail(res.cause());
             }
         });
+    }
+
+    private String getTemplateFileName(Client client) {
+        return "registration_confirmation" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
     }
 }

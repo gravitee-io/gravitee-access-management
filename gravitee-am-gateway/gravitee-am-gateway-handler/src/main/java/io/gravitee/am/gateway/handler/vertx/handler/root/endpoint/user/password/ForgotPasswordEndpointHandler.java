@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.password;
 
+import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.ClientRequestParseHandler;
+import io.gravitee.am.model.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -50,6 +53,7 @@ public class ForgotPasswordEndpointHandler implements Handler<RoutingContext> {
         final String error = request.getParam(ERROR_PARAM);
         final String success = request.getParam(SUCCESS_PARAM);
         final String warning = request.getParam(WARNING_PARAM);
+        final Client client = routingContext.get(ClientRequestParseHandler.CLIENT_CONTEXT_KEY);
         // add query params to context
         routingContext.put(ERROR_PARAM, error);
         routingContext.put(SUCCESS_PARAM, success);
@@ -57,7 +61,7 @@ public class ForgotPasswordEndpointHandler implements Handler<RoutingContext> {
         routingContext.put(PARAM_CONTEXT_KEY, Collections.singletonMap(OAuth2Constants.CLIENT_ID, request.getParam(OAuth2Constants.CLIENT_ID)));
 
         // render the forgot password page
-        engine.render(routingContext, "forgot_password", res -> {
+        engine.render(routingContext, getTemplateFileName(client), res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 routingContext.response().end(res.result());
@@ -66,5 +70,9 @@ public class ForgotPasswordEndpointHandler implements Handler<RoutingContext> {
                 routingContext.fail(res.cause());
             }
         });
+    }
+
+    private String getTemplateFileName(Client client) {
+        return "forgot_password" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId(): "");
     }
 }

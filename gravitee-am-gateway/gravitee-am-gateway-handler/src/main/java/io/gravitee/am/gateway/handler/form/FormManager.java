@@ -22,4 +22,6 @@ import io.gravitee.common.service.Service;
  * @author GraviteeSource Team
  */
 public interface FormManager extends Service {
+
+    String TEMPLATE_NAME_SEPARATOR = "|";
 }

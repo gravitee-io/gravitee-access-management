@@ -23,11 +23,7 @@ import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.DomainAlreadyExistsException;
-import io.gravitee.am.service.exception.DomainDeleteMasterException;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
@@ -85,6 +81,12 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private GroupService groupService;
+
+    @Autowired
+    private EmailTemplateService emailTemplateService;
+
+    @Autowired
+    private FormService formService;
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -314,7 +316,22 @@ public class DomainServiceImpl implements DomainService {
                                         List<Completable> deleteScopesCompletable = scopes.stream().map(s -> scopeService.delete(s.getId(), true)).collect(Collectors.toList());
                                         return Completable.concat(deleteScopesCompletable);
                                     })
-                            .andThen(domainRepository.delete(domainId)));
+                            )
+                            // delete email templates
+                            .andThen(emailTemplateService.findByDomain(domainId)
+                                    .flatMapCompletable(scopes -> {
+                                        List<Completable> deleteEmailsCompletable = scopes.stream().map(e -> emailTemplateService.delete(e.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteEmailsCompletable);
+                                    })
+                            )
+                            // delete form templates
+                            .andThen(formService.findByDomain(domainId)
+                                    .flatMapCompletable(scopes -> {
+                                        List<Completable> deleteFormsCompletable = scopes.stream().map(f -> formService.delete(f.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteFormsCompletable);
+                                    })
+                            )
+                            .andThen(domainRepository.delete(domainId));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

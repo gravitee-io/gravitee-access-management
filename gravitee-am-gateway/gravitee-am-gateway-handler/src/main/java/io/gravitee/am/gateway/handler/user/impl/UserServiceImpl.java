@@ -25,7 +25,9 @@ import io.gravitee.am.gateway.handler.email.EmailManager;
 import io.gravitee.am.gateway.handler.email.EmailService;
 import io.gravitee.am.gateway.handler.jwt.JwtBuilder;
 import io.gravitee.am.gateway.handler.jwt.JwtParser;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.user.UserService;
+import io.gravitee.am.gateway.handler.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
@@ -37,6 +39,7 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.MaybeSource;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +47,7 @@ import org.springframework.beans.factory.annotation.Value;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -83,10 +87,13 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private EmailManager emailManager;
 
+    @Autowired
+    private ClientSyncService clientSyncService;
+
     @Override
-    public Maybe<User> verifyToken(String token) {
+    public Maybe<UserToken> verifyToken(String token) {
         return Maybe.fromCallable(() -> jwtParser.parse(token))
-                .flatMap(jwt -> userRepository.findById(jwt.getSub()));
+                .flatMap(jwt -> userRepository.findById(jwt.getSub()).zipWith(clientSource(jwt.getAud()), (user, optionalClient) -> new UserToken(user, optionalClient.orElse(null))));
     }
 
     @Override
@@ -169,12 +176,12 @@ public class UserServiceImpl implements UserService {
 
     private void completeForgotPassword(User user, Client client) {
         io.gravitee.am.model.Email email = emailManager.getEmail(getTemplateName(client), resetPasswordSubject, expireAfter);
-        Email email1 = convert(user, email, "/resetPassword", "resetPasswordUrl");
+        Email email1 = convert(user, client, email, "/resetPassword", "resetPasswordUrl");
         emailService.send(email1);
     }
 
-    private Email convert(User user, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {
-        Map<String, Object> params = prepareEmail(user, email.getExpiresAfter(), redirectUri, redirectUriName);
+    private Email convert(User user, Client client, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {
+        Map<String, Object> params = prepareEmail(user, client, email.getExpiresAfter(), redirectUri, redirectUriName);
         Email email1 = new EmailBuilder()
                 .to(user.getEmail())
                 .from(email.getFrom())
@@ -186,12 +193,13 @@ public class UserServiceImpl implements UserService {
         return email1;
     }
 
-    private Map<String, Object> prepareEmail(User user, int expiresAfter, String redirectUri, String redirectUriName) {
+    private Map<String, Object> prepareEmail(User user, Client client, int expiresAfter, String redirectUri, String redirectUriName) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
         claims.put(Claims.iat, new Date().getTime() / 1000);
         claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expiresAfter * 1000)).getTime() / 1000);
         claims.put(Claims.sub, user.getId());
+        claims.put(Claims.aud, client.getId());
         claims.put(StandardClaims.EMAIL, user.getEmail());
         claims.put(StandardClaims.GIVEN_NAME, user.getFirstName());
         claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
@@ -219,6 +227,15 @@ public class UserServiceImpl implements UserService {
                 + ((client != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR +  client.getId() : "");
     }
 
+    private MaybeSource<Optional<Client>> clientSource(String audience) {
+        if (audience == null) {
+            return Maybe.just(Optional.empty());
+        }
+
+        return clientSyncService.findById(audience)
+                .map(client -> Optional.of(client))
+                .defaultIfEmpty(Optional.empty());
+    }
 
     private io.gravitee.am.identityprovider.api.User convert(User user) {
         DefaultUser idpUser = new DefaultUser(user.getUsername());

@@ -32,6 +32,7 @@
                     <i id="changePasswordVisibility" class="mdl-textfield__icon material-icons">visibility</i>
                 </div>
 
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" name="token" id="token" th:value="${token}"/>
                 <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary">Confirm registration</button>
             </form>

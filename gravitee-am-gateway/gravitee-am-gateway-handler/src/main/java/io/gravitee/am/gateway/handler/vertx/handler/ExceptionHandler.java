@@ -50,7 +50,7 @@ public class ExceptionHandler implements Handler<RoutingContext> {
                         .setStatusCode(oAuth2Exception.getHttpStatusCode())
                         .end(Json.encodePrettily(oAuth2ErrorResponse));
             } else {
-                logger.error(throwable.getMessage(), throwable);
+                logger.error("An exception occurs while handling incoming request", throwable);
                 if (routingContext.statusCode() != -1) {
                     routingContext
                             .response()

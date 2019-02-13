@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,6 +57,28 @@ public class FormServiceImpl implements FormService {
     private DomainService domainService;
 
     @Override
+    public Single<List<Form>> findByDomain(String domain) {
+        LOGGER.debug("Find form by domain {}", domain);
+        return formRepository.findByDomain(domain)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a form using its domain {}", domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a role using its domain %s and template %s", domain), ex));
+                });
+    }
+
+    @Override
+    public Single<List<Form>> findByDomainAndClient(String domain, String client) {
+        LOGGER.debug("Find form by domain {} and client {}", domain, client);
+        return formRepository.findByDomainAndClient(domain, client)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a form using its domain {} and client {}", domain, client, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a role using its domain %s and client %s", domain, client), ex));
+                });
+    }
+
+    @Override
     public Maybe<Form> findByDomainAndTemplate(String domain, String template) {
         LOGGER.debug("Find form by domain {} and template {}", domain, template);
         return formRepository.findByDomainAndTemplate(domain, template)
@@ -67,24 +90,57 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    public Single<Form> create(String domain, NewForm newForm) {
-        LOGGER.debug("Create a new page {} for domain {}", newForm, domain);
+    public Maybe<Form> findByDomainAndClientAndTemplate(String domain, String client, String template) {
+        LOGGER.debug("Find form by domain {}, client {} and template {}", domain, client, template);
+        return formRepository.findByDomainAndClientAndTemplate(domain, client, template)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a form using its domain {} its client {} and template {}", domain, client, template, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a form using its domain %s its client %s and template %s", domain, client, template), ex));
+                });
+    }
 
-        String pageId = UUID.toString(UUID.random());
+    @Override
+    public Single<Form> create(String domain, NewForm newForm) {
+        LOGGER.debug("Create a new form {} for domain {}", newForm, domain);
+        return create0(domain, null, newForm);
+    }
+
+    @Override
+    public Single<Form> create(String domain, String client, NewForm newForm) {
+        LOGGER.debug("Create a new form {} for domain {} and client {}", newForm, domain, client);
+        return create0(domain, client, newForm);
+    }
+
+    @Override
+    public Single<Form> update(String domain, String id, UpdateForm updateForm) {
+        LOGGER.debug("Update a form {} for domain {}", id, domain);
+        return update0(domain, id, updateForm);
+    }
+
+    @Override
+    public Single<Form> update(String domain, String client, String id, UpdateForm updateForm) {
+        LOGGER.debug("Update a form {} for domain {} and client {}", id, domain, client);
+        return update0(domain, id, updateForm);
+    }
+
+    private Single<Form> create0(String domain, String client, NewForm newForm) {
+        String formId = UUID.toString(UUID.random());
 
         // check if form is unique
-        return checkFormUniqueness(domain, newForm.getTemplate().template())
+        return checkFormUniqueness(domain, client, newForm.getTemplate().template())
                 .flatMap(irrelevant -> {
-                    Form page = new Form();
-                    page.setId(pageId);
-                    page.setDomain(domain);
-                    page.setEnabled(newForm.isEnabled());
-                    page.setTemplate(newForm.getTemplate().template());
-                    page.setContent(newForm.getContent());
-                    page.setAssets(newForm.getAssets());
-                    page.setCreatedAt(new Date());
-                    page.setUpdatedAt(page.getCreatedAt());
-                    return formRepository.create(page);
+                    Form form = new Form();
+                    form.setId(formId);
+                    form.setDomain(domain);
+                    form.setClient(client);
+                    form.setEnabled(newForm.isEnabled());
+                    form.setTemplate(newForm.getTemplate().template());
+                    form.setContent(newForm.getContent());
+                    form.setAssets(newForm.getAssets());
+                    form.setCreatedAt(new Date());
+                    form.setUpdatedAt(form.getCreatedAt());
+                    return formRepository.create(form);
                 })
                 .flatMap(page -> {
                     // Reload domain to take care about page creation
@@ -101,18 +157,16 @@ public class FormServiceImpl implements FormService {
                 });
     }
 
-    @Override
-    public Single<Form> update(String domain, String id, UpdateForm updateForm) {
-        LOGGER.debug("Update a page {} for domain {}", id, domain);
+    private Single<Form> update0(String domain, String id, UpdateForm updateForm) {
         return formRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new FormNotFoundException(id)))
-                .flatMapSingle(oldPage -> {
-                    oldPage.setEnabled(updateForm.isEnabled());
-                    oldPage.setContent(updateForm.getContent());
-                    oldPage.setAssets(updateForm.getAssets());
-                    oldPage.setUpdatedAt(new Date());
+                .flatMapSingle(oldForm -> {
+                    oldForm.setEnabled(updateForm.isEnabled());
+                    oldForm.setContent(updateForm.getContent());
+                    oldForm.setAssets(updateForm.getAssets());
+                    oldForm.setUpdatedAt(new Date());
 
-                    return formRepository.update(oldPage);
+                    return formRepository.update(oldForm);
                 })
                 .flatMap(page -> {
                     // Reload domain to take care about form update
@@ -128,6 +182,7 @@ public class FormServiceImpl implements FormService {
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a form", ex));
                 });
     }
+
 
     @Override
     public Completable delete(String formId) {
@@ -150,8 +205,14 @@ public class FormServiceImpl implements FormService {
                 });
     }
 
-    private Single<Boolean> checkFormUniqueness(String domain, String formTemplate) {
-        return findByDomainAndTemplate(domain, formTemplate)
+
+
+    private Single<Boolean> checkFormUniqueness(String domain, String client, String formTemplate) {
+        Maybe<Form> maybeSource = client == null ?
+                findByDomainAndTemplate(domain, formTemplate) :
+                findByDomainAndClientAndTemplate(domain, client, formTemplate);
+
+        return maybeSource
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {

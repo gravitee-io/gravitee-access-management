@@ -24,23 +24,23 @@ export class FormService {
 
   constructor(private http: Http) { }
 
-  get(domainId, pageTemplate): Observable<Response>  {
-    return this.http.get(this.formsUrl + domainId + "/forms?template=" + pageTemplate);
+  get(domainId, clientId, formTemplate): Observable<Response>  {
+    return this.http.get(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms?template=" + formTemplate);
   }
 
-  create(domainId, page): Observable<Response>  {
-    return this.http.post(this.formsUrl + domainId + "/forms", page);
+  create(domainId, clientId, form): Observable<Response>  {
+    return this.http.post(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms", form);
   }
 
-  update(domainId, id, page): Observable<Response>  {
-    return this.http.put(this.formsUrl + domainId + "/forms/" + id, {
-      'enabled' : page.enabled,
-      'content' : page.content
+  update(domainId, clientId, id, form): Observable<Response>  {
+    return this.http.put(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms/" + id, {
+      'enabled' : form.enabled,
+      'content' : form.content
     });
   }
 
-  delete(domainId, id): Observable<Response>  {
-    return this.http.delete(this.formsUrl + domainId + "/forms/" + id);
+  delete(domainId, clientId, id): Observable<Response>  {
+    return this.http.delete(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms/" + id);
   }
 
 }

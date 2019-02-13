@@ -28,6 +28,7 @@ import {DomainSettingsProvidersComponent} from "./domain/settings/providers/prov
 import {DomainSettingsRolesComponent} from "./domain/settings/roles/roles.component";
 import {DomainSettingsScopesComponent} from "./domain/settings/scopes/scopes.component";
 import {DomainSettingsFormsComponent} from "./domain/settings/forms/forms.component";
+import {DomainSettingsFormComponent} from "./domain/settings/forms/form/form.component";
 import {DomainSettingsLoginComponent} from "./domain/settings/login/login.component";
 import {DomainSettingsEmailsComponent} from "./domain/settings/emails/emails.component";
 import {DomainSettingsEmailComponent} from "./domain/settings/emails/email/email.component";
@@ -54,6 +55,8 @@ import {ClientSettingsComponent} from "./domain/clients/client/settings/settings
 import {ClientIdPComponent} from "./domain/clients/client/idp/idp.component";
 import {ClientEmailsComponent} from "./domain/clients/client/emails/emails.component";
 import {ClientEmailComponent} from "./domain/clients/client/emails/email/email.component";
+import {ClientFormsComponent} from "./domain/clients/client/forms/forms.component";
+import {ClientFormComponent} from "./domain/clients/client/forms/form/form.component";
 import {CertificatesResolver} from "./resolvers/certificates.resolver";
 import {CertificateCreationComponent} from "./domain/settings/certificates/creation/certificate-creation.component";
 import {CertificateComponent} from "./domain/settings/certificates/certificate/certificate.component";
@@ -80,7 +83,6 @@ import {ExtensionGrantsResolver} from "./resolvers/extension-grants.resolver";
 import {ExtensionGrantResolver} from "./resolvers/extension-grant.resolver";
 import {ManagementComponent} from "./settings/management/management.component";
 import {ManagementGeneralComponent} from "./settings/management/general/general.component";
-import {FormComponent} from "./domain/settings/forms/form/form.component";
 import {FormResolver} from "./resolvers/form.resolver";
 import {GroupsResolver} from "./resolvers/groups.resolver";
 import {GroupsComponent} from "./domain/settings/groups/groups.component";
@@ -178,7 +180,7 @@ const routes: Routes = [
           },
           {
             path: 'login',
-            component: FormComponent,
+            component: DomainSettingsFormComponent,
             resolve: {
               form: FormResolver
             },
@@ -338,7 +340,9 @@ const routes: Routes = [
           },
           { path: 'idp', component: ClientIdPComponent },
           { path: 'oidc', component: ClientOIDCComponent },
-          { path: 'emails', component: ClientEmailsComponent },
+          { path: 'forms', component: ClientFormsComponent, resolve: { domain: DomainResolver } },
+          { path: 'forms/form', component: ClientFormComponent, resolve: { form: FormResolver } },
+          { path: 'emails', component: ClientEmailsComponent, resolve: { domain: DomainResolver } },
           { path: 'emails/email', component: ClientEmailComponent, resolve: { email: EmailResolver} }
         ]
       },
@@ -493,6 +497,7 @@ const routes: Routes = [
           },
           { path: 'forms',
             component: DomainSettingsFormsComponent,
+            resolve: { domain: DomainResolver },
             data: {
               menu: {
                 label: 'Forms',
@@ -501,13 +506,14 @@ const routes: Routes = [
             }
           },
           { path: 'forms/form',
-            component: FormComponent,
+            component: DomainSettingsFormComponent,
             resolve: {
               form: FormResolver
             },
           },
           { path: 'emails',
             component: DomainSettingsEmailsComponent,
+            resolve: { domain: DomainResolver },
             data: {
               menu: {
                 label: 'Emails',

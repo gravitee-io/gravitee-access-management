@@ -70,6 +70,16 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
     }
 
     @Override
+    public Single<List<Email>> findByDomainAndClient(String domain, String client) {
+        return Observable.fromPublisher(
+                emailsCollection.find(
+                        and(
+                                eq(FIELD_DOMAIN, domain),
+                                eq(FIELD_CLIENT, client))
+                        )).map(this::convert).collect(ArrayList::new, List::add);
+    }
+
+    @Override
     public Maybe<Email> findByDomainAndTemplate(String domain, String template) {
         return Observable.fromPublisher(
                 emailsCollection.find(
