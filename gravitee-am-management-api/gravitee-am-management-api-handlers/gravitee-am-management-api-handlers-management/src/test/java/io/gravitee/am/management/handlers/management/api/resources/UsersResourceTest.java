@@ -20,17 +20,21 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Test;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -79,5 +83,48 @@ public class UsersResourceTest extends JerseySpringTest {
 
         final Response response = target("domains").path(domainId).path("users").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotCreate_invalid_password() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        NewUser newUser = new NewUser();
+        newUser.setUsername("username");
+        newUser.setPassword("password");
+        newUser.setEmail("test@test.com");
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(false).when(passwordValidator).validate(anyString());
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("users")
+                .request().post(Entity.json(newUser));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotCreate() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        NewUser newUser = new NewUser();
+        newUser.setUsername("username");
+        newUser.setPassword("password");
+        newUser.setEmail("test@test.com");
+
+        doReturn(true).when(passwordValidator).validate(anyString());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(new User())).when(userService).create(anyString(), any());
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("users")
+                .request().post(Entity.json(newUser));
+        assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
     }
 }

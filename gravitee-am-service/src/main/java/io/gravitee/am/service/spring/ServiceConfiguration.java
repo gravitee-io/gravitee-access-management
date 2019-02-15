@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.spring;
 
+import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.service.authentication.crypto.password.RegexPasswordValidator;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
@@ -51,5 +53,10 @@ public class ServiceConfiguration {
                 .setTrustAll(Boolean.valueOf(properties.getProperty("oidc.http.client.trustAll", "true")));
 
         return WebClient.create(vertx,options);
+    }
+
+    @Bean
+    public PasswordValidator passwordValidator() {
+        return new RegexPasswordValidator();
     }
 }

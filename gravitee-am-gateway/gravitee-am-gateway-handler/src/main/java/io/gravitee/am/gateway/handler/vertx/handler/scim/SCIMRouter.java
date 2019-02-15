@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.vertx.handler.scim.endpoint.configuration.
 import io.gravitee.am.gateway.handler.vertx.handler.scim.endpoint.groups.*;
 import io.gravitee.am.gateway.handler.vertx.handler.scim.endpoint.users.*;
 import io.gravitee.am.gateway.handler.vertx.handler.scim.handler.BearerTokensParseHandler;
+import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +64,9 @@ public class SCIMRouter {
     @Autowired
     private ClientSyncService clientSyncService;
 
+    @Autowired
+    private PasswordValidator passwordValidator;
+
     public Router route() {
         // Create the SCIM router
         final Router router = Router.router(vertx);
@@ -85,8 +89,10 @@ public class SCIMRouter {
         getUserEndpointHandler.setObjectMapper(objectMapper);
         CreateUserEndpointHandler createUserEndpointHandler = CreateUserEndpointHandler.create(userService);
         createUserEndpointHandler.setObjectMapper(objectMapper);
+        createUserEndpointHandler.setPasswordValidator(passwordValidator);
         UpdateUserEndpointHandler updateUserEndpointHandler = UpdateUserEndpointHandler.create(userService);
         updateUserEndpointHandler.setObjectMapper(objectMapper);
+        updateUserEndpointHandler.setPasswordValidator(passwordValidator);
         DeleteUserEndpointHandler deleteUserEndpointHandler = DeleteUserEndpointHandler.create(userService);
 
         router.get("/Users").handler(listUserEndpointHandler);

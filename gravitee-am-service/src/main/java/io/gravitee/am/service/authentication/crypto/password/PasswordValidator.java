@@ -13,24 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.model;
-
-import javax.validation.constraints.NotNull;
+package io.gravitee.am.service.authentication.crypto.password;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PasswordValue {
+public interface PasswordValidator {
 
-    @NotNull
-    private String password;
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    boolean validate(final String password);
 }

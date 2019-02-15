@@ -46,7 +46,9 @@ public class RegisterSubmissionEndpointHandler extends UserRequestHandler {
         MultiMap params = context.request().formAttributes();
 
         Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(CLIENT_ID_PARAM, context.request().getParam(CLIENT_ID_PARAM));
+        if (context.request().getParam(CLIENT_ID_PARAM) != null) {
+            queryParams.put(CLIENT_ID_PARAM, context.request().getParam(CLIENT_ID_PARAM));
+        }
 
         userService.register(convert(params))
                 .subscribe(

@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.EntrepriseUser;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -79,6 +80,7 @@ public class UpdateUserEndpointHandler implements Handler<RoutingContext>  {
     private static final Logger logger = LoggerFactory.getLogger(UpdateUserEndpointHandler.class);
     private UserService userService;
     private ObjectMapper objectMapper;
+    private PasswordValidator passwordValidator;
 
     public UpdateUserEndpointHandler(UserService userService) {
         this.userService = userService;
@@ -104,6 +106,14 @@ public class UpdateUserEndpointHandler implements Handler<RoutingContext>  {
                 return;
             }
 
+            // password policy
+            if (user.getPassword() != null) {
+                if (!passwordValidator.validate(user.getPassword())) {
+                    context.fail(new InvalidValueException("Field [password] is invalid"));
+                    return;
+                }
+            }
+
             userService.update(userId, user, location(context.request()))
                     .subscribe(
                             user1 -> context.response()
@@ -120,6 +130,10 @@ public class UpdateUserEndpointHandler implements Handler<RoutingContext>  {
 
     public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
+    }
+
+    public void setPasswordValidator(PasswordValidator passwordValidator) {
+        this.passwordValidator = passwordValidator;
     }
 
     public static UpdateUserEndpointHandler create(UserService userService) {
