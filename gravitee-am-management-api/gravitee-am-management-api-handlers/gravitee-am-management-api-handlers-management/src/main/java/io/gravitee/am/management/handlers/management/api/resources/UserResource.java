@@ -23,7 +23,9 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
@@ -63,6 +65,9 @@ public class UserResource {
 
     @Autowired
     private ClientService clientService;
+
+    @Autowired
+    private PasswordValidator passwordValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -141,6 +146,13 @@ public class UserResource {
                               @PathParam("user") String user,
                               @ApiParam(name = "password", required = true) @Valid @NotNull PasswordValue password,
                               @Suspended final AsyncResponse response) {
+
+        // check password policy
+        if (!passwordValidator.validate(password.getPassword())) {
+            response.resume(new UserInvalidException(("Field [password] is invalid")));
+            return;
+        }
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapCompletable(user1 -> userService.resetPassword(domain, user, password.getPassword()))

@@ -29,10 +29,12 @@ import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.login.LoginCal
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.login.LoginEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.login.LoginRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.logout.LogoutEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.password.*;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.register.*;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.Vertx;
@@ -71,6 +73,9 @@ public class RootRouter {
     @Autowired
     private UserAuthenticationManager userAuthenticationManager;
 
+    @Autowired
+    private PasswordValidator passwordValidator;
+
     public Router route(AuthProvider userAuthProvider) {
         // create the root router
         final Router router = Router.router(vertx);
@@ -95,6 +100,7 @@ public class RootRouter {
         Handler<RoutingContext> resetPasswordHandler = new ResetPasswordEndpointHandler(thymeleafTemplateEngine);
         Handler<RoutingContext> resetPasswordSubmissionRequestParseHandler = new ResetPasswordSubmissionRequestParseHandler();
         Handler<RoutingContext> resetPasswordSubmissionHandler = new ResetPasswordSubmissionEndpointHandler(userService);
+        Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator);
 
         // login route
         router.get("/login")
@@ -123,6 +129,7 @@ public class RootRouter {
                     .handler(registerHandler);
             router.route(HttpMethod.POST, "/register")
                     .handler(registerSubmissionRequestHandler)
+                    .handler(passwordPolicyRequestParseHandler)
                     .handler(registerSubmissionHandler);
         }
 
@@ -132,6 +139,7 @@ public class RootRouter {
         router.route(HttpMethod.POST, "/confirmRegistration")
                 .handler(registerConfirmationSubmissionRequestParseHandler)
                 .handler(userTokenRequestParseHandler)
+                .handler(passwordPolicyRequestParseHandler)
                 .handler(registerConfirmationSubmissionEndpointHandler);
 
         // mount forgot/reset password pages only if the option is enabled
@@ -149,6 +157,7 @@ public class RootRouter {
             router.route(HttpMethod.POST, "/resetPassword")
                     .handler(resetPasswordSubmissionRequestParseHandler)
                     .handler(userTokenRequestParseHandler)
+                    .handler(passwordPolicyRequestParseHandler)
                     .handler(resetPasswordSubmissionHandler);
         }
         return router;

@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.EntrepriseUser;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -86,6 +87,7 @@ public class CreateUserEndpointHandler implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(CreateUserEndpointHandler.class);
     private UserService userService;
     private ObjectMapper objectMapper;
+    private PasswordValidator passwordValidator;
 
     public CreateUserEndpointHandler(UserService userService) {
         this.userService = userService;
@@ -110,6 +112,14 @@ public class CreateUserEndpointHandler implements Handler<RoutingContext> {
                 return;
             }
 
+            // password policy
+            if (user.getPassword() != null) {
+                if (!passwordValidator.validate(user.getPassword())) {
+                    context.fail(new InvalidValueException("Field [password] is invalid"));
+                    return;
+                }
+            }
+
             userService.create(user, location(context.request()))
                     .subscribe(
                             user1 -> context.response()
@@ -129,6 +139,10 @@ public class CreateUserEndpointHandler implements Handler<RoutingContext> {
         this.objectMapper = objectMapper;
     }
 
+    public void setPasswordValidator(PasswordValidator passwordValidator) {
+        this.passwordValidator = passwordValidator;
+    }
+
     public static CreateUserEndpointHandler create(UserService userService) {
         return new CreateUserEndpointHandler(userService);
     }
@@ -142,7 +156,7 @@ public class CreateUserEndpointHandler implements Handler<RoutingContext> {
         }
     }
 
-    private void checkSchemas(List<String> schemas) throws Exception {
+    private void checkSchemas(List<String> schemas) {
         if (schemas == null || schemas.isEmpty()) {
             throw new InvalidValueException("Field [schemas] is required");
         }

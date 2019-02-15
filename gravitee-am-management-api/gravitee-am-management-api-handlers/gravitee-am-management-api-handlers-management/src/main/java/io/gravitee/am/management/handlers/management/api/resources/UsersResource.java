@@ -20,6 +20,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.model.NewUser;
@@ -62,6 +63,9 @@ public class UsersResource extends AbstractResource {
 
     @Autowired
     private IdentityProviderService identityProviderService;
+
+    @Autowired
+    private PasswordValidator passwordValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -122,6 +126,14 @@ public class UsersResource extends AbstractResource {
         if (!newUser.isPreRegistration() && newUser.getPassword() == null) {
             response.resume(new UserInvalidException(("Field [password] is required")));
             return;
+        }
+
+        // check password policy
+        if (newUser.getPassword() != null) {
+            if (!passwordValidator.validate(newUser.getPassword())) {
+                response.resume(new UserInvalidException(("Field [password] is invalid")));
+                return;
+            }
         }
 
         domainService.findById(domain)

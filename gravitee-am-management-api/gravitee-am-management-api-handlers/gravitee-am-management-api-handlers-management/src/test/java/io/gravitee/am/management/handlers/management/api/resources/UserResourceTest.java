@@ -16,16 +16,20 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import org.junit.Test;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -73,5 +77,53 @@ public class UserResourceTest extends JerseySpringTest {
 
         final Response response = target("domains/" + domainId).request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotResetPassword_invalid_password() {
+        final String domainId = "domain-id";
+        final String userId = "user-id";
+
+        PasswordValue passwordValue = new PasswordValue();
+        passwordValue.setPassword("password");
+
+        doReturn(false).when(passwordValidator).validate(anyString());
+
+        final Response response = target("domains")
+                .path(domainId).path("users")
+                .path(userId)
+                .path("resetPassword")
+                .request()
+                .post(Entity.json(passwordValue));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldResetPassword() {
+        final String domainId = "domain-id";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final String userId = "user-id";
+        final User mockUser = new User();
+        mockUser.setId(userId);
+        mockUser.setUsername("user-username");
+        mockUser.setDomain(domainId);
+
+        PasswordValue passwordValue = new PasswordValue();
+        passwordValue.setPassword("password");
+
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Completable.complete()).when(userService).resetPassword(anyString(), anyString(), anyString());
+        doReturn(true).when(passwordValidator).validate(anyString());
+
+        final Response response = target("domains")
+                .path(domainId).path("users")
+                .path(userId)
+                .path("resetPassword")
+                .request()
+                .post(Entity.json(passwordValue));
+        assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
     }
 }

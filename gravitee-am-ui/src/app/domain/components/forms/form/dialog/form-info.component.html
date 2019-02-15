@@ -52,7 +52,7 @@
         <div>
           <div th:if="${error == null && success == null}">
             <div th:if="${warning}">
-              <p>An account already exists with this username.</p>
+              <p th:text="${warning == 'invalid_password_value'} ? 'Invalid password value. It does not comply with the password policy.' : 'An account already exists with this username.'"></p>
             </div>
             <form th:action="@{register}" method="post">
               <input class="mdl-textfield__input" type="text" id="firstName" name="firstName"/>
@@ -138,6 +138,9 @@
             <div>
               <label>Hi <span th:text="${user.firstName} + ' ' + ${user.lastName}"></span></label>
               <p>Please enter a new password for your account.</p>
+            </div>
+             <div th:if="${warning}">
+                <p>Invalid password value. It does not comply with the password policy.</p>
             </div>
             <form th:action="@{resetPassword}" method="post">
               <input type="password" id="password" name="password" required/>

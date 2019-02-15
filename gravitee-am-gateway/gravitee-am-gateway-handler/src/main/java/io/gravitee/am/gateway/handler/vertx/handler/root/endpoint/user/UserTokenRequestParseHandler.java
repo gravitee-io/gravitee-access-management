@@ -56,7 +56,7 @@ public class UserTokenRequestParseHandler extends UserRequestHandler {
         }
 
         // user has been redirected due to warning, continue
-        if (warning != null) {
+        if (warning != null && token == null) {
             context.next();
             return;
         }

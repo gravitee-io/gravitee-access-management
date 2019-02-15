@@ -25,7 +25,7 @@
                 <label>Create your account</label>
             </div>
             <div th:if="${warning}" class="register-error-info">
-                <p style="margin: 0;">An account already exists with this username.</p>
+                <p style="margin: 0;" th:text="${warning == 'invalid_password_value'} ? 'Invalid password value. It does not comply with the password policy.' : 'An account already exists with this username.'"></p>
             </div>
             <form role="form" th:action="@{register}" method="post" style="display: flex; flex-direction: column; margin-top: 30px;">
                 <div style="display: flex; flex-direction: row">

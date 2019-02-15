@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.certificate.Certificate
 import io.gravitee.am.management.service.*;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.*;
+import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
@@ -96,6 +97,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected FormService formService;
+
+    @Autowired
+    protected PasswordValidator passwordValidator;
 
     @Configuration
     @ComponentScan("io.gravitee.am.management.handlers.management.api.resources.enhancer")
@@ -188,6 +192,11 @@ public abstract class JerseySpringTest {
         @Bean
         public FormService formService() {
             return mock(FormService.class);
+        }
+
+        @Bean
+        public PasswordValidator passwordValidator() {
+            return mock(PasswordValidator.class);
         }
     }
 
