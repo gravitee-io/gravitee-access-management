@@ -157,7 +157,7 @@ export class ProviderRolesComponent implements OnInit {
 
   displayMapping(mapping: string): string {
     let mapperKey = mapping.split('=')[0];
-    let mapperValue = mapping.split('=')[1];
+    let mapperValue = mapping.split(mapperKey + '=')[1];
     if (mapperKey === 'group') {
       mapperValue = this.getGroup(mapperValue);
     }
