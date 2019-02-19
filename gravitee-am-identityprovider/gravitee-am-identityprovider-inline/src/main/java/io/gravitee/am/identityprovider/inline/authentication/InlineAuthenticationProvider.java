@@ -94,7 +94,7 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
             roleMapper.getRoles().forEach((role, users) -> {
                 Arrays.asList(users).forEach(u -> {
                     // user/group have the following syntax userAttribute=userValue
-                    String[] attributes = u.split("=");
+                    String[] attributes = u.split("=", 2);
                     String userAttribute = attributes[0];
                     String userValue = attributes[1];
 
