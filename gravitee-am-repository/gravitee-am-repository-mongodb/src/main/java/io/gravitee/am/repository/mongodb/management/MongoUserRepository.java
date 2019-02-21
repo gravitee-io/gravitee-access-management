@@ -19,10 +19,16 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.scim.Address;
+import io.gravitee.am.model.scim.Attribute;
+import io.gravitee.am.model.scim.Certificate;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.scim.AddressMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.scim.AttributeMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.scim.CertificateMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -35,6 +41,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.*;
 
@@ -154,6 +161,8 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         user.setExternalId(userMongo.getExternalId());
         user.setUsername(userMongo.getUsername());
         user.setEmail(userMongo.getEmail());
+        user.setDisplayName(userMongo.getDisplayName());
+        user.setNickName(userMongo.getNickName());
         user.setFirstName(userMongo.getFirstName());
         user.setLastName(userMongo.getLastName());
         user.setAccountNonExpired(userMongo.isAccountNonExpired());
@@ -169,6 +178,13 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         user.setLoginsCount(userMongo.getLoginsCount());
         user.setLoggedAt(userMongo.getLoggedAt());
         user.setRoles(userMongo.getRoles());
+        user.setEmails(toModelAttributes(userMongo.getEmails()));
+        user.setPhoneNumbers(toModelAttributes(userMongo.getPhoneNumbers()));
+        user.setIms(toModelAttributes(userMongo.getIms()));
+        user.setPhotos(toModelAttributes(userMongo.getPhotos()));
+        user.setEntitlements(userMongo.getEntitlements());
+        user.setAddresses(toModelAddresses(userMongo.getAddresses()));
+        user.setX509Certificates(toModelCertificates(userMongo.getX509Certificates()));
         user.setAdditionalInformation(userMongo.getAdditionalInformation());
         user.setCreatedAt(userMongo.getCreatedAt());
         user.setUpdatedAt(userMongo.getUpdatedAt());
@@ -185,6 +201,8 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         userMongo.setExternalId(user.getExternalId());
         userMongo.setUsername(user.getUsername());
         userMongo.setEmail(user.getEmail());
+        userMongo.setDisplayName(user.getDisplayName());
+        userMongo.setNickName(user.getNickName());
         userMongo.setFirstName(user.getFirstName());
         userMongo.setLastName(user.getLastName());
         userMongo.setAccountNonExpired(user.isAccountNonExpired());
@@ -200,9 +218,112 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         userMongo.setLoginsCount(user.getLoginsCount());
         userMongo.setLoggedAt(user.getLoggedAt());
         userMongo.setRoles(user.getRoles());
+        userMongo.setEmails(toMongoAttributes(user.getEmails()));
+        userMongo.setPhoneNumbers(toMongoAttributes(user.getPhoneNumbers()));
+        userMongo.setIms(toMongoAttributes(user.getIms()));
+        userMongo.setPhotos(toMongoAttributes(user.getPhotos()));
+        userMongo.setEntitlements(user.getEntitlements());
+        userMongo.setAddresses(toMongoAddresses(user.getAddresses()));
+        userMongo.setX509Certificates(toMongoCertificates(user.getX509Certificates()));
         userMongo.setAdditionalInformation(user.getAdditionalInformation() != null ? new Document(user.getAdditionalInformation()) : new Document());
         userMongo.setCreatedAt(user.getCreatedAt());
         userMongo.setUpdatedAt(user.getUpdatedAt());
         return userMongo;
+    }
+
+    private List<Attribute> toModelAttributes(List<AttributeMongo> mongoAttributes) {
+        if (mongoAttributes == null) {
+            return null;
+        }
+        return mongoAttributes
+                .stream()
+                .map(mongoAttribute -> {
+                    Attribute modelAttribute = new Attribute();
+                    modelAttribute.setPrimary(mongoAttribute.isPrimary());
+                    modelAttribute.setValue(mongoAttribute.getValue());
+                    modelAttribute.setType(mongoAttribute.getType());
+                    return modelAttribute;
+                }).collect(Collectors.toList());
+    }
+
+    private List<AttributeMongo> toMongoAttributes(List<Attribute> modelAttributes) {
+        if (modelAttributes == null) {
+            return null;
+        }
+        return modelAttributes
+                .stream()
+                .map(modelAttribute -> {
+                    AttributeMongo mongoAttribute = new AttributeMongo();
+                    mongoAttribute.setPrimary(modelAttribute.isPrimary());
+                    mongoAttribute.setValue(modelAttribute.getValue());
+                    mongoAttribute.setType(modelAttribute.getType());
+                    return mongoAttribute;
+                }).collect(Collectors.toList());
+    }
+
+    private List<Address> toModelAddresses(List<AddressMongo> mongoAddresses) {
+        if (mongoAddresses == null) {
+            return null;
+        }
+        return mongoAddresses
+                .stream()
+                .map(mongoAddress -> {
+                    Address modelAddress = new Address();
+                    modelAddress.setType(mongoAddress.getType());
+                    modelAddress.setFormatted(mongoAddress.getFormatted());
+                    modelAddress.setStreetAddress(mongoAddress.getStreetAddress());
+                    modelAddress.setCountry(mongoAddress.getCountry());
+                    modelAddress.setLocality(mongoAddress.getLocality());
+                    modelAddress.setPostalCode(mongoAddress.getPostalCode());
+                    modelAddress.setRegion(mongoAddress.getRegion());
+                    modelAddress.setPrimary(mongoAddress.isPrimary());
+                    return modelAddress;
+                }).collect(Collectors.toList());
+    }
+
+    private List<AddressMongo> toMongoAddresses(List<Address> modelAddresses) {
+        if (modelAddresses == null) {
+            return null;
+        }
+        return modelAddresses
+                .stream()
+                .map(modelAddress -> {
+                    AddressMongo mongoAddress = new AddressMongo();
+                    mongoAddress.setType(modelAddress.getType());
+                    mongoAddress.setFormatted(modelAddress.getFormatted());
+                    mongoAddress.setStreetAddress(modelAddress.getStreetAddress());
+                    mongoAddress.setCountry(modelAddress.getCountry());
+                    mongoAddress.setLocality(modelAddress.getLocality());
+                    mongoAddress.setPostalCode(modelAddress.getPostalCode());
+                    mongoAddress.setRegion(modelAddress.getRegion());
+                    mongoAddress.setPrimary(modelAddress.isPrimary());
+                    return mongoAddress;
+                }).collect(Collectors.toList());
+    }
+
+    private List<Certificate> toModelCertificates(List<CertificateMongo> mongoCertificates) {
+        if (mongoCertificates == null) {
+            return null;
+        }
+        return mongoCertificates
+                .stream()
+                .map(mongoCertificate -> {
+                    Certificate modelCertificate = new Certificate();
+                    modelCertificate.setValue(mongoCertificate.getValue());
+                    return modelCertificate;
+                }).collect(Collectors.toList());
+    }
+
+    private List<CertificateMongo> toMongoCertificates(List<Certificate> modelCertificates) {
+        if (modelCertificates == null) {
+            return null;
+        }
+        return modelCertificates
+                .stream()
+                .map(modelCertificate -> {
+                    CertificateMongo mongoCertificate = new CertificateMongo();
+                    mongoCertificate.setValue(modelCertificate.getValue());
+                    return mongoCertificate;
+                }).collect(Collectors.toList());
     }
 }

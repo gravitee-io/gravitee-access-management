@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.scim.impl;
 
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.common.scim.UserClaims;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.scim.GroupService;
 import io.gravitee.am.gateway.handler.scim.UserService;
@@ -280,12 +279,12 @@ public class UserServiceImpl implements UserService {
 
         scimUser.setProfileUrl(get(additionalInformation, StandardClaims.PROFILE, String.class));
         scimUser.setTitle(user.getTitle());
-        scimUser.setUserType(get(additionalInformation, UserClaims.USER_TYPE, String.class));
-        scimUser.setPreferredLanguage(get(additionalInformation, UserClaims.PREFERRED_LANGUAGE, String.class));
+        scimUser.setUserType(user.getType());
+        scimUser.setPreferredLanguage(user.getPreferredLanguage());
         scimUser.setLocale(get(additionalInformation, StandardClaims.LOCALE, String.class));
         scimUser.setTimezone(get(additionalInformation, StandardClaims.ZONEINFO, String.class));
         scimUser.setActive(user.isEnabled());
-        scimUser.setEmails(get(additionalInformation, UserClaims.EMAILS, List.class));
+        scimUser.setEmails(toScimAttributes(user.getEmails()));
         // set primary email
         if (user.getEmail() != null) {
             Attribute attribute = new Attribute();
@@ -300,13 +299,14 @@ public class UserServiceImpl implements UserService {
                 scimUser.setEmails(Collections.singletonList(attribute));
             }
         }
-        scimUser.setPhoneNumbers(get(additionalInformation, UserClaims.PHONE_NUMBERS, List.class));
-        scimUser.setIms(get(additionalInformation, UserClaims.IMS, List.class));
-        scimUser.setPhotos(get(additionalInformation, UserClaims.PHOTOS, List.class));
-        scimUser.setAddresses(get(additionalInformation, UserClaims.ADDRESSES, List.class));
-        scimUser.setEntitlements(get(additionalInformation, UserClaims.ENTITLEMENTS, List.class));
-        scimUser.setRoles(get(additionalInformation, UserClaims.ROLES, List.class));
-        scimUser.setX509Certificates(get(additionalInformation, UserClaims.CERTIFICATES, List.class));
+        scimUser.setPhoneNumbers(toScimAttributes(user.getPhoneNumbers()));
+        scimUser.setIms(toScimAttributes(user.getIms()));
+        scimUser.setPhotos(toScimAttributes(user.getPhotos()));
+        scimUser.setAddresses(toScimAddresses(user.getAddresses()));
+        scimUser.setEntitlements(user.getEntitlements());
+        // TODO
+        // scimUser.setRoles(user.getRoles());
+        scimUser.setX509Certificates(toScimCertificates(user.getX509Certificates()));
 
         // Meta
         Meta meta = new Meta();
@@ -350,12 +350,8 @@ public class UserServiceImpl implements UserService {
             additionalInformation.put(StandardClaims.PROFILE, scimUser.getProfileUrl());
         }
         user.setTitle(scimUser.getTitle());
-        if (scimUser.getUserType() != null) {
-            additionalInformation.put(UserClaims.USER_TYPE, scimUser.getUserType());
-        }
-        if (scimUser.getPreferredLanguage() != null) {
-            additionalInformation.put(UserClaims.PREFERRED_LANGUAGE, scimUser.getPreferredLanguage());
-        }
+        user.setType(scimUser.getUserType());
+        user.setPreferredLanguage(scimUser.getPreferredLanguage());
         if (scimUser.getLocale() != null) {
             additionalInformation.put(StandardClaims.LOCALE, scimUser.getLocale());
         }
@@ -378,32 +374,22 @@ public class UserServiceImpl implements UserService {
         }
         if (scimUser.getEmails() != null && !scimUser.getEmails().isEmpty()) {
             List<Attribute> emails = scimUser.getEmails();
-            user.setEmail(emails.stream().filter(Attribute::isPrimary).findFirst().orElse(emails.get(0)).getValue());
-            additionalInformation.put(UserClaims.EMAILS, emails);
+            user.setEmail(emails.stream().filter(attribute -> Boolean.TRUE.equals(attribute.isPrimary())).findFirst().orElse(emails.get(0)).getValue());
+            user.setEmails(toModelAttributes(emails));
         }
-        if (scimUser.getPhoneNumbers() != null && !scimUser.getPhoneNumbers().isEmpty()) {
-            additionalInformation.put(UserClaims.PHONE_NUMBERS, scimUser.getPhoneNumbers());
-        }
-        if (scimUser.getIms() != null && !scimUser.getIms().isEmpty()) {
-            additionalInformation.put(UserClaims.IMS, scimUser.getIms());
-        }
+        user.setPhoneNumbers(toModelAttributes(scimUser.getPhoneNumbers()));
+        user.setIms(toModelAttributes(scimUser.getIms()));
         if (scimUser.getPhotos() != null && !scimUser.getPhotos().isEmpty()) {
             List<Attribute> photos = scimUser.getPhotos();
-            additionalInformation.put(StandardClaims.PICTURE, photos.stream().filter(Attribute::isPrimary).findFirst().orElse(photos.get(0)).getValue());
-            additionalInformation.put(UserClaims.PHOTOS, photos);
+            additionalInformation.put(StandardClaims.PICTURE, photos.stream().filter(attribute -> Boolean.TRUE.equals(attribute.isPrimary())).findFirst().orElse(photos.get(0)).getValue());
+            user.setPhotos(toModelAttributes(photos));
         }
-        if (scimUser.getAddresses() != null && !scimUser.getAddresses().isEmpty()) {
-            additionalInformation.put(UserClaims.ADDRESSES, scimUser.getAddresses());
-        }
-        if (scimUser.getEntitlements() != null && !scimUser.getEntitlements().isEmpty()) {
-            additionalInformation.put(UserClaims.ENTITLEMENTS, scimUser.getEntitlements());
-        }
-        if (scimUser.getRoles() != null && !scimUser.getRoles().isEmpty()) {
-            additionalInformation.put(UserClaims.ROLES, scimUser.getRoles());
-        }
-        if (scimUser.getX509Certificates() != null && !scimUser.getX509Certificates().isEmpty()) {
-            additionalInformation.put(UserClaims.CERTIFICATES, scimUser.getX509Certificates());
-        }
+        user.setAddresses(toModelAddresses(scimUser.getAddresses()));
+        user.setEntitlements(scimUser.getEntitlements());
+        // TODO
+        // user.setRoles(scimUser.getRoles());
+        user.setX509Certificates(toModelCertificates(scimUser.getX509Certificates()));
+
         // set additional information
         user.setAdditionalInformation(additionalInformation);
         return user;
@@ -443,4 +429,99 @@ public class UserServiceImpl implements UserService {
         return idpUser;
     }
 
+    private List<io.gravitee.am.model.scim.Attribute> toModelAttributes(List<Attribute> scimAttributes) {
+        if (scimAttributes == null) {
+            return null;
+        }
+        return scimAttributes
+                .stream()
+                .map(scimAttribute -> {
+                    io.gravitee.am.model.scim.Attribute modelAttribute = new io.gravitee.am.model.scim.Attribute();
+                    modelAttribute.setPrimary(scimAttribute.isPrimary());
+                    modelAttribute.setValue(scimAttribute.getValue());
+                    modelAttribute.setType(scimAttribute.getType());
+                    return modelAttribute;
+                }).collect(Collectors.toList());
+    }
+
+    private List<Attribute> toScimAttributes(List<io.gravitee.am.model.scim.Attribute> modelAttributes) {
+        if (modelAttributes == null) {
+            return null;
+        }
+        return modelAttributes
+                .stream()
+                .map(modelAttribute -> {
+                    Attribute scimAttribute = new Attribute();
+                    scimAttribute.setPrimary(modelAttribute.isPrimary());
+                    scimAttribute.setValue(modelAttribute.getValue());
+                    scimAttribute.setType(modelAttribute.getType());
+                    return scimAttribute;
+                }).collect(Collectors.toList());
+    }
+
+    private List<io.gravitee.am.model.scim.Address> toModelAddresses(List<Address> scimAddresses) {
+        if (scimAddresses == null) {
+            return null;
+        }
+        return scimAddresses
+                .stream()
+                .map(scimAddress -> {
+                    io.gravitee.am.model.scim.Address modelAddress = new io.gravitee.am.model.scim.Address();
+                    modelAddress.setType(scimAddress.getType());
+                    modelAddress.setFormatted(scimAddress.getFormatted());
+                    modelAddress.setStreetAddress(scimAddress.getStreetAddress());
+                    modelAddress.setCountry(scimAddress.getCountry());
+                    modelAddress.setLocality(scimAddress.getLocality());
+                    modelAddress.setPostalCode(scimAddress.getPostalCode());
+                    modelAddress.setRegion(scimAddress.getRegion());
+                    modelAddress.setPrimary(scimAddress.isPrimary());
+                    return modelAddress;
+                }).collect(Collectors.toList());
+    }
+
+    private List<Address> toScimAddresses(List<io.gravitee.am.model.scim.Address> modelAddresses) {
+        if (modelAddresses == null) {
+            return null;
+        }
+        return modelAddresses
+                .stream()
+                .map(modelAddress -> {
+                    Address scimAddress = new Address();
+                    scimAddress.setType(modelAddress.getType());
+                    scimAddress.setFormatted(modelAddress.getFormatted());
+                    scimAddress.setStreetAddress(modelAddress.getStreetAddress());
+                    scimAddress.setCountry(modelAddress.getCountry());
+                    scimAddress.setLocality(modelAddress.getLocality());
+                    scimAddress.setPostalCode(modelAddress.getPostalCode());
+                    scimAddress.setRegion(modelAddress.getRegion());
+                    scimAddress.setPrimary(modelAddress.isPrimary());
+                    return scimAddress;
+                }).collect(Collectors.toList());
+    }
+
+    private List<io.gravitee.am.model.scim.Certificate> toModelCertificates(List<Certificate> scimCertificates) {
+        if (scimCertificates == null) {
+            return null;
+        }
+        return scimCertificates
+                .stream()
+                .map(scimCertificate -> {
+                    io.gravitee.am.model.scim.Certificate modelCertificate = new io.gravitee.am.model.scim.Certificate();
+                    modelCertificate.setValue(scimCertificate.getValue());
+                    return modelCertificate;
+                }).collect(Collectors.toList());
+    }
+
+    private List<Certificate> toScimCertificates(List<io.gravitee.am.model.scim.Certificate> modelCertificates) {
+        if (modelCertificates == null) {
+            return null;
+        }
+        return modelCertificates
+                .stream()
+                .map(modelCertificate -> {
+                    Certificate scimCertificate = new Certificate();
+                    scimCertificate.setValue(modelCertificate.getValue());
+                    return scimCertificate;
+                }).collect(Collectors.toList());
+    }
 }

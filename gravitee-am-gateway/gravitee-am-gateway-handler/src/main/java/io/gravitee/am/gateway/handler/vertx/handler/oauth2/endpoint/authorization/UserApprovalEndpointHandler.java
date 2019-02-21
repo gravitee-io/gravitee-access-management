@@ -71,8 +71,6 @@ public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
 
                         requestedScopes.add(requestedScope);
                     }
-                    // Remove client_secret if present to prevent leaks
-                    client.setClientSecret(null);
                     return new ApprovalData(client, requestedScopes);
                 })
                 .subscribe(approvalData -> {
@@ -103,7 +101,10 @@ public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
         private Set<Scope> scopes;
 
         public ApprovalData(Client client, Set<Scope> scopes) {
-            this.client = client;
+            this.client = new Client();
+            this.client.setId(client.getId());
+            this.client.setClientId(client.getClientId());
+            this.client.setClientName(client.getClientName());
             this.scopes = scopes;
         }
 

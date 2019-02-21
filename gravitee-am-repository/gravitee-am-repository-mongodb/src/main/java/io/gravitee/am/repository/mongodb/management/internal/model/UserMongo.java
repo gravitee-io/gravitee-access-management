@@ -16,6 +16,9 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
+import io.gravitee.am.repository.mongodb.management.internal.model.scim.AddressMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.scim.AttributeMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.scim.CertificateMongo;
 import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 
@@ -33,8 +36,13 @@ public class UserMongo extends Auditable {
     private String externalId;
     private String username;
     private String email;
+    private String displayName;
+    private String nickName;
     private String firstName;
     private String lastName;
+    private String title;
+    private String type;
+    private String preferredLanguage;
     private boolean accountNonExpired = true;
     private boolean accountNonLocked = true;
     private boolean credentialsNonExpired = true;
@@ -47,6 +55,13 @@ public class UserMongo extends Auditable {
     private String client;
     private long loginsCount;
     private Date loggedAt;
+    private List<AttributeMongo> emails;
+    private List<AttributeMongo> phoneNumbers;
+    private List<AttributeMongo> ims;
+    private List<AttributeMongo> photos;
+    private List<String> entitlements;
+    private List<AddressMongo> addresses;
+    private List<CertificateMongo> x509Certificates;
     private List<String> roles;
     /**
      * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
@@ -85,6 +100,22 @@ public class UserMongo extends Auditable {
         this.email = email;
     }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getNickName() {
+        return nickName;
+    }
+
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
+    }
+
     public String getFirstName() {
         return firstName;
     }
@@ -99,6 +130,30 @@ public class UserMongo extends Auditable {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getPreferredLanguage() {
+        return preferredLanguage;
+    }
+
+    public void setPreferredLanguage(String preferredLanguage) {
+        this.preferredLanguage = preferredLanguage;
     }
 
     public boolean isAccountNonExpired() {
@@ -195,6 +250,62 @@ public class UserMongo extends Auditable {
 
     public void setLoggedAt(Date loggedAt) {
         this.loggedAt = loggedAt;
+    }
+
+    public List<AttributeMongo> getEmails() {
+        return emails;
+    }
+
+    public void setEmails(List<AttributeMongo> emails) {
+        this.emails = emails;
+    }
+
+    public List<AttributeMongo> getPhoneNumbers() {
+        return phoneNumbers;
+    }
+
+    public void setPhoneNumbers(List<AttributeMongo> phoneNumbers) {
+        this.phoneNumbers = phoneNumbers;
+    }
+
+    public List<AttributeMongo> getIms() {
+        return ims;
+    }
+
+    public void setIms(List<AttributeMongo> ims) {
+        this.ims = ims;
+    }
+
+    public List<AttributeMongo> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<AttributeMongo> photos) {
+        this.photos = photos;
+    }
+
+    public List<String> getEntitlements() {
+        return entitlements;
+    }
+
+    public void setEntitlements(List<String> entitlements) {
+        this.entitlements = entitlements;
+    }
+
+    public List<AddressMongo> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<AddressMongo> addresses) {
+        this.addresses = addresses;
+    }
+
+    public List<CertificateMongo> getX509Certificates() {
+        return x509Certificates;
+    }
+
+    public void setX509Certificates(List<CertificateMongo> x509Certificates) {
+        this.x509Certificates = x509Certificates;
     }
 
     public List<String> getRoles() {

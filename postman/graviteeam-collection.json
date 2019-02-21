@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "dcdc899b-5b75-4887-8eb8-19b7170d8d0d",
+		"_postman_id": "2217778e-9067-431b-9b8e-1a01c03b2f05",
 		"name": "Gravitee.io AM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -16530,7 +16530,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+											"raw": "{\n  \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n  \"externalId\": \"701984\",\n  \"userName\": \"bjensen@example.com\",\n  \"name\": {\n    \"formatted\": \"Ms. Barbara J Jensen, III\",\n    \"familyName\": \"Jensen\",\n    \"givenName\": \"Barbara\",\n    \"middleName\": \"Jane\",\n    \"honorificPrefix\": \"Ms.\",\n    \"honorificSuffix\": \"III\"\n  },\n  \"displayName\": \"Babs Jensen\",\n  \"nickName\": \"Babs\",\n  \"profileUrl\": \"https://login.example.com/bjensen\",\n  \"emails\": [\n    {\n      \"value\": \"bjensen@example.com\",\n      \"type\": \"work\",\n      \"primary\": true\n    },\n    {\n      \"value\": \"babs@jensen.org\",\n      \"type\": \"home\"\n    }\n  ],\n  \"addresses\": [\n    {\n      \"type\": \"work\",\n      \"streetAddress\": \"100 Universal City Plaza\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"100 Universal City Plaza\\nHollywood, CA 91608 USA\",\n      \"primary\": true\n    },\n    {\n      \"type\": \"home\",\n      \"streetAddress\": \"456 Hollywood Blvd\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"456 Hollywood Blvd\\nHollywood, CA 91608 USA\"\n    }\n  ],\n  \"phoneNumbers\": [\n    {\n      \"value\": \"555-555-5555\",\n      \"type\": \"work\"\n    },\n    {\n      \"value\": \"555-555-4444\",\n      \"type\": \"mobile\"\n    }\n  ],\n  \"ims\": [\n    {\n      \"value\": \"someaimhandle\",\n      \"type\": \"aim\"\n    }\n  ],\n  \"photos\": [\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/F\",\n      \"type\": \"photo\"\n    },\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/T\",\n      \"type\": \"thumbnail\"\n    }\n  ],\n  \"userType\": \"Employee\",\n  \"title\": \"Tour Guide\",\n  \"preferredLanguage\": \"en-US\",\n  \"locale\": \"en-US\",\n  \"timezone\": \"America/Los_Angeles\",\n  \"active\":true,\n  \"x509Certificates\": [\n    {\n      \"value\":\n       \"MIIDQzCCAqygAwIBAgICEAAwDQ....1UEBhMCVVMx\"\n    }\n  ]\n}"
 										},
 										"url": {
 											"raw": "{{gateway_url}}/test/scim/Users",
@@ -16562,7 +16562,7 @@
 													"    var jsonData = pm.response.json();",
 													"    pm.expect(jsonData.status).to.eql(\"400\");",
 													"    pm.expect(jsonData.scimType).to.eql(\"uniqueness\");",
-													"    pm.expect(jsonData.detail).to.eql(\"User with username [bjensen] already exists\");",
+													"    pm.expect(jsonData.detail).to.eql(\"User with username [bjensen@example.com] already exists\");",
 													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 													"});"
 												],
@@ -16587,7 +16587,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen@example.com\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
 										},
 										"url": {
 											"raw": "{{gateway_url}}/test/scim/Users",

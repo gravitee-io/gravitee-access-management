@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.scim.Address;
+import io.gravitee.am.model.scim.Attribute;
+import io.gravitee.am.model.scim.Certificate;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +51,28 @@ public class User {
 
     private String title;
 
+    private String type;
+
+    private String preferredLanguage;
+
+    private List<Attribute> emails;
+
+    private List<Attribute> phoneNumbers;
+
+    private List<Attribute> ims;
+
+    private List<Attribute> photos;
+
+    private List<String> entitlements;
+
+    private List<Address> addresses;
+
+    private List<String> roles;
+
+    private Set<Role> rolesPermissions;
+
+    private List<Certificate> x509Certificates;
+
     private boolean accountNonExpired = true;
 
     private boolean accountNonLocked = true;
@@ -61,9 +87,6 @@ public class User {
 
     private boolean registrationCompleted;
 
-    /**
-     * Security domain associated to the client
-     */
     private String domain;
 
     private String source;
@@ -72,13 +95,9 @@ public class User {
 
     private long loginsCount;
 
-    private Date loggedAt;
-
-    private List<String> roles;
-
-    private Set<Role> rolesPermissions;
-
     private Map<String, Object> additionalInformation;
+
+    private Date loggedAt;
 
     private Date createdAt;
 
@@ -162,6 +181,78 @@ public class User {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getPreferredLanguage() {
+        return preferredLanguage;
+    }
+
+    public void setPreferredLanguage(String preferredLanguage) {
+        this.preferredLanguage = preferredLanguage;
+    }
+
+    public List<Attribute> getEmails() {
+        return emails;
+    }
+
+    public void setEmails(List<Attribute> emails) {
+        this.emails = emails;
+    }
+
+    public List<Attribute> getPhoneNumbers() {
+        return phoneNumbers;
+    }
+
+    public void setPhoneNumbers(List<Attribute> phoneNumbers) {
+        this.phoneNumbers = phoneNumbers;
+    }
+
+    public List<Attribute> getIms() {
+        return ims;
+    }
+
+    public void setIms(List<Attribute> ims) {
+        this.ims = ims;
+    }
+
+    public List<Attribute> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<Attribute> photos) {
+        this.photos = photos;
+    }
+
+    public List<String> getEntitlements() {
+        return entitlements;
+    }
+
+    public void setEntitlements(List<String> entitlements) {
+        this.entitlements = entitlements;
+    }
+
+    public List<Address> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<Address> addresses) {
+        this.addresses = addresses;
+    }
+
+    public List<Certificate> getX509Certificates() {
+        return x509Certificates;
+    }
+
+    public void setX509Certificates(List<Certificate> x509Certificates) {
+        this.x509Certificates = x509Certificates;
     }
 
     public boolean isAccountNonExpired() {
