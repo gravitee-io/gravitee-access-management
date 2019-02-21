@@ -107,7 +107,6 @@ public class OAuth2Router {
 
         final AuthHandler clientAuthHandler = ChainAuthHandler.newInstance(new ClientChainAuthHandler())
                 .append(ClientCredentialsAuthHandler.create(clientAuthProvider.getDelegate()))
-                .append(ClientAssertionAuthHandler.create(clientAssertionAuthProvider.getDelegate()))
                 .append(ClientBasicAuthHandler.create(clientAuthProvider.getDelegate()));
 
         final AuthHandler userAuthHandler = RedirectAuthHandler.create(
