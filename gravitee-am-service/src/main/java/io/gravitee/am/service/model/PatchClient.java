@@ -464,7 +464,7 @@ public class PatchClient {
         this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
     }
 
-    public Client patch(Client toPatch) {
+    public Client patch(Client toPatch, boolean forceNull) {
 
         SetterUtils.safeSet(toPatch::setRedirectUris, this.getRedirectUris());
         SetterUtils.safeSet(toPatch::setAuthorizedGrantTypes, this.getAuthorizedGrantTypes());
@@ -512,7 +512,12 @@ public class PatchClient {
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setIdentities, this.getIdentities());
         SetterUtils.safeSet(toPatch::setOauth2Identities, this.getOauth2Identities());
-        SetterUtils.safeSet(toPatch::setCertificate, this.getCertificate());
+        // we should be able to unset the certificate
+        if (this.getCertificate() == null && forceNull) {
+            toPatch.setCertificate(null);
+        } else {
+            SetterUtils.safeSet(toPatch::setCertificate, this.getCertificate());
+        }
         SetterUtils.safeSet(toPatch::setEnhanceScopesWithUserPermissions, this.getEnhanceScopesWithUserPermissions(), boolean.class);
 
         return toPatch;

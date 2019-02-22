@@ -53,7 +53,7 @@ public class PatchClientTest {
         patcher.setRefreshTokenValiditySeconds(Optional.empty());
 
         //Apply patch
-        Client result = patcher.patch(toPatch);
+        Client result = patcher.patch(toPatch, false);
 
         //Checks
         assertNotNull(result);

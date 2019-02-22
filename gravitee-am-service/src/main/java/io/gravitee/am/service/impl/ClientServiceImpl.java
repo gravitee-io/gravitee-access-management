@@ -396,11 +396,11 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Single<Client> patch(String domain, String id, PatchClient patchClient) {
+    public Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull) {
         LOGGER.debug("Patch a client {} for domain {}", id, domain);
         return clientRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(id)))
-                .flatMapSingle(toPatch -> Single.just(patchClient.patch(toPatch)))
+                .flatMapSingle(toPatch -> Single.just(patchClient.patch(toPatch, forceNull)))
                 .flatMap(client -> this.validateClientMetadata(domain, client))
                 .flatMap(client -> this.updateClientAndReloadDomain(domain, client))
                 .onErrorResumeNext(this::handleError);

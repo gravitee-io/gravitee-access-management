@@ -120,7 +120,7 @@ public class ClientResource extends AbstractResource {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapSingle(irrelevant -> this.applyDefaultResponseType(patchClient))
-                .flatMap(patch -> clientService.patch(domain, client, patch))
+                .flatMap(patch -> clientService.patch(domain, client, patch, true))
                 .map(updatedClient -> Response.ok(updatedClient).build())
                 .subscribe(
                         result -> response.resume(result),
