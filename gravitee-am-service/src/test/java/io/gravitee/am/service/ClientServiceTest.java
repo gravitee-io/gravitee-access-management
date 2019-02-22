@@ -553,7 +553,7 @@ public class ClientServiceTest {
     @Test
     public void shouldPatch() {
         PatchClient patchClient = Mockito.mock(PatchClient.class);
-        when(patchClient.patch(any())).thenReturn(new Client());
+        when(patchClient.patch(any(), eq(false))).thenReturn(new Client());
         when(patchClient.getRedirectUris()).thenReturn(Optional.of(Arrays.asList("https://gravitee.io/callback")));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));

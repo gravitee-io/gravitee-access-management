@@ -41,7 +41,7 @@ export class ClientService {
   }
 
   update(domainId, id, client): Observable<Response> {
-    return this.http.patch(this.clientsURL + domainId + "/clients/" + id, {
+    return this.http.put(this.clientsURL + domainId + "/clients/" + id, {
       'clientName': client.clientName,
       'redirectUris': client.redirectUris,
       'authorizedGrantTypes': client.authorizedGrantTypes,

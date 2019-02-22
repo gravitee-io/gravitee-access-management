@@ -56,7 +56,11 @@ public interface ClientService {
 
     Single<Client> update(Client client);
 
-    Single<Client> patch(String domain, String id, PatchClient patchClient);
+    default Single<Client> patch(String domain, String id, PatchClient patchClient) {
+        return patch(domain, id, patchClient, false);
+    }
+
+    Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull);
 
     Single<Set<Client>> findByIdentityProvider(String identityProvider);
 
