@@ -1,5 +1,61 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/issues/milestone/110?closed=1[AM - 2.3.0 (2019-02-25)]
+
+=== Bug fixes
+
+*_Email_*
+
+- Do not try to load local image resources if src tag is an absolute http link https://github.com/gravitee-io/issues/issues/1970[#1970]
+
+*_General_*
+
+- NullPointerException with unknown client https://github.com/gravitee-io/issues/issues/1895[#1895]
+
+*_Idp_*
+
+- Role Mapper does not handle attribute value with '=' https://github.com/gravitee-io/issues/issues/1936[#1936]
+
+*_Management_*
+
+- Cannot reset client certificate https://github.com/gravitee-io/issues/issues/1960[#1960]
+- Dashboard tokens doesn't work https://github.com/gravitee-io/issues/issues/1959[#1959]
+
+*_Oidc_*
+
+- Missing SubjectTypesSupported in oidc/.well-known/openid-configuration response https://github.com/gravitee-io/issues/issues/1928[#1928]
+
+*_Scim_*
+
+- Org.bson.codecs.configuration.CodecConfigurationExceptionCan't find a codec for class io.gravitee.am.gateway.handler.scim.model.Attribute https://github.com/gravitee-io/issues/issues/1953[#1953]
+
+=== Features
+
+*_Certificate_*
+
+- PKCS12 support https://github.com/gravitee-io/issues/issues/1896[#1896]
+
+*_Idp_*
+
+- Ldap] enable compare password authentication https://github.com/gravitee-io/issues/issues/1912[#1912]
+
+*_Management_*
+
+- Custom HTML templates per client https://github.com/gravitee-io/issues/issues/1910[#1910]
+- Custom email templates https://github.com/gravitee-io/issues/issues/1909[#1909]
+- Password Complexity policy https://github.com/gravitee-io/issues/issues/1921[#1921]
+
+*_Oauth2_*
+
+- [extension-grant] Exchange APIM API-Key for token https://github.com/gravitee-io/issues/issues/1911[#1911]
+
+=== Improvements
+
+*_General_*
+
+- [jwt] Check that the user identified by sub is existing https://github.com/gravitee-io/issues/issues/1900[#1900]
+
+
 == https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/25?closed=1[2.2.0 (2019-01-24)]
 
 === Bug fixes
