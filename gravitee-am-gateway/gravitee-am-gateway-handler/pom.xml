@@ -33,7 +33,7 @@
     <name>Gravitee IO - Access Management - Gateway - Domain Handler</name>
 
     <properties>
-        <jjwt.version>0.10.5</jjwt.version>
+        <jjwt.version>0.10.6</jjwt.version>
     </properties>
 
     <dependencies>
