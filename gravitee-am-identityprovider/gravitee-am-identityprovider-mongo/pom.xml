@@ -56,27 +56,8 @@
         <!-- MongoDB driver -->
         <dependency>
             <groupId>org.mongodb</groupId>
-            <artifactId>mongodb-driver-core</artifactId>
-            <version>${org.mongodb.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongodb-driver-async</artifactId>
-            <version>${org.mongodb.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-reactivestreams</artifactId>
             <version>${org.mongodb.mongodb.driver.reactivestreams.version}</version>
-        </dependency>
-
-        <!-- Bson -->
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>bson</artifactId>
-            <version>${org.mongodb.version}</version>
         </dependency>
 
         <!-- Unit tests -->
