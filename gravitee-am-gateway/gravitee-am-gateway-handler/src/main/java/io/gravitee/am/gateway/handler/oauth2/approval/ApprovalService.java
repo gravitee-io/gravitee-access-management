@@ -29,5 +29,5 @@ public interface ApprovalService {
 
     Single<AuthorizationRequest> checkApproval(AuthorizationRequest authorizationRequest, Client client, String username);
 
-    Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, String username);
+    Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, Client client, String username);
 }

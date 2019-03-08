@@ -101,6 +101,7 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         scope.setDomain(scopeMongo.getDomain());
         scope.setSystem(scopeMongo.isSystem());
         scope.setClaims(scopeMongo.getClaims());
+        scope.setExpiresIn(scopeMongo.getExpiresIn());
         scope.setCreatedAt(scopeMongo.getCreatedAt());
         scope.setUpdatedAt(scopeMongo.getUpdatedAt());
 
@@ -120,6 +121,7 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         scopeMongo.setDomain(scope.getDomain());
         scopeMongo.setSystem(scope.isSystem());
         scopeMongo.setClaims(scope.getClaims());
+        scopeMongo.setExpiresIn(scope.getExpiresIn());
         scopeMongo.setCreatedAt(scope.getCreatedAt());
         scopeMongo.setUpdatedAt(scope.getUpdatedAt());
 

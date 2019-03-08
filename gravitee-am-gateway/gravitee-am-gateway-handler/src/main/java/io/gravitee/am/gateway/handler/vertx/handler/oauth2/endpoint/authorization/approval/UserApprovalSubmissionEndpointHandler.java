@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization;
+package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.approval;
 
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
+import io.gravitee.am.model.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
@@ -45,31 +46,27 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationApprovalEndpointHandler implements Handler<RoutingContext> {
+public class UserApprovalSubmissionEndpointHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizationApprovalEndpointHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserApprovalSubmissionEndpointHandler.class);
+    private static final String CLIENT_CONTEXT_KEY = "client";
     private ApprovalService approvalService;
 
-    public AuthorizationApprovalEndpointHandler(ApprovalService approvalService) {
+    public UserApprovalSubmissionEndpointHandler(ApprovalService approvalService) {
         this.approvalService = approvalService;
     }
 
     @Override
     public void handle(RoutingContext context) {
-        // The authorization server authenticates the resource owner and obtains
-        // an authorization decision (by asking the resource owner or by establishing approval via other means).
-        User authenticatedUser = context.user();
-        if (authenticatedUser == null || ! (authenticatedUser.getDelegate() instanceof io.gravitee.am.gateway.handler.vertx.auth.user.User)) {
-            throw new AccessDeniedException();
-        }
+        // retrieve client
+        Client client = context.get(CLIENT_CONTEXT_KEY);
 
+        // retrieve end user
+        User authenticatedUser = context.user();
         io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.vertx.auth.user.User) authenticatedUser.getDelegate()).getUser();
 
+        // retrieve authorization request
         AuthorizationRequest authorizationRequest = context.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
-        if (authorizationRequest == null) {
-            context.response().setStatusCode(400).end("An authorization request is required to handle user approval");
-            return;
-        }
 
         HttpServerRequest req = context.request();
         if (!req.isExpectMultipart()) {
@@ -87,7 +84,7 @@ public class AuthorizationApprovalEndpointHandler implements Handler<RoutingCont
         authorizationRequest.setApprovalParameters(approvalParameters);
 
         // handle approval response
-        approvalService.saveApproval(authorizationRequest, endUser.getUsername())
+        approvalService.saveApproval(authorizationRequest, client, endUser.getUsername())
                 .subscribe(authorizationRequest1 -> {
                     // user denied access
                     if (!authorizationRequest.isApproved()) {

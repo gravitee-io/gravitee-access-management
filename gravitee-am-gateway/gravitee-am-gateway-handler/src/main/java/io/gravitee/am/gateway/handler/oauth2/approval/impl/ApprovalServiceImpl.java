@@ -18,9 +18,11 @@ package io.gravitee.am.gateway.handler.oauth2.approval.impl;
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.reactivex.Observable;
@@ -43,6 +45,9 @@ public class ApprovalServiceImpl implements ApprovalService {
     @Autowired
     private Domain domain;
 
+    @Autowired
+    private ScopeManager scopeManager;
+
     @Value("${oauth2.approval.expiry:-1}")
     private int approvalExpirySeconds;
 
@@ -60,13 +65,11 @@ public class ApprovalServiceImpl implements ApprovalService {
     }
 
     @Override
-    public Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, String username) {
-        // Get the approved scopes
-        Set<String> requestedScopes = authorizationRequest.getScopes();
+    public Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, Client client, String username) {
+        // Get the unapproved requested scopes
+        Set<String> requestedScopes = authorizationRequest.getDeniedScopes();
         Set<String> approvedScopes = new HashSet<>();
         Set<ScopeApproval> approvals = new HashSet<>();
-
-        Date expiry = computeExpiry();
 
         // Store the scopes that have been approved / denied
         Map<String, String> approvalParameters = authorizationRequest.getApprovalParameters();
@@ -74,6 +77,7 @@ public class ApprovalServiceImpl implements ApprovalService {
             String approvalParameter = requestedScope;
             String value = approvalParameters.get(OAuth2Constants.SCOPE_PREFIX + approvalParameter);
             value = value == null ? "" : value.toLowerCase();
+            Date expiry = computeExpiry(client, requestedScope);
             if ("true".equals(value) || value.startsWith("approve")) {
                 approvedScopes.add(requestedScope);
                 approvals.add(new ScopeApproval(username, authorizationRequest.getClientId(),
@@ -128,6 +132,9 @@ public class ApprovalServiceImpl implements ApprovalService {
                         authorizationRequest.setApproved(true);
                         return Single.just(authorizationRequest);
                     }
+
+                    // set denied scopes for the user consent page
+                    authorizationRequest.setDeniedScopes(requestedScopes.stream().filter(requestedScope -> !approvedScopes.contains(requestedScope)).collect(Collectors.toSet()));
                     return Single.error(new AccessDeniedException("User denied access"));
                 });
     }
@@ -154,8 +161,23 @@ public class ApprovalServiceImpl implements ApprovalService {
         return false;
     }
 
-    private Date computeExpiry() {
+    private Date computeExpiry(Client client, String scope) {
         Calendar expiresAt = Calendar.getInstance();
+
+        // if client has approval settings, apply them
+        if (client.getScopeApprovals() != null && client.getScopeApprovals().containsKey(scope)) {
+            expiresAt.add(Calendar.SECOND, client.getScopeApprovals().get(scope));
+            return expiresAt.getTime();
+        }
+
+        // if domain has approval settings, apply them
+        Scope domainScope = scopeManager.findByKey(scope);
+        if (domainScope != null && domainScope.getExpiresIn() != null) {
+            expiresAt.add(Calendar.SECOND, domainScope.getExpiresIn());
+            return expiresAt.getTime();
+        }
+
+        // default approval time
         if (approvalExpirySeconds == -1) { // use default of 1 month
             expiresAt.add(Calendar.MONTH, 1);
         }

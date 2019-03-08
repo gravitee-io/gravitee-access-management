@@ -57,6 +57,11 @@ public class Scope {
 
     private List<String> claims;
 
+    /**
+     * Expiration time for user consent (in seconds)
+     */
+    private Integer expiresIn;
+
     public Scope() {
     }
 
@@ -134,6 +139,14 @@ public class Scope {
 
     public void setClaims(List<String> claims) {
         this.claims = claims;
+    }
+
+    public Integer getExpiresIn() {
+        return expiresIn;
+    }
+
+    public void setExpiresIn(Integer expiresIn) {
+        this.expiresIn = expiresIn;
     }
 
     @Override

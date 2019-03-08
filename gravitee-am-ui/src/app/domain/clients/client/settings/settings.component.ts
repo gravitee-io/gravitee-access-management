@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { ClientService } from "../../../../services/client.service";
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { ProviderService } from "../../../../services/provider.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { CertificateService } from "../../../../services/certificate.service";
 import { DialogService } from "../../../../services/dialog.service";
-import { MatInput } from "@angular/material/input";
 import * as _ from 'lodash';
+import * as moment from "moment";
 
 export interface Scope {
   id: string;
@@ -36,10 +36,11 @@ export interface Scope {
 })
 export class ClientSettingsComponent implements OnInit {
 
-  @ViewChild('chipInput') chipInput: MatInput;
+  @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
 
   private domainId: string;
   selectedScopes: Scope[];
+  selectedScopeApprovals: any;
   client: any;
   formChanged: boolean = false;
   identityProviders: any[] = [];
@@ -60,9 +61,13 @@ export class ClientSettingsComponent implements OnInit {
   ];
   customGrantTypes: any[];
 
-  constructor(private clientService: ClientService, private snackbarService: SnackbarService,
-              private providerService: ProviderService, private certificateService: CertificateService,
-              private route: ActivatedRoute, private router: Router, private dialogService: DialogService) {
+  constructor(private clientService: ClientService,
+              private snackbarService: SnackbarService,
+              private providerService: ProviderService,
+              private certificateService: CertificateService,
+              private route: ActivatedRoute,
+              private router: Router,
+              private dialogService: DialogService) {
   }
 
   ngOnInit() {
@@ -70,6 +75,7 @@ export class ClientSettingsComponent implements OnInit {
     this.client = this.route.snapshot.parent.data['client'];
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'];
     this.scopes = this.route.snapshot.data['scopes'];
+    this.selectedScopeApprovals = this.client.scopeApprovals || {};
     (!this.client.redirectUris) ? this.client.redirectUris = [] : this.client.redirectUris = this.client.redirectUris;
     (!this.client.scopes) ? this.client.scopes = [] : this.client.scopes = this.client.scopes;
     this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.identityProviders = data);
@@ -195,18 +201,24 @@ export class ClientSettingsComponent implements OnInit {
     return this.client.autoApproveScopes && this.client.autoApproveScopes.indexOf('true') > -1;
   }
 
-  addScope(event) {
-    this.selectedScopes = this.selectedScopes.concat(_.remove(this.scopes, { 'key': event.option.value }));
-    this.chipInput['nativeElement'].blur();
+  addScope(scope) {
+    this.selectedScopes = this.selectedScopes.concat(_.remove(this.scopes, { 'key': scope.key }));
+    this.selectedScopes = [...this.selectedScopes];
+
+    if (scope.expiresIn && scope.unitTime) {
+      this.selectedScopeApprovals[scope.key] = moment.duration(scope.expiresIn, scope.unitTime).asSeconds();
+    }
+
     this.formChanged = true;
   }
 
-  removeScope(scope) {
+  removeScope(scopeKey, event) {
+    event.preventDefault();
     this.scopes = this.scopes.concat(_.remove(this.selectedScopes, function(selectPermission) {
-      return selectPermission.key === scope.key;
+      return selectPermission.key === scopeKey;
     }));
-
-    this.chipInput['nativeElement'].blur();
+    this.selectedScopes = [...this.selectedScopes];
+    delete this.selectedScopeApprovals[scopeKey];
     this.formChanged = true;
   }
 
@@ -219,12 +231,31 @@ export class ClientSettingsComponent implements OnInit {
     return this.client.enhanceScopesWithUserPermissions;
   }
 
+  get isSelectedScopesEmpty() {
+    return !this.selectedScopes || this.selectedScopes.length == 0;
+  }
+
+  getScopeApproval(scopeKey) {
+    let scopeApproval = this.selectedScopeApprovals[scopeKey];
+    return this.getScopeExpiry(scopeApproval);
+  }
+
+  getScopeExpiry(expiresIn) {
+    return (expiresIn) ? moment.duration(expiresIn, 'seconds').humanize() : 'no time set';
+  }
+
+  scopeApprovalExists(scopeKey) {
+    return this.selectedScopeApprovals.hasOwnProperty(scopeKey);
+  }
+
   update() {
     this.client.authorizedGrantTypes = this.selectedGrantTypes.concat(this.selectedCustomGrantTypes);
     this.client.responseTypes = this.selectedResponseTypes;
     this.client.scopes = _.map(this.selectedScopes, scope => scope.key);
+    this.client.scopeApprovals = this.selectedScopeApprovals;
     this.clientService.update(this.domainId, this.client.id, this.client).map(res => res.json()).subscribe(data => {
       this.client = data;
+      this.formChanged = false;
       this.snackbarService.open("Client updated");
       this.initGrantTypes();
       this.initResponseTypes();

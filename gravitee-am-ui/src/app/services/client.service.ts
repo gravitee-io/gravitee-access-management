@@ -56,7 +56,8 @@ export class ClientService {
       'oauth2Identities': client.oauth2Identities,
       'certificate': client.certificate,
       'enhanceScopesWithUserPermissions' : client.enhanceScopesWithUserPermissions,
-      'responseTypes' : client.responseTypes
+      'responseTypes' : client.responseTypes,
+      'scopeApprovals' : client.scopeApprovals
     });
   }
 

@@ -33,7 +33,9 @@ import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.introspection.impl.IntrospectionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.revocation.impl.RevocationTokenServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
+import io.gravitee.am.gateway.handler.oauth2.scope.impl.ScopeManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.scope.impl.ScopeServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
@@ -105,5 +107,10 @@ public class OAuth2Configuration {
     @Bean
     public ClientAssertionService clientAssertionService() {
         return new ClientAssertionServiceImpl();
+    }
+
+    @Bean
+    public ScopeManager scopeManager() {
+        return new ScopeManagerImpl();
     }
 }

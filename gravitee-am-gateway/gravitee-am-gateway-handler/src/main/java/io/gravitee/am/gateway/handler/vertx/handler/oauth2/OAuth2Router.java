@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.flow.Flow;
+import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientAssertionAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
@@ -32,7 +33,13 @@ import io.gravitee.am.gateway.handler.vertx.auth.handler.impl.ClientChainAuthHan
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAssertionAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.ClientAuthenticationProvider;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.ErrorHandlerEndpoint;
-import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.*;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationRequestParseClientHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationRequestParseParametersHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.AuthorizationRequestParseRequiredParametersHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.approval.UserApprovalEndpointHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.approval.UserApprovalRequestParseHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.approval.UserApprovalSubmissionEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.introspection.CheckTokenEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.introspection.IntrospectionEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.revocation.RevocationTokenEndpointHandler;
@@ -106,6 +113,7 @@ public class OAuth2Router {
 
         final AuthHandler clientAuthHandler = ChainAuthHandler.newInstance(new ClientChainAuthHandler())
                 .append(ClientCredentialsAuthHandler.create(clientAuthProvider.getDelegate()))
+                .append(ClientAssertionAuthHandler.create(clientAssertionAuthProvider.getDelegate()))
                 .append(ClientBasicAuthHandler.create(clientAuthProvider.getDelegate()));
 
         final AuthHandler userAuthHandler = RedirectAuthHandler.create(
@@ -117,8 +125,9 @@ public class OAuth2Router {
         Handler<RoutingContext> authorizationRequestParseClientHandler = new AuthorizationRequestParseClientHandler(clientSyncService);
         Handler<RoutingContext> authorizationRequestParseParametersHandler = new AuthorizationRequestParseParametersHandler(domain);
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(flow, domain);
-        Handler<RoutingContext> authorizeApprovalEndpoint = new AuthorizationApprovalEndpointHandler(approvalService);
-        Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(clientSyncService, scopeService, thymeleafTemplateEngine);
+        Handler<RoutingContext> userApprovalRequestParseHandler = new UserApprovalRequestParseHandler(clientSyncService);
+        Handler<RoutingContext> userApprovalSubmissionEndpointHandler = new UserApprovalSubmissionEndpointHandler(approvalService);
+        Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(scopeService, thymeleafTemplateEngine);
         // Token endpoint
         Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler(tokenGranter);
         Handler<RoutingContext> tokenRequestParseHandler = new TokenRequestParseHandler();
@@ -140,7 +149,8 @@ public class OAuth2Router {
                 .handler(authorizeEndpoint);
         router.route(HttpMethod.POST, "/authorize")
                 .handler(userAuthHandler)
-                .handler(authorizeApprovalEndpoint);
+                .handler(userApprovalRequestParseHandler)
+                .handler(userApprovalSubmissionEndpointHandler);
         router.route(HttpMethod.POST, "/token")
                 .handler(tokenRequestParseHandler)
                 .handler(clientAuthHandler)
@@ -158,6 +168,7 @@ public class OAuth2Router {
                 .handler(clientAuthHandler)
                 .handler(revocationTokenEndpoint);
         router.route(HttpMethod.GET, "/confirm_access")
+                .handler(userApprovalRequestParseHandler)
                 .handler(userApprovalEndpoint);
         router.route(HttpMethod.GET, "/error")
                 .handler(new ErrorHandlerEndpoint(thymeleafTemplateEngine));

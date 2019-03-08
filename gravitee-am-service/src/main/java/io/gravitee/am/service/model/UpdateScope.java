@@ -27,12 +27,10 @@ public class UpdateScope {
     @NotNull
     private String name;
 
-    private Map<String, String> names;
-
     @NotNull
     private String description;
 
-    private Map<String, String> descriptions;
+    private Integer expiresIn;
 
     public String getName() {
         return name;
@@ -40,14 +38,6 @@ public class UpdateScope {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Map<String, String> getNames() {
-        return names;
-    }
-
-    public void setNames(Map<String, String> names) {
-        this.names = names;
     }
 
     public String getDescription() {
@@ -58,11 +48,11 @@ public class UpdateScope {
         this.description = description;
     }
 
-    public Map<String, String> getDescriptions() {
-        return descriptions;
+    public Integer getExpiresIn() {
+        return expiresIn;
     }
 
-    public void setDescriptions(Map<String, String> descriptions) {
-        this.descriptions = descriptions;
+    public void setExpiresIn(Integer expiresIn) {
+        this.expiresIn = expiresIn;
     }
 }

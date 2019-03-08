@@ -62,3 +62,31 @@ mat-icon.delete-chip {
   display: inline-flex;
   width: 100%;
 }
+
+.client-oauth-zone {
+  padding: 10px;
+  background-color: #f1f1f1;
+  margin-top: 20px;
+  h4 {
+    margin: 5px 0;
+  }
+}
+
+.client-scopes {
+  a {
+    cursor: pointer;
+    font-size: 75%;
+    color: #2196f3;
+  }
+
+  ngx-datatable {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .client-scope-actions {
+    button {
+      top: -7px;
+    }
+  }
+}

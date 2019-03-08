@@ -42,10 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -362,6 +359,7 @@ public class ClientServiceImpl implements ClientService {
                     client.setIdTokenCustomClaims(updateClient.getIdTokenCustomClaims());
                     client.setCertificate(updateClient.getCertificate());
                     client.setEnhanceScopesWithUserPermissions(updateClient.isEnhanceScopesWithUserPermissions());
+                    client.setScopeApprovals(updateClient.getScopeApprovals());
                     return client;
                 })
                 .map(ResponseTypeUtils::applyDefaultResponseType)
@@ -468,15 +466,28 @@ public class ClientServiceImpl implements ClientService {
                         }
                     }
 
-                    //Check scopes.
-                    return scopeService.validateScope(domainId, client.getScopes());
+                    // check scopes and scope approvals
+                    return scopeService.validateScope(domainId, client.getScopes())
+                            .map(isValid -> {
+                                // scopes are valid, let's check scope approvals
+                                if (isValid && client.getScopeApprovals() != null) {
+                                    Map<String, Integer> scopeApprovals = client.getScopeApprovals()
+                                            .entrySet()
+                                            .stream()
+                                            .filter(entry -> client.getScopes() != null && client.getScopes().contains(entry.getKey()))
+                                            .collect(Collectors.toMap(
+                                                    entry -> entry.getKey(),
+                                                    entry -> entry.getValue()));
+                                    client.setScopeApprovals(scopeApprovals);
+                                }
+                                return isValid;
+                            });
                 })
                 .flatMap(isValid -> {
                     if (!isValid) {
                         //last boolean come from scopes validation...
                         return Single.error(new InvalidClientMetadataException("non valid scopes"));
                     }
-
                     //ensure correspondance between response & grant types.
                     GrantTypeUtils.completeGrantTypeCorrespondance(client);
 
