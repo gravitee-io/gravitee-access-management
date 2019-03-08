@@ -161,7 +161,7 @@ public class Client {
 
     private boolean enhanceScopesWithUserPermissions;
 
-    private boolean useDefaultIdentityProvider;
+    private Map<String, Integer> scopeApprovals;
 
     public String getId() {
         return id;
@@ -598,12 +598,12 @@ public class Client {
         this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
     }
 
-    public boolean isUseDefaultIdentityProvider() {
-        return useDefaultIdentityProvider;
+    public Map<String, Integer> getScopeApprovals() {
+        return scopeApprovals;
     }
 
-    public void setUseDefaultIdentityProvider(boolean useDefaultIdentityProvider) {
-        this.useDefaultIdentityProvider = useDefaultIdentityProvider;
+    public void setScopeApprovals(Map<String, Integer> scopeApprovals) {
+        this.scopeApprovals = scopeApprovals;
     }
 
     @Override

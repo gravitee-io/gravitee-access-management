@@ -32,6 +32,8 @@ public class NewScope {
     @NotNull
     private String description;
 
+    private Integer expiresIn;
+
     public String getKey() {
         return key;
     }
@@ -54,5 +56,13 @@ public class NewScope {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Integer getExpiresIn() {
+        return expiresIn;
+    }
+
+    public void setExpiresIn(Integer expiresIn) {
+        this.expiresIn = expiresIn;
     }
 }

@@ -18,7 +18,9 @@ package io.gravitee.am.gateway.handler.oauth2.request;
 import io.gravitee.am.gateway.handler.oauth2.response.AuthorizationResponse;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -67,6 +69,8 @@ public class AuthorizationRequest extends BaseRequest implements Serializable {
 
     private Map<String, String> approvalParameters;
 
+    private Set<String> deniedScopes;
+
     public String getResponseType() {
         return responseType;
     }
@@ -113,6 +117,14 @@ public class AuthorizationRequest extends BaseRequest implements Serializable {
 
     public void setApprovalParameters(Map<String, String> approvalParameters) {
         this.approvalParameters = approvalParameters;
+    }
+
+    public Set<String> getDeniedScopes() {
+        return deniedScopes;
+    }
+
+    public void setDeniedScopes(Set<String> deniedScopes) {
+        this.deniedScopes = deniedScopes;
     }
 
     public OAuth2Request createOAuth2Request() {

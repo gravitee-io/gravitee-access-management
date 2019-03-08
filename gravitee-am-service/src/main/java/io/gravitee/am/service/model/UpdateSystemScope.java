@@ -32,6 +32,8 @@ public class UpdateSystemScope {
 
     private List<String> claims;
 
+    private Integer expiresIn;
+
     public String getName() {
         return name;
     }
@@ -54,5 +56,13 @@ public class UpdateSystemScope {
 
     public void setClaims(List<String> claims) {
         this.claims = claims;
+    }
+
+    public Integer getExpiresIn() {
+        return expiresIn;
+    }
+
+    public void setExpiresIn(Integer expiresIn) {
+        this.expiresIn = expiresIn;
     }
 }

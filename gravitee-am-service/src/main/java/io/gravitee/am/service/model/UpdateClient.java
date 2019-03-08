@@ -53,6 +53,8 @@ public class UpdateClient {
 
     private boolean enhanceScopesWithUserPermissions;
 
+    private Map<String, Integer> scopeApprovals;
+
     public List<String> getRedirectUris() {
         return redirectUris;
     }
@@ -163,5 +165,13 @@ public class UpdateClient {
 
     public void setEnhanceScopesWithUserPermissions(boolean enhanceScopesWithUserPermissions) {
         this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
+    }
+
+    public Map<String, Integer> getScopeApprovals() {
+        return scopeApprovals;
+    }
+
+    public void setScopeApprovals(Map<String, Integer> scopeApprovals) {
+        this.scopeApprovals = scopeApprovals;
     }
 }

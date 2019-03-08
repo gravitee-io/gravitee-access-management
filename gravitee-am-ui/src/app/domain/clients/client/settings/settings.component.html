@@ -42,9 +42,9 @@
       <input matInput type="text" placeholder="Client name" name="client_name" [(ngModel)]="client.clientName">
       <mat-hint>The client human readable name.</mat-hint>
     </mat-form-field>
-    <div fxLayout="row">
+    <div fxLayout="row" class="client-oauth-zone">
       <section class="type-section">
-        <h4 style="margin-bottom: 5px;">Grant types</h4>
+        <h4>Grant types</h4>
         <mat-hint style="font-size: 75%; margin-bottom: 20px;">OAuth 2.0 grant types used by the client to obtain an access token.<br> Each grant type is specific to a type of application.</mat-hint>
         <mat-checkbox class="type-selection" *ngFor="let grantType of grantTypes"
                       name="grantTypes"
@@ -53,9 +53,16 @@
                       (change)="selectedGrantType($event)">
               {{grantType.name}}
         </mat-checkbox>
+        <mat-checkbox *ngFor="let extensionGrant of customGrantTypes"
+                      name="customGrantTypes"
+                      value="{{extensionGrant.value}}"
+                      [checked]="extensionGrant.checked"
+                      (change)="selectedCustomGrantType($event)">
+          <span style="text-transform: uppercase;">{{extensionGrant.name}}</span>
+        </mat-checkbox>
       </section>
       <section class="type-section">
-        <h4 style="margin-bottom: 5px;">Response types</h4>
+        <h4>Response types</h4>
         <mat-hint style="font-size: 75%; margin-bottom: 20px;">OAuth 2.0 response types used by the client to obtain an access token.<br> Each response type must correspond to a selected grant type</mat-hint>
         <mat-checkbox class="type-selection" *ngFor="let responseType of responseTypes"
                       name="responseTypes"
@@ -66,100 +73,113 @@
         </mat-checkbox>
       </section>
     </div>
-    <div>
-      <h5>Extension grants</h5>
+
+    <div class="client-oauth-zone" fxLayout="column">
+      <h4>Redirect URIs</h4>
+      <mat-hint style="font-size: 75%;">
+        Set of allowed URLs where the user will be redirected after successfully login to your client.
+        It prevents some vulnerabilities like being redirected to unsafe websites.
+      </mat-hint>
+      <mat-chip-list style="margin-top: 10px;" class="mat-chip-list-stacked">
+        <mat-chip *ngFor="let redirectURI of client.redirectUris" color="accent" selected="true" fxLayout="row">
+          <span fxFlex style="margin-top: 3px;">{{redirectURI}}</span>
+          <mat-icon class="delete-chip" (click)="removeRedirectURI(redirectURI, $event)">clear</mat-icon>
+        </mat-chip>
+      </mat-chip-list>
+      <mat-form-field fxFlex>
+        <input matInput #inputRedirectURI (keyup.enter)="addRedirectURI($event, inputRedirectURI)" placeholder="New redirect URI..."/>
+        <mat-hint>Once written, press enter to add the redirect URI.</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <div class="client-oauth-zone client-scopes" fxLayout="column">
+      <h4>Scopes</h4>
       <div fxLayout="column">
-        <mat-checkbox *ngFor="let extensionGrant of customGrantTypes"
-                     name="customGrantTypes"
-                     value="{{extensionGrant.value}}"
-                     [checked]="extensionGrant.checked"
-                     (change)="selectedCustomGrantType($event)">
-          <span style="text-transform: uppercase;">{{extensionGrant.name}}</span>
-        </mat-checkbox>
+        <mat-hint style="font-size: 75%;">Let you limit client's access to protected resources/APIs.</mat-hint>
+        <client-scope [scopes]="scopes" (addScopeChange)="addScope($event)"></client-scope>
+        <ngx-datatable style="margin-top: 20px;" *ngIf="!isSelectedScopesEmpty"
+                       [columnMode]="'flex'"
+                       class="material"
+                       [headerHeight]="40"
+                       [footerHeight]="40"
+                       [rowHeight]="55"
+                       [rows]='selectedScopes'>
+          <ngx-datatable-column name="Scope" [flexGrow]="1">
+            <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+              <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
+              <span>{{ row.key }}</span> | <small>{{row.name}}</small>
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="User consent expiry period" [flexGrow]="1">
+            <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+              <div>
+                <span *ngIf="!(scopeApprovalExists(row.key))" style="color: grey; font-size: 85%; font-style: italic;">No time set</span>
+                <span *ngIf="(scopeApprovalExists(row.key))">{{ getScopeApproval(row.key) }}</span>
+              </div>
+              <div>
+                <small style="color: grey;">
+                  ( default value :
+                  <span *ngIf="!row.expiresIn" style="font-style: italic;">No time set</span>
+                  <span *ngIf="row.expiresIn">{{ getScopeExpiry(row.expiresIn) }}</span>
+                  )
+                </small>
+              </div>
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="Actions" [flexGrow]="1">
+            <ng-template let-row="row" ngx-datatable-cell-template>
+              <div fxLayout="row" class="client-scope-actions">
+                <button mat-icon-button (click)="removeScope(row.key, $event)"><mat-icon>clear</mat-icon></button>
+              </div>
+            </ng-template>
+          </ngx-datatable-column>
+        </ngx-datatable>
+      </div>
+      <div fxLayout="column">
+        <h5 style="margin: 10px 0 10px 0;">Enhance scopes</h5>
+        <mat-slide-toggle
+          (change)="enhanceScopesWithUserPermissions($event)"
+          [checked]="isScopesEnhanceWithUserPermissions()">
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%;">Enhance client scopes with user permissions. Useful for fine tuned resources access.</mat-hint>
       </div>
     </div>
 
-    <h4 style="margin-bottom: 0px;">Redirect URIs</h4>
-    <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" class="mat-chip-list-stacked">
-      <mat-chip *ngFor="let redirectURI of client.redirectUris" color="accent" selected="true" fxLayout="row">
-        <span fxFlex style="margin-top: 3px;">{{redirectURI}}</span>
-        <mat-icon class="delete-chip" (click)="removeRedirectURI(redirectURI, $event)">clear</mat-icon>
-      </mat-chip>
-    </mat-chip-list>
-    <mat-form-field fxFlex>
-      <input matInput #inputRedirectURI (keyup.enter)="addRedirectURI($event, inputRedirectURI)" placeholder="New redirect URI..."/>
-      <mat-hint>
-        Set of allowed URLs where the user will be redirected after successfully login to your client.
-        It prevents some vulnerabilities like being redirected to unsafe websites. Once written, press enter to add the redirect URI.
-      </mat-hint>
-    </mat-form-field>
-
-    <br>
-
-    <h4 style="margin-bottom: 5px;">Scopes</h4>
-      <mat-hint style="font-size: 75%; margin-bottom: 20px;">Let you limit client's access to protected resources/APIs.</mat-hint>
-      <mat-form-field>
-        <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" #chipListPermissions>
-          <mat-chip *ngFor="let scope of selectedScopes" color="accent"
-                    selected="true" (remove)="removeScope(scope)">
-            <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
-            &nbsp;<span>{{scope.key}}</span>&nbsp;|&nbsp;<small>{{scope.name}}</small>
-            <mat-icon matChipRemove>cancel</mat-icon>
-          </mat-chip>
-          <input matInput
-                 placeholder="Permissions"
-                 aria-label="Permissions"
-                 [matAutocomplete]="auto"
-                 [matChipInputFor]="chipListPermissions"
-                 #chipInput>
-        </mat-chip-list>
-
-      <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addScope($event)">
-        <mat-option *ngFor="let scope of scopes" [value]="scope.key">
-          <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
-          <span>{{ scope.key }}</span> | <small>{{scope.name}}</small>
-        </mat-option>
-      </mat-autocomplete>
-    </mat-form-field>
-
-    <h4>Auto approval</h4>
-    <mat-slide-toggle
-      (change)="enableAutoApprove($event)"
-      [checked]="isAutoApprove()">
-    </mat-slide-toggle>
-    <mat-hint style="font-size: 75%;">Allow to skip user approval. Generally used for internal trusted service applications.</mat-hint>
-
-    <h5 style="margin: 10px 0 10px 0;">Enhance scopes</h5>
-    <mat-slide-toggle
-      (change)="enhanceScopesWithUserPermissions($event)"
-      [checked]="isScopesEnhanceWithUserPermissions()">
-    </mat-slide-toggle>
-    <mat-hint style="font-size: 75%;">Enhance client scopes with user permissions. Useful for fine tuned resources access.</mat-hint>
-
-    <br>
-
-    <h4>Tokens</h4>
-    <div fxLayout="row">
-      <mat-form-field fxFlex style="margin-right: 20px;">
-        <mat-icon matPrefix>timer</mat-icon>
-        <input matInput type="number" placeholder="Access token validity" name="accessTokenValidity" [(ngModel)]="client.accessTokenValiditySeconds" />
-        <span matSuffix>seconds</span>
-      </mat-form-field>
-      <mat-form-field fxFlex>
-        <mat-icon matPrefix>timer</mat-icon>
-        <input matInput type="number" placeholder="Refresh token validity" name="refreshTokenValidity" [(ngModel)]="client.refreshTokenValiditySeconds" />
-        <span matSuffix>seconds</span>
-      </mat-form-field>
+    <div class="client-oauth-zone" fxLayout="column">
+      <h4>User consent</h4>
+      <mat-slide-toggle
+        (change)="enableAutoApprove($event)"
+        [checked]="isAutoApprove()">
+      </mat-slide-toggle>
+      <mat-hint style="font-size: 75%;">Allow to skip user approval. Generally used for internal trusted service applications.</mat-hint>
     </div>
 
-    <h4>Certificate</h4>
-    <mat-form-field>
-      <mat-select placeholder="Certificate" name="certificate" [(ngModel)]="client.certificate">
-        <mat-option><em>None</em></mat-option>
-        <mat-option *ngFor="let certificate of certificates" [value]="certificate.id">{{ certificate.name }}</mat-option>
-      </mat-select>
-      <mat-hint style="font-size: 75%;">Certificate use to sign tokens.</mat-hint>
-    </mat-form-field>
+    <div class="client-oauth-zone" fxLayout="column">
+      <h4>Tokens</h4>
+      <div fxLayout="row">
+        <mat-form-field fxFlex style="margin-right: 20px;">
+          <mat-icon matPrefix>timer</mat-icon>
+          <input matInput type="number" placeholder="Access token validity" name="accessTokenValidity" [(ngModel)]="client.accessTokenValiditySeconds" />
+          <span matSuffix>seconds</span>
+        </mat-form-field>
+        <mat-form-field fxFlex>
+          <mat-icon matPrefix>timer</mat-icon>
+          <input matInput type="number" placeholder="Refresh token validity" name="refreshTokenValidity" [(ngModel)]="client.refreshTokenValiditySeconds" />
+          <span matSuffix>seconds</span>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="client-oauth-zone" fxLayout="column">
+      <h4>Certificate</h4>
+      <mat-form-field>
+        <mat-select placeholder="Certificate" name="certificate" [(ngModel)]="client.certificate">
+          <mat-option><em>None</em></mat-option>
+          <mat-option *ngFor="let certificate of certificates" [value]="certificate.id">{{ certificate.name }}</mat-option>
+        </mat-select>
+        <mat-hint>Certificate use to sign tokens.</mat-hint>
+      </mat-form-field>
+    </div>
 
     <div fxLayout="row" class="client-settings-form-actions">
       <button mat-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>

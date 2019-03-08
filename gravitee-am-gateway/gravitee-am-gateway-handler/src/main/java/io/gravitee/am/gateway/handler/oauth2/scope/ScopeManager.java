@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.scope.impl;
+package io.gravitee.am.gateway.handler.oauth2.scope;
 
-import io.gravitee.am.gateway.handler.oauth2.scope.ScopeManager;
-import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
 import io.gravitee.am.model.oauth2.Scope;
-import io.reactivex.Single;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.gravitee.common.service.Service;
 
 import java.util.Set;
 
@@ -27,13 +24,10 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ScopeServiceImpl implements ScopeService {
+public interface ScopeManager extends Service {
 
-    @Autowired
-    private ScopeManager scopeManager;
+    Set<Scope> findAll();
 
-    @Override
-    public Single<Set<Scope>> getAll() {
-        return Single.just(scopeManager.findAll());
-    }
+    Scope findByKey(String scopeKey);
+
 }

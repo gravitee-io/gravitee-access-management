@@ -85,6 +85,7 @@ public class OpenIDScopeUpgrader implements Upgrader, Ordered {
                         scope.setName(existingScope.getName() != null ? existingScope.getName() : systemScope.getLabel());
                         scope.setDescription(existingScope.getDescription() != null ? existingScope.getDescription() : systemScope.getDescription());
                         scope.setClaims(systemScope.getClaims());
+                        scope.setExpiresIn(existingScope.getExpiresIn());
                         return scopeService.update(domain, optScope.get().getId(), scope);
                     }
                     return Single.just(optScope.get());

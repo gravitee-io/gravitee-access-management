@@ -33,9 +33,38 @@
         <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="scope.description" required>
         <mat-hint>A description for your scope.</mat-hint>
       </mat-form-field>
+
+      <div fxLayout="column" class="user-consent-zone">
+        <h4>User consent</h4>
+        <small>Expiry/lapsing period for consent after which the user would need to confirm that scope.</small>
+        <p fxLayout="row" style="align-items: center; font-size: 90%;">
+          <mat-icon mat-list-icon>alarm</mat-icon>
+          <span>Current period :&nbsp;</span>
+          <span *ngIf="!scope.expiresIn" style="color: grey; font-style: italic;">No time set</span>
+          <span *ngIf="scope.expiresIn">{{ getScopeExpiry() }}</span>
+        </p>
+        <div fxLayout="row">
+          <mat-form-field fxFlex style="margin-right: 20px;">
+            <input matInput type="number" placeholder="Duration time" name="expiresIn" min="0" [min]="0" [(ngModel)]="expiresIn">
+            <mat-hint>The duration for the user consent.</mat-hint>
+          </mat-form-field>
+          <mat-form-field fxFlex style="margin-right: 20px;">
+            <mat-select placeholder="Unit time" name="unitTime" [(ngModel)]="unitTime">
+              <mat-option value="seconds">SECONDS</mat-option>
+              <mat-option value="minutes">MINUTES</mat-option>
+              <mat-option value="hours">HOURS</mat-option>
+              <mat-option value="days">DAYS</mat-option>
+              <mat-option value="weeks">WEEKS</mat-option>
+              <mat-option value="months">MONTHS</mat-option>
+              <mat-option value="years">YEARS</mat-option>
+            </mat-select>
+            <mat-hint>Unit time for the user consent duration.</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
       <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;">
         <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
-        <button mat-raised-button [disabled]="!scopeForm.valid || scopeForm.pristine" type="submit">CREATE</button>
+        <button mat-raised-button [disabled]="(!scopeForm.valid || scopeForm.pristine) || formIsInvalid()" type="submit">CREATE</button>
       </div>
     </form>
     <div class="new-scope-description" fxFlex>

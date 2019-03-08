@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.email.EmailManager;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.granter.extensiongrant.ExtensionGrantManager;
+import io.gravitee.am.gateway.handler.oauth2.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.spring.HandlerConfiguration;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.model.Domain;
@@ -96,6 +97,7 @@ public class SecurityDomainRouterFactory {
         components.add(ExtensionGrantManager.class);
         components.add(FormManager.class);
         components.add(EmailManager.class);
+        components.add(ScopeManager.class);
 
         components.forEach(componentClass -> {
             LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);

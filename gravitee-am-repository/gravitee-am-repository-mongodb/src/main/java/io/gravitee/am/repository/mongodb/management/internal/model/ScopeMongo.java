@@ -40,11 +40,7 @@ public class ScopeMongo extends Auditable {
 
     private String name;
 
-    private Map<String, String> names;
-
     private String description;
-
-    private Map<String, String> descriptions;
 
     /**
      * Security domain associated to the scope
@@ -54,6 +50,8 @@ public class ScopeMongo extends Auditable {
     private boolean system;
 
     private List<String> claims;
+
+    private Integer expiresIn;
 
     public String getId() {
         return id;
@@ -111,6 +109,13 @@ public class ScopeMongo extends Auditable {
         this.claims = claims;
     }
 
+    public Integer getExpiresIn() {
+        return expiresIn;
+    }
+
+    public void setExpiresIn(Integer expiresIn) {
+        this.expiresIn = expiresIn;
+    }
 
     @Override
     public boolean equals(Object o) {

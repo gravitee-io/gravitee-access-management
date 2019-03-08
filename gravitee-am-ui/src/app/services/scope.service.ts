@@ -40,7 +40,7 @@ export class ScopeService {
     return this.http.put(this.scopes + domainId + "/scopes/" + id, {
       'name' : scope.name,
       'description' : scope.description,
-      'permissions' : scope.permissions
+      'expiresIn' : scope.expiresIn
     });
   }
 

@@ -144,6 +144,11 @@ public class ClientMongo extends Auditable {
 
     private boolean enhanceScopesWithUserPermissions;
 
+    /**
+     * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
+     */
+    private Document scopeApprovals;
+
     public String getId() {
         return id;
     }
@@ -558,6 +563,14 @@ public class ClientMongo extends Auditable {
 
     public void setEnhanceScopesWithUserPermissions(boolean enhanceScopesWithUserPermissions) {
         this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
+    }
+
+    public Document getScopeApprovals() {
+        return scopeApprovals;
+    }
+
+    public void setScopeApprovals(Document scopeApprovals) {
+        this.scopeApprovals = scopeApprovals;
     }
 
     @Override

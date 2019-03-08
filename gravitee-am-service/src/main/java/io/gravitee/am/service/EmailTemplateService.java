@@ -34,8 +34,6 @@ public interface EmailTemplateService {
 
     Single<List<Email>> findByDomain(String domain);
 
-    Single<List<Email>> findByDomainAndClient(String domain, String client);
-
     Maybe<Email> findByDomainAndTemplate(String domain, String template);
 
     Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template);

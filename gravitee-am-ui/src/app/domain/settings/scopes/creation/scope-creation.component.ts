@@ -18,6 +18,7 @@ import { ScopeService } from "../../../../services/scope.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../../services/snackbar.service";
 import {AppConfig} from "../../../../../config/app.config";
+import * as moment from "moment";
 
 @Component({
   selector: 'app-creation',
@@ -28,6 +29,8 @@ export class ScopeCreationComponent implements OnInit {
   private domainId: string;
   private adminContext: boolean;
   scope: any = {};
+  expiresIn: any;
+  unitTime: any;
 
   constructor(private scopeService: ScopeService, private router: Router, private route: ActivatedRoute,
               private snackbarService : SnackbarService) { }
@@ -43,6 +46,10 @@ export class ScopeCreationComponent implements OnInit {
   create() {
     // Force lowercase for scope key
     this.scope.key = this.scope.key.toLowerCase();
+    // set duration time for user consent
+    if (this.expiresIn && this.unitTime) {
+      this.scope.expiresIn = moment.duration(this.expiresIn, this.unitTime).asSeconds();
+    }
     this.scopeService.create(this.domainId, this.scope).map(res => res.json()).subscribe(data => {
       this.snackbarService.open("Scope " + data.name + " created");
       if (this.adminContext) {
@@ -53,4 +60,11 @@ export class ScopeCreationComponent implements OnInit {
     });
   }
 
+  formIsInvalid() {
+    return (this.expiresIn > 0 && !this.unitTime) || (this.expiresIn <= 0 && this.unitTime);
+  }
+
+  getScopeExpiry() {
+    return (this.scope.expiresIn) ? moment.duration(this.scope.expiresIn, 'seconds').humanize() : 'no time set';
+  }
 }

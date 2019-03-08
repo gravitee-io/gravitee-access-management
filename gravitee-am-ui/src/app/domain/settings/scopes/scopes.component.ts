@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ProviderService } from "../../../services/provider.service";
 import { SnackbarService } from "../../../services/snackbar.service";
 import { DialogService } from "../../../services/dialog.service";
 import { ActivatedRoute } from "@angular/router";
 import { ScopeService } from "../../../services/scope.service";
+import * as moment from 'moment';
 
 @Component({
   selector: 'app-scopes',
@@ -58,6 +58,10 @@ export class DomainSettingsScopesComponent implements OnInit {
           });
         }
       });
+  }
+
+  getScopeExpiry(expiresIn) {
+    return expiresIn ? moment.duration(expiresIn, 'seconds').humanize() : 'no time set';
   }
 
 }

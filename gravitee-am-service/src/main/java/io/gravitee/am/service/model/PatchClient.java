@@ -75,6 +75,7 @@ public class PatchClient {
     private Optional<Set<String>> oauth2Identities;
     private Optional<String> certificate;
     private Optional<Boolean> enhanceScopesWithUserPermissions;
+    private Optional<Map<String, Integer>> scopeApprovals;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -460,6 +461,14 @@ public class PatchClient {
         this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
     }
 
+    public Optional<Map<String, Integer>> getScopeApprovals() {
+        return scopeApprovals;
+    }
+
+    public void setScopeApprovals(Optional<Map<String, Integer>> scopeApprovals) {
+        this.scopeApprovals = scopeApprovals;
+    }
+
     public Client patch(Client toPatch, boolean forceNull) {
 
         SetterUtils.safeSet(toPatch::setRedirectUris, this.getRedirectUris());
@@ -515,6 +524,7 @@ public class PatchClient {
             SetterUtils.safeSet(toPatch::setCertificate, this.getCertificate());
         }
         SetterUtils.safeSet(toPatch::setEnhanceScopesWithUserPermissions, this.getEnhanceScopesWithUserPermissions(), boolean.class);
+        SetterUtils.safeSet(toPatch::setScopeApprovals, this.getScopeApprovals());
 
         return toPatch;
     }

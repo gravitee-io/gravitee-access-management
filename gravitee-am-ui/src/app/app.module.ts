@@ -173,6 +173,7 @@ import { EmailComponent, EmailInfoDialog } from "./domain/components/emails/emai
 import { EmailService } from "./services/email.service";
 import { EmailResolver } from "./resolvers/email.resolver";
 import { SelectClientsComponent } from "./domain/components/clients/select-clients.component";
+import { ClientScopeComponent } from "./domain/clients/client/scopes/client-scope.component";
 
 @NgModule({
   declarations: [
@@ -270,7 +271,8 @@ import { SelectClientsComponent } from "./domain/components/clients/select-clien
     EmailsComponent,
     EmailComponent,
     EmailInfoDialog,
-    SelectClientsComponent
+    SelectClientsComponent,
+    ClientScopeComponent
   ],
   imports: [
     BrowserModule,

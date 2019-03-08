@@ -37,9 +37,7 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -220,6 +218,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setEnhanceScopesWithUserPermissions(clientMongo.isEnhanceScopesWithUserPermissions());
         client.setCreatedAt(clientMongo.getCreatedAt());
         client.setUpdatedAt(clientMongo.getUpdatedAt());
+        client.setScopeApprovals((Map)clientMongo.getScopeApprovals());
         return client;
     }
 
@@ -283,6 +282,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
         clientMongo.setCreatedAt(client.getCreatedAt());
         clientMongo.setUpdatedAt(client.getUpdatedAt());
+        clientMongo.setScopeApprovals(client.getScopeApprovals() != null ? new Document((Map)client.getScopeApprovals()) : new Document());
         return clientMongo;
     }
 

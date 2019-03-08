@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.handler.oauth2.approval.impl.ApprovalServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
@@ -57,6 +58,9 @@ public class ApprovalServiceTest {
 
     @Mock
     private Domain domain;
+
+    @Mock
+    private ScopeManager scopeManager;
 
     @Test
     public void shouldApproveRequest_clientAutoApproval() {
@@ -175,7 +179,7 @@ public class ApprovalServiceTest {
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setClientId(clientId);
-        authorizationRequest.setScopes(new HashSet<>(Arrays.asList(readScope, writeScope)));
+        authorizationRequest.setDeniedScopes(new HashSet<>(Arrays.asList(readScope, writeScope)));
 
         Map<String, String> approvalParameters = new HashMap<>();
         approvalParameters.put(OAuth2Constants.SCOPE_PREFIX + readScope, "true");
@@ -184,7 +188,7 @@ public class ApprovalServiceTest {
 
         when(scopeApprovalRepository.upsert(any())).thenReturn(Single.just(new ScopeApproval()));
 
-        TestObserver<AuthorizationRequest> testObserver = approvalService.saveApproval(authorizationRequest, userId).test();
+        TestObserver<AuthorizationRequest> testObserver = approvalService.saveApproval(authorizationRequest, client, userId).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -206,7 +210,7 @@ public class ApprovalServiceTest {
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setClientId(clientId);
-        authorizationRequest.setScopes(new HashSet<>(Arrays.asList(readScope, writeScope)));
+        authorizationRequest.setDeniedScopes(new HashSet<>(Arrays.asList(readScope, writeScope)));
 
         Map<String, String> approvalParameters = new HashMap<>();
         approvalParameters.put(OAuth2Constants.SCOPE_PREFIX + readScope, "false");
@@ -215,7 +219,7 @@ public class ApprovalServiceTest {
 
         when(scopeApprovalRepository.upsert(any())).thenReturn(Single.just(new ScopeApproval()));
 
-        TestObserver<AuthorizationRequest> testObserver = approvalService.saveApproval(authorizationRequest, userId).test();
+        TestObserver<AuthorizationRequest> testObserver = approvalService.saveApproval(authorizationRequest, client, userId).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
