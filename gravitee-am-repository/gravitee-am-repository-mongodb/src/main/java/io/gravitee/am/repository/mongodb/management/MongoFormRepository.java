@@ -16,9 +16,9 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.repository.management.api.FormRepository;
-import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.FormMongo;
 import io.reactivex.Completable;
@@ -55,9 +55,6 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
         formsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_TEMPLATE, 1)).subscribe(new LoggableIndexSubscriber());
         formsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1)).subscribe(new LoggableIndexSubscriber());
     }
-
-    @Autowired
-    private IdGenerator idGenerator;
 
     @Override
     public Single<List<Form>> findByDomain(String domain) {
@@ -106,7 +103,7 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     @Override
     public Single<Form> create(Form item) {
         FormMongo page = convert(item);
-        page.setId(page.getId() == null ? (String) idGenerator.generate() : page.getId());
+        page.setId(page.getId() == null ? RandomString.generate() : page.getId());
         return Single.fromPublisher(formsCollection.insertOne(page)).flatMap(success -> findById(page.getId()).toSingle());
     }
 

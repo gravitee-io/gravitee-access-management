@@ -26,7 +26,6 @@ import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbiddenException;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.reactivex.core.http.HttpServerRequest;

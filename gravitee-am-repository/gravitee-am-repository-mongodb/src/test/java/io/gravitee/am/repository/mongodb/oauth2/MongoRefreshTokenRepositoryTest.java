@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
@@ -50,7 +51,7 @@ public class MongoRefreshTokenRepositoryTest extends AbstractOAuth2RepositoryTes
     @Test
     public void shouldFindToken() {
         RefreshToken token = new RefreshToken();
-        token.setId(UUID.randomUUID().toString());
+        token.setId(RandomString.generate());
         token.setToken("my-token");
 
         TestObserver<RefreshToken> observer = refreshTokenRepository
@@ -69,7 +70,7 @@ public class MongoRefreshTokenRepositoryTest extends AbstractOAuth2RepositoryTes
     @Test
     public void shouldDelete() {
         RefreshToken token = new RefreshToken();
-        token.setId(UUID.randomUUID().toString());
+        token.setId(RandomString.generate());
         token.setId("my-token");
         token.setToken("my-token");
 

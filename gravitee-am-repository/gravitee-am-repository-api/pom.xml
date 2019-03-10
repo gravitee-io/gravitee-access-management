@@ -36,9 +36,16 @@
     </properties>
 
     <dependencies>
+        <!-- Gravitee dependencies -->
         <dependency>
             <groupId>io.gravitee.am.model</groupId>
             <artifactId>gravitee-am-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.common</groupId>
+            <artifactId>gravitee-am-common</artifactId>
             <version>${project.version}</version>
         </dependency>
 

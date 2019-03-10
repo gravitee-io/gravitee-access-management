@@ -16,9 +16,9 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.RoleRepository;
-import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
 import io.reactivex.Completable;
@@ -26,7 +26,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -47,9 +46,6 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
     private MongoCollection<RoleMongo> rolesCollection;
-
-    @Autowired
-    private IdGenerator idGenerator;
 
     @PostConstruct
     public void init() {
@@ -75,7 +71,7 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     @Override
     public Single<Role> create(Role item) {
         RoleMongo role = convert(item);
-        role.setId(role.getId() == null ? (String) idGenerator.generate() : role.getId());
+        role.setId(role.getId() == null ? RandomString.generate() : role.getId());
         return Single.fromPublisher(rolesCollection.insertOne(role)).flatMap(success -> findById(role.getId()).toSingle());
     }
 

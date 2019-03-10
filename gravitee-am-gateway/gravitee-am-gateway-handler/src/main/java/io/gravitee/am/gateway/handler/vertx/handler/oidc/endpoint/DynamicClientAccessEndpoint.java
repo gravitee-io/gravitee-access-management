@@ -21,7 +21,6 @@ import io.gravitee.am.gateway.handler.oidc.clientregistration.DynamicClientRegis
 import io.gravitee.am.gateway.handler.oidc.response.DynamicClientRegistrationResponse;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;

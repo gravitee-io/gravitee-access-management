@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
@@ -30,7 +31,6 @@ import io.gravitee.am.service.exception.IdentityProviderWithClientsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -103,7 +103,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         LOGGER.debug("Create a new identity provider {} for domain {}", newIdentityProvider, domain);
 
         IdentityProvider identityProvider = new IdentityProvider();
-        identityProvider.setId(newIdentityProvider.getId() == null ? UUID.toString(UUID.random()) : newIdentityProvider.getId());
+        identityProvider.setId(newIdentityProvider.getId() == null ? RandomString.generate() : newIdentityProvider.getId());
         identityProvider.setDomain(domain);
         identityProvider.setName(newIdentityProvider.getName());
         identityProvider.setType(newIdentityProvider.getType());

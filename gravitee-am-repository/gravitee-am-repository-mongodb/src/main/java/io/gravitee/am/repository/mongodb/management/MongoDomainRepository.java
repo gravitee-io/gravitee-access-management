@@ -16,30 +16,29 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.model.login.LoginForm;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
-import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
-import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginFormMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SCIMSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -61,9 +60,6 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     private static final String FIELD_ID = "_id";
     private MongoCollection<DomainMongo> domainsCollection;
-
-    @Autowired
-    private IdGenerator idGenerator;
 
     @PostConstruct
     public void init() {
@@ -88,7 +84,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     @Override
     public Single<Domain> create(Domain item) {
         DomainMongo domain = convert(item);
-        domain.setId(domain.getId() == null ? (String) idGenerator.generate() : domain.getId());
+        domain.setId(domain.getId() == null ? RandomString.generate() : domain.getId());
         return Single.fromPublisher(domainsCollection.insertOne(domain)).flatMap(success -> findById(domain.getId()).toSingle());
     }
 

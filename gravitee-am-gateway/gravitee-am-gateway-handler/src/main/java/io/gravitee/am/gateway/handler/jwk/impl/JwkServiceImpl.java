@@ -22,7 +22,6 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.utils.UriBuilder;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;

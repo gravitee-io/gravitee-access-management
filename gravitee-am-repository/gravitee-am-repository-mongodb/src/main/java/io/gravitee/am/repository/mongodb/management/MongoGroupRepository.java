@@ -17,10 +17,10 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.GroupRepository;
-import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.GroupMongo;
 import io.reactivex.Completable;
@@ -28,7 +28,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -36,9 +35,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -52,9 +49,6 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     private static final String FIELD_NAME = "name";
     private static final String FIELD_MEMBERS = "members";
     private MongoCollection<GroupMongo> groupsCollection;
-
-    @Autowired
-    private IdGenerator idGenerator;
 
     @PostConstruct
     public void init() {
@@ -104,7 +98,7 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     @Override
     public Single<Group> create(Group item) {
         GroupMongo group = convert(item);
-        group.setId(group.getId() == null ? (String) idGenerator.generate() : group.getId());
+        group.setId(group.getId() == null ? RandomString.generate() : group.getId());
         return Single.fromPublisher(groupsCollection.insertOne(group)).flatMap(success -> findById(group.getId()).toSingle());
     }
 

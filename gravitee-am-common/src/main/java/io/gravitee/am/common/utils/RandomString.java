@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.common;
+package io.gravitee.am.common.utils;
+
+import io.gravitee.common.utils.UUID;
 
 /**
+ * Random version-4 UUID will have 6 predetermined variant and version bits, leaving 122 bits for the randomly generated part.
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdGenerator {
+public final class RandomString {
 
-    Object generate();
+    public static String generate() {
+        return UUID.toString(UUID.random());
+    }
 }

@@ -18,7 +18,8 @@ package io.gravitee.am.gateway.handler.oauth2.request;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

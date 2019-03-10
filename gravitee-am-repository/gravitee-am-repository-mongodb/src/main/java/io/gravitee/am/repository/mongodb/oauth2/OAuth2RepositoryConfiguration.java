@@ -19,9 +19,7 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.common.AbstractRepositoryConfiguration;
-import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.common.MongoFactory;
-import io.gravitee.am.repository.mongodb.common.UUIDIdGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -51,8 +49,4 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
         return mongo.getDatabase(getDatabaseName());
     }
 
-    @Bean
-    public IdGenerator idGenerator() {
-        return new UUIDIdGenerator();
-    }
 }

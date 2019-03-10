@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.jose.ECKey;
@@ -24,7 +25,6 @@ import io.gravitee.am.model.jose.KeyType;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ClientRepository;
-import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.ClientMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
@@ -34,7 +34,6 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -62,9 +61,6 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_GRANT_TYPES= "authorizedGrantTypes";
     private MongoCollection<ClientMongo> clientsCollection;
-
-    @Autowired
-    private IdGenerator idGenerator;
 
     @PostConstruct
     public void init() {
@@ -139,7 +135,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     @Override
     public Single<Client> create(Client item) {
         ClientMongo client = convert(item);
-        client.setId(client.getId() == null ? (String) idGenerator.generate() : client.getId());
+        client.setId(client.getId() == null ? RandomString.generate() : client.getId());
         return Single.fromPublisher(clientsCollection.insertOne(client)).flatMap(success -> findById(client.getId()).toSingle());
     }
 

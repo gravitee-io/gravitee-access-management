@@ -16,9 +16,9 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.api.ScopeRepository;
-import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.ScopeMongo;
 import io.reactivex.Completable;
@@ -26,7 +26,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -49,9 +48,6 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     private static final String FIELD_KEY = "key";
     private MongoCollection<ScopeMongo> scopesCollection;
 
-    @Autowired
-    private IdGenerator idGenerator;
-
     @PostConstruct
     public void init() {
         scopesCollection = mongoOperations.getCollection("scopes", ScopeMongo.class);
@@ -67,7 +63,7 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     @Override
     public Single<Scope> create(Scope item) {
         ScopeMongo scope = convert(item);
-        scope.setId(scope.getId() == null ? (String) idGenerator.generate() : scope.getId());
+        scope.setId(scope.getId() == null ? RandomString.generate() : scope.getId());
         return Single.fromPublisher(scopesCollection.insertOne(scope)).flatMap(success -> findById(scope.getId()).toSingle());
     }
 

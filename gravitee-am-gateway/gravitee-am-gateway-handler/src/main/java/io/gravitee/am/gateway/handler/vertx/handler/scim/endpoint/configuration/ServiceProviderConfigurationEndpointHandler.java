@@ -20,7 +20,6 @@ import io.gravitee.am.gateway.handler.scim.ServiceProviderConfigService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
-import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**

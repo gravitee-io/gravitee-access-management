@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
@@ -29,7 +30,6 @@ import io.gravitee.am.service.exception.EmailNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewEmail;
 import io.gravitee.am.service.model.UpdateEmail;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -158,7 +158,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
 
 
     private Single<Email> create0(String domain, String client, NewEmail newEmail) {
-        String emailId = UUID.toString(UUID.random());
+        String emailId = RandomString.generate();
 
         // check if email is unique
         return checkEmailUniqueness(domain, client, newEmail.getTemplate().template())

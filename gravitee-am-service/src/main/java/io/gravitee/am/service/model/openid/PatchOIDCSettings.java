@@ -18,6 +18,7 @@ package io.gravitee.am.service.model.openid;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+
 import java.util.Optional;
 
 /**

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx;
 
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.vertx.auth.provider.UserAuthenticationProvider;
@@ -27,7 +28,6 @@ import io.gravitee.am.gateway.handler.vertx.handler.scim.SCIMRouter;
 import io.gravitee.am.gateway.handler.vertx.handler.scim.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.session.RxSessionHandler;
 import io.gravitee.am.model.Domain;
-import io.gravitee.common.utils.UUID;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.AuthProvider;
@@ -203,7 +203,7 @@ public class VertxSecurityDomainHandler {
     }
 
     private void csrfHandler(Router router) {
-        CSRFHandler csrfHandler = CSRFHandler.create(UUID.random().toString());
+        CSRFHandler csrfHandler = CSRFHandler.create(SecureRandomString.generate());
         // override cookie path
         csrfHandler.setCookiePath("/" + domain.getPath());
         io.gravitee.am.gateway.handler.vertx.handler.CSRFHandler csrfHandler1 = io.gravitee.am.gateway.handler.vertx.handler.CSRFHandler.create();

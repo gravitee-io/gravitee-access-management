@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.service.exception.FormNotFoundException;
 import io.gravitee.am.service.model.UpdateForm;

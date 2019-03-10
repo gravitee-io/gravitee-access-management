@@ -30,7 +30,6 @@ package io.gravitee.am.service.authentication.crypto.password.bcrypt;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
-
 import java.security.SecureRandom;
 
 /**

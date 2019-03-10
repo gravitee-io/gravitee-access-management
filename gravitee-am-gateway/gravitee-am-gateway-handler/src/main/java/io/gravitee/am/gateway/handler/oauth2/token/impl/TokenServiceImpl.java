@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.oauth2.token.impl;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.exception.JwtException;
+import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.jwt.JwtService;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
@@ -34,7 +36,6 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.common.util.MultiValueMap;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -165,8 +166,8 @@ public class TokenServiceImpl implements TokenService {
      */
     private Single<io.gravitee.am.repository.oauth2.model.AccessToken> storeAccessToken(OAuth2Request oAuth2Request, Client client, User endUser, String refreshToken) {
         io.gravitee.am.repository.oauth2.model.AccessToken accessToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
-        accessToken.setId(UUID.random().toString());
-        accessToken.setToken(UUID.random().toString());
+        accessToken.setId(RandomString.generate());
+        accessToken.setToken(SecureRandomString.generate());
         accessToken.setDomain(client.getDomain());
         accessToken.setClient(client.getClientId());
         accessToken.setSubject(endUser != null ? endUser.getId() : null);
@@ -195,8 +196,8 @@ public class TokenServiceImpl implements TokenService {
      */
     private Single<io.gravitee.am.repository.oauth2.model.RefreshToken> storeRefreshToken(Client client, User endUser) {
         io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken = new io.gravitee.am.repository.oauth2.model.RefreshToken();
-        refreshToken.setId(UUID.random().toString());
-        refreshToken.setToken(UUID.random().toString());
+        refreshToken.setId(RandomString.generate());
+        refreshToken.setToken(SecureRandomString.generate());
         refreshToken.setDomain(client.getDomain());
         refreshToken.setClient(client.getClientId());
         refreshToken.setSubject(endUser != null ? endUser.getId() : null);

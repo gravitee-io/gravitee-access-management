@@ -24,7 +24,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.observers.TestObserver;
@@ -51,7 +52,7 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
     @Test
     public void shouldFindToken() {
         AccessToken token = new AccessToken();
-        token.setId(UUID.randomUUID().toString());
+        token.setId(RandomString.generate());
         token.setToken("my-token");
 
         TestObserver<AccessToken> observer = accessTokenRepository
@@ -70,7 +71,7 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
     @Test
     public void shouldFindByClientIdAndSubject() {
         AccessToken token = new AccessToken();
-        token.setId(UUID.randomUUID().toString());
+        token.setId(RandomString.generate());
         token.setToken("my-token");
         token.setClient("my-client-id");
         token.setSubject("my-subject");
@@ -91,7 +92,7 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
     @Test
     public void shouldFindByClientId() {
         AccessToken token = new AccessToken();
-        token.setId(UUID.randomUUID().toString());
+        token.setId(RandomString.generate());
         token.setToken("my-token");
         token.setClient("my-client-id-2");
 
@@ -109,7 +110,7 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
     @Test
     public void shouldCountByClientId() {
         AccessToken token = new AccessToken();
-        token.setId(UUID.randomUUID().toString());
+        token.setId(RandomString.generate());
         token.setToken("my-token");
         token.setClient("my-client-id-count");
 

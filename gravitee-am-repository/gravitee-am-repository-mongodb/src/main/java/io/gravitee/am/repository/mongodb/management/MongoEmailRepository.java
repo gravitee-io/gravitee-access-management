@@ -16,9 +16,9 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.repository.management.api.EmailRepository;
-import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.EmailMongo;
 import io.reactivex.Completable;
@@ -26,7 +26,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -47,9 +46,6 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
     private static final String FIELD_CLIENT = "client";
     private static final String FIELD_TEMPLATE = "template";
     private MongoCollection<EmailMongo> emailsCollection;
-
-    @Autowired
-    private IdGenerator idGenerator;
 
     @PostConstruct
     public void init() {
@@ -111,7 +107,7 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
     @Override
     public Single<Email> create(Email item) {
         EmailMongo email = convert(item);
-        email.setId(email.getId() == null ? (String) idGenerator.generate() : email.getId());
+        email.setId(email.getId() == null ? RandomString.generate() : email.getId());
         return Single.fromPublisher(emailsCollection.insertOne(email)).flatMap(success -> findById(email.getId()).toSingle());
     }
 

@@ -16,10 +16,11 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.GroupRepository;
+import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -27,7 +28,6 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -132,7 +132,7 @@ public class UserServiceImpl implements UserService {
                     if (!isEmpty) {
                         return Single.error(new UserAlreadyExistsException(newUser.getUsername()));
                     } else {
-                        String userId = UUID.toString(UUID.random());
+                        String userId = RandomString.generate();
 
                         User user = new User();
                         user.setId(userId);

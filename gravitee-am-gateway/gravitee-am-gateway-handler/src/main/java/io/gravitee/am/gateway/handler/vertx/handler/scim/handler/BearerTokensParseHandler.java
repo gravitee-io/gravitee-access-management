@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.vertx.handler.scim.handler;
 
 import io.gravitee.am.gateway.handler.jwt.JwtService;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.gateway.handler.oauth2.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;

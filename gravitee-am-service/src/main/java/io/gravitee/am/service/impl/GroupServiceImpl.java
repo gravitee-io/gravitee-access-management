@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -27,7 +28,6 @@ import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.am.service.model.UpdateGroup;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -125,7 +125,7 @@ public class GroupServiceImpl implements GroupService {
                     if (!isEmpty) {
                         throw new GroupAlreadyExistsException(newGroup.getName());
                     } else {
-                        String groupId = UUID.toString(UUID.random());
+                        String groupId = RandomString.generate();
                         Group group = new Group();
                         group.setId(groupId);
                         group.setDomain(domain);

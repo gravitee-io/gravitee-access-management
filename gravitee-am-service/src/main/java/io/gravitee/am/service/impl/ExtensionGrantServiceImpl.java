@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
@@ -27,7 +28,6 @@ import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -94,7 +94,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         if (!empty) {
                             throw new ExtensionGrantAlreadyExistsException(newExtensionGrant.getGrantType());
                         } else {
-                            String certificateId = UUID.toString(UUID.random());
+                            String certificateId = RandomString.generate();
                             ExtensionGrant extensionGrant = new ExtensionGrant();
                             extensionGrant.setId(certificateId);
                             extensionGrant.setDomain(domain);

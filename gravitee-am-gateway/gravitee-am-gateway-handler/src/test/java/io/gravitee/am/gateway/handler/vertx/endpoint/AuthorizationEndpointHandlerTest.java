@@ -54,7 +54,6 @@ import java.util.Date;
 import static io.gravitee.am.common.oauth2.ResponseType.CODE;
 import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
-
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;

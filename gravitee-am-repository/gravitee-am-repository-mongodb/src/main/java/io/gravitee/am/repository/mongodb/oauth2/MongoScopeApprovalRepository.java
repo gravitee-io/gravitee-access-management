@@ -17,8 +17,8 @@ package io.gravitee.am.repository.mongodb.oauth2;
 
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.oauth2.ScopeApproval;
-import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.ScopeApprovalMongo;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.reactivex.Completable;
@@ -29,7 +29,6 @@ import io.reactivex.subscribers.DefaultSubscriber;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -58,9 +57,6 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     private static final String FIELD_SCOPE = "scope";
     private MongoCollection<ScopeApprovalMongo> scopeApprovalsCollection;
 
-    @Autowired
-    private IdGenerator idGenerator;
-
     @PostConstruct
     public void init() {
         scopeApprovalsCollection = mongoOperations.getCollection("scope_approvals", ScopeApprovalMongo.class);
@@ -77,7 +73,7 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     @Override
     public Single<ScopeApproval> create(ScopeApproval scopeApproval) {
         ScopeApprovalMongo scopeApprovalMongo = convert(scopeApproval);
-        scopeApprovalMongo.setId(scopeApprovalMongo.getId() == null ? (String) idGenerator.generate() : scopeApprovalMongo.getId());
+        scopeApprovalMongo.setId(scopeApprovalMongo.getId() == null ? RandomString.generate() : scopeApprovalMongo.getId());
         return Single.fromPublisher(scopeApprovalsCollection.insertOne(scopeApprovalMongo)).flatMap(success -> _findById(scopeApprovalMongo.getId()));
     }
 

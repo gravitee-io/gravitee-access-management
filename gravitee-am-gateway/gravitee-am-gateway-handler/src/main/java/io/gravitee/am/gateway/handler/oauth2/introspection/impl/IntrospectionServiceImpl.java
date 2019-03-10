@@ -20,8 +20,8 @@ import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionResponse
 import io.gravitee.am.gateway.handler.oauth2.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.UserService;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -16,9 +16,9 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
-import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.ExtensionGrantMongo;
 import io.reactivex.Completable;
@@ -26,7 +26,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -47,9 +46,6 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_GRANT_TYPE = "grantType";
     private MongoCollection<ExtensionGrantMongo> extensionGrantsCollection;
-
-    @Autowired
-    private IdGenerator idGenerator;
 
     @PostConstruct
     public void init() {
@@ -76,7 +72,7 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
     @Override
     public Single<ExtensionGrant> create(ExtensionGrant item) {
         ExtensionGrantMongo extensionGrant = convert(item);
-        extensionGrant.setId(extensionGrant.getId() == null ? (String) idGenerator.generate() : extensionGrant.getId());
+        extensionGrant.setId(extensionGrant.getId() == null ? RandomString.generate() : extensionGrant.getId());
         return Single.fromPublisher(extensionGrantsCollection.insertOne(extensionGrant)).flatMap(success -> findById(extensionGrant.getId()).toSingle());
     }
 

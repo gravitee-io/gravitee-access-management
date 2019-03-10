@@ -19,7 +19,6 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
