@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.scim;
 
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.User;
-import io.gravitee.am.model.common.Page;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;

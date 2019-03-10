@@ -17,7 +17,7 @@ package io.gravitee.am.repository.mongodb.oauth2;
 
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import io.gravitee.am.repository.mongodb.common.IdGenerator;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.AuthorizationCodeMongo;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
@@ -28,7 +28,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -49,9 +48,6 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
     private static final String FIELD_RESET_TIME = "expire_at";
     private MongoCollection<AuthorizationCodeMongo> authorizationCodeCollection;
 
-    @Autowired
-    private IdGenerator idGenerator;
-
     @PostConstruct
     public void init() {
         authorizationCodeCollection = mongoOperations.getCollection("authorization_codes", AuthorizationCodeMongo.class);
@@ -69,7 +65,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
     @Override
     public Single<AuthorizationCode> create(AuthorizationCode authorizationCode) {
         if (authorizationCode.getId() == null) {
-            authorizationCode.setId((String) idGenerator.generate());
+            authorizationCode.setId(RandomString.generate());
         }
 
         return Single

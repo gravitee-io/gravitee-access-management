@@ -16,6 +16,8 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Action;
@@ -25,22 +27,11 @@ import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.ClientAlreadyExistsException;
-import io.gravitee.am.service.exception.ClientNotFoundException;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.gravitee.am.service.exception.InvalidRedirectUriException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.model.NewClient;
-import io.gravitee.am.service.model.PatchClient;
-import io.gravitee.am.service.model.TopClient;
-import io.gravitee.am.service.model.TotalClient;
-import io.gravitee.am.service.model.UpdateClient;
+import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.model.*;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
 import io.gravitee.am.service.utils.UriBuilder;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -302,13 +293,13 @@ public class ClientServiceImpl implements ClientService {
         }
 
         /* openid response metadata */
-        client.setId(UUID.toString(UUID.random()));
+        client.setId(RandomString.generate());
         //client_id & client_secret may be already informed if created through UI
         if(client.getClientId()==null) {
-            client.setClientId(UUID.toString(UUID.random()));
+            client.setClientId(SecureRandomString.generate());
         }
         if(client.getClientSecret()==null || client.getClientSecret().trim().isEmpty()) {
-            client.setClientSecret(UUID.toString(UUID.random()));
+            client.setClientSecret(SecureRandomString.generate());
         }
         if(client.getClientName()==null || client.getClientName().trim().isEmpty()) {
             client.setClientName("Unknown Client");

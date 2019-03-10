@@ -21,11 +21,7 @@ import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.jwk.JWKSetService;
-import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.DynamicClientAccessEndpoint;
-import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.DynamicClientRegistrationEndpoint;
-import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.ProviderConfigurationEndpoint;
-import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.ProviderJWKSetEndpoint;
-import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.UserInfoEndpoint;
+import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.*;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.handler.DynamicClientAccessHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.handler.DynamicClientRegistrationHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.handler.UserInfoRequestParseHandler;
@@ -46,8 +42,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
 import static io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants.CLIENT_ID;
+import static java.util.Arrays.asList;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

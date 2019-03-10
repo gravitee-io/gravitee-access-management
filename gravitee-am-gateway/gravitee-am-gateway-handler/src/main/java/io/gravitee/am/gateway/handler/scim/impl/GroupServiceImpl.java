@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.scim.impl;
 
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.scim.GroupService;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -28,7 +29,6 @@ import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -130,7 +130,7 @@ public class GroupServiceImpl implements GroupService {
                 .flatMap(group1 -> {
                     io.gravitee.am.model.Group groupModel = convert(group1);
                     // set technical ID
-                    groupModel.setId(UUID.toString(UUID.random()));
+                    groupModel.setId(RandomString.generate());
                     groupModel.setDomain(domain.getId());
                     groupModel.setCreatedAt(new Date());
                     groupModel.setUpdatedAt(groupModel.getCreatedAt());

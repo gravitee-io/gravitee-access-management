@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.service.RoleService;
@@ -24,7 +25,6 @@ import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -85,7 +85,7 @@ public class RoleServiceImpl implements RoleService {
     public Single<Role> create(String domain, NewRole newRole) {
         LOGGER.debug("Create a new role {} for domain {}", newRole, domain);
 
-        String roleId = UUID.toString(UUID.random());
+        String roleId = RandomString.generate();
 
         // check if role name is unique
         return checkRoleUniqueness(newRole.getName(), roleId, domain)

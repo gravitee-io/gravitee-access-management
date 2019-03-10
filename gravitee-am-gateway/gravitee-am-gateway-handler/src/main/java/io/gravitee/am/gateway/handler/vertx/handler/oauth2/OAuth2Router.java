@@ -25,7 +25,6 @@ import io.gravitee.am.gateway.handler.oauth2.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.flow.Flow;
-import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientAssertionAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.ClientCredentialsAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;

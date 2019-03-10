@@ -17,15 +17,12 @@ package io.gravitee.am.service.utils;
 
 import io.gravitee.am.model.Client;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oauth2.GrantType.*;
-import static io.gravitee.am.common.oauth2.ResponseType.*;
+import static io.gravitee.am.common.oauth2.ResponseType.CODE;
+import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
 
 /**

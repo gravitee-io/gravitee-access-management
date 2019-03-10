@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.handlers.admin.handler;
 
-import io.gravitee.common.http.HttpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;

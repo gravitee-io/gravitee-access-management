@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
@@ -35,7 +36,6 @@ import io.gravitee.am.service.exception.CertificateWithClientsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -110,7 +110,7 @@ public class CertificateServiceImpl implements CertificateService {
         LOGGER.debug("Create a new certificate {} for domain {}", newCertificate, domain);
 
         Single<Certificate> certificateSingle = Single.create(emitter -> {
-            String certificateId = UUID.toString(UUID.random());
+            String certificateId = RandomString.generate();
             Certificate certificate = new Certificate();
             certificate.setId(certificateId);
             certificate.setDomain(domain);

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
@@ -29,7 +30,6 @@ import io.gravitee.am.service.exception.FormNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewForm;
 import io.gravitee.am.service.model.UpdateForm;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -125,7 +125,7 @@ public class FormServiceImpl implements FormService {
     }
 
     private Single<Form> create0(String domain, String client, NewForm newForm) {
-        String formId = UUID.toString(UUID.random());
+        String formId = RandomString.generate();
 
         // check if form is unique
         return checkFormUniqueness(domain, client, newForm.getTemplate().template())

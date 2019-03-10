@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.scim.impl;
 
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.scim.GroupService;
 import io.gravitee.am.gateway.handler.scim.UserService;
@@ -26,7 +27,6 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.*;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -114,7 +114,7 @@ public class UserServiceImpl implements UserService {
                 .flatMap(irrelevant -> {
                     io.gravitee.am.model.User userModel = convert(user);
                     // set technical ID
-                    userModel.setId(UUID.toString(UUID.random()));
+                    userModel.setId(RandomString.generate());
                     userModel.setDomain(domain.getId());
                     userModel.setSource(source);
                     userModel.setInternal(true);

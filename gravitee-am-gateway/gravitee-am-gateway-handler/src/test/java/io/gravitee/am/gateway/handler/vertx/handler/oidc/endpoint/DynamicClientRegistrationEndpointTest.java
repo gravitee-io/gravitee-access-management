@@ -20,12 +20,11 @@ import io.gravitee.am.gateway.handler.oidc.clientregistration.DynamicClientRegis
 import io.gravitee.am.gateway.handler.oidc.request.DynamicClientRegistrationRequest;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.Single;
 import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Before;
 import org.junit.Test;

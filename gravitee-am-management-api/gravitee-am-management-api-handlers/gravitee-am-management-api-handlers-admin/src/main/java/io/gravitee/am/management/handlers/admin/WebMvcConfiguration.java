@@ -19,7 +19,6 @@ import io.gravitee.am.management.handlers.admin.view.ThymeleafConfiguration;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginForm;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;

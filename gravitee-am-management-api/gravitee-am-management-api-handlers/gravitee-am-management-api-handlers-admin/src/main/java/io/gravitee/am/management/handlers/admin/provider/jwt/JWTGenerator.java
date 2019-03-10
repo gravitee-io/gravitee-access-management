@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.admin.provider.jwt;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.common.http.HttpHeaders;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.InitializingBean;

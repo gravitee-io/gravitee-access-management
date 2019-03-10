@@ -18,6 +18,7 @@ package io.gravitee.am.identityprovider.mongo.user;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
@@ -83,7 +84,7 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
                     } else {
                         Document document = new Document();
                         // set technical id
-                        document.put(FIELD_ID, user.getId() != null ? user.getId() : UUID.toString(UUID.random()));
+                        document.put(FIELD_ID, user.getId() != null ? user.getId() : RandomString.generate());
                         // set username
                         document.put(configuration.getUsernameField(), user.getUsername());
                         // set password

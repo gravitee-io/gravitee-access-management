@@ -17,13 +17,13 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
 import io.gravitee.am.repository.management.api.UserRepository;
-import io.gravitee.am.repository.mongodb.common.IdGenerator;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AddressMongo;
@@ -35,7 +35,6 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -59,9 +58,6 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     private static final String FIELD_EMAIL = "email";
 
     private MongoCollection<UserMongo> usersCollection;
-
-    @Autowired
-    private IdGenerator idGenerator;
 
     @PostConstruct
     public void init() {
@@ -136,7 +132,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     @Override
     public Single<User> create(User item) {
         UserMongo user = convert(item);
-        user.setId(user.getId() == null ? (String) idGenerator.generate() : user.getId());
+        user.setId(user.getId() == null ? RandomString.generate() : user.getId());
         return Single.fromPublisher(usersCollection.insertOne(user)).flatMap(success -> findById(user.getId()).toSingle());
     }
 

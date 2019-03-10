@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oidc.clientregistration.impl;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.Scope;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.jwk.JwkService;
 import io.gravitee.am.gateway.handler.jwt.JwtService;
 import io.gravitee.am.gateway.handler.oidc.clientregistration.DynamicClientRegistrationService;
@@ -31,7 +32,6 @@ import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
 import io.gravitee.am.service.utils.UriBuilder;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -45,13 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -84,7 +78,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     @Override
     public Client create(String domain, DynamicClientRegistrationRequest request) {
         Client client = new Client();
-        client.setClientId(UUID.toString(UUID.random()));
+        client.setClientId(SecureRandomString.generate());
         client.setDomain(domain);
         return request.patch(client);
     }
@@ -136,7 +130,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         jwt.setIat(new Date().getTime() / 1000l);
         jwt.setExp(Date.from(new Date().toInstant().plusSeconds(3600*24*365*2)).getTime() / 1000l);
         jwt.setScope(Scope.DCR.getKey());
-        jwt.setJti(UUID.toString(UUID.random()));
+        jwt.setJti(SecureRandomString.generate());
 
         return jwtService.encode(jwt, client)
                 .map(token -> {
