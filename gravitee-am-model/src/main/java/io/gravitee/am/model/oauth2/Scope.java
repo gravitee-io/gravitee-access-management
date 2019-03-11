@@ -17,6 +17,7 @@ package io.gravitee.am.model.oauth2;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -153,14 +154,12 @@ public class Scope {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         Scope scope = (Scope) o;
-
-        return id.equals(scope.id);
+        return Objects.equals(key, scope.key);
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode();
+        return Objects.hash(key);
     }
 }
