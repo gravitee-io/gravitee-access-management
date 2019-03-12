@@ -279,6 +279,11 @@ public class User extends Resource {
      */
     private List<Certificate> x509Certificates;
 
+    /**
+     * Extended custom AM source field. Represents in which idp the user will be stored.
+     */
+    private String source;
+
     public String getUserName() {
         return userName;
     }
@@ -445,5 +450,13 @@ public class User extends Resource {
 
     public void setX509Certificates(List<Certificate> x509Certificates) {
         this.x509Certificates = x509Certificates;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 }

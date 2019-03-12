@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.handler.scim.handler.ErrorHandler;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
@@ -113,6 +114,31 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
                 },
                 201,
                 "Created", null);
+    }
+
+    @Test
+    public void shouldNotInvokeSCIMCreateUserEndpoint_invalid_identity_provider() throws Exception {
+        User user = getUser();
+        user.setSource("unknown-idp");
+
+        router.route("/Users").handler(createUserEndpointHandler);
+        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(userService.create(any(), any())).thenReturn(Single.error(new UserProviderNotFoundException(user.getSource())));
+
+        testRequest(
+                HttpMethod.POST,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    req.write(Json.encode(user));
+                },
+                404,
+                "Not Found",
+                "{\n" +
+                        "  \"status\" : \"404\",\n" +
+                        "  \"detail\" : \"User provider [unknown-idp] can not be found.\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
     }
 
     private User getUser() {

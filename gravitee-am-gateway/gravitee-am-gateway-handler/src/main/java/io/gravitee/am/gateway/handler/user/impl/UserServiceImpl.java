@@ -98,8 +98,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<User> register(User user) {
-        final String source = DEFAULT_IDP_PREFIX + domain.getId();
+        // set user idp source
+        final String source = user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource();
 
+        // check user uniqueness
         return userRepository.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source)
                 .isEmpty()
                 .map(isEmpty -> {
@@ -108,6 +110,7 @@ public class UserServiceImpl implements UserService {
                     }
                     return true;
                 })
+                // check if user provider exists
                 .flatMap(irrelevant -> identityProviderManager.getUserProvider(source)
                         .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(source)))
                         .flatMapSingle(userProvider -> userProvider.create(convert(user)))
@@ -134,6 +137,7 @@ public class UserServiceImpl implements UserService {
     public Completable confirmRegistration(User user) {
         // user has completed his account, add it to the idp
         return identityProviderManager.getUserProvider(user.getSource())
+                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                 .flatMapSingle(userProvider -> userProvider.create(convert(user)))
                 .flatMap(idpUser -> {
                     // update 'users' collection for management and audit purpose
@@ -151,6 +155,7 @@ public class UserServiceImpl implements UserService {
     public Completable resetPassword(User user) {
         // only idp manage password, find user idp and update its password
         return identityProviderManager.getUserProvider(user.getSource())
+                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                 .flatMapSingle(userProvider -> userProvider.update(user.getExternalId(), convert(user)))
                 .flatMap(idpUser -> {
                     // update 'users' collection for management and audit purpose

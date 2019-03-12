@@ -20,6 +20,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
@@ -107,7 +108,29 @@ public class UsersResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldNotCreate() {
+    public void shouldNotCreate_invalid_identity_provider() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        NewUser newUser = new NewUser();
+        newUser.setUsername("username");
+        newUser.setPassword("password");
+        newUser.setEmail("test@test.com");
+        newUser.setSource("unknown-source");
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.error(new UserProviderNotFoundException(newUser.getSource()))).when(userService).create(anyString(), any());
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("users")
+                .request().post(Entity.json(newUser));
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+    }
+
+    @Test
+    public void shouldCreate() {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);

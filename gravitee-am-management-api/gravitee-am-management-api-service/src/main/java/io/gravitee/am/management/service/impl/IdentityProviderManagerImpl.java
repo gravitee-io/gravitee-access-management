@@ -97,6 +97,11 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager {
                 .flatMap(identityProvider -> reloadUserProvider(identityProvider));
     }
 
+    @Override
+    public boolean userProviderExists(String identityProviderId) {
+        return userProviders.containsKey(identityProviderId);
+    }
+
     private void loadUserProvider(IdentityProvider identityProvider) {
         UserProvider userProvider = identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
         if (userProvider != null) {
