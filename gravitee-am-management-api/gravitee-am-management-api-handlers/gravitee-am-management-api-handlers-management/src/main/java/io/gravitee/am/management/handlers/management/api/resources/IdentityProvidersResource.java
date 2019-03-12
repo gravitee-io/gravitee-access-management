@@ -23,6 +23,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -65,17 +66,25 @@ public class IdentityProvidersResource extends AbstractResource {
             @ApiResponse(code = 200, message = "List registered identity providers for a security domain", response = IdentityProvider.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(@PathParam("domain") String domain,
+                     @QueryParam("userProvider") boolean userProvider,
                      @Suspended final AsyncResponse response) {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> identityProviderService.findByDomain(domain)
-                        .map(identities -> {
-                            List<IdentityProvider> sortedIdentityProviders = identities.stream()
-                                    .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                                    .collect(Collectors.toList());
-                            return Response.ok(sortedIdentityProviders).build();
-                        })
-                )
+                .flatMapSingle(irrelevant -> identityProviderService.findByDomain(domain))
+                .flatMapObservable(identities -> Observable.fromIterable(identities))
+                .filter(identityProvider -> {
+                    if (userProvider) {
+                        return identityProviderManager.userProviderExists(identityProvider.getId());
+                    }
+                    return true;
+                })
+                .toList()
+                .map(identities -> {
+                    List<IdentityProvider> sortedIdentityProviders = identities.stream()
+                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                            .collect(Collectors.toList());
+                    return Response.ok(sortedIdentityProviders).build();
+                })
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

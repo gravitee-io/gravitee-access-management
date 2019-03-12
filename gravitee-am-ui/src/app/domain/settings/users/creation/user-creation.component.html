@@ -42,6 +42,7 @@
       <div fxLayout="row">
         <mat-form-field style="margin-right: 20px;">
           <input matInput placeholder="Username" #username="ngModel" name="username" [(ngModel)]="user.username" [disabled]="useEmailAsUsername" required>
+          <mat-hint>Username for the User.</mat-hint>
           <mat-error *ngIf="username.errors?.required">Enter username</mat-error>
         </mat-form-field>
         <mat-checkbox [checked]="useEmailAsUsername" (change)="toggleUseEmailAsUsername($event)" [disabled]="email.invalid" style="margin-top: 20px;"><mat-hint style="font-size: 75%;">Use email as username</mat-hint></mat-checkbox>
@@ -62,6 +63,15 @@
       </div>
       <div>
         <app-select-clients (onSelectClient)="onClientSelectionChanged($event)" (onRemoveClient)="onClientDeleted($event)"></app-select-clients>
+      </div>
+      <div>
+        <mat-form-field>
+          <mat-select placeholder="Identity provider" [(ngModel)]="user.source" name="source">
+            <mat-option>None</mat-option>
+            <mat-option *ngFor="let userProvider of userProviders" [value]="userProvider.id">{{userProvider.name}}</mat-option>
+          </mat-select>
+          <mat-hint>Assign user to an identity provider. The user will be stored in the selected identity provider instead of the default one.</mat-hint>
+        </mat-form-field>
       </div>
       <div fxLayout="column" class="additional-information">
         <h4>Additional information</h4>

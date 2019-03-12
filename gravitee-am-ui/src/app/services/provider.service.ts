@@ -28,6 +28,10 @@ export class ProviderService {
     return this.http.get(this.providersURL + domainId + "/identities");
   }
 
+  findUserProvidersByDomain(domainId): Observable<Response> {
+    return this.http.get(this.providersURL + domainId + "/identities?userProvider=true");
+  }
+
   get(domainId, id): Observable<Response>  {
     return this.http.get(this.providersURL + domainId + "/identities/" + id);
   }

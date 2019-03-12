@@ -99,12 +99,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<User> create(String domain, NewUser newUser) {
-        return Single.just(newUser.isPreRegistration())
-                .flatMap(isPreRegistration -> {
-                    // set source (currently default idp)
-                    newUser.setSource(DEFAULT_IDP_PREFIX + domain);
+        // set user idp source
+        if (newUser.getSource() == null) {
+            newUser.setSource(DEFAULT_IDP_PREFIX + domain);
+        }
+
+        return identityProviderManager.getUserProvider(newUser.getSource())
+                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
+                .flatMapSingle(userProvider -> {
+                    // user is flagged as internal user
                     newUser.setInternal(true);
-                    if (isPreRegistration) {
+                    if (newUser.isPreRegistration()) {
                         // in pre registration mode an email will be sent to the user to complete his account
                         // and user will only be stored as 'readonly' account
                         newUser.setPassword(null);
@@ -117,17 +122,14 @@ public class UserServiceImpl implements UserService {
                         newUser.setEnabled(true);
                         newUser.setDomain(domain);
                         // store user in its identity provider
-                        return identityProviderManager.getUserProvider(newUser.getSource())
-                                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
-                                .flatMapSingle(userProvider -> userProvider.create(convert(newUser))
-                                        .onErrorResumeNext(ex -> {
-                                            if (ex instanceof UserAlreadyExistsException) {
-                                                return userProvider.findByUsername(newUser.getUsername()).toSingle();
-                                            } else {
-                                                return Single.error(ex);
-                                            }
-                                        })
-                                )
+                        return userProvider.create(convert(newUser))
+                                .onErrorResumeNext(ex -> {
+                                    if (ex instanceof UserAlreadyExistsException) {
+                                        return userProvider.findByUsername(newUser.getUsername()).toSingle();
+                                    } else {
+                                        return Single.error(ex);
+                                    }
+                                })
                                 .flatMap(idpUser -> {
                                     // AM 'users' collection is not made for authentication (but only management stuff)
                                     // clear password

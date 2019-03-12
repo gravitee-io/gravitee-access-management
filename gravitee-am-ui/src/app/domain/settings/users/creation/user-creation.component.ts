@@ -23,6 +23,7 @@ import {UserClaimComponent} from "./user-claim.component";
 import * as _ from 'lodash';
 import {FormControl} from "@angular/forms";
 import {ClientService} from "../../../../services/client.service";
+import {ProviderService} from "../../../../services/provider.service";
 
 @Component({
   selector: 'user-creation',
@@ -49,6 +50,7 @@ export class UserCreationComponent implements OnInit {
   clientCtrl = new FormControl();
   filteredClients: any[];
   selectedClient: any;
+  userProviders: any[];
   @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
 
   constructor(private userService: UserService,
@@ -56,7 +58,8 @@ export class UserCreationComponent implements OnInit {
               private route: ActivatedRoute,
               private snackbarService: SnackbarService,
               private factoryResolver: ComponentFactoryResolver,
-              private clientService: ClientService) {
+              private clientService: ClientService,
+              private providerService: ProviderService) {
   }
 
   ngOnInit() {
@@ -65,6 +68,10 @@ export class UserCreationComponent implements OnInit {
       this.domainId = AppConfig.settings.authentication.domainId;
       this.adminContext = true;
     }
+
+    this.providerService.findUserProvidersByDomain(this.domainId).map(res => res.json()).subscribe(response => {
+      this.userProviders = response;
+    });
 
     this.clientCtrl.valueChanges
       .subscribe(searchTerm => {

@@ -101,8 +101,10 @@ public class UserServiceImpl implements UserService {
     public Single<User> create(User user, String baseUrl) {
         LOGGER.debug("Create a new user {} for domain {}", user.getUserName(), domain.getName());
 
+        // set user idp source
+        final String source = user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource();
+
         // check if user is unique
-        final String source = DEFAULT_IDP_PREFIX + domain.getId();
         return userRepository.findByDomainAndUsernameAndSource(domain.getId(), user.getUserName(), source)
                 .isEmpty()
                 .map(isEmpty -> {
@@ -111,7 +113,9 @@ public class UserServiceImpl implements UserService {
                     }
                     return true;
                 })
-                .flatMap(irrelevant -> {
+                .flatMapMaybe(irrelevant -> identityProviderManager.getUserProvider(source))
+                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(source)))
+                .flatMapSingle(userProvider -> {
                     io.gravitee.am.model.User userModel = convert(user);
                     // set technical ID
                     userModel.setId(RandomString.generate());
@@ -125,9 +129,7 @@ public class UserServiceImpl implements UserService {
                         return userRepository.create(userModel);
                     } else {
                         // store user in its identity provider
-                        return identityProviderManager.getUserProvider(userModel.getSource())
-                                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(userModel.getSource())))
-                                .flatMapSingle(userProvider -> userProvider.create(convert(userModel)))
+                        return userProvider.create(convert(userModel))
                                 .flatMap(idpUser -> {
                                     // AM 'users' collection is not made for authentication (but only management stuff)
                                     // clear password
@@ -140,7 +142,7 @@ public class UserServiceImpl implements UserService {
                 })
                 .map(user1 -> convert(user1, baseUrl, true))
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof SCIMException) {
+                    if (ex instanceof SCIMException || ex instanceof UserProviderNotFoundException) {
                         return Single.error(ex);
                     } else {
                         LOGGER.error("An error occurs while trying to create a user", ex);

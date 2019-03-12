@@ -31,4 +31,6 @@ public interface IdentityProviderManager {
     Maybe<UserProvider> getUserProvider(String userProvider);
 
     Single<IdentityProvider> create(String domain);
+
+    boolean userProviderExists(String identityProviderId);
 }
