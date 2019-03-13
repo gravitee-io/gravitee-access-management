@@ -130,6 +130,12 @@ services:
         users:
           admin: adminadmin
 
+  # Metrics service
+  metrics:
+    enabled: false
+    prometheus:
+      enabled: true
+
   # Local registry service.
   # This registry is used to load domain definitions with json format from the file system.
   local:
