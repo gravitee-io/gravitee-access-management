@@ -1,5 +1,35 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/issues/milestone/111?closed=1[AM - 2.4.0 (2019-03-20)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Return a refresh_token when getting an access_token using extension grant https://github.com/gravitee-io/issues/issues/1978[#1978]
+
+*_General_*
+
+- SSL problems when connecting with MongoDB ReplicaSet https://github.com/gravitee-io/issues/issues/1983[#1983]
+
+=== Features
+
+*_Management_*
+
+- Cusomizable scope expiry (per single scope) https://github.com/gravitee-io/issues/issues/1850[#1850]
+- [Users] Select IDP when creating a user https://github.com/gravitee-io/issues/issues/2018[#2018]
+
+=== Improvements
+
+*_Gateway_*
+
+- Stronger client_secret (and other tokens) https://github.com/gravitee-io/issues/issues/1847[#1847]
+
+*_Management_*
+
+- Add the prometheus configuration https://github.com/gravitee-io/issues/issues/2036[#2036]
+
+
 == https://github.com/gravitee-io/issues/issues/milestone/110?closed=1[AM - 2.3.0 (2019-02-25)]
 
 === Bug fixes
