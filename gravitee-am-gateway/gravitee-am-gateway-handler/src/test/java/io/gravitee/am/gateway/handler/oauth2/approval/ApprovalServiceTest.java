@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.reactivex.Maybe;
@@ -71,13 +72,16 @@ public class ApprovalServiceTest {
         client.setClientId(clientId);
         client.setAutoApproveScopes(Collections.singletonList(autoApproveScope));
 
+        User user = new User();
+        user.setId(userId);
+
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setClientId(clientId);
         authorizationRequest.setScopes(Collections.singleton(autoApproveScope));
 
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
 
-        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, userId).test();
+        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, user).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -94,6 +98,9 @@ public class ApprovalServiceTest {
         client.setClientId(clientId);
         client.setAutoApproveScopes(null);
 
+        User user = new User();
+        user.setId(userId);
+
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setClientId(clientId);
         authorizationRequest.setScopes(Collections.singleton(autoApproveScope));
@@ -101,7 +108,7 @@ public class ApprovalServiceTest {
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(anyString(), anyString(), anyString())).thenReturn(Single.just(Collections.emptySet()));
 
-        approvalService.checkApproval(authorizationRequest, client, userId).test().assertError(AccessDeniedException.class);
+        approvalService.checkApproval(authorizationRequest, client, user).test().assertError(AccessDeniedException.class);
     }
 
     @Test
@@ -113,6 +120,9 @@ public class ApprovalServiceTest {
         Client client = new Client();
         client.setClientId(clientId);
         client.setAutoApproveScopes(null);
+
+        User user = new User();
+        user.setId(userId);
 
         ScopeApproval userScopeApproval = new ScopeApproval();
         userScopeApproval.setClientId(clientId);
@@ -130,7 +140,7 @@ public class ApprovalServiceTest {
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(domainId, userId, clientId)).thenReturn(Single.just(Collections.singleton(userScopeApproval)));
 
-        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, userId).test();
+        TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, user).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -148,6 +158,9 @@ public class ApprovalServiceTest {
         client.setClientId(clientId);
         client.setAutoApproveScopes(null);
 
+        User user = new User();
+        user.setId(userId);
+
         ScopeApproval userScopeApproval = new ScopeApproval();
         userScopeApproval.setClientId(clientId);
         userScopeApproval.setUserId(userId);
@@ -164,7 +177,7 @@ public class ApprovalServiceTest {
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(domainId, userId, clientId)).thenReturn(Single.just(Collections.singleton(userScopeApproval)));
 
-        approvalService.checkApproval(authorizationRequest, client, userId).test().assertError(AccessDeniedException.class);
+        approvalService.checkApproval(authorizationRequest, client, user).test().assertError(AccessDeniedException.class);
     }
 
     @Test
@@ -177,6 +190,9 @@ public class ApprovalServiceTest {
         client.setClientId(clientId);
         client.setAutoApproveScopes(Collections.singletonList(readScope));
 
+        User user = new User();
+        user.setId(userId);
+
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setClientId(clientId);
         authorizationRequest.setDeniedScopes(new HashSet<>(Arrays.asList(readScope, writeScope)));
@@ -188,7 +204,7 @@ public class ApprovalServiceTest {
 
         when(scopeApprovalRepository.upsert(any())).thenReturn(Single.just(new ScopeApproval()));
 
-        TestObserver<AuthorizationRequest> testObserver = approvalService.saveApproval(authorizationRequest, client, userId).test();
+        TestObserver<AuthorizationRequest> testObserver = approvalService.saveApproval(authorizationRequest, client, user).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -208,6 +224,9 @@ public class ApprovalServiceTest {
         client.setClientId(clientId);
         client.setAutoApproveScopes(Collections.singletonList(readScope));
 
+        User user = new User();
+        user.setId(userId);
+
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setClientId(clientId);
         authorizationRequest.setDeniedScopes(new HashSet<>(Arrays.asList(readScope, writeScope)));
@@ -219,7 +238,7 @@ public class ApprovalServiceTest {
 
         when(scopeApprovalRepository.upsert(any())).thenReturn(Single.just(new ScopeApproval()));
 
-        TestObserver<AuthorizationRequest> testObserver = approvalService.saveApproval(authorizationRequest, client, userId).test();
+        TestObserver<AuthorizationRequest> testObserver = approvalService.saveApproval(authorizationRequest, client, user).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

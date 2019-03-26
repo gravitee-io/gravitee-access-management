@@ -24,13 +24,21 @@ import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, String> {
 
     Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId);
 
+    Single<Set<ScopeApproval>> findByDomainAndUser(String domain, String user);
+
     Single<ScopeApproval> upsert(ScopeApproval scopeApproval);
 
-    Completable delete(String domain, String scope);
+    Completable deleteByDomainAndScopeKey(String domain, String scope);
+
+    Completable deleteByDomainAndUserAndClient(String domain, String user, String client);
+
+    Completable deleteByDomainAndUser(String domain, String user);
+
 }

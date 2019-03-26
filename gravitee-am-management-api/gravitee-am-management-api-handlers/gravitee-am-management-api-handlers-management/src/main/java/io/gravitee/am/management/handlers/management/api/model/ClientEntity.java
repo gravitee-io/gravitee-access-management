@@ -27,6 +27,12 @@ public class ClientEntity {
     private String clientId;
     private String clientName;
 
+    public ClientEntity(String id, String clientId, String clientName) {
+        this.id = id;
+        this.clientId = clientId;
+        this.clientName = clientName;
+    }
+
     public ClientEntity(Client client) {
         setId(client.getId());
         setClientId(client.getClientId());

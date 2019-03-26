@@ -19,41 +19,51 @@ import java.util.Date;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ScopeApproval {
+
+    public enum ApprovalStatus {
+        APPROVED,
+        DENIED
+    }
+
+    private String id;
 
     private String userId;
 
     private String clientId;
 
-    private String scope;
+    private String domain;
 
-    public enum ApprovalStatus {
-        APPROVED,
-        DENIED;
-    }
+    private String scope;
 
     private ApprovalStatus status;
 
     private Date expiresAt;
 
-    private Date updatedAt;
+    private Date createdAt;
 
-    /**
-     * Security domain associated to the scope
-     */
-    private String domain;
+    private Date updatedAt;
 
     public ScopeApproval() {}
 
     public ScopeApproval(String userId, String clientId, String scope, ApprovalStatus status, Date expiresAt, String domain) {
         this.userId = userId;
         this.clientId = clientId;
+        this.domain = domain;
         this.scope = scope;
         this.status = status;
         this.expiresAt = expiresAt;
-        this.domain = domain;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getUserId() {
@@ -70,6 +80,14 @@ public class ScopeApproval {
 
     public void setClientId(String clientId) {
         this.clientId = clientId;
+    }
+
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
     }
 
     public String getScope() {
@@ -96,20 +114,20 @@ public class ScopeApproval {
         this.expiresAt = expiresAt;
     }
 
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public Date getUpdatedAt() {
         return updatedAt;
     }
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
     }
 
     @Override

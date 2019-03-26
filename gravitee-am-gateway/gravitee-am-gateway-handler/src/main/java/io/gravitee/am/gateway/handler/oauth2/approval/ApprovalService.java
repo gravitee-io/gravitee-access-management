@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.approval;
 
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
 import io.reactivex.Single;
 
 /**
@@ -27,7 +28,7 @@ import io.reactivex.Single;
  */
 public interface ApprovalService {
 
-    Single<AuthorizationRequest> checkApproval(AuthorizationRequest authorizationRequest, Client client, String username);
+    Single<AuthorizationRequest> checkApproval(AuthorizationRequest authorizationRequest, Client client, User user);
 
-    Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, Client client, String username);
+    Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, Client client, User user);
 }

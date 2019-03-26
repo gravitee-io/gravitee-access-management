@@ -77,6 +77,8 @@ import {UsersResolver} from "./resolvers/users.resolver";
 import {UserComponent} from "./domain/settings/users/user/user.component";
 import {UserResolver} from "./resolvers/user.resolver";
 import {UserCreationComponent} from "./domain/settings/users/creation/user-creation.component";
+import {UserProfileComponent} from "./domain/settings/users/user/profile/profile.component";
+import {UserApplicationsComponent} from "./domain/settings/users/user/applications/applications.component";
 import {ExtensionGrantCreationComponent} from "./domain/settings/extension-grants/creation/extension-grant-creation.component";
 import {ExtensionGrantComponent} from "./domain/settings/extension-grants/extension-grant/extension-grant.component";
 import {ExtensionGrantsResolver} from "./resolvers/extension-grants.resolver";
@@ -93,6 +95,8 @@ import {GroupSettingsComponent} from "./domain/settings/groups/group/settings/se
 import {GroupMembersComponent} from "./domain/settings/groups/group/members/members.component";
 import {ScimComponent} from "./domain/settings/scim/scim.component";
 import {EmailResolver} from "./resolvers/email.resolver";
+import {ConsentsResolver} from "./resolvers/consents.resolver";
+import {UserApplicationComponent} from "./domain/settings/users/user/applications/application/application.component";
 
 const routes: Routes = [
   { path: 'dashboard',
@@ -546,7 +550,13 @@ const routes: Routes = [
             component: UserComponent,
             resolve: {
               user: UserResolver
-            }
+            },
+            children: [
+              { path: '', redirectTo: 'profile', pathMatch: 'full' },
+              { path: 'profile', component: UserProfileComponent },
+              { path: 'applications', component: UserApplicationsComponent, resolve: {consents: ConsentsResolver}},
+              { path: 'applications/:clientId', component: UserApplicationComponent, resolve: {consents: ConsentsResolver}},
+            ]
           },
           { path: 'groups', component: GroupsComponent,
             resolve: {

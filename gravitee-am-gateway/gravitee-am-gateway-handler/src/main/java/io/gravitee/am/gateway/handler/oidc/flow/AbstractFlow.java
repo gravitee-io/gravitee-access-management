@@ -64,11 +64,7 @@ public abstract class AbstractFlow implements Flow {
     }
 
     private Single<AuthorizationRequest> obtainEndUserConsent(AuthorizationRequest authorizationRequest, Client client, User endUser) {
-        return approvalService.checkApproval(authorizationRequest, client, endUser.getUsername());
-    }
-
-    public AuthorizationRequestResolver getAuthorizationRequestResolver() {
-        return authorizationRequestResolver;
+        return approvalService.checkApproval(authorizationRequest, client, endUser);
     }
 
     public void setAuthorizationRequestResolver(AuthorizationRequestResolver authorizationRequestResolver) {

@@ -61,13 +61,24 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     public void init() {
         scopeApprovalsCollection = mongoOperations.getCollection("scope_approvals", ScopeApprovalMongo.class);
         scopeApprovalsCollection.createIndex(new Document(FIELD_EXPIRES_AT, 1),  new IndexOptions().expireAfter(0l, TimeUnit.SECONDS)).subscribe(new IndexSubscriber());
+        scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1)).subscribe(new IndexSubscriber());
         scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1)).subscribe(new IndexSubscriber());
         scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1)).subscribe(new IndexSubscriber());
     }
 
     @Override
-    public Maybe<ScopeApproval> findById(String s) {
-        throw new IllegalStateException();
+    public Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId) {
+        return Observable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId), eq(FIELD_USER_ID, userId)))).map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
+    public Single<Set<ScopeApproval>> findByDomainAndUser(String domain, String user) {
+        return Observable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user)))).map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
+    public Maybe<ScopeApproval> findById(String id) {
+        return Observable.fromPublisher(scopeApprovalsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -100,6 +111,8 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
                 .isEmpty()
                 .flatMap(isEmpty -> {
                     if (isEmpty) {
+                        scopeApproval.setCreatedAt(new Date());
+                        scopeApproval.setUpdatedAt(scopeApproval.getCreatedAt());
                         return create(scopeApproval);
                     } else {
                         scopeApproval.setUpdatedAt(new Date());
@@ -109,7 +122,7 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     }
 
     @Override
-    public Completable delete(String domain, String scope) {
+    public Completable deleteByDomainAndScopeKey(String domain, String scope) {
         return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
                 and(eq(FIELD_DOMAIN, domain), eq(FIELD_SCOPE, scope))));
     }
@@ -120,8 +133,15 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     }
 
     @Override
-    public Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId) {
-        return Observable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId), eq(FIELD_USER_ID, userId)))).map(this::convert).collect(HashSet::new, Set::add);
+    public Completable deleteByDomainAndUserAndClient(String domain, String user, String client) {
+        return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
+                and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user), eq(FIELD_CLIENT_ID, client))));
+    }
+
+    @Override
+    public Completable deleteByDomainAndUser(String domain, String user) {
+        return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
+                and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user))));
     }
 
     private Single<ScopeApproval> _findById(String id) {
@@ -134,12 +154,14 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
         }
 
         ScopeApproval scopeApproval = new ScopeApproval();
+        scopeApproval.setId(scopeApprovalMongo.getId());
         scopeApproval.setClientId(scopeApprovalMongo.getClientId());
         scopeApproval.setUserId(scopeApprovalMongo.getUserId());
         scopeApproval.setScope(scopeApprovalMongo.getScope());
         scopeApproval.setExpiresAt(scopeApprovalMongo.getExpiresAt());
         scopeApproval.setStatus(ScopeApproval.ApprovalStatus.valueOf(scopeApprovalMongo.getStatus().toUpperCase()));
         scopeApproval.setDomain(scopeApprovalMongo.getDomain());
+        scopeApproval.setCreatedAt(scopeApprovalMongo.getCreatedAt());
         scopeApproval.setUpdatedAt(scopeApprovalMongo.getUpdatedAt());
 
         return scopeApproval;
@@ -151,12 +173,14 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
         }
 
         ScopeApprovalMongo scopeApprovalMongo = new ScopeApprovalMongo();
+        scopeApprovalMongo.setId(scopeApproval.getId());
         scopeApprovalMongo.setClientId(scopeApproval.getClientId());
         scopeApprovalMongo.setUserId(scopeApproval.getUserId());
         scopeApprovalMongo.setScope(scopeApproval.getScope());
         scopeApprovalMongo.setExpiresAt(scopeApproval.getExpiresAt());
         scopeApprovalMongo.setStatus(scopeApproval.getStatus().name().toUpperCase());
         scopeApprovalMongo.setDomain(scopeApproval.getDomain());
+        scopeApprovalMongo.setCreatedAt(scopeApproval.getCreatedAt());
         scopeApprovalMongo.setUpdatedAt(scopeApproval.getUpdatedAt());
 
         return scopeApprovalMongo;

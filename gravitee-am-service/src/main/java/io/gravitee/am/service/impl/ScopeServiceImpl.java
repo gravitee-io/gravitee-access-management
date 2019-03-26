@@ -256,7 +256,7 @@ public class ScopeServiceImpl implements ScopeService {
                                                     return clientService.patch(scope.getDomain(), client.getId(), patchClient);
                                                 }).toList()).toCompletable()
                                 // 3_ Remove scopes from scope_approvals
-                                .andThen(scopeApprovalRepository.delete(scope.getDomain(), scope.getKey()))
+                                .andThen(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey()))
                                 // 4_ Delete scope
                                 .andThen(scopeRepository.delete(scopeId))
                                 // 5_ reload domain
@@ -278,12 +278,23 @@ public class ScopeServiceImpl implements ScopeService {
 
     @Override
     public Single<Set<Scope>> findByDomain(String domain) {
-        LOGGER.debug("Find scopes by domain", domain);
+        LOGGER.debug("Find scopes by domain: {}", domain);
         return scopeRepository.findByDomain(domain)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find scopes by domain: {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find scopes by domain: %s", domain), ex));
+                });
+    }
+
+    @Override
+    public Maybe<Scope> findByDomainAndKey(String domain, String scopeKey) {
+        LOGGER.debug("Find scopes by domain: {} and scope key: {}", domain, scopeKey);
+        return scopeRepository.findByDomainAndKey(domain, scopeKey)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find scopes by domain: {} and scope key: {}", domain, scopeKey, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find scopes by domain: %s and scope key: %s", domain, scopeKey), ex));
                 });
     }
 

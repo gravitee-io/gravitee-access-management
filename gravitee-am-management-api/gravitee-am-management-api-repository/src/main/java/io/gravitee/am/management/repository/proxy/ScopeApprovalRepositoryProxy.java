@@ -26,13 +26,22 @@ import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
 public class ScopeApprovalRepositoryProxy extends AbstractProxy<ScopeApprovalRepository> implements ScopeApprovalRepository {
 
-    public Maybe<ScopeApproval> findById(String s) {
-        return target.findById(s);
+    public Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId) {
+        return target.findByDomainAndUserAndClient(domain, userId, clientId);
+    }
+
+    public Single<Set<ScopeApproval>> findByDomainAndUser(String domain, String user) {
+        return target.findByDomainAndUser(domain, user);
+    }
+
+    public Maybe<ScopeApproval> findById(String id) {
+        return target.findById(id);
     }
 
     public Single<ScopeApproval> create(ScopeApproval item) {
@@ -43,19 +52,23 @@ public class ScopeApprovalRepositoryProxy extends AbstractProxy<ScopeApprovalRep
         return target.update(item);
     }
 
-    public Completable delete(String s) {
-        return target.delete(s);
-    }
-
-    public Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId) {
-        return target.findByDomainAndUserAndClient(domain, userId, clientId);
-    }
-
     public Single<ScopeApproval> upsert(ScopeApproval scopeApproval) {
         return target.upsert(scopeApproval);
     }
 
-    public Completable delete(String domain, String scope) {
-        return target.delete(domain, scope);
+    public Completable delete(String id) {
+        return target.delete(id);
+    }
+
+    public Completable deleteByDomainAndScopeKey(String domain, String scope) {
+        return target.deleteByDomainAndScopeKey(domain, scope);
+    }
+
+    public Completable deleteByDomainAndUserAndClient(String domain, String user, String client) {
+        return target.deleteByDomainAndUserAndClient(domain, user, client);
+    }
+
+    public Completable deleteByDomainAndUser(String domain, String user) {
+        return target.deleteByDomainAndUser(domain, user);
     }
 }

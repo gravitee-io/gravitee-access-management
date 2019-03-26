@@ -180,6 +180,11 @@ public class UserResource {
 
     }
 
+    @Path("{consents}")
+    public UserConsentsResource getUserConsentsResource() {
+        return resourceContext.getResource(UserConsentsResource.class);
+    }
+
     private Maybe<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {
         if (userEntity.getSource() != null) {
             return identityProviderService.findById(userEntity.getSource())

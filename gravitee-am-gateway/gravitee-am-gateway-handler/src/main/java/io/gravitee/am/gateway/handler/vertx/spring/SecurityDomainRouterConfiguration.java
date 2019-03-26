@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.vertx.handler.oauth2.OAuth2Router;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.OIDCRouter;
 import io.gravitee.am.gateway.handler.vertx.handler.root.RootRouter;
 import io.gravitee.am.gateway.handler.vertx.handler.scim.SCIMRouter;
+import io.gravitee.am.gateway.handler.vertx.handler.users.UsersRouter;
 import io.gravitee.am.gateway.handler.vertx.view.freemarker.FreeMarkerConfiguration;
 import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.ThymeleafConfiguration;
 import io.gravitee.am.service.spring.ServiceConfiguration;
@@ -65,5 +66,10 @@ public class SecurityDomainRouterConfiguration {
     @Bean
     public SCIMRouter scimRouter() {
         return new SCIMRouter();
+    }
+
+    @Bean
+    public UsersRouter usersRouter() {
+        return new UsersRouter();
     }
 }

@@ -21,6 +21,7 @@ import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.UpdateScope;
 import io.gravitee.am.service.model.UpdateSystemScope;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -43,6 +44,8 @@ public interface ScopeService {
 
     Single<Set<Scope>> findByDomain(String domain);
 
+    Maybe<Scope> findByDomainAndKey(String domain, String scopeKey);
+
     Single<Scope> update(String domain, String id, UpdateScope updateScope);
 
     Single<Scope> update(String domain, String id, UpdateSystemScope updateScope);
@@ -54,4 +57,5 @@ public interface ScopeService {
      * @param scopes Array of scope to validate.
      */
     Single<Boolean> validateScope(String domain, List<String> scopes);
+
 }

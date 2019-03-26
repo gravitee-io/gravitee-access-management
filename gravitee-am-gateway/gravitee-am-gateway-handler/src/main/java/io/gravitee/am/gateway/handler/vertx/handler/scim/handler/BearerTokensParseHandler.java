@@ -90,6 +90,7 @@ public class BearerTokensParseHandler implements Handler<RoutingContext> {
                 Token token = handler.result();
                 if (token.getScope() == null || token.getScope().isEmpty() || !Arrays.asList(token.getScope().split("\\s+")).contains(SCIM_SCOPE)) {
                     context.fail(new InvalidTokenException("Invalid access token scopes. The access token should have at least 'scim' scope"));
+                    return;
                 }
 
                 context.next();

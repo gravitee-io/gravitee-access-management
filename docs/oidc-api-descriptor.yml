@@ -19,7 +19,7 @@ info:
   description: >-
     Gravitee.io - Access Management - OpenID Connect API.
     Defines The OpenID Connect Endpoints exposed by AM server.
-  version: 2.2.0
+  version: 2.5.0
   title: Gravitee.io - Access Management - OpenID Connect API
   contact:
     email: contact@graviteesource.com

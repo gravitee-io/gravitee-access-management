@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
@@ -52,7 +53,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     private int approvalExpirySeconds;
 
     @Override
-    public Single<AuthorizationRequest> checkApproval(AuthorizationRequest authorizationRequest, Client client, String username) {
+    public Single<AuthorizationRequest> checkApproval(AuthorizationRequest authorizationRequest, Client client, User user) {
         // check client auto approval option
         return checkAutoApproval(authorizationRequest, client)
                 .flatMap(authorizationRequest1 ->  {
@@ -60,12 +61,12 @@ public class ApprovalServiceImpl implements ApprovalService {
                         return Single.just(authorizationRequest1);
                     }
                     // check user approval
-                    return checkUserApproval(authorizationRequest, username);
+                    return checkUserApproval(authorizationRequest, user);
                 });
     }
 
     @Override
-    public Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, Client client, String username) {
+    public Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, Client client, User user) {
         // Get the unapproved requested scopes
         Set<String> requestedScopes = authorizationRequest.getDeniedScopes();
         Set<String> approvedScopes = new HashSet<>();
@@ -80,11 +81,11 @@ public class ApprovalServiceImpl implements ApprovalService {
             Date expiry = computeExpiry(client, requestedScope);
             if ("true".equals(value) || value.startsWith("approve")) {
                 approvedScopes.add(requestedScope);
-                approvals.add(new ScopeApproval(username, authorizationRequest.getClientId(),
+                approvals.add(new ScopeApproval(user.getId(), authorizationRequest.getClientId(),
                         requestedScope, ScopeApproval.ApprovalStatus.APPROVED, expiry, domain.getId()));
             }
             else {
-                approvals.add(new ScopeApproval(username, authorizationRequest.getClientId(),
+                approvals.add(new ScopeApproval(user.getId(), authorizationRequest.getClientId(),
                         requestedScope, ScopeApproval.ApprovalStatus.DENIED, expiry, domain.getId()));
             }
         }
@@ -106,10 +107,10 @@ public class ApprovalServiceImpl implements ApprovalService {
                 });
     }
 
-    private Single<AuthorizationRequest> checkUserApproval(AuthorizationRequest authorizationRequest, String username) {
+    private Single<AuthorizationRequest> checkUserApproval(AuthorizationRequest authorizationRequest, User user) {
         Set<String> requestedScopes = authorizationRequest.getScopes();
         Set<String> approvedScopes = new HashSet<>();
-        return scopeApprovalRepository.findByDomainAndUserAndClient(domain.getId(), username, authorizationRequest.getClientId())
+        return scopeApprovalRepository.findByDomainAndUserAndClient(domain.getId(), user.getId(), authorizationRequest.getClientId())
                 .flatMap(userApprovals -> {
                     // Look at the scopes and see if they have expired
                     if (userApprovals != null) {

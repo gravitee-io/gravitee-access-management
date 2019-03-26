@@ -39,6 +39,10 @@ public abstract class AbstractAuthorizationEndpointHandler {
         }
 
         // the initial request failed for some reasons, we have the required request parameters to re-create the authorize request
+        return createAuthorizationRequest(routingContext);
+    }
+
+    protected AuthorizationRequest createAuthorizationRequest(RoutingContext routingContext) {
         return authorizationRequestFactory.create(routingContext.request());
     }
 }
