@@ -1,0 +1,74 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="user-application-container" fxFlex="70">
+  <a [routerLink]="['..']"><small><< Back to authorized apps</small></a>
+  <div class="user-application-content">
+    <div fxLayout="row" style="align-items: center;">
+      <h1>{{clientId}}</h1>
+      <div fxFlex fxLayoutAlign="end">
+        <button *ngIf="canRevokeAccess();" style="height: 40px;" mat-stroked-button color="warn" (click)="revokeApplication($event)">Revoke access</button>
+      </div>
+    </div>
+    <ngx-datatable class="material"
+                   [columnMode]="'flex'"
+                   [headerHeight]="40"
+                   [footerHeight]="40"
+                   [rowHeight]="50"
+                   [rows]='consents'
+                   [sorts]="[{prop: 'status', dir: 'desc'}]"
+                   [rowClass]="getRowClass">
+      <ngx-datatable-column>
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <mat-icon [ngStyle]="{'color': row.status === 'approved' ? 'green' : 'orange'}"  matTooltip="{{row.status === 'approved' ? 'Permission approved' : 'Permission denied'}}">
+            {{row.status === 'approved' ? 'done' : 'not_interested'}}
+          </mat-icon>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Permission" [flexGrow]="2">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{row.scopeEntity.key}} | <small>{{row.scopeEntity.name}}</small> | <small>{{row.scopeEntity.description}}</small>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Approval date" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{row.updatedAt | humanDate}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Expires at" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <span>{{row.expiresAt | humanDate}}</span>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div fxLayout="row" class="user-application-actions">
+            <button *ngIf="row.status === 'approved'" mat-icon-button (click)="revokeConsent($event, row);"><mat-icon matTooltip="Revoke access">highlight_off</mat-icon></button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+  </div>
+</div>
+<div class="user-application-description" fxFlex>
+  <h3>Authorized application</h3>
+  <div class="user-application-description-content">
+    <p>
+      Application act on behalf the user to access data based on the permissions the user grant them.
+    </p>
+  </div>
+</div>

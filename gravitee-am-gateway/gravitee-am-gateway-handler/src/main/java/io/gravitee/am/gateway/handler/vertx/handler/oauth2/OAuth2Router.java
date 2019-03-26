@@ -126,7 +126,7 @@ public class OAuth2Router {
         Handler<RoutingContext> authorizationRequestParseParametersHandler = new AuthorizationRequestParseParametersHandler(domain);
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpointHandler(flow, domain);
         Handler<RoutingContext> userApprovalRequestParseHandler = new UserApprovalRequestParseHandler(clientSyncService);
-        Handler<RoutingContext> userApprovalSubmissionEndpointHandler = new UserApprovalSubmissionEndpointHandler(approvalService);
+        Handler<RoutingContext> userApprovalSubmissionEndpointHandler = new UserApprovalSubmissionEndpointHandler(approvalService, domain);
         Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpointHandler(scopeService, thymeleafTemplateEngine);
         // Token endpoint
         Handler<RoutingContext> tokenEndpoint = new TokenEndpointHandler(tokenGranter);

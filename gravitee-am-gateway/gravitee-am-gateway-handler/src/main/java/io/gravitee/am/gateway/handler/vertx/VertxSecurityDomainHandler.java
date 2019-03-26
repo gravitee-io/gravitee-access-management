@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.vertx.handler.root.RootRouter;
 import io.gravitee.am.gateway.handler.vertx.handler.scim.SCIMRouter;
 import io.gravitee.am.gateway.handler.vertx.handler.scim.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.session.RxSessionHandler;
+import io.gravitee.am.gateway.handler.vertx.handler.users.UsersRouter;
 import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.Vertx;
@@ -73,6 +74,9 @@ public class VertxSecurityDomainHandler {
     private SCIMRouter scimRouter;
 
     @Autowired
+    private UsersRouter usersRouter;
+
+    @Autowired
     private Environment environment;
 
     public Router create() {
@@ -111,6 +115,9 @@ public class VertxSecurityDomainHandler {
             router.mountSubRouter("/scim", scimRouter.route());
         }
 
+        // mount Users router
+        router.mountSubRouter("/users", usersRouter.route());
+
         return router;
     }
 
@@ -133,6 +140,7 @@ public class VertxSecurityDomainHandler {
         router.route("/forgotPassword").failureHandler(rootErrorFailureHandler);
         router.route("/oauth/authorize").failureHandler(authorizationEndpointFailureHandler);
         router.routeWithRegex("/scim/(.*)").failureHandler(new ErrorHandler());
+        router.routeWithRegex("/users/(.*)").failureHandler(new io.gravitee.am.gateway.handler.vertx.handler.users.handler.ErrorHandler());
         router.route().failureHandler(new ExceptionHandler());
     }
 

@@ -141,6 +141,9 @@ import { UsersComponent } from './domain/settings/users/users.component';
 import { UserComponent } from './domain/settings/users/user/user.component';
 import { UserCreationComponent } from './domain/settings/users/creation/user-creation.component';
 import { UserClaimComponent } from './domain/settings/users/creation/user-claim.component';
+import { UserProfileComponent } from './domain/settings/users/user/profile/profile.component';
+import { UserApplicationsComponent } from './domain/settings/users/user/applications/applications.component';
+import { UserApplicationComponent } from './domain/settings/users/user/applications/application/application.component';
 import { UserService} from "./services/user.service";
 import { UsersResolver } from "./resolvers/users.resolver";
 import { UserResolver } from "./resolvers/user.resolver";
@@ -174,6 +177,7 @@ import { EmailService } from "./services/email.service";
 import { EmailResolver } from "./resolvers/email.resolver";
 import { SelectClientsComponent } from "./domain/components/clients/select-clients.component";
 import { ClientScopeComponent } from "./domain/clients/client/scopes/client-scope.component";
+import { ConsentsResolver } from "./resolvers/consents.resolver";
 
 @NgModule({
   declarations: [
@@ -253,6 +257,9 @@ import { ClientScopeComponent } from "./domain/clients/client/scopes/client-scop
     UserComponent,
     UserCreationComponent,
     UserClaimComponent,
+    UserProfileComponent,
+    UserApplicationsComponent,
+    UserApplicationComponent,
     ScopeCreationComponent,
     ScopeComponent,
     MaterialFileComponent,
@@ -328,6 +335,7 @@ import { ClientScopeComponent } from "./domain/clients/client/scopes/client-scop
     GroupResolver,
     EmailService,
     EmailResolver,
+    ConsentsResolver,
     { provide: Http, useClass: HttpService }
   ],
   entryComponents: [

@@ -1,0 +1,141 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="user-profile-container">
+  <div class="user-profile-content">
+    <div class="user-profile-claims" fxFlex="70">
+      <form (ngSubmit)="update()" fxLayout="column" #userForm="ngForm">
+        <div fxLayout="row" *ngIf="user.username">
+          <mat-form-field>
+            <input matInput placeholder="Username" disabled name="username" [value]="user.username" required>
+          </mat-form-field>
+        </div>
+        <div *ngIf="editMode()" fxLayout="column" style="margin-bottom: 20px;">
+          <mat-slide-toggle
+            (change)="enableUser($event)"
+            [checked]="isUserEnabled()">
+            Enable User
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Enable or disable user to restrict application access.
+            By disabled the user, he will not be able to log to their applications.</mat-hint>
+        </div>
+        <div fxLayout="row">
+          <mat-form-field *ngIf="user.firstName" style="margin-right: 20px;">
+            <input matInput type="text" placeholder="First name" [disabled]="!editMode()" #firstName="ngModel" name="firstName" [(ngModel)]="user.firstName" required>
+            <mat-hint *ngIf="editMode()">The first name of the User.</mat-hint>
+            <mat-error *ngIf="firstName.errors?.required">Enter first name</mat-error>
+          </mat-form-field>
+          <mat-form-field *ngIf="user.lastName">
+            <input matInput type="text" placeholder="Last name" [disabled]="!editMode()" #lastName="ngModel" name="lastName" [(ngModel)]="user.lastName" required>
+            <mat-hint *ngIf="editMode()">The last name of the User.</mat-hint>
+            <mat-error *ngIf="lastName.errors?.required">Enter last name</mat-error>
+          </mat-form-field>
+        </div>
+        <div fxLayout="row" *ngIf="user.email">
+          <mat-form-field>
+            <input matInput placeholder="Email" [disabled]="!editMode()" #email="ngModel" name="email" [(ngModel)]="user.email" [email]="user.email !== ''" required>
+            <mat-hint *ngIf="editMode()">Email address for the User.</mat-hint>
+            <mat-error *ngIf="email.errors?.required">Enter email</mat-error>
+            <mat-error *ngIf="user.email && email.errors?.email">Not a valid email</mat-error>
+          </mat-form-field>
+        </div>
+        <div fxLayout="column" *ngIf="editMode() && user.preRegistration && !user.registrationCompleted" class="additional-information">
+          <div fxLayout="row" style="color: orange;"><mat-icon>warning</mat-icon><h4 style="margin-top: 5px;">User does not complete registration</h4></div>
+          <span>An email will be sent to the user asking to complete his account.</span>
+          <a (click)="resendConfirmationRegistration()">Resend confirmation e-mail</a>
+        </div>
+        <div *ngIf="editMode()">
+          <app-select-clients [selectedClient]="user.clientEntity" (onSelectClient)="onClientSelectionChanged($event)" (onRemoveClient)="onClientDeleted($event)"></app-select-clients>
+        </div>
+        <div *ngIf="editMode()" fxLayout="column" class="additional-information">
+          <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" fxLayout="row" style="background: #f1f1f1; border: none;">
+            <mat-form-field style="margin-right: 20px" fxFlex="75">
+              <input matInput type="password" name="password" placeholder="Password" required [(ngModel)]="password"/>
+              <mat-hint>User's password</mat-hint>
+            </mat-form-field>
+            <button style="height:36px; margin-top: 20px;" mat-raised-button color="primary" [disabled]="!passwordForm.valid || passwordForm.pristine" type="submit">RESET PASSWORD</button>
+          </form>
+        </div>
+        <div fxLayout="column" class="additional-information" *ngIf="!isEmptyObject(user.additionalInformation) || editMode()">
+          <h4>Additional information</h4>
+          <span>Custom information about the user. These details are available in the user's profile.</span>
+          <a (click)="addDynamicComponent()" *ngIf="editMode()">(+) add user attribute</a>
+          <template #dynamic></template>
+          <div *ngFor="let keyValuePair of userAdditionalInformation | mapToIterable">
+            <div *ngIf="keyValuePair.value" fxLayout="row">
+              <mat-form-field style="margin-right: 20px;" fxFlex="40">
+                <input matInput type="text" name="claimName" [value]="keyValuePair.key" disabled>
+              </mat-form-field>
+              <mat-form-field>
+                <input matInput type="text" name="claimValue" [value]="keyValuePair.value" (change)="formChanged = true;" [disabled]="!editMode()">
+              </mat-form-field>
+              <button mat-icon-button *ngIf="editMode()" (click)="removeExistingClaim(keyValuePair.key, $event)"><mat-icon>clear</mat-icon></button>
+            </div>
+          </div>
+        </div>
+
+        <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;" *ngIf="editMode()">
+          <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
+          <button mat-raised-button [disabled]="(!userForm.valid || userForm.pristine) && !formChanged" type="submit">UPDATE</button>
+        </div>
+      </form>
+      <div class="user-profile-settings-delete-zone" fxLayout="column" *ngIf="editMode()">
+        <p>This operation cannot be undone.</p>
+        User will be deleted and will no longer be able to sign in to applications.
+        <div class="user-profile-settings-delete-button" fxLayout="row">
+          <span fxFlex></span>
+          <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+        </div>
+      </div>
+    </div>
+    <div class="user-profile-activities" fxFlex>
+      <h3>User activities</h3>
+      <div class="user-profile-activities-content">
+        <mat-list>
+          <mat-list-item>
+            <mat-icon mat-list-icon>trending_up</mat-icon>
+            <h4 matLine>Logins count</h4>
+            <p matLine>{{user.loginsCount}}</p>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon mat-list-icon>alarm</mat-icon>
+            <h4 matLine>Last login</h4>
+            <p matLine>
+              <span *ngIf="!(user.loggedAt)">Never logged in</span>
+              <span *ngIf="(user.loggedAt)">{{user.loggedAt | humanDate}}</span>
+            </p>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon mat-list-icon>alarm_on</mat-icon>
+            <h4 matLine>Created at</h4>
+            <p matLine>{{user.createdAt | humanDate}}</p>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon mat-list-icon>dock</mat-icon>
+            <h4 matLine>Last client</h4>
+            <p matLine>{{displayClientName()}}</p>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon mat-list-icon>device_hub</mat-icon>
+            <h4 matLine>Identity provider</h4>
+            <p matLine>{{user.source}}</p>
+          </mat-list-item>
+        </mat-list>
+      </div>
+    </div>
+  </div>
+</div>

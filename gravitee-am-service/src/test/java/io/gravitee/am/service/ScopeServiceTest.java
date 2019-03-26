@@ -257,7 +257,7 @@ public class ScopeServiceTest {
         when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(scope));
         when(scopeRepository.delete("my-scope")).thenReturn(Completable.complete());
-        when(scopeApprovalRepository.delete(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
+        when(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
         when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = scopeService.delete("my-scope", false).test();
@@ -292,7 +292,7 @@ public class ScopeServiceTest {
         when(clientService.patch(anyString(),anyString(),any(PatchClient.class))).thenReturn(Single.just(new Client()));
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(scope));
         when(scopeRepository.delete("my-scope")).thenReturn(Completable.complete());
-        when(scopeApprovalRepository.delete(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
+        when(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
         when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = scopeService.delete("my-scope", false).test();

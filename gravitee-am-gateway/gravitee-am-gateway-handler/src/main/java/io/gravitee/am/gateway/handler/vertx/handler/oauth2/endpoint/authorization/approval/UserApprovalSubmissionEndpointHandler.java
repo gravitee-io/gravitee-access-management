@@ -19,8 +19,9 @@ import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
+import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
@@ -28,7 +29,6 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,9 +51,11 @@ public class UserApprovalSubmissionEndpointHandler implements Handler<RoutingCon
     private static final Logger logger = LoggerFactory.getLogger(UserApprovalSubmissionEndpointHandler.class);
     private static final String CLIENT_CONTEXT_KEY = "client";
     private ApprovalService approvalService;
+    private Domain domain;
 
-    public UserApprovalSubmissionEndpointHandler(ApprovalService approvalService) {
+    public UserApprovalSubmissionEndpointHandler(ApprovalService approvalService, Domain domain) {
         this.approvalService = approvalService;
+        this.domain = domain;
     }
 
     @Override
@@ -84,7 +86,7 @@ public class UserApprovalSubmissionEndpointHandler implements Handler<RoutingCon
         authorizationRequest.setApprovalParameters(approvalParameters);
 
         // handle approval response
-        approvalService.saveApproval(authorizationRequest, client, endUser.getUsername())
+        approvalService.saveApproval(authorizationRequest, client, endUser)
                 .subscribe(authorizationRequest1 -> {
                     // user denied access
                     if (!authorizationRequest.isApproved()) {
@@ -93,13 +95,8 @@ public class UserApprovalSubmissionEndpointHandler implements Handler<RoutingCon
                     }
 
                     // user approved access, replay authorization request
-                    Session session = context.session();
-                    if (session != null && session.get(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM) != null) {
-                        final String redirectUrl = session.get(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM);
-                        doRedirect(context.response(), redirectUrl);
-                    } else {
-                        context.fail(503);
-                    }
+                    final String authorizationRequestUrl = UriBuilderRequest.resolveProxyRequest(context.request(),"/" + domain.getPath() + "/oauth/authorize", authorizationRequest.getRequestParameters().toSingleValueMap());
+                    doRedirect(context.response(), authorizationRequestUrl);
                 },
                 error -> {
                     logger.error("An error occurs while handling authorization approval request", error);

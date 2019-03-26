@@ -18,9 +18,12 @@ package io.gravitee.am.gateway.handler.user;
 import io.gravitee.am.gateway.handler.user.model.UserToken;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,4 +40,16 @@ public interface UserService {
     Completable resetPassword(User user);
 
     Completable forgotPassword(String email, Client client);
+
+    Single<Set<ScopeApproval>> consents(String userId);
+
+    Single<Set<ScopeApproval>> consents(String userId, String clientId);
+
+    Maybe<ScopeApproval> consent(String consentId);
+
+    Completable revokeConsent(String consentId);
+
+    Completable revokeConsents(String userId);
+
+    Completable revokeConsents(String userId, String clientId);
 }

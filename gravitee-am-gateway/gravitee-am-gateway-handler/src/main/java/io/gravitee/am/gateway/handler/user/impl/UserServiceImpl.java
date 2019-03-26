@@ -33,7 +33,10 @@ import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.service.ScopeApprovalService;
+import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
@@ -44,10 +47,7 @@ import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -89,6 +89,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private ClientSyncService clientSyncService;
+
+    @Autowired
+    private ScopeApprovalService scopeApprovalService;
 
     @Override
     public Maybe<UserToken> verifyToken(String token) {
@@ -177,6 +180,37 @@ public class UserServiceImpl implements UserService {
                 .doOnSuccess(user -> new Thread(() -> completeForgotPassword(user, client)).start())
                 .toCompletable();
 
+    }
+
+    @Override
+    public Single<Set<ScopeApproval>> consents(String userId) {
+        return scopeApprovalService.findByDomainAndUser(domain.getId(), userId);
+    }
+
+    @Override
+    public Single<Set<ScopeApproval>> consents(String userId, String clientId) {
+        return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), userId, clientId);
+    }
+
+    @Override
+    public Maybe<ScopeApproval> consent(String consentId) {
+        return scopeApprovalService.findById(consentId)
+                .switchIfEmpty(Maybe.error(new ScopeApprovalNotFoundException(consentId)));
+    }
+
+    @Override
+    public Completable revokeConsent(String consentId) {
+        return scopeApprovalService.revoke(consentId);
+    }
+
+    @Override
+    public Completable revokeConsents(String userId) {
+        return scopeApprovalService.revoke(domain.getId(), userId);
+    }
+
+    @Override
+    public Completable revokeConsents(String userId, String clientId) {
+        return scopeApprovalService.revoke(domain.getId(), userId, clientId);
     }
 
     private void completeForgotPassword(User user, Client client) {

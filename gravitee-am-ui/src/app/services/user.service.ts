@@ -65,4 +65,15 @@ export class UserService {
     return this.http.get(this.usersURL + domainId + "/users?q=" + searchTerm + "&page=" + page + "&size=" + size);
   }
 
+  consents(domainId, userId, clientId) {
+    return this.http.get(this.usersURL + domainId + "/users/" + userId + "/consents" + (clientId ? "?clientId=" + clientId : ""));
+  }
+
+  revokeConsents(domainId, userId, clientId) {
+    return this.http.delete(this.usersURL + domainId + "/users/" + userId + "/consents" + (clientId ? "?clientId=" + clientId : ""));
+  }
+
+  revokeConsent(domainId, userId, consentId) {
+    return this.http.delete(this.usersURL + domainId + "/users/" + userId + "/consents/" + consentId);
+  }
 }

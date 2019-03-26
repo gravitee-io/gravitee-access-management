@@ -30,6 +30,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableMBeanExport;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
@@ -100,6 +101,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected PasswordValidator passwordValidator;
+
+    @Autowired
+    protected ScopeApprovalService scopeApprovalService;
 
     @Configuration
     @ComponentScan("io.gravitee.am.management.handlers.management.api.resources.enhancer")
@@ -197,6 +201,11 @@ public abstract class JerseySpringTest {
         @Bean
         public PasswordValidator passwordValidator() {
             return mock(PasswordValidator.class);
+        }
+
+        @Bean
+        public ScopeApprovalService scopeApprovalService() {
+            return mock(ScopeApprovalService.class);
         }
     }
 

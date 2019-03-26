@@ -22,18 +22,23 @@ import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
 import io.gravitee.am.gateway.handler.oidc.flow.Flow;
+import io.gravitee.am.gateway.handler.vertx.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * The authorization endpoint is used to interact with the resource owner and obtain an authorization grant.
@@ -59,7 +64,7 @@ public class AuthorizationEndpointHandler extends AbstractAuthorizationEndpointH
 
     @Override
     public void handle(RoutingContext context) {
-        AuthorizationRequest request = resolveInitialAuthorizeRequest(context);
+        AuthorizationRequest request = createAuthorizationRequest(context);
 
         // The authorization server authenticates the resource owner and obtains
         // an authorization decision (by asking the resource owner or by establishing approval via other means).
