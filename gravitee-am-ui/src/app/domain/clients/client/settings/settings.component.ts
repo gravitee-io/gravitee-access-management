@@ -324,4 +324,18 @@ export class ClientSettingsComponent implements OnInit {
         }
       });
   }
+
+  renewClientSecret(event) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Renew Client secret', 'Are you sure you want to renew the client secret ?')
+      .subscribe(res => {
+        if (res) {
+          this.clientService.renewClientSecret(this.domainId, this.client.id).map(res => res.json()).subscribe(data => {
+            this.client = data;
+            this.snackbarService.open("Client secret updated");
+          });
+        }
+      });
+  }
 }

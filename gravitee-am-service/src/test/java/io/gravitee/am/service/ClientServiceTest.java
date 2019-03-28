@@ -730,4 +730,46 @@ public class ClientServiceTest {
         verify(clientRepository, times(1)).findById(anyString());
         verify(clientRepository, times(1)).update(any(Client.class));
     }
+
+    @Test
+    public void shouldRenewSecret() {
+        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
+        when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
+
+        TestObserver testObserver = clientService.renewClientSecret(DOMAIN, "my-client").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(clientRepository, times(1)).findById(anyString());
+        verify(clientRepository, times(1)).update(any(Client.class));
+    }
+
+    @Test
+    public void shouldRenewSecret_clientNotFound() {
+        when(clientRepository.findById("my-client")).thenReturn(Maybe.empty());
+
+        TestObserver testObserver = clientService.renewClientSecret(DOMAIN, "my-client").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(ClientNotFoundException.class);
+        testObserver.assertNotComplete();
+
+        verify(clientRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldRenewSecret_technicalException() {
+        when(clientRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
+
+        TestObserver testObserver = clientService.renewClientSecret(DOMAIN, "my-client").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+
+        verify(clientRepository, never()).update(any());
+    }
 }

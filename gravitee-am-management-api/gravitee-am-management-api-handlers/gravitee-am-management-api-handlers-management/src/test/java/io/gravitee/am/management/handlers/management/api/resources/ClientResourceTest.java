@@ -18,8 +18,10 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
@@ -100,5 +102,55 @@ public class ClientResourceTest extends JerseySpringTest {
 
         final Response response = target("domains").path(domainId).path("clients").path(clientId).request().get();
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldRenewClientSecret() {
+        final String domainId = "domain-id";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final String clientId = "client-id";
+        final Client mockClient = new Client();
+        mockClient.setId(clientId);
+        mockClient.setClientId("client-name");
+        mockClient.setDomain(domainId);
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(mockClient)).when(clientService).renewClientSecret(domainId, clientId);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("clients")
+                .path(clientId)
+                .path("secret/_renew")
+                .request()
+                .post(null);
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    @Test
+    public void shouldRenewClientSecret_clientNotFound() {
+        final String domainId = "domain-id";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final String clientId = "client-id";
+        final Client mockClient = new Client();
+        mockClient.setId(clientId);
+        mockClient.setClientId("client-name");
+        mockClient.setDomain(domainId);
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.error(new ClientNotFoundException(clientId))).when(clientService).renewClientSecret(domainId, clientId);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("clients")
+                .path(clientId)
+                .path("secret/_renew")
+                .request()
+                .post(null);
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 }

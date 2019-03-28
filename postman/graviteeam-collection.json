@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "e320de06-8313-4716-9b82-f674ea61347c",
-		"name": "Gravitee.io AM copy",
+		"_postman_id": "0928edc9-9ae1-4d4c-ab6d-eeccf9d8370f",
+		"name": "Gravitee.io AM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -1219,6 +1219,409 @@
 				{
 					"name": "Client Credentials Grant",
 					"item": [
+						{
+							"name": "Case - renew client secret",
+							"item": [
+								{
+									"name": "Create client 3",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"var body = JSON.parse(responseBody);",
+													"pm.environment.set('client3', body.id);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"clientId\": \"my-client-3\",\n  \"clientSecret\": \"my-client-secret-3\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/clients",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"clients"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Configure client 3",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "58987251-6ffb-479d-80af-40373ea5a0cb",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 5000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}} ",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n \"authorizedGrantTypes\": [\n    \"client_credentials\"\n  ]\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/clients/{{client3}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"clients",
+												"{{client3}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Generate token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has an access_token without refresh token\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('access_token');",
+													"    pm.expect(body).to.have.property('token_type');",
+													"    pm.expect(body.token_type).to.eql('bearer');",
+													"    pm.expect(body).to.have.property('expires_in');",
+													"    pm.expect(body).to.not.have.property('refresh_token');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Basic bXktY2xpZW50LTM6bXktY2xpZW50LXNlY3JldC0z"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "client_credentials",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oauth/token",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oauth",
+												"token"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Renew client 3 secret",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "58987251-6ffb-479d-80af-40373ea5a0cb",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"var body = JSON.parse(responseBody);",
+													"pm.environment.set('client3Secret', body.clientSecret);",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 5000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}} "
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/clients/{{client3}}/secret/_renew",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"clients",
+												"{{client3}}",
+												"secret",
+												"_renew"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Generate token - wrong secret",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+												"exec": [
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Basic bXktY2xpZW50LTM6bXktY2xpZW50LXNlY3JldC0z"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "client_credentials",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oauth/token",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oauth",
+												"token"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Generate token - new secret",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/x-www-form-urlencoded",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "client_credentials",
+													"type": "text"
+												},
+												{
+													"key": "client_id",
+													"value": "my-client-3",
+													"type": "text"
+												},
+												{
+													"key": "client_secret",
+													"value": "{{client3Secret}}",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oauth/token",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oauth",
+												"token"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete client 3",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "58987251-6ffb-479d-80af-40373ea5a0cb",
+												"exec": [
+													"pm.test(\"Status code is 204\", function () {",
+													"    pm.response.to.have.status(204);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}} "
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/clients/{{client3}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"clients",
+												"{{client3}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
 						{
 							"name": "Invalid client",
 							"event": [

@@ -32,19 +32,49 @@ import java.util.Set;
  */
 public interface ClientService {
 
-    Maybe<Client> findById(String id);
+    Single<Set<Client>> findAll();
 
-    Maybe<Client> findByDomainAndClientId(String domain, String clientId);
-
-    Single<Page<Client>> findByDomain(String domain, int page, int size);
+    Single<Page<Client>> findAll(int page, int size);
 
     Single<Set<Client>> search(String domain, String query);
 
     Single<Set<Client>> findByDomain(String domain);
 
+    Single<Page<Client>> findByDomain(String domain, int page, int size);
+
+    Single<Set<Client>> findByDomainAndExtensionGrant(String domain, String tokenGranter);
+
+    Single<Set<Client>> findByCertificate(String certificate);
+
+    Single<Set<Client>> findByIdentityProvider(String identityProvider);
+
+    Single<Set<TopClient>> findTopClients();
+
+    Single<Set<TopClient>> findTopClientsByDomain(String domain);
+
+    Single<TotalClient> findTotalClients();
+
+    Single<TotalClient> findTotalClientsByDomain(String domain);
+
+    Maybe<Client> findByDomainAndClientId(String domain, String clientId);
+
+    Maybe<Client> findById(String id);
+
     Single<Client> create(String domain, NewClient newClient);
 
     Single<Client> create(Client client);
+
+    default Single<Client> patch(String domain, String id, PatchClient patchClient) {
+        return patch(domain, id, patchClient, false);
+    }
+
+    Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull);
+
+    Single<Client> renewClientSecret(String domain, String id);
+
+    Completable delete(String clientId);
+
+    Single<Client> update(Client client);
 
     /**
      * Since Dynamic Client Registration, many new fields have been added to client.
@@ -53,32 +83,4 @@ public interface ClientService {
      */
     @Deprecated
     Single<Client> update(String domain, String id, UpdateClient updateClient);
-
-    Single<Client> update(Client client);
-
-    default Single<Client> patch(String domain, String id, PatchClient patchClient) {
-        return patch(domain, id, patchClient, false);
-    }
-
-    Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull);
-
-    Single<Set<Client>> findByIdentityProvider(String identityProvider);
-
-    Single<Set<Client>> findByCertificate(String certificate);
-
-    Single<Set<Client>> findByDomainAndExtensionGrant(String domain, String tokenGranter);
-
-    Single<Set<Client>> findAll();
-
-    Single<Page<Client>> findAll(int page, int size);
-
-    Single<Set<TopClient>> findTopClients();
-
-    Single<Set<TopClient>> findTopClientsByDomain(String domain);
-
-    Single<TotalClient> findTotalClientsByDomain(String domain);
-
-    Single<TotalClient> findTotalClients();
-
-    Completable delete(String clientId);
 }
