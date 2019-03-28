@@ -18,10 +18,14 @@ package io.gravitee.am.gateway.handler.vertx.handler.oauth2.request;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,8 +39,11 @@ import java.util.stream.Stream;
  */
 public final class TokenRequestFactory {
 
+    private static final Logger logger = LoggerFactory.getLogger(TokenRequestFactory.class);
+
     public TokenRequest create(HttpServerRequest request) {
         TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setOrigin(extractOrigin(request));
         tokenRequest.setClientId(request.params().get(OAuth2Constants.CLIENT_ID));
         tokenRequest.setGrantType(request.params().get(OAuth2Constants.GRANT_TYPE));
         String scopes = request.params().get(OAuth2Constants.SCOPE);
@@ -61,5 +68,15 @@ public final class TokenRequestFactory {
         MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
         request.params().getDelegate().entries().stream().filter(entry -> !restrictedParameters.contains(entry.getKey())).forEach(entry -> additionalParameters.add(entry.getKey(), entry.getValue()));
         return additionalParameters;
+    }
+
+    private String extractOrigin(HttpServerRequest request) {
+        String basePath = "/";
+        try {
+            basePath = UriBuilderRequest.resolveProxyRequest(request, "/", null);
+        } catch (Exception e) {
+            logger.error("Unable to resolve OAuth 2.0 Token Request origin uri", e);
+        }
+        return basePath;
     }
 }

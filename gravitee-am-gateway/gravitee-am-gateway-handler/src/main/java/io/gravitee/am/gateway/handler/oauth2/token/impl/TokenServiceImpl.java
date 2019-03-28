@@ -31,6 +31,7 @@ import io.gravitee.am.gateway.handler.oauth2.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
@@ -40,7 +41,6 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Collections;
 import java.util.Date;
@@ -56,9 +56,6 @@ public class TokenServiceImpl implements TokenService {
     private int accessTokenValiditySeconds = 60 * 60 * 12; // default 12 hours.
     private int refreshTokenValiditySeconds = 60 * 60 * 24 * 30; // default 30 days.
 
-    @Value("${oidc.iss:http://gravitee.am}")
-    private String iss;
-
     @Autowired
     private AccessTokenRepository accessTokenRepository;
 
@@ -73,6 +70,9 @@ public class TokenServiceImpl implements TokenService {
 
     @Autowired
     private ClientSyncService clientSyncService;
+
+    @Autowired
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
     @Override
     public Maybe<Token> getAccessToken(String token, Client client) {
@@ -298,7 +298,7 @@ public class TokenServiceImpl implements TokenService {
      */
     private JWT convert(io.gravitee.am.repository.oauth2.model.Token token, OAuth2Request oAuth2Request) {
         JWT jwt = new JWT();
-        jwt.setIss(iss);
+        jwt.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
         jwt.setSub(token.getSubject() != null ? token.getSubject() : token.getClient());
         jwt.setAud(oAuth2Request.getClientId());
         jwt.setDomain(token.getDomain());

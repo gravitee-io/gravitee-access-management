@@ -73,6 +73,7 @@ public class TokenRequest extends BaseRequest {
         safeRequestParameters.remove("client_secret");
 
         OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setOrigin(getOrigin());
         oAuth2Request.setClientId(getClientId());
         oAuth2Request.setScopes(getScopes());
         oAuth2Request.setRequestParameters(safeRequestParameters);

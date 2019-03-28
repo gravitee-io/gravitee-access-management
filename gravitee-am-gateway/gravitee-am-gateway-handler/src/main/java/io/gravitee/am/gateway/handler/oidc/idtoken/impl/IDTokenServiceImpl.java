@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.jwt.JwtService;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.utils.OIDCParameters;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.idtoken.IDTokenUtils;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequest;
@@ -32,7 +33,6 @@ import io.gravitee.am.model.User;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -46,9 +46,6 @@ public class IDTokenServiceImpl implements IDTokenService {
     private static final int defaultIDTokenExpireIn = 14400;
     private static final String defaultDigestAlgorithm = "SHA-512";
 
-    @Value("${oidc.iss:http://gravitee.am}")
-    private String iss;
-
     @Autowired
     private CertificateManager certificateManager;
 
@@ -58,12 +55,15 @@ public class IDTokenServiceImpl implements IDTokenService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private OpenIDDiscoveryService openIDDiscoveryService;
+
     @Override
     public Single<String> create(OAuth2Request oAuth2Request, Client client, User user) {
         IDToken idToken = new IDToken();
 
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        idToken.setIss(iss);
+        idToken.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
         idToken.setSub(oAuth2Request.isClientOnly() ? oAuth2Request.getClientId() : user.getId());
         idToken.setAud(oAuth2Request.getClientId());
         idToken.setIat(calendar.getTimeInMillis() / 1000l);

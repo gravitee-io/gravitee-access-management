@@ -28,6 +28,11 @@ import java.util.Set;
 public abstract class BaseRequest {
 
     /**
+     * Request origin : scheme/host/port triple.
+     */
+    private String origin;
+
+    /**
      * The authorization server issues the registered client a client
      * identifier -- a unique string representing the registration
      * information provided by the client.  The client identifier is not a
@@ -49,6 +54,14 @@ public abstract class BaseRequest {
     private MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
 
     private MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
+
+    public String getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(String origin) {
+        this.origin = origin;
+    }
 
     public String getClientId() {
         return clientId;

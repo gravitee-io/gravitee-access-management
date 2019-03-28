@@ -22,6 +22,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.jwt.JwtService;
 import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.idtoken.impl.IDTokenServiceImpl;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
@@ -60,6 +61,9 @@ public class IDTokenServiceTest {
 
     @Mock
     private CertificateProvider defaultCertificateProvider;
+
+    @Mock
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
     @Mock
     private JwtService jwtService;
