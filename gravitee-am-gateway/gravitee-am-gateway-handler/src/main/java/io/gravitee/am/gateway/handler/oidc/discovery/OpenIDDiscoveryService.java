@@ -17,9 +17,12 @@ package io.gravitee.am.gateway.handler.oidc.discovery;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface OpenIDDiscoveryService {
 
     OpenIDProviderMetadata getConfiguration(String basePath);
+
+    String getIssuer(String basePath);
 }

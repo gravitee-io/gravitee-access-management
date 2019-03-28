@@ -27,7 +27,6 @@ import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.model.Domain;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -48,9 +47,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
     private static final String INTROSPECTION_ENDPOINT = "/oauth/introspect";
     private static final String ENDSESSION_ENDPOINT = "/logout";
     private static final String REGISTRATION_ENDPOINT = "/oidc/register";
-
-    @Value("${oidc.iss:http://gravitee.am}")
-    private String iss;
+    private static final String OIDC_ENDPOINT = "/oidc";
 
     @Autowired
     private Domain domain;
@@ -60,7 +57,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
 
         // issuer
-        openIDProviderMetadata.setIssuer(iss);
+        openIDProviderMetadata.setIssuer(getEndpointAbsoluteURL(basePath, OIDC_ENDPOINT));
 
         // endpoints
         openIDProviderMetadata.setAuthorizationEndpoint(getEndpointAbsoluteURL(basePath, AUTHORIZATION_ENDPOINT));
@@ -85,6 +82,11 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         openIDProviderMetadata.setSubjectTypesSupported(Arrays.asList(SubjectType.PUBLIC));
 
         return openIDProviderMetadata;
+    }
+
+    @Override
+    public String getIssuer(String basePath) {
+        return getEndpointAbsoluteURL(basePath, OIDC_ENDPOINT);
     }
 
     private String getEndpointAbsoluteURL(String basePath, String endpointPath) {

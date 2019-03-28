@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.TokenServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
@@ -68,6 +69,9 @@ public class TokenServiceTest {
 
     @Mock
     private ClientSyncService clientSyncService;
+
+    @Mock
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
     @Test
     public void shouldCreate() {

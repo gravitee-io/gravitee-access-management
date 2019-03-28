@@ -41,7 +41,7 @@ public class ProviderConfigurationEndpoint implements Handler<RoutingContext> {
         String basePath = "/";
         try {
             basePath = UriBuilderRequest.resolveProxyRequest(context.request(), "/", null);
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
             logger.error("Unable to resolve OpenID Connect provider configuration endpoint", e);
         }
 
