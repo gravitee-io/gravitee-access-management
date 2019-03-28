@@ -141,6 +141,25 @@ public class ClientResource extends AbstractResource {
                         error -> response.resume(error));
     }
 
+    @POST
+    @Path("secret/_renew")
+    @ApiOperation(value = "Renew client secret")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Client secret successfully updated", response = Client.class),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void renewClientSecret(@PathParam("domain") String domain,
+                            @PathParam("client") String client,
+                            @Suspended final AsyncResponse response) {
+        domainService.findById(domain)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(__ -> clientService.renewClientSecret(domain, client))
+                .map(updatedClient -> Response.ok(updatedClient).build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
+    }
+
     @Path("emails")
     public ClientEmailsResource getEmailsResource() {
         return resourceContext.getResource(ClientEmailsResource.class);

@@ -186,12 +186,19 @@
     </div>
   </form>
   <div class="client-settings-delete-zone" fxLayout="column">
-    <p>This operation cannot be undone.</p>
-    Client will be deleted, applications related to this client will no longer be able to request for tokens and access protected resources.
-    <div class="client-settings-delete-button" fxLayout="row">
-      <span fxFlex></span>
-      <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
-    </div>
+    <mat-list>
+      <mat-list-item>
+        <h3 matLine>Renew client secret</h3>
+        <p matLine>All applications using this client secret will need to be updated to be able to request for tokens and access protected resources.</p>
+        <button mat-stroked-button color="warn" (click)="renewClientSecret($event)">RENEW</button>
+      </mat-list-item>
+      <mat-divider></mat-divider>
+      <mat-list-item>
+        <h3 matLine>Delete client</h3>
+        <p matLine>Client will be deleted, applications related to this client will no longer be able to request for tokens and access protected resources.</p>
+        <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+      </mat-list-item>
+    </mat-list>
   </div>
 </div>
 <div class="client-settings-description" fxFlex>

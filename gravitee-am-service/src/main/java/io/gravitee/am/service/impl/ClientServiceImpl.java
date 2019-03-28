@@ -431,6 +431,21 @@ public class ClientServiceImpl implements ClientService {
                 });
     }
 
+    @Override
+    public Single<Client> renewClientSecret(String domain, String id) {
+        LOGGER.debug("Renew client secret for client {} in domain {}", id, domain);
+        return clientRepository.findById(id)
+                .switchIfEmpty(Maybe.error(new ClientNotFoundException(id)))
+                .flatMapSingle(client -> {
+                    // update client secret
+                    client.setClientSecret(SecureRandomString.generate());
+
+                    // update client and reload domain
+                    return updateClientAndReloadDomain(domain, client);
+                })
+                .onErrorResumeNext(this::handleError);
+    }
+
     /**
      * <pre>
      * This function will return an error if :

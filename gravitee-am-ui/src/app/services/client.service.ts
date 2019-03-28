@@ -64,4 +64,8 @@ export class ClientService {
   delete(domainId, id): Observable<Response> {
     return this.http.delete(this.clientsURL + domainId + "/clients/" + id);
   }
+
+  renewClientSecret(domainId, id): Observable<Response> {
+    return this.http.post(this.clientsURL + domainId + "/clients/" + id + "/secret/_renew", {});
+  }
 }
