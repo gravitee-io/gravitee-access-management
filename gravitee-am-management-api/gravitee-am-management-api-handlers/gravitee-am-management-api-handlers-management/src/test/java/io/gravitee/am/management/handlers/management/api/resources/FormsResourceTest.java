@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
@@ -90,7 +91,7 @@ public class FormsResourceTest extends JerseySpringTest {
         newForm.setContent("content");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(new Form())).when(formService).create(eq(domainId), any());
+        doReturn(Single.just(new Form())).when(formService).create(eq(domainId), any(), any(User.class));
 
         final Response response = target("domains")
                 .path(domainId)

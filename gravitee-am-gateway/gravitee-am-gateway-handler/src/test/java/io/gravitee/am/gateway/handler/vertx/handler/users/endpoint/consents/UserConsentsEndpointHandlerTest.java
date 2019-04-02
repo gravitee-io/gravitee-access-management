@@ -25,7 +25,9 @@ import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.handler.users.handler.AuthTokenParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.users.handler.ErrorHandler;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
@@ -64,8 +66,11 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private TokenService tokenService;
 
+    @Mock
+    private Domain domain;
+
     @InjectMocks
-    private UserConsentsEndpointHandler userConsentsEndpointHandler = new UserConsentsEndpointHandler(userService);
+    private UserConsentsEndpointHandler userConsentsEndpointHandler = new UserConsentsEndpointHandler(userService, clientService, domain);
 
     @InjectMocks
     private AuthTokenParseHandler authTokenParseHandler = AuthTokenParseHandler.create(jwtService, tokenService, clientService, "consent_admin");
@@ -143,7 +148,7 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
         when(jwtService.decode(anyString())).thenReturn(Single.just(new JWT()));
         when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
         when(tokenService.getAccessToken(anyString(), any())).thenReturn(Maybe.just(token));
-        when(userService.revokeConsents(anyString())).thenReturn(Completable.complete());
+        when(userService.revokeConsents(anyString(), any(User.class))).thenReturn(Completable.complete());
 
         router.route("/users/:userId/consents")
                 .handler(authTokenParseHandler)

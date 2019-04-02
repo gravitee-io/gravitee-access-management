@@ -62,6 +62,9 @@ public class ExtensionGrantServiceTest {
     @Mock
     private ExtensionGrantRepository extensionGrantRepository;
 
+    @Mock
+    private AuditService auditService;
+
     private final static String DOMAIN = "domain1";
 
     @Test

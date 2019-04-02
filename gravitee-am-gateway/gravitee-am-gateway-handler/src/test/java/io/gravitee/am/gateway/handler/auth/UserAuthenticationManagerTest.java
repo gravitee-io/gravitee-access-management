@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.authentication.AccountDisabledException;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
@@ -62,6 +63,9 @@ public class UserAuthenticationManagerTest {
 
     @Mock
     private IdentityProviderManager identityProviderManager;
+
+    @Mock
+    private AuditService auditService;
 
     @Test
     public void shouldNotAuthenticateUser_noIdentityProvider() {

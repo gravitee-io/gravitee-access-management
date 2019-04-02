@@ -44,6 +44,22 @@ public class IdentityProvider {
 
     private Date updatedAt;
 
+    public IdentityProvider() {
+    }
+
+    public IdentityProvider(IdentityProvider other) {
+        this.id = other.id;
+        this.name = other.name;
+        this.type = other.type;
+        this.configuration = other.configuration;
+        this.mappers = other.mappers;
+        this.roleMapper = other.roleMapper;
+        this.domain = other.domain;
+        this.external = other.external;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+    }
+
     public String getId() {
         return id;
     }

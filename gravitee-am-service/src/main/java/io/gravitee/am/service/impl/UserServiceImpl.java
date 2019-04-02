@@ -142,6 +142,9 @@ public class UserServiceImpl implements UserService {
                         user.setUsername(newUser.getUsername());
                         user.setFirstName(newUser.getFirstName());
                         user.setLastName(newUser.getLastName());
+                        if (user.getFirstName() != null) {
+                            user.setDisplayName(user.getFirstName() + (user.getLastName() != null ? " " + user.getLastName() : ""));
+                        }
                         user.setEmail(newUser.getEmail());
                         user.setSource(newUser.getSource());
                         user.setInternal(true);

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.IdentityProvider;
@@ -96,9 +97,11 @@ public class IdentityProviderResource extends AbstractResource {
             @PathParam("identity") String identity,
             @ApiParam(name = "identity", required = true) @Valid @NotNull UpdateIdentityProvider updateIdentityProvider,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> identityProviderService.update(domain, identity, updateIdentityProvider))
+                .flatMapSingle(irrelevant -> identityProviderService.update(domain, identity, updateIdentityProvider, authenticatedUser))
                 .flatMap(identityProvider -> identityProviderManager.reloadUserProvider(identityProvider))
                 .map(identityProvider -> Response.ok(identityProvider).build())
                 .subscribe(
@@ -115,7 +118,9 @@ public class IdentityProviderResource extends AbstractResource {
     public void delete(@PathParam("domain") String domain,
                        @PathParam("identity") String identity,
                        @Suspended final AsyncResponse response) {
-        identityProviderService.delete(domain, identity)
+        final User authenticatedUser = getAuthenticatedUser();
+
+        identityProviderService.delete(domain, identity, authenticatedUser)
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

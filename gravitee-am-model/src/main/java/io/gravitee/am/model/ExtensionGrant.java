@@ -45,6 +45,23 @@ public class ExtensionGrant {
 
     private Date updatedAt;
 
+    public ExtensionGrant() {
+    }
+
+    public ExtensionGrant(ExtensionGrant other) {
+        this.id = other.id;
+        this.name = other.name;
+        this.type = other.type;
+        this.configuration = other.configuration;
+        this.domain = other.domain;
+        this.grantType = other.grantType;
+        this.identityProvider = other.identityProvider;
+        this.createUser = other.createUser;
+        this.userExists = other.userExists;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+    }
+
     public String getId() {
         return id;
     }

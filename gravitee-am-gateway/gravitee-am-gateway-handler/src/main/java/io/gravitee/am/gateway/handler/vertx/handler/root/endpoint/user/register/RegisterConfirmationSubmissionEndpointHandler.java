@@ -42,7 +42,7 @@ public class RegisterConfirmationSubmissionEndpointHandler extends UserRequestHa
         User user = context.get("user");
         user.setPassword(password);
 
-        userService.confirmRegistration(user)
+        userService.confirmRegistration(user, getAuthenticatedUser(context))
                 .subscribe(
                         () -> redirectToPage(context, Collections.singletonMap("success", "registration_completed")),
                         error -> redirectToPage(context, Collections.singletonMap("error", "registration_failed"), error));

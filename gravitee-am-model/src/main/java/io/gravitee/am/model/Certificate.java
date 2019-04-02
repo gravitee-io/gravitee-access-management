@@ -40,6 +40,20 @@ public class Certificate {
 
     private Date updatedAt;
 
+    public Certificate() {
+    }
+
+    public Certificate(Certificate other) {
+        this.id = other.id;
+        this.name = other.name;
+        this.type = other.type;
+        this.configuration = other.configuration;
+        this.domain = other.domain;
+        this.metadata = other.metadata;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+    }
+
     public String getId() {
         return id;
     }

@@ -42,10 +42,23 @@ public interface GroupService {
 
     Maybe<Group> findById(String id);
 
-    Single<Group> create(String domain, NewGroup group);
+    Single<Group> create(String domain, NewGroup group, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<Group> update(String domain, String id, UpdateGroup group);
+    Single<Group> update(String domain, String id, UpdateGroup group, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable delete(String groupId);
+    Completable delete(String groupId, io.gravitee.am.identityprovider.api.User principal);
+
+    default Single<Group> create(String domain, NewGroup group) {
+        return create(domain, group, null);
+    }
+
+    default Single<Group> update(String domain, String id, UpdateGroup group) {
+        return update(domain, id, group, null);
+    }
+
+    default Completable delete(String groupId) {
+        return delete(groupId, null);
+    }
+
 
 }

@@ -17,6 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.management.service.impl.UserServiceImpl;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.reactivex.Maybe;
@@ -43,6 +44,9 @@ public class UserServiceTest {
 
     @Mock
     private IdentityProviderManager identityProviderManager;
+
+    @Mock
+    private AuditService auditService;
 
     @Test
     public void shouldCreateUser_invalid_identity_provider() {

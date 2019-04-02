@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.handler.users.handler.AuthTokenParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.users.handler.ErrorHandler;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
@@ -63,8 +64,11 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private TokenService tokenService;
 
+    @Mock
+    private Domain domain;
+
     @InjectMocks
-    private UserConsentEndpointHandler userConsentEndpointHandler = new UserConsentEndpointHandler(userService);
+    private UserConsentEndpointHandler userConsentEndpointHandler = new UserConsentEndpointHandler(userService, clientService, domain);
 
     @InjectMocks
     private AuthTokenParseHandler authTokenParseHandler = AuthTokenParseHandler.create(jwtService, tokenService, clientService, "consent_admin");
@@ -166,7 +170,7 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
         when(jwtService.decode(anyString())).thenReturn(Single.just(new JWT()));
         when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
         when(tokenService.getAccessToken(anyString(), any())).thenReturn(Maybe.just(token));
-        when(userService.revokeConsent(anyString())).thenReturn(Completable.complete());
+        when(userService.revokeConsent(anyString(), anyString(), any())).thenReturn(Completable.complete());
 
         router.route("/users/:userId/consents/:consentId")
                 .handler(authTokenParseHandler)

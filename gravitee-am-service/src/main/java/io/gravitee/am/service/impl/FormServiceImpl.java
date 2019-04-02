@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.FormRepository;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -30,6 +33,8 @@ import io.gravitee.am.service.exception.FormNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewForm;
 import io.gravitee.am.service.model.UpdateForm;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.FormTemplateAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -56,6 +61,9 @@ public class FormServiceImpl implements FormService {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private AuditService auditService;
+
     @Override
     public Single<List<Form>> findByDomain(String domain) {
         LOGGER.debug("Find form by domain {}", domain);
@@ -63,16 +71,16 @@ public class FormServiceImpl implements FormService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a form using its domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a role using its domain %s and template %s", domain), ex));
+                            String.format("An error occurs while trying to find a role using its domain %s", domain), ex));
                 });
     }
 
     @Override
     public Single<List<Form>> findByDomainAndClient(String domain, String client) {
-        LOGGER.debug("Find form by domain {} and client {}", domain, client);
+        LOGGER.debug("Find form by domain {} and client", domain, client);
         return formRepository.findByDomainAndClient(domain, client)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a form using its domain {} and client {}", domain, client, ex);
+                    LOGGER.error("An error occurs while trying to find a form using its domain {} and its client {}", domain, client, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a role using its domain %s and client %s", domain, client), ex));
                 });
@@ -101,30 +109,30 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    public Single<Form> create(String domain, NewForm newForm) {
+    public Single<Form> create(String domain, NewForm newForm, User principal) {
         LOGGER.debug("Create a new form {} for domain {}", newForm, domain);
-        return create0(domain, null, newForm);
+        return create0(domain, null, newForm, principal);
     }
 
     @Override
-    public Single<Form> create(String domain, String client, NewForm newForm) {
+    public Single<Form> create(String domain, String client, NewForm newForm, User principal) {
         LOGGER.debug("Create a new form {} for domain {} and client {}", newForm, domain, client);
-        return create0(domain, client, newForm);
+        return create0(domain, client, newForm, principal);
     }
 
     @Override
-    public Single<Form> update(String domain, String id, UpdateForm updateForm) {
+    public Single<Form> update(String domain, String id, UpdateForm updateForm, User principal) {
         LOGGER.debug("Update a form {} for domain {}", id, domain);
-        return update0(domain, id, updateForm);
+        return update0(domain, id, updateForm, principal);
     }
 
     @Override
-    public Single<Form> update(String domain, String client, String id, UpdateForm updateForm) {
+    public Single<Form> update(String domain, String client, String id, UpdateForm updateForm, User principal) {
         LOGGER.debug("Update a form {} for domain {} and client {}", id, domain, client);
-        return update0(domain, id, updateForm);
+        return update0(domain, id, updateForm, principal);
     }
 
-    private Single<Form> create0(String domain, String client, NewForm newForm) {
+    private Single<Form> create0(String domain, String client, NewForm newForm, User principal) {
         String formId = RandomString.generate();
 
         // check if form is unique
@@ -154,24 +162,29 @@ public class FormServiceImpl implements FormService {
 
                     LOGGER.error("An error occurs while trying to create a form", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a form", ex));
-                });
+                })
+                .doOnSuccess(form -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_CREATED).form(form)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_CREATED).throwable(throwable)));
     }
 
-    private Single<Form> update0(String domain, String id, UpdateForm updateForm) {
+    private Single<Form> update0(String domain, String id, UpdateForm updateForm, User principal) {
         return formRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new FormNotFoundException(id)))
                 .flatMapSingle(oldForm -> {
-                    oldForm.setEnabled(updateForm.isEnabled());
-                    oldForm.setContent(updateForm.getContent());
-                    oldForm.setAssets(updateForm.getAssets());
-                    oldForm.setUpdatedAt(new Date());
+                    Form formToUpdate = new Form(oldForm);
+                    formToUpdate.setEnabled(updateForm.isEnabled());
+                    formToUpdate.setContent(updateForm.getContent());
+                    formToUpdate.setAssets(updateForm.getAssets());
+                    formToUpdate.setUpdatedAt(new Date());
 
-                    return formRepository.update(oldForm);
-                })
-                .flatMap(page -> {
-                    // Reload domain to take care about form update
-                    Event event = new Event(Type.FORM, new Payload(page.getId(), page.getDomain(), Action.UPDATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(page));
+                    return formRepository.update(formToUpdate)
+                            .flatMap(page -> {
+                                // Reload domain to take care about form update
+                                Event event = new Event(Type.FORM, new Payload(page.getId(), page.getDomain(), Action.UPDATE));
+                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(page));
+                            })
+                            .doOnSuccess(form -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_UPDATED).oldValue(oldForm).form(form)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_UPDATED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -185,14 +198,18 @@ public class FormServiceImpl implements FormService {
 
 
     @Override
-    public Completable delete(String formId) {
+    public Completable delete(String formId, User principal) {
         LOGGER.debug("Delete form {}", formId);
         return formRepository.findById(formId)
                 .switchIfEmpty(Maybe.error(new FormNotFoundException(formId)))
                 .flatMapCompletable(page -> {
                     // Reload domain to take care about delete form
                     Event event = new Event(Type.FORM, new Payload(page.getId(), page.getDomain(), Action.DELETE));
-                    return formRepository.delete(formId).andThen(domainService.reload(page.getDomain(), event)).toCompletable();
+                    return formRepository.delete(formId)
+                            .andThen(domainService.reload(page.getDomain(), event))
+                            .toCompletable()
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_DELETED).form(page)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

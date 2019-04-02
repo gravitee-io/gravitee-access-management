@@ -1,0 +1,75 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:reporter:mongodb:MongoReporterConfiguration",
+  "properties" : {
+    "uri" : {
+      "type" : "string",
+      "default": "mongodb://localhost:27017",
+      "title": "MongoDB connection URI",
+      "description": "Connection URI used to connect to a MongoDB instance."
+    },
+    "host" : {
+      "type" : "string",
+      "default": "localhost",
+      "title": "MongoDB connection host",
+      "description": "Not required if the MongoDB connection URI is set."
+    },
+    "port" : {
+      "type": "number",
+      "default": 27017,
+      "minimum": 1,
+      "title": "MongoDB connection port",
+      "description": "Not required if the MongoDB connection URI is set."
+    },
+    "enableCredentials" : {
+      "type" : "boolean",
+      "default": false,
+      "title": "Secure access to MongoDB",
+      "description": "If MongoDB database need an authentication, this flag must be enabled."
+    },
+    "databaseCredentials" : {
+      "type" : "string",
+      "title": "Authentication database",
+      "description": "Database used for authentication."
+    },
+    "usernameCredentials" : {
+      "type" : "string",
+      "title": "Authentication user",
+      "description": "User used to authenticate."
+    },
+    "passwordCredentials" : {
+      "type" : "string",
+      "title": "Authentication password",
+      "description": "Password used to authenticate.",
+      "widget": "password"
+    },
+    "database" : {
+      "type" : "string",
+      "title": "The database used to run query",
+      "description": "The MongoDB database used to run query to search for reportable."
+    },
+    "reportableCollection" : {
+      "type" : "string",
+      "title": "The collection used to run query",
+      "description": "The collection which is containing all the users."
+    },
+    "bulkActions" : {
+      "type": "number",
+      "title": "Bulk actions",
+      "description": "Number of requests action before flush",
+      "default": 1000
+    },
+    "flushInterval" : {
+      "type": "number",
+      "title": "Bulk flush interval",
+      "description": "Flush interval for bulk actions in seconds",
+      "default": 5
+    }
+  },
+  "required": [
+    "database",
+    "reportableCollection",
+    "bulkActions",
+    "flushInterval"
+  ]
+}

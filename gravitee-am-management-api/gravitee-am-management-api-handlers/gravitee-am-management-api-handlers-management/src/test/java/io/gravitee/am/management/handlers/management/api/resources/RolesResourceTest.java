@@ -95,7 +95,7 @@ public class RolesResourceTest extends JerseySpringTest {
         role.setName("role-name");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(role)).when(roleService).create(eq(domainId), any());
+        doReturn(Single.just(role)).when(roleService).create(eq(domainId), any(), any());
 
         final Response response = target("domains")
                 .path(domainId)

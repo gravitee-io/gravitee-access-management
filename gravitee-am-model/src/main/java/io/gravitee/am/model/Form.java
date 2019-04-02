@@ -33,6 +33,21 @@ public class Form {
     private Date createdAt;
     private Date updatedAt;
 
+    public Form() {
+    }
+
+    public Form(Form other) {
+        this.id = other.id;
+        this.enabled = other.enabled;
+        this.domain = other.domain;
+        this.client = other.client;
+        this.template = other.template;
+        this.content = other.content;
+        this.assets = other.assets;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+    }
+
     public String getId() {
         return id;
     }

@@ -1,0 +1,71 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="audits-settings-container" fxLayout="column">
+  <h1>Audit settings</h1>
+  <a [routerLink]="['..']"><small><< Back to Audit Log</small></a>
+
+  <div fxLayout="row">
+    <div class="audits-settings-content" fxFlex="70">
+      <ngx-datatable *ngIf="!isEmpty" class="material"
+                     [columnMode]="'flex'"
+                     [headerHeight]="40"
+                     [footerHeight]="40"
+                     [rowHeight]="50"
+                     [rows]='reporters'
+                     [sorts]="[{prop: 'enabled', dir: 'desc'}]"
+                     [rowClass]="rowClass">
+        <ngx-datatable-column>
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <mat-icon [ngStyle]="{'color': row.enabled ? 'green' : 'orange'}"  matTooltip="{{row.enabled ? 'Reporter enabled' : 'Reporter disabled'}}">
+              {{row.enabled ? 'done' : 'not_interested'}}
+            </mat-icon>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Reporter" [flexGrow]="2">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{row.name}}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Type" [flexGrow]="2">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{row.type}}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div fxLayout="row" class="forms-actions">
+              <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="Settings">settings</mat-icon></a>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+
+      <app-emptystate *ngIf="isEmpty"
+                      [message]="'Audit Reporters will appear here'"
+                      [icon]="'list'"></app-emptystate>
+    </div>
+    <div class="audits-settings-description" fxFlex>
+      <h3>Audit reporters</h3>
+      <div class="audits-settings-description-content">
+        <p>
+          Reporters are used by the platform to report many types of event (e.g Audit logs).
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

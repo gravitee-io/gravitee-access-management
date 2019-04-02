@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.password;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.root.endpoint.user.UserRequestHandler;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
@@ -34,9 +38,11 @@ public class ForgotPasswordSubmissionEndpointHandler extends UserRequestHandler 
 
     private static final String emailParam = "email";
     private UserService userService;
+    private Domain domain;
 
-    public ForgotPasswordSubmissionEndpointHandler(UserService userService) {
+    public ForgotPasswordSubmissionEndpointHandler(UserService userService, Domain domain) {
         this.userService = userService;
+        this.domain = domain;
     }
 
     @Override
@@ -46,7 +52,7 @@ public class ForgotPasswordSubmissionEndpointHandler extends UserRequestHandler 
         Map<String, String> requestParams = new HashMap<>();
         requestParams.put(OAuth2Constants.CLIENT_ID, client.getClientId());
 
-        userService.forgotPassword(email, client)
+        userService.forgotPassword(email, client, getAuthenticatedUser(context))
                 .subscribe(
                         () -> {
                             requestParams.put("success", "forgot_password_completed");
@@ -63,4 +69,15 @@ public class ForgotPasswordSubmissionEndpointHandler extends UserRequestHandler 
                         });
     }
 
+    @Override
+    protected User getAuthenticatedUser(RoutingContext routingContext) {
+        // override principal user
+        User principal = new DefaultUser(routingContext.request().getParam(emailParam));
+        Map<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put(Claims.ip_address, remoteAddress(routingContext.request()));
+        additionalInformation.put(Claims.user_agent, userAgent(routingContext.request()));
+        additionalInformation.put(Claims.domain, domain.getId());
+        ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
+        return principal;
+    }
 }

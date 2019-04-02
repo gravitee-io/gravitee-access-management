@@ -20,7 +20,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
@@ -28,6 +30,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.plugins.certificate.core.CertificateSchema;
 import io.gravitee.am.repository.management.api.CertificateRepository;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
@@ -36,6 +39,8 @@ import io.gravitee.am.service.exception.CertificateWithClientsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.CertificateAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -68,7 +73,11 @@ public class CertificateServiceImpl implements CertificateService {
     @Autowired
     private DomainService domainService;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private AuditService auditService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private Map<String, CertificateProvider> certificateProviders = new HashMap<>();
 
@@ -106,7 +115,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Single<Certificate> create(String domain, NewCertificate newCertificate, String schema) {
+    public Single<Certificate> create(String domain, NewCertificate newCertificate, String schema, User principal) {
         LOGGER.debug("Create a new certificate {} for domain {}", newCertificate, domain);
 
         Single<Certificate> certificateSingle = Single.create(emitter -> {
@@ -162,18 +171,21 @@ public class CertificateServiceImpl implements CertificateService {
                 .doOnError(ex -> {
                     LOGGER.error("An error occurs while trying to create a certificate", ex);
                     throw new TechnicalManagementException("An error occurs while trying to create a certificate", ex);
-                });
+                })
+                .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).certificate(certificate)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).throwable(throwable)));
     }
 
     @Override
-    public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema) {
+    public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema, User principal) {
         LOGGER.debug("Update a certificate {} for domain {}", id, domain);
 
         return certificateRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(id)))
                 .flatMapSingle(oldCertificate -> {
                     Single<Certificate> certificateSingle = Single.create(emitter -> {
-                        oldCertificate.setName(updateCertificate.getName());
+                        Certificate certificateToUpdate = new Certificate(oldCertificate);
+                        certificateToUpdate.setName(updateCertificate.getName());
 
                         try {
 
@@ -194,7 +206,7 @@ public class CertificateServiceImpl implements CertificateService {
                                             if (!oldFileInformation.equals(fileInformation)) {
                                                 JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
                                                 byte[] data = Base64.getDecoder().decode(file.get("content").asText());
-                                                oldCertificate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, data));
+                                                certificateToUpdate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, data));
 
                                                 // update configuration to set the file path
                                                 ((ObjectNode) certificateConfiguration).put(key, file.get("name").asText());
@@ -207,14 +219,14 @@ public class CertificateServiceImpl implements CertificateService {
                                     });
 
 
-                            oldCertificate.setConfiguration(updateCertificate.getConfiguration());
-                            oldCertificate.setUpdatedAt(new Date());
+                            certificateToUpdate.setConfiguration(updateCertificate.getConfiguration());
+                            certificateToUpdate.setUpdatedAt(new Date());
 
                         } catch (Exception ex) {
                             LOGGER.error("An error occurs while trying to update certificate configuration", ex);
                             emitter.onError(ex);
                         }
-                        emitter.onSuccess(oldCertificate);
+                        emitter.onSuccess(certificateToUpdate);
                     });
 
                     return certificateSingle
@@ -224,10 +236,12 @@ public class CertificateServiceImpl implements CertificateService {
                                 Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), certificate1.getDomain(), Action.UPDATE));
                                 return domainService.reload(domain, event).flatMap(domain1 -> Single.just(certificate1));
                             })
-                            .doOnError(ex -> {
+                            .onErrorResumeNext(ex -> {
                                 LOGGER.error("An error occurs while trying to update a certificate", ex);
                                 throw new TechnicalManagementException("An error occurs while trying to update a certificate", ex);
-                            });
+                            })
+                            .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_UPDATED).oldValue(oldCertificate).certificate(certificate)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_UPDATED).throwable(throwable)));
                 });
     }
 
@@ -249,7 +263,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Completable delete(String certificateId) {
+    public Completable delete(String certificateId, User principal) {
         LOGGER.debug("Delete certificate {}", certificateId);
         return certificateRepository.findById(certificateId)
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificateId)))
@@ -264,7 +278,11 @@ public class CertificateServiceImpl implements CertificateService {
                 .flatMapCompletable(certificate -> {
                     // Reload domain to take care about delete certificate
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), certificate.getDomain(), Action.DELETE));
-                    return certificateRepository.delete(certificateId).andThen(domainService.reload(certificate.getDomain(), event)).toCompletable();
+                    return certificateRepository.delete(certificateId)
+                            .andThen(domainService.reload(certificate.getDomain(), event))
+                            .toCompletable()
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).certificate(certificate)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to delete certificate: {}", certificateId, ex);

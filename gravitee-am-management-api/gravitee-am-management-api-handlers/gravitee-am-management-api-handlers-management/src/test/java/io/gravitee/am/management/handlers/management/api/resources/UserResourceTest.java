@@ -29,6 +29,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
@@ -115,7 +116,7 @@ public class UserResourceTest extends JerseySpringTest {
 
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(userService).resetPassword(anyString(), anyString(), anyString());
+        doReturn(Completable.complete()).when(userService).resetPassword(anyString(), anyString(), anyString(),  any());
         doReturn(true).when(passwordValidator).validate(anyString());
 
         final Response response = target("domains")

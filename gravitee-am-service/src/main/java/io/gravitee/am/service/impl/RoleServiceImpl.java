@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.RoleRepository;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.RoleAlreadyExistsException;
@@ -25,6 +28,8 @@ import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.RoleAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -48,6 +53,9 @@ public class RoleServiceImpl implements RoleService {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public Single<Set<Role>> findByDomain(String domain) {
@@ -82,7 +90,7 @@ public class RoleServiceImpl implements RoleService {
 
 
     @Override
-    public Single<Role> create(String domain, NewRole newRole) {
+    public Single<Role> create(String domain, NewRole newRole, User principal) {
         LOGGER.debug("Create a new role {} for domain {}", newRole, domain);
 
         String roleId = RandomString.generate();
@@ -106,11 +114,13 @@ public class RoleServiceImpl implements RoleService {
 
                     LOGGER.error("An error occurs while trying to create a role", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a role", ex));
-                });
+                })
+                .doOnSuccess(role -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_CREATED).role(role)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_CREATED).throwable(throwable)));
     }
 
     @Override
-    public Single<Role> update(String domain, String id, UpdateRole updateRole) {
+    public Single<Role> update(String domain, String id, UpdateRole updateRole, User principal) {
         LOGGER.debug("Update a role {} for domain {}", id, domain);
 
         return roleRepository.findById(id)
@@ -119,11 +129,14 @@ public class RoleServiceImpl implements RoleService {
                     // check if role name is unique
                     return checkRoleUniqueness(updateRole.getName(), oldRole.getId(), domain)
                             .flatMap(irrelevant -> {
-                                oldRole.setName(updateRole.getName());
-                                oldRole.setDescription(updateRole.getDescription());
-                                oldRole.setPermissions(updateRole.getPermissions());
-                                oldRole.setUpdatedAt(new Date());
-                                return roleRepository.update(oldRole);
+                                Role roleToUpdate = new Role(oldRole);
+                                roleToUpdate.setName(updateRole.getName());
+                                roleToUpdate.setDescription(updateRole.getDescription());
+                                roleToUpdate.setPermissions(updateRole.getPermissions());
+                                roleToUpdate.setUpdatedAt(new Date());
+                                return roleRepository.update(roleToUpdate)
+                                        .doOnSuccess(role -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_UPDATED).oldValue(oldRole).role(role)))
+                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_UPDATED).throwable(throwable)));
                             });
                 })
                 .onErrorResumeNext(ex -> {
@@ -138,11 +151,14 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public Completable delete(String roleId) {
+    public Completable delete(String roleId, User principal) {
         LOGGER.debug("Delete role {}", roleId);
         return roleRepository.findById(roleId)
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(roleId)))
-                .flatMapCompletable(role -> roleRepository.delete(roleId))
+                .flatMapCompletable(role -> roleRepository.delete(roleId)
+                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).role(role)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).throwable(throwable)))
+                )
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

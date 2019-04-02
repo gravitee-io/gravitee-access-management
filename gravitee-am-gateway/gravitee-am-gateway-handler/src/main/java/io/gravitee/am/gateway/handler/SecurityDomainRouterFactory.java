@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler;
 
+import io.gravitee.am.gateway.handler.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.email.EmailManager;
@@ -98,6 +99,7 @@ public class SecurityDomainRouterFactory {
         components.add(FormManager.class);
         components.add(EmailManager.class);
         components.add(ScopeManager.class);
+        components.add(AuditReporterManager.class);
 
         components.forEach(componentClass -> {
             LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);

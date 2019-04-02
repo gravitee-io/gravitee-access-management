@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.admin.listener;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.admin.security.listener.AuthenticationSuccessListener;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
@@ -61,6 +62,9 @@ public class AuthenticationSuccessListenerTest {
 
     @Mock
     private io.gravitee.am.model.User repositoryUserMock;
+
+    @Mock
+    private AuditService auditService;
 
     @Test
     public void shouldCreateUser() {

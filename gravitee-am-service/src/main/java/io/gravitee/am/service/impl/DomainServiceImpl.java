@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
@@ -28,6 +30,8 @@ import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.model.UpdateDomain;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.DomainAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -88,6 +92,12 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private FormService formService;
 
+    @Autowired
+    private ReporterService reporterService;
+
+    @Autowired
+    private AuditService auditService;
+
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("Find domain by ID: {}", id);
@@ -120,7 +130,7 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public Single<Domain> create(NewDomain newDomain) {
+    public Single<Domain> create(NewDomain newDomain, User principal) {
         LOGGER.debug("Create a new domain: {}", newDomain);
         String id = generateContextPath(newDomain.getName());
 
@@ -151,11 +161,13 @@ public class DomainServiceImpl implements DomainService {
 
                     LOGGER.error("An error occurs while trying to create a domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a domain", ex));
-                });
+                })
+                .doOnSuccess(domain -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_CREATED).domain(domain)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_CREATED).throwable(throwable)));
     }
 
     @Override
-    public Single<Domain> update(String domainId, UpdateDomain updateDomain) {
+    public Single<Domain> update(String domainId, UpdateDomain updateDomain, User principal) {
         LOGGER.debug("Update an existing domain: {}", updateDomain);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
@@ -178,7 +190,9 @@ public class DomainServiceImpl implements DomainService {
                     domain.setScim(updateDomain.getScim());
                     domain.setLoginSettings(updateDomain.getLoginSettings());
 
-                    return domainRepository.update(domain);
+                    return domainRepository.update(domain)
+                            .doOnSuccess(domain1 -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -190,15 +204,19 @@ public class DomainServiceImpl implements DomainService {
                 });
     }
 
-    public Single<Domain> patch(String domainId, PatchDomain patchDomain) {
-        LOGGER.debug("Patching an existing domain ({}) with : {}",domainId, patchDomain);
+    @Override
+    public Single<Domain> patch(String domainId, PatchDomain patchDomain, User principal) {
+        LOGGER.debug("Patching an existing domain ({}) with : {}", domainId, patchDomain);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .flatMapSingle(oldDomain -> {
                     Domain toPatch = patchDomain.patch(oldDomain);
                     toPatch.setUpdatedAt(new Date());
                     toPatch.setLastEvent(new Event(Type.DOMAIN, new Payload(domainId, domainId, Action.UPDATE)));
-                    return domainRepository.update(toPatch);
+                    return domainRepository.update(toPatch)
+                            .doOnSuccess(domain1 -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).throwable(throwable)));
+
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -251,7 +269,7 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public Completable delete(String domainId) {
+    public Completable delete(String domainId, User principal) {
         LOGGER.debug("Delete security domain {}", domainId);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
@@ -331,7 +349,16 @@ public class DomainServiceImpl implements DomainService {
                                         return Completable.concat(deleteFormsCompletable);
                                     })
                             )
-                            .andThen(domainRepository.delete(domainId));
+                            // delete reporters
+                            .andThen(reporterService.findByDomain(domainId)
+                                    .flatMapCompletable(reporters -> {
+                                        List<Completable> deleteReportersCompletable = reporters.stream().map(r -> reporterService.delete(r.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteReportersCompletable);
+                                    })
+                            )
+                            .andThen(domainRepository.delete(domainId))
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).domain(domain)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

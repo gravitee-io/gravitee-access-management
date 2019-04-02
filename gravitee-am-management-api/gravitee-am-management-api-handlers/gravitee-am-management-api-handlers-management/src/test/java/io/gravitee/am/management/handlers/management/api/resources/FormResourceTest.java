@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Form;
@@ -51,7 +52,7 @@ public class FormResourceTest extends JerseySpringTest {
         updateForm.setContent("content");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(new Form())).when(formService).update(eq(domainId), eq(formId), any());
+        doReturn(Single.just(new Form())).when(formService).update(eq(domainId), eq(formId), any(), any(User.class));
 
         final Response response = target("domains")
                 .path(domainId)
@@ -69,7 +70,7 @@ public class FormResourceTest extends JerseySpringTest {
         mockDomain.setId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(formService).delete(eq(formId));
+        doReturn(Completable.complete()).when(formService).delete(eq(formId), any());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -87,7 +88,7 @@ public class FormResourceTest extends JerseySpringTest {
         mockDomain.setId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.error(new FormNotFoundException(formId))).when(formService).delete(eq(formId));
+        doReturn(Completable.error(new FormNotFoundException(formId))).when(formService).delete(eq(formId), any());
 
         final Response response = target("domains")
                 .path(domainId)

@@ -95,7 +95,7 @@ public class CertificatesResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just("certificate-schema")).when(certificatePluginService).getSchema(anyString());
-        doReturn(Single.just(certificate)).when(certificateService).create(eq(domainId), any(), anyString());
+        doReturn(Single.just(certificate)).when(certificateService).create(eq(domainId), any(), anyString(), any());
 
         final Response response = target("domains")
                 .path(domainId)

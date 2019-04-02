@@ -178,6 +178,17 @@ import { EmailResolver } from "./resolvers/email.resolver";
 import { SelectClientsComponent } from "./domain/components/clients/select-clients.component";
 import { ClientScopeComponent } from "./domain/clients/client/scopes/client-scope.component";
 import { ConsentsResolver } from "./resolvers/consents.resolver";
+import { AuditsComponent } from "./domain/settings/audits/audits.component";
+import { AuditComponent } from "./domain/settings/audits/audit/audit.component";
+import { AuditsSettingsComponent } from "./domain/settings/audits/settings/settings.component";
+import { AuditService } from "./services/audit.service";
+import { AuditsResolver } from "./resolvers/audits.resolver";
+import { AuditResolver } from "./resolvers/audit.resolver";
+import { ReporterService } from "./services/reporter.service";
+import { ReportersResolver } from "./resolvers/reporters.resolver";
+import { ReporterResolver } from "./resolvers/reporter.resolver";
+import { ReporterComponent } from "./domain/settings/audits/settings/reporter/reporter.component";
+import { ReporterFormComponent } from "./domain/settings/audits/settings/reporter/form/form.component";
 
 @NgModule({
   declarations: [
@@ -279,7 +290,12 @@ import { ConsentsResolver } from "./resolvers/consents.resolver";
     EmailComponent,
     EmailInfoDialog,
     SelectClientsComponent,
-    ClientScopeComponent
+    ClientScopeComponent,
+    AuditsComponent,
+    AuditComponent,
+    AuditsSettingsComponent,
+    ReporterComponent,
+    ReporterFormComponent
   ],
   imports: [
     BrowserModule,
@@ -336,6 +352,12 @@ import { ConsentsResolver } from "./resolvers/consents.resolver";
     EmailService,
     EmailResolver,
     ConsentsResolver,
+    AuditService,
+    AuditsResolver,
+    AuditResolver,
+    ReporterService,
+    ReportersResolver,
+    ReporterResolver,
     { provide: Http, useClass: HttpService }
   ],
   entryComponents: [

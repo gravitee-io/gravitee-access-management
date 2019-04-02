@@ -35,13 +35,35 @@ public interface UserService {
 
     Maybe<User> findById(String id);
 
-    Single<User> create(String domain, NewUser newUser);
+    Single<User> create(String domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> update(String domain, String id, UpdateUser updateUser);
+    Single<User> update(String domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable delete(String userId);
+    Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable resetPassword(String domain, String userId, String password);
+    Completable resetPassword(String domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable sendRegistrationConfirmation(String userId);
+    Completable sendRegistrationConfirmation(String userId, io.gravitee.am.identityprovider.api.User principal);
+
+    default Single<User> create(String domain, NewUser newUser) {
+        return create(domain, newUser, null);
+    }
+
+    default Single<User> update(String domain, String id, UpdateUser updateUser) {
+        return update(domain, id, updateUser, null);
+    }
+
+    default Completable delete(String userId) {
+        return delete(userId, null);
+    }
+
+    default Completable resetPassword(String domain, String userId, String password) {
+        return resetPassword(domain, userId, password, null);
+    }
+
+    default Completable sendRegistrationConfirmation(String userId) {
+        return sendRegistrationConfirmation(userId, null);
+    }
+
+
 }

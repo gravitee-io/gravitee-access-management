@@ -1,0 +1,58 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="audit-container">
+  <h1>Audit log detail</h1>
+  <a [routerLink]="['..']"><small><< Back to Audit Log</small></a>
+  <div class="audit-content" fxLayout="row">
+    <form fxLayout="column" fxFlex="70">
+      <mat-chip-list #chipList style="position: absolute; margin-top: -35px; margin-left: -10px;">
+        <mat-chip [color]="audit.outcome?.status === 'SUCCESS'? 'accent':'warn'" selected>
+          {{audit.outcome?.status}}
+        </mat-chip>
+      </mat-chip-list>
+      <mat-form-field *ngIf="audit.timestamp">
+        <input matInput placeholder="Timestamp" disabled [value]="audit.timestamp | date: 'dd/MM/yyyy HH:mm:ss.sss'">
+      </mat-form-field>
+      <mat-form-field *ngIf="audit.type">
+        <input matInput placeholder="Event Type" disabled [value]="audit.type">
+      </mat-form-field>
+      <mat-form-field *ngIf="audit.actor?.displayName">
+        <input matInput placeholder="Actor" disabled [value]="audit.actor?.displayName">
+      </mat-form-field>
+      <mat-form-field *ngIf="audit.accessPoint?.alternativeId">
+        <input matInput placeholder="Client" disabled [value]="audit.accessPoint?.alternativeId">
+      </mat-form-field>
+      <mat-form-field *ngIf="audit.accessPoint?.ipAddress">
+        <input matInput placeholder="IP Address" disabled [value]="audit.accessPoint?.ipAddress">
+      </mat-form-field>
+      <mat-form-field *ngIf="audit.accessPoint?.ipAddress">
+        <input matInput placeholder="User Agent" disabled [value]="audit.accessPoint?.userAgent">
+      </mat-form-field>
+      <div *ngIf="audit.outcome?.message" class="audit-message-zone" fxLayout="column">
+        <div style="margin-bottom: 20px;"><strong>Details</strong></div>
+        <codemirror [value]="auditDetails()" [config]="config"></codemirror>
+      </div>
+    </form>
+    <div class="audit-description" fxFlex>
+      <h3>Log details</h3>
+      <div class="audit-description-content">
+        <p>View the detailed properties of the audit log event record.</p>
+      </div>
+    </div>
+  </div>
+</div>

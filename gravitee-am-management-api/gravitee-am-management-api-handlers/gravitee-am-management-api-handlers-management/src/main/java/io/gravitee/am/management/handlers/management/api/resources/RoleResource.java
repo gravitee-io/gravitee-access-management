@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
@@ -42,7 +43,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RoleResource {
+public class RoleResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -90,9 +91,11 @@ public class RoleResource {
             @PathParam("role") String role,
             @ApiParam(name = "role", required = true) @Valid @NotNull UpdateRole updateRole,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> roleService.update(domain, role, updateRole))
+                .flatMapSingle(irrelevant -> roleService.update(domain, role, updateRole, authenticatedUser))
                 .map(role1 -> Response.ok(role1).build())
                 .subscribe(
                         result -> response.resume(result),
@@ -108,7 +111,9 @@ public class RoleResource {
     public void delete(@PathParam("domain") String domain,
                            @PathParam("role") String role,
                            @Suspended final AsyncResponse response) {
-        roleService.delete(role)
+        final User authenticatedUser = getAuthenticatedUser();
+
+        roleService.delete(role, authenticatedUser)
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

@@ -15,12 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.provider;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
+import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.model.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -30,6 +32,9 @@ import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -55,6 +60,8 @@ public class UserAuthenticationProvider implements AuthProvider {
         String username = authInfo.getString(USERNAME_PARAMETER);
         String password = authInfo.getString(PASSWORD_PARAMETER);
         String clientId = authInfo.getString(OAuth2Constants.CLIENT_ID);
+        String ipAddress = authInfo.getString(Claims.ip_address);
+        String userAgent = authInfo.getString(Claims.user_agent);
 
         parseClient(clientId, parseClientHandler -> {
             if (parseClientHandler.failed()) {
@@ -64,7 +71,15 @@ public class UserAuthenticationProvider implements AuthProvider {
             }
 
             final Client client = parseClientHandler.result();
-            userAuthenticationManager.authenticate(client, new EndUserAuthentication(username, password))
+
+            final Authentication authentication = new EndUserAuthentication(username, password);
+            Map<String, Object> additionalInformation = new HashMap();
+            additionalInformation.put(Claims.ip_address, ipAddress);
+            additionalInformation.put(Claims.user_agent, userAgent);
+            additionalInformation.put(Claims.domain, client.getDomain());
+            ((EndUserAuthentication) authentication).setAdditionalInformation(additionalInformation);
+
+            userAuthenticationManager.authenticate(client, authentication)
                     .subscribe(
                             user -> resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.vertx.auth.user.User(user))),
                             error -> resultHandler.handle(Future.failedFuture(error))

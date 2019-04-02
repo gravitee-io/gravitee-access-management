@@ -1,0 +1,48 @@
+.audit-container {
+  padding: 20px 70px 20px 50px;
+  h1 {
+    font-weight: 400;
+  }
+  a {
+    margin-left: 10px;
+    color: #006CAB;
+    text-decoration: none;
+    &:hover {
+      color: #2196f3;
+      text-decoration: underline;
+    }
+  }
+  .audit-content {
+    padding: 25px 0 20px;
+    form {
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 2px;
+      border: 1px solid rgb(226, 229, 231);
+
+      .audit-message-zone {
+        padding: 10px;
+        background-color: #f1f1f1;
+        margin-top: 20px;
+        h4 {
+          margin: 5px 0;
+        }
+      }
+    }
+    .audit-description {
+      margin-left: 20px;
+      h3 {
+        font-weight: 400;
+      }
+      .audit-description-content {
+        border-top: 1px solid rgb(226, 229, 231);
+        p {
+          font-size: 12px;
+        }
+        mat-icon {
+          color: grey;
+        }
+      }
+    }
+  }
+}

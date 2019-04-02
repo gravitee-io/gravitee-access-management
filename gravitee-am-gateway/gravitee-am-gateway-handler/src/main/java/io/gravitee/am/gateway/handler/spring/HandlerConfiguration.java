@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.spring;
 
+import io.gravitee.am.gateway.handler.audit.AuditReporterManager;
+import io.gravitee.am.gateway.handler.audit.impl.AuditReporterManagerImpl;
 import io.gravitee.am.gateway.handler.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.auth.idp.impl.IdentityProviderManagerImpl;
@@ -100,4 +102,11 @@ public class HandlerConfiguration {
     public EmailManager emailManager() {
         return new EmailManagerImpl();
     }
+
+    @Bean
+    public AuditReporterManager auditReporterManager() {
+        return new AuditReporterManagerImpl();
+    }
+
+
 }

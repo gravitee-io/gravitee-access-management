@@ -49,7 +49,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserResource {
+public class UserResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -109,10 +109,11 @@ public class UserResource {
             @PathParam("user") String user,
             @ApiParam(name = "user", required = true) @Valid @NotNull UpdateUser updateUser,
             @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> userService.update(domain, user, updateUser))
+                .flatMapSingle(irrelevant -> userService.update(domain, user, updateUser, authenticatedUser))
                 .map(user1 -> Response.ok(user1).build())
                 .subscribe(
                         result -> response.resume(result),
@@ -127,10 +128,11 @@ public class UserResource {
     public void delete(@PathParam("domain") String domain,
                        @PathParam("user") String user,
                        @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(irrelevant -> userService.delete(user))
+                .flatMapCompletable(irrelevant -> userService.delete(user, authenticatedUser))
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
@@ -146,6 +148,7 @@ public class UserResource {
                               @PathParam("user") String user,
                               @ApiParam(name = "password", required = true) @Valid @NotNull PasswordValue password,
                               @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         // check password policy
         if (!passwordValidator.validate(password.getPassword())) {
@@ -155,7 +158,7 @@ public class UserResource {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(user1 -> userService.resetPassword(domain, user, password.getPassword()))
+                .flatMapCompletable(user1 -> userService.resetPassword(domain, user, password.getPassword(), authenticatedUser))
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
@@ -171,9 +174,11 @@ public class UserResource {
     public void sendRegistrationConfirmation(@PathParam("domain") String domain,
                                              @PathParam("user") String user,
                                              @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(irrelevant -> userService.sendRegistrationConfirmation(user))
+                .flatMapCompletable(irrelevant -> userService.sendRegistrationConfirmation(user, authenticatedUser))
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

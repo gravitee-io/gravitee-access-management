@@ -19,7 +19,13 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.gateway.handler.email.EmailService;
+import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.User;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -61,8 +67,14 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private Configuration freemarkerConfiguration;
 
+    @Autowired
+    private Domain domain;
+
+    @Autowired
+    private AuditService auditService;
+
     @Override
-    public void send(Email email) {
+    public void send(Email email, User user, Client client) {
         if (enabled) {
             try {
                 final MimeMessageHelper mailMessage = new MimeMessageHelper(mailSender.createMimeMessage(), true, StandardCharsets.UTF_8.name());
@@ -88,9 +100,11 @@ public class EmailServiceImpl implements EmailService {
                 final String html = addResourcesInMessage(mailMessage, content);
                 LOGGER.debug("Sending an email to: {}\nSubject: {}\nMessage: {}", email.getTo(), email.getSubject(), html);
                 mailSender.send(mailMessage.getMimeMessage());
+                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).client(client).email(email).user(user));
             } catch (final Exception ex) {
                 LOGGER.error("Error while sending email", ex);
                 new TechnicalManagementException("Error while sending email", ex);
+                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).client(client).email(email).throwable(ex));
             }
         }
     }

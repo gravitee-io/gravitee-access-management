@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
@@ -48,6 +49,12 @@ public class ScopeApprovalServiceTest {
 
     @Mock
     private ScopeApprovalRepository scopeApprovalRepository;
+
+    @Mock
+    private AuditService auditService;
+
+    @Mock
+    private UserService userService;
 
     private final static String DOMAIN = "domain1";
 
@@ -128,8 +135,8 @@ public class ScopeApprovalServiceTest {
     @Test
     public void shouldDelete_technicalException() {
         when(scopeApprovalRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
-
-        TestObserver testObserver = scopeApprovalService.revoke("my-consent").test();
+        when(userService.findById(anyString())).thenReturn(Maybe.just(new User()));
+        TestObserver testObserver = scopeApprovalService.revokeByConsent("my-domain","user-id","my-consent").test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -138,8 +145,10 @@ public class ScopeApprovalServiceTest {
     @Test
     public void shouldDelete() {
         when(scopeApprovalRepository.delete("my-consent")).thenReturn(Completable.complete());
+        when(scopeApprovalRepository.findById("my-consent")).thenReturn(Maybe.just(new ScopeApproval()));
+        when(userService.findById(anyString())).thenReturn(Maybe.just(new User()));
 
-        TestObserver testObserver = scopeApprovalService.revoke( "my-consent").test();
+        TestObserver testObserver = scopeApprovalService.revokeByConsent("my-domain","user-id", "my-consent").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

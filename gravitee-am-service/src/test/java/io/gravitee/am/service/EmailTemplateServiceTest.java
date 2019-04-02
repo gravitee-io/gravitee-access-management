@@ -59,6 +59,9 @@ public class EmailTemplateServiceTest {
     @Mock
     private EmailRepository emailRepository;
 
+    @Mock
+    private AuditService auditService;
+
     private final static String DOMAIN = "domain1";
 
     @Test

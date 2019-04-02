@@ -62,7 +62,7 @@ public class Client implements Cloneable{
 
     private String logoUri;
 
-    private String ClientUri;
+    private String clientUri;
 
     private String policyUri;
 
@@ -133,6 +133,66 @@ public class Client implements Cloneable{
     private int idTokenValiditySeconds = DEFAULT_ID_TOKEN_VALIDITY_SECONDS;
 
     private Map<String, Object> idTokenCustomClaims;
+
+    public Client() { }
+
+    public Client(Client other) {
+        this.id = other.id;
+        this.clientId = other.clientId;
+        this.clientSecret = other.clientSecret;
+        this.redirectUris = other.redirectUris;
+        this.authorizedGrantTypes = other.authorizedGrantTypes;
+        this.responseTypes = other.responseTypes;
+        this.applicationType = other.applicationType;
+        this.contacts = other.contacts;
+        this.clientName = other.clientName;
+        this.logoUri = other.logoUri;
+        this.clientUri = other.clientUri;
+        this.policyUri = other.policyUri;
+        this.tosUri = other.tosUri;
+        this.jwksUri = other.jwksUri;
+        this.jwks = other.jwks;
+        this.sectorIdentifierUri = other.sectorIdentifierUri;
+        this.subjectType = other.subjectType;
+        this.idTokenSignedResponseAlg = other.idTokenSignedResponseAlg;
+        this.idTokenEncryptedResponseAlg = other.idTokenEncryptedResponseAlg;
+        this.idTokenEncryptedResponseEnc = other.idTokenEncryptedResponseEnc;
+        this.userinfoSignedResponseAlg = other.userinfoSignedResponseAlg;
+        this.userinfoEncryptedResponseAlg = other.userinfoEncryptedResponseAlg;
+        this.userinfoEncryptedResponseEnc = other.userinfoEncryptedResponseEnc;
+        this.requestObjectSigningAlg = other.requestObjectSigningAlg;
+        this.requestObjectEncryptionAlg = other.requestObjectEncryptionAlg;
+        this.requestObjectEncryptionEnc = other.requestObjectEncryptionEnc;
+        this.tokenEndpointAuthMethod = other.tokenEndpointAuthMethod;
+        this.tokenEndpointAuthSigningAlg = other.tokenEndpointAuthSigningAlg;
+        this.defaultMaxAge = other.defaultMaxAge;
+        this.requireAuthTime = other.requireAuthTime;
+        this.defaultACRvalues = other.defaultACRvalues;
+        this.initiateLoginUri = other.initiateLoginUri;
+        this.requestUris = other.requestUris;
+        this.scopes = other.scopes;
+        this.softwareId = other.softwareId;
+        this.softwareVersion = other.softwareVersion;
+        this.softwareStatement = other.softwareStatement;
+        this.registrationAccessToken = other.registrationAccessToken;
+        this.registrationClientUri = other.registrationClientUri;
+        this.clientIdIssuedAt = other.clientIdIssuedAt;
+        this.clientSecretExpiresAt = other.clientSecretExpiresAt;
+        this.autoApproveScopes = other.autoApproveScopes;
+        this.accessTokenValiditySeconds = other.accessTokenValiditySeconds;
+        this.refreshTokenValiditySeconds = other.refreshTokenValiditySeconds;
+        this.idTokenValiditySeconds = other.idTokenValiditySeconds;
+        this.idTokenCustomClaims = other.idTokenCustomClaims;
+        this.domain = other.domain;
+        this.enabled = other.enabled;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+        this.identities = other.identities;
+        this.oauth2Identities = other.oauth2Identities;
+        this.certificate = other.certificate;
+        this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
+        this.scopeApprovals = other.scopeApprovals;
+    }
 
     /**
      * Security domain associated to the client
@@ -243,11 +303,11 @@ public class Client implements Cloneable{
     }
 
     public String getClientUri() {
-        return ClientUri;
+        return clientUri;
     }
 
     public void setClientUri(String clientUri) {
-        ClientUri = clientUri;
+        clientUri = clientUri;
     }
 
     public String getPolicyUri() {

@@ -33,4 +33,10 @@ public class PlatformResource {
     public PluginsResource getPluginsResource() {
         return resourceContext.getResource(PluginsResource.class);
     }
+
+    @Path("audit")
+    public AuditResource getAuditResource() {
+        return resourceContext.getResource(AuditResource.class);
+    }
+
 }

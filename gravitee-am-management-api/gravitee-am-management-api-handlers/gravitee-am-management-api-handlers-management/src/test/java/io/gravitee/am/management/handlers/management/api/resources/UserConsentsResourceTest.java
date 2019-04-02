@@ -102,7 +102,7 @@ public class UserConsentsResourceTest extends JerseySpringTest {
         mockUser.setId("user-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(scopeApprovalService).revoke(domainId, mockUser.getId());
+        doReturn(Completable.complete()).when(scopeApprovalService).revokeByUser(domainId, mockUser.getId(), null);
 
         final Response response = target("domains")
                 .path(domainId)

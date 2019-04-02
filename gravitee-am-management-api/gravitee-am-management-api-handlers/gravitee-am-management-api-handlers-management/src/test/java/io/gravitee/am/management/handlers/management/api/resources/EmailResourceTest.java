@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
@@ -54,7 +55,7 @@ public class EmailResourceTest extends JerseySpringTest {
         updateEmail.setExpiresAfter(1000);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(new Email())).when(emailTemplateService).update(eq(domainId), eq(emailId), any());
+        doReturn(Single.just(new Email())).when(emailTemplateService).update(eq(domainId), eq(emailId), any(), any(User.class));
         doReturn(Single.just(new Email())).when(emailManager).reloadEmail(any());
 
         final Response response = target("domains")
@@ -73,7 +74,7 @@ public class EmailResourceTest extends JerseySpringTest {
         mockDomain.setId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(emailTemplateService).delete(eq(emailId));
+        doReturn(Completable.complete()).when(emailTemplateService).delete(eq(emailId), any());
         doReturn(Completable.complete()).when(emailManager).deleteEmail(any());
 
         final Response response = target("domains")
@@ -92,7 +93,7 @@ public class EmailResourceTest extends JerseySpringTest {
         mockDomain.setId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.error(new EmailNotFoundException(emailId))).when(emailTemplateService).delete(eq(emailId));
+        doReturn(Completable.error(new EmailNotFoundException(emailId))).when(emailTemplateService).delete(eq(emailId), any());
 
         final Response response = target("domains")
                 .path(domainId)

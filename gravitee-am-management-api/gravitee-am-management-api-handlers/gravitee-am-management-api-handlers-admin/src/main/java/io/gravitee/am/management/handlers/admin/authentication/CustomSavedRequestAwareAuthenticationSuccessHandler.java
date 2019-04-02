@@ -15,8 +15,13 @@
  */
 package io.gravitee.am.management.handlers.admin.authentication;
 
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.admin.provider.jwt.JWTGenerator;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +36,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.groups.Default;
 import java.io.IOException;
 
 /**
@@ -44,6 +50,12 @@ public class CustomSavedRequestAwareAuthenticationSuccessHandler extends SavedRe
 
     @Autowired
     private JWTGenerator jwtGenerator;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private Domain domain;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -85,7 +97,11 @@ public class CustomSavedRequestAwareAuthenticationSuccessHandler extends SavedRe
     }
 
     private Cookie createJWTAuthenticationCookie(Authentication authentication) {
+        final io.gravitee.am.model.User endUser = userService.findByDomainAndUsername(domain.getId(), authentication.getName()).blockingGet();
         final User principal = (User) authentication.getPrincipal();
+        ((DefaultUser) principal).setId(endUser.getId());
+        principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
+        principal.getAdditionalInformation().put(Claims.domain, endUser.getDomain());
         return jwtGenerator.generateCookie(principal);
     }
 }

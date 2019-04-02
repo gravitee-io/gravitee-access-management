@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.users.endpoint.consents;
 
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.user.UserService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Single;
@@ -28,12 +30,10 @@ import java.util.Optional;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserConsentsEndpointHandler {
+public class UserConsentsEndpointHandler extends AbstractUserConsentEndpointHandler {
 
-    private UserService userService;
-
-    public UserConsentsEndpointHandler(UserService userService) {
-        this.userService = userService;
+    public UserConsentsEndpointHandler(UserService userService, ClientSyncService clientSyncService, Domain domain) {
+        super(userService, clientSyncService, domain);
     }
 
     /**
@@ -70,9 +70,11 @@ public class UserConsentsEndpointHandler {
         Single.just(Optional.ofNullable(clientId))
                 .flatMapCompletable(optClient -> {
                     if (optClient.isPresent()) {
-                        return userService.revokeConsents(userId, optClient.get());
+                        return getPrincipal(context)
+                                .flatMapCompletable(principal -> userService.revokeConsents(userId, optClient.get(), principal));
                     }
-                    return userService.revokeConsents(userId);
+                    return getPrincipal(context)
+                            .flatMapCompletable(principal -> userService.revokeConsents(userId, principal));
                 })
                 .subscribe(
                         () -> context.response().setStatusCode(204).end(),

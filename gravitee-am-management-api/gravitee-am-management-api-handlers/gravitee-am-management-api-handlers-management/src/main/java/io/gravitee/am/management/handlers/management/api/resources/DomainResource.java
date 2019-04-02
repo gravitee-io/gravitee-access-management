@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -25,7 +26,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.glassfish.jersey.server.ManagedAsync;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
@@ -51,7 +51,6 @@ public class DomainResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @GET
-    @ManagedAsync
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a security domain")
     @ApiResponses({
@@ -78,7 +77,9 @@ public class DomainResource extends AbstractResource {
             @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
             @PathParam("domain") String domainId,
             @Suspended final AsyncResponse response) {
-         domainService.patch(domainId, domainToPatch)
+        final User authenticatedUser = getAuthenticatedUser();
+
+         domainService.patch(domainId, domainToPatch, authenticatedUser)
                 .subscribe(
                         domain -> response.resume(Response.ok(domain).build()),
                         error -> response.resume(error));
@@ -96,7 +97,9 @@ public class DomainResource extends AbstractResource {
             @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
             @PathParam("domain") String domainId,
             @Suspended final AsyncResponse response) {
-        domainService.patch(domainId, domainToPatch)
+        final User authenticatedUser = getAuthenticatedUser();
+
+        domainService.patch(domainId, domainToPatch, authenticatedUser)
                 .subscribe(
                         domain -> response.resume(Response.ok(domain).build()),
                         error -> response.resume(error));
@@ -109,7 +112,9 @@ public class DomainResource extends AbstractResource {
             @ApiResponse(code = 500, message = "Internal server error")})
     public void delete(@PathParam("domain") String domain,
                        @Suspended final AsyncResponse response) {
-        domainService.delete(domain)
+        final User authenticatedUser = getAuthenticatedUser();
+
+        domainService.delete(domain, authenticatedUser)
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
@@ -163,6 +168,16 @@ public class DomainResource extends AbstractResource {
     @Path("emails")
     public EmailsResource getEmailsResource() {
         return resourceContext.getResource(EmailsResource.class);
+    }
+
+    @Path("audits")
+    public AuditsResource getAuditsResource() {
+        return resourceContext.getResource(AuditsResource.class);
+    }
+
+    @Path("reporters")
+    public ReportersResource getReportersResource() {
+        return resourceContext.getResource(ReportersResource.class);
     }
 
 }

@@ -33,6 +33,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.Collections;
 import java.util.Set;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
@@ -103,7 +104,7 @@ public class UserServiceTest {
         final ScopeApproval scopeApproval = new ScopeApproval();
         scopeApproval.setId("consentId");
 
-        when(scopeApprovalService.revoke(anyString(), eq(userId))).thenReturn(Completable.complete());
+        when(scopeApprovalService.revokeByUser(anyString(), eq(userId), any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.revokeConsents(userId).test();
 
@@ -113,9 +114,9 @@ public class UserServiceTest {
 
     @Test
     public void shouldRevokeConsent() {
-        when(scopeApprovalService.revoke(anyString())).thenReturn(Completable.complete());
+        when(scopeApprovalService.revokeByConsent(anyString(), anyString(), anyString(), any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.revokeConsent("consentId").test();
+        TestObserver testObserver = userService.revokeConsent("userId", "consentId").test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

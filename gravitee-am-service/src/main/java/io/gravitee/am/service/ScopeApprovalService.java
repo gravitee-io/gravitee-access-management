@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -34,9 +35,21 @@ public interface ScopeApprovalService {
 
     Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String user, String client);
 
-    Completable revoke(String consentId);
+    Completable revokeByConsent(String domain, String userId, String consentId, User principal);
 
-    Completable revoke(String domain, String user);
+    Completable revokeByUser(String domain, String user, User principal);
 
-    Completable revoke(String domain, String user, String clientId);
+    Completable revokeByUserAndClient(String domain, String user, String clientId, User principal);
+
+    default Completable revokeByConsent(String domain, String userId, String consentId) {
+        return revokeByConsent(domain, userId, consentId, null);
+    }
+
+    default Completable revokeByUser(String domain, String userId) {
+        return revokeByUser(domain, userId, null);
+    }
+
+    default Completable revokeByUserAndClient(String domain, String userId, String clientId) {
+        return revokeByUserAndClient(domain, userId, clientId, null);
+    }
 }

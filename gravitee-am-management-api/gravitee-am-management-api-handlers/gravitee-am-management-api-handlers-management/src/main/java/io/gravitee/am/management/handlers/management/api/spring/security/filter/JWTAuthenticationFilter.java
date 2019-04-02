@@ -15,9 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.spring.security.filter;
 
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.common.http.HttpHeaders;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -41,6 +42,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.Key;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFilter implements InitializingBean {
@@ -51,6 +54,10 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
     private String jwtCookiePath;
     @Value("${jwt.cookie-name:Auth-Graviteeio-AM}")
     private String authCookieName;
+    @Value("${jwt.cookie-secure:false}")
+    private boolean jwtCookieSecure;
+    @Value("${jwt.cookie-domain:}")
+    private String jwtCookieDomain;
     private Key key;
 
     public JWTAuthenticationFilter(RequestMatcher requiresAuthenticationRequestMatcher) {
@@ -87,8 +94,11 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
         try {
             JwtParser jwtParser = Jwts.parser().setSigningKey(key);
-            Claims claims = jwtParser.parseClaimsJws(authToken).getBody();
-            DefaultUser user = new DefaultUser(claims.getSubject());
+            Map<String, Object> claims = new HashMap<>(jwtParser.parseClaimsJws(authToken).getBody());
+            claims.put(Claims.ip_address, remoteAddress(request));
+            claims.put(Claims.user_agent, userAgent(request));
+            DefaultUser user = new DefaultUser((String) claims.get(StandardClaims.PREFERRED_USERNAME));
+            user.setId((String) claims.get(StandardClaims.SUB));
             user.setAdditionalInformation(claims);
             return new UsernamePasswordAuthenticationToken(user, null, AuthorityUtils.NO_AUTHORITIES);
         } catch (Exception ex) {
@@ -115,8 +125,10 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
     }
 
     private void removeJWTAuthenticationCookie(HttpServletResponse response) {
-        Cookie cookie = new Cookie(HttpHeaders.AUTHORIZATION, null);
+        Cookie cookie = new Cookie(authCookieName, null);
+        cookie.setSecure(jwtCookieSecure);
         cookie.setPath(jwtCookiePath);
+        cookie.setDomain(jwtCookieDomain);
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }
@@ -139,5 +151,28 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
             // We do not need to do anything extra on REST authentication success, because there is no page to redirect to
         }
 
+    }
+
+    private String remoteAddress(HttpServletRequest httpServerRequest) {
+        String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
+        String remoteAddress;
+
+        if(xForwardedFor != null && xForwardedFor.length() > 0) {
+            int idx = xForwardedFor.indexOf(',');
+
+            remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;
+
+            idx = remoteAddress.indexOf(':');
+
+            remoteAddress = (idx != -1) ? remoteAddress.substring(0, idx).trim() : remoteAddress.trim();
+        } else {
+            remoteAddress = httpServerRequest.getRemoteAddr();
+        }
+
+        return remoteAddress;
+    }
+
+    private String userAgent(HttpServletRequest request) {
+        return request.getHeader(HttpHeaders.USER_AGENT);
     }
 }

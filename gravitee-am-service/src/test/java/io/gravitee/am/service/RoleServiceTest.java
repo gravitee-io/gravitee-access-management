@@ -62,6 +62,9 @@ public class RoleServiceTest {
     @Mock
     private RoleRepository roleRepository;
 
+    @Mock
+    private AuditService auditService;
+
     private final static String DOMAIN = "domain1";
 
     @Test

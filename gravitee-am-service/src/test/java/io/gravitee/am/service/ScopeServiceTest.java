@@ -74,6 +74,9 @@ public class ScopeServiceTest {
     @Mock
     private DomainService domainService;
 
+    @Mock
+    private AuditService auditService;
+
     private final static String DOMAIN = "domain1";
 
     @Test

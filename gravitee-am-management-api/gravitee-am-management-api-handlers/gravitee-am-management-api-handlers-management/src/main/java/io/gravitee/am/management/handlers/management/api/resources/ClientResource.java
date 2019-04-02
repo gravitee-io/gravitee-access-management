@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
@@ -117,10 +118,12 @@ public class ClientResource extends AbstractResource {
             @PathParam("client") String client,
             @ApiParam(name = "client", required = true) @Valid @NotNull PatchClient patchClient,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapSingle(irrelevant -> this.applyDefaultResponseType(patchClient))
-                .flatMap(patch -> clientService.patch(domain, client, patch, true))
+                .flatMap(patch -> clientService.patch(domain, client, patch, true, authenticatedUser))
                 .map(updatedClient -> Response.ok(updatedClient).build())
                 .subscribe(
                         result -> response.resume(result),
@@ -135,7 +138,9 @@ public class ClientResource extends AbstractResource {
     public void delete(@PathParam("domain") String domain,
                        @PathParam("client") String client,
                        @Suspended final AsyncResponse response) {
-        clientService.delete(client)
+        final User authenticatedUser = getAuthenticatedUser();
+
+        clientService.delete(client, authenticatedUser)
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
@@ -151,9 +156,11 @@ public class ClientResource extends AbstractResource {
     public void renewClientSecret(@PathParam("domain") String domain,
                             @PathParam("client") String client,
                             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(__ -> clientService.renewClientSecret(domain, client))
+                .flatMapSingle(__ -> clientService.renewClientSecret(domain, client, authenticatedUser))
                 .map(updatedClient -> Response.ok(updatedClient).build())
                 .subscribe(
                         result -> response.resume(result),

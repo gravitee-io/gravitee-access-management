@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
-import java.security.Principal;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public abstract class AbstractResource {
@@ -28,23 +31,14 @@ public abstract class AbstractResource {
     @Context
     protected SecurityContext securityContext;
 
-    protected String getAuthenticatedUsername() {
-        return securityContext.getUserPrincipal().getName();
-    }
-
-    protected Principal getAuthenticatedUser() {
-        return securityContext.getUserPrincipal();
+    protected User getAuthenticatedUser() {
+        if (isAuthenticated()) {
+            return (User) ((UsernamePasswordAuthenticationToken) securityContext.getUserPrincipal()).getPrincipal();
+        }
+        return null;
     }
 
     protected boolean isAuthenticated() {
         return securityContext.getUserPrincipal() != null;
-    }
-
-    protected boolean isAdmin() {
-        return isUserInRole("ADMIN");
-    }
-
-    protected boolean isUserInRole(String role) {
-        return securityContext.isUserInRole(role);
     }
 }

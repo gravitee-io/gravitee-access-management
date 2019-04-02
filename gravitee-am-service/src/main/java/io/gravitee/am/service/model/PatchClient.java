@@ -469,7 +469,9 @@ public class PatchClient {
         this.scopeApprovals = scopeApprovals;
     }
 
-    public Client patch(Client toPatch, boolean forceNull) {
+    public Client patch(Client _toPatch, boolean forceNull) {
+        // create new object for audit purpose (patch json result)
+        Client toPatch = new Client(_toPatch);
 
         SetterUtils.safeSet(toPatch::setRedirectUris, this.getRedirectUris());
         SetterUtils.safeSet(toPatch::setAuthorizedGrantTypes, this.getAuthorizedGrantTypes());

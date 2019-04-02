@@ -1,0 +1,50 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="reporter-container">
+  <h1>{{reporter.name}}</h1>
+  <a [routerLink]="['..']"><small><< Back to reporters</small></a>
+  <div class="reporter-content">
+    <form #reporterForm="ngForm" fxLayout="column" fxFlex="70">
+      <div fxFlex fxLayoutAlign="end">
+        <mat-slide-toggle matTooltip="{{reporter.enabled ? 'Disable reporter ?' : 'Enable reporter ?'}}"
+                          (change)="enableReporter($event)"
+                          [checked]="reporter.enabled"></mat-slide-toggle>
+      </div>
+      <h4 style="margin-top: 0px;">General</h4>
+      <mat-form-field>
+        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="reporter.name" required>
+        <mat-hint>A name for your reporter.</mat-hint>
+      </mat-form-field>
+
+      <h4 style="margin-top: 10px;">Configuration</h4>
+      <reporter-form *ngIf="reporter" [reporterConfiguration]="reporterConfiguration" [reporterSchema]="reporterSchema" (configurationCompleted)="enableReporterUpdate($event)"></reporter-form>
+
+      <div fxLayout="row" fxLayoutAlign="end end" class="update-reporter">
+        <button mat-raised-button [disabled]="(!reporterForm.valid || reporterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">UPDATE</button>
+      </div>
+    </form>
+    <div class="reporter-description" fxFlex>
+      <h3>Reporter</h3>
+      <div class="reporter-description-content">
+        <p>
+          A reporter is used by the platform to report many types of event (e.g Audit logs).
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -24,6 +24,7 @@ import io.gravitee.am.management.standalone.node.ManagementNode;
 import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
+import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.node.api.Node;
@@ -35,6 +36,7 @@ import org.springframework.context.annotation.Import;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
@@ -49,6 +51,7 @@ import org.springframework.context.annotation.Import;
         IdentityProviderConfiguration.class,
         CertificateConfiguration.class,
         ExtensionGrantConfiguration.class,
+        ReporterConfiguration.class,
         CoreConfiguration.class})
 public class StandaloneConfiguration {
 

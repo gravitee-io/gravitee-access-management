@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.service.DomainService;
@@ -40,7 +41,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EmailResource {
+public class EmailResource extends AbstractResource {
 
     @Autowired
     private EmailTemplateService emailTemplateService;
@@ -63,9 +64,11 @@ public class EmailResource {
             @PathParam("email") String email,
             @ApiParam(name = "email", required = true) @Valid @NotNull UpdateEmail updateEmail,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> emailTemplateService.update(domain, email, updateEmail))
+                .flatMapSingle(irrelevant -> emailTemplateService.update(domain, email, updateEmail, authenticatedUser))
                 .flatMap(email1 -> emailManager.reloadEmail(email1))
                 .map(email1 -> Response.ok(email1).build())
                 .subscribe(
@@ -81,7 +84,9 @@ public class EmailResource {
     public void delete(@PathParam("domain") String domain,
                            @PathParam("email") String email,
                            @Suspended final AsyncResponse response) {
-        emailTemplateService.delete(email)
+        final User authenticatedUser = getAuthenticatedUser();
+
+        emailTemplateService.delete(email, authenticatedUser)
                 .andThen(emailManager.deleteEmail(email))
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),

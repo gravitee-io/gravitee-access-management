@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
@@ -42,7 +43,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ExtensionGrantResource {
+public class ExtensionGrantResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -90,9 +91,11 @@ public class ExtensionGrantResource {
             @PathParam("extensionGrant") String extensionGrant,
             @ApiParam(name = "tokenGranter", required = true) @Valid @NotNull UpdateExtensionGrant updateExtensionGrant,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> extensionGrantService.update(domain, extensionGrant, updateExtensionGrant))
+                .flatMapSingle(irrelevant -> extensionGrantService.update(domain, extensionGrant, updateExtensionGrant, authenticatedUser))
                 .map(extensionGrant1 -> Response.ok(extensionGrant1).build())
                 .subscribe(
                         result -> response.resume(result),
@@ -108,7 +111,9 @@ public class ExtensionGrantResource {
     public void delete(@PathParam("domain") String domain,
                        @PathParam("extensionGrant") String extensionGrant,
                        @Suspended final AsyncResponse response) {
-        extensionGrantService.delete(domain, extensionGrant)
+        final User authenticatedUser = getAuthenticatedUser();
+
+        extensionGrantService.delete(domain, extensionGrant, authenticatedUser)
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

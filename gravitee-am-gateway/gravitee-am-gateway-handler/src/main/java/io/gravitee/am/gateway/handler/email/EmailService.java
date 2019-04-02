@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.email;
 
 import io.gravitee.am.common.email.Email;
+import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -23,5 +25,5 @@ import io.gravitee.am.common.email.Email;
  */
 public interface EmailService {
 
-    void send(Email email);
+    void send(Email email, User user, Client client);
 }

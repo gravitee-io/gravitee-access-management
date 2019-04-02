@@ -61,6 +61,9 @@ public class CertificateServiceTest {
     @Mock
     private ObjectMapper objectMapper;
 
+    @Mock
+    private AuditService auditService;
+
     private final static String DOMAIN = "domain1";
 
     @Test

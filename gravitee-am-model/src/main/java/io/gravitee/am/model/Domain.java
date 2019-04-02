@@ -84,6 +84,27 @@ public class Domain {
 
     private SCIMSettings scim;
 
+    public Domain() {
+    }
+
+    public Domain(Domain other) {
+        this.id = other.id;
+        this.name = other.name;
+        this.description = other.description;
+        this.enabled = other.enabled;
+        this.master = other.master;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+        this.path = other.path;
+        this.loginForm = other.loginForm;
+        this.identities = other.identities;
+        this.oauth2Identities = other.oauth2Identities;
+        this.lastEvent = other.lastEvent;
+        this.oidc = other.oidc;
+        this.loginSettings = other.loginSettings;
+        this.scim = other.scim;
+    }
+
     public String getId() {
         return id;
     }

@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
@@ -38,18 +39,30 @@ public interface CertificateService {
 
     Single<List<Certificate>> findByDomain(String domain);
 
-    Single<Certificate> create(String domain, NewCertificate newCertificate, String schema);
+    Single<Certificate> create(String domain, NewCertificate newCertificate, String schema, User principal);
 
-    Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema);
+    Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema, User principal);
 
     Single<Certificate> update(Certificate certificate);
 
-    Completable delete(String certificateId);
+    Completable delete(String certificateId, User principal);
 
     void setCertificateProviders(Map<String, CertificateProvider> certificateProviders);
 
     void setCertificateProvider(String certificateId, CertificateProvider certificateProvider);
 
     Maybe<CertificateProvider> getCertificateProvider(String certificateId);
+
+    default Single<Certificate> create(String domain, NewCertificate newCertificate, String schema) {
+        return create(domain, newCertificate, schema, null);
+    }
+
+    default Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema) {
+        return update(domain, id, updateCertificate, schema, null);
+    }
+
+    default Completable delete(String certificateId) {
+        return delete(certificateId, null);
+    }
 
 }

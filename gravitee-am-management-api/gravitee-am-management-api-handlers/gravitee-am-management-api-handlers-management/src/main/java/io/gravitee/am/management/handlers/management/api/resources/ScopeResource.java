@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.DomainService;
@@ -92,9 +93,11 @@ public class ScopeResource extends AbstractResource {
             @PathParam("scope") String scope,
             @ApiParam(name = "scope", required = true) @Valid @NotNull UpdateScope updateScope,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> scopeService.update(domain, scope, updateScope))
+                .flatMapSingle(irrelevant -> scopeService.update(domain, scope, updateScope, authenticatedUser))
                 .map(scope1 -> Response.ok(scope1).build())
                 .subscribe(
                         result -> response.resume(result),
@@ -109,7 +112,9 @@ public class ScopeResource extends AbstractResource {
     public void delete(@PathParam("domain") String domain,
                        @PathParam("scope") String scope,
                        @Suspended final AsyncResponse response) {
-        scopeService.delete(scope, false)
+        final User authenticatedUser = getAuthenticatedUser();
+
+        scopeService.delete(scope, false, authenticatedUser)
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

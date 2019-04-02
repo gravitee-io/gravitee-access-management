@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.service.DomainService;
@@ -42,7 +43,7 @@ import java.net.URI;
  * @author GraviteeSource Team
  */
 @Api(tags = {"email"})
-public class EmailsResource {
+public class EmailsResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -86,9 +87,11 @@ public class EmailsResource {
             @ApiParam(name = "email", required = true)
             @Valid @NotNull final NewEmail newEmail,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> emailTemplateService.create(domain, newEmail))
+                .flatMapSingle(irrelevant -> emailTemplateService.create(domain, newEmail, authenticatedUser))
                 .flatMap(email -> emailManager.reloadEmail(email))
                 .map(email -> Response
                         .created(URI.create("/domains/" + domain + "/emails/" + email.getId()))

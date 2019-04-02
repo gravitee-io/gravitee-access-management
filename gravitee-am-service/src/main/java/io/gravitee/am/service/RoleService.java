@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
@@ -37,10 +38,22 @@ public interface RoleService {
 
     Single<Set<Role>> findByIdIn(List<String> ids);
 
-    Single<Role> create(String domain, NewRole role);
+    Single<Role> create(String domain, NewRole role, User principal);
 
-    Single<Role> update(String domain, String id, UpdateRole role);
+    Single<Role> update(String domain, String id, UpdateRole role, User principal);
 
-    Completable delete(String roleId);
+    Completable delete(String roleId, User principal);
+
+    default Single<Role> create(String domain, NewRole role) {
+        return create(domain, role, null);
+    }
+
+    default Single<Role> update(String domain, String id, UpdateRole role) {
+        return update(domain, id, role, null);
+    }
+
+    default Completable delete(String roleId) {
+        return delete(roleId, null);
+    }
 
 }

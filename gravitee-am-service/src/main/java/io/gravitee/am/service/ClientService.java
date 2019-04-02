@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.*;
@@ -60,27 +61,36 @@ public interface ClientService {
 
     Maybe<Client> findById(String id);
 
-    Single<Client> create(String domain, NewClient newClient);
+    Single<Client> create(String domain, NewClient newClient, User principal);
 
     Single<Client> create(Client client);
 
-    default Single<Client> patch(String domain, String id, PatchClient patchClient) {
-        return patch(domain, id, patchClient, false);
-    }
+    Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull, User principal);
 
-    Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull);
+    Single<Client> renewClientSecret(String domain, String id, User principal);
 
-    Single<Client> renewClientSecret(String domain, String id);
-
-    Completable delete(String clientId);
+    Completable delete(String clientId, User principal);
 
     Single<Client> update(Client client);
 
-    /**
-     * Since Dynamic Client Registration, many new fields have been added to client.
-     * Using this legacy update method may make you loose data.
-     * You should better use patch(String,String,PatchClient) method.
-     */
-    @Deprecated
-    Single<Client> update(String domain, String id, UpdateClient updateClient);
+    default Single<Client> create(String domain, NewClient newClient) {
+        return create(domain, newClient, null);
+    }
+
+    default Single<Client> patch(String domain, String id, PatchClient patchClient) {
+        return patch(domain, id, patchClient, false, null);
+    }
+
+    default Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull) {
+        return patch(domain, id, patchClient, forceNull, null);
+    }
+
+    default Single<Client> renewClientSecret(String domain, String id) {
+        return renewClientSecret(domain, id, null);
+    }
+
+    default Completable delete(String clientId) {
+        return delete(clientId, null);
+    }
+
 }

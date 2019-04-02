@@ -70,6 +70,19 @@ public class Scope {
         this.key = key;
     }
 
+    public Scope(Scope other) {
+        this.id = other.id;
+        this.key = other.key;
+        this.name = other.name;
+        this.description = other.description;
+        this.domain = other.domain;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+        this.system = other.system;
+        this.claims = other.claims;
+        this.expiresIn = other.expiresIn;
+    }
+
     public String getId() {
         return id;
     }

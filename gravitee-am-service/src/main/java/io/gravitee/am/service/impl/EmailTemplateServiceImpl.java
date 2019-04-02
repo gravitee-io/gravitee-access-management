@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.EmailRepository;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -30,6 +33,8 @@ import io.gravitee.am.service.exception.EmailNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewEmail;
 import io.gravitee.am.service.model.UpdateEmail;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.EmailTemplateAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -56,6 +61,9 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private AuditService auditService;
+
     @Override
     public Single<List<Email>> findAll() {
         LOGGER.debug("Find all emails");
@@ -74,6 +82,17 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                     LOGGER.error("An error occurs while trying to find a email using its domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a email using its domain %s", domain), ex));
+                });
+    }
+
+    @Override
+    public Single<List<Email>> findByDomainAndClient(String domain, String client) {
+        LOGGER.debug("Find email by domain {} and client {}", domain, client);
+        return emailRepository.findByDomainAndClient(domain, client)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a email using its domain {} and its client {}", domain, client, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a email using its domain %s and its client %s", domain, client), ex));
                 });
     }
 
@@ -100,38 +119,42 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     }
 
     @Override
-    public Single<Email> create(String domain, NewEmail newEmail) {
+    public Single<Email> create(String domain, NewEmail newEmail, User principal) {
         LOGGER.debug("Create a new email {} for domain {}", newEmail, domain);
-        return create0(domain, null, newEmail);
+        return create0(domain, null, newEmail, principal);
     }
 
     @Override
-    public Single<Email> create(String domain, String client, NewEmail newEmail) {
+    public Single<Email> create(String domain, String client, NewEmail newEmail, User principal) {
         LOGGER.debug("Create a new email {} for domain {} and client {}", newEmail, domain, client);
-        return create0(domain, client, newEmail);
+        return create0(domain, client, newEmail, principal);
     }
 
     @Override
-    public Single<Email> update(String domain, String id, UpdateEmail updateEmail) {
+    public Single<Email> update(String domain, String id, UpdateEmail updateEmail, User principal) {
         LOGGER.debug("Update an email {} for domain {}", id, domain);
-        return update0(domain, id, updateEmail);
+        return update0(domain, id, updateEmail, principal);
     }
 
     @Override
-    public Single<Email> update(String domain, String client, String id, UpdateEmail updateEmail) {
+    public Single<Email> update(String domain, String client, String id, UpdateEmail updateEmail, User principal) {
         LOGGER.debug("Update an email {} for domain {} and client {}", id, domain, client);
-        return update0(domain, id, updateEmail);
+        return update0(domain, id, updateEmail, principal);
     }
 
     @Override
-    public Completable delete(String emailId) {
+    public Completable delete(String emailId, User principal) {
         LOGGER.debug("Delete email {}", emailId);
         return emailRepository.findById(emailId)
                 .switchIfEmpty(Maybe.error(new EmailNotFoundException(emailId)))
                 .flatMapCompletable(page -> {
                     // Reload domain to take care about delete email
                     Event event = new Event(Type.EMAIL, new Payload(page.getId(), page.getDomain(), Action.DELETE));
-                    return emailRepository.delete(emailId).andThen(domainService.reload(page.getDomain(), event)).toCompletable();
+                    return emailRepository.delete(emailId)
+                            .andThen(domainService.reload(page.getDomain(), event))
+                            .toCompletable()
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_DELETED).email(page)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -145,7 +168,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     }
 
 
-    private Single<Email> create0(String domain, String client, NewEmail newEmail) {
+    private Single<Email> create0(String domain, String client, NewEmail newEmail, User principal) {
         String emailId = RandomString.generate();
 
         // check if email is unique
@@ -178,27 +201,32 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
 
                     LOGGER.error("An error occurs while trying to create a email", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a email", ex));
-                });
+                })
+                .doOnSuccess(email -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_CREATED).email(email)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_CREATED).throwable(throwable)));
     }
 
-    private Single<Email> update0(String domain, String id, UpdateEmail updateEmail) {
+    private Single<Email> update0(String domain, String id, UpdateEmail updateEmail, User principal) {
         return emailRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new EmailNotFoundException(id)))
                 .flatMapSingle(oldEmail -> {
-                    oldEmail.setEnabled(updateEmail.isEnabled());
-                    oldEmail.setFrom(updateEmail.getFrom());
-                    oldEmail.setFromName(updateEmail.getFromName());
-                    oldEmail.setSubject(updateEmail.getSubject());
-                    oldEmail.setContent(updateEmail.getContent());
-                    oldEmail.setExpiresAfter(updateEmail.getExpiresAfter());
-                    oldEmail.setUpdatedAt(new Date());
+                    Email emailToUpdate = new Email(oldEmail);
+                    emailToUpdate.setEnabled(updateEmail.isEnabled());
+                    emailToUpdate.setFrom(updateEmail.getFrom());
+                    emailToUpdate.setFromName(updateEmail.getFromName());
+                    emailToUpdate.setSubject(updateEmail.getSubject());
+                    emailToUpdate.setContent(updateEmail.getContent());
+                    emailToUpdate.setExpiresAfter(updateEmail.getExpiresAfter());
+                    emailToUpdate.setUpdatedAt(new Date());
 
-                    return emailRepository.update(oldEmail);
-                })
-                .flatMap(email -> {
-                    // Reload domain to take care about email update
-                    Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getDomain(), Action.UPDATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(email));
+                    return emailRepository.update(emailToUpdate)
+                            .flatMap(email -> {
+                                // Reload domain to take care about email update
+                                Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getDomain(), Action.UPDATE));
+                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(email));
+                            })
+                            .doOnSuccess(email -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_UPDATED).oldValue(oldEmail).email(email)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_UPDATED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

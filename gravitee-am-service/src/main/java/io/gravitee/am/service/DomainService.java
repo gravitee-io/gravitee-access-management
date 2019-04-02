@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.service.model.NewDomain;
@@ -40,17 +41,33 @@ public interface DomainService {
 
     Single<Set<Domain>> findByIdIn(Collection<String> ids);
 
-    Single<Domain> create(NewDomain domain);
+    Single<Domain> create(NewDomain domain, User principal);
 
-    Single<Domain> update(String domainId, UpdateDomain domain);
+    Single<Domain> update(String domainId, UpdateDomain domain, User principal);
 
     Single<Domain> reload(String domainId, Event event);
 
-    Single<Domain> patch(String domainId, PatchDomain domain);
+    Single<Domain> patch(String domainId, PatchDomain domain, User principal);
 
     Single<Domain> setMasterDomain(String domainId, boolean isMaster);
 
     Single<Domain> deleteLoginForm(String domainId);
 
-    Completable delete(String domain);
+    Completable delete(String domain, User principal);
+
+    default Single<Domain> create(NewDomain domain) {
+        return create(domain, null);
+    }
+
+    default Single<Domain> update(String domainId, UpdateDomain domain) {
+        return update(domainId, domain, null);
+    }
+
+    default Single<Domain> patch(String domainId, PatchDomain domain) {
+        return patch(domainId, domain, null);
+    }
+
+    default Completable delete(String domain) {
+        return delete(domain, null);
+    }
 }

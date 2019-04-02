@@ -118,7 +118,9 @@ public class PatchDomain {
         this.loginSettings = loginSettings;
     }
 
-    public Domain patch(Domain toPatch) {
+    public Domain patch(Domain _toPatch) {
+        // create new object for audit purpose (patch json result)
+        Domain toPatch = new Domain(_toPatch);
 
         SetterUtils.safeSet(toPatch::setName, this.getName());
         SetterUtils.safeSet(toPatch::setDescription, this.getDescription());

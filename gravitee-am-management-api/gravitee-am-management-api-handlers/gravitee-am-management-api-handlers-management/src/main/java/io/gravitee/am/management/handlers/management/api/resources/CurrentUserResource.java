@@ -24,7 +24,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -53,8 +52,7 @@ public class CurrentUserResource extends AbstractResource {
         Single<Map<String, Object>> currentUserSource = Single.create(emitter -> {
             try {
                 if (isAuthenticated()) {
-                    UsernamePasswordAuthenticationToken authenticatedUser = (UsernamePasswordAuthenticationToken) getAuthenticatedUser();
-                    emitter.onSuccess(((io.gravitee.am.identityprovider.api.User) authenticatedUser.getPrincipal()).getAdditionalInformation());
+                    emitter.onSuccess(getAuthenticatedUser().getAdditionalInformation());
                 } else {
                     emitter.onError(new IllegalAccessException("Current user is not authenticated"));
                 }
