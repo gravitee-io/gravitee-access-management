@@ -36,6 +36,24 @@ public class Email {
     private Date createdAt;
     private Date updatedAt;
 
+    public Email() {
+    }
+
+    public Email(Email other) {
+        this.id = other.id;
+        this.enabled = other.enabled;
+        this.domain = other.domain;
+        this.client = other.client;
+        this.template = other.template;
+        this.from = other.from;
+        this.fromName = other.fromName;
+        this.subject = other.subject;
+        this.content = other.content;
+        this.expiresAfter = other.expiresAfter;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+    }
+
     public String getId() {
         return id;
     }

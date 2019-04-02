@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Completable;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -48,6 +52,12 @@ public class DomainsResource extends AbstractResource {
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    private AuditReporterManager auditReporterManager;
+
+    @Autowired
+    private ReporterService reporterService;
 
     @Context
     private ResourceContext resourceContext;
@@ -87,9 +97,15 @@ public class DomainsResource extends AbstractResource {
             @ApiParam(name = "domain", required = true)
             @Valid @NotNull final NewDomain newDomain,
             @Suspended final AsyncResponse response) {
-        domainService.create(newDomain)
+        final User authenticatedUser = getAuthenticatedUser();
+
+        domainService.create(newDomain, authenticatedUser)
                 // create default idp
                 .flatMap(domain -> identityProviderManager.create(domain.getId()).map(identityProvider -> domain))
+                // create default reporter
+                .flatMap(domain -> reporterService.createDefault(domain.getId())
+                        .flatMapCompletable(reporter -> Completable.fromRunnable(() -> auditReporterManager.reloadReporter(reporter)))
+                        .toSingleDefault(domain))
                 .subscribe(
                         domain -> response.resume(Response
                                                     .created(URI.create("/domains/" + domain.getId()))

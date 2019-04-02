@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
@@ -31,6 +34,8 @@ import io.gravitee.am.service.exception.IdentityProviderWithClientsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.IdentityProviderAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -64,6 +69,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public Single<List<IdentityProvider>> findAll() {
@@ -99,7 +107,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Single<IdentityProvider> create(String domain, NewIdentityProvider newIdentityProvider) {
+    public Single<IdentityProvider> create(String domain, NewIdentityProvider newIdentityProvider, User principal) {
         LOGGER.debug("Create a new identity provider {} for domain {}", newIdentityProvider, domain);
 
         IdentityProvider identityProvider = new IdentityProvider();
@@ -121,28 +129,33 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to create an identity provider", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create an identity provider", ex));
-                });
+                })
+                .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).identityProvider(identityProvider1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).throwable(throwable)));
     }
 
     @Override
-    public Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider) {
+    public Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
         LOGGER.debug("Update an identity provider {} for domain {}", id, domain);
 
         return identityProviderRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(id)))
-                .flatMapSingle(identityProvider -> {
-                    identityProvider.setName(updateIdentityProvider.getName());
-                    identityProvider.setConfiguration(updateIdentityProvider.getConfiguration());
-                    identityProvider.setMappers(updateIdentityProvider.getMappers());
-                    identityProvider.setRoleMapper(updateIdentityProvider.getRoleMapper());
-                    identityProvider.setUpdatedAt(new Date());
+                .flatMapSingle(oldIdentity -> {
+                    IdentityProvider identityToUpdate = new IdentityProvider(oldIdentity);
+                    identityToUpdate.setName(updateIdentityProvider.getName());
+                    identityToUpdate.setConfiguration(updateIdentityProvider.getConfiguration());
+                    identityToUpdate.setMappers(updateIdentityProvider.getMappers());
+                    identityToUpdate.setRoleMapper(updateIdentityProvider.getRoleMapper());
+                    identityToUpdate.setUpdatedAt(new Date());
 
-                    return identityProviderRepository.update(identityProvider)
+                    return identityProviderRepository.update(identityToUpdate)
                             .flatMap(identityProvider1 -> {
                                 // Reload domain to take care about identity provider update
                                 Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getDomain(), Action.UPDATE));
                                 return domainService.reload(domain, event).flatMap(domain1 -> Single.just(identityProvider1));
-                            });
+                            })
+                            .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(oldIdentity).identityProvider(identityProvider1)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -155,7 +168,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Completable delete(String domain, String identityProviderId) {
+    public Completable delete(String domain, String identityProviderId, User principal) {
         LOGGER.debug("Delete identity provider {}", identityProviderId);
 
         return identityProviderRepository.findById(identityProviderId)
@@ -165,12 +178,16 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                             if (clients.size() > 0) {
                                 throw new IdentityProviderWithClientsException();
                             }
-                            return Single.just(clients);
+                            return Single.just(identityProvider);
                         }))
-                .flatMapCompletable(irrelevant -> {
+                .flatMapCompletable(identityProvider -> {
                     // Reload domain to take care about delete identity provider
                     Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProviderId, domain, Action.DELETE));
-                    return identityProviderRepository.delete(identityProviderId).andThen(domainService.reload(domain, event)).toCompletable();
+                    return identityProviderRepository.delete(identityProviderId)
+                            .andThen(domainService.reload(domain, event))
+                            .toCompletable()
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).identityProvider(identityProvider)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

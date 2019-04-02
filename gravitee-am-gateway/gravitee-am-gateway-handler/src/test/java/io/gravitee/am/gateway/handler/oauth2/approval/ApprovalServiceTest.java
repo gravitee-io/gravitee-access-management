@@ -26,6 +26,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
+import io.gravitee.am.service.AuditService;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -62,6 +63,9 @@ public class ApprovalServiceTest {
 
     @Mock
     private ScopeManager scopeManager;
+
+    @Mock
+    private AuditService auditService;
 
     @Test
     public void shouldApproveRequest_clientAutoApproval() {

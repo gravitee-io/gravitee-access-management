@@ -15,12 +15,18 @@
  */
 package io.gravitee.am.management.handlers.admin.security.listener;
 
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.admin.provider.security.EndUserAuthentication;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +34,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -48,10 +55,17 @@ public class AuthenticationSuccessListener implements ApplicationListener<Authen
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private AuditService auditService;
+
     @Override
     public void onApplicationEvent(AuthenticationSuccessEvent event) {
         final User principal = (User) event.getAuthentication().getPrincipal();
-        Map<String, String> details = (Map<String, String>) event.getAuthentication().getDetails();
+        Map<String, String> details = event.getAuthentication().getDetails() == null ? new HashMap<>() : new HashMap<>((Map) event.getAuthentication().getDetails());
+        details.put(Claims.domain, domain.getId());
+
+        final Authentication authentication = new EndUserAuthentication(((User) event.getAuthentication().getPrincipal()).getUsername(), null);
+        ((EndUserAuthentication) authentication).setAdditionalInformation((Map) details);
 
         userService.findByDomainAndUsername(domain.getId(), principal.getUsername())
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
@@ -82,6 +96,7 @@ public class AuthenticationSuccessListener implements ApplicationListener<Authen
                     }
                     return Single.error(ex);
                 })
+                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).domain(domain.getId()).client(CLIENT_ID).user(user)))
                 .subscribe();
     }
 }

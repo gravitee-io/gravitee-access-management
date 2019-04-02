@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.admin;
 
+import io.gravitee.am.management.handlers.admin.authentication.CustomAuthenticationFailureHandler;
 import io.gravitee.am.management.handlers.admin.authentication.CustomSavedRequestAwareAuthenticationSuccessHandler;
 import io.gravitee.am.management.handlers.admin.authentication.LoginUrlAuthenticationEntryPoint;
 import io.gravitee.am.management.handlers.admin.filter.CheckAuthenticationCookieFilter;
@@ -35,6 +36,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -42,14 +44,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.RedirectStrategy;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+import org.springframework.security.web.authentication.*;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import javax.servlet.Filter;
+import javax.servlet.http.HttpServletRequest;
 
 @Configuration
 @ComponentScan("io.gravitee.am.management.handlers.admin.controller")
@@ -112,6 +113,7 @@ public class SecurityConfiguration {
                     .and()
                 .formLogin()
                     .loginPage("/login")
+                    .authenticationDetailsSource(authenticationDetailsSource())
                     .successHandler(authenticationSuccessHandler())
                     .failureHandler(authenticationFailureHandler())
                     .permitAll()
@@ -147,6 +149,11 @@ public class SecurityConfiguration {
         }
 
         @Bean
+        public AuthenticationDetailsSource<HttpServletRequest, io.gravitee.am.management.handlers.admin.authentication.WebAuthenticationDetails> authenticationDetailsSource() {
+            return new io.gravitee.am.management.handlers.admin.authentication.WebAuthenticationDetailsSource();
+        }
+
+        @Bean
         public AuthenticationSuccessHandler authenticationSuccessHandler() {
             CustomSavedRequestAwareAuthenticationSuccessHandler successHandler = new CustomSavedRequestAwareAuthenticationSuccessHandler();
             successHandler.setRedirectStrategy(redirectStrategy());
@@ -155,7 +162,7 @@ public class SecurityConfiguration {
 
         @Bean
         public AuthenticationFailureHandler authenticationFailureHandler() {
-            SimpleUrlAuthenticationFailureHandler authenticationFailureHandler = new SimpleUrlAuthenticationFailureHandler("/login?error");
+            SimpleUrlAuthenticationFailureHandler authenticationFailureHandler = new CustomAuthenticationFailureHandler("/login?error");
             authenticationFailureHandler.setRedirectStrategy(redirectStrategy());
             return authenticationFailureHandler;
         }

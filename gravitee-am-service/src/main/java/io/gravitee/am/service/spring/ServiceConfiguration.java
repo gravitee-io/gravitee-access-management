@@ -17,16 +17,9 @@ package io.gravitee.am.service.spring;
 
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.am.service.authentication.crypto.password.RegexPasswordValidator;
-import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.web.client.WebClient;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.Properties;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -35,25 +28,6 @@ import java.util.Properties;
 @Configuration
 @ComponentScan("io.gravitee.am.service")
 public class ServiceConfiguration {
-    private static final String DEFAULT_MAX_TOTAL_CONNECTION = "200";
-    private static final String DEFAULT_CONNECTION_TIMEOUT = "10";
-
-    @Autowired
-    @Qualifier("graviteeProperties")
-    private Properties properties;
-
-    @Autowired
-    private Vertx vertx;
-
-    @Bean
-    public WebClient webClient() {
-        WebClientOptions options = new WebClientOptions()
-                .setConnectTimeout(Integer.valueOf(properties.getProperty("oidc.http.connectionTimeout", DEFAULT_CONNECTION_TIMEOUT)) * 1000)
-                .setMaxPoolSize(Integer.valueOf(properties.getProperty("oidc.http.pool.maxTotalConnection", DEFAULT_MAX_TOTAL_CONNECTION)))
-                .setTrustAll(Boolean.valueOf(properties.getProperty("oidc.http.client.trustAll", "true")));
-
-        return WebClient.create(vertx,options);
-    }
 
     @Bean
     public PasswordValidator passwordValidator() {

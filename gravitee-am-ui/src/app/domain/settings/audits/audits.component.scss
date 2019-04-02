@@ -1,0 +1,78 @@
+.audits-container {
+  padding: 20px 70px 20px 50px;
+  .audits-title {
+    align-items: center;
+    h1 {
+      font-weight: 400;
+    }
+  }
+  .audits-search {
+    font-size: 14px;
+    align-items: center;
+    button, a {
+      color: grey;
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+  }
+  .audits-content {
+    ngx-datatable {
+      font-size: 12px;
+      box-shadow: none;
+    }
+  }
+
+  mat-icon {
+    margin: 0 0 3px 7px;
+  }
+}
+
+.audits-actions {
+  margin-left: -10px;
+
+  button, a {
+    top: -9px;
+    color: grey;
+  }
+}
+
+:host /deep/ .ngx-datatable.material .datatable-body .datatable-body-row .datatable-body-cell {
+  font-size: 12px;
+  a {
+    color: #006CAB;
+    text-decoration: none;
+    &:hover {
+      color: #2196f3;
+      text-decoration: underline;
+    }
+    mat-icon {
+      color: grey;
+    }
+  }
+  a.expanded {
+    text-decoration: none;
+    color: grey;
+    &:hover {
+      color: grey;
+      text-decoration: none;
+    }
+  }
+}
+
+:host /deep/ .ngx-datatable.material .datatable-footer .datatable-pager {
+  ul li:not(:last-child):after {
+    content: none;
+  }
+}
+
+:host /deep/ .ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
+  &:first-child {
+    padding-left: 32px;
+  }
+}
+
+::ng-deep .cdk-overlay-pane {
+  /* Do you changes here */
+  width: auto !important;
+}

@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.user.UserService;
 import io.gravitee.am.gateway.handler.vertx.handler.users.endpoint.consents.UserConsentEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.users.endpoint.consents.UserConsentsEndpointHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.users.handler.AuthTokenParseHandler;
+import io.gravitee.am.model.Domain;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,14 +48,16 @@ public class UsersRouter {
     @Autowired
     private ClientSyncService clientSyncService;
 
+    @Autowired
+    private Domain domain;
+
     public Router route() {
         // Create the Users router
         final Router router = Router.router(vertx);
 
         // Declare Users routes
-        final UserConsentsEndpointHandler userConsentsHandler = new UserConsentsEndpointHandler(userService);
-        final UserConsentEndpointHandler userConsentHandler = new UserConsentEndpointHandler(userService);
-
+        final UserConsentsEndpointHandler userConsentsHandler = new UserConsentsEndpointHandler(userService, clientSyncService, domain);
+        final UserConsentEndpointHandler userConsentHandler = new UserConsentEndpointHandler(userService, clientSyncService, domain);
 
         // User consent routes
         router.routeWithRegex(".*consents.*")

@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -30,6 +31,8 @@ import io.gravitee.am.service.exception.authentication.AccountDisabledException;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.gravitee.am.service.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.service.exception.authentication.UsernameNotFoundException;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -66,6 +69,9 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public Single<User> authenticate(Client client, Authentication authentication) {
@@ -110,7 +116,9 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         throw new AccountDisabledException("Account is disabled for user " + user.getUsername());
                     }
                     return user;
-                });
+                })
+                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).domain(domain.getId()).client(client).user(user)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).domain(domain.getId()).client(client).throwable(throwable)));
     }
 
     @Override

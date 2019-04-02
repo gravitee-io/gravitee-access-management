@@ -30,5 +30,9 @@ public interface ApprovalService {
 
     Single<AuthorizationRequest> checkApproval(AuthorizationRequest authorizationRequest, Client client, User user);
 
-    Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, Client client, User user);
+    Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, Client client, User user, io.gravitee.am.identityprovider.api.User principal);
+
+    default Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, Client client, User user) {
+        return saveApproval(authorizationRequest, client, user, null);
+    }
 }

@@ -15,19 +15,24 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.ExtensionGrantAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -62,6 +67,9 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private AuditService auditService;
+
     @Override
     public Maybe<ExtensionGrant> findById(String id) {
         LOGGER.debug("Find extension grant by ID: {}", id);
@@ -85,50 +93,52 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     }
 
     @Override
-    public Single<ExtensionGrant> create(String domain, NewExtensionGrant newExtensionGrant) {
+    public Single<ExtensionGrant> create(String domain, NewExtensionGrant newExtensionGrant, User principal) {
         LOGGER.debug("Create a new extension grant {} for domain {}", newExtensionGrant, domain);
 
         return extensionGrantRepository.findByDomainAndGrantType(domain, newExtensionGrant.getGrantType())
                 .isEmpty()
-                    .flatMap(empty -> {
-                        if (!empty) {
-                            throw new ExtensionGrantAlreadyExistsException(newExtensionGrant.getGrantType());
-                        } else {
-                            String certificateId = RandomString.generate();
-                            ExtensionGrant extensionGrant = new ExtensionGrant();
-                            extensionGrant.setId(certificateId);
-                            extensionGrant.setDomain(domain);
-                            extensionGrant.setName(newExtensionGrant.getName());
-                            extensionGrant.setGrantType(newExtensionGrant.getGrantType());
-                            extensionGrant.setIdentityProvider(newExtensionGrant.getIdentityProvider());
-                            extensionGrant.setCreateUser(newExtensionGrant.isCreateUser());
-                            extensionGrant.setUserExists(newExtensionGrant.isUserExists());
-                            extensionGrant.setType(newExtensionGrant.getType());
-                            extensionGrant.setConfiguration(newExtensionGrant.getConfiguration());
-                            extensionGrant.setCreatedAt(new Date());
-                            extensionGrant.setUpdatedAt(extensionGrant.getCreatedAt());
+                .flatMap(empty -> {
+                    if (!empty) {
+                        throw new ExtensionGrantAlreadyExistsException(newExtensionGrant.getGrantType());
+                    } else {
+                        String certificateId = RandomString.generate();
+                        ExtensionGrant extensionGrant = new ExtensionGrant();
+                        extensionGrant.setId(certificateId);
+                        extensionGrant.setDomain(domain);
+                        extensionGrant.setName(newExtensionGrant.getName());
+                        extensionGrant.setGrantType(newExtensionGrant.getGrantType());
+                        extensionGrant.setIdentityProvider(newExtensionGrant.getIdentityProvider());
+                        extensionGrant.setCreateUser(newExtensionGrant.isCreateUser());
+                        extensionGrant.setUserExists(newExtensionGrant.isUserExists());
+                        extensionGrant.setType(newExtensionGrant.getType());
+                        extensionGrant.setConfiguration(newExtensionGrant.getConfiguration());
+                        extensionGrant.setCreatedAt(new Date());
+                        extensionGrant.setUpdatedAt(extensionGrant.getCreatedAt());
 
-                            return extensionGrantRepository.create(extensionGrant)
-                                    .flatMap(extensionGrant1 -> {
-                                        // Reload domain to take care about extension grant create
-                                        Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant1.getId(), extensionGrant1.getDomain(), Action.CREATE));
-                                        return domainService.reload(domain, event).flatMap(domain1 -> Single.just(extensionGrant1));
-                                    });
+                        return extensionGrantRepository.create(extensionGrant)
+                                .flatMap(extensionGrant1 -> {
+                                    // Reload domain to take care about extension grant create
+                                    Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant1.getId(), extensionGrant1.getDomain(), Action.CREATE));
+                                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(extensionGrant1));
+                                });
 
-                        }
-                    })
-                    .onErrorResumeNext(ex -> {
-                        if (ex instanceof AbstractManagementException) {
-                            return Single.error(ex);
-                        }
+                    }
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
 
-                        LOGGER.error("An error occurs while trying to create a extension grant", ex);
-                        return Single.error(new TechnicalManagementException("An error occurs while trying to create a extension grant", ex));
-                    });
+                    LOGGER.error("An error occurs while trying to create a extension grant", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a extension grant", ex));
+                })
+                .doOnSuccess(extensionGrant -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_CREATED).extensionGrant(extensionGrant)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_CREATED).throwable(throwable)));
     }
 
     @Override
-    public Single<ExtensionGrant> update(String domain, String id, UpdateExtensionGrant updateExtensionGrant) {
+    public Single<ExtensionGrant> update(String domain, String id, UpdateExtensionGrant updateExtensionGrant, User principal) {
         LOGGER.debug("Update a extension grant {} for domain {}", id, domain);
 
         return extensionGrantRepository.findById(id)
@@ -144,20 +154,23 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                            return Single.just(tokenGranter);
                        }))
                 .flatMap(oldExtensionGrant -> {
-                    oldExtensionGrant.setName(updateExtensionGrant.getName());
-                    oldExtensionGrant.setGrantType(updateExtensionGrant.getGrantType());
-                    oldExtensionGrant.setIdentityProvider(updateExtensionGrant.getIdentityProvider());
-                    oldExtensionGrant.setCreateUser(updateExtensionGrant.isCreateUser());
-                    oldExtensionGrant.setUserExists(updateExtensionGrant.isUserExists());
-                    oldExtensionGrant.setConfiguration(updateExtensionGrant.getConfiguration());
-                    oldExtensionGrant.setUpdatedAt(new Date());
+                    ExtensionGrant extensionGrantToUpdate = new ExtensionGrant(oldExtensionGrant);
+                    extensionGrantToUpdate.setName(updateExtensionGrant.getName());
+                    extensionGrantToUpdate.setGrantType(updateExtensionGrant.getGrantType());
+                    extensionGrantToUpdate.setIdentityProvider(updateExtensionGrant.getIdentityProvider());
+                    extensionGrantToUpdate.setCreateUser(updateExtensionGrant.isCreateUser());
+                    extensionGrantToUpdate.setUserExists(updateExtensionGrant.isUserExists());
+                    extensionGrantToUpdate.setConfiguration(updateExtensionGrant.getConfiguration());
+                    extensionGrantToUpdate.setUpdatedAt(new Date());
 
-                    return extensionGrantRepository.update(oldExtensionGrant)
+                    return extensionGrantRepository.update(extensionGrantToUpdate)
                             .flatMap(extensionGrant -> {
                                 // Reload domain to take care about extension grant update
                                 Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant.getId(), extensionGrant.getDomain(), Action.UPDATE));
                                 return domainService.reload(domain, event).flatMap(domain1 -> Single.just(extensionGrant));
-                            });
+                            })
+                            .doOnSuccess(extensionGrant -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_UPDATED).oldValue(oldExtensionGrant).extensionGrant(extensionGrant)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_UPDATED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -170,7 +183,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     }
 
     @Override
-    public Completable delete(String domain, String extensionGrantId) {
+    public Completable delete(String domain, String extensionGrantId, User principal) {
         LOGGER.debug("Delete extension grant {}", extensionGrantId);
         return extensionGrantRepository.findById(extensionGrantId)
                 .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrantId)))
@@ -179,12 +192,16 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                             if (clients.size() > 0) {
                                 throw new ExtensionGrantWithClientsException();
                             }
-                            return Single.just(clients);
+                            return Single.just(extensionGrant);
                         }))
-                .flatMapCompletable(irrelevant -> {
+                .flatMapCompletable(extensionGrant -> {
                     // Reload domain to take care about extension grant create
                     Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrantId, domain, Action.DELETE));
-                    return extensionGrantRepository.delete(extensionGrantId).andThen(domainService.reload(domain, event).toCompletable());
+                    return extensionGrantRepository.delete(extensionGrantId)
+                            .andThen(domainService.reload(domain, event))
+                            .toCompletable()
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_DELETED).extensionGrant(extensionGrant)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

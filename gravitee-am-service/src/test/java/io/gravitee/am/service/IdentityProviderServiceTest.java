@@ -63,6 +63,9 @@ public class IdentityProviderServiceTest {
     @Mock
     private ClientService clientService;
 
+    @Mock
+    private AuditService auditService;
+
     private final static String DOMAIN = "domain1";
 
     @Test

@@ -49,7 +49,7 @@ export class UserProfileComponent implements OnInit {
               private factoryResolver: ComponentFactoryResolver) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.domainId = AppConfig.settings.authentication.domainId;
       this.adminContext = true;

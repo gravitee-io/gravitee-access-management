@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.mapper;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -24,10 +25,13 @@ import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.event.Event;
 
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
+import java.time.Instant;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 /**
@@ -63,6 +67,13 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
                 jgen.writeString(value.name().toLowerCase());
             }
         });
+        module.addSerializer(Instant.class, new StdSerializer<Instant>(Instant.class) {
+            @Override
+            public void serialize(Instant instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+                jsonGenerator.writeNumber(instant.toEpochMilli());
+            }
+        });
+        mapper.addMixIn(Domain.class, MixIn.class);
         mapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
         mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -73,5 +84,10 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
     @Override
     public ObjectMapper getContext(Class<?> type) {
         return mapper;
+    }
+
+    private abstract class MixIn {
+        @JsonIgnore
+        abstract Event getLastEvent();
     }
 }

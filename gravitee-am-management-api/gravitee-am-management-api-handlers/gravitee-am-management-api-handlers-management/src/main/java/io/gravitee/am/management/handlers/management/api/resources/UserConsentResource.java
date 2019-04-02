@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.ClientEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.service.ClientService;
@@ -39,7 +40,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserConsentResource {
+public class UserConsentResource extends AbstractResource {
 
     @Autowired
     private DomainService domainService;
@@ -78,7 +79,7 @@ public class UserConsentResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Revoke user consent")
+    @ApiOperation(value = "Revoke a user consent")
     @ApiResponses({
             @ApiResponse(code = 204, message = "User consent successfully revoked"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -86,9 +87,11 @@ public class UserConsentResource {
                        @PathParam("user") String user,
                        @PathParam("consent") String consent,
                        @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(__ -> scopeApprovalService.revoke(consent))
+                .flatMapCompletable(__ -> scopeApprovalService.revokeByConsent(domain, user, consent, authenticatedUser))
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

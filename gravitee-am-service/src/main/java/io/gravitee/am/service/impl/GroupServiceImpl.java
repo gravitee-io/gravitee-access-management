@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.User;
@@ -28,6 +29,8 @@ import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.am.service.model.UpdateGroup;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.GroupAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -55,6 +58,9 @@ public class GroupServiceImpl implements GroupService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AuditServiceImpl auditService;
 
     @Override
     public Single<Page<Group>> findByDomain(String domain, int page, int size) {
@@ -116,7 +122,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Single<Group> create(String domain, NewGroup newGroup) {
+    public Single<Group> create(String domain, NewGroup newGroup, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Create a new group {} for domain {}", newGroup.getName(), domain);
 
         return findByDomainAndName(domain, newGroup.getName())
@@ -145,12 +151,14 @@ public class GroupServiceImpl implements GroupService {
                         LOGGER.error("An error occurs while trying to create a group", ex);
                         return Single.error(new TechnicalManagementException("An error occurs while trying to create a group", ex));
                     }
-                });
+                })
+                .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).group(group)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).throwable(throwable)));
 
     }
 
     @Override
-    public Single<Group> update(String domain, String id, UpdateGroup updateGroup) {
+    public Single<Group> update(String domain, String id, UpdateGroup updateGroup, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Update a group {} for domain {}", id, domain);
 
         return groupRepository.findById(id)
@@ -166,15 +174,18 @@ public class GroupServiceImpl implements GroupService {
                             return existingGroup;
                         })
                 )
-                .map(oldGroup -> {
+                .flatMapSingle(oldGroup -> {
                     oldGroup.setName(updateGroup.getName());
                     oldGroup.setMembers(updateGroup.getMembers());
                     oldGroup.setUpdatedAt(new Date());
-                    return oldGroup;
+
+                    // set members and update
+                    return setMembers(oldGroup)
+                            .flatMap(group -> groupRepository.update(group))
+                            .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).oldValue(oldGroup).group(group)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).throwable(throwable)));
+
                 })
-                // set members
-                .flatMapSingle(group -> setMembers(group))
-                .flatMap(group -> groupRepository.update(group))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -186,12 +197,15 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Completable delete(String groupId) {
+    public Completable delete(String groupId, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Delete group {}", groupId);
 
         return groupRepository.findById(groupId)
                 .switchIfEmpty(Maybe.error(new GroupNotFoundException(groupId)))
-                .flatMapCompletable(user -> groupRepository.delete(groupId))
+                .flatMapCompletable(group -> groupRepository.delete(groupId)
+                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).throwable(throwable)))
+                )
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

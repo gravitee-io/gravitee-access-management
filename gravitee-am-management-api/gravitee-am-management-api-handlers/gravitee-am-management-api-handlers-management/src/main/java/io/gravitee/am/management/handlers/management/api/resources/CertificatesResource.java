@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
 import io.gravitee.am.management.service.CertificatePluginService;
 import io.gravitee.am.management.service.exception.CertificatePluginSchemaNotFoundException;
@@ -97,11 +98,13 @@ public class CertificatesResource extends AbstractResource {
             @ApiParam(name = "certificate", required = true)
             @Valid @NotNull final NewCertificate newCertificate,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMap(irrelevant -> certificatePluginService.getSchema(newCertificate.getType()))
                 .switchIfEmpty(Maybe.error(new CertificatePluginSchemaNotFoundException(newCertificate.getType())))
-                .flatMapSingle(schema -> certificateService.create(domain, newCertificate, schema))
+                .flatMapSingle(schema -> certificateService.create(domain, newCertificate, schema, authenticatedUser))
                 .map(certificate -> {
                     // TODO remove after refactoring JWKS endpoint
                     certificateManager.reloadCertificateProviders(certificate);

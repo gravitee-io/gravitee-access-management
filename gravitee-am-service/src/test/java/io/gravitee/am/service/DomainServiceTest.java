@@ -64,6 +64,7 @@ public class DomainServiceTest {
     private static final String GROUP_ID = "id-group";
     private static final String FORM_ID = "id-form";
     private static final String EMAIL_ID = "id-email";
+    private static final String REPORTER_ID = "id-reporter";
 
     @InjectMocks
     private DomainService domainService = new DomainServiceImpl();
@@ -99,6 +100,9 @@ public class DomainServiceTest {
     private Email email;
 
     @Mock
+    private Reporter reporter;
+
+    @Mock
     private DomainRepository domainRepository;
 
     @Mock
@@ -131,6 +135,11 @@ public class DomainServiceTest {
     @Mock
     private EmailTemplateService emailTemplateService;
 
+    @Mock
+    private AuditService auditService;
+
+    @Mock
+    private ReporterService reporterService;
 
     @Test
     public void shouldFindById() {
@@ -213,6 +222,7 @@ public class DomainServiceTest {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(new Domain()));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(reporterService.createDefault(any())).thenReturn(Single.just(new Reporter()));
 
         TestObserver testObserver = domainService.create(newDomain).test();
         testObserver.awaitTerminalEvent();
@@ -415,6 +425,9 @@ public class DomainServiceTest {
         when(email.getId()).thenReturn(EMAIL_ID);
         when(emailTemplateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(email)));
         when(emailTemplateService.delete(anyString())).thenReturn(Completable.complete());
+        when(reporter.getId()).thenReturn(REPORTER_ID);
+        when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(reporter)));
+        when(reporterService.delete(anyString())).thenReturn(Completable.complete());
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -448,6 +461,7 @@ public class DomainServiceTest {
         when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(emailTemplateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();

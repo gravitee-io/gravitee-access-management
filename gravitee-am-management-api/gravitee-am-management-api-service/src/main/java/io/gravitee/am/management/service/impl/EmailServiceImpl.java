@@ -19,7 +19,11 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.management.service.EmailService;
+import io.gravitee.am.model.User;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -50,6 +54,8 @@ import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processT
 public class EmailServiceImpl implements EmailService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailServiceImpl.class);
+    private static final String ADMIN_DOMAIN = "admin";
+    private static final String ADMIN_CLIENT = "admin";
 
     @Value("${templates.path:${gravitee.home}/templates}")
     private String templatesPath;
@@ -63,8 +69,11 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private Configuration freemarkerConfiguration;
 
+    @Autowired
+    private AuditService auditService;
+
     @Override
-    public void send(Email email) {
+    public void send(Email email, User user) {
         if (enabled) {
             try {
                 final MimeMessageHelper mailMessage = new MimeMessageHelper(mailSender.createMimeMessage(), true, StandardCharsets.UTF_8.name());
@@ -90,10 +99,11 @@ public class EmailServiceImpl implements EmailService {
                 final String html = addResourcesInMessage(mailMessage, content);
 
                 LOGGER.debug("Sending an email to: {}\nSubject: {}\nMessage: {}", email.getTo(), email.getSubject(), html);
-
                 mailSender.send(mailMessage.getMimeMessage());
+                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(ADMIN_DOMAIN).client(ADMIN_CLIENT).email(email).user(user));
             } catch (final Exception ex) {
                 LOGGER.error("Error while sending email", ex);
+                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(ADMIN_DOMAIN).client(ADMIN_CLIENT).email(email).user(user).throwable(ex));
                 throw new TechnicalManagementException("Error while sending email", ex);
             }
         }

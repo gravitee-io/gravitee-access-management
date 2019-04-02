@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.enhancer.ClientEnhancer;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.ClientListItem;
@@ -100,9 +101,12 @@ public class ClientsResource extends AbstractResource {
             @ApiParam(name = "client", required = true)
             @Valid @NotNull final NewClient newClient,
             @Suspended final AsyncResponse response) {
+
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> clientService.create(domain, newClient)
+                .flatMapSingle(irrelevant -> clientService.create(domain, newClient, authenticatedUser)
                         .map(client -> Response
                                 .created(URI.create("/domains/" + domain + "/clients/" + client.getId()))
                                 .entity(client)

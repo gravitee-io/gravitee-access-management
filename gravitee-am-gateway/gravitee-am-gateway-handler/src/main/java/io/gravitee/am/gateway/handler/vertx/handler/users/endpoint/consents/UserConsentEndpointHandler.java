@@ -15,22 +15,31 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.users.endpoint.consents;
 
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.oauth2.token.Token;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.user.UserService;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Single;
 import io.vertx.core.json.Json;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserConsentEndpointHandler {
+public class UserConsentEndpointHandler extends AbstractUserConsentEndpointHandler {
 
-    private UserService userService;
-
-    public UserConsentEndpointHandler(UserService userService) {
-        this.userService = userService;
+    public UserConsentEndpointHandler(UserService userService, ClientSyncService clientSyncService, Domain domain) {
+        super(userService, clientSyncService, domain);
     }
 
     /**
@@ -52,11 +61,13 @@ public class UserConsentEndpointHandler {
      * Revoke specific consent for a user
      */
     public void revoke(RoutingContext context) {
+        final String userId = context.request().getParam("userId");
         final String consentId = context.request().getParam("consentId");
-        userService.revokeConsent(consentId)
+
+        getPrincipal(context)
+                .flatMapCompletable(principal -> userService.revokeConsent(userId, consentId, principal))
                 .subscribe(
                         () -> context.response().setStatusCode(204).end(),
                         error -> context.fail(error));
     }
-
 }

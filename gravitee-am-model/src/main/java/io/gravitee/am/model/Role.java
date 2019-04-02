@@ -32,6 +32,19 @@ public class Role {
     private Date createdAt;
     private Date updatedAt;
 
+    public Role() {
+    }
+
+    public Role(Role other) {
+        this.id = other.id;
+        this.name = other.name;
+        this.description = other.description;
+        this.domain = other.domain;
+        this.permissions = other.permissions;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+    }
+
     public String getId() {
         return id;
     }

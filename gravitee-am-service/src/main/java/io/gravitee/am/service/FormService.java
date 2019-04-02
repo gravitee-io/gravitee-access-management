@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.service.model.NewForm;
 import io.gravitee.am.service.model.UpdateForm;
@@ -38,14 +39,34 @@ public interface FormService {
 
     Maybe<Form> findByDomainAndClientAndTemplate(String domain, String client, String template);
 
-    Single<Form> create(String domain, NewForm form);
+    Single<Form> create(String domain, NewForm form, User principal);
 
-    Single<Form> create(String domain, String client, NewForm form);
+    Single<Form> create(String domain, String client, NewForm form, User principal);
 
-    Single<Form> update(String domain, String id, UpdateForm form);
+    Single<Form> update(String domain, String id, UpdateForm form, User principal);
 
-    Single<Form> update(String domain, String client, String id, UpdateForm form);
+    Single<Form> update(String domain, String client, String id, UpdateForm form, User principal);
 
-    Completable delete(String pageId);
+    Completable delete(String pageId, User principal);
+
+    default Single<Form> create(String domain, NewForm form) {
+        return create(domain, form, null);
+    }
+
+    default Single<Form> create(String domain, String client, NewForm form) {
+        return create(domain, client, form, null);
+    }
+
+    default Single<Form> update(String domain, String id, UpdateForm form) {
+        return update(domain, id, form, null);
+    }
+
+    default Single<Form> update(String domain, String client, String id, UpdateForm form) {
+        return update(domain, client, id, form);
+    }
+
+    default Completable delete(String pageId) {
+        return delete(pageId);
+    }
 
 }

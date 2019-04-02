@@ -15,11 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.vertx.handler.oauth2.endpoint.authorization.approval;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
@@ -27,11 +29,13 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
+import io.vertx.reactivex.core.net.SocketAddress;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -86,7 +90,7 @@ public class UserApprovalSubmissionEndpointHandler implements Handler<RoutingCon
         authorizationRequest.setApprovalParameters(approvalParameters);
 
         // handle approval response
-        approvalService.saveApproval(authorizationRequest, client, endUser)
+        approvalService.saveApproval(authorizationRequest, client, endUser, getAuthenticatedUser(context, endUser))
                 .subscribe(authorizationRequest1 -> {
                     // user denied access
                     if (!authorizationRequest.isApproved()) {
@@ -106,5 +110,41 @@ public class UserApprovalSubmissionEndpointHandler implements Handler<RoutingCon
 
     private void doRedirect(HttpServerResponse response, String url) {
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    }
+
+    private io.gravitee.am.identityprovider.api.User getAuthenticatedUser(RoutingContext routingContext, io.gravitee.am.model.User user) {
+        io.gravitee.am.identityprovider.api.User authenticatedUser = new DefaultUser(user.getUsername());
+        ((DefaultUser) authenticatedUser).setId(user.getId());
+        Map<String, Object> additionalInformation = new HashMap<>(user.getAdditionalInformation());
+        // add ip address and user agent
+        additionalInformation.put(Claims.ip_address, remoteAddress(routingContext.request()));
+        additionalInformation.put(Claims.user_agent, userAgent(routingContext.request()));
+        additionalInformation.put(Claims.domain, domain.getId());
+        ((DefaultUser) authenticatedUser).setAdditionalInformation(additionalInformation);
+        return authenticatedUser;
+    }
+
+    public String remoteAddress(HttpServerRequest httpServerRequest) {
+        String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
+        String remoteAddress;
+
+        if(xForwardedFor != null && xForwardedFor.length() > 0) {
+            int idx = xForwardedFor.indexOf(',');
+
+            remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;
+
+            idx = remoteAddress.indexOf(':');
+
+            remoteAddress = (idx != -1) ? remoteAddress.substring(0, idx).trim() : remoteAddress.trim();
+        } else {
+            SocketAddress address = httpServerRequest.remoteAddress();
+            remoteAddress = (address != null) ? address.host() : null;
+        }
+
+        return remoteAddress;
+    }
+
+    private String userAgent(HttpServerRequest request) {
+        return request.getHeader(HttpHeaders.USER_AGENT);
     }
 }

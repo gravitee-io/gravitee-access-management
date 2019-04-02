@@ -41,7 +41,7 @@ public class ResetPasswordSubmissionEndpointHandler extends UserRequestHandler {
         User user = context.get("user");
         user.setPassword(password);
 
-        userService.resetPassword(user)
+        userService.resetPassword(user, getAuthenticatedUser(context))
                 .subscribe(
                         () -> redirectToPage(context, Collections.singletonMap("success", "reset_password_completed")),
                         error -> redirectToPage(context, Collections.singletonMap("error", "reset_password_failed"), error));

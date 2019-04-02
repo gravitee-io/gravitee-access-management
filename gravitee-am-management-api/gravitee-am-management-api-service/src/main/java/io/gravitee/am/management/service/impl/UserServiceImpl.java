@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
@@ -28,12 +29,15 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.jsonwebtoken.JwtBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -82,6 +86,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private EmailManager emailManager;
 
+    @Autowired
+    private AuditService auditService;
+
     @Override
     public Single<Page<User>> search(String domain, String query, int limit) {
         return userService.search(domain, query, limit);
@@ -98,7 +105,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> create(String domain, NewUser newUser) {
+    public Single<User> create(String domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
         // set user idp source
         if (newUser.getSource() == null) {
             newUser.setSource(DEFAULT_IDP_PREFIX + domain);
@@ -139,11 +146,13 @@ public class UserServiceImpl implements UserService {
                                     return userService.create(domain, newUser);
                                 });
                     }
-                });
+                })
+                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
     }
 
     @Override
-    public Single<User> update(String domain, String id, UpdateUser updateUser) {
+    public Single<User> update(String domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
         return userService.findById(id)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
                 .flatMapSingle(user -> identityProviderManager.getUserProvider(user.getSource())
@@ -160,11 +169,14 @@ public class UserServiceImpl implements UserService {
                                 return userService.update(domain, id, updateUser);
                             }
                             return Single.error(ex);
-                        }));
+                        })
+                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).oldValue(user).user(user1)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)))
+                );
     }
 
     @Override
-    public Completable delete(String userId) {
+    public Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal) {
         return userService.findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> identityProviderManager.getUserProvider(user.getSource())
@@ -177,11 +189,14 @@ public class UserServiceImpl implements UserService {
                                 return userRepository.delete(userId);
                             }
                             return Completable.error(ex);
-                        }));
+                        })
+                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(user)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)))
+                );
     }
 
     @Override
-    public Completable resetPassword(String domain, String userId, String password) {
+    public Completable resetPassword(String domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal) {
         return userService.findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapSingle(user -> identityProviderManager.getUserProvider(user.getSource())
@@ -202,11 +217,14 @@ public class UserServiceImpl implements UserService {
                                 user.setRegistrationCompleted(true);
                             }
                             return userRepository.update(user);
-                        })).toCompletable();
+                        })
+                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)))
+                ).toCompletable();
     }
 
     @Override
-    public Completable sendRegistrationConfirmation(String userId) {
+    public Completable sendRegistrationConfirmation(String userId, io.gravitee.am.identityprovider.api.User principal) {
         return findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .map(user -> {
@@ -219,6 +237,8 @@ public class UserServiceImpl implements UserService {
                     return user;
                 })
                 .doOnSuccess(user -> new Thread(() -> completeUserRegistration(user)).start())
+                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).user(user1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).throwable(throwable)))
                 .toSingle()
                 .toCompletable();
     }
@@ -227,7 +247,7 @@ public class UserServiceImpl implements UserService {
         final String templateName = getTemplateName(user);
         io.gravitee.am.model.Email email = emailManager.getEmail(templateName, registrationSubject, expireAfter);
         Email email1 = convert(user, email, "/confirmRegistration", "registrationUrl");
-        emailService.send(email1);
+        emailService.send(email1, user);
     }
 
     private Email convert(User user, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {

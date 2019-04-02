@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Action;
@@ -28,9 +30,13 @@ import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
-import io.gravitee.am.service.model.*;
+import io.gravitee.am.service.model.NewClient;
+import io.gravitee.am.service.model.PatchClient;
+import io.gravitee.am.service.model.TopClient;
+import io.gravitee.am.service.model.TotalClient;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.ClientAuditBuilder;
 import io.gravitee.am.service.utils.GrantTypeUtils;
-import io.gravitee.am.service.utils.ResponseTypeUtils;
 import io.gravitee.am.service.utils.UriBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -76,6 +82,9 @@ public class ClientServiceImpl implements ClientService {
 
     @Autowired
     private FormService formService;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public Maybe<Client> findById(String id) {
@@ -261,7 +270,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Single<Client> create(String domain, NewClient newClient) {
+    public Single<Client> create(String domain, NewClient newClient, User principal) {
         LOGGER.debug("Create a new client {} for domain {}", newClient, domain);
         return clientRepository.findByClientIdAndDomain(newClient.getClientId(), domain)
                 .isEmpty()
@@ -278,7 +287,9 @@ public class ClientServiceImpl implements ClientService {
                     return Single.just(client);
                 })
                 .flatMap(client -> this.create(client))
-                .onErrorResumeNext(this::handleError);
+                .onErrorResumeNext(this::handleError)
+                .doOnSuccess(client -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_CREATED).client(client)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_CREATED).throwable(throwable)));
     }
 
     @Override
@@ -321,53 +332,6 @@ public class ClientServiceImpl implements ClientService {
                 .onErrorResumeNext(this::handleError);
         }
 
-    /**
-     * Since Dynamic Client Registration, many new fields have been added to client.
-     * Using this legacy update method may make you loose data.
-     * You should better use patch(String,String,PatchClient) method.
-     */
-    @Deprecated
-    @Override
-    public Single<Client> update(String domain, String id, UpdateClient updateClient) {
-        LOGGER.debug("Update a client {} for domain {}", id, domain);
-        return clientRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ClientNotFoundException(id)))
-                .flatMapSingle(client -> {
-                    //Refresh with existing identity providers.
-                    Set<String> identities = updateClient.getIdentities();
-                    if (identities == null) {
-                        return Single.just(client);
-                    } else {
-                        return Observable.fromIterable(identities)
-                                .flatMapMaybe(identityProviderId -> identityProviderService.findById(identityProviderId))
-                                .toList()
-                                .flatMap(idp -> Single.just(client));
-                    }
-                })
-                .map(client -> {
-                    client.setClientName(updateClient.getClientName());
-                    client.setScopes(updateClient.getScopes());
-                    client.setAutoApproveScopes(updateClient.getAutoApproveScopes());
-                    client.setAccessTokenValiditySeconds(updateClient.getAccessTokenValiditySeconds());
-                    client.setRefreshTokenValiditySeconds(updateClient.getRefreshTokenValiditySeconds());
-                    client.setAuthorizedGrantTypes(updateClient.getAuthorizedGrantTypes());
-                    client.setRedirectUris(updateClient.getRedirectUris());
-                    client.setEnabled(updateClient.isEnabled());
-                    client.setIdentities(updateClient.getIdentities());
-                    client.setOauth2Identities(updateClient.getOauth2Identities());
-                    client.setIdTokenValiditySeconds(updateClient.getIdTokenValiditySeconds());
-                    client.setIdTokenCustomClaims(updateClient.getIdTokenCustomClaims());
-                    client.setCertificate(updateClient.getCertificate());
-                    client.setEnhanceScopesWithUserPermissions(updateClient.isEnhanceScopesWithUserPermissions());
-                    client.setScopeApprovals(updateClient.getScopeApprovals());
-                    return client;
-                })
-                .map(ResponseTypeUtils::applyDefaultResponseType)
-                .flatMap(client -> this.validateClientMetadata(domain, client))
-                .flatMap(client -> this.updateClientAndReloadDomain(domain, client))
-                .onErrorResumeNext(this::handleError);
-    }
-
     @Override
     public Single<Client> update(Client client) {
         LOGGER.debug("Update client_id {} for domain {}", client.getClientId(), client.getDomain());
@@ -385,18 +349,32 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull) {
+    public Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull, User principal) {
         LOGGER.debug("Patch a client {} for domain {}", id, domain);
         return clientRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(id)))
-                .flatMapSingle(toPatch -> Single.just(patchClient.patch(toPatch, forceNull)))
-                .flatMap(client -> this.validateClientMetadata(domain, client))
-                .flatMap(client -> this.updateClientAndReloadDomain(domain, client))
+                .flatMapSingle(client -> {
+                    //Refresh with existing identity providers.
+                    Optional<Set<String>> identities = patchClient.getIdentities();
+                    if (identities == null || !identities.isPresent()) {
+                        return Single.just(client);
+                    } else {
+                        return Observable.fromIterable(identities.get())
+                                .flatMapMaybe(identityProviderId -> identityProviderService.findById(identityProviderId))
+                                .toList()
+                                .flatMap(idp -> Single.just(client));
+                    }
+                })
+                .flatMap(toPatch -> Single.just(patchClient.patch(toPatch, forceNull))
+                        .flatMap(client -> this.validateClientMetadata(domain, client))
+                        .flatMap(client -> this.updateClientAndReloadDomain(domain, client))
+                        .doOnSuccess(client -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_UPDATED).oldValue(toPatch).client(client)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_UPDATED).throwable(throwable))))
                 .onErrorResumeNext(this::handleError);
     }
 
     @Override
-    public Completable delete(String clientId) {
+    public Completable delete(String clientId, User principal) {
         LOGGER.debug("Delete client {}", clientId);
         return clientRepository.findById(clientId)
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(clientId)))
@@ -406,19 +384,21 @@ public class ClientServiceImpl implements ClientService {
                     return clientRepository.delete(clientId)
                             .andThen(domainService.reload(client.getDomain(), event).toCompletable())
                             // delete email templates
-                            .andThen(emailTemplateService.findByDomain(client.getDomain())
-                                    .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteEmailsCompletable = scopes.stream().map(e -> emailTemplateService.delete(e.getId())).collect(Collectors.toList());
+                            .andThen(emailTemplateService.findByDomainAndClient(client.getDomain(), client.getId())
+                                    .flatMapCompletable(emails -> {
+                                        List<Completable> deleteEmailsCompletable = emails.stream().map(e -> emailTemplateService.delete(e.getId())).collect(Collectors.toList());
                                         return Completable.concat(deleteEmailsCompletable);
                                     })
                             )
                             // delete form templates
-                            .andThen(formService.findByDomain(client.getDomain())
-                                    .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteFormsCompletable = scopes.stream().map(f -> formService.delete(f.getId())).collect(Collectors.toList());
+                            .andThen(formService.findByDomainAndClient(client.getDomain(), client.getId())
+                                    .flatMapCompletable(forms -> {
+                                        List<Completable> deleteFormsCompletable = forms.stream().map(f -> formService.delete(f.getId())).collect(Collectors.toList());
                                         return Completable.concat(deleteFormsCompletable);
                                     })
-                            );
+                            )
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_DELETED).client(client)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -432,7 +412,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Single<Client> renewClientSecret(String domain, String id) {
+    public Single<Client> renewClientSecret(String domain, String id, User principal) {
         LOGGER.debug("Renew client secret for client {} in domain {}", id, domain);
         return clientRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(id)))
@@ -443,7 +423,9 @@ public class ClientServiceImpl implements ClientService {
                     // update client and reload domain
                     return updateClientAndReloadDomain(domain, client);
                 })
-                .onErrorResumeNext(this::handleError);
+                .onErrorResumeNext(this::handleError)
+                .doOnSuccess(client -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_SECRET_RENEWED).client(client)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_SECRET_RENEWED).throwable(throwable)));
     }
 
     /**

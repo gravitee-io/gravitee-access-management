@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
@@ -88,9 +89,11 @@ public class RolesResource extends AbstractResource {
             @ApiParam(name = "role", required = true)
             @Valid @NotNull final NewRole newRole,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> roleService.create(domain, newRole)
+                .flatMapSingle(irrelevant -> roleService.create(domain, newRole, authenticatedUser)
                             .map(role -> Response
                                     .created(URI.create("/domains/" + domain + "/roles/" + role.getId()))
                                     .entity(role)

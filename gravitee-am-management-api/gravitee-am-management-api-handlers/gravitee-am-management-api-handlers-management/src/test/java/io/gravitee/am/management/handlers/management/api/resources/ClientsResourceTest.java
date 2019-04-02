@@ -97,7 +97,7 @@ public class ClientsResourceTest extends JerseySpringTest {
         client.setClientSecret("client-secret");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(client)).when(clientService).create(eq(domainId), any(NewClient.class));
+        doReturn(Single.just(client)).when(clientService).create(eq(domainId), any(NewClient.class), any());
 
         final Response response = target("domains")
                 .path(domainId)

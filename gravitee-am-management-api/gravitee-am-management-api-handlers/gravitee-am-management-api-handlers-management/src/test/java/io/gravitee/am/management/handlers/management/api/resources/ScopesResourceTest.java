@@ -97,7 +97,7 @@ public class ScopesResourceTest extends JerseySpringTest {
         scope.setName("scope-name");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(scope)).when(scopeService).create(eq(domainId), any(NewScope.class));
+        doReturn(Single.just(scope)).when(scopeService).create(eq(domainId), any(NewScope.class), any());
 
         final Response response = target("domains")
                 .path(domainId)

@@ -17,6 +17,7 @@ import { Injectable } from '@angular/core';
 import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { UserService } from "../services/user.service";
+import { AppConfig } from "../../config/app.config";
 
 @Injectable()
 export class ConsentsResolver implements Resolve<any> {
@@ -24,7 +25,10 @@ export class ConsentsResolver implements Resolve<any> {
   constructor(private userService: UserService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId = route.parent.parent.parent.paramMap.get('domainId');
+    let domainId: string = AppConfig.settings.authentication.domainId;
+    if (!state.url.startsWith('/settings')) {
+      domainId = route.parent.parent.parent.paramMap.get('domainId');
+    }
     let userId = route.parent.paramMap.get('userId');
     let clientId = route.paramMap.get('clientId');
     return this.userService.consents(domainId, userId, clientId).map(res => res.json());

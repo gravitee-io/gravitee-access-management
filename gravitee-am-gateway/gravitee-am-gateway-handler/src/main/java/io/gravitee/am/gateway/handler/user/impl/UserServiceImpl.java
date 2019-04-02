@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.user.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
@@ -35,11 +36,14 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
@@ -93,6 +97,14 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private ScopeApprovalService scopeApprovalService;
 
+    @Autowired
+    private AuditService auditService;
+
+    @Override
+    public Maybe<User> findById(String id) {
+        return userRepository.findById(id);
+    }
+
     @Override
     public Maybe<UserToken> verifyToken(String token) {
         return Maybe.fromCallable(() -> jwtParser.parse(token))
@@ -100,7 +112,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> register(User user) {
+    public Single<User> register(User user, io.gravitee.am.identityprovider.api.User principal) {
         // set user idp source
         final String source = user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource();
 
@@ -133,11 +145,24 @@ public class UserServiceImpl implements UserService {
                             user.setCreatedAt(new Date());
                             user.setUpdatedAt(user.getCreatedAt());
                             return userRepository.create(user);
-                        }));
+                        })
+                        .doOnSuccess(user1 -> {
+                            // reload principal
+                            io.gravitee.am.identityprovider.api.User principal1 = new DefaultUser(user1.getUsername());
+                            ((DefaultUser) principal1).setId(user1.getId());
+                            ((DefaultUser) principal1).setAdditionalInformation(principal.getAdditionalInformation());
+                            principal1.getAdditionalInformation()
+                                    .put(StandardClaims.NAME,
+                                            user1.getDisplayName() != null ? user1.getDisplayName() :
+                                                    (user1.getFirstName() != null ? user1.getFirstName() + (user1.getLastName() != null ? " " + user1.getLastName() : "") : user1.getUsername()));
+                            auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal1).type(EventType.USER_REGISTERED));
+                        })
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_REGISTERED).throwable(throwable)))
+                );
     }
 
     @Override
-    public Completable confirmRegistration(User user) {
+    public Completable confirmRegistration(User user, io.gravitee.am.identityprovider.api.User principal) {
         // user has completed his account, add it to the idp
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
@@ -151,11 +176,14 @@ public class UserServiceImpl implements UserService {
                     user.setUpdatedAt(new Date());
                     return userRepository.update(user);
                 })
-                .toCompletable();
+                .toCompletable()
+                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.REGISTRATION_CONFIRMATION)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.REGISTRATION_CONFIRMATION).throwable(throwable)));
+
     }
 
     @Override
-    public Completable resetPassword(User user) {
+    public Completable resetPassword(User user, io.gravitee.am.identityprovider.api.User principal) {
         // only idp manage password, find user idp and update its password
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
@@ -167,17 +195,31 @@ public class UserServiceImpl implements UserService {
                     user.setUpdatedAt(new Date());
                     return userRepository.update(user);
                 })
-                .toCompletable();
+                .toCompletable()
+                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)));
     }
 
     @Override
-    public Completable forgotPassword(String email, Client client) {
+    public Completable forgotPassword(String email, Client client, io.gravitee.am.identityprovider.api.User principal) {
         return userRepository.findByDomainAndEmail(domain.getId(), email)
                 .map(users -> users.stream().filter(user -> user.isInternal()).findFirst())
                 .flatMapMaybe(optionalUser -> optionalUser.isPresent() ? Maybe.just(optionalUser.get()) : Maybe.empty())
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(email)))
                 .toSingle()
                 .doOnSuccess(user -> new Thread(() -> completeForgotPassword(user, client)).start())
+                .doOnSuccess(user1 -> {
+                    // reload principal
+                    io.gravitee.am.identityprovider.api.User principal1 = new DefaultUser(user1.getUsername());
+                    ((DefaultUser) principal1).setId(user1.getId());
+                    ((DefaultUser) principal1).setAdditionalInformation(principal.getAdditionalInformation());
+                    principal1.getAdditionalInformation()
+                            .put(StandardClaims.NAME,
+                                    user1.getDisplayName() != null ? user1.getDisplayName() :
+                                            (user1.getFirstName() != null ? user1.getFirstName() + (user1.getLastName() != null ? " " + user1.getLastName() : "") : user1.getUsername()));
+                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal1).type(EventType.FORGOT_PASSWORD_REQUESTED));
+                })
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
                 .toCompletable();
 
     }
@@ -199,24 +241,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Completable revokeConsent(String consentId) {
-        return scopeApprovalService.revoke(consentId);
+    public Completable revokeConsent(String userId, String consentId, io.gravitee.am.identityprovider.api.User principal) {
+        return scopeApprovalService.revokeByConsent(domain.getId(), userId, consentId, principal);
     }
 
     @Override
-    public Completable revokeConsents(String userId) {
-        return scopeApprovalService.revoke(domain.getId(), userId);
+    public Completable revokeConsents(String userId, io.gravitee.am.identityprovider.api.User principal) {
+        return scopeApprovalService.revokeByUser(domain.getId(), userId, principal);
     }
 
     @Override
-    public Completable revokeConsents(String userId, String clientId) {
-        return scopeApprovalService.revoke(domain.getId(), userId, clientId);
+    public Completable revokeConsents(String userId, String clientId, io.gravitee.am.identityprovider.api.User principal) {
+        return scopeApprovalService.revokeByUserAndClient(domain.getId(), userId, clientId, principal);
     }
 
     private void completeForgotPassword(User user, Client client) {
         io.gravitee.am.model.Email email = emailManager.getEmail(getTemplateName(client), resetPasswordSubject, expireAfter);
         Email email1 = convert(user, client, email, "/resetPassword", "resetPasswordUrl");
-        emailService.send(email1);
+        emailService.send(email1, user, client);
     }
 
     private Email convert(User user, Client client, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {

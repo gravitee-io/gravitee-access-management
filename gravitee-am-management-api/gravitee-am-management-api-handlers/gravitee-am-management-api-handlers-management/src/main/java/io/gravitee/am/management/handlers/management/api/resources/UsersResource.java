@@ -122,6 +122,8 @@ public class UsersResource extends AbstractResource {
             @ApiParam(name = "user", required = true)
             @Valid @NotNull final NewUser newUser,
             @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+
         // user must have a password in no pre registration mode
         if (!newUser.isPreRegistration() && newUser.getPassword() == null) {
             response.resume(new UserInvalidException(("Field [password] is required")));
@@ -138,7 +140,7 @@ public class UsersResource extends AbstractResource {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(userProvider -> userService.create(domain, newUser))
+                .flatMapSingle(userProvider -> userService.create(domain, newUser, authenticatedUser))
                 .map(user -> Response
                         .created(URI.create("/domains/" + domain + "/users/" + user.getId()))
                         .entity(user)

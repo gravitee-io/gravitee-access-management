@@ -29,5 +29,6 @@ public enum Type {
     SCOPE,
     ROLE,
     FORM,
-    EMAIL
+    EMAIL,
+    REPORTER
 }

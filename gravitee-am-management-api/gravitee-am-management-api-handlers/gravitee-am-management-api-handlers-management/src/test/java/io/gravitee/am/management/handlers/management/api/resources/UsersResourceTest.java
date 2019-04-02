@@ -120,7 +120,7 @@ public class UsersResourceTest extends JerseySpringTest {
         newUser.setSource("unknown-source");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.error(new UserProviderNotFoundException(newUser.getSource()))).when(userService).create(anyString(), any());
+        doReturn(Single.error(new UserProviderNotFoundException(newUser.getSource()))).when(userService).create(anyString(), any(), any());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -142,7 +142,7 @@ public class UsersResourceTest extends JerseySpringTest {
 
         doReturn(true).when(passwordValidator).validate(anyString());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(new User())).when(userService).create(anyString(), any());
+        doReturn(Single.just(new User())).when(userService).create(anyString(), any(), any());
 
         final Response response = target("domains")
                 .path(domainId)

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.FormService;
@@ -82,9 +83,11 @@ public class FormsResource extends AbstractResource {
             @ApiParam(name = "form", required = true)
             @Valid @NotNull final NewForm newForm,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> formService.create(domain, newForm)
+                .flatMapSingle(irrelevant -> formService.create(domain, newForm, authenticatedUser)
                             .map(form -> Response
                                     .created(URI.create("/domains/" + domain + "/forms/" + form.getId()))
                                     .entity(form)

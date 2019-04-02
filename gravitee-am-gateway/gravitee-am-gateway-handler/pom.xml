@@ -98,6 +98,18 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.reporter</groupId>
+            <artifactId>gravitee-am-reporter-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-reporter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Vert.x -->
         <dependency>
             <groupId>io.vertx</groupId>

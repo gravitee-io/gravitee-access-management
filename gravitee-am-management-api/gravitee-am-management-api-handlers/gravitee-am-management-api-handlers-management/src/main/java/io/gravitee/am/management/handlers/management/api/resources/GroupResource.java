@@ -43,7 +43,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GroupResource {
+public class GroupResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -92,10 +92,11 @@ public class GroupResource {
             @PathParam("group") String group,
             @ApiParam(name = "group", required = true) @Valid @NotNull UpdateGroup updateGroup,
             @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> groupService.update(domain, group, updateGroup))
+                .flatMapSingle(irrelevant -> groupService.update(domain, group, updateGroup, authenticatedUser))
                 .map(user1 -> Response.ok(user1).build())
                 .subscribe(
                         result -> response.resume(result),
@@ -110,10 +111,11 @@ public class GroupResource {
     public void delete(@PathParam("domain") String domain,
                            @PathParam("group") String group,
                            @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(irrelevant -> groupService.delete(group))
+                .flatMapCompletable(irrelevant -> groupService.delete(group, authenticatedUser))
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

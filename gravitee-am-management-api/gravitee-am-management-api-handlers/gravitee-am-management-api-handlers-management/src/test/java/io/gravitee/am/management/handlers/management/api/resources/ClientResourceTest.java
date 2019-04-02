@@ -117,7 +117,7 @@ public class ClientResourceTest extends JerseySpringTest {
         mockClient.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockClient)).when(clientService).renewClientSecret(domainId, clientId);
+        doReturn(Single.just(mockClient)).when(clientService).renewClientSecret(domainId, clientId, null);
 
         final Response response = target("domains")
                 .path(domainId)
@@ -142,7 +142,7 @@ public class ClientResourceTest extends JerseySpringTest {
         mockClient.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.error(new ClientNotFoundException(clientId))).when(clientService).renewClientSecret(domainId, clientId);
+        doReturn(Single.error(new ClientNotFoundException(clientId))).when(clientService).renewClientSecret(domainId, clientId, null);
 
         final Response response = target("domains")
                 .path(domainId)

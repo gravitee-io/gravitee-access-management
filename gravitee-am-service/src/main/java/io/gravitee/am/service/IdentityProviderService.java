@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
@@ -37,9 +38,21 @@ public interface IdentityProviderService {
 
     Single<List<IdentityProvider>> findByDomain(String domain);
 
-    Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider);
+    Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider, User principal);
 
-    Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider);
+    Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal);
 
-    Completable delete(String domain, String identityProviderId);
+    Completable delete(String domain, String identityProviderId, User principal);
+
+    default Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider) {
+        return create(domain, identityProvider, null);
+    }
+
+    default Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider) {
+        return update(domain, id, updateIdentityProvider, null);
+    }
+
+    default Completable delete(String domain, String identityProviderId) {
+        return delete(domain, identityProviderId, null);
+    }
 }

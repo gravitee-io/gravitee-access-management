@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.service.model.NewEmail;
 import io.gravitee.am.service.model.UpdateEmail;
@@ -34,18 +35,40 @@ public interface EmailTemplateService {
 
     Single<List<Email>> findByDomain(String domain);
 
+    Single<List<Email>> findByDomainAndClient(String domain, String client);
+
     Maybe<Email> findByDomainAndTemplate(String domain, String template);
 
     Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template);
 
-    Single<Email> create(String domain, NewEmail newEmail);
+    Single<Email> create(String domain, NewEmail newEmail, User principal);
 
-    Single<Email> create(String domain, String client, NewEmail newEmail);
+    Single<Email> create(String domain, String client, NewEmail newEmail, User principal);
 
-    Single<Email> update(String domain, String id, UpdateEmail updateEmail);
+    Single<Email> update(String domain, String id, UpdateEmail updateEmail, User principal);
 
-    Single<Email> update(String domain, String client, String id, UpdateEmail updateEmail);
+    Single<Email> update(String domain, String client, String id, UpdateEmail updateEmail, User principal);
 
-    Completable delete(String emailId);
+    Completable delete(String emailId, User principal);
+
+    default Single<Email> create(String domain, NewEmail newEmail) {
+        return create(domain, newEmail,  null);
+    }
+
+    default Single<Email> create(String domain, String client, NewEmail newEmail) {
+        return create(domain, client, newEmail, null);
+    }
+
+    default Single<Email> update(String domain, String id, UpdateEmail updateEmail) {
+        return update(domain, id, updateEmail,  null);
+    }
+
+    default Single<Email> update(String domain, String client, String id, UpdateEmail updateEmail) {
+        return update(domain, client, id, updateEmail, null);
+    }
+
+    default Completable delete(String emailId) {
+        return delete(emailId, null);
+    }
 
 }

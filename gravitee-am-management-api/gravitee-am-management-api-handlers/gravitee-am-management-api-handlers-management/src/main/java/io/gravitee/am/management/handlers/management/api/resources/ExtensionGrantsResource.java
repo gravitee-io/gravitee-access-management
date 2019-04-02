@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
@@ -88,9 +89,11 @@ public class ExtensionGrantsResource extends AbstractResource {
             @ApiParam(name = "extension grant", required = true)
             @Valid @NotNull final NewExtensionGrant newExtensionGrant,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> extensionGrantService.create(domain, newExtensionGrant)
+                .flatMapSingle(irrelevant -> extensionGrantService.create(domain, newExtensionGrant, authenticatedUser)
                             .map(extensionGrant -> Response
                                     .created(URI.create("/domains/" + domain + "/extensionGrants/" + extensionGrant.getId()))
                                     .entity(extensionGrant)

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
 import io.gravitee.am.management.service.CertificatePluginService;
 import io.gravitee.am.management.service.exception.CertificatePluginSchemaNotFoundException;
@@ -46,7 +47,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateResource {
+public class CertificateResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -118,13 +119,15 @@ public class CertificateResource {
             @PathParam("certificate") String certificate,
             @ApiParam(name = "certificate", required = true) @Valid @NotNull UpdateCertificate updateCertificate,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMap(irrelevant -> certificateService.findById(certificate))
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificate)))
                 .flatMap(certificate1 ->  certificatePluginService.getSchema(certificate1.getType()))
                 .switchIfEmpty(Maybe.error(new CertificatePluginSchemaNotFoundException(certificate)))
-                .flatMapSingle(schema -> certificateService.update(domain, certificate, updateCertificate, schema))
+                .flatMapSingle(schema -> certificateService.update(domain, certificate, updateCertificate, schema, authenticatedUser))
                 .map(certificate1 -> {
                     // TODO remove after refactoring JWKS endpoint
                     certificateManager.reloadCertificateProviders(certificate1);
@@ -144,7 +147,9 @@ public class CertificateResource {
     public void delete(@PathParam("domain") String domain,
                        @PathParam("certificate") String certificate,
                        @Suspended final AsyncResponse response) {
-        certificateService.delete(certificate)
+        final User authenticatedUser = getAuthenticatedUser();
+
+        certificateService.delete(certificate, authenticatedUser)
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

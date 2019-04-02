@@ -51,4 +51,12 @@ export class PlatformService {
   extensionGrantSchema(id): Observable<Response> {
     return this.http.get(this.platformURL + 'plugins/extensionGrants/' + id + '/schema');
   }
+
+  reporterSchema(id): Observable<Response> {
+    return this.http.get(this.platformURL + 'plugins/reporters/' + id + '/schema');
+  }
+
+  auditEventTypes(): Observable<Response> {
+    return this.http.get(this.platformURL + 'audit/events');
+  }
 }

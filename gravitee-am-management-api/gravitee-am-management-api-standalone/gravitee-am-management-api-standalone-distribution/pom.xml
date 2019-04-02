@@ -130,6 +130,14 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.reporter</groupId>
+            <artifactId>gravitee-am-reporter-mongodb</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.management</groupId>
             <artifactId>gravitee-am-management-api-services-sync</artifactId>
             <version>${project.version}</version>
@@ -229,6 +237,14 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.extensiongrant</groupId>
                                     <artifactId>gravitee-am-extensiongrant-jwtbearer</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- Reporters -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.reporter</groupId>
+                                    <artifactId>gravitee-am-reporter-mongodb</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

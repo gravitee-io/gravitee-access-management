@@ -96,7 +96,7 @@ public class ExtensionGrantsResourceTest extends JerseySpringTest {
         extensionGrant.setName("extensionGrant-name");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(extensionGrant)).when(extensionGrantService).create(eq(domainId), any());
+        doReturn(Single.just(extensionGrant)).when(extensionGrantService).create(eq(domainId), any(), any());
 
         final Response response = target("domains")
                 .path(domainId)

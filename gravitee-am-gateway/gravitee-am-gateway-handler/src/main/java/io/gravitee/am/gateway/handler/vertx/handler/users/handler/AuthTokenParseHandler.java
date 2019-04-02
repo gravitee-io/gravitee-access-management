@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.gateway.handler.oauth2.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
+import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.Maybe;
 import io.vertx.core.AsyncResult;
@@ -70,6 +71,7 @@ public class AuthTokenParseHandler implements Handler<RoutingContext> {
                 final String userId = context.request().getParam("userId");
 
                 Token token = handler.result();
+                context.put(AccessToken.ACCESS_TOKEN, token);
 
                 // current user can show its account information
                 if (userId != null && userId.equals(token.getSubject())) {

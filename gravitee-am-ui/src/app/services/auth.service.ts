@@ -55,7 +55,7 @@ export class AuthService {
   }
 
   setUser(user: any) {
-    this.currentUser = user.sub;
+    this.currentUser = user.preferred_username;
     sessionStorage.setItem('user', this.currentUser);
   }
 

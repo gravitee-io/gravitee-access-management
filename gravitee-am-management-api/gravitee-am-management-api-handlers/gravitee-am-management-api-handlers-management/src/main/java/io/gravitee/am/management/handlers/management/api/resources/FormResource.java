@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.FormService;
@@ -41,7 +42,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FormResource {
+public class FormResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -64,9 +65,11 @@ public class FormResource {
             @PathParam("form") String form,
             @ApiParam(name = "form", required = true) @Valid @NotNull UpdateForm updateForm,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> formService.update(domain, form, updateForm))
+                .flatMapSingle(irrelevant -> formService.update(domain, form, updateForm, authenticatedUser))
                 .map(form1 -> Response.ok(form1).build())
                 .subscribe(
                         result -> response.resume(result),
@@ -81,7 +84,9 @@ public class FormResource {
     public void delete(@PathParam("domain") String domain,
                            @PathParam("form") String form,
                            @Suspended final AsyncResponse response) {
-        formService.delete(form)
+        final User authenticatedUser = getAuthenticatedUser();
+
+        formService.delete(form, authenticatedUser)
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

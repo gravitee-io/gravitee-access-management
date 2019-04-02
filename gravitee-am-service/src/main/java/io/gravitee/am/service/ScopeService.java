@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.model.NewScope;
 import io.gravitee.am.service.model.NewSystemScope;
@@ -38,7 +39,7 @@ public interface ScopeService {
 
     Maybe<Scope> findById(String id);
 
-    Single<Scope> create(String domain, NewScope scope);
+    Single<Scope> create(String domain, NewScope scope, User principal);
 
     Single<Scope> create(String domain, NewSystemScope scope);
 
@@ -46,16 +47,28 @@ public interface ScopeService {
 
     Maybe<Scope> findByDomainAndKey(String domain, String scopeKey);
 
-    Single<Scope> update(String domain, String id, UpdateScope updateScope);
+    Single<Scope> update(String domain, String id, UpdateScope updateScope, User principal);
 
     Single<Scope> update(String domain, String id, UpdateSystemScope updateScope);
 
-    Completable delete(String scopeId, boolean force);
+    Completable delete(String scopeId, boolean force, User principal);
 
     /**
      * Throw InvalidClientMetadataException if null or empty, or contains unknown scope.
      * @param scopes Array of scope to validate.
      */
     Single<Boolean> validateScope(String domain, List<String> scopes);
+
+    default Single<Scope> create(String domain, NewScope scope) {
+        return create(domain, scope, null);
+    }
+
+    default Single<Scope> update(String domain, String id, UpdateScope updateScope) {
+        return update(domain, id, updateScope, null);
+    }
+
+    default Completable delete(String scopeId, boolean force) {
+        return delete(scopeId, force, null);
+    }
 
 }

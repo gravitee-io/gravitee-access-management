@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.approval.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.gateway.handler.oauth2.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.request.AuthorizationRequest;
@@ -26,6 +27,9 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.UserConsentAuditBuilder;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +53,9 @@ public class ApprovalServiceImpl implements ApprovalService {
     @Autowired
     private ScopeManager scopeManager;
 
+    @Autowired
+    private AuditService auditService;
+
     @Value("${oauth2.approval.expiry:-1}")
     private int approvalExpirySeconds;
 
@@ -66,7 +73,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     }
 
     @Override
-    public Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, Client client, User user) {
+    public Single<AuthorizationRequest> saveApproval(AuthorizationRequest authorizationRequest, Client client, User user, io.gravitee.am.identityprovider.api.User principal) {
         // Get the unapproved requested scopes
         Set<String> requestedScopes = authorizationRequest.getDeniedScopes();
         Set<String> approvedScopes = new HashSet<>();
@@ -104,7 +111,9 @@ public class ApprovalServiceImpl implements ApprovalService {
                     }
                     authorizationRequest.setApproved(approved);
                     return Single.just(authorizationRequest);
-                });
+                })
+                .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.USER_CONSENT_CONSENTED).approvals(approvals)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.USER_CONSENT_CONSENTED).throwable(throwable)));
     }
 
     private Single<AuthorizationRequest> checkUserApproval(AuthorizationRequest authorizationRequest, User user) {

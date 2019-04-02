@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -23,12 +25,11 @@ import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
-import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.*;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.ScopeAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -73,6 +74,9 @@ public class ScopeServiceImpl implements ScopeService {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private AuditService auditService;
+
     @Override
     public Maybe<Scope> findById(String id) {
         LOGGER.debug("Find scope by ID: {}", id);
@@ -85,7 +89,7 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
-    public Single<Scope> create(String domain, NewScope newScope) {
+    public Single<Scope> create(String domain, NewScope newScope, User principal) {
         LOGGER.debug("Create a new scope {} for domain {}", newScope, domain);
         String scopeKey = newScope.getKey().toLowerCase();
         return scopeRepository.findByDomainAndKey(domain, scopeKey)
@@ -118,7 +122,9 @@ public class ScopeServiceImpl implements ScopeService {
 
                     LOGGER.error("An error occurs while trying to create a scope", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a scope", ex));
-                });
+                })
+                .doOnSuccess(scope -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_CREATED).scope(scope)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_CREATED).throwable(throwable)));
     }
 
     @Override
@@ -159,22 +165,25 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
-    public Single<Scope> update(String domain, String id, UpdateScope updateScope) {
+    public Single<Scope> update(String domain, String id, UpdateScope updateScope, User principal) {
         LOGGER.debug("Update a scope {} for domain {}", id, domain);
         return scopeRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
-                .flatMapSingle(scope -> {
-                    scope.setName(updateScope.getName());
-                    scope.setDescription(updateScope.getDescription());
-                    scope.setExpiresIn(updateScope.getExpiresIn());
-                    scope.setUpdatedAt(new Date());
+                .flatMapSingle(oldScope -> {
+                    Scope scopeToUpdate = new Scope(oldScope);
+                    scopeToUpdate.setName(updateScope.getName());
+                    scopeToUpdate.setDescription(updateScope.getDescription());
+                    scopeToUpdate.setExpiresIn(updateScope.getExpiresIn());
+                    scopeToUpdate.setUpdatedAt(new Date());
 
-                    return scopeRepository.update(scope);
-                })
-                .flatMap(scope -> {
-                    // Reload domain to take care about scope update
-                    Event event = new Event(Type.SCOPE, new Payload(scope.getId(), scope.getDomain(), Action.UPDATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(scope));
+                    return scopeRepository.update(scopeToUpdate)
+                            .flatMap(scope1 -> {
+                                // Reload domain to take care about scope update
+                                Event event = new Event(Type.SCOPE, new Payload(scope1.getId(), scope1.getDomain(), Action.UPDATE));
+                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(scope1));
+                            })
+                            .doOnSuccess(scope1 -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).oldValue(oldScope).scope(scope1)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -214,7 +223,7 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
-    public Completable delete(String scopeId, boolean force) {
+    public Completable delete(String scopeId, boolean force, User principal) {
         LOGGER.debug("Delete scope {}", scopeId);
         return scopeRepository.findById(scopeId)
                 .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
@@ -264,16 +273,19 @@ public class ScopeServiceImpl implements ScopeService {
                                         Completable.fromSingle(
                                                 domainService.reload(scope.getDomain(),
                                                         new Event(Type.SCOPE, new Payload(scope.getId(), scope.getDomain(), Action.DELETE))))
-                                ))
-                                .onErrorResumeNext(ex -> {
-                                    if (ex instanceof AbstractManagementException) {
-                                        return Completable.error(ex);
-                                    }
+                                )
+                                .doOnComplete(() -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).scope(scope)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).throwable(throwable)))
+                )
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Completable.error(ex);
+                    }
 
-                                    LOGGER.error("An error occurs while trying to delete scope: {}", scopeId, ex);
-                                    return Completable.error(new TechnicalManagementException(
-                                            String.format("An error occurs while trying to delete scope: %s", scopeId), ex));
-                                });
+                    LOGGER.error("An error occurs while trying to delete scope: {}", scopeId, ex);
+                    return Completable.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete scope: %s", scopeId), ex));
+                });
     }
 
     @Override

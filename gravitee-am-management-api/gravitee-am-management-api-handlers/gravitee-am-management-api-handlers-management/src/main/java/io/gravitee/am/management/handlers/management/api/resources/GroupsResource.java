@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
@@ -86,9 +87,11 @@ public class GroupsResource extends AbstractResource {
             @ApiParam(name = "group", required = true)
             @Valid @NotNull final NewGroup newGroup,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> groupService.create(domain, newGroup))
+                .flatMapSingle(irrelevant -> groupService.create(domain, newGroup, authenticatedUser))
                 .map(group -> Response
                         .created(URI.create("/domains/" + domain + "/groups/" + group.getId()))
                         .entity(group)

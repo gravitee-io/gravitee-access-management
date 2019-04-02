@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.admin.provider.jwt;
 
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -51,7 +52,8 @@ public class JWTGenerator implements InitializingBean {
     private Environment environment;
 
     public Cookie generateCookie(final User user) {
-        Date expirationDate = new Date(System.currentTimeMillis() + JWTGenerator.DEFAULT_JWT_EXPIRE_AFTER);
+        int expiresAfter = environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
+        Date expirationDate = new Date(System.currentTimeMillis() + expiresAfter * 1000);
         String jwtToken  = generateToken(user, expirationDate);
 
         final Cookie cookie = new Cookie(authCookieName, "Bearer " + jwtToken);
@@ -59,13 +61,14 @@ public class JWTGenerator implements InitializingBean {
         cookie.setSecure(environment.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
         cookie.setPath(environment.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
         cookie.setDomain(environment.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));
-        cookie.setMaxAge(environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER));
+        cookie.setMaxAge(expiresAfter);
 
         return cookie;
     }
 
     public Map<String, Object> generateToken(final User user) {
-        Date expirationDate = new Date(System.currentTimeMillis() + JWTGenerator.DEFAULT_JWT_EXPIRE_AFTER);
+        int expiresAfter = environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
+        Date expirationDate = new Date(System.currentTimeMillis() + expiresAfter * 1000);
         String jwtToken  = generateToken(user, expirationDate);
 
         Map<String, Object> token = new HashMap<>();
@@ -78,10 +81,11 @@ public class JWTGenerator implements InitializingBean {
 
     private String generateToken(final User user, Date expirationDate) {
         String compactJws = Jwts.builder()
-                .setSubject(user.getUsername())
+                .setSubject(user.getId())
                 .setIssuedAt(new Date())
                 .setExpiration(expirationDate)
-                .setClaims(user.getAdditionalInformation())
+                .claim(StandardClaims.PREFERRED_USERNAME, user.getUsername())
+                .addClaims(user.getAdditionalInformation())
                 .signWith(key)
                 .compact();
 

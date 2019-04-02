@@ -97,6 +97,14 @@ import {ScimComponent} from "./domain/settings/scim/scim.component";
 import {EmailResolver} from "./resolvers/email.resolver";
 import {ConsentsResolver} from "./resolvers/consents.resolver";
 import {UserApplicationComponent} from "./domain/settings/users/user/applications/application/application.component";
+import {AuditResolver} from "./resolvers/audit.resolver";
+import {AuditsComponent} from "./domain/settings/audits/audits.component";
+import {AuditsResolver} from "./resolvers/audits.resolver";
+import {AuditComponent} from "./domain/settings/audits/audit/audit.component";
+import {AuditsSettingsComponent} from "./domain/settings/audits/settings/settings.component";
+import {ReportersResolver} from "./resolvers/reporters.resolver";
+import {ReporterResolver} from "./resolvers/reporter.resolver";
+import {ReporterComponent} from "./domain/settings/audits/settings/reporter/reporter.component";
 
 const routes: Routes = [
   { path: 'dashboard',
@@ -222,6 +230,36 @@ const routes: Routes = [
               { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver} }
             ]
           },
+          { path: 'audits',
+            component: AuditsComponent,
+            resolve: {
+              audits: AuditsResolver,
+            },
+            data: {
+              menu: {
+                label: 'Audit Log',
+                section: 'Security'
+              }
+            }
+          },
+          { path: 'audits/settings',
+            component: AuditsSettingsComponent,
+            resolve: {
+              reporters: ReportersResolver
+            }
+          },
+          { path: 'audits/settings/:reporterId',
+            component: ReporterComponent,
+            resolve: {
+              reporter: ReporterResolver
+            }
+          },
+          { path: 'audits/:auditId',
+            component: AuditComponent,
+            resolve: {
+              audit: AuditResolver
+            }
+          },
           { path: 'scopes',
             component: DomainSettingsScopesComponent,
             resolve: {
@@ -259,7 +297,13 @@ const routes: Routes = [
             component: UserComponent,
             resolve: {
               user: UserResolver
-            }
+            },
+            children: [
+              { path: '', redirectTo: 'profile', pathMatch: 'full' },
+              { path: 'profile', component: UserProfileComponent },
+              { path: 'applications', component: UserApplicationsComponent, resolve: {consents: ConsentsResolver}},
+              { path: 'applications/:clientId', component: UserApplicationComponent, resolve: {consents: ConsentsResolver}},
+            ]
           },
           { path: 'roles', component: DomainSettingsRolesComponent,
             resolve: {
@@ -464,6 +508,36 @@ const routes: Routes = [
             resolve: {
               extensionGrant: ExtensionGrantResolver,
               identityProviders: ProvidersResolver
+            }
+          },
+          { path: 'audits',
+            component: AuditsComponent,
+            resolve: {
+              audits: AuditsResolver,
+            },
+            data: {
+              menu: {
+                label: 'Audit Log',
+                section: 'Security'
+              }
+            }
+          },
+          { path: 'audits/settings',
+            component: AuditsSettingsComponent,
+            resolve: {
+              reporters: ReportersResolver
+            }
+          },
+          { path: 'audits/settings/:reporterId',
+            component: ReporterComponent,
+            resolve: {
+              reporter: ReporterResolver
+            }
+          },
+          { path: 'audits/:auditId',
+            component: AuditComponent,
+            resolve: {
+              audit: AuditResolver
             }
           },
           { path: 'certificates',

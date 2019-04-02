@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.ClientEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeEntity;
@@ -43,7 +44,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserConsentsResource {
+public class UserConsentsResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -104,13 +105,15 @@ public class UserConsentsResource {
                        @PathParam("user") String user,
                        @QueryParam("clientId") String clientId,
                        @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapCompletable(__ -> {
                     if (clientId == null || clientId.isEmpty()) {
-                        return scopeApprovalService.revoke(domain, user);
+                        return scopeApprovalService.revokeByUser(domain, user, authenticatedUser);
                     }
-                    return scopeApprovalService.revoke(domain, user, clientId);
+                    return scopeApprovalService.revokeByUserAndClient(domain, user, clientId, authenticatedUser);
                 })
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),

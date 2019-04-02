@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
@@ -84,7 +85,7 @@ public class EmailsResourceTest extends JerseySpringTest {
         newEmail.setExpiresAfter(1000);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(new Email())).when(emailTemplateService).create(eq(domainId), any());
+        doReturn(Single.just(new Email())).when(emailTemplateService).create(eq(domainId), any(), any(User.class));
         doReturn(Single.just(new Email())).when(emailManager).reloadEmail(any());
 
         final Response response = target("domains")

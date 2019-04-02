@@ -48,6 +48,7 @@
         <gravitee-common.version>1.13.0</gravitee-common.version>
         <gravitee-plugin-core.version>1.4.0</gravitee-plugin-core.version>
         <gravitee-node.version>1.1.0</gravitee-node.version>
+        <gravitee-reporter.version>1.13.0</gravitee-reporter.version>
         <spring-security.version>4.2.4.RELEASE</spring-security.version>
         <jetty.version>9.3.14.v20161028</jetty.version>
         <jjwt.version>0.10.5</jjwt.version>
@@ -60,21 +61,23 @@
         <org.mongodb.mongodb.driver.reactivestreams.version>1.11.0</org.mongodb.mongodb.driver.reactivestreams.version>
         <embed.mongo.version>2.2.0</embed.mongo.version>
         <validation-api.version>2.0.1.Final</validation-api.version>
+        <json-patch.version>1.9</json-patch.version>
         <sonar.skip>true</sonar.skip>
     </properties>
 
     <modules>
+        <module>gravitee-am-common</module>
         <module>gravitee-am-model</module>
-        <module>gravitee-am-gateway</module>
-        <module>gravitee-am-identityprovider</module>
         <module>gravitee-am-repository</module>
+        <module>gravitee-am-service</module>
+        <module>gravitee-am-identityprovider</module>
         <module>gravitee-am-certificate</module>
         <module>gravitee-am-extensiongrant</module>
+        <module>gravitee-am-reporter</module>
+        <module>gravitee-am-plugins-handlers</module>
+        <module>gravitee-am-gateway</module>
         <module>gravitee-am-management-api</module>
         <module>gravitee-am-ui</module>
-        <module>gravitee-am-service</module>
-        <module>gravitee-am-plugins-handlers</module>
-        <module>gravitee-am-common</module>
     </modules>
 
     <dependencyManagement>

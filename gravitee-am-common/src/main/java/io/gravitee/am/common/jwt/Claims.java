@@ -69,4 +69,14 @@ public interface Claims {
      * The claims parameter used to request that specific Claims be returned
      */
     String claims = "claims_request_parameter";
+
+    /**
+     * The "ip_address" (IP Address) claim identifies the remote client ip used for the JWT.
+     */
+    String ip_address = "ip_address";
+
+    /**
+     * The "user_agent" (User Agent) claim identifies the user agent used for the JWT.
+     */
+    String user_agent = "user_agent";
 }

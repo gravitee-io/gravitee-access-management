@@ -1,0 +1,46 @@
+.reporter-container {
+  padding: 20px 70px 20px 50px;
+  h1 {
+    font-weight: 400;
+  }
+  a {
+    color: #006CAB;
+    text-decoration: none;
+    &:hover {
+      color: #2196f3;
+      text-decoration: underline;
+    }
+  }
+  .reporter-content {
+    padding: 20px 0 20px;
+
+    form {
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 2px;
+      border: 1px solid rgb(226, 229, 231);
+    }
+
+    .update-reporter {
+      margin-top: 20px;
+    }
+
+    .reporter-description {
+      margin-left: 20px;
+      h3 {
+        font-weight: 400;
+      }
+      .reporter-description-content {
+        border-top: 1px solid rgb(226, 229, 231);
+        p {
+          margin-top: 20px;
+          font-size: 14px;
+        }
+        small {
+          font-size: 12px;
+          color: rgba(0, 0, 0, 0.38);
+        }
+      }
+    }
+  }
+}

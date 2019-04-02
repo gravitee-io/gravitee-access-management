@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ClientListItem;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.DomainService;
@@ -89,9 +90,11 @@ public class ScopesResource extends AbstractResource {
             @ApiParam(name = "scope", required = true)
             @Valid @NotNull final NewScope newScope,
             @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> scopeService.create(domain, newScope)
+                .flatMapSingle(irrelevant -> scopeService.create(domain, newScope, authenticatedUser)
                         .map(scope -> Response
                                 .created(URI.create("/domains/" + domain + "/scopes/" + scope.getId()))
                                 .entity(scope)

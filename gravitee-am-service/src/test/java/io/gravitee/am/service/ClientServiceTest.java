@@ -24,7 +24,6 @@ import io.gravitee.am.service.impl.ClientServiceImpl;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.am.service.model.PatchClient;
 import io.gravitee.am.service.model.TotalClient;
-import io.gravitee.am.service.model.UpdateClient;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -72,6 +71,9 @@ public class ClientServiceTest {
 
     @Mock
     private EmailTemplateService emailTemplateService;
+
+    @Mock
+    private AuditService auditService;
 
     private final static String DOMAIN = "domain1";
 
@@ -440,9 +442,9 @@ public class ClientServiceTest {
 
     @Test
     public void shouldUpdate() {
-        UpdateClient updateClient = new UpdateClient();
-        updateClient.setIdentities(new HashSet<>(Arrays.asList("id1", "id2")));
-        updateClient.setAuthorizedGrantTypes(Arrays.asList("authorization_code"));
+        PatchClient patchClient = new PatchClient();
+        patchClient.setIdentities(Optional.of(new HashSet<>(Arrays.asList("id1", "id2"))));
+        patchClient.setAuthorizedGrantTypes(Optional.of(Arrays.asList("authorization_code")));
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
         when(identityProviderService.findById("id1")).thenReturn(Maybe.just(new IdentityProvider()));
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(new IdentityProvider()));
@@ -451,7 +453,7 @@ public class ClientServiceTest {
         when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
         when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
 
-        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -464,10 +466,10 @@ public class ClientServiceTest {
 
     @Test
     public void shouldUpdate_technicalException() {
-        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
+        PatchClient patchClient = Mockito.mock(PatchClient.class);
         when(clientRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
@@ -477,28 +479,26 @@ public class ClientServiceTest {
 
     @Test
     public void shouldUpdate2_technicalException() {
-        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
-        when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
-        when(clientRepository.update(any(Client.class))).thenReturn(Single.error(TechnicalException::new));
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(scopeService.validateScope(DOMAIN,Collections.emptyList())).thenReturn(Single.just(true));
+        PatchClient patchClient = Mockito.mock(PatchClient.class);
+        when(patchClient.patch(any(), anyBoolean())).thenReturn(new Client());
+        when(clientRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
         verify(clientRepository, times(1)).findById(anyString());
-        verify(clientRepository, times(1)).update(any(Client.class));
+        verify(clientRepository, never()).update(any(Client.class));
     }
 
     @Test
     public void shouldUpdate3_technicalException() {
-        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
-        when(updateClient.getIdentities()).thenReturn(new HashSet<>(Arrays.asList("id1", "id2")));
+        PatchClient patchClient = Mockito.mock(PatchClient.class);
+        when(patchClient.getIdentities()).thenReturn(Optional.of(new HashSet<>(Arrays.asList("id1", "id2"))));
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
         when(identityProviderService.findById(anyString())).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
@@ -508,10 +508,10 @@ public class ClientServiceTest {
 
     @Test
     public void shouldUpdate_clientNotFound() {
-        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
+        PatchClient patchClient = Mockito.mock(PatchClient.class);
         when(clientRepository.findById("my-client")).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
 
         testObserver.assertError(ClientNotFoundException.class);
         testObserver.assertNotComplete();
@@ -574,13 +574,14 @@ public class ClientServiceTest {
     @Test
     public void shouldDelete() {
         Client existingClient = Mockito.mock(Client.class);
+        when(existingClient.getId()).thenReturn("my-client");
         when(existingClient.getDomain()).thenReturn("my-domain");
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(existingClient));
         when(clientRepository.delete("my-client")).thenReturn(Completable.complete());
         when(domainService.reload(eq("my-domain"), any())).thenReturn(Single.just(new Domain()));
-        when(formService.findByDomain("my-domain")).thenReturn(Single.just(Collections.singletonList(new Form())));
+        when(formService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.singletonList(new Form())));
         when(formService.delete(anyString())).thenReturn(Completable.complete());
-        when(emailTemplateService.findByDomain("my-domain")).thenReturn(Single.just(Collections.singletonList(new Email())));
+        when(emailTemplateService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.singletonList(new Email())));
         when(emailTemplateService.delete(anyString())).thenReturn(Completable.complete());
 
         TestObserver testObserver = clientService.delete("my-client").test();
@@ -598,11 +599,12 @@ public class ClientServiceTest {
     public void shouldDelete_withoutRelatedData() {
         Client existingClient = Mockito.mock(Client.class);
         when(existingClient.getDomain()).thenReturn("my-domain");
+        when(existingClient.getId()).thenReturn("my-client");
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(existingClient));
         when(clientRepository.delete("my-client")).thenReturn(Completable.complete());
         when(domainService.reload(eq("my-domain"), any())).thenReturn(Single.just(new Domain()));
-        when(formService.findByDomain("my-domain")).thenReturn(Single.just(Collections.emptyList()));
-        when(emailTemplateService.findByDomain("my-domain")).thenReturn(Single.just(Collections.emptyList()));
+        when(formService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.emptyList()));
+        when(emailTemplateService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.emptyList()));
 
         TestObserver testObserver = clientService.delete("my-client").test();
         testObserver.awaitTerminalEvent();
@@ -653,12 +655,14 @@ public class ClientServiceTest {
 
     @Test
     public void validateClientMetadata_invalidRedirectUriException_forbidLocalhost() {
-        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
-        when(updateClient.getRedirectUris()).thenReturn(Arrays.asList("http://localhost/callback"));
+        PatchClient patchClient = Mockito.mock(PatchClient.class);
+        Client client = new Client();
+        client.setRedirectUris(Arrays.asList("http://localhost/callback"));
+        when(patchClient.patch(any(), anyBoolean())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
 
-        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -668,12 +672,14 @@ public class ClientServiceTest {
 
     @Test
     public void validateClientMetadata_invalidRedirectUriException_forbidHttp() {
-        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
-        when(updateClient.getRedirectUris()).thenReturn(Arrays.asList("http://gravitee.io/callback"));
+        PatchClient patchClient = Mockito.mock(PatchClient.class);
+        Client client = new Client();
+        client.setRedirectUris(Arrays.asList("http://gravitee.io/callback"));
+        when(patchClient.patch(any(), anyBoolean())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
 
-        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -683,12 +689,14 @@ public class ClientServiceTest {
 
     @Test
     public void validateClientMetadata_invalidRedirectUriException_forbidWildcard() {
-        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
-        when(updateClient.getRedirectUris()).thenReturn(Arrays.asList("https://gravitee.io/*"));
+        PatchClient patchClient = Mockito.mock(PatchClient.class);
+        Client client = new Client();
+        client.setRedirectUris(Arrays.asList("https://gravitee.io/*"));
+        when(patchClient.patch(any(), anyBoolean())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
 
-        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -698,12 +706,15 @@ public class ClientServiceTest {
 
     @Test
     public void validateClientMetadata_invalidClientMetadataException_unknownScope() {
-        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
+        PatchClient patchClient = Mockito.mock(PatchClient.class);
+        Client client = new Client();
+        client.setScopes(Collections.emptyList());
+        when(patchClient.patch(any(), anyBoolean())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
-        when(scopeService.validateScope(DOMAIN,Collections.emptyList())).thenReturn(Single.just(false));
+        when(scopeService.validateScope(DOMAIN, Collections.emptyList())).thenReturn(Single.just(false));
 
-        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
 
@@ -713,15 +724,18 @@ public class ClientServiceTest {
 
     @Test
     public void validateClientMetadata_validMetadata() {
-        UpdateClient updateClient = Mockito.mock(UpdateClient.class);
-        when(updateClient.getRedirectUris()).thenReturn(Arrays.asList("https://gravitee.io/callback"));
+        PatchClient patchClient = Mockito.mock(PatchClient.class);
+        Client client = new Client();
+        client.setRedirectUris(Arrays.asList("https://gravitee.io/callback"));
+        client.setScopes(Collections.emptyList());
+        when(patchClient.patch(any(), anyBoolean())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
         when(scopeService.validateScope(DOMAIN,Collections.emptyList())).thenReturn(Single.just(true));
 
-        TestObserver testObserver = clientService.update(DOMAIN, "my-client", updateClient).test();
+        TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
