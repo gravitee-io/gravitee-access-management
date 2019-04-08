@@ -49,19 +49,29 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
 
     /**
      * Read client_metadata.
+     * See <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ReadRequest">Read Request</a>
+     * See <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ReadResponse">Read Response</a>
+     *
      * @param context
      */
     public void read(RoutingContext context) {
         LOGGER.debug("Dynamic client registration GET endpoint");
 
         this.getClient(context)
+                .map(DynamicClientRegistrationResponse::fromClient)
+                .map(response -> {
+                    //The Authorization Server need not include the registration access_token or client_uri unless they have been updated.
+                    response.setRegistrationAccessToken(null);
+                    response.setRegistrationClientUri(null);
+                    return response;
+                })
                 .subscribe(
-                        client -> context.response()
+                        result -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                 .setStatusCode(HttpStatusCode.OK_200)
-                                .end(Json.encodePrettily(DynamicClientRegistrationResponse.fromClient(client)))
+                                .end(Json.encodePrettily(result))
                         , error -> context.fail(error)
                 );
     }
@@ -73,12 +83,12 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
     public void patch(RoutingContext context) {
         LOGGER.debug("Dynamic client registration UPDATE endpoint");
 
-
         this.getClient(context)
                 .flatMapSingle(Single::just)
                 .flatMap(client -> this.extractRequest(context)
                         .flatMap(dcrService::validateClientPatchRequest)
                         .map(request -> request.patch(client))
+                        .flatMap(updatedClient -> dcrService.applyRegistrationAccessToken(extractBasePath(context), updatedClient))
                         .flatMap(clientService::update)
                         .map(clientSyncService::addDynamicClientRegistred)
                 )
