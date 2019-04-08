@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "0928edc9-9ae1-4d4c-ab6d-eeccf9d8370f",
+		"_postman_id": "8a6e3a44-8fd6-4221-9482-5e3771c7a545",
 		"name": "Gravitee.io AM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -16574,8 +16574,9 @@
 													"    pm.expect(body.grant_types).to.eql([ 'implicit','authorization_code' ]);",
 													"    pm.expect(body.client_name).to.eql('Client was created via DCR');",
 													"    ",
-													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
-													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+													"    //The Authorization Server need not include the registration_access_token or registration_client_uri value in this response unless they have been updated.",
+													"    pm.expect(body).to.not.have.property('registration_access_token');",
+													"    pm.expect(body).to.not.have.property('registration_client_uri');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -16625,7 +16626,12 @@
 													"    pm.response.to.be.header('Content-Type', 'application/json');",
 													"    var body = pm.response.json();",
 													"    pm.expect(body.client_name).to.eql('Client patched via DCR');",
-													"    ",
+													"});",
+													"",
+													"pm.test(\"One time Token\", function() {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('registration_access_token');",
+													"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
 													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
 													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
 													"});"

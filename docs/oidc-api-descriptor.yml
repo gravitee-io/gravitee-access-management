@@ -163,7 +163,7 @@ paths:
         '403':
           description: Access forbidden
         '200':
-          description: Claims about the registred client.
+          description: Claims about the registred client. Please take into considerations that registration_access_token and registration_client_uri are not included in the payload unless they have been updated.
           schema:
             $ref: '#/definitions/ClientRegistrationResponse'
     patch:
@@ -199,7 +199,7 @@ paths:
         '403':
           description: Access forbidden
         '200':
-          description: Claims about the updated client.
+          description: Claims about the updated client. Please take into considerations that registration_access_token and registration_client_uri are renewed on each request, with as consequences to revoke previous values.
           schema:
             $ref: '#/definitions/ClientRegistrationResponse'
     delete:
