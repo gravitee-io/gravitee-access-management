@@ -114,4 +114,12 @@ public class SetterUtils {
         LOGGER.warn("should never happen except if class is not a primitive:" + primitive.isPrimitive());
         return null;
     }
+
+    public static<T> void set(final Consumer<T> setter, final Optional<T> value) {
+        if(value == null) {
+            setter.accept(null);
+        } else {
+            setter.accept(value.orElse(null));
+        }
+    }
 }

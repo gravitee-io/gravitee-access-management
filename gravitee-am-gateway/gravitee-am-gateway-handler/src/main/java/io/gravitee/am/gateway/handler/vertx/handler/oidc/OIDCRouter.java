@@ -140,6 +140,11 @@ public class OIDCRouter {
                 .handler(dynamicClientAccessHandler)
                 .handler(dynamicClientAccessEndpoint::patch);
         router
+                .route(HttpMethod.PUT, "/register/:"+CLIENT_ID)
+                .consumes(MediaType.APPLICATION_JSON)
+                .handler(dynamicClientAccessHandler)
+                .handler(dynamicClientAccessEndpoint::update);
+        router
                 .route(HttpMethod.DELETE, "/register/:"+CLIENT_ID)
                 .handler(dynamicClientAccessHandler)
                 .handler(dynamicClientAccessEndpoint::delete);

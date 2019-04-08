@@ -60,6 +60,7 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
 
         router.route(HttpMethod.GET, "/register/:client_id").handler(endpoint::read);
         router.route(HttpMethod.PATCH, "/register/:client_id").handler(endpoint::patch);
+        router.route(HttpMethod.PUT, "/register/:client_id").handler(endpoint::update);
         router.route(HttpMethod.DELETE, "/register/:client_id").handler(endpoint::delete);
         router.route().failureHandler(new ExceptionHandler());
 
@@ -104,6 +105,17 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
                 HttpStatusCode.BAD_REQUEST_400, "Bad Request");
     }
 
+    @Test
+    public void update_noBody() throws Exception{
+        when(dcrService.validateClientRegistrationRequest(any())).thenReturn(Single.just(new DynamicClientRegistrationRequest()));
+        when(clientService.update(any())).thenReturn(Single.just(new Client()));
+        when(clientSyncService.addDynamicClientRegistred(any())).thenReturn(new Client());
+
+        String body = "{\"redirect_uris\": [\"https://redirecturi\"]}";
+        testRequest(
+                HttpMethod.PUT, "/register/my-test-client_id",
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
+    }
 
     /*TODO: Implement valid case
     @Test

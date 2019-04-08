@@ -17,9 +17,10 @@ package io.gravitee.am.model.oidc;
 
 import io.gravitee.am.model.jose.JWK;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class JWKSet {
+public class JWKSet implements Cloneable{
     private List<JWK> keys;
 
     public List<JWK> getKeys() {
@@ -28,5 +29,12 @@ public class JWKSet {
 
     public void setKeys(List<JWK> keys) {
         this.keys = keys;
+    }
+
+    @Override
+    public JWKSet clone() throws CloneNotSupportedException {
+        JWKSet clone = (JWKSet) super.clone();
+        clone.setKeys(this.getKeys()!=null?new ArrayList<>(this.getKeys()):null);
+        return clone;
     }
 }

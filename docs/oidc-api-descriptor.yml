@@ -170,7 +170,7 @@ paths:
       tags:
       - OpenID Connect
       summary: Patch a registred client.
-      description: Update information about a registred client.
+      description: Partially update information about a registred client.
       consumes:
       - application/json
       produces:
@@ -200,6 +200,42 @@ paths:
           description: Access forbidden
         '200':
           description: Claims about the updated client. Please take into considerations that registration_access_token and registration_client_uri are renewed on each request, with as consequences to revoke previous values.
+          schema:
+            $ref: '#/definitions/ClientRegistrationResponse'
+    put:
+      tags:
+        - OpenID Connect
+      summary: Update a registred client.
+      description: Update information about a registred client.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: header
+          name: Authorization
+          description: Bearer token obtained on the register process through the registration_access_token property giving access only to one client matching the client_id path parameter. An admin token can be also obtained through the client crendentials flow with as mandatory scope "dcr_admin".
+          type: string
+          required: true
+        - in: path
+          name: client_id
+          type: string
+          required: true
+          description: ID of the client
+        - in: body
+          name: request
+          schema:
+            $ref: '#/definitions/ClientRegistrationRequest'
+          required: true
+      responses:
+        '400':
+          description: Invalid Request
+        '401':
+          description: Invalid Token
+        '403':
+          description: Access forbidden
+        '200':
+          description: Claims about the updated client. All missing fields will be set to null. Please take into considerations that registration_access_token and registration_client_uri are renewed on each request, with as consequences to revoke previous values.
           schema:
             $ref: '#/definitions/ClientRegistrationResponse'
     delete:

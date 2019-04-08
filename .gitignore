@@ -19,3 +19,6 @@ gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-man
 
 # used in makefile as working directory
 .working
+
+# vert.x
+.vertx
