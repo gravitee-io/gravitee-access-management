@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.request;
 
 import io.gravitee.am.model.Client;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -29,10 +30,13 @@ import static org.junit.Assert.*;
  */
 public class DynamicClientRegistrationRequestTest {
 
-    @Test
-    public void testPatch() {
+    Client toPatch;
+    DynamicClientRegistrationRequest patcher;
+
+    @Before
+    public void setUp() {
         //Build Object to patch
-        Client toPatch = new Client();
+        toPatch = new Client();
         toPatch.setClientName("oldName");
         toPatch.setClientSecret("expectedSecret");
         toPatch.setClientUri("shouldDisappear");
@@ -40,15 +44,19 @@ public class DynamicClientRegistrationRequestTest {
         toPatch.setAccessTokenValiditySeconds(7200);
         toPatch.setRefreshTokenValiditySeconds(3600);
         toPatch.setResponseTypes(Arrays.asList("old","old2"));
+        toPatch.setDefaultMaxAge(1);
 
         //Build patcher
-        DynamicClientRegistrationRequest patcher = new DynamicClientRegistrationRequest();
+        patcher = new DynamicClientRegistrationRequest();
         patcher.setClientName(Optional.of("expectedClientName"));
         patcher.setClientUri(Optional.empty());
         patcher.setGrantTypes(Optional.of(Arrays.asList("grant1","grant2")));
         patcher.setResponseTypes(Optional.empty());
         patcher.setScope(Optional.of("scope1 scope2"));
+    }
 
+    @Test
+    public void testPatch() {
         //Apply patch
         Client result = patcher.patch(toPatch);
 
@@ -59,8 +67,27 @@ public class DynamicClientRegistrationRequestTest {
         assertNull("Client uri should have been erased",result.getClientUri());
         assertEquals("Access token validity should have been kept",7200,result.getAccessTokenValiditySeconds());
         assertEquals("Refresh token validity should have been kept",3600, result.getRefreshTokenValiditySeconds());
+        assertEquals("Default Max Age should have been kept",Integer.valueOf(1),result.getDefaultMaxAge());
         assertArrayEquals("Grant types should have been replaced",Arrays.asList("grant1","grant2").toArray(),result.getAuthorizedGrantTypes().toArray());
-        assertArrayEquals("Response type should have been replaced by default falues",Arrays.asList("code").toArray(),result.getResponseTypes().toArray());
+        assertArrayEquals("Response type should have been replaced by default values",Arrays.asList("code").toArray(),result.getResponseTypes().toArray());
         assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopes().toArray());
+    }
+
+    @Test
+    public void testUpdate() {
+        //Apply update
+        Client result = patcher.update(toPatch);
+
+        //Checks
+        assertNotNull(result);
+        assertEquals("Client name should have been replaced","expectedClientName",result.getClientName());
+        assertEquals("Client secret should have been kept","expectedSecret", result.getClientSecret());
+        assertNull("Client uri should have been erased",result.getClientUri());
+        assertEquals("Access token validity should have been kept",7200,result.getAccessTokenValiditySeconds());
+        assertEquals("Refresh token validity should have been kept",3600, result.getRefreshTokenValiditySeconds());
+        assertArrayEquals("Grant types should have been replaced",Arrays.asList("grant1","grant2").toArray(),result.getAuthorizedGrantTypes().toArray());
+        assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopes().toArray());
+        assertNull("Response type should be set to null", result.getResponseTypes());
+        assertNull("Default max age should be set to null", result.getDefaultMaxAge());
     }
 }

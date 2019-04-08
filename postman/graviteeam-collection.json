@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "8a6e3a44-8fd6-4221-9482-5e3771c7a545",
+		"_postman_id": "2c384dba-a62c-4505-b7fb-a2c1b78e4e93",
 		"name": "Gravitee.io AM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -11644,6 +11644,93 @@
 			"name": "OIDC",
 			"item": [
 				{
+					"name": "Discovery",
+					"item": [
+						{
+							"name": "well-known/openid-configuration",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check discovery endpoints\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    ",
+											"    pm.expect(body).to.have.property(\"authorization_endpoint\");",
+											"    pm.expect(body).to.have.property(\"token_endpoint\");",
+											"    pm.expect(body).to.have.property(\"userinfo_endpoint\");",
+											"    pm.expect(body).to.have.property(\"jwks_uri\");",
+											"    pm.expect(body).to.have.property(\"end_session_endpoint\");",
+											"    pm.expect(body).to.have.property(\"revocation_endpoint\");",
+											"    pm.expect(body).to.have.property(\"introspection_endpoint\");",
+											"    pm.expect(body).to.have.property(\"registration_endpoint\");",
+											"    ",
+											"    pm.environment.set('authorizationEndpoint', body.authorization_endpoint);",
+											"    pm.environment.set('tokenEndpoint', body.token_endpoint);",
+											"    pm.environment.set('userinfoEndpoint', body.userinfo_endpoint);",
+											"    pm.environment.set('jwksUriEndpoint', body.jwks_uri);",
+											"    pm.environment.set('logoutEndpoint', body.end_session_endpoint);",
+											"    pm.environment.set('revocationEndpoint', body.revocation_endpoint);",
+											"    pm.environment.set('introspectionEndpoint', body.introspection_endpoint);",
+											"    pm.environment.set('registrationEndpoint', body.registration_endpoint);",
+											"});",
+											"",
+											"pm.test(\"Check discovery properties\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"issuer\");",
+											"",
+											"    pm.expect(body).to.have.property(\"scopes_supported\");",
+											"    pm.expect(body).to.have.property(\"response_types_supported\");",
+											"    pm.expect(body).to.have.property(\"subject_types_supported\");",
+											"    pm.expect(body).to.have.property(\"id_token_signing_alg_values_supported\");",
+											"    pm.expect(body).to.have.property(\"token_endpoint_auth_methods_supported\");",
+											"    pm.expect(body).to.have.property(\"claim_types_supported\");",
+											"    pm.expect(body).to.have.property(\"claims_supported\");",
+											"    pm.expect(body).to.have.property(\"code_challenge_methods_supported\");",
+											"    pm.expect(body).to.have.property(\"claims_parameter_supported\");",
+											"    pm.expect(body).to.have.property(\"request_parameter_supported\");",
+											"    pm.expect(body).to.have.property(\"request_uri_parameter_supported\");",
+											"    pm.expect(body).to.have.property(\"require_request_uri_registration\");",
+											"    ",
+											"    pm.expect(body.code_challenge_methods_supported).to.eql([ 'plain','S256' ]);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/test/oidc/.well-known/openid-configuration",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"test",
+										"oidc",
+										".well-known",
+										"openid-configuration"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
 					"name": "ID Token",
 					"item": [
 						{
@@ -11723,14 +11810,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/token",
+											"raw": "{{tokenEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"token"
+												"{{tokenEndpoint}}"
 											]
 										}
 									},
@@ -11831,14 +11913,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/token",
+											"raw": "{{tokenEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"token"
+												"{{tokenEndpoint}}"
 											]
 										}
 									},
@@ -11895,14 +11972,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/revoke",
+											"raw": "{{revocationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"revoke"
+												"{{revocationEndpoint}}"
 											]
 										}
 									},
@@ -12009,14 +12081,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/token",
+											"raw": "{{tokenEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"token"
+												"{{tokenEndpoint}}"
 											]
 										}
 									},
@@ -12073,14 +12140,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/revoke",
+											"raw": "{{revocationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"revoke"
+												"{{revocationEndpoint}}"
 											]
 										}
 									},
@@ -12187,14 +12249,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/token",
+											"raw": "{{tokenEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"token"
+												"{{tokenEndpoint}}"
 											]
 										}
 									},
@@ -12251,14 +12308,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/revoke",
+											"raw": "{{revocationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"revoke"
+												"{{revocationEndpoint}}"
 											]
 										}
 									},
@@ -12387,14 +12439,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/token",
+											"raw": "{{tokenEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"token"
+												"{{tokenEndpoint}}"
 											]
 										}
 									},
@@ -12499,14 +12546,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/token",
+											"raw": "{{tokenEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"token"
+												"{{tokenEndpoint}}"
 											]
 										}
 									},
@@ -12563,14 +12605,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/revoke",
+											"raw": "{{revocationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"revoke"
+												"{{revocationEndpoint}}"
 											]
 										}
 									},
@@ -12627,14 +12664,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/revoke",
+											"raw": "{{revocationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"revoke"
+												"{{revocationEndpoint}}"
 											]
 										}
 									},
@@ -12737,14 +12769,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/userinfo",
+											"raw": "{{userinfoEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"userinfo"
+												"{{userinfoEndpoint}}"
 											]
 										}
 									},
@@ -12797,14 +12824,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/userinfo",
+											"raw": "{{userinfoEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"userinfo"
+												"{{userinfoEndpoint}}"
 											]
 										}
 									},
@@ -12857,14 +12879,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/userinfo",
+											"raw": "{{userinfoEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"userinfo"
+												"{{userinfoEndpoint}}"
 											]
 										}
 									},
@@ -12961,14 +12978,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/token",
+											"raw": "{{tokenEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"token"
+												"{{tokenEndpoint}}"
 											]
 										}
 									},
@@ -13028,14 +13040,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/userinfo",
+											"raw": "{{userinfoEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"userinfo"
+												"{{userinfoEndpoint}}"
 											]
 										}
 									},
@@ -13115,14 +13122,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/userinfo",
+											"raw": "{{userinfoEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"userinfo"
+												"{{userinfoEndpoint}}"
 											]
 										}
 									},
@@ -13179,14 +13181,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/revoke",
+											"raw": "{{revocationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"revoke"
+												"{{revocationEndpoint}}"
 											]
 										}
 									},
@@ -13272,14 +13269,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/token",
+											"raw": "{{tokenEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"token"
+												"{{tokenEndpoint}}"
 											]
 										}
 									},
@@ -13331,14 +13323,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/userinfo",
+											"raw": "{{userinfoEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"userinfo"
+												"{{userinfoEndpoint}}"
 											]
 										}
 									},
@@ -13411,14 +13398,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/userinfo",
+											"raw": "{{userinfoEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"userinfo"
+												"{{userinfoEndpoint}}"
 											]
 										}
 									},
@@ -13506,14 +13488,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/authorize?response_type=id_token token",
+											"raw": "{{authorizationEndpoint}}?response_type=id_token token",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"authorize"
+												"{{authorizationEndpoint}}"
 											],
 											"query": [
 												{
@@ -13573,14 +13550,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/authorize?response_type=id_token token&client_id=my-client2&redirect_uri=http://localhost:4000/",
+											"raw": "{{authorizationEndpoint}}?response_type=id_token token&client_id=my-client2&redirect_uri=http://localhost:4000/",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"authorize"
+												"{{authorizationEndpoint}}"
 											],
 											"query": [
 												{
@@ -13648,14 +13620,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/authorize?response_type=id_token token&client_id=my-client&nonce=n-0S6_WzA2Mj",
+											"raw": "{{authorizationEndpoint}}?response_type=id_token token&client_id=my-client&nonce=n-0S6_WzA2Mj",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"authorize"
+												"{{authorizationEndpoint}}"
 											],
 											"query": [
 												{
@@ -13749,14 +13716,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/authorize?response_type=id_token token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj",
+											"raw": "{{authorizationEndpoint}}?response_type=id_token token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"authorize"
+												"{{authorizationEndpoint}}"
 											],
 											"query": [
 												{
@@ -14052,13 +14014,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/logout",
+											"raw": "{{logoutEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"logout"
+												"{{logoutEndpoint}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -14139,14 +14097,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/authorize?response_type=id_token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj",
+											"raw": "{{authorizationEndpoint}}?response_type=id_token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"authorize"
+												"{{authorizationEndpoint}}"
 											],
 											"query": [
 												{
@@ -14440,13 +14393,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/logout",
+											"raw": "{{logoutEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"logout"
+												"{{logoutEndpoint}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -14527,14 +14476,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/authorize?response_type=id_token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj&state=af0ifjsldkj",
+											"raw": "{{authorizationEndpoint}}?response_type=id_token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj&state=af0ifjsldkj",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"authorize"
+												"{{authorizationEndpoint}}"
 											],
 											"query": [
 												{
@@ -14821,13 +14765,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/logout",
+											"raw": "{{logoutEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"logout"
+												"{{logoutEndpoint}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -14908,14 +14848,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/authorize?response_type=id_token token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj&state=af0ifjsldkj",
+											"raw": "{{authorizationEndpoint}}?response_type=id_token token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj&state=af0ifjsldkj",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"authorize"
+												"{{authorizationEndpoint}}"
 											],
 											"query": [
 												{
@@ -15202,13 +15137,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/logout",
+											"raw": "{{logoutEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"logout"
+												"{{logoutEndpoint}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -15296,14 +15227,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/authorize?response_type=code",
+											"raw": "{{authorizationEndpoint}}?response_type=code",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"authorize"
+												"{{authorizationEndpoint}}"
 											],
 											"query": [
 												{
@@ -15363,14 +15289,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/authorize?response_type=code&client_id=my-client",
+											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"authorize"
+												"{{authorizationEndpoint}}"
 											],
 											"query": [
 												{
@@ -15457,14 +15378,9 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/register",
+											"raw": "{{registrationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"register"
+												"{{registrationEndpoint}}"
 											]
 										}
 									},
@@ -15695,14 +15611,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/token",
+											"raw": "{{tokenEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"token"
+												"{{tokenEndpoint}}"
 											]
 										}
 									},
@@ -15750,14 +15661,9 @@
 											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/register",
+											"raw": "{{registrationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"register"
+												"{{registrationEndpoint}}"
 											]
 										}
 									},
@@ -15883,14 +15789,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oauth/token",
+											"raw": "{{tokenEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oauth",
-												"token"
+												"{{tokenEndpoint}}"
 											]
 										}
 									},
@@ -15900,7 +15801,7 @@
 							"_postman_isSubFolder": true
 						},
 						{
-							"name": "Invalid requests",
+							"name": "Invalid creation requests",
 							"item": [
 								{
 									"name": "Invalid access token",
@@ -15944,14 +15845,9 @@
 											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/register",
+											"raw": "{{registrationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"register"
+												"{{registrationEndpoint}}"
 											]
 										}
 									},
@@ -15999,14 +15895,9 @@
 											"raw": "{\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/register",
+											"raw": "{{registrationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"register"
+												"{{registrationEndpoint}}"
 											]
 										}
 									},
@@ -16054,14 +15945,9 @@
 											"raw": "{\n  \"redirect_uris\": [\n    \"https://localhost/callback\",\n    \"https://localhost/callback2\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/register",
+											"raw": "{{registrationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"register"
+												"{{registrationEndpoint}}"
 											]
 										}
 									},
@@ -16109,14 +15995,9 @@
 											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/*/callback\",\n    \"https://client.example.org/*/callback2\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/register",
+											"raw": "{{registrationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"register"
+												"{{registrationEndpoint}}"
 											]
 										}
 									},
@@ -16164,14 +16045,9 @@
 											"raw": "{\n  \"redirect_uris\": [\n    \"http://client.example.org/callback\",\n    \"http://client.example.org/callback2\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/register",
+											"raw": "{{registrationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"register"
+												"{{registrationEndpoint}}"
 											]
 										}
 									},
@@ -16219,14 +16095,9 @@
 											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"response_types\": [\n\t\"unknown\"\n   ],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/register",
+											"raw": "{{registrationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"register"
+												"{{registrationEndpoint}}"
 											]
 										}
 									},
@@ -16274,14 +16145,9 @@
 											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"grant_types\": [\n\t\"unknown\"\n   ],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/register",
+											"raw": "{{registrationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"register"
+												"{{registrationEndpoint}}"
 											]
 										}
 									},
@@ -16329,14 +16195,9 @@
 											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"request_uris\": [\n\t\"malformed_url\"\n   ],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/register",
+											"raw": "{{registrationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"register"
+												"{{registrationEndpoint}}"
 											]
 										}
 									},
@@ -16384,14 +16245,9 @@
 											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"scope\": \"unkown-domain-scope\",\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/register",
+											"raw": "{{registrationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"register"
+												"{{registrationEndpoint}}"
 											]
 										}
 									},
@@ -16418,6 +16274,367 @@
 											""
 										]
 									}
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Invalid update requests",
+							"item": [
+								{
+									"name": "Register client",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"Has default attributes\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('response_types');",
+													"    pm.expect(body).to.have.property('grant_types');",
+													"    pm.expect(body).to.have.property('scope');",
+													"    pm.expect(body).to.have.property('client_name');",
+													"    pm.expect(body).to.have.property('client_id');",
+													"    pm.expect(body).to.have.property('client_secret');",
+													"    pm.expect(body.response_types).to.eql(['code']);",
+													"    pm.expect(body.grant_types).to.eql(['authorization_code']);",
+													"    pm.expect(body.scope).to.eql('openid');",
+													"    pm.expect(body.client_name).to.eql('Unknown Client');",
+													"    ",
+													"    pm.environment.set('newClientForDCRTests', body.id);",
+													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"pairwise\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
+										},
+										"url": {
+											"raw": "{{registrationEndpoint}}",
+											"host": [
+												"{{registrationEndpoint}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid access token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
+													"});",
+													"",
+													"pm.test(\"Invalid bearer\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_token');",
+													"    pm.expect(body.error_description).to.eql('The access token is invalid');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer wrongToken"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"client_name\": \"Should have not been updated\"\n}"
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid redirect uri",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Redirect uris are missing\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_redirect_uri');",
+													"    pm.expect(body.error_description).to.eql('Missing or invalid redirect_uris.');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"client_name\": \"Should have not been updated\"\n}\n"
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid redirect uri - localhost",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Redirect uris localhost forbidden\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_redirect_uri');",
+													"    pm.expect(body.error_description).to.eql('localhost is forbidden');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{  \"redirect_uris\": [\n    \"https://localhost/callback\",\n    \"https://localhost/callback2\"\n   ],\n   \"client_name\": \"Should have not been updated\"\n}"
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid response type",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Invalid response type\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+													"    pm.expect(body.error_description).to.eql('Invalid response type.');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"response_types\": [\n\t\"unknown\"\n   ],\n   \"client_name\": \"Should have not been updated\"\n}"
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid scope",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Invalid scope\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+													"    pm.expect(body.error_description).to.eql('scope unkown-domain-scope is not valid.');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"scope\": \"unkown-domain-scope\",\n  \"client_name\": \"Should have not been updated\"\n}"
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete client - with registration token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 204\", function () {",
+													"    pm.response.to.have.status(204);",
+													"});",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
 								}
 							],
 							"_postman_isSubFolder": true
@@ -16478,14 +16695,9 @@
 											"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"pairwise\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/test/oidc/register",
+											"raw": "{{registrationEndpoint}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"test",
-												"oidc",
-												"register"
+												"{{registrationEndpoint}}"
 											]
 										}
 									},
@@ -16657,6 +16869,63 @@
 										"body": {
 											"mode": "raw",
 											"raw": "{\n   \"client_name\": \"Client patched via DCR\"\n}"
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update client - with registration token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Get client with response types\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.client_name).to.eql('Client name updated via DCR');",
+													"});",
+													"",
+													"pm.test(\"One time Token\", function() {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('registration_access_token');",
+													"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
+													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"redirect_uris\": [\n        \"https://client.example.org/callback\",\n        \"https://client.example.org/callback2\"\n    ],\n    \"response_types\": [\n        \"code\"\n    ],\n    \"grant_types\": [\n        \"authorization_code\"\n    ],\n    \"application_type\": \"web\",\n    \"contacts\": [\n        \"marie@example.org\",\n        \"jeanne@example.org\"\n    ],\n\t\"client_name\": \"Client name updated via DCR\",\n    \"logo_uri\": \"https://client.example.org/logo.png\",\n    \"subject_type\": \"pairwise\",\n    \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n    \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"require_auth_time\": false,\n    \"request_uris\": [\n        \"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"\n    ],\n    \"scope\": \"openid\"\n}"
 										},
 										"url": {
 											"raw": "{{registrationClientUri}}",
@@ -17879,14 +18148,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/oauth/token",
+									"raw": "{{tokenEndpoint}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"test",
-										"oauth",
-										"token"
+										"{{tokenEndpoint}}"
 									]
 								}
 							},
@@ -20666,14 +20930,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/oauth/token",
+									"raw": "{{tokenEndpoint}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"test",
-										"oauth",
-										"token"
+										"{{tokenEndpoint}}"
 									]
 								}
 							},
@@ -20740,14 +20999,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/oauth/token",
+									"raw": "{{tokenEndpoint}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"test",
-										"oauth",
-										"token"
+										"{{tokenEndpoint}}"
 									]
 								}
 							},
@@ -20813,14 +21067,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/oauth/token",
+									"raw": "{{tokenEndpoint}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"test",
-										"oauth",
-										"token"
+										"{{tokenEndpoint}}"
 									]
 								}
 							},
@@ -20943,14 +21192,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/oauth/token",
+									"raw": "{{tokenEndpoint}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"test",
-										"oauth",
-										"token"
+										"{{tokenEndpoint}}"
 									]
 								}
 							},
@@ -21124,14 +21368,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/oauth/token",
+									"raw": "{{tokenEndpoint}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"test",
-										"oauth",
-										"token"
+										"{{tokenEndpoint}}"
 									]
 								}
 							},
@@ -21293,14 +21532,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/oauth/token",
+									"raw": "{{tokenEndpoint}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"test",
-										"oauth",
-										"token"
+										"{{tokenEndpoint}}"
 									]
 								}
 							},
@@ -21765,14 +21999,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/oauth/token",
+									"raw": "{{tokenEndpoint}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"test",
-										"oauth",
-										"token"
+										"{{tokenEndpoint}}"
 									]
 								}
 							},
@@ -21899,14 +22128,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/oauth/token",
+									"raw": "{{tokenEndpoint}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"test",
-										"oauth",
-										"token"
+										"{{tokenEndpoint}}"
 									]
 								}
 							},
@@ -22084,14 +22308,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/oauth/token",
+									"raw": "{{tokenEndpoint}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"test",
-										"oauth",
-										"token"
+										"{{tokenEndpoint}}"
 									]
 								}
 							},
@@ -22278,14 +22497,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/oauth/token",
+									"raw": "{{tokenEndpoint}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"test",
-										"oauth",
-										"token"
+										"{{tokenEndpoint}}"
 									]
 								}
 							},

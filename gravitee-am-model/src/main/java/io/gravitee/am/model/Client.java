@@ -24,6 +24,7 @@ import io.gravitee.am.model.oidc.JWKSet;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -32,7 +33,7 @@ import java.util.*;
  * See https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata
  */
 
-public class Client {
+public class Client implements Cloneable{
 
     public final static int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
     public final static int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
@@ -617,5 +618,26 @@ public class Client {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    @Override
+    public Client clone() throws CloneNotSupportedException {
+        Client clone = (Client) super.clone();
+
+        clone.setRedirectUris(this.getRedirectUris()!=null?new ArrayList<>(this.getRedirectUris()):null);
+        clone.setAuthorizedGrantTypes(this.getAuthorizedGrantTypes()!=null?new ArrayList<>(this.getAuthorizedGrantTypes()):null);
+        clone.setResponseTypes(this.getResponseTypes()!=null?new ArrayList<>(this.getResponseTypes()):null);
+        clone.setContacts(this.getContacts()!=null?new ArrayList<>(this.getContacts()):null);
+        clone.setDefaultACRvalues(this.getDefaultACRvalues()!=null?new ArrayList<>(this.getDefaultACRvalues()):null);
+        clone.setRequestUris(this.getRequestUris()!=null?new ArrayList<>(this.getRequestUris()):null);
+        clone.setScopes(this.getScopes()!=null?new ArrayList<>(this.getScopes()):null);
+        clone.setScopeApprovals(this.getScopeApprovals()!=null?new HashMap<>(this.getScopeApprovals()):null);
+        clone.setAutoApproveScopes(this.getAutoApproveScopes()!=null?new ArrayList<>(this.getAutoApproveScopes()):null);
+        clone.setIdentities(this.getIdentities()!=null?new HashSet<>(this.getIdentities()):null);
+        clone.setOauth2Identities(this.getOauth2Identities()!=null?new HashSet<>(this.getOauth2Identities()):null);
+        clone.setIdTokenCustomClaims(this.getIdTokenCustomClaims()!=null?new HashMap<>(this.getIdTokenCustomClaims()):null);
+        clone.setJwks(this.getJwks()!=null?this.getJwks().clone():null);
+
+        return clone;
     }
 }

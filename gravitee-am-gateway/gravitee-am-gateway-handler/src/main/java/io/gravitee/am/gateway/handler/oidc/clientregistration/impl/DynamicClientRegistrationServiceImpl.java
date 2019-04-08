@@ -149,7 +149,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      */
     @Override
     public Single<DynamicClientRegistrationRequest> validateClientRegistrationRequest(final DynamicClientRegistrationRequest request) {
-        LOGGER.debug("Validating dynamic client registration payload : creation");
+        LOGGER.debug("Validating dynamic client registration payload");
 
         if(request==null) {
             return Single.error(new InvalidClientMetadataException());
@@ -166,7 +166,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     @Override
     public Single<DynamicClientRegistrationRequest> validateClientPatchRequest(DynamicClientRegistrationRequest request) {
-        LOGGER.debug("Validating dynamic client registration payload : update");
+        LOGGER.debug("Validating dynamic client registration payload : patch");
 
         if(request==null) {
             return Single.error(new InvalidClientMetadataException());

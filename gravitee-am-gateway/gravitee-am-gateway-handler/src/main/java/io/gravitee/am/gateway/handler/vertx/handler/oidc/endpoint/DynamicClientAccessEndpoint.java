@@ -81,13 +81,40 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
      * @param context
      */
     public void patch(RoutingContext context) {
-        LOGGER.debug("Dynamic client registration UPDATE endpoint");
+        LOGGER.debug("Dynamic client registration PATCH endpoint");
 
         this.getClient(context)
                 .flatMapSingle(Single::just)
                 .flatMap(client -> this.extractRequest(context)
                         .flatMap(dcrService::validateClientPatchRequest)
                         .map(request -> request.patch(client))
+                        .flatMap(updatedClient -> dcrService.applyRegistrationAccessToken(extractBasePath(context), updatedClient))
+                        .flatMap(clientService::update)
+                        .map(clientSyncService::addDynamicClientRegistred)
+                )
+                .subscribe(
+                        client -> context.response()
+                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                                .setStatusCode(HttpStatusCode.OK_200)
+                                .end(Json.encodePrettily(DynamicClientRegistrationResponse.fromClient(client)))
+                        , error -> context.fail(error)
+                );
+    }
+
+    /**
+     * Update/Override client_metadata.
+     * @param context
+     */
+    public void update(RoutingContext context) {
+        LOGGER.debug("Dynamic client registration UPDATE endpoint");
+
+        this.getClient(context)
+                .flatMapSingle(Single::just)
+                .flatMap(client -> this.extractRequest(context)
+                        .flatMap(dcrService::validateClientRegistrationRequest)
+                        .map(request -> request.update(client))
                         .flatMap(updatedClient -> dcrService.applyRegistrationAccessToken(extractBasePath(context), updatedClient))
                         .flatMap(clientService::update)
                         .map(clientSyncService::addDynamicClientRegistred)
@@ -124,6 +151,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         String clientId = context.request().getParam("client_id");
 
         return this.clientSyncService.findByDomainAndClientId(domain,clientId)
+                .map(Client::clone)
                 .switchIfEmpty(Maybe.error(new OAuth2Exception() {
                     @Override
                     public int getHttpStatusCode() {

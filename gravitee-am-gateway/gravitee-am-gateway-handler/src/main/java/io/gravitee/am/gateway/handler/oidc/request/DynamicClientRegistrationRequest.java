@@ -475,5 +475,48 @@ public class DynamicClientRegistrationRequest {
 
         return client;
     }
+
+    public Client update(Client client) {
+        /* set openid request metadata */
+        SetterUtils.set(client::setRedirectUris, this.getRedirectUris());
+        SetterUtils.set(client::setResponseTypes, this.getResponseTypes());
+        SetterUtils.set(client::setAuthorizedGrantTypes, this.getGrantTypes());
+        SetterUtils.set(client::setApplicationType, this.getApplicationType());
+        SetterUtils.set(client::setContacts, this.getContacts());
+        SetterUtils.set(client::setClientName, this.getClientName());
+        SetterUtils.set(client::setLogoUri, this.getLogoUri());
+        SetterUtils.set(client::setClientUri, this.getClientUri());
+        SetterUtils.set(client::setPolicyUri, this.getPolicyUri());
+        SetterUtils.set(client::setTosUri, this.getTosUri());
+
+        SetterUtils.set(client::setJwksUri, this.getJwksUri());
+        SetterUtils.set(client::setJwks, this.getJwks());
+        SetterUtils.set(client::setSectorIdentifierUri, this.getSectorIdentifierUri());
+        SetterUtils.set(client::setSubjectType, this.getSubjectType());
+        SetterUtils.set(client::setIdTokenSignedResponseAlg, this.getIdTokenSignedResponseAlg());
+        SetterUtils.set(client::setIdTokenEncryptedResponseAlg, this.getIdTokenEncryptedResponseAlg());
+        SetterUtils.set(client::setIdTokenEncryptedResponseEnc, this.getIdTokenEncryptedResponseEnc());
+        SetterUtils.set(client::setUserinfoSignedResponseAlg, this.getUserinfoSignedResponseAlg());
+        SetterUtils.set(client::setUserinfoEncryptedResponseAlg, this.getUserinfoEncryptedResponseAlg());
+        SetterUtils.set(client::setUserinfoEncryptedResponseEnc, this.getUserinfoEncryptedResponseEnc());
+        SetterUtils.set(client::setRequestObjectSigningAlg, this.getRequestObjectSigningAlg());
+        SetterUtils.set(client::setRequestObjectEncryptionAlg, this.getRequestObjectEncryptionAlg());
+        SetterUtils.set(client::setRequestObjectEncryptionEnc, this.getRequestObjectEncryptionEnc());
+        SetterUtils.set(client::setTokenEndpointAuthMethod, this.getTokenEndpointAuthMethod());
+        SetterUtils.set(client::setTokenEndpointAuthSigningAlg, this.getTokenEndpointAuthSigningAlg());
+        SetterUtils.set(client::setDefaultMaxAge, this.getDefaultMaxAge());
+        SetterUtils.set(client::setRequireAuthTime, this.getRequireAuthTime());
+        SetterUtils.set(client::setDefaultACRvalues, this.getDefaultACRvalues());
+        SetterUtils.set(client::setInitiateLoginUri, this.getInitiateLoginUri());
+        SetterUtils.set(client::setRequestUris, this.getRequestUris());
+
+        /* set oauth2 request metadata */
+        SetterUtils.set(client::setScopes, this.getScope());
+        SetterUtils.set(client::setSoftwareId, this.getSoftwareId());
+        SetterUtils.set(client::setSoftwareVersion, this.getSoftwareVersion());
+        SetterUtils.set(client::setSoftwareStatement, this.getSoftwareStatement());
+
+        return client;
+    }
 }
 

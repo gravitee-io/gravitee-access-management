@@ -138,6 +138,28 @@ public class SetterUtilsTest {
         assertEquals("succeed",basic.getString());
     }
 
+    @Test
+    public void testSet_optionalIsNull() {
+        BasicDto basic = new BasicDto();
+        SetterUtils.set(basic::setString,null);
+        assertNull("was expecting a null value",basic.getString());
+    }
+
+    @Test
+    public void testSet_optionalIsEmpty() {
+        BasicDto basic = new BasicDto();
+        SetterUtils.set(basic::setString,Optional.empty());
+        assertNull("was expecting a null value",basic.getString());
+    }
+
+    @Test
+    public void testSet_optionalIsNotEmpty() {
+        BasicDto basic = new BasicDto();
+        SetterUtils.set(basic::setString,Optional.of("succeed"));
+        assertNotNull(basic.getString());
+        assertEquals("succeed",basic.getString());
+    }
+
     private class BasicDto {
         private String objet;
         private boolean solo;
