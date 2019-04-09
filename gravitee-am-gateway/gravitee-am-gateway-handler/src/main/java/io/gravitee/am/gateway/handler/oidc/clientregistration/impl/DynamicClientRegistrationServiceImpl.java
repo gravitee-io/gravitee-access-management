@@ -31,6 +31,7 @@ import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
+import io.gravitee.am.service.utils.SubjectTypeUtils;
 import io.gravitee.am.service.utils.UriBuilder;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -158,6 +159,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         return this.validateRedirectUri(request)
                 .flatMap(this::validateResponseType)
                 .flatMap(this::validateGrantType)
+                .flatMap(this::validateSubjectType)
                 .flatMap(this::validateRequestUri)
                 .flatMap(this::validateSectorIdentifierUri)
                 .flatMap(this::validateJKWs)
@@ -174,6 +176,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
         return this.validateResponseType(request)
                 .flatMap(this::validateGrantType)
+                .flatMap(this::validateSubjectType)
                 .flatMap(this::validateRequestUri)
                 .flatMap(this::validateSectorIdentifierUri)
                 .flatMap(this::validateJKWs);
@@ -202,6 +205,16 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         if(request.getGrantTypes()!=null) {
             if(!GrantTypeUtils.isValidGrantType(request.getGrantTypes().get())) {
                 return Single.error(new InvalidClientMetadataException("Missing or invalid grant type."));
+            }
+        }
+        return Single.just(request);
+    }
+
+    private Single<DynamicClientRegistrationRequest> validateSubjectType(DynamicClientRegistrationRequest request) {
+        //if subject_type is provided, they must be valid.
+        if(request.getSubjectType()!=null) {
+            if(!SubjectTypeUtils.isValidSubjectType(request.getSubjectType().get())) {
+                return Single.error(new InvalidClientMetadataException("Unsupported subject type"));
             }
         }
         return Single.just(request);

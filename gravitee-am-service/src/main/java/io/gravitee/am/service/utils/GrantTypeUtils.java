@@ -54,7 +54,7 @@ public class GrantTypeUtils {
     }
 
     /**
-     * Throw InvalidClientMetadataException if null or contains unknown grant types.
+     * Check if grant type is known/supported.
      * @param grantType String grant_type to validate.
      */
     public static boolean isValidGrantType(String grantType) {
