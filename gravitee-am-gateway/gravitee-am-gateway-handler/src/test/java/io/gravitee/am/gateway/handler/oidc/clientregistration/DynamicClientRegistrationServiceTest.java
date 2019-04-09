@@ -210,6 +210,17 @@ public class DynamicClientRegistrationServiceTest {
     }
 
     @Test
+    public void validateClientRegistrationRequest_unsupportedSubjectTypePayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setSubjectType(Optional.of("unknownSubjectType"));
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
     public void validateClientRegistrationRequest_unvalidRequestUris() {
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "2c384dba-a62c-4505-b7fb-a2c1b78e4e93",
+		"_postman_id": "4388b7d9-1598-4ebc-910d-337c701d5cce",
 		"name": "Gravitee.io AM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -16154,6 +16154,61 @@
 									"response": []
 								},
 								{
+									"name": "Invalid subject type",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Invalid grant type\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+													"    pm.expect(body.error_description).to.eql('Unsupported subject type');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"pairwise\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/test/oidc/register",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"test",
+												"oidc",
+												"register"
+											]
+										}
+									},
+									"response": []
+								},
+								{
 									"name": "Invalid request uri",
 									"event": [
 										{
@@ -16331,7 +16386,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"pairwise\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
+											"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
 										},
 										"url": {
 											"raw": "{{registrationEndpoint}}",
@@ -16692,7 +16747,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"pairwise\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
+											"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"public\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
 										},
 										"url": {
 											"raw": "{{registrationEndpoint}}",
@@ -16925,7 +16980,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"redirect_uris\": [\n        \"https://client.example.org/callback\",\n        \"https://client.example.org/callback2\"\n    ],\n    \"response_types\": [\n        \"code\"\n    ],\n    \"grant_types\": [\n        \"authorization_code\"\n    ],\n    \"application_type\": \"web\",\n    \"contacts\": [\n        \"marie@example.org\",\n        \"jeanne@example.org\"\n    ],\n\t\"client_name\": \"Client name updated via DCR\",\n    \"logo_uri\": \"https://client.example.org/logo.png\",\n    \"subject_type\": \"pairwise\",\n    \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n    \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"require_auth_time\": false,\n    \"request_uris\": [\n        \"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"\n    ],\n    \"scope\": \"openid\"\n}"
+											"raw": "{\n    \"redirect_uris\": [\n        \"https://client.example.org/callback\",\n        \"https://client.example.org/callback2\"\n    ],\n    \"response_types\": [\n        \"code\"\n    ],\n    \"grant_types\": [\n        \"authorization_code\"\n    ],\n    \"application_type\": \"web\",\n    \"contacts\": [\n        \"marie@example.org\",\n        \"jeanne@example.org\"\n    ],\n\t\"client_name\": \"Client name updated via DCR\",\n    \"logo_uri\": \"https://client.example.org/logo.png\",\n    \"subject_type\": \"public\",\n    \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n    \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"require_auth_time\": false,\n    \"request_uris\": [\n        \"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"\n    ],\n    \"scope\": \"openid\"\n}"
 										},
 										"url": {
 											"raw": "{{registrationClientUri}}",
