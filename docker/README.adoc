@@ -27,3 +27,5 @@ $ curl -L http://bit.ly/graviteeio-am | bash
 ```
 $ curl -L http://bit.ly/graviteeio-am | bash -s <port>
 ```
+
+Visit http://localhost/am/ui and login-in with as ... ?
