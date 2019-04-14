@@ -107,10 +107,15 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     @Override
     public Collection<CertificateProvider> providers() {
+        if (!domainsCertificateProviders.containsKey(domain.getId())) {
+            return Collections.emptyList();
+        }
+
         return domainsCertificateProviders
+                .get(domain.getId())
                 .entrySet()
                 .stream()
-                .flatMap(p -> p.getValue().entrySet().stream().map(Map.Entry::getValue))
+                .map(p -> p.getValue())
                 .collect(Collectors.toList());
     }
 
