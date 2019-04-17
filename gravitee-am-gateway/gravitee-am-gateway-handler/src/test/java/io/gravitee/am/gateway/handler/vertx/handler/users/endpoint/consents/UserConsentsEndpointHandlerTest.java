@@ -95,13 +95,20 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotListConsents_invalid_token() throws Exception {
+        JWT jwt = new JWT();
+        jwt.setAud("client-id");
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
         Token token = new AccessToken("uuid");
         token.setExpiresIn(10000);
         token.setScope("read");
 
-        when(jwtService.decode(anyString())).thenReturn(Single.just(new JWT()));
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
-        when(tokenService.getAccessToken(anyString(), any())).thenReturn(Maybe.just(token));
+        when(jwtService.decode("token")).thenReturn(Single.just(jwt));
+        when(clientService.findByClientId(jwt.getAud())).thenReturn(Maybe.just(client));
+        when(tokenService.getAccessToken("token", client)).thenReturn(Maybe.just(token));
 
         router.route("/users/:userId/consents")
                 .handler(authTokenParseHandler)
@@ -117,13 +124,20 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldListConsents() throws Exception {
+        JWT jwt = new JWT();
+        jwt.setAud("client-id");
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
         Token token = new AccessToken("uuid");
         token.setExpiresIn(10000);
         token.setScope("consent_admin");
 
-        when(jwtService.decode(anyString())).thenReturn(Single.just(new JWT()));
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
-        when(tokenService.getAccessToken(anyString(), any())).thenReturn(Maybe.just(token));
+        when(jwtService.decode("token")).thenReturn(Single.just(jwt));
+        when(clientService.findByClientId(jwt.getAud())).thenReturn(Maybe.just(client));
+        when(tokenService.getAccessToken("token", client)).thenReturn(Maybe.just(token));
         when(userService.consents(anyString())).thenReturn(Single.just(Collections.singleton(new ScopeApproval())));
 
         router.route("/users/:userId/consents")
@@ -141,13 +155,20 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldRevokeConsents() throws Exception {
+        JWT jwt = new JWT();
+        jwt.setAud("client-id");
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
         Token token = new AccessToken("uuid");
         token.setExpiresIn(10000);
         token.setScope("consent_admin");
 
-        when(jwtService.decode(anyString())).thenReturn(Single.just(new JWT()));
-        when(clientService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
-        when(tokenService.getAccessToken(anyString(), any())).thenReturn(Maybe.just(token));
+        when(jwtService.decode("token")).thenReturn(Single.just(jwt));
+        when(clientService.findByClientId(jwt.getAud())).thenReturn(Maybe.just(client));
+        when(tokenService.getAccessToken("token", client)).thenReturn(Maybe.just(token));
         when(userService.revokeConsents(anyString(), any(User.class))).thenReturn(Completable.complete());
 
         router.route("/users/:userId/consents")

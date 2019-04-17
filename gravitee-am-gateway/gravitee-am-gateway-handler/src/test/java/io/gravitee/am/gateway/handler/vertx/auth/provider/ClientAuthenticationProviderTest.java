@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.vertx.auth.provider;
 
 import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.BadClientCredentialsException;
-import io.gravitee.am.gateway.handler.oauth2.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
 import io.reactivex.Maybe;
 import io.vertx.core.json.JsonObject;
@@ -79,7 +78,6 @@ public class ClientAuthenticationProviderTest {
     @Test
     public void shouldNotAuthenticateClient_badClientSecret() throws Exception {
         Client client = mock(Client.class);
-        when(client.getClientId()).thenReturn("my-client-id");
         when(client.getClientSecret()).thenReturn("my-client-secret");
 
         when(clientSyncService.findByClientId("my-client-id")).thenReturn(Maybe.just(client));
@@ -102,7 +100,7 @@ public class ClientAuthenticationProviderTest {
     public void shouldNotAuthenticateClient_unknownClient() throws Exception {
         when(clientSyncService.findByClientId(anyString())).thenReturn(Maybe.empty());
         JsonObject credentials = new JsonObject();
-        credentials.put(OAuth2Constants.CLIENT_ID, "other-client-id");
+        credentials.put("username", "other-client-id");
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.authenticate(credentials, userAsyncResult -> {
             latch.countDown();
@@ -119,7 +117,7 @@ public class ClientAuthenticationProviderTest {
         Exception exception = new Exception();
         when(clientSyncService.findByClientId(anyString())).thenReturn(Maybe.error(exception));
         JsonObject credentials = new JsonObject();
-        credentials.put(OAuth2Constants.CLIENT_ID, "other-client-id");
+        credentials.put("username", "other-client-id");
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.authenticate(credentials, userAsyncResult -> {
             latch.countDown();

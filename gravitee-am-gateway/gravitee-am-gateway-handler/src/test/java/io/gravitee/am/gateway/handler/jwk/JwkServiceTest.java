@@ -70,7 +70,6 @@ public class JwkServiceTest {
 
         when(client.getAbs(any())).thenReturn(request);
         when(request.rxSend()).thenReturn(Single.just(response));
-        when(response.statusCode()).thenReturn(400);
 
         TestObserver testObserver = jwkService.getKeys(JWKS_URI).test();
 
@@ -87,7 +86,6 @@ public class JwkServiceTest {
 
         when(client.getAbs(any())).thenReturn(request);
         when(request.rxSend()).thenReturn(Single.just(response));
-        when(response.statusCode()).thenReturn(200);
         when(response.bodyAsString()).thenReturn("{\"unknown\":[]}");
 
         TestObserver testObserver = jwkService.getKeys(JWKS_URI).test();
@@ -106,7 +104,6 @@ public class JwkServiceTest {
 
         when(client.getAbs(any())).thenReturn(request);
         when(request.rxSend()).thenReturn(Single.just(response));
-        when(response.statusCode()).thenReturn(200);
         when(response.bodyAsString()).thenReturn(bodyAsString);
 
         TestObserver testObserver = jwkService.getKeys(JWKS_URI).test();

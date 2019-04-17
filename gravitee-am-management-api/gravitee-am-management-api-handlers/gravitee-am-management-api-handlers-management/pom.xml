@@ -33,6 +33,7 @@
         <jersey.version>2.27</jersey.version>
         <swagger.version>1.5.18</swagger.version>
         <commons.lang.version>2.6</commons.lang.version>
+        <jaxb.version>2.3.1</jaxb.version>
     </properties>
 
     <dependencies>
@@ -98,6 +99,13 @@
                     <artifactId>spring-web</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <!-- JAXB dependencies -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>${jaxb.version}</version>
         </dependency>
 
         <!-- Swagger -->

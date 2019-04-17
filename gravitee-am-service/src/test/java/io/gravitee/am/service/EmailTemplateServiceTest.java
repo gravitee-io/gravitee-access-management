@@ -225,17 +225,21 @@ public class EmailTemplateServiceTest {
 
     @Test
     public void shouldDelete() {
-        when(emailRepository.findById("my-email")).thenReturn(Maybe.just(new Email()));
-        when(emailRepository.delete("my-email")).thenReturn(Completable.complete());
-        when(domainService.reload(anyString(), any())).thenReturn(Single.just(new Domain()));
+        Email email = new Email();
+        email.setId("my-email");
+        email.setDomain("domain-id");
 
-        TestObserver testObserver = emailTemplateService.delete( "my-email").test();
+        when(emailRepository.findById(email.getId())).thenReturn(Maybe.just(email));
+        when(emailRepository.delete(email.getId())).thenReturn(Completable.complete());
+        when(domainService.reload(eq(email.getDomain()), any())).thenReturn(Single.just(new Domain()));
+
+        TestObserver testObserver = emailTemplateService.delete(email.getId()).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(emailRepository, times(1)).delete("my-email");
-        verify(domainService, times(1)).reload(anyString(), any());
+        verify(emailRepository, times(1)).delete(email.getId());
+        verify(domainService, times(1)).reload(eq(email.getDomain()), any());
     }
 }

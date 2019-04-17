@@ -58,6 +58,7 @@ public class UserServiceTest {
 
         User newUser = mock(User.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
 
         when(domain.getId()).thenReturn(domainId);
         when(userRepository.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());

@@ -66,8 +66,6 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeLoginEndpoint_noClient() throws Exception {
-        when(clientSyncService.findByClientId(anyString())).thenReturn(Maybe.empty());
-
         testRequest(
                 HttpMethod.GET, "/login?client_id=test",
                 HttpStatusCode.BAD_REQUEST_400, "Bad Request");

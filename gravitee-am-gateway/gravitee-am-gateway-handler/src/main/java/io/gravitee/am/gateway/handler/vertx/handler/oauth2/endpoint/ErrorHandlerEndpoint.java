@@ -20,7 +20,7 @@ import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
+import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -53,7 +53,7 @@ public class ErrorHandlerEndpoint implements Handler<RoutingContext> {
         }
         routingContext.put(ERROR_PARAM, error);
         routingContext.put(ERROR_DESCRIPTION_PARAM, errorDescription);
-        engine.render(routingContext, "access_error", res -> {
+        engine.render(routingContext.data(), "access_error", res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 routingContext.response().end(res.result());

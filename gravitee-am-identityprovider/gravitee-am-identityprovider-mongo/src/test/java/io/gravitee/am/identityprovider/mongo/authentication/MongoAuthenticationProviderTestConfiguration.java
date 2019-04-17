@@ -24,24 +24,23 @@ import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
 import io.reactivex.Observable;
 import org.bson.Document;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import javax.annotation.PostConstruct;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
-public class MongoAuthenticationProviderTestConfiguration {
+public class MongoAuthenticationProviderTestConfiguration implements InitializingBean {
 
     @Autowired
     private MongoDatabase mongoDatabase;
 
-    @PostConstruct
-    public void init() {
+    @Override
+    public void afterPropertiesSet() throws Exception {
         Observable.fromPublisher(mongoDatabase.createCollection("users")).blockingFirst();
         MongoCollection<Document> collection = mongoDatabase.getCollection("users");
         Document doc = new Document("username", "bob").append("password", "bobspassword");

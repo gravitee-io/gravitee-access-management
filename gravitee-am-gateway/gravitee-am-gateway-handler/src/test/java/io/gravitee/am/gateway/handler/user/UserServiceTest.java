@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.user;
 
 import io.gravitee.am.gateway.handler.user.impl.UserServiceImpl;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.ScopeApprovalService;
@@ -33,6 +34,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.Collections;
 import java.util.Set;
 
+import static org.mockito.ArgumentMatchers.floatThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -57,11 +59,13 @@ public class UserServiceTest {
     @Test
     public void shouldFindUserConsents() {
         final String userId = "userId";
+        final String domainId = "domainId";
 
         final ScopeApproval scopeApproval = new ScopeApproval();
         scopeApproval.setId("consentId");
 
-        when(scopeApprovalService.findByDomainAndUser(anyString(), eq(userId))).thenReturn(Single.just(Collections.singleton(scopeApproval)));
+        when(domain.getId()).thenReturn(domainId);
+        when(scopeApprovalService.findByDomainAndUser(domainId, userId)).thenReturn(Single.just(Collections.singleton(scopeApproval)));
 
         TestObserver<Set<ScopeApproval>> testObserver = userService.consents(userId).test();
 
@@ -75,7 +79,7 @@ public class UserServiceTest {
         final ScopeApproval scopeApproval = new ScopeApproval();
         scopeApproval.setId("consentId");
 
-        when(scopeApprovalService.findById(anyString())).thenReturn(Maybe.just(scopeApproval));
+        when(scopeApprovalService.findById("consentId")).thenReturn(Maybe.just(scopeApproval));
 
         TestObserver<ScopeApproval> testObserver = userService.consent("consentId").test();
 
@@ -100,11 +104,13 @@ public class UserServiceTest {
     @Test
     public void shouldRevokeConsents() {
         final String userId = "userId";
+        final String domainId = "domainId";
 
         final ScopeApproval scopeApproval = new ScopeApproval();
         scopeApproval.setId("consentId");
 
-        when(scopeApprovalService.revokeByUser(anyString(), eq(userId), any())).thenReturn(Completable.complete());
+        when(domain.getId()).thenReturn(domainId);
+        when(scopeApprovalService.revokeByUser(domainId, userId, null)).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.revokeConsents(userId).test();
 
@@ -114,9 +120,14 @@ public class UserServiceTest {
 
     @Test
     public void shouldRevokeConsent() {
-        when(scopeApprovalService.revokeByConsent(anyString(), anyString(), anyString(), any())).thenReturn(Completable.complete());
+        final String domainId = "domainId";
+        final String userId = "userId";
+        final String consentId = "consentId";
 
-        TestObserver testObserver = userService.revokeConsent("userId", "consentId").test();
+        when(domain.getId()).thenReturn(domainId);
+        when(scopeApprovalService.revokeByConsent(domainId, userId, consentId, null)).thenReturn(Completable.complete());
+
+        TestObserver testObserver = userService.revokeConsent(userId, consentId).test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

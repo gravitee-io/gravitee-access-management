@@ -167,8 +167,7 @@ public class ScopeServiceTest {
         verify(scopeRepository, times(1)).create(any(Scope.class));
         verify(scopeRepository, times(1)).create(argThat(new ArgumentMatcher<Scope>() {
             @Override
-            public boolean matches(Object argument) {
-                Scope scope = (Scope) argument;
+            public boolean matches(Scope scope) {
                 return scope.getKey().equals("my-scope");
             }
         }));
@@ -230,7 +229,6 @@ public class ScopeServiceTest {
     @Test
     public void shouldDelete2_technicalException() {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
-        when(roleService.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
         scopeService.delete("my-scope", false).subscribe(testObserver);
@@ -242,8 +240,6 @@ public class ScopeServiceTest {
     @Test
     public void shouldDelete3_technicalException() {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
-        when(roleService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
-        when(clientService.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
         scopeService.delete("my-scope", false).subscribe(testObserver);

@@ -111,7 +111,6 @@ public class DynamicClientRegistrationEndpointTest {
     public void register_fail() {
         //Context
         when(dcrService.validateClientRegistrationRequest(any())).thenReturn(Single.just(request));
-        when(clientService.create(any())).thenReturn(Single.error(new Exception()));
 
         //Test
         endpoint.handle(routingContext);

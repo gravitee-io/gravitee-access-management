@@ -122,8 +122,6 @@ public class TokenServiceTest {
         when(jwtService.decodeAndVerify(any(), any())).thenReturn(Single.just(jwt));
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
-        when(accessTokenRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
-        when(tokenEnhancer.enhance(any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertComplete();

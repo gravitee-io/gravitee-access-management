@@ -86,7 +86,7 @@ public class UserAuthenticationManagerTest {
         client.setIdentities(Collections.singleton("idp-1"));
 
         when(userService.findOrCreate(any(),any())).then(invocation -> {
-            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgumentAt(1, io.gravitee.am.identityprovider.api.User.class);
+            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(1);
             User user = new User();
             user.setUsername(idpUser.getUsername());
             return Single.just(user);
@@ -174,7 +174,7 @@ public class UserAuthenticationManagerTest {
         client.setIdentities(new LinkedHashSet<>(Arrays.asList("idp-1", "idp-2")));
 
         when(userService.findOrCreate(any(),any())).then(invocation -> {
-            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgumentAt(1, io.gravitee.am.identityprovider.api.User.class);
+            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(1);
             User user = new User();
             user.setUsername(idpUser.getUsername());
             return Single.just(user);
@@ -203,7 +203,6 @@ public class UserAuthenticationManagerTest {
             }
         }));
 
-        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(Maybe.empty());
         when(identityProviderManager.getIdentityProvider("idp-2")).thenReturn(Maybe.empty());
 
         TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
@@ -235,7 +234,7 @@ public class UserAuthenticationManagerTest {
         client.setIdentities(Collections.singleton("idp-1"));
 
         when(userService.findOrCreate(any(), any())).then(invocation -> {
-            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgumentAt(1, io.gravitee.am.identityprovider.api.User.class);
+            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(1);
             User user = new User();
             user.setUsername(idpUser.getUsername());
             user.setEnabled(false);

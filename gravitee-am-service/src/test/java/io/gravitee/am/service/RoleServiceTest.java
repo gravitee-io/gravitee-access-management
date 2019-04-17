@@ -248,7 +248,6 @@ public class RoleServiceTest {
     @Test
     public void shouldUpdate_roleNotFound() {
         UpdateRole updateRole = Mockito.mock(UpdateRole.class);
-        when(updateRole.getName()).thenReturn("existing-role-name");
         when(roleRepository.findById("my-role")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();

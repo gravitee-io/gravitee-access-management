@@ -177,7 +177,6 @@ public class DynamicClientRegistrationHandlerTest {
         AccessToken token = Mockito.mock(AccessToken.class);
         when(token.getSubject()).thenReturn(client.getClientId());
         when(token.getExpireAt()).thenReturn(Date.from(new Date().toInstant().plusSeconds(3600)));
-        when(token.getClientId()).thenReturn(client.getClientId());
 
         when(jwtService.decode(any())).thenReturn(Single.just(new JWT()));
         when(tokenService.getAccessToken(any(),any())).thenReturn(Maybe.just(token));
@@ -200,7 +199,6 @@ public class DynamicClientRegistrationHandlerTest {
         AccessToken token = Mockito.mock(AccessToken.class);
         when(token.getSubject()).thenReturn(client.getClientId());
         when(token.getExpireAt()).thenReturn(Date.from(new Date().toInstant().plusSeconds(3600)));
-        when(token.getClientId()).thenReturn(client.getClientId());
         when(token.getScope()).thenReturn(Scope.DCR_ADMIN.getKey());
 
         when(jwtService.decode(any())).thenReturn(Single.just(new JWT()));

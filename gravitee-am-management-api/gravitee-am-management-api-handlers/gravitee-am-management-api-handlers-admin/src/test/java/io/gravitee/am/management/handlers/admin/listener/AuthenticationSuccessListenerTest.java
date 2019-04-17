@@ -42,6 +42,8 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class AuthenticationSuccessListenerTest {
 
+    private static final String domainId = "domain-id";
+
     @InjectMocks
     private AuthenticationSuccessListener listener = new AuthenticationSuccessListener();
 
@@ -68,6 +70,7 @@ public class AuthenticationSuccessListenerTest {
 
     @Test
     public void shouldCreateUser() {
+        when(domainMock.getId()).thenReturn(domainId);
         when(eventMock.getAuthentication()).thenReturn(authenticationMock);
         when(authenticationMock.getPrincipal()).thenReturn(userDetailsMock);
         when(userServiceMock.findByDomainAndUsername(domainMock.getId(), userDetailsMock.getUsername())).thenReturn(Maybe.empty());
@@ -82,6 +85,8 @@ public class AuthenticationSuccessListenerTest {
 
     @Test
     public void shouldUpdatedUser() {
+        when(domainMock.getId()).thenReturn(domainId);
+        when(repositoryUserMock.getId()).thenReturn("userId");
         when(eventMock.getAuthentication()).thenReturn(authenticationMock);
         when(authenticationMock.getPrincipal()).thenReturn(userDetailsMock);
         when(userServiceMock.findByDomainAndUsername(domainMock.getId(), userDetailsMock.getUsername())).thenReturn(Maybe.just(repositoryUserMock));

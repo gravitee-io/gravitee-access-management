@@ -121,7 +121,6 @@ public class InitializeUpgraderTest {
         adminClient.setClientId(ADMIN_CLIENT_ID);
 
         when(domainService.findById(ADMIN_DOMAIN)).thenReturn(Maybe.just(adminDomain));
-        when(domainService.update(eq(ADMIN_DOMAIN), any(UpdateDomain.class))).thenReturn(Single.just(adminDomain));
         when(clientService.findByDomainAndClientId(ADMIN_DOMAIN, ADMIN_CLIENT_ID)).thenReturn(Maybe.empty());
 
         initializeUpgrader.upgrade();

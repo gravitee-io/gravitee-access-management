@@ -88,12 +88,13 @@ public class AuthorizationCodeServiceTest {
         client.setClientId("my-client-id");
 
         AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setId("code-id");
         authorizationCode.setCode("my-code");
         authorizationCode.setClientId("my-client-id");
 
-        when(authorizationCodeRepository.findByCode(any())).thenReturn(Maybe.just(authorizationCode));
-        when(authorizationCodeRepository.delete(anyString())).thenReturn(Maybe.just(authorizationCode));
-        when(accessTokenRepository.findByAuthorizationCode(anyString())).thenReturn(Observable.empty());
+        when(authorizationCodeRepository.findByCode(authorizationCode.getCode())).thenReturn(Maybe.just(authorizationCode));
+        when(authorizationCodeRepository.delete(authorizationCode.getId())).thenReturn(Maybe.just(authorizationCode));
+        when(accessTokenRepository.findByAuthorizationCode(authorizationCode.getCode())).thenReturn(Observable.empty());
 
         TestObserver<AuthorizationCode> testObserver = authorizationCodeService.remove(authorizationCode.getCode(), client).test();
         testObserver.assertComplete();
