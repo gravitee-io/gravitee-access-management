@@ -63,7 +63,7 @@ public class DomainReporterUpgrader implements Upgrader, Ordered {
                     if (reporters == null || reporters.isEmpty()) {
                         logger.info("No default reporter found for domain {}, update domain", domain.getName());
                         return reporterService.createDefault(domain.getId())
-                                .doOnSuccess(reporter -> auditReporterManager.reloadReporter(reporter))
+                                .doOnSuccess(reporter -> auditReporterManager.loadReporter(reporter))
                                 .toCompletable();
                     }
                     return Completable.complete();

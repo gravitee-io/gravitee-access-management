@@ -174,7 +174,6 @@ public class SecurityConfiguration {
     }
 
     @Configuration
-
     public static class BasicSecurityConfigurationAdapter extends WebSecurityConfigurerAdapter {
 
         @Override
@@ -186,11 +185,17 @@ public class SecurityConfiguration {
                     .and()
                         .httpBasic()
                             .realmName("Gravitee.io AM Management API")
+                            .authenticationDetailsSource(authenticationDetailsSource())
                     .and()
                         .sessionManagement()
                             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                     .and()
                         .csrf().disable();
+        }
+
+        @Bean
+        public AuthenticationDetailsSource<HttpServletRequest, io.gravitee.am.management.handlers.admin.authentication.WebAuthenticationDetails> authenticationDetailsSource() {
+            return new io.gravitee.am.management.handlers.admin.authentication.WebAuthenticationDetailsSource();
         }
     }
 }

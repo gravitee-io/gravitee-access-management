@@ -148,6 +148,20 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         }
     }
 
+    @Override
+    public void loadReporter(io.gravitee.am.model.Reporter reporter) {
+        Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration());
+        if (auditReporter != null) {
+            Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter);
+            auditReporters.put(reporter, eventBusReporter);
+            try {
+                eventBusReporter.start();
+            } catch (Exception e) {
+                logger.error("Unexpected error while loading reporter", e);
+            }
+        }
+    }
+
     private void deployReporterVerticle(Collection<Reporter> reporters) {
         Single<String> deployment = RxHelper.deployVerticle(vertx, applicationContext.getBean(AuditReporterVerticle.class));
 
@@ -170,18 +184,5 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
             // Could not deploy
             logger.error("Reporter service can not be started", err);
         });
-    }
-
-    private void loadReporter(io.gravitee.am.model.Reporter reporter) {
-        Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration());
-        if (auditReporter != null) {
-            Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter);
-            auditReporters.put(reporter, eventBusReporter);
-            try {
-                eventBusReporter.start();
-            } catch (Exception e) {
-                logger.error("Unexpected error while loading reporter", e);
-            }
-        }
     }
 }

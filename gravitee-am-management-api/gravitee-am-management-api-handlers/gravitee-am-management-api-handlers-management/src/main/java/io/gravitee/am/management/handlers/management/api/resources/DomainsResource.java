@@ -104,7 +104,7 @@ public class DomainsResource extends AbstractResource {
                 .flatMap(domain -> identityProviderManager.create(domain.getId()).map(identityProvider -> domain))
                 // create default reporter
                 .flatMap(domain -> reporterService.createDefault(domain.getId())
-                        .flatMapCompletable(reporter -> Completable.fromRunnable(() -> auditReporterManager.reloadReporter(reporter)))
+                        .flatMapCompletable(reporter -> Completable.fromRunnable(() -> auditReporterManager.loadReporter(reporter)))
                         .toSingleDefault(domain))
                 .subscribe(
                         domain -> response.resume(Response

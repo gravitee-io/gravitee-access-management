@@ -27,4 +27,6 @@ public interface AuditReporterManager extends Service<AuditReporterManager> {
     Reporter getReporter(String domain);
 
     void reloadReporter(io.gravitee.am.model.Reporter reporter);
+
+    void loadReporter(io.gravitee.am.model.Reporter reporter);
 }
