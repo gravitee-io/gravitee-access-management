@@ -158,56 +158,47 @@ public class VertxSecurityDomainHandler {
                 .create(LocalSessionStore.create(vertx))
                 .setCookieHttpOnlyFlag(true)
                 .setSessionCookieName(environment.getProperty("http.cookie.session.name", String.class, DEFAULT_SESSION_COOKIE_NAME))
+                .setSessionCookiePath("/" + domain.getPath())
                 .setSessionTimeout(environment.getProperty("http.cookie.session.timeout", Long.class, DEFAULT_SESSION_TIMEOUT))
-                .setCookieSecureFlag(environment.getProperty("http.cookie.secure", Boolean.class, false));
-        // override session cookie path
-        ((RxSessionHandler) sessionHandler).setSessionCookiePath("/" + domain.getPath());
-        // user session handler
-        UserSessionHandler userSessionHandler = UserSessionHandler.create(userAuthProvider);
+                .setCookieSecureFlag(environment.getProperty("http.cookie.secure", Boolean.class, false))
+                .setAuthProvider(userAuthProvider);
 
         // Login endpoint
         router.route("/login")
                 .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(userSessionHandler);
+                .handler(sessionHandler);
         router
                 .route("/login/callback")
                 .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(userSessionHandler);
+                .handler(sessionHandler);
 
         // Logout endpoint
         router
                 .route("/logout")
                 .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(userSessionHandler);
+                .handler(sessionHandler);
 
         // OAuth 2.0 Authorize endpoint
         router
                 .route("/oauth/authorize")
                 .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(userSessionHandler);
+                .handler(sessionHandler);
         router
                 .route("/oauth/confirm_access")
                 .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(userSessionHandler);
+                .handler(sessionHandler);
 
         // Registration confirmation endpoint
         router
                 .route("/confirmRegistration")
                 .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(userSessionHandler);
+                .handler(sessionHandler);
 
         // Reset password endpoint
         router
                 .route("/resetPassword")
                 .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(userSessionHandler);
+                .handler(sessionHandler);
     }
 
     private void csrfHandler(Router router) {

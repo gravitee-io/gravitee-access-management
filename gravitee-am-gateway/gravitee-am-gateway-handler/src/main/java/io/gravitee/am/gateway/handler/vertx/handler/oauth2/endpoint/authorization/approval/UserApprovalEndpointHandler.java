@@ -25,7 +25,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
+import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -73,7 +73,7 @@ public class UserApprovalEndpointHandler implements Handler<RoutingContext>  {
                             Client safeClient = safeClient(client);
                             routingContext.put("client", safeClient);
                             routingContext.put("scopes", requestedScopes);
-                            engine.render(routingContext, getTemplateFileName(safeClient), res -> {
+                            engine.render(routingContext.data(), getTemplateFileName(safeClient), res -> {
                                 if (res.succeeded()) {
                                     routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                                     routingContext.response().end(res.result());

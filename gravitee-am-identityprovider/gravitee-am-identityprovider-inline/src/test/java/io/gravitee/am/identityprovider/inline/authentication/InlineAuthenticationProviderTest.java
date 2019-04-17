@@ -57,9 +57,10 @@ public class InlineAuthenticationProviderTest {
 
         io.gravitee.am.identityprovider.inline.model.User user = mock(io.gravitee.am.identityprovider.inline.model.User.class);
         when(user.getUsername()).thenReturn("username");
+        when(user.getPassword()).thenReturn("password");
 
         when(userDetailsService.loadUserByUsername("username")).thenReturn(Maybe.just(user));
-        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+        when(passwordEncoder.matches((String) authentication.getCredentials(), user.getPassword())).thenReturn(true);
 
         TestObserver<User> testObserver = inlineAuthenticationProvider.loadUserByUsername(authentication).test();
         testObserver.awaitTerminalEvent();
@@ -76,10 +77,8 @@ public class InlineAuthenticationProviderTest {
         when(authentication.getCredentials()).thenReturn("password");
 
         io.gravitee.am.identityprovider.inline.model.User user = mock(io.gravitee.am.identityprovider.inline.model.User.class);
-        when(user.getUsername()).thenReturn("username");
 
         when(userDetailsService.loadUserByUsername("username")).thenReturn(Maybe.just(user));
-        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
         TestObserver<User> testObserver = inlineAuthenticationProvider.loadUserByUsername(authentication).test();
         testObserver.assertError(BadCredentialsException.class);
@@ -89,10 +88,6 @@ public class InlineAuthenticationProviderTest {
     public void shouldLoadUserByUsername_authentication_usernameNotFound() {
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn("username");
-        when(authentication.getCredentials()).thenReturn("password");
-
-        io.gravitee.am.identityprovider.inline.model.User user = mock(io.gravitee.am.identityprovider.inline.model.User.class);
-        when(user.getUsername()).thenReturn("username");
 
         when(userDetailsService.loadUserByUsername("username")).thenReturn(Maybe.error(new UsernameNotFoundException("username")));
 

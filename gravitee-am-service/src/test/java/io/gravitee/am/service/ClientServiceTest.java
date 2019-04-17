@@ -480,7 +480,6 @@ public class ClientServiceTest {
     @Test
     public void shouldUpdate2_technicalException() {
         PatchClient patchClient = Mockito.mock(PatchClient.class);
-        when(patchClient.patch(any(), anyBoolean())).thenReturn(new Client());
         when(clientRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
@@ -545,7 +544,7 @@ public class ClientServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(clientRepository, times(1)).findById(anyString());
+        verify(clientRepository, times(1)).findById(any());
         verify(clientRepository, times(1)).update(any(Client.class));
     }
 
@@ -554,7 +553,6 @@ public class ClientServiceTest {
     public void shouldPatch() {
         PatchClient patchClient = Mockito.mock(PatchClient.class);
         when(patchClient.patch(any(), eq(false))).thenReturn(new Client());
-        when(patchClient.getRedirectUris()).thenReturn(Optional.of(Arrays.asList("https://gravitee.io/callback")));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
@@ -579,10 +577,15 @@ public class ClientServiceTest {
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(existingClient));
         when(clientRepository.delete("my-client")).thenReturn(Completable.complete());
         when(domainService.reload(eq("my-domain"), any())).thenReturn(Single.just(new Domain()));
-        when(formService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.singletonList(new Form())));
-        when(formService.delete(anyString())).thenReturn(Completable.complete());
-        when(emailTemplateService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.singletonList(new Email())));
-        when(emailTemplateService.delete(anyString())).thenReturn(Completable.complete());
+        Form form = new Form();
+        form.setId("form-id");
+        when(formService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.singletonList(form)));
+        when(formService.delete(form.getId())).thenReturn(Completable.complete());
+        Email email = new Email();
+        email.setId("email-id");
+        when(emailTemplateService.findByDomainAndClient("my-domain", "my-client"))
+                .thenReturn(Single.just(Collections.singletonList(email)));
+        when(emailTemplateService.delete(email.getId())).thenReturn(Completable.complete());
 
         TestObserver testObserver = clientService.delete("my-client").test();
         testObserver.awaitTerminalEvent();

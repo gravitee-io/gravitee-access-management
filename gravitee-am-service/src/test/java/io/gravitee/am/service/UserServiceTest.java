@@ -201,7 +201,6 @@ public class UserServiceTest {
         when(newUser.getUsername()).thenReturn("username");
         when(newUser.getSource()).thenReturn("source");
         when(userRepository.findByDomainAndUsernameAndSource(DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.just(new User()));
-        when(userRepository.create(any(User.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
         userService.create(DOMAIN, newUser).subscribe(testObserver);

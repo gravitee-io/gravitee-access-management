@@ -207,7 +207,6 @@ public class IdentityProviderServiceTest {
     @Test
     public void shouldDelete_technicalException() {
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(new IdentityProvider()));
-        when(identityProviderRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
 
         TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
 

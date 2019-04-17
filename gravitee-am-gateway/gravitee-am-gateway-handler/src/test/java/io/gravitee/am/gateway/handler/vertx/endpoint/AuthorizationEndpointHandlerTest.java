@@ -245,7 +245,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         authorizationRequest.setApproved(true);
         authorizationRequest.setResponseType(OAuth2Constants.CODE);
 
-        when(domain.getPath()).thenReturn("test");
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
@@ -294,8 +293,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
-
-        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -404,7 +401,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         });
 
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
-        when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
         testRequest(
                 HttpMethod.GET,
@@ -443,7 +439,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         });
 
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
-        when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
         testRequest(
                 HttpMethod.GET,
@@ -835,8 +830,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
-        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
-
         testRequest(
                 HttpMethod.GET,
                 "/oauth/authorize?response_type=id_token&client_id=client-id&redirect_uri=http://localhost:9999/callback",
@@ -856,8 +849,6 @@ public class AuthorizationEndpointHandlerTest  extends RxWebTestBase {
         client.setClientId("client-id");
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
-
-        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,

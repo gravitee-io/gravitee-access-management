@@ -134,7 +134,6 @@ public class ScopeApprovalServiceTest {
 
     @Test
     public void shouldDelete_technicalException() {
-        when(scopeApprovalRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
         when(userService.findById(anyString())).thenReturn(Maybe.just(new User()));
         TestObserver testObserver = scopeApprovalService.revokeByConsent("my-domain","user-id","my-consent").test();
 

@@ -62,7 +62,6 @@ public class ClientAssertionAuthenticationProviderTest {
     public void authorized_client() throws Exception {
         Client client = mock(Client.class);
         when(client.getClientId()).thenReturn(CLIENT_ID);
-        when(client.getClientSecret()).thenReturn(CLIENT_SECRET);
 
         when(clientAssertionService.assertClient(any(),any(),any())).thenReturn(Maybe.just(client));
         JsonObject credentials = new JsonObject();

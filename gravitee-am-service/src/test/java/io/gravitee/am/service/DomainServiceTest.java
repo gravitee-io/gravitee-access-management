@@ -220,9 +220,10 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
-        when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(new Domain()));
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
-        when(reporterService.createDefault(any())).thenReturn(Single.just(new Reporter()));
 
         TestObserver testObserver = domainService.create(newDomain).test();
         testObserver.awaitTerminalEvent();
@@ -327,7 +328,6 @@ public class DomainServiceTest {
     public void shouldUpdate_domainNotFound() {
         UpdateDomain updateDomain = Mockito.mock(UpdateDomain.class);
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
-        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(new Domain()));
 
         TestObserver testObserver = domainService.update("my-domain", updateDomain).test();
         testObserver.assertError(DomainNotFoundException.class);

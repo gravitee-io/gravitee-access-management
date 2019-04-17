@@ -177,7 +177,6 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
         // Jackson is unable to generate a JSON from a mocked interface.
         Token accessToken = new AccessToken("my-token");
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(tokenGranter.grant(any(TokenRequest.class), any(io.gravitee.am.model.Client.class))).thenReturn(Single.just(accessToken));
 
         testRequest(
@@ -219,8 +218,6 @@ public class TokenEndpointHandlerTest extends RxWebTestBase {
                 routingContext.next();
             }
         });
-
-        when(tokenGranter.grant(any(TokenRequest.class), any(io.gravitee.am.model.Client.class))).thenReturn(Single.error(new Exception()));
 
         testRequest(
                 HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",

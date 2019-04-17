@@ -67,11 +67,6 @@ public class CertificateUpgraderTest {
         certificate.setType("javakeystore-am-certificate");
         certificate.setConfiguration("{\"jks\":\""+file.getAbsolutePath()+"\"}");
 
-        JsonNode jsonNode = mock(JsonNode.class);
-        TextNode textNode = mock(TextNode.class);
-        when(textNode.asText()).thenReturn(file.getAbsolutePath());
-        when(jsonNode.get("jks")).thenReturn(textNode);
-        when(objectMapper.readTree(anyString())).thenReturn(jsonNode);
         when(certificateService.findAll()).thenReturn(Single.just(Collections.singletonList(certificate)));
         when(certificateService.update(any())).thenReturn(Single.just(new Certificate()));
 

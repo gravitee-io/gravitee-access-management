@@ -18,8 +18,6 @@ package io.gravitee.am.gateway.handler.vertx.handler.session;
 import io.vertx.reactivex.ext.web.handler.SessionHandler;
 import io.vertx.reactivex.ext.web.sstore.SessionStore;
 
-import static io.vertx.ext.web.handler.SessionHandler.*;
-
 /**
  * Override default Vert.x Session Handler to set session cookie path
  *
@@ -35,22 +33,12 @@ public class RxSessionHandler extends SessionHandler {
     }
 
     /**
-     * Set the session cookie name
-     * @param sessionCookiePath the session cookie name
-     * @return a reference to this, so the API can be used fluently
-     */
-    public SessionHandler setSessionCookiePath(String sessionCookiePath) {
-        ((SessionHandlerImpl) getDelegate()).setSessionCookiePath(sessionCookiePath);
-        return this;
-    }
-
-    /**
      * Create a session handler
      * @param sessionStore the session store
      * @return the handler
      */
     public static SessionHandler create(SessionStore sessionStore) {
-        SessionHandler ret = newInstance(new SessionHandlerImpl(DEFAULT_SESSION_COOKIE_NAME, DEFAULT_SESSION_TIMEOUT, DEFAULT_NAG_HTTPS, DEFAULT_COOKIE_SECURE_FLAG, DEFAULT_COOKIE_HTTP_ONLY_FLAG, DEFAULT_SESSIONID_MIN_LENGTH, DEFAULT_SESSION_COOKIE_PATH, sessionStore.getDelegate()));
+        SessionHandler ret = newInstance(new SessionHandlerImpl(DEFAULT_SESSION_COOKIE_NAME, DEFAULT_SESSION_COOKIE_PATH, DEFAULT_SESSION_TIMEOUT, DEFAULT_NAG_HTTPS, DEFAULT_COOKIE_SECURE_FLAG, DEFAULT_COOKIE_HTTP_ONLY_FLAG, DEFAULT_SESSIONID_MIN_LENGTH, sessionStore.getDelegate()));
         return ret;
     }
 

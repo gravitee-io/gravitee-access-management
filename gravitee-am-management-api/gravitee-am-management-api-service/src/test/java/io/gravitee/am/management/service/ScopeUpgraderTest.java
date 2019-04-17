@@ -144,7 +144,6 @@ public class ScopeUpgraderTest {
         when(scopeService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet())).thenReturn(Single.just(Collections.singleton(domainScope)));
         when(clientService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet()));
         when(roleService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet()));
-        when(scopeService.create(any(String.class), any(NewScope.class))).thenReturn(Single.just(new Scope()));
 
         scopeUpgrader.upgrade();
 
@@ -180,7 +179,6 @@ public class ScopeUpgraderTest {
         when(scopeService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet())).thenReturn(Single.just(Collections.singleton(domainScope)));
         when(clientService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(client)));
         when(roleService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(role)));
-        when(scopeService.create(any(String.class), any(NewScope.class))).thenReturn(Single.just(new Scope()));
 
         scopeUpgrader.upgrade();
 

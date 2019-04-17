@@ -63,6 +63,7 @@ public class OAuth2ClientAuthenticationProviderTest {
         JsonObject credentials = new JsonObject();
         credentials.put("username", "my-user-id");
         credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
 
         io.gravitee.am.identityprovider.api.User user  = new io.gravitee.am.identityprovider.api.DefaultUser("username");
 
@@ -87,6 +88,7 @@ public class OAuth2ClientAuthenticationProviderTest {
         JsonObject credentials = new JsonObject();
         credentials.put("username", "my-user-id");
         credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
 
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.error(new BadCredentialsException()));
         when(identityProviderManager.get(anyString())).thenReturn(Maybe.just(authenticationProvider));
@@ -108,6 +110,7 @@ public class OAuth2ClientAuthenticationProviderTest {
         JsonObject credentials = new JsonObject();
         credentials.put("username", "my-user-id");
         credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
 
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.empty());
         when(identityProviderManager.get(anyString())).thenReturn(Maybe.just(authenticationProvider));

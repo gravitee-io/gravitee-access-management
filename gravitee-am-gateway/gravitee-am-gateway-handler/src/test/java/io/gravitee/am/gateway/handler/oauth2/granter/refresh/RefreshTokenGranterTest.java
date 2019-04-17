@@ -84,8 +84,6 @@ public class RefreshTokenGranterTest {
         Client client = new Client();
         client.setClientId("my-client-id");
 
-        when(tokenRequest.getClientId()).thenReturn("my-client-id");
-        when(tokenRequest.getGrantType()).thenReturn("refresh_token");
         when(tokenRequest.getRequestParameters()).thenReturn(parameters);
 
         granter.grant(tokenRequest, client).test().assertError(InvalidRequestException.class);
@@ -101,8 +99,6 @@ public class RefreshTokenGranterTest {
         client.setClientId("my-client-id");
         client.setAuthorizedGrantTypes(Arrays.asList(new String[]{"refresh_token"}));
 
-        when(tokenRequest.getClientId()).thenReturn("my-client-id");
-        when(tokenRequest.getGrantType()).thenReturn("refresh_token");
         when(tokenRequest.getRequestParameters()).thenReturn(parameters);
 
         when(tokenService.refresh(refreshToken, tokenRequest, client)).thenReturn(Single.error(new InvalidGrantException()));

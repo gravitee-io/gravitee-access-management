@@ -83,8 +83,6 @@ public class ApprovalServiceTest {
         authorizationRequest.setClientId(clientId);
         authorizationRequest.setScopes(Collections.singleton(autoApproveScope));
 
-        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
-
         TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, user).test();
         testObserver.awaitTerminalEvent();
 
@@ -109,7 +107,7 @@ public class ApprovalServiceTest {
         authorizationRequest.setClientId(clientId);
         authorizationRequest.setScopes(Collections.singleton(autoApproveScope));
 
-        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        when(domain.getId()).thenReturn("domain_id");
         when(scopeApprovalRepository.findByDomainAndUserAndClient(anyString(), anyString(), anyString())).thenReturn(Single.just(Collections.emptySet()));
 
         approvalService.checkApproval(authorizationRequest, client, user).test().assertError(AccessDeniedException.class);
@@ -141,7 +139,6 @@ public class ApprovalServiceTest {
         authorizationRequest.setScopes(Collections.singleton(autoApproveScope));
 
         when(domain.getId()).thenReturn(domainId);
-        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(domainId, userId, clientId)).thenReturn(Single.just(Collections.singleton(userScopeApproval)));
 
         TestObserver<AuthorizationRequest> testObserver = approvalService.checkApproval(authorizationRequest, client, user).test();
@@ -178,7 +175,6 @@ public class ApprovalServiceTest {
         authorizationRequest.setScopes(Collections.singleton(autoApproveScope));
 
         when(domain.getId()).thenReturn(domainId);
-        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         when(scopeApprovalRepository.findByDomainAndUserAndClient(domainId, userId, clientId)).thenReturn(Single.just(Collections.singleton(userScopeApproval)));
 
         approvalService.checkApproval(authorizationRequest, client, user).test().assertError(AccessDeniedException.class);

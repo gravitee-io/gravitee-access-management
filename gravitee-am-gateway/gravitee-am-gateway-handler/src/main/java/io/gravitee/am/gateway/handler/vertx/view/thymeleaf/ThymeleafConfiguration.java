@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 
-import io.vertx.reactivex.ext.web.templ.ThymeleafTemplateEngine;
+import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thymeleaf.TemplateEngine;
@@ -30,9 +32,12 @@ import org.thymeleaf.templateresolver.ITemplateResolver;
 @Configuration
 public class ThymeleafConfiguration {
 
+    @Autowired
+    private Vertx vertx;
+
     @Bean
     public ThymeleafTemplateEngine getTemplateEngine() {
-        ThymeleafTemplateEngine thymeleafTemplateEngine = ThymeleafTemplateEngine.create();
+        ThymeleafTemplateEngine thymeleafTemplateEngine = ThymeleafTemplateEngine.create(vertx);
         TemplateEngine templateEngine = thymeleafTemplateEngine.getDelegate().getThymeleafTemplateEngine();
 
         // set template resolvers

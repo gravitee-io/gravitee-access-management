@@ -64,7 +64,11 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
         router.route(HttpMethod.DELETE, "/register/:client_id").handler(endpoint::delete);
         router.route().failureHandler(new ExceptionHandler());
 
-        when(clientSyncService.findByDomainAndClientId(null,"my-test-client_id")).thenReturn(Maybe.just(new Client()));
+        Client client = new Client();
+        client.setId("my-test-client_id");
+        client.setClientId("my-test-client_id");
+
+        when(clientSyncService.findByDomainAndClientId(null,"my-test-client_id")).thenReturn(Maybe.just(client));
     }
 
     @Test
@@ -85,7 +89,7 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
 
     @Test
     public void delete() throws Exception{
-        when(clientService.delete(anyString())).thenReturn(Completable.complete());
+        when(clientService.delete("my-test-client_id")).thenReturn(Completable.complete());
         when(clientSyncService.removeDynamicClientRegistred(any())).thenReturn(new Client());
 
         testRequest(
@@ -95,10 +99,6 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
 
     @Test
     public void patch_noBody() throws Exception{
-        when(dcrService.validateClientRegistrationRequest(any())).thenReturn(Single.just(new DynamicClientRegistrationRequest()));
-        when(clientService.update(any())).thenReturn(Single.just(new Client()));
-        when(clientSyncService.addDynamicClientRegistred(any())).thenReturn(new Client());
-
         String body = "{\"redirect_uris\": [\"https://redirecturi\"]}";
         testRequest(
                 HttpMethod.PATCH, "/register/my-test-client_id",
@@ -107,10 +107,6 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
 
     @Test
     public void update_noBody() throws Exception{
-        when(dcrService.validateClientRegistrationRequest(any())).thenReturn(Single.just(new DynamicClientRegistrationRequest()));
-        when(clientService.update(any())).thenReturn(Single.just(new Client()));
-        when(clientSyncService.addDynamicClientRegistred(any())).thenReturn(new Client());
-
         String body = "{\"redirect_uris\": [\"https://redirecturi\"]}";
         testRequest(
                 HttpMethod.PUT, "/register/my-test-client_id",

@@ -206,7 +206,6 @@ public class ExtensionGrantServiceTest {
     @Test
     public void shouldUpdate_technicalException() {
         UpdateExtensionGrant updateExtensionGrant = Mockito.mock(UpdateExtensionGrant.class);
-        when(updateExtensionGrant.getGrantType()).thenReturn("my-extension-grant");
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = extensionGrantService.update(DOMAIN, "my-extension-grant", updateExtensionGrant).test();
@@ -250,7 +249,6 @@ public class ExtensionGrantServiceTest {
     @Test
     public void shouldDelete_extensionGrantWithClients() {
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(new ExtensionGrant()));
-        when(clientService.findByDomainAndExtensionGrant(DOMAIN, "my-extension-grant")).thenReturn(Single.just(Collections.singleton(new Client())));
 
         TestObserver testObserver = extensionGrantService.delete(DOMAIN, "my-extension-grant").test();
 
@@ -264,7 +262,6 @@ public class ExtensionGrantServiceTest {
     @Test
     public void shouldDelete_technicalException() {
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(new ExtensionGrant()));
-        when(extensionGrantRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
 
         TestObserver testObserver = extensionGrantService.delete(DOMAIN, "my-extension-grant").test();
 
@@ -277,7 +274,6 @@ public class ExtensionGrantServiceTest {
         ExtensionGrant existingExtensionGrant = Mockito.mock(ExtensionGrant.class);
         when(existingExtensionGrant.getGrantType()).thenReturn("my-extension-grant");
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(existingExtensionGrant));
-        when(extensionGrantRepository.findByDomainAndGrantType(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.delete("my-extension-grant")).thenReturn(Completable.complete());
         when(clientService.findByDomainAndExtensionGrant(DOMAIN, "my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
         when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));

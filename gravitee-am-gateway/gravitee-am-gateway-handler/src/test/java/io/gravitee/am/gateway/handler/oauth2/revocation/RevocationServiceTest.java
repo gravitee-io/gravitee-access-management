@@ -59,7 +59,6 @@ public class RevocationServiceTest {
         client.setClientId("wrong-client-id");
 
         when(tokenService.getAccessToken("token", client)).thenReturn(Maybe.just(accessToken));
-        when(tokenService.getRefreshToken("token", client)).thenReturn(Maybe.empty());
 
         TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest, client).test();
 

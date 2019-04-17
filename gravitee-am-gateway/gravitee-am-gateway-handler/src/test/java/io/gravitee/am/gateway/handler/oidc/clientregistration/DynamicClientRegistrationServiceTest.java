@@ -276,7 +276,6 @@ public class DynamicClientRegistrationServiceTest {
 
         when(webClient.getAbs(sectorUri)).thenReturn(httpRequest);
         when(httpRequest.rxSend()).thenReturn(Single.just(httpResponse));
-        when(httpResponse.statusCode()).thenReturn(400);
 
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
@@ -294,7 +293,6 @@ public class DynamicClientRegistrationServiceTest {
 
         when(webClient.getAbs(sectorUri)).thenReturn(httpRequest);
         when(httpRequest.rxSend()).thenReturn(Single.just(httpResponse));
-        when(httpResponse.statusCode()).thenReturn(200);
         when(httpResponse.bodyAsString()).thenReturn("[\"https://not/same/redirect/uri\"]");
 
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
@@ -314,7 +312,6 @@ public class DynamicClientRegistrationServiceTest {
 
         when(webClient.getAbs(sectorUri)).thenReturn(httpRequest);
         when(httpRequest.rxSend()).thenReturn(Single.just(httpResponse));
-        when(httpResponse.statusCode()).thenReturn(200);
         when(httpResponse.bodyAsString()).thenReturn("[\""+redirectUri+"\"]");
 
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
