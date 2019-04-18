@@ -62,11 +62,11 @@ public interface FormService {
     }
 
     default Single<Form> update(String domain, String client, String id, UpdateForm form) {
-        return update(domain, client, id, form);
+        return update(domain, client, id, form, null);
     }
 
     default Completable delete(String pageId) {
-        return delete(pageId);
+        return delete(pageId, null);
     }
 
 }
