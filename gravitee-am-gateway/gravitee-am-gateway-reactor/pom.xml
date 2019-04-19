@@ -33,7 +33,7 @@
     <dependencies>
         <dependency>
             <groupId>io.gravitee.am.gateway.handlers</groupId>
-            <artifactId>gravitee-am-gateway-handler</artifactId>
+            <artifactId>gravitee-am-gateway-handler-core</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

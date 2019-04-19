@@ -1,0 +1,137 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.gravitee.am.gateway.handler.common.jwt;
+
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.jwt.JwtBuilder;
+import io.gravitee.am.gateway.handler.common.jwt.JwtService;
+import io.gravitee.am.gateway.handler.common.jwt.impl.JwtServiceImpl;
+import io.gravitee.am.model.Client;
+import io.reactivex.Maybe;
+import io.reactivex.observers.TestObserver;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+/**
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author GraviteeSource Team
+ */
+@RunWith(MockitoJUnitRunner.class)
+public class JwtServiceTest {
+
+    @InjectMocks
+    private JwtService jwtService = new JwtServiceImpl();
+
+    @Mock
+    private CertificateManager certificateManager;
+
+    @Before
+    public void setUp() {
+        JwtBuilder rs256JwtBuilder = mock(JwtBuilder.class);
+        JwtBuilder rs512JwtBuilder = mock(JwtBuilder.class);
+        JwtBuilder defaultJwtBuilder = mock(JwtBuilder.class);
+        when(rs256JwtBuilder.sign(any())).thenReturn("token_rs_256");
+        when(rs512JwtBuilder.sign(any())).thenReturn("token_rs_512");
+        when(defaultJwtBuilder.sign(any())).thenReturn("token_default");
+
+        io.gravitee.am.gateway.handler.common.certificate.CertificateProvider rs256CertProvider =
+                mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
+        io.gravitee.am.gateway.handler.common.certificate.CertificateProvider rs512CertProvider =
+                mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
+        io.gravitee.am.gateway.handler.common.certificate.CertificateProvider defaultCertProvider =
+                mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
+        when(rs256CertProvider.getJwtBuilder()).thenReturn(rs256JwtBuilder);
+        when(rs512CertProvider.getJwtBuilder()).thenReturn(rs512JwtBuilder);
+        when(defaultCertProvider.getJwtBuilder()).thenReturn(defaultJwtBuilder);
+
+        when(certificateManager.findByAlgorithm(null)).thenReturn(Maybe.empty());
+        when(certificateManager.findByAlgorithm("unknown")).thenReturn(Maybe.empty());
+        when(certificateManager.findByAlgorithm("RS512")).thenReturn(Maybe.just(rs512CertProvider));
+        when(certificateManager.get(null)).thenReturn(Maybe.empty());
+        when(certificateManager.get("notExistingId")).thenReturn(Maybe.empty());
+        when(certificateManager.get("existingId")).thenReturn(Maybe.just(rs256CertProvider));
+        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCertProvider);
+    }
+
+    @Test
+    public void encode_noClientCertificate() {
+        this.testEncode(null,"token_default");
+    }
+
+    @Test
+    public void encode_noClientCertificateFound() {
+        this.testEncode("notExistingId","token_default");
+    }
+
+    @Test
+    public void encode_clientCertificateFound() {
+        this.testEncode("existingId","token_rs_256");
+    }
+
+    private void testEncode(String clientCertificate, String expectedResult) {
+        Client client = new Client();
+        client.setCertificate(clientCertificate);
+
+        TestObserver testObserver = jwtService.encode(new JWT(), client).test();
+        testObserver.assertComplete();
+        testObserver.assertValue(o -> o.equals(expectedResult));
+    }
+
+
+    @Test
+    public void encodeUserinfo_defaultCertificate() {
+        this.testEncodeUserinfo(null, null,"token_default");
+    }
+
+    @Test
+    public void encodeUserinfo_noMatchingAlgorithm_noClientCertificate() {
+        this.testEncodeUserinfo("unknown", null,"token_default");
+    }
+
+    @Test
+    public void encodeUserinfo_noMatchingAlgorithm_noClientCertificateFound() {
+        this.testEncodeUserinfo("unknown", "notExistingId","token_default");
+    }
+
+    @Test
+    public void encodeUserinfo_noMatchingAlgorithm_clientCertificateFound() {
+        this.testEncodeUserinfo("unknown", "existingId","token_rs_256");
+    }
+
+    @Test
+    public void encodeUserinfo_matchingAlgorithm() {
+        this.testEncodeUserinfo("RS512", null,"token_rs_512");
+    }
+
+    private void testEncodeUserinfo(String algorithm, String clientCertificate, String expectedResult) {
+        Client client = new Client();
+        client.setUserinfoSignedResponseAlg(algorithm);
+        client.setCertificate(clientCertificate);
+
+        TestObserver testObserver = jwtService.encodeUserinfo(new JWT(), client).test();
+        testObserver.assertComplete();
+        testObserver.assertValue(o -> o.equals(expectedResult));
+    }
+}

@@ -17,6 +17,7 @@ package io.gravitee.am.common.jwt;
 
 import io.gravitee.am.common.oauth2.Parameters;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -91,11 +92,11 @@ public class JWT extends HashMap<String, Object> {
     }
 
     public String getScope() {
-        return containsKey(Parameters.SCOPE.value()) ? (String) get(Parameters.SCOPE.value()) : null;
+        return containsKey(Parameters.SCOPE) ? (String) get(Parameters.SCOPE) : null;
     }
 
     public void setScope(String scope) {
-        put(Parameters.SCOPE.value(), scope);
+        put(Parameters.SCOPE, scope);
     }
 
     public String getDomain() {
@@ -112,5 +113,9 @@ public class JWT extends HashMap<String, Object> {
 
     public void setClaimsRequestParameter(Object claims) {
         put(Claims.claims, claims);
+    }
+
+    public boolean hasScope(String scope) {
+        return getScope() != null && Arrays.asList(getScope().split("\\s+")).contains(scope);
     }
 }

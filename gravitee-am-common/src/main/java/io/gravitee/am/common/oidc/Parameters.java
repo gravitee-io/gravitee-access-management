@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.common.oidc;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 /**
  * OIDC Parameters
  *
@@ -23,68 +26,61 @@ package io.gravitee.am.common.oidc;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Parameters {
+public interface Parameters {
 
     /**
      * String value used to associate a Client session with an ID Token, and to mitigate replay attacks.
      */
-    NONCE("nonce"),
+    String NONCE = "nonce";
     /**
      * ASCII string value that specifies how the Authorization Server displays the authentication and consent user interface pages to the End-User.
      */
-    DISPLAY("display"),
+    String DISPLAY = "display";
     /**
      * Space delimited, case sensitive list of ASCII string values that specifies whether the Authorization Server prompts the End-User for reauthentication and consent.
      */
-    PROMPT("prompt"),
+    String PROMPT = "prompt";
     /**
      * Maximum Authentication Age. Specifies the allowable elapsed time in seconds since the last time the End-User was actively authenticated by the OP.
      */
-    MAX_AGE("max_age"),
+    String MAX_AGE = "max_age";
     /**
      * End-User's preferred languages and scripts for the user interface, represented as a space-separated list of BCP47 [RFC5646] language tag values, ordered by preference.
      */
-    UI_LOCALES("ui_locales"),
+    String UI_LOCALES = "ui_locales";
     /**
      * End-User's preferred languages and scripts for Claims being returned, represented as a space-separated list of BCP47 [RFC5646] language tag values, ordered by preference.
      */
-    CLAIMS_LOCALES("claims_locales"),
+    String CLAIMS_LOCALES = "claims_locales";
     /**
      * ID Token previously issued by the Authorization Server being passed as a hint about the End-User's current or past authenticated session with the Client.
      */
-    ID_TOKEN_HINT("id_token_hint"),
+    String ID_TOKEN_HINT = "id_token_hint";
     /**
      * Hint to the Authorization Server about the login identifier the End-User might use to log in (if necessary).
      */
-    LOGIN_HINT("login_hint"),
+    String LOGIN_HINT = "login_hint";
     /**
      * Requested Authentication Context Class Reference values.
      */
-    ACR_VALUES("acr_values"),
+    String ACR_VALUES = "acr_values";
     /**
      * This parameter is used to request that specific Claims be returned.
      */
-    CLAIMS("claims"),
+    String CLAIMS = "claims";
     /**
      * This parameter is used by the Client to provide information about itself to a Self-Issued OP that would normally be provided to an OP during Dynamic Client Registration.
      */
-    REGISTRATION("registration"),
+    String REGISTRATION = "registration";
     /**
      * This parameter enables OpenID Connect requests to be passed in a single, self-contained parameter and to be optionally signed and/or encrypted.
      */
-    REQUEST("request"),
+    String REQUEST = "request";
     /**
      * This parameter enables OpenID Connect requests to be passed by reference, rather than by value.
      */
-    REQUEST_URI("request_uri");
+    String REQUEST_URI = "request_uri";
 
-    private String value;
-
-    Parameters(String value) {
-        this.value = value;
-    }
-
-    public String value() {
-        return this.value;
-    }
+    Collection<String> values = Arrays.asList(NONCE, DISPLAY, PROMPT, MAX_AGE, UI_LOCALES, CLAIMS_LOCALES, ID_TOKEN_HINT, LOGIN_HINT, ACR_VALUES, CLAIMS,
+                REGISTRATION, REQUEST, REQUEST_URI);
 }

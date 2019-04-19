@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "4388b7d9-1598-4ebc-910d-337c701d5cce",
+		"_postman_id": "2777c354-6fc2-4198-bce4-455280f61402",
 		"name": "Gravitee.io AM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -12187,8 +12187,8 @@
 													"pm.test(\"Non DCR client\", function () {",
 													"    pm.response.to.be.header('Content-Type', 'application/json');",
 													"    var body = pm.response.json();",
-													"    pm.expect(body.error).to.eql('registration_forbidden');",
-													"    pm.expect(body.error_description).to.eql('Not allowed to access to this resource.');",
+													"    pm.expect(body.error).to.eql('insufficient_scope');",
+													"    pm.expect(body.error_description).to.eql('Invalid access token scopes. The access token should have at least \\'dcr_admin\\' scope');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -15368,15 +15368,12 @@
 											"script": {
 												"id": "355997a0-4d2d-4585-9428-f2ef4e33495d",
 												"exec": [
-													"pm.test(\"Status code is 400\", function () {",
-													"    pm.response.to.have.status(400);",
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
 													"});",
 													"",
 													"pm.test(\"No access_token\", function () {",
-													"    pm.response.to.be.header('Content-Type', 'application/json');",
-													"    var body = pm.response.json();",
-													"    pm.expect(body.error).to.eql('invalid_request');",
-													"    pm.expect(body.error_description).to.eql('An access token is required');",
+													"    pm.response.to.have.header('WWW-Authenticate');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -15417,15 +15414,12 @@
 											"script": {
 												"id": "355997a0-4d2d-4585-9428-f2ef4e33495d",
 												"exec": [
-													"pm.test(\"Status code is 400\", function () {",
-													"    pm.response.to.have.status(400);",
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
 													"});",
 													"",
 													"pm.test(\"No bearer authorization header\", function () {",
-													"    pm.response.to.be.header('Content-Type', 'application/json');",
-													"    var body = pm.response.json();",
-													"    pm.expect(body.error).to.eql('invalid_request');",
-													"    pm.expect(body.error_description).to.eql('The access token must be sent using the Authorization header with as value \\\"Bearer xxxx\\\"');",
+													"    pm.response.to.have.header('WWW-Authenticate');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -15917,14 +15911,14 @@
 											"script": {
 												"id": "355997a0-4d2d-4585-9428-f2ef4e33495d",
 												"exec": [
-													"pm.test(\"Status code is 401\", function () {",
-													"    pm.response.to.have.status(401);",
+													"pm.test(\"Status code is 403\", function () {",
+													"    pm.response.to.have.status(403);",
 													"});",
 													"",
 													"pm.test(\"Invalid scope\", function () {",
 													"    pm.response.to.be.header('Content-Type', 'application/json');",
 													"    var body = pm.response.json();",
-													"    pm.expect(body.error).to.eql('invalid_token');",
+													"    pm.expect(body.error).to.eql('insufficient_scope');",
 													"    pm.expect(body.error_description).to.eql('Invalid access token scopes. The access token should have at least \\'openid\\' scope');",
 													"});"
 												],
@@ -15971,14 +15965,14 @@
 											"script": {
 												"id": "355997a0-4d2d-4585-9428-f2ef4e33495d",
 												"exec": [
-													"pm.test(\"Status code is 401\", function () {",
-													"    pm.response.to.have.status(401);",
+													"pm.test(\"Status code is 403\", function () {",
+													"    pm.response.to.have.status(403);",
 													"});",
 													"",
 													"pm.test(\"Invalid scope\", function () {",
 													"    pm.response.to.be.header('Content-Type', 'application/json');",
 													"    var body = pm.response.json();",
-													"    pm.expect(body.error).to.eql('invalid_token');",
+													"    pm.expect(body.error).to.eql('insufficient_scope');",
 													"    pm.expect(body.error_description).to.eql('Invalid access token scopes. The access token should have at least \\'openid\\' scope');",
 													"});"
 												],
@@ -18880,12 +18874,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/scim/ServiceProviderConfig",
+									"raw": "{{gateway_url}}/gravitee/scim/ServiceProviderConfig",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"test",
+										"gravitee",
 										"scim",
 										"ServiceProviderConfig"
 									]
@@ -18914,7 +18908,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -18930,12 +18924,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/test/scim/Users",
+									"raw": "{{gateway_url}}/gravitee/scim/Users",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"test",
+										"gravitee",
 										"scim",
 										"Users"
 									]
@@ -19008,7 +19002,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -19102,7 +19096,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -19198,7 +19192,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -19294,7 +19288,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -19388,7 +19382,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -19484,7 +19478,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -19578,7 +19572,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"An access token is required\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
