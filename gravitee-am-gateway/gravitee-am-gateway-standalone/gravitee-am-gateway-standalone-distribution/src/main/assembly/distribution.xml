@@ -39,7 +39,7 @@
             <fileMode>755</fileMode>
         </fileSet>
 
-        <!-- Just to create an empty logs directory -->
+        <!-- Just to router an empty logs directory -->
         <fileSet>
             <directory>src/main/assembly</directory>
             <outputDirectory>/logs</outputDirectory>

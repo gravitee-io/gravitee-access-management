@@ -36,5 +36,6 @@
         <module>gravitee-am-plugins-handlers-extensiongrant</module>
         <module>gravitee-am-plugins-handlers-certificate</module>
         <module>gravitee-am-plugins-handlers-reporter</module>
+        <module>gravitee-am-plugins-handlers-protocol</module>
     </modules>
 </project>

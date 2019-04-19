@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.common.oauth2;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 /**
  * OAuth 2.0 Parameters
  *
@@ -23,107 +26,103 @@ package io.gravitee.am.common.oauth2;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Parameters {
+public interface Parameters {
 
     /**
      * The client identifier issued to the client during the registration process.
      */
-    CLIENT_ID("client_id"),
+    String CLIENT_ID = "client_id";
     /**
      * The client secret.
      */
-    CLIENT_SECRET("client_secret"),
+    String CLIENT_SECRET = "client_secret";
     /**
      * The client informs the authorization server of the desired grant type using the response_type parameter.
      */
-    RESPONSE_TYPE("response_type"),
+    String RESPONSE_TYPE = "response_type";
     /**
      * The authorization server redirects the user-agent to the client's redirection endpoint previously established with the
      *  authorization server during the client registration process or when making the authorization request.
      */
-    REDIRECT_URI("redirect_uri"),
+    String REDIRECT_URI = "redirect_uri";
     /**
      * The authorization and token endpoints allow the client to specify the scope of the access request using the "scope" request parameter.
      */
-    SCOPE("scope"),
+   String SCOPE = "scope";
     /**
      * An opaque value used by the client to maintain state between the request and callback.
      * The parameter SHOULD be used for preventing cross-site request forgery.
      */
-    STATE("state"),
+    String STATE = "state";
     /**
      * The authorization code received from the authorization server.
      */
-    CODE("code"),
+    String CODE = "code";
     /**
      * Authorization Grant
      */
-    GRANT_TYPE("grant_type"),
+    String GRANT_TYPE = "grant_type";
     /**
      * The resource owner username.
      */
-    USERNAME("username"),
+    String USERNAME = "username";
     /**
      * The resource owner password.
      */
-    PASSWORD("password"),
+    String PASSWORD = "password";
     /**
      * The refresh token issued to the client.
      */
-    REFRESH_TOKEN("refresh_token"),
+    String REFRESH_TOKEN = "refresh_token";
     /**
      * The assertion being used as an authorization grant.
      */
-    ASSERTION("assertion"),
+    String ASSERTION = "assertion";
     /**
      * The assertion being used to authenticate the client.
      */
-    CLIENT_ASSERTION("client_assertion"),
+    String CLIENT_ASSERTION = "client_assertion";
     /**
      * The format of the assertion as defined by the authorization server.
      * The value will be an absolute URI.
      */
-    CLIENT_ASSERTION_TYPE("client_assertion_type"),
+    String CLIENT_ASSERTION_TYPE = "client_assertion_type";
     /**
      * PKCE code verifier.
      */
-    CODE_VERIFIER("code_verifier"),
+    String CODE_VERIFIER = "code_verifier";
     /**
      * PKCE code challenge.
      */
-    CODE_CHALLENGE("code_challenge"),
+    String CODE_CHALLENGE = "code_challenge";
     /**
      * PKCE code challenge method.
      */
-    CODE_CHALLENGE_METHOD("code_challenge_method"),
+    String CODE_CHALLENGE_METHOD = "code_challenge_method";
     /**
      * UMA claim token.
      */
-    CLAIM_TOKEN("claim_token"),
+    String CLAIM_TOKEN = "claim_token";
     /**
      * UMA PCT.
      */
-    PCT("pct"),
+    String PCT = "pct";
     /**
      * UMA RPT.
      */
-    RPT("rpt"),
+    String RPT = "rpt";
     /**
      * UMA ticket.
      */
-    TICKET("ticket"),
+    String TICKET = "ticket";
     /**
      * Vector of trust.
      */
-    VTR("vtr");
+    String VTR = "vtr";
 
-    private String value;
-
-    Parameters(String value) {
-        this.value = value;
-    }
-
-    public String value() {
-        return this.value;
+    static Collection<String> values() {
+        return Arrays.asList(CLIENT_ID, CLIENT_SECRET, RESPONSE_TYPE, REDIRECT_URI, SCOPE, STATE, CODE, GRANT_TYPE, USERNAME, PASSWORD,
+                REFRESH_TOKEN, ASSERTION, CLIENT_ASSERTION, CLIENT_ASSERTION_TYPE, CODE_VERIFIER, CODE_CHALLENGE, CODE_CHALLENGE_METHOD,
+                CLAIM_TOKEN, PCT, RPT, TICKET, VTR);
     }
 }
