@@ -24,6 +24,8 @@ import io.gravitee.am.gateway.handler.oidc.clientregistration.DynamicClientRegis
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.request.DynamicClientRegistrationRequest;
+import io.gravitee.am.gateway.handler.oidc.utils.SigningAlgorithmUtils;
+import io.gravitee.am.gateway.handler.oidc.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.IdentityProviderService;
@@ -31,7 +33,6 @@ import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
-import io.gravitee.am.service.utils.SubjectTypeUtils;
 import io.gravitee.am.service.utils.UriBuilder;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -46,7 +47,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -163,6 +170,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateRequestUri)
                 .flatMap(this::validateSectorIdentifierUri)
                 .flatMap(this::validateJKWs)
+                .flatMap(this::validateUserinfoSigningAlgorithm)
                 .flatMap(this::validateScopes);
     }
 
@@ -179,7 +187,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateSubjectType)
                 .flatMap(this::validateRequestUri)
                 .flatMap(this::validateSectorIdentifierUri)
-                .flatMap(this::validateJKWs);
+                .flatMap(this::validateJKWs)
+                .flatMap(this::validateUserinfoSigningAlgorithm);
     }
 
     private Single<DynamicClientRegistrationRequest> validateRedirectUri(DynamicClientRegistrationRequest request) {
@@ -211,10 +220,20 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     }
 
     private Single<DynamicClientRegistrationRequest> validateSubjectType(DynamicClientRegistrationRequest request) {
-        //if subject_type is provided, they must be valid.
+        //if subject_type is provided, it must be valid.
         if(request.getSubjectType()!=null) {
             if(!SubjectTypeUtils.isValidSubjectType(request.getSubjectType().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported subject type"));
+            }
+        }
+        return Single.just(request);
+    }
+
+    private Single<DynamicClientRegistrationRequest> validateUserinfoSigningAlgorithm(DynamicClientRegistrationRequest request) {
+        //if userinfo_signed_response_alg is provided, it must be valid.
+        if(request.getUserinfoSignedResponseAlg()!=null) {
+            if(!SigningAlgorithmUtils.isValidUserinfoSigningAlg(request.getUserinfoSignedResponseAlg().get())) {
+                return Single.error(new InvalidClientMetadataException("Unsupported userinfo signing algorithm"));
             }
         }
         return Single.just(request);

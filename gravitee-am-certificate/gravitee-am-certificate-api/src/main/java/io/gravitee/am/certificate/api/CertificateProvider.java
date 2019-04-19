@@ -32,4 +32,6 @@ public interface CertificateProvider {
     Flowable<JWK> keys();
 
     CertificateMetadata certificateMetadata();
+
+    String signatureAlgorithm();
 }

@@ -27,6 +27,10 @@ package io.gravitee.am.model.jose;
  */
 public class RSAKey extends JWK {
 
+    public RSAKey() {
+        setKty(KeyType.RSA.getKeyType());
+    }
+
     /**
      * The public exponent of the RSA key.
      */

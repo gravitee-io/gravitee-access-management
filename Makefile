@@ -33,13 +33,32 @@ define addNetworkToCompose
 endef
 
 define generateCertificate
-	cd .working/certificate && keytool -genkeypair \
+	cd .working/certificate \
+	&& keytool -genkeypair \
 		-alias mytestkey \
 		-keyalg RSA \
 		-dname "CN=Web Server,OU=Unit,O=Organization,L=City,S=State,C=US" \
 		-keypass changeme \
 		-keystore server.jks \
-		-storepass letmein
+		-storepass letmein \
+	&& keytool -genkeypair \
+        -alias my3072key \
+        -keyalg RSA \
+        -keysize 3072 \
+        -sigalg SHA384withRSA \
+        -dname "CN=Web Server,OU=Unit,O=Organization,L=City,S=State,C=US" \
+        -keypass changeme \
+        -keystore server3072.jks \
+        -storepass letmein
+	&& keytool -genkeypair \
+         -alias my4096key \
+         -keyalg RSA \
+         -keysize 4096 \
+         -sigalg SHA512withRSA \
+         -dname "CN=Web Server,OU=Unit,O=Organization,L=City,S=State,C=US" \
+         -keypass changeme \
+         -keystore server4096.jks \
+         -storepass letmein
 endef
 
 define clone

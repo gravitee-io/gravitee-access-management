@@ -17,16 +17,12 @@ package io.gravitee.am.gateway.handler.oidc.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.gravitee.am.gateway.handler.oidc.jwk.ECKey;
-import io.gravitee.am.gateway.handler.oidc.jwk.JWK;
 import io.gravitee.am.gateway.handler.oidc.jwk.JWKSet;
-import io.gravitee.am.gateway.handler.oidc.jwk.RSAKey;
+import io.gravitee.am.gateway.handler.oidc.utils.JWKSetUtils;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.jose.KeyType;
 
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -583,7 +579,7 @@ public class DynamicClientRegistrationResponse {
         response.setPolicyUri(client.getPolicyUri());
         response.setTosUri(client.getTosUri());
         response.setJwksUri(client.getJwksUri());
-        response.setJwks(DynamicClientRegistrationResponse.convert(client.getJwks()));
+        response.setJwks(JWKSetUtils.convert(client.getJwks()));
         response.setSectorIdentifierUri(client.getSectorIdentifierUri());
         response.setSubjectType(client.getSubjectType());
         response.setIdTokenSignedResponseAlg(client.getIdTokenSignedResponseAlg());
@@ -620,30 +616,4 @@ public class DynamicClientRegistrationResponse {
 
         return response;
     }
-
-    private static JWKSet convert(io.gravitee.am.model.oidc.JWKSet jwkSet) {
-        if(jwkSet==null) {
-            return null;
-        }
-
-        JWKSet result = new JWKSet();
-        result.setKeys(jwkSet.getKeys()
-                .stream()
-                .map(DynamicClientRegistrationResponse::convert)
-                .collect(Collectors.toList())
-        );
-        return result;
-    }
-
-    private static JWK convert(io.gravitee.am.model.jose.JWK jwk) {
-        switch (KeyType.valueOf(jwk.getKty())) {
-            case EC:return ECKey.from((io.gravitee.am.model.jose.ECKey)jwk);
-            case RSA:return RSAKey.from((io.gravitee.am.model.jose.RSAKey)jwk);
-            case OCT:return null;
-            case OKP:return null;
-            default:return null;
-        }
-    }
-
-
 }

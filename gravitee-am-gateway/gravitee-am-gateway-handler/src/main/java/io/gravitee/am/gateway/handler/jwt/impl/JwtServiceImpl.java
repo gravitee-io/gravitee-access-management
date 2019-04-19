@@ -33,6 +33,7 @@ import java.util.Objects;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 public class JwtServiceImpl implements JwtService {
@@ -54,6 +55,14 @@ public class JwtServiceImpl implements JwtService {
     @Override
     public Single<String> encode(JWT jwt, Client client) {
         return certificateManager.get(client.getCertificate())
+                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                .flatMapSingle(certificateProvider -> encode(jwt, certificateProvider));
+    }
+
+    @Override
+    public Single<String> encodeUserinfo(JWT jwt, Client client) {
+        return certificateManager.findByAlgorithm(client.getUserinfoSignedResponseAlg())
+                .switchIfEmpty(certificateManager.get(client.getCertificate()))
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
                 .flatMapSingle(certificateProvider -> encode(jwt, certificateProvider));
     }

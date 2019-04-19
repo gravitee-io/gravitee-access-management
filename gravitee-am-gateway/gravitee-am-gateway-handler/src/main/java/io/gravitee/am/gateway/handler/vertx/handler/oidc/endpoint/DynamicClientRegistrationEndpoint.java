@@ -75,7 +75,7 @@ public class DynamicClientRegistrationEndpoint implements Handler<RoutingContext
                 .map(request -> dcrService.create(domain, request))
                 .flatMap(dcrService::applyDefaultIdentityProvider)
                 .flatMap(dcrService::applyDefaultCertificateProvider)
-                .flatMap(client -> dcrService.applyRegistrationAccessToken(extractBasePath(context), client))
+                .flatMap(client -> dcrService.applyRegistrationAccessToken(UriBuilderRequest.extractBasePath(context), client))
                 .flatMap(clientService::create)
                 .map(clientSyncService::addDynamicClientRegistred)
                 .subscribe(
@@ -101,14 +101,5 @@ public class DynamicClientRegistrationEndpoint implements Handler<RoutingContext
             }
             return Single.error(ex);
         }
-    }
-
-    protected String extractBasePath(RoutingContext context) {
-        try {
-            return UriBuilderRequest.resolveProxyRequest(context.request(), "/", null);
-        } catch (URISyntaxException e) {
-            LOGGER.error("Unable to resolve OpenID Connect provider configuration endpoint", e);
-        }
-        return "/";
     }
 }

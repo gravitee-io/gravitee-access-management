@@ -16,12 +16,16 @@
 package io.gravitee.am.gateway.handler.jwt;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oidc.idtoken.IDToken;
 import io.gravitee.am.gateway.handler.certificate.CertificateProvider;
 import io.gravitee.am.model.Client;
 import io.reactivex.Single;
 
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 public interface JwtService {
@@ -41,6 +45,14 @@ public interface JwtService {
      * @return JWT signed string representation
      */
     Single<String> encode(JWT jwt, Client client);
+
+    /**
+     * Encode raw JWT to JWT signed representation using userinfo_signed_response_alg Client preferences.
+     * @param jwt JWT to encode
+     * @param client client which want to sign the token
+     * @return JWT signed string representation
+     */
+    Single<String> encodeUserinfo(JWT jwt, Client client);
 
     /**
      * Decode JWT signed string representation to JWT

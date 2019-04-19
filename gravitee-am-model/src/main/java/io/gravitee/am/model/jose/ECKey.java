@@ -29,6 +29,10 @@ package io.gravitee.am.model.jose;
  */
 public class ECKey extends JWK {
 
+    public ECKey() {
+        setKty(KeyType.EC.getKeyType());
+    }
+
     private String crv;
     private String x;
     private String y;

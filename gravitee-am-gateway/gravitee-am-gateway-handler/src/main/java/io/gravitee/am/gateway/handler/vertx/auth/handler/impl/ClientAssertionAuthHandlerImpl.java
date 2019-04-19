@@ -27,8 +27,6 @@ import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URISyntaxException;
-
 /**
  * Dynamic Client Registration is a protocol that allows OAuth client applications to register with an OAuth server.
  * Specifications are defined by OpenID Foundation and by the IETF as RFC 7591 too.
@@ -60,23 +58,10 @@ public class ClientAssertionAuthHandlerImpl extends AuthHandlerImpl {
                     .put(OIDCParameters.CLIENT_ASSERTION_TYPE, clientAssertionType)
                     .put(OIDCParameters.CLIENT_ASSERTION, clientAssertion)
                     .put(OAuth2Constants.CLIENT_ID, clientId)
-                    .put(BASE_PATH_PARAM, extractBasePath(context));
+                    .put(BASE_PATH_PARAM, UriBuilderRequest.extractBasePath(context));
             handler.handle(Future.succeededFuture(clientCredentials));
         } else {
             handler.handle(Future.failedFuture(UNAUTHORIZED));
-        }
-    }
-
-    private String extractBasePath(RoutingContext context) {
-        try {
-            return UriBuilderRequest.resolveProxyRequest(
-                    new io.vertx.reactivex.core.http.HttpServerRequest(context.request()),
-                    "/",
-                    null
-            );
-        } catch (URISyntaxException e) {
-            LOGGER.error("Unable to resolve OpenID Connect provider configuration endpoint", e);
-            return "/";
         }
     }
 }

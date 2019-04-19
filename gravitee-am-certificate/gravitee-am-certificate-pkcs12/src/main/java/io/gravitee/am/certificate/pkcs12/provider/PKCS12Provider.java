@@ -197,5 +197,8 @@ public class PKCS12Provider implements CertificateProvider, InitializingBean {
                 .orElse(Signature.SHA256withRSA);
     }
 
-
+    @Override
+    public String signatureAlgorithm() {
+        return signature.getJwsAlgorithm().getName();
+    }
 }

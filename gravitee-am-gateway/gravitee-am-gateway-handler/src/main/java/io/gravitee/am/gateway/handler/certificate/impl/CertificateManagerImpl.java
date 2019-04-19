@@ -54,6 +54,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -95,6 +96,25 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     @Override
     public Maybe<CertificateProvider> get(String id) {
         return id == null ? Maybe.empty() : findByDomainAndId(domain.getId(), id);
+    }
+
+    @Override
+    public Maybe<CertificateProvider> findByAlgorithm(String algorithm) {
+
+        if(algorithm==null || algorithm.trim().isEmpty()) {
+            return Maybe.empty();
+        }
+
+        Optional<CertificateProvider> certificate = this
+                .providers()
+                .stream()
+                .filter(certificateProvider ->
+                        certificateProvider!=null && certificateProvider.getProvider()!=null &&
+                        algorithm.equals(certificateProvider.getProvider().signatureAlgorithm())
+                )
+                .findFirst();
+
+        return certificate.isPresent()?Maybe.just(certificate.get()):Maybe.empty();
     }
 
     @Override
@@ -228,6 +248,21 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
             @Override
             public Flowable<JWK> keys() {
+                return null;
+            }
+
+            @Override
+            public String signatureAlgorithm() {
+                int keySize = key.getValue().toString().getBytes().length*8;
+                if(keySize>=512) {
+                    return "HS512";
+                }
+                else if(keySize>=384) {
+                    return "HS384";
+                }
+                else if(keySize>=256) {
+                    return "HS256";
+                }
                 return null;
             }
 
