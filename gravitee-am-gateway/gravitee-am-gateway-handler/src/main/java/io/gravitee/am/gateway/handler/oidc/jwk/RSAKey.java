@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.oidc.jwk;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.math.BigInteger;
+
 /**
  * See <a href="https://tools.ietf.org/html/rfc7638#section-3.2">3.2. JWK Members Used in the Thumbprint Computation</a>
  *
@@ -62,6 +64,21 @@ public class RSAKey extends JWK {
         rsaKey.setE(source.getE());
         rsaKey.setN(source.getN());
         rsaKey.copy(source);
+
+        /*If alg is not set then compute it*/
+        if(rsaKey.getAlg()==null && rsaKey.getN()!=null) {
+            int keySize = new BigInteger(rsaKey.getN().getBytes()).bitLength();
+            if(keySize>=4096) {
+                rsaKey.setAlg("RS512");
+            }
+            else if(keySize>=3072) {
+                rsaKey.setAlg("RS384");
+            }
+            else if(keySize>=2048) {
+                rsaKey.setAlg("RS256");
+            }
+        }
+
         return rsaKey;
     }
 }

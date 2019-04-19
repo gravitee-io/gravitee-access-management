@@ -21,12 +21,11 @@ import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ClaimType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.Scope;
-import io.gravitee.am.common.oidc.SubjectType;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDProviderMetadata;
+import io.gravitee.am.gateway.handler.oidc.utils.SigningAlgorithmUtils;
+import io.gravitee.am.gateway.handler.oidc.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.utils.SubjectTypeUtils;
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
@@ -58,7 +57,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
 
         // issuer
-        openIDProviderMetadata.setIssuer(getEndpointAbsoluteURL(basePath, OIDC_ENDPOINT));
+        openIDProviderMetadata.setIssuer(getIssuer(basePath));
 
         // endpoints
         openIDProviderMetadata.setAuthorizationEndpoint(getEndpointAbsoluteURL(basePath, AUTHORIZATION_ENDPOINT));
@@ -74,13 +73,14 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         openIDProviderMetadata.setScopesSupported(Stream.of(Scope.values()).map(Scope::getKey).collect(Collectors.toList()));
         openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE, ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN));
         openIDProviderMetadata.setGrantTypesSupported(Arrays.asList(GrantType.CLIENT_CREDENTIALS, GrantType.PASSWORD, GrantType.IMPLICIT, GrantType.AUTHORIZATION_CODE, GrantType.REFRESH_TOKEN, GrantType.JWT_BEARER));
-        openIDProviderMetadata.setIdTokenSigningAlgValuesSupported(Arrays.asList(SignatureAlgorithm.RS256.getValue(), SignatureAlgorithm.RS512.getValue(), SignatureAlgorithm.HS512.getValue()));
+        openIDProviderMetadata.setIdTokenSigningAlgValuesSupported(SigningAlgorithmUtils.getSupportedIdTokenSigningAlg());
         openIDProviderMetadata.setTokenEndpointAuthMethodsSupported(Arrays.asList(ClientAuthenticationMethod.CLIENT_SECRET_BASIC, ClientAuthenticationMethod.CLIENT_SECRET_POST, ClientAuthenticationMethod.PRIVATE_KEY_JWT));
         openIDProviderMetadata.setClaimTypesSupported(Arrays.asList(ClaimType.NORMAL));
         openIDProviderMetadata.setClaimsSupported(Stream.of(Scope.values()).map(Scope::getClaims).flatMap(Collection::stream).distinct().collect(Collectors.toList()));
         openIDProviderMetadata.setCodeChallengeMethodsSupported(Arrays.asList(CodeChallengeMethod.PLAIN, CodeChallengeMethod.S256));
         openIDProviderMetadata.setClaimsParameterSupported(true);
         openIDProviderMetadata.setSubjectTypesSupported(SubjectTypeUtils.getSupportedSubjectTypes());
+        openIDProviderMetadata.setUserinfoSigningAlgValuesSupported(SigningAlgorithmUtils.getSupportedUserinfoSigningAlg());
 
         return openIDProviderMetadata;
     }

@@ -28,6 +28,8 @@ public interface CertificateManager extends Service {
 
     Maybe<CertificateProvider> get(String id);
 
+    Maybe<CertificateProvider> findByAlgorithm(String algorithm);
+
     Maybe<CertificateProvider> findByDomainAndId(String domain, String id);
 
     Collection<CertificateProvider> providers();

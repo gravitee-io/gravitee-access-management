@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.oidc.jwk.JWK;
 import io.gravitee.am.gateway.handler.oidc.jwk.JWKSet;
 import io.gravitee.am.gateway.handler.oidc.jwk.JWKSetService;
 import io.gravitee.am.gateway.handler.oidc.jwk.RSAKey;
+import io.gravitee.am.gateway.handler.oidc.utils.JWKSetUtils;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,32 +38,12 @@ public class JWKSetServiceImpl implements JWKSetService {
     public Single<JWKSet> getKeys() {
         return Flowable.fromIterable(certificateManager.providers())
                 .flatMap(certificateProvider -> certificateProvider.getProvider().keys())
-                .map(this::convert)
+                .map(JWKSetUtils::convert)
                 .toList()
                 .map(keys -> {
                     JWKSet jwkSet = new JWKSet();
                     jwkSet.setKeys(keys);
                     return jwkSet;
                 });
-
-    }
-
-    private JWK convert(io.gravitee.am.model.jose.JWK jwk) {
-        JWK jwk1 = new RSAKey();
-        jwk1.setKty(jwk.getKty());
-        jwk1.setUse(jwk.getUse());
-        jwk1.setKeyOps(jwk.getKeyOps());
-        jwk1.setAlg(jwk.getAlg());
-        jwk1.setKid(jwk.getKid());
-        jwk1.setX5u(jwk.getX5u());
-        jwk1.setX5c(jwk.getX5c());
-        jwk1.setX5t(jwk.getX5t());
-        jwk1.setX5tS256(jwk.getX5tS256());
-
-        // specific RSA Key
-        ((RSAKey) jwk1).setE(((io.gravitee.am.model.jose.RSAKey)jwk).getE());
-        ((RSAKey) jwk1).setN(((io.gravitee.am.model.jose.RSAKey)jwk).getN());
-
-        return jwk1;
     }
 }

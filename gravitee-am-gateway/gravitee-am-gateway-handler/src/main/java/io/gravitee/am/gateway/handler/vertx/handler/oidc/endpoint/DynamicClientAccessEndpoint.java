@@ -19,6 +19,7 @@ import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oidc.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.gateway.handler.oidc.response.DynamicClientRegistrationResponse;
+import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.common.http.HttpHeaders;
@@ -88,7 +89,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
                 .flatMap(client -> this.extractRequest(context)
                         .flatMap(dcrService::validateClientPatchRequest)
                         .map(request -> request.patch(client))
-                        .flatMap(updatedClient -> dcrService.applyRegistrationAccessToken(extractBasePath(context), updatedClient))
+                        .flatMap(updatedClient -> dcrService.applyRegistrationAccessToken(UriBuilderRequest.extractBasePath(context), updatedClient))
                         .flatMap(clientService::update)
                         .map(clientSyncService::addDynamicClientRegistred)
                 )
@@ -115,7 +116,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
                 .flatMap(client -> this.extractRequest(context)
                         .flatMap(dcrService::validateClientRegistrationRequest)
                         .map(request -> request.update(client))
-                        .flatMap(updatedClient -> dcrService.applyRegistrationAccessToken(extractBasePath(context), updatedClient))
+                        .flatMap(updatedClient -> dcrService.applyRegistrationAccessToken(UriBuilderRequest.extractBasePath(context), updatedClient))
                         .flatMap(clientService::update)
                         .map(clientSyncService::addDynamicClientRegistred)
                 )

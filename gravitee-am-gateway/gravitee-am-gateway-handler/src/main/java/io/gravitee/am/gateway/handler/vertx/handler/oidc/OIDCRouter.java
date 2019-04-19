@@ -98,7 +98,7 @@ public class OIDCRouter {
                 .handler(openIDProviderConfigurationEndpoint);
 
         // UserInfo Endpoint
-        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userService);
+        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userService, clientSyncService, jwtService, discoveryService);
         Handler<RoutingContext> userInfoRequestParseHandler = new UserInfoRequestParseHandler(tokenService, clientSyncService, jwtService);
         router.route("/userinfo").handler(CorsHandler.newInstance(corsHandler()));
         router

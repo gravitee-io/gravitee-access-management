@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.utils;
+package io.gravitee.am.gateway.handler.oidc.utils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,7 +21,6 @@ import org.junit.runners.JUnit4;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

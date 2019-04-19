@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.utils;
+package io.gravitee.am.gateway.handler.oidc.utils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,7 +30,7 @@ import static io.gravitee.am.common.oidc.SubjectType.*;
  */
 public class SubjectTypeUtils {
 
-    private static final Set<String> SUPPORTED_GRANT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+    private static final Set<String> SUPPORTED_SUBJECT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             PUBLIC
     )));
 
@@ -39,14 +39,14 @@ public class SubjectTypeUtils {
      * @return
      */
     public static List<String> getSupportedSubjectTypes() {
-        return Collections.unmodifiableList(SUPPORTED_GRANT_TYPES.stream().collect(Collectors.toList()));
+        return Collections.unmodifiableList(SUPPORTED_SUBJECT_TYPES.stream().collect(Collectors.toList()));
     }
 
     /**
      * Throw InvalidClientMetadataException if null or contains unsupported subject type.
-     * @param subjectType String grant_type to validate.
+     * @param subjectType String subject type to validate.
      */
     public static boolean isValidSubjectType(String subjectType) {
-        return SUPPORTED_GRANT_TYPES.contains(subjectType);
+        return SUPPORTED_SUBJECT_TYPES.contains(subjectType);
     }
 }

@@ -16,21 +16,34 @@
 package io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.gateway.handler.jwt.JwtService;
+import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.gateway.handler.oauth2.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.request.ClaimsRequest;
+import io.gravitee.am.gateway.handler.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -47,9 +60,15 @@ import java.util.stream.Collectors;
 public class UserInfoEndpoint implements Handler<RoutingContext> {
 
     private UserService userService;
+    private ClientSyncService clientSyncService;
+    private JwtService jwtService;
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
-    public UserInfoEndpoint(UserService userService) {
+    public UserInfoEndpoint(UserService userService, ClientSyncService clientSyncService, JwtService jwtService, OpenIDDiscoveryService openIDDiscoveryService) {
         this.userService = userService;
+        this.clientSyncService = clientSyncService;
+        this.jwtService = jwtService;
+        this.openIDDiscoveryService = openIDDiscoveryService;
     }
 
     @Override
@@ -89,16 +108,35 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
 
                     return (requestForSpecificClaims) ? requestedClaims : userClaims;
                  })
+                .switchIfEmpty(Maybe.error(new InvalidTokenException("No user found for this token")))
+                .flatMapSingle(
+                    claims -> clientSyncService.findByClientId(accessToken.getClientId())
+                            .flatMapSingle(client -> {
+                                if(client.getUserinfoSignedResponseAlg()==null) {
+                                    context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+                                    return Single.just(Json.encodePrettily(claims));
+                                }
+                                else {
+                                    JWT jwt = new JWT(claims);
+                                    jwt.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.extractBasePath(context)));
+                                    jwt.setSub(accessToken.getSubject());
+                                    jwt.setAud(accessToken.getClientId());
+                                    jwt.setIat(new Date().getTime() / 1000l);
+                                    jwt.setExp(accessToken.getExpireAt().getTime() / 1000l);
+
+                                    context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JWT);
+                                    return jwtService.encodeUserinfo(jwt,client);
+                                }
+                            })
+                )
                 .subscribe(
-                        claims -> context.response()
+                        buffer -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .end(Json.encodePrettily(claims)),
-                        error -> context.fail(error),
-                        () -> context.fail(new InvalidTokenException("No user found for this token"))
+                                .end(buffer)
+                        ,
+                        error -> context.fail(error)
                 );
-
     }
 
     /**
@@ -112,10 +150,10 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
     private boolean processScopesRequest(Set<String> scopes, final Map<String, Object> userClaims, Map<String, Object> requestedClaims) {
         // get requested scopes claims
         final List<String> scopesClaims = scopes.stream()
-                .map(scope -> scope.toUpperCase())
+                .map(String::toUpperCase)
                 .filter(scope -> Scope.exists(scope) && !Scope.valueOf(scope).getClaims().isEmpty())
-                .map(scope -> Scope.valueOf(scope))
-                .map(scope -> scope.getClaims())
+                .map(Scope::valueOf)
+                .map(Scope::getClaims)
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
 

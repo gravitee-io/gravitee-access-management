@@ -28,9 +28,17 @@ import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
-import java.security.*;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
@@ -194,5 +202,8 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
                 .orElse(Signature.SHA256withRSA);
     }
 
-
+    @Override
+    public String signatureAlgorithm() {
+        return signature.getJwsAlgorithm().getName();
+    }
 }

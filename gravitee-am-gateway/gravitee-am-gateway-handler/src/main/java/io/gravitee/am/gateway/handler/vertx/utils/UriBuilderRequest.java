@@ -18,6 +18,9 @@ package io.gravitee.am.gateway.handler.vertx.utils;
 import io.gravitee.am.service.utils.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -31,6 +34,24 @@ import java.util.Map;
 public class UriBuilderRequest {
 
     private static final String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
+    private static final Logger LOGGER = LoggerFactory.getLogger(UriBuilderRequest.class);
+
+    public static String extractBasePath(final io.vertx.ext.web.RoutingContext context) {
+        return extractBasePath(new io.vertx.reactivex.core.http.HttpServerRequest(context.request()));
+    }
+
+    public static String extractBasePath(final RoutingContext context) {
+        return extractBasePath(context.request());
+    }
+
+    private static String extractBasePath(final HttpServerRequest request) {
+        try {
+            return UriBuilderRequest.resolveProxyRequest(request, "/", null);
+        } catch (URISyntaxException e) {
+            LOGGER.error("Unable to resolve OpenID Connect provider configuration endpoint", e);
+        }
+        return "/";
+    }
 
     /**
      * Resolve proxy request

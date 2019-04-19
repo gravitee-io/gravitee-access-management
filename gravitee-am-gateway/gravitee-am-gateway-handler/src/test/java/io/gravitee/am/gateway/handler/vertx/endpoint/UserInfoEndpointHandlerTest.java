@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.token.impl.AccessToken;
+import io.gravitee.am.gateway.handler.oidc.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.vertx.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.endpoint.UserInfoEndpoint;
@@ -34,6 +35,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
@@ -44,7 +46,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -71,8 +77,11 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private ClientSyncService clientSyncService;
 
+    @Mock
+    private OpenIDDiscoveryService openIDDiscoveryService;
+
     @InjectMocks
-    private UserInfoEndpoint userInfoEndpoint = new UserInfoEndpoint(userService);
+    private UserInfoEndpoint userInfoEndpoint = new UserInfoEndpoint(userService, clientSyncService, jwtService, openIDDiscoveryService);
 
     @InjectMocks
     private UserInfoRequestParseHandler userInfoRequestParseHandler = new UserInfoRequestParseHandler(tokenService, clientSyncService, jwtService);
@@ -267,6 +276,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         token.setSubject("id-subject");
         token.setExpiresIn(100);
         token.setScope("openid");
+        token.setClientId(client.getClientId());
 
         User user = new User();
         user.setAdditionalInformation(Collections.singletonMap("sub", "user"));
@@ -294,6 +304,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         token.setSubject("id-subject");
         token.setExpiresIn(100);
         token.setScope("openid");
+        token.setClientId(client.getClientId());
         token.setAdditionalInformation(Collections.singletonMap(Claims.claims, "{\"userinfo\":{\"name\":{\"essential\":true}}}"));
 
         User user = createUser();
@@ -329,6 +340,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         token.setSubject("id-subject");
         token.setExpiresIn(100);
         token.setScope("openid profile");
+        token.setClientId(client.getClientId());
 
         User user = createUser();
 
@@ -362,6 +374,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         token.setSubject("id-subject");
         token.setExpiresIn(100);
         token.setScope("openid email");
+        token.setClientId(client.getClientId());
 
         User user = createUser();
 
@@ -397,6 +410,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         token.setSubject("id-subject");
         token.setExpiresIn(100);
         token.setScope("openid email address");
+        token.setClientId(client.getClientId());
 
         User user = createUser();
 
@@ -433,6 +447,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         token.setSubject("id-subject");
         token.setExpiresIn(100);
         token.setScope("openid email address");
+        token.setClientId(client.getClientId());
         token.setAdditionalInformation(Collections.singletonMap(Claims.claims, "{\"userinfo\":{\"name\":{\"essential\":true}}}"));
 
         User user = createUser();
@@ -446,15 +461,56 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
                 HttpMethod.GET,
                 "/userinfo",
                 req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> resp.bodyHandler(body -> {
-                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
-                    assertNotNull(claims);
-                    assertEquals(5, claims.size());
-                    assertTrue(claims.containsKey(StandardClaims.NAME));
-                    assertTrue(claims.containsKey(StandardClaims.ADDRESS));
-                    assertTrue(claims.containsKey(StandardClaims.EMAIL));
-                    assertTrue(claims.containsKey(StandardClaims.EMAIL_VERIFIED));
-                }),
+                resp -> {
+                    assertEquals(MediaType.APPLICATION_JSON,resp.getHeader(HttpHeaders.CONTENT_TYPE));
+                    resp.bodyHandler(body -> {
+                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                        assertNotNull(claims);
+                        assertEquals(5, claims.size());
+                        assertTrue(claims.containsKey(StandardClaims.NAME));
+                        assertTrue(claims.containsKey(StandardClaims.ADDRESS));
+                        assertTrue(claims.containsKey(StandardClaims.EMAIL));
+                        assertTrue(claims.containsKey(StandardClaims.EMAIL_VERIFIED));
+                    });
+                },
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldInvokeUserEndpoint_scopesRequest_and_claimsRequest_signedResponse() throws Exception {
+        JWT jwt = new JWT();
+        jwt.setAud("client-id");
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setUserinfoSignedResponseAlg("algorithm");
+
+        Token token = new AccessToken("id-token");
+        token.setSubject("id-subject");
+        token.setExpiresIn(100);
+        token.setScope("openid email address");
+        token.setClientId(client.getClientId());
+        token.setAdditionalInformation(Collections.singletonMap(Claims.claims, "{\"userinfo\":{\"name\":{\"essential\":true}}}"));
+        token.setExpireAt(Date.from(Instant.now().plusSeconds(3600)));
+
+        User user = createUser();
+
+        when(jwtService.decode("test-token")).thenReturn(Single.just(jwt));
+        when(clientSyncService.findByClientId(jwt.getAud())).thenReturn(Maybe.just(client));
+        when(tokenService.getAccessToken("test-token", client)).thenReturn(Maybe.just(token));
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(openIDDiscoveryService.getIssuer(anyString())).thenReturn("iss");
+        when(jwtService.encodeUserinfo(any(),any())).thenReturn(Single.just("signedJwtBearer"));
+
+        testRequest(
+                HttpMethod.GET,
+                "/userinfo",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+                resp -> {
+                    assertEquals(MediaType.APPLICATION_JWT,resp.getHeader(HttpHeaders.CONTENT_TYPE));
+                    resp.bodyHandler(body -> assertEquals("signedJwtBearer",body.toString()));
+                },
                 HttpStatusCode.OK_200, "OK", null);
     }
 

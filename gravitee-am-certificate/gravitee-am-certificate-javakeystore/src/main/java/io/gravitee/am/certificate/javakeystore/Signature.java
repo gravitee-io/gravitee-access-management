@@ -25,11 +25,11 @@ import sun.security.x509.AlgorithmId;
  */
 public enum Signature {
 
-    SHA512withRSA("SHA-512", AlgorithmId.SHA512_oid, JWSAlgorithm.RS512),
-    SHA384withRSA("SHA-384", AlgorithmId.SHA384_oid, JWSAlgorithm.RS384),
-    SHA256withRSA("SHA-256", AlgorithmId.SHA256_oid, JWSAlgorithm.RS256),
-    SHA224withRSA("SHA-224", AlgorithmId.SHA224_oid, null),
-    SHA1withRSA("SHA-1", AlgorithmId.SHA_oid, null);
+    SHA512withRSA("SHA-512", AlgorithmId.sha512WithRSAEncryption_oid, JWSAlgorithm.RS512),
+    SHA384withRSA("SHA-384", AlgorithmId.sha384WithRSAEncryption_oid, JWSAlgorithm.RS384),
+    SHA256withRSA("SHA-256", AlgorithmId.sha256WithRSAEncryption_oid, JWSAlgorithm.RS256),
+    SHA224withRSA("SHA-224", AlgorithmId.sha224WithRSAEncryption_oid, null),
+    SHA1withRSA("SHA-1", AlgorithmId.sha1WithRSAEncryption_oid, null);
 
     private String digestOID;
     private ObjectIdentifier algorithmId;
