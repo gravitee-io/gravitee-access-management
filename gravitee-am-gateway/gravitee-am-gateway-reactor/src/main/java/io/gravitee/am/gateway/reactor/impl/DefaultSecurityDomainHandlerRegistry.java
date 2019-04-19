@@ -51,10 +51,10 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
         VertxSecurityDomainHandler handler = create0(domain);
         if (handler != null) {
             try {
-                //handler.start();
+                handler.start();
                 handlers.putIfAbsent(handler.contextPath(), handler);
                 contextPaths.putIfAbsent(domain, handler.contextPath());
-                reactor.mountSubRouter(handler.contextPath(), handler.create());
+                reactor.mountSubRouter(handler.contextPath(), handler.router());
             } catch (Exception ex) {
                 logger.error("Unable to register handler", ex);
             }

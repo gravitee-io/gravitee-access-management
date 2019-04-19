@@ -285,7 +285,7 @@ public class UserServiceImpl implements UserService {
         if (additionalInformation != null) {
             Map<String, Object> extraInformation = new HashMap<>(additionalInformation);
             user.setSource((String) extraInformation.remove(SOURCE_FIELD));
-            user.setClient((String) extraInformation.remove(Parameters.CLIENT_ID.value()));
+            user.setClient((String) extraInformation.remove(Parameters.CLIENT_ID));
             extraInformation.remove(GROUP_MAPPING_ATTRIBUTE);
             user.setAdditionalInformation(extraInformation);
         }
