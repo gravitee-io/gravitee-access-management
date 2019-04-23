@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.jetty;
 
+import org.eclipse.jetty.http.CookieCompliance;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.*;
@@ -69,6 +70,8 @@ public class JettyServerFactory implements FactoryBean<Server> {
         httpConfig.setResponseHeaderSize(8192);
         httpConfig.setSendServerVersion(false);
         httpConfig.setSendDateHeader(false);
+        httpConfig.setRequestCookieCompliance(CookieCompliance.RFC2965);
+        httpConfig.setResponseCookieCompliance(CookieCompliance.RFC2965);
 
         // Setup Jetty HTTP or HTTPS Connector
         if (jettyConfiguration.isSecured()) {
