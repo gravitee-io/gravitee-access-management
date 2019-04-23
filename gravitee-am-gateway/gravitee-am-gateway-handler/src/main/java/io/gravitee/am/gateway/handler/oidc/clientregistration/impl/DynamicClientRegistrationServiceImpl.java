@@ -171,6 +171,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateSectorIdentifierUri)
                 .flatMap(this::validateJKWs)
                 .flatMap(this::validateUserinfoSigningAlgorithm)
+                .flatMap(this::validateIdTokenSigningAlgorithm)
                 .flatMap(this::validateScopes);
     }
 
@@ -188,7 +189,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateRequestUri)
                 .flatMap(this::validateSectorIdentifierUri)
                 .flatMap(this::validateJKWs)
-                .flatMap(this::validateUserinfoSigningAlgorithm);
+                .flatMap(this::validateUserinfoSigningAlgorithm)
+                .flatMap(this::validateIdTokenSigningAlgorithm);
     }
 
     private Single<DynamicClientRegistrationRequest> validateRedirectUri(DynamicClientRegistrationRequest request) {
@@ -234,6 +236,16 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         if(request.getUserinfoSignedResponseAlg()!=null) {
             if(!SigningAlgorithmUtils.isValidUserinfoSigningAlg(request.getUserinfoSignedResponseAlg().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported userinfo signing algorithm"));
+            }
+        }
+        return Single.just(request);
+    }
+
+    private Single<DynamicClientRegistrationRequest> validateIdTokenSigningAlgorithm(DynamicClientRegistrationRequest request) {
+        //if userinfo_signed_response_alg is provided, it must be valid.
+        if(request.getIdTokenSignedResponseAlg()!=null) {
+            if(!SigningAlgorithmUtils.isValidIdTokenSigningAlg(request.getIdTokenSignedResponseAlg().get())) {
+                return Single.error(new InvalidClientMetadataException("Unsupported id_token signing algorithm"));
             }
         }
         return Single.just(request);

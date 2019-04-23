@@ -99,7 +99,7 @@ certificate: ## Generate certificate that can be used
 clean: # remove .working directory
 	@rm -rf .working/gateway
 	@rm -rf .working/management-api
-
+	@mvn clean -pl '!gravitee-am-ui'
 version: # Get version and save it into a file
 	@mkdir -p .working
 	@rm -f .working/.version
