@@ -232,6 +232,17 @@ public class DynamicClientRegistrationServiceTest {
     }
 
     @Test
+    public void validateClientRegistrationRequest_unsupportedIdTokenSigningAlgorithmPayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setIdTokenSignedResponseAlg(Optional.of("unknownSigningAlg"));
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertNotComplete();
+    }
+    
+    @Test
     public void validateClientRegistrationRequest_unvalidRequestUris() {
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));

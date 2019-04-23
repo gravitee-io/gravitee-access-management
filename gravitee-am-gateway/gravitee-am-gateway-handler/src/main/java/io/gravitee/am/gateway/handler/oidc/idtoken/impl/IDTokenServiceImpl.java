@@ -115,7 +115,8 @@ public class IDTokenServiceImpl implements IDTokenService {
         }
 
         // sign the ID Token and add id_token field to the access_token
-        return certificateManager.get(client.getCertificate())
+        return certificateManager.findByAlgorithm(client.getIdTokenSignedResponseAlg())
+                .switchIfEmpty(certificateManager.get(client.getCertificate()))
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
                 .flatMapSingle(certificateProvider -> {
                     // set hash claims (hybrid flow)

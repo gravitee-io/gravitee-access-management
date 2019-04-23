@@ -71,6 +71,37 @@ public class IDTokenServiceTest {
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
+    public void shouldCreateIDToken_clientOnly_clientIdTokenCertificate() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Collections.singleton("openid"));
+
+        Client client = new Client();
+        client.setCertificate("client-certificate");
+
+        String idTokenPayload = "payload";
+
+        io.gravitee.am.gateway.handler.certificate.CertificateProvider idTokenCert = new io.gravitee.am.gateway.handler.certificate.CertificateProvider(certificateProvider);
+        io.gravitee.am.gateway.handler.certificate.CertificateProvider clientCert = new io.gravitee.am.gateway.handler.certificate.CertificateProvider(certificateProvider);
+        io.gravitee.am.gateway.handler.certificate.CertificateProvider defaultCert = new io.gravitee.am.gateway.handler.certificate.CertificateProvider(defaultCertificateProvider);
+
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.just(idTokenCert));
+        when(certificateManager.get(anyString())).thenReturn(Maybe.just(clientCert));
+        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
+        when(jwtService.encode(any(), any(io.gravitee.am.gateway.handler.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
+
+        TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(certificateManager, times(1)).findByAlgorithm(any());
+        verify(certificateManager, times(1)).get(anyString());
+        verify(certificateManager, times(1)).defaultCertificateProvider();
+        verify(jwtService, times(1)).encode(any(), eq(idTokenCert));
+    }
+
+    @Test
     public void shouldCreateIDToken_clientOnly_clientCertificate() {
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setClientId("client-id");
@@ -81,8 +112,12 @@ public class IDTokenServiceTest {
 
         String idTokenPayload = "payload";
 
-        when(certificateManager.defaultCertificateProvider()).thenReturn(new io.gravitee.am.gateway.handler.certificate.CertificateProvider(defaultCertificateProvider));
-        when(certificateManager.get(anyString())).thenReturn(Maybe.just(new io.gravitee.am.gateway.handler.certificate.CertificateProvider(certificateProvider)));
+        io.gravitee.am.gateway.handler.certificate.CertificateProvider clientCert = new io.gravitee.am.gateway.handler.certificate.CertificateProvider(certificateProvider);
+        io.gravitee.am.gateway.handler.certificate.CertificateProvider defaultCert = new io.gravitee.am.gateway.handler.certificate.CertificateProvider(defaultCertificateProvider);
+
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
+        when(certificateManager.get(anyString())).thenReturn(Maybe.just(clientCert));
+        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
         when(jwtService.encode(any(), any(io.gravitee.am.gateway.handler.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
 
         TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null).test();
@@ -90,8 +125,10 @@ public class IDTokenServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
+        verify(certificateManager, times(1)).findByAlgorithm(any());
         verify(certificateManager, times(1)).get(anyString());
-        verify(jwtService, times(1)).encode(any(), any(io.gravitee.am.gateway.handler.certificate.CertificateProvider.class));
+        verify(certificateManager, times(1)).defaultCertificateProvider();
+        verify(jwtService, times(1)).encode(any(), eq(clientCert));
     }
 
     @Test
@@ -105,8 +142,11 @@ public class IDTokenServiceTest {
 
         String idTokenPayload = "payload";
 
-        when(certificateManager.get(anyString())).thenReturn(Maybe.empty());
-        when(certificateManager.defaultCertificateProvider()).thenReturn(new io.gravitee.am.gateway.handler.certificate.CertificateProvider(defaultCertificateProvider));
+        io.gravitee.am.gateway.handler.certificate.CertificateProvider defaultCert = new io.gravitee.am.gateway.handler.certificate.CertificateProvider(defaultCertificateProvider);
+
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
+        when(certificateManager.get(any())).thenReturn(Maybe.empty());
+        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
         when(jwtService.encode(any(), any(io.gravitee.am.gateway.handler.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
 
         TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null).test();
@@ -114,8 +154,10 @@ public class IDTokenServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
+        verify(certificateManager, times(1)).findByAlgorithm(any());
         verify(certificateManager, times(1)).get(anyString());
-        verify(jwtService, times(1)).encode(any(), any(io.gravitee.am.gateway.handler.certificate.CertificateProvider.class));
+        verify(certificateManager, times(1)).defaultCertificateProvider();
+        verify(jwtService, times(1)).encode(any(), eq(defaultCert));
     }
 
     @Test
