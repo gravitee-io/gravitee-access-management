@@ -1,5 +1,46 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/issues/milestone/122?closed=1[AM - 2.5.0 (2019-04-24)]
+
+=== Bug fixes
+
+*_Oidc_*
+
+- [dcr] subject_type not checked https://github.com/gravitee-io/issues/issues/2135[#2135]
+- [jwks] JWKS keys endpoint seems to load all domains certificates https://github.com/gravitee-io/issues/issues/2126[#2126]
+- [dcr] update through PUT request https://github.com/gravitee-io/issues/issues/2134[#2134]
+
+=== Features
+
+*_Gateway_*
+
+- [jwt] generate 'issuer' claim per domain https://github.com/gravitee-io/issues/issues/2015[#2015]
+
+*_Management_*
+
+- Create audit logs for the platform https://github.com/gravitee-io/issues/issues/2065[#2065]
+- Delete scope approval https://github.com/gravitee-io/issues/issues/1851[#1851]
+
+*_Management-api_*
+
+- Add a service to generate a new client secret https://github.com/gravitee-io/issues/issues/2063[#2063]
+
+*_Oidc_*
+
+- [dcr] Manage id_token_signed_response_alg https://github.com/gravitee-io/issues/issues/2154[#2154]
+- [dcr] Manage userinfo_signed_response_alg https://github.com/gravitee-io/issues/issues/2136[#2136]
+
+*_Platform_*
+
+- Java 11 support https://github.com/gravitee-io/issues/issues/2145[#2145]
+
+=== Improvements
+
+*_Oidc_*
+
+- [dcr] One time Token https://github.com/gravitee-io/issues/issues/2133[#2133]
+
+
 == https://github.com/gravitee-io/issues/issues/milestone/111?closed=1[AM - 2.4.0 (2019-03-20)]
 
 === Bug fixes
