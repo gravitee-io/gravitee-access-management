@@ -13,26 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.audit;
+package io.gravitee.am.service.exception;
+
+import io.gravitee.common.http.HttpStatusCode;
 
 /**
- * Audit entity types
- *
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EntityType {
-    String CLIENT = "CLIENT";
-    String DOMAIN = "DOMAIN";
-    String CERTIFICATE = "CERTIFICATE";
-    String EXTENSION_GRANT = "EXTENSTION_GRANT";
-    String USER = "USER";
-    String GROUP = "GROUP";
-    String ROLE = "ROLE";
-    String SCOPE = "SCOPE";
-    String IDENTITY_PROVIDER = "IDENTITY_PROVIDER";
-    String EMAIL = "EMAIL";
-    String FORM = "FORM";
-    String REPORTER = "REPORTER";
-    String TAG = "TAG";
+public class TagAlreadyExistsException extends AbstractManagementException {
+
+    private final String tag;
+
+    public TagAlreadyExistsException(String tag) {
+        this.tag = tag;
+    }
+
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.BAD_REQUEST_400;
+    }
+
+    @Override
+    public String getMessage() {
+        return "A sharding-tag [" + tag + "] already exists.";
+    }
 }

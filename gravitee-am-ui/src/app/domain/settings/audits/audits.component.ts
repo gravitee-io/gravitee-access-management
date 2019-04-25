@@ -118,10 +118,15 @@ export class AuditsComponent implements OnInit {
 
   getTargetUrl(row) {
     let routerLink = [];
-    routerLink.push('/domains');
-    routerLink.push(row.target.domain);
-    if (row.target.type !== 'CLIENT') {
-      routerLink.push('settings');
+    if (AppConfig.settings.authentication.domainId === row.target.domain) {
+      routerLink.push('/settings');
+      routerLink.push('management');
+    } else {
+      routerLink.push('/domains');
+      routerLink.push(row.target.domain);
+      if (row.target.type !== 'CLIENT') {
+        routerLink.push('settings');
+      }
     }
     if (row.target.type !== 'DOMAIN') {
       if (row.target.type !== 'IDENTITY_PROVIDER') {

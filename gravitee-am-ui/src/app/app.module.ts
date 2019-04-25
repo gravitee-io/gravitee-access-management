@@ -189,6 +189,12 @@ import { ReportersResolver } from "./resolvers/reporters.resolver";
 import { ReporterResolver } from "./resolvers/reporter.resolver";
 import { ReporterComponent } from "./domain/settings/audits/settings/reporter/reporter.component";
 import { ReporterFormComponent } from "./domain/settings/audits/settings/reporter/form/form.component";
+import {TagsResolver} from "./resolvers/tags.resolver";
+import {TagResolver} from "./resolvers/tag.resolver";
+import {TagService} from "./services/tag.service";
+import {TagsComponent} from "./settings/management/tags/tags.component";
+import {TagCreationComponent} from "./settings/management/tags/creation/tag-creation.component";
+import {TagComponent} from "./settings/management/tags/tag/tag.component";
 
 @NgModule({
   declarations: [
@@ -295,7 +301,10 @@ import { ReporterFormComponent } from "./domain/settings/audits/settings/reporte
     AuditComponent,
     AuditsSettingsComponent,
     ReporterComponent,
-    ReporterFormComponent
+    ReporterFormComponent,
+    TagsComponent,
+    TagCreationComponent,
+    TagComponent
   ],
   imports: [
     BrowserModule,
@@ -358,6 +367,9 @@ import { ReporterFormComponent } from "./domain/settings/audits/settings/reporte
     ReporterService,
     ReportersResolver,
     ReporterResolver,
+    TagService,
+    TagsResolver,
+    TagResolver,
     { provide: Http, useClass: HttpService }
   ],
   entryComponents: [

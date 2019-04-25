@@ -119,6 +119,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setOidc(convert(domainMongo.getOidc()));
         domain.setScim(convert(domainMongo.getScim()));
         domain.setLoginSettings(convert(domainMongo.getLoginSettings()));
+        domain.setTags(domainMongo.getTags());
 
         // set last event
         Document document = domainMongo.getLastEvent();
@@ -149,6 +150,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setOidc(convert(domain.getOidc()));
         domainMongo.setScim(convert(domain.getScim()));
         domainMongo.setLoginSettings(convert(domain.getLoginSettings()));
+        domainMongo.setTags(domain.getTags());
 
         // save last event
         Event event = domain.getLastEvent();

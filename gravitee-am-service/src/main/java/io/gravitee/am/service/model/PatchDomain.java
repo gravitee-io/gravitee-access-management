@@ -45,6 +45,7 @@ public class PatchDomain {
     private Optional<PatchOIDCSettings> oidc;
     private Optional<SCIMSettings> scim;
     private Optional<LoginSettings> loginSettings;
+    private Optional<Set<String>> tags;
 
     public Optional<String> getName() {
         return name;
@@ -118,6 +119,14 @@ public class PatchDomain {
         this.loginSettings = loginSettings;
     }
 
+    public Optional<Set<String>> getTags() {
+        return tags;
+    }
+
+    public void setTags(Optional<Set<String>> tags) {
+        this.tags = tags;
+    }
+
     public Domain patch(Domain _toPatch) {
         // create new object for audit purpose (patch json result)
         Domain toPatch = new Domain(_toPatch);
@@ -130,6 +139,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setOauth2Identities, this.getOauth2Identities());
         SetterUtils.safeSet(toPatch::setScim, this.getScim());
         SetterUtils.safeSet(toPatch::setLoginSettings, this.getLoginSettings());
+        SetterUtils.safeSet(toPatch::setTags, this.getTags());
 
         if (this.getOidc() != null) {
             if (this.getOidc().isPresent()) {

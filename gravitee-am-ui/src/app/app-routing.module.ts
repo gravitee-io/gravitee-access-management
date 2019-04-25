@@ -105,6 +105,11 @@ import {AuditsSettingsComponent} from "./domain/settings/audits/settings/setting
 import {ReportersResolver} from "./resolvers/reporters.resolver";
 import {ReporterResolver} from "./resolvers/reporter.resolver";
 import {ReporterComponent} from "./domain/settings/audits/settings/reporter/reporter.component";
+import {TagsResolver} from "./resolvers/tags.resolver";
+import {TagsComponent} from "./settings/management/tags/tags.component";
+import {TagCreationComponent} from "./settings/management/tags/creation/tag-creation.component";
+import {TagComponent} from "./settings/management/tags/tag/tag.component";
+import {TagResolver} from "./resolvers/tag.resolver";
 
 const routes: Routes = [
   { path: 'dashboard',
@@ -329,6 +334,27 @@ const routes: Routes = [
               role: RoleResolver,
               scopes: ScopesResolver
             }
+          },
+          { path: 'tags', component: TagsComponent,
+            resolve: {
+              tags: TagsResolver
+            },
+            data: {
+              menu: {
+                label: 'Sharding tags',
+                section: 'Deployment'
+              }
+            }
+          },
+          { path: 'tags/new',
+            component: TagCreationComponent
+          },
+          {
+            path: 'tags/:tagId',
+            component: TagComponent,
+            resolve: {
+              tag: TagResolver
+            }
           }
         ]
       }
@@ -408,6 +434,9 @@ const routes: Routes = [
           { path: '', redirectTo: 'general', pathMatch: 'full' },
           { path: 'general',
             component: DomainSettingsGeneralComponent,
+            resolve: {
+              tags: TagsResolver
+            },
             data: {
               menu: {
                 label: 'General',

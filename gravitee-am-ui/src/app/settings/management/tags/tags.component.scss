@@ -1,0 +1,41 @@
+.tags-container {
+  padding: 20px 70px 20px 50px;
+  h1 {
+    font-weight: 400;
+  }
+  ngx-datatable {
+    font-size: 14px;
+    box-shadow: none;
+  }
+}
+
+.tags-actions {
+  margin-left: -10px;
+
+  button, a {
+    top: -9px;
+    color: grey;
+  }
+}
+
+.add-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
+
+.add-button-center {
+  text-align: center;
+}
+
+/deep/ .ngx-datatable.material .datatable-footer .datatable-pager {
+  ul li:not(:last-child):after {
+    content: none;
+  }
+}
+
+:host /deep/ .ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
+  &:first-child {
+    padding-left: 42px;
+  }
+}

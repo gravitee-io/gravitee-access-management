@@ -205,6 +205,24 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
+    public Single<Domain> update(String domainId, Domain domain) {
+        LOGGER.debug("Update an existing domain: {}", domain);
+        return domainRepository.findById(domainId)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                .flatMapSingle(__ -> {
+                        domain.setUpdatedAt(new Date());
+                        return domainRepository.update(domain);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to update a domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a domain", ex));
+                });
+    }
+
+    @Override
     public Single<Domain> patch(String domainId, PatchDomain patchDomain, User principal) {
         LOGGER.debug("Patching an existing domain ({}) with : {}", domainId, patchDomain);
         return domainRepository.findById(domainId)

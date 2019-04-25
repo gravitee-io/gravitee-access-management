@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform;
 
+import io.gravitee.am.management.handlers.management.api.resources.platform.tags.TagsResource;
+
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;
@@ -37,6 +39,11 @@ public class PlatformResource {
     @Path("audit")
     public AuditResource getAuditResource() {
         return resourceContext.getResource(AuditResource.class);
+    }
+
+    @Path("tags")
+    public TagsResource getTagsResource() {
+        return resourceContext.getResource(TagsResource.class);
     }
 
 }

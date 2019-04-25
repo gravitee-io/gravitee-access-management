@@ -40,6 +40,31 @@
           <mat-hint>Your domain's description.</mat-hint>
         </mat-form-field>
 
+        <h4 style="margin-bottom: 0px;">Deployment</h4>
+        <mat-form-field>
+          <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" #chipListTags>
+            <mat-chip *ngFor="let tag of selectedTags" color="accent"
+                      selected="true" (remove)="removeTag(tag)">
+              <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
+              &nbsp;<span>{{tag.id}}</span>&nbsp;|&nbsp;<small>{{tag.name}}</small>
+              <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+            <input matInput
+                   placeholder="Sharding Tags"
+                   aria-label="Sharding Tags"
+                   [matAutocomplete]="auto"
+                   [matChipInputFor]="chipListTags"
+                   #chipInput>
+          </mat-chip-list>
+
+          <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addTag($event)">
+            <mat-option *ngFor="let tag of tags" [value]="tag.id">
+              <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
+              <span>{{ tag.id }}</span> | <small>{{tag.name}}</small>
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+
         <div class="domain-general-form-actions">
           <button mat-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
@@ -61,6 +86,9 @@
           Configure your security domain's name, path and description.
         </p>
         <small>Changing the security domain's path involve to change endpoint URLs in your current applications.</small>
+        <br />
+        <br />
+        <small>Changing the sharding tags involve that security domain will no more accessible from some of your AM gateways.</small>
       </div>
     </div>
   </div>

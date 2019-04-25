@@ -50,7 +50,8 @@ export class DomainService {
       'name': domain.name,
       'description': domain.description,
       'path': domain.path,
-      'enabled': domain.enabled
+      'enabled': domain.enabled,
+      'tags': domain.tags
     });
   }
 
