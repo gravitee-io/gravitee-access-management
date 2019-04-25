@@ -45,6 +45,8 @@ public interface DomainService {
 
     Single<Domain> update(String domainId, UpdateDomain domain, User principal);
 
+    Single<Domain> update(String domainId, Domain domain);
+
     Single<Domain> reload(String domainId, Event event);
 
     Single<Domain> patch(String domainId, PatchDomain domain, User principal);

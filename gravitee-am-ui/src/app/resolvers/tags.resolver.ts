@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.audit;
+import { Injectable } from '@angular/core';
+import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
+import { Observable } from "rxjs";
+import { TagService } from "../services/tag.service";
 
-/**
- * Audit entity types
- *
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface EntityType {
-    String CLIENT = "CLIENT";
-    String DOMAIN = "DOMAIN";
-    String CERTIFICATE = "CERTIFICATE";
-    String EXTENSION_GRANT = "EXTENSTION_GRANT";
-    String USER = "USER";
-    String GROUP = "GROUP";
-    String ROLE = "ROLE";
-    String SCOPE = "SCOPE";
-    String IDENTITY_PROVIDER = "IDENTITY_PROVIDER";
-    String EMAIL = "EMAIL";
-    String FORM = "FORM";
-    String REPORTER = "REPORTER";
-    String TAG = "TAG";
+@Injectable()
+export class TagsResolver implements Resolve<any> {
+
+  constructor(private tagService: TagService) { }
+
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+    return this.tagService.list().map(res => res.json());
+  }
+
 }

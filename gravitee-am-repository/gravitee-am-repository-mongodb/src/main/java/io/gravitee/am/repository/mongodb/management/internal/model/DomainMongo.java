@@ -16,9 +16,8 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
-import io.gravitee.common.event.Event;
-import org.bson.Document;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
+import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.Set;
@@ -55,6 +54,8 @@ public class DomainMongo extends Auditable {
     private SCIMSettingsMongo scim;
 
     private LoginSettingsMongo loginSettings;
+
+    private Set<String> tags;
 
     public String getId() {
         return id;
@@ -158,6 +159,14 @@ public class DomainMongo extends Auditable {
 
     public void setLoginSettings(LoginSettingsMongo loginSettings) {
         this.loginSettings = loginSettings;
+    }
+
+    public Set<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<String> tags) {
+        this.tags = tags;
     }
 
     @Override

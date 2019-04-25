@@ -18,8 +18,8 @@ package io.gravitee.am.management.handlers.management.api;
 import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
 import io.gravitee.am.management.service.*;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
-import io.gravitee.am.service.*;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -31,7 +31,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableMBeanExport;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
@@ -114,6 +113,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected ReporterService reporterService;
+
+    @Autowired
+    protected TagService tagService;
 
     @Configuration
     @ComponentScan("io.gravitee.am.management.handlers.management.api.resources.enhancer")
@@ -231,6 +233,11 @@ public abstract class JerseySpringTest {
         @Bean
         public ReporterService reporterService() {
             return mock(ReporterService.class);
+        }
+
+        @Bean
+        public TagService tagService() {
+            return mock(TagService.class);
         }
     }
 

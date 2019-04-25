@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import { DomainService } from "../../../services/domain.service";
 import { DialogService } from "../../../services/dialog.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../services/snackbar.service";
 import { BreadcrumbService } from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { SidenavService } from "../../../components/sidenav/sidenav.service";
+import { Scope } from "../roles/role/role.component";
+import * as _ from "lodash";
+import {MatInput} from "@angular/material";
+
+export interface Tag {
+  id: string;
+  name: string;
+}
 
 @Component({
   selector: 'app-general',
@@ -27,8 +35,12 @@ import { SidenavService } from "../../../components/sidenav/sidenav.service";
   styleUrls: ['./general.component.scss']
 })
 export class DomainSettingsGeneralComponent implements OnInit {
+  @ViewChild('chipInput') chipInput: MatInput;
+
   formChanged: boolean = false;
   domain: any = {};
+  tags: Tag[];
+  selectedTags: Scope[];
 
   constructor(private domainService: DomainService, private dialogService: DialogService, private snackbarService: SnackbarService,
               private router: Router, private route: ActivatedRoute, private breadcrumbService: BreadcrumbService, private sidenavService: SidenavService) {
@@ -36,6 +48,39 @@ export class DomainSettingsGeneralComponent implements OnInit {
 
   ngOnInit() {
     this.domain = this.route.snapshot.parent.data['domain'];
+    this.tags = this.route.snapshot.data['tags'];
+
+    this.initTags();
+  }
+
+  initTags() {
+    let that = this;
+    // Merge with existing tag
+    this.selectedTags = _.map(this.domain.tags, function(t) {
+      let tag = _.find(that.tags, { 'id': t });
+      if (tag !== undefined) {
+        return tag;
+      }
+
+      return undefined;
+    });
+
+    this.tags = _.difference(this.tags, this.selectedTags);
+  }
+
+  addTag(event) {
+    this.selectedTags = this.selectedTags.concat(_.remove(this.tags, { 'id': event.option.value }));
+    this.chipInput['nativeElement'].blur();
+    this.formChanged = true;
+  }
+
+  removeTag(permission) {
+    this.tags = this.tags.concat(_.remove(this.selectedTags, function(selectPermission) {
+      return selectPermission.key === permission.key;
+    }));
+
+    this.chipInput['nativeElement'].blur();
+    this.formChanged = true;
   }
 
   enableDomain(event) {
@@ -44,11 +89,14 @@ export class DomainSettingsGeneralComponent implements OnInit {
   }
 
   update() {
+    this.domain.tags = _.map(this.selectedTags, tag => tag.id);
+
     this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe(response => {
       this.domain = response.json();
       this.domainService.notify(this.domain);
       this.sidenavService.notify(this.domain);
       this.breadcrumbService.addFriendlyNameForRoute('/domains/'+this.domain.id, this.domain.name);
+      this.formChanged = false;
       this.snackbarService.open("Domain " + this.domain.name + " updated");
     });
   }

@@ -1,0 +1,62 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tag-container">
+  <h1>{{tag.name}}</h1>
+  <div class="tag-content">
+    <form (keydown.enter)="false" (ngSubmit)="update()" #tagForm="ngForm" fxLayout="column" fxFlex="70">
+      <mat-form-field fxFlex>
+        <input matInput type="text" placeholder="ID" name="id" [(ngModel)]="tag.id" required disabled>
+        <mat-hint align="end">Sharding tag's technical id which will be set to the gateway configuration file</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field fxFlex>
+        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="tag.name" required>
+        <mat-hint align="end">Sharding tag's name</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field fxFlex>
+        <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="tag.description">
+        <mat-hint align="end">Sharding tag's description</mat-hint>
+      </mat-form-field>
+
+      <div fxLayout="row" class="tag-form-actions">
+        <button mat-raised-button [disabled]="(!tagForm.valid || tagForm.pristine)" type="submit">SAVE</button>
+      </div>
+    </form>
+    <div class="tag-description" fxFlex>
+      <h3>Manage sharding tag</h3>
+      <div class="tag-description-content">
+        <p>
+          A sharding-tag determines how security domain will be deployed across multiple AM Gateway.
+        </p>
+        <p>
+          To make the association between security domains and Gateway instances,
+          you must copy/paste the shard tag's ID to the <small style="color:grey;">gravitee.yml</small> file of the gateway instance :
+        </p>
+
+        <p style="padding: 10px; background: #f1f1f1;">
+          <small>
+            # Sharding tags configuration <br />
+            # tags: public,private,!international
+          </small>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+

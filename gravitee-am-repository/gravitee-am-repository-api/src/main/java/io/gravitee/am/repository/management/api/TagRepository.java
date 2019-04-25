@@ -13,26 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.audit;
+package io.gravitee.am.repository.management.api;
+
+import io.gravitee.am.model.Tag;
+import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Single;
+
+import java.util.Set;
 
 /**
- * Audit entity types
- *
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EntityType {
-    String CLIENT = "CLIENT";
-    String DOMAIN = "DOMAIN";
-    String CERTIFICATE = "CERTIFICATE";
-    String EXTENSION_GRANT = "EXTENSTION_GRANT";
-    String USER = "USER";
-    String GROUP = "GROUP";
-    String ROLE = "ROLE";
-    String SCOPE = "SCOPE";
-    String IDENTITY_PROVIDER = "IDENTITY_PROVIDER";
-    String EMAIL = "EMAIL";
-    String FORM = "FORM";
-    String REPORTER = "REPORTER";
-    String TAG = "TAG";
+public interface TagRepository extends CrudRepository<Tag, String> {
+
+    Single<Set<Tag>> findAll();
 }

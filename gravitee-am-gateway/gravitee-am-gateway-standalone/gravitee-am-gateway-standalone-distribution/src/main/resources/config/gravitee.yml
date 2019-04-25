@@ -197,6 +197,10 @@ user:
 gateway:
   url: http://localhost:8092
 
+# Sharding tags configuration
+# Allows to define inclusion/exclusion sharding tags to only deploy a part of security domains. To exclude just prefix the tag with '!'.
+#tags: public,private,!partner
+
 # Referenced properties
 ds:
   mongodb:
