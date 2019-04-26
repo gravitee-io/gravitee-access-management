@@ -52,7 +52,7 @@ public class DynamicClientAccessHandlerTest {
     private ClientSyncService clientSyncService;
 
     @Mock
-    private JwtService jwtService;
+    private JWTService jwtService;
 
     @Mock
     private Domain domain;
@@ -138,7 +138,6 @@ public class DynamicClientAccessHandlerTest {
 
         ArgumentCaptor<Throwable> exceptionCaptor = ArgumentCaptor.forClass(Throwable.class);
         verify(context, times(1)).fail(exceptionCaptor.capture());
-        System.out.println( exceptionCaptor.getValue());
         Assert.assertTrue("Should return a DCR disabled exception", exceptionCaptor.getValue() instanceof ClientRegistrationForbiddenException);
     }
 
@@ -158,7 +157,6 @@ public class DynamicClientAccessHandlerTest {
 
         ArgumentCaptor<Throwable> exceptionCaptor = ArgumentCaptor.forClass(Throwable.class);
         verify(context, times(1)).fail(exceptionCaptor.capture());
-        System.out.println( exceptionCaptor.getValue());
         Assert.assertTrue("Should return a DCR disabled exception", exceptionCaptor.getValue() instanceof ClientRegistrationForbiddenException);
     }
 
@@ -178,7 +176,6 @@ public class DynamicClientAccessHandlerTest {
 
         ArgumentCaptor<Throwable> exceptionCaptor = ArgumentCaptor.forClass(Throwable.class);
         verify(context, times(1)).fail(exceptionCaptor.capture());
-        System.out.println( exceptionCaptor.getValue());
         Assert.assertTrue("Should return a DCR disabled exception", exceptionCaptor.getValue() instanceof ClientRegistrationForbiddenException);
     }
 

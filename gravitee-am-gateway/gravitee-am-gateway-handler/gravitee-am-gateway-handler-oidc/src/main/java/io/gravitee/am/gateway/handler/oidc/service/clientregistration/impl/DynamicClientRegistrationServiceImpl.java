@@ -18,13 +18,13 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.utils.SecureRandomString;
-import io.gravitee.am.gateway.handler.common.jwk.JwkService;
-import io.gravitee.am.gateway.handler.common.jwt.JwtService;
+import io.gravitee.am.gateway.handler.common.jwk.JWKService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
-import io.gravitee.am.gateway.handler.oidc.service.utils.SigningAlgorithmUtils;
+import io.gravitee.am.gateway.handler.common.jwa.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
@@ -70,10 +70,10 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private CertificateService certificateService;
 
     @Autowired
-    private JwkService jwkService;
+    private JWKService jwkService;
 
     @Autowired
-    private JwtService jwtService;
+    private JWTService jwtService;
 
     @Autowired
     public WebClient client;
@@ -170,6 +170,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateJKWs)
                 .flatMap(this::validateUserinfoSigningAlgorithm)
                 .flatMap(this::validateIdTokenSigningAlgorithm)
+                .flatMap(this::validateIdTokenEncryptionAlgorithm)
                 .flatMap(this::validateScopes);
     }
 
@@ -188,7 +189,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateSectorIdentifierUri)
                 .flatMap(this::validateJKWs)
                 .flatMap(this::validateUserinfoSigningAlgorithm)
-                .flatMap(this::validateIdTokenSigningAlgorithm);
+                .flatMap(this::validateIdTokenSigningAlgorithm)
+                .flatMap(this::validateIdTokenEncryptionAlgorithm);
     }
 
     private Single<DynamicClientRegistrationRequest> validateRedirectUri(DynamicClientRegistrationRequest request) {
@@ -232,7 +234,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private Single<DynamicClientRegistrationRequest> validateUserinfoSigningAlgorithm(DynamicClientRegistrationRequest request) {
         //if userinfo_signed_response_alg is provided, it must be valid.
         if(request.getUserinfoSignedResponseAlg()!=null) {
-            if(!SigningAlgorithmUtils.isValidUserinfoSigningAlg(request.getUserinfoSignedResponseAlg().get())) {
+            if(!JWAlgorithmUtils.isValidUserinfoSigningAlg(request.getUserinfoSignedResponseAlg().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported userinfo signing algorithm"));
             }
         }
@@ -242,8 +244,30 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private Single<DynamicClientRegistrationRequest> validateIdTokenSigningAlgorithm(DynamicClientRegistrationRequest request) {
         //if userinfo_signed_response_alg is provided, it must be valid.
         if(request.getIdTokenSignedResponseAlg()!=null) {
-            if(!SigningAlgorithmUtils.isValidIdTokenSigningAlg(request.getIdTokenSignedResponseAlg().get())) {
+            if(!JWAlgorithmUtils.isValidIdTokenSigningAlg(request.getIdTokenSignedResponseAlg().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported id_token signing algorithm"));
+            }
+        }
+        return Single.just(request);
+    }
+
+    private Single<DynamicClientRegistrationRequest> validateIdTokenEncryptionAlgorithm(DynamicClientRegistrationRequest request) {
+        if(request.getIdTokenEncryptedResponseEnc()!=null && request.getIdTokenEncryptedResponseAlg()==null) {
+            return Single.error(new InvalidClientMetadataException("When id_token_encrypted_response_enc is included, id_token_encrypted_response_alg MUST also be provided"));
+        }
+        //if userinfo_signed_response_alg is provided, it must be valid.
+        if(request.getIdTokenEncryptedResponseAlg()!=null) {
+            if(!JWAlgorithmUtils.isValidIdTokenResponseAlg(request.getIdTokenEncryptedResponseAlg().get())) {
+                return Single.error(new InvalidClientMetadataException("Unsupported id_token_encrypted_response_alg value"));
+            }
+            if(request.getIdTokenEncryptedResponseEnc()!=null) {
+                if(!JWAlgorithmUtils.isValidIdTokenResponseEnc(request.getIdTokenEncryptedResponseEnc().get())) {
+                    return Single.error(new InvalidClientMetadataException("Unsupported id_token_encrypted_response_enc value"));
+                }
+            }
+            else {
+                //Apply default value if id_token_encrypted_response_alg is informed and not id_token_encrypted_response_enc.
+                request.setIdTokenEncryptedResponseEnc(Optional.of(JWAlgorithmUtils.getDefaultIdTokenResponseEnc()));
             }
         }
         return Single.just(request);

@@ -18,7 +18,7 @@ package io.gravitee.am.model.jose;
 /**
  * See <a href="https://tools.ietf.org/html/rfc7638#section-3.2">3.2. JWK Members Used in the Thumbprint Computation</a>
  *
- *  The required members for an RSA public key, in lexicographic order, are:
+ *  The required members for an Elliptic Curve public key, in lexicographic order, are:
  *    - "crv"
  *    - "kty"
  *    - "x"

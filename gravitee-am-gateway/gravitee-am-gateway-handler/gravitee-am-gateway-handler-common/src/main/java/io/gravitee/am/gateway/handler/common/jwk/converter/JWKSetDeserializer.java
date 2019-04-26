@@ -18,10 +18,10 @@ package io.gravitee.am.gateway.handler.common.jwk.converter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.util.StdConverter;
-import io.gravitee.am.model.jose.*;
+import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.gravitee.am.service.exception.NotImplementedException;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
@@ -35,7 +35,8 @@ import java.util.stream.Collectors;
  */
 public class JWKSetDeserializer extends StdConverter<ObjectNode, Optional<JWKSet>> {
 
-    private final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(JWKSetDeserializer.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(JWKSetDeserializer.class);
+    public final static String PARSE_ERROR_MESSAGE = "Unable to parse jwks content: ";
 
     @Override
     public Optional<JWKSet> convert(ObjectNode node) {
@@ -59,7 +60,7 @@ public class JWKSetDeserializer extends StdConverter<ObjectNode, Optional<JWKSet
             com.nimbusds.jose.jwk.JWKSet jwkSet = com.nimbusds.jose.jwk.JWKSet.parse(jwkSetAsString);
             List<JWK> jwkList = jwkSet.getKeys()
                     .stream()
-                    .map(this::convert)
+                    .map(JWKConverter::convert)
                     .collect(Collectors.toList());
 
             JWKSet result = new JWKSet();
@@ -67,52 +68,7 @@ public class JWKSetDeserializer extends StdConverter<ObjectNode, Optional<JWKSet
             return Optional.of(result);
         } catch (ParseException ex) {
             LOGGER.error(ex.getMessage(), ex);
-            throw new InvalidClientMetadataException("Unable to parse jwks content");
+            throw new InvalidClientMetadataException(PARSE_ERROR_MESSAGE+ex.getMessage());
         }
-    }
-
-    private JWK convert(com.nimbusds.jose.jwk.JWK jwk) {
-        if (jwk == null) {
-            return null;
-        }
-
-        switch (KeyType.valueOf(jwk.getKeyType().getValue())) {
-            case EC:
-                return fromEC((com.nimbusds.jose.jwk.ECKey) jwk);
-            case RSA:
-                return fromRSA((com.nimbusds.jose.jwk.RSAKey) jwk);
-            case OCT:
-                throw new NotImplementedException("JWK Key Type:" + KeyType.OCT.getKeyType());
-            case OKP:
-                throw new NotImplementedException("JWK Key Type:" + KeyType.OKP.getKeyType());
-            default:
-                throw new InvalidClientMetadataException("Unknown JWK Key Type (kty)");
-        }
-    }
-
-    private JWK fromRSA(com.nimbusds.jose.jwk.RSAKey jwk) {
-        RSAKey rsaKey = new RSAKey();
-        rsaKey.setKty(KeyType.RSA.getKeyType());
-        rsaKey.setKid(jwk.getKeyID());
-        rsaKey.setUse(jwk.getKeyUse() != null ? jwk.getKeyUse().identifier() : null);
-        rsaKey.setE(jwk.getPublicExponent() != null ? jwk.getPublicExponent().toString() : null);
-        rsaKey.setN(jwk.getModulus() != null ? jwk.getModulus().toString() : null);
-
-        return rsaKey;
-    }
-
-    private JWK fromEC(com.nimbusds.jose.jwk.ECKey jwk) {
-        ECKey ecKey = new ECKey();
-        ecKey.setKty(KeyType.EC.getKeyType());
-        ecKey.setKid(jwk.getKeyID());
-        ecKey.setUse(jwk.getKeyUse() != null ? jwk.getKeyUse().identifier() : null);
-        ecKey.setX(jwk.getX() != null ? jwk.getX().toString() : null);
-        ecKey.setY(jwk.getY() != null ? jwk.getY().toString() : null);
-
-        Optional<Curve> curve = Curve.getByName(jwk.getCurve().getName());
-        //if not present, parse method will fail before...
-        ecKey.setCrv(curve.get().getName());
-
-        return ecKey;
     }
 }

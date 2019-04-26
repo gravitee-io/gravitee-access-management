@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
-import io.gravitee.am.gateway.handler.common.jwk.JwkService;
+import io.gravitee.am.gateway.handler.common.jwk.JWKService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.model.jose.JWK;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
 public class ProviderJWKSetEndpointHandlerTest extends RxWebTestBase {
 
     @Mock
-    private JwkService jwkService;
+    private JWKService jwkService;
 
     @InjectMocks
     private ProviderJWKSetEndpoint providerJWKSetEndpoint = new ProviderJWKSetEndpoint(jwkService);

@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
-import io.gravitee.am.gateway.handler.common.jwk.JwkService;
-import io.gravitee.am.gateway.handler.oidc.service.utils.JWKSetUtils;
+import io.gravitee.am.gateway.handler.common.jwk.JWKService;
+import io.gravitee.am.gateway.handler.oidc.model.jwk.converter.JWKConverter;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
@@ -36,16 +36,16 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public class ProviderJWKSetEndpoint implements Handler<RoutingContext> {
 
-    private JwkService jwkService;
+    private JWKService jwkService;
 
-    public ProviderJWKSetEndpoint(JwkService jwkService) {
+    public ProviderJWKSetEndpoint(JWKService jwkService) {
         this.jwkService = jwkService;
     }
 
     @Override
     public void handle(RoutingContext context) {
         jwkService.getKeys()
-                .map(JWKSetUtils::convert)
+                .map(JWKConverter::convert)
                 .subscribe(keys -> context.response()
                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                 .putHeader(HttpHeaders.PRAGMA, "no-cache")

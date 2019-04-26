@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
-import io.gravitee.am.gateway.handler.common.jwk.JwkService;
-import io.gravitee.am.gateway.handler.common.jwt.JwtService;
+import io.gravitee.am.gateway.handler.common.jwk.JWKService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
@@ -41,13 +41,14 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
@@ -71,10 +72,10 @@ public class DynamicClientRegistrationServiceTest {
     private CertificateService certificateService;
 
     @Mock
-    private JwkService jwkService;
+    private JWKService jwkService;
 
     @Mock
-    private JwtService jwtService;
+    private JWTService jwtService;
 
     @Mock
     public WebClient webClient;
@@ -160,6 +161,7 @@ public class DynamicClientRegistrationServiceTest {
     public void validateClientRegistrationRequest_nullRequest() {
         TestObserver testObserver = dcrService.validateClientRegistrationRequest(null).test();
         testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("One of the Client Metadata value is invalid.");
         testObserver.assertNotComplete();
     }
 
@@ -199,6 +201,7 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Invalid response type.");
         testObserver.assertNotComplete();
     }
 
@@ -210,6 +213,7 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Missing or invalid grant type.");
         testObserver.assertNotComplete();
     }
 
@@ -221,6 +225,7 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Unsupported subject type");
         testObserver.assertNotComplete();
     }
 
@@ -232,6 +237,7 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Unsupported userinfo signing algorithm");
         testObserver.assertNotComplete();
     }
 
@@ -243,7 +249,57 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Unsupported id_token signing algorithm");
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_unsupportedIdTokenResponseAlgPayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setIdTokenEncryptedResponseAlg(Optional.of("unknownEncryptionAlg"));
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Unsupported id_token_encrypted_response_alg value");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_missingIdTokenResponseAlgPayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setIdTokenEncryptedResponseEnc(Optional.of("unknownEncryptionAlg"));
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("When id_token_encrypted_response_enc is included, id_token_encrypted_response_alg MUST also be provided");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_unsupportedIdTokenResponseEncPayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setIdTokenEncryptedResponseAlg(Optional.of("RSA-OAEP-256"));
+        request.setIdTokenEncryptedResponseEnc(Optional.of("unknownEncryptionAlg"));
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Unsupported id_token_encrypted_response_enc value");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_defaultIdTokenResponseEncPayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setIdTokenEncryptedResponseAlg(Optional.of("RSA-OAEP-256"));
+
+        TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(result -> result.getIdTokenEncryptedResponseEnc()!=null);
     }
 
     @Test
@@ -252,9 +308,11 @@ public class DynamicClientRegistrationServiceTest {
         request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
         request.setRequestUris(Optional.of(Arrays.asList("nonValidUri")));
 
-        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
+        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("request_uris:"));
     }
 
     @Test
@@ -278,6 +336,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
+        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("sector_identifier_uri:"));
     }
 
     @Test
@@ -289,6 +349,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
+        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("Scheme must be https for sector_identifier_uri"));
     }
 
     @Test
@@ -306,6 +368,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
+        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("Unable to parse sector_identifier_uri"));
     }
 
     @Test
@@ -354,6 +418,7 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("The jwks_uri and jwks parameters MUST NOT be used together.");
         testObserver.assertNotComplete();
     }
 
@@ -363,10 +428,11 @@ public class DynamicClientRegistrationServiceTest {
         request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
         request.setJwksUri(Optional.of("something"));
 
-        when(jwkService.getKeys(any())).thenReturn(Maybe.empty());
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.empty());
 
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("No JWK found behing jws uri...");
         testObserver.assertNotComplete();
     }
 
@@ -376,7 +442,7 @@ public class DynamicClientRegistrationServiceTest {
         request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
         request.setJwksUri(Optional.of("something"));
 
-        when(jwkService.getKeys(any())).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
 
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertNoErrors();
@@ -409,6 +475,7 @@ public class DynamicClientRegistrationServiceTest {
     public void validatePatchRequest_nullRequest() {
         TestObserver testObserver = dcrService.validateClientPatchRequest(null).test();
         testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("One of the Client Metadata value is invalid.");
         testObserver.assertNotComplete();
     }
 
@@ -418,7 +485,7 @@ public class DynamicClientRegistrationServiceTest {
         request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
         request.setJwksUri(Optional.of("something"));
 
-        when(jwkService.getKeys(any())).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
 
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientPatchRequest(request).test();
         testObserver.assertNoErrors();

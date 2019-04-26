@@ -19,7 +19,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.gateway.handler.common.jwt.JwtService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
@@ -66,7 +66,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     private UserService userService;
 
     @Mock
-    private JwtService jwtService;
+    private JWTService jwtService;
 
     @Mock
     private OpenIDDiscoveryService openIDDiscoveryService;

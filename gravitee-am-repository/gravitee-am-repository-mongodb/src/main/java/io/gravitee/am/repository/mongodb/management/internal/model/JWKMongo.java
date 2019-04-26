@@ -45,10 +45,14 @@ public class JWKMongo {
     private String e;
     private String n;
 
-    /* EC Key properties */
+    /* EC Key properties (including OKP) */
     private String crv;
     private String x;
     private String y;
+
+    /* OCT Key properties */
+    private String k;
+
 
     public String getKty() {
         return kty;
@@ -160,5 +164,13 @@ public class JWKMongo {
 
     public void setY(String y) {
         this.y = y;
+    }
+
+    public String getK() {
+        return k;
+    }
+
+    public void setK(String k) {
+        this.k = k;
     }
 }

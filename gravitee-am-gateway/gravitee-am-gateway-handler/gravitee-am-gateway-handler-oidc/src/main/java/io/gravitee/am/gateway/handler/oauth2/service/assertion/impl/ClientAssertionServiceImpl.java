@@ -18,8 +18,8 @@ package io.gravitee.am.gateway.handler.oauth2.service.assertion.impl;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
-import io.gravitee.am.gateway.handler.common.jwk.JwkService;
-import io.gravitee.am.gateway.handler.common.jws.JwsService;
+import io.gravitee.am.gateway.handler.common.jwk.JWKService;
+import io.gravitee.am.gateway.handler.common.jws.JWSService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
@@ -56,10 +56,10 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     private ClientSyncService clientSyncService;
 
     @Autowired
-    private JwkService jwkService;
+    private JWKService jwkService;
 
     @Autowired
-    private JwsService jwsService;
+    private JWSService jwsService;
 
     @Autowired
     private OpenIDDiscoveryService openIDDiscoveryService;

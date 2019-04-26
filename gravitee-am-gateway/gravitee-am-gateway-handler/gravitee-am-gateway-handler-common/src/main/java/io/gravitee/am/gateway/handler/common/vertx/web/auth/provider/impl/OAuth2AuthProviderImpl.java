@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.impl;
 
 import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
-import io.gravitee.am.gateway.handler.common.jwt.JwtService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
@@ -37,7 +37,7 @@ import java.util.Date;
 public class OAuth2AuthProviderImpl implements OAuth2AuthProvider {
 
     @Autowired
-    private JwtService jwtService;
+    private JWTService jwtService;
 
     @Autowired
     private ClientSyncService clientService;

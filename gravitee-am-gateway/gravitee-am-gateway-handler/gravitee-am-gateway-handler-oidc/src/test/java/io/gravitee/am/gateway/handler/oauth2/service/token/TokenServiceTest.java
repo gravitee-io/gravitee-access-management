@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.common.jwt.JwtService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -65,7 +65,7 @@ public class TokenServiceTest {
     private TokenEnhancer tokenEnhancer;
 
     @Mock
-    private JwtService jwtService;
+    private JWTService jwtService;
 
     @Mock
     private ClientSyncService clientSyncService;

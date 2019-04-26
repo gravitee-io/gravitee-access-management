@@ -17,12 +17,12 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.jwt.exception.JwtException;
+import io.gravitee.am.common.jwt.exception.JWTException;
 import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
-import io.gravitee.am.gateway.handler.common.jwt.JwtService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
@@ -64,7 +64,7 @@ public class TokenServiceImpl implements TokenService {
     private TokenEnhancer tokenEnhancer;
 
     @Autowired
-    private JwtService jwtService;
+    private JWTService jwtService;
 
     @Autowired
     private ClientSyncService clientSyncService;
@@ -76,7 +76,7 @@ public class TokenServiceImpl implements TokenService {
     public Maybe<Token> getAccessToken(String token, Client client) {
         return jwtService.decodeAndVerify(token, client)
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof JwtException) {
+                    if (ex instanceof JWTException) {
                         return Single.error(new InvalidTokenException(ex.getMessage(), ex));
                     }
                     return Single.error(ex);
@@ -88,7 +88,7 @@ public class TokenServiceImpl implements TokenService {
     public Maybe<Token> getRefreshToken(String refreshToken, Client client) {
         return jwtService.decodeAndVerify(refreshToken, client)
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof JwtException) {
+                    if (ex instanceof JWTException) {
                         return Single.error(new InvalidTokenException(ex.getMessage(), ex));
                     }
                     return Single.error(ex);

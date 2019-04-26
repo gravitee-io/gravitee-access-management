@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.JWKSet;
-import io.gravitee.am.gateway.handler.oidc.service.utils.JWKSetUtils;
+import io.gravitee.am.gateway.handler.oidc.model.jwk.converter.JWKConverter;
 import io.gravitee.am.model.Client;
 
 import java.util.Date;
@@ -579,7 +579,7 @@ public class DynamicClientRegistrationResponse {
         response.setPolicyUri(client.getPolicyUri());
         response.setTosUri(client.getTosUri());
         response.setJwksUri(client.getJwksUri());
-        response.setJwks(JWKSetUtils.convert(client.getJwks()));
+        response.setJwks(JWKConverter.convert(client.getJwks()));
         response.setSectorIdentifierUri(client.getSectorIdentifierUri());
         response.setSubjectType(client.getSubjectType());
         response.setIdTokenSignedResponseAlg(client.getIdTokenSignedResponseAlg());

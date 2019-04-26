@@ -20,7 +20,7 @@ import io.gravitee.am.common.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.gateway.handler.common.jwt.JwtService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
@@ -58,10 +58,10 @@ import java.util.stream.Collectors;
 public class UserInfoEndpoint implements Handler<RoutingContext> {
 
     private UserService userService;
-    private JwtService jwtService;
+    private JWTService jwtService;
     private OpenIDDiscoveryService openIDDiscoveryService;
 
-    public UserInfoEndpoint(UserService userService, JwtService jwtService, OpenIDDiscoveryService openIDDiscoveryService) {
+    public UserInfoEndpoint(UserService userService, JWTService jwtService, OpenIDDiscoveryService openIDDiscoveryService) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.openIDDiscoveryService = openIDDiscoveryService;

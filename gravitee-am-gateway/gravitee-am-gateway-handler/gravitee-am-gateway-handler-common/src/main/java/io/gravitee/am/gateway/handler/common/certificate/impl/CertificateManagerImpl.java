@@ -21,8 +21,8 @@ import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.gateway.core.event.CertificateEvent;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateProvider;
-import io.gravitee.am.gateway.handler.common.jwt.impl.JJwtBuilder;
-import io.gravitee.am.gateway.handler.common.jwt.impl.JJwtParser;
+import io.gravitee.am.gateway.handler.common.jwt.impl.JJWTBuilder;
+import io.gravitee.am.gateway.handler.common.jwt.impl.JJWTParser;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Payload;
@@ -284,8 +284,8 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         io.jsonwebtoken.JwtParser jjwtParser = Jwts.parser().deserializeJsonWith(new JacksonDeserializer(objectMapper)).setSigningKey(verifyingKey);
         io.jsonwebtoken. JwtBuilder jjwtBuilder = Jwts.builder().serializeToJsonWith(new JacksonSerializer(objectMapper)).signWith(signingKey).setHeaderParam(JwsHeader.KEY_ID, providerKey.getKeyId());
 
-        certificateProvider.setJwtParser(new JJwtParser(jjwtParser));
-        certificateProvider.setJwtBuilder(new JJwtBuilder(jjwtBuilder));
+        certificateProvider.setJwtParser(new JJWTParser(jjwtParser));
+        certificateProvider.setJwtBuilder(new JJWTBuilder(jjwtBuilder));
 
         return certificateProvider;
     }

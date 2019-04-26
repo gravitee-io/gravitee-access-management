@@ -19,7 +19,7 @@ package io.gravitee.am.common.jwt.exception;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SignatureException extends JwtException {
+public class SignatureException extends JWTException {
 
     public SignatureException(String message) {
         super(message);

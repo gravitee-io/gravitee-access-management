@@ -23,8 +23,8 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.common.jwt.JwtBuilder;
-import io.gravitee.am.gateway.handler.common.jwt.JwtParser;
+import io.gravitee.am.gateway.handler.common.jwt.JWTBuilder;
+import io.gravitee.am.gateway.handler.common.jwt.JWTParser;
 import io.gravitee.am.gateway.handler.email.EmailManager;
 import io.gravitee.am.gateway.handler.email.EmailService;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -74,10 +74,10 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private JwtParser jwtParser;
+    private JWTParser jwtParser;
 
     @Autowired
-    private JwtBuilder jwtBuilder;
+    private JWTBuilder jwtBuilder;
 
     @Autowired
     private Domain domain;

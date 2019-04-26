@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.jose.ECKey;
+import io.gravitee.am.model.jose.OCTKey;
+import io.gravitee.am.model.jose.OKPKey;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import org.junit.Test;
@@ -48,8 +50,19 @@ public class DynamicClientRegistrationResponseTest {
         ecKey.setX("vBT2JhFHd62Jcf4yyBzSV9NuDBNBssR1zlmnHelgZcs");
         ecKey.setY("up8E8b3TjeKS2v2GCH23UJP0bak0La77lkQ7_n4djqE");
 
+        OKPKey okpKey = new OKPKey();
+        okpKey.setKty("OKP");
+        okpKey.setKid("kidOKP");
+        okpKey.setCrv("Ed25519");
+        okpKey.setX("vBNW8f19leF79U4U6NrDDQaK_i5kL0iMKghB39AUT2I");
+
+        OCTKey octKey = new OCTKey();
+        octKey.setKty("oct");
+        octKey.setKid("kidOCT");
+        octKey.setK("FdFYFzERwC2uCBB46pZQi4GG85LujR8obt-KWRBICVQ");
+
         JWKSet jwkSet = new JWKSet();
-        jwkSet.setKeys(Arrays.asList(rsaKey,ecKey));
+        jwkSet.setKeys(Arrays.asList(rsaKey,ecKey,okpKey,octKey));
 
         Client client = new Client();
         client.setClientId("clientId");
@@ -61,6 +74,6 @@ public class DynamicClientRegistrationResponseTest {
         assertNotNull("expecting response",response);
         assertEquals(response.getClientId(),"clientId");
         assertEquals(response.getClientName(),"clientName");
-        assertTrue(response.getJwks().getKeys().size()==2);
+        assertTrue(response.getJwks().getKeys().size()==4);
     }
 }

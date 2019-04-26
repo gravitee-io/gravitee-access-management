@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.common.certificate;
 
 
-import io.gravitee.am.gateway.handler.common.jwt.JwtBuilder;
-import io.gravitee.am.gateway.handler.common.jwt.JwtParser;
+import io.gravitee.am.gateway.handler.common.jwt.JWTBuilder;
+import io.gravitee.am.gateway.handler.common.jwt.JWTParser;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -26,8 +26,8 @@ import io.gravitee.am.gateway.handler.common.jwt.JwtParser;
 public class CertificateProvider {
 
     private io.gravitee.am.certificate.api.CertificateProvider provider;
-    private JwtParser jwtParser;
-    private JwtBuilder jwtBuilder;
+    private JWTParser jwtParser;
+    private JWTBuilder jwtBuilder;
 
     public CertificateProvider(io.gravitee.am.certificate.api.CertificateProvider provider) {
         this.provider = provider;
@@ -41,19 +41,19 @@ public class CertificateProvider {
         this.provider = provider;
     }
 
-    public JwtParser getJwtParser() {
+    public JWTParser getJwtParser() {
         return jwtParser;
     }
 
-    public void setJwtParser(JwtParser jwtParser) {
+    public void setJwtParser(JWTParser jwtParser) {
         this.jwtParser = jwtParser;
     }
 
-    public JwtBuilder getJwtBuilder() {
+    public JWTBuilder getJwtBuilder() {
         return jwtBuilder;
     }
 
-    public void setJwtBuilder(JwtBuilder jwtBuilder) {
+    public void setJwtBuilder(JWTBuilder jwtBuilder) {
         this.jwtBuilder = jwtBuilder;
     }
 }
