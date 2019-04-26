@@ -33,7 +33,7 @@ import static io.gravitee.am.common.oidc.ResponseType.*;
 public class ResponseTypeUtils {
 
     private static final Set<String> VALID_RESPONSE_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            CODE, TOKEN, ID_TOKEN
+            CODE, TOKEN, ID_TOKEN, ID_TOKEN_TOKEN, CODE_TOKEN, CODE_ID_TOKEN, CODE_ID_TOKEN_TOKEN
     )));
 
     /**

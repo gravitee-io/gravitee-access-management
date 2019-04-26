@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 import static io.gravitee.am.common.oauth2.GrantType.*;
 import static io.gravitee.am.common.oauth2.ResponseType.CODE;
 import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
-import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -80,25 +80,25 @@ public class GrantTypeUtils {
         Set grantType = client.getAuthorizedGrantTypes() != null ? new HashSet<>(client.getAuthorizedGrantTypes()) : new HashSet();
 
         //If response type contains "code", then grant_type must contains "authorization_code"
-        if(responseType.contains(CODE) && !grantType.contains(AUTHORIZATION_CODE)) {
+        if(mustHaveAuthorizationCode(responseType) && !grantType.contains(AUTHORIZATION_CODE)) {
             grantType.add(AUTHORIZATION_CODE);
             updatedGrantType=true;
         }
 
         //If response type contains "token" or "id_token", then grant_type must contains "implicit"
-        if((responseType.contains(TOKEN)||responseType.contains(ID_TOKEN)) && !grantType.contains(IMPLICIT)) {
+        if(mustHaveImplicit(responseType) && !grantType.contains(IMPLICIT)) {
             grantType.add(IMPLICIT);
             updatedGrantType=true;
         }
 
         //If grant_type contains authorization_code, response_type must contains code
-        if(grantType.contains(AUTHORIZATION_CODE) && !responseType.contains(CODE)) {
+        if(grantType.contains(AUTHORIZATION_CODE) && !mustHaveAuthorizationCode(responseType)) {
             grantType.remove(AUTHORIZATION_CODE);
             updatedGrantType=true;
         }
 
         //If grant_type contains implicit, response_type must contains token or id_token
-        if(grantType.contains(IMPLICIT) && (!responseType.contains(TOKEN) && !responseType.contains(ID_TOKEN))) {
+        if(grantType.contains(IMPLICIT) && !mustHaveImplicit(responseType)) {
             grantType.remove(IMPLICIT);
             updatedGrantType=true;
         }
@@ -115,5 +115,19 @@ public class GrantTypeUtils {
         }
 
         return client;
+    }
+
+    private static boolean mustHaveAuthorizationCode(Set<String> responseType) {
+        return responseType.contains(CODE) ||
+                responseType.contains(CODE_TOKEN) ||
+                responseType.contains(CODE_ID_TOKEN) ||
+                responseType.contains(CODE_ID_TOKEN_TOKEN);
+    }
+
+    private static boolean mustHaveImplicit(Set<String> responseType) {
+        return responseType.contains(TOKEN) ||
+                responseType.contains(ID_TOKEN) ||
+                responseType.contains(CODE_TOKEN) ||
+                responseType.contains(CODE_ID_TOKEN_TOKEN);
     }
 }
