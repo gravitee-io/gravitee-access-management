@@ -17,10 +17,10 @@ package io.gravitee.am.gateway.handler.root.spring;
 
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.am.gateway.handler.common.jwt.JwtBuilder;
-import io.gravitee.am.gateway.handler.common.jwt.JwtParser;
-import io.gravitee.am.gateway.handler.common.jwt.impl.JJwtBuilder;
-import io.gravitee.am.gateway.handler.common.jwt.impl.JJwtParser;
+import io.gravitee.am.gateway.handler.common.jwt.JWTBuilder;
+import io.gravitee.am.gateway.handler.common.jwt.JWTParser;
+import io.gravitee.am.gateway.handler.common.jwt.impl.JJWTBuilder;
+import io.gravitee.am.gateway.handler.common.jwt.impl.JJWTParser;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
@@ -55,16 +55,16 @@ public class RootConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public JwtParser jwtParser() {
+    public JWTParser jwtParser() {
         // jwt parser for token user registration
-        JwtParser jwtParser = new JJwtParser(Jwts.parser().setSigningKey(key()));
+        JWTParser jwtParser = new JJWTParser(Jwts.parser().setSigningKey(key()));
         return jwtParser;
     }
 
     @Bean
-    public JwtBuilder jwtBuilder() {
+    public JWTBuilder jwtBuilder() {
         // jwt builder for reset password
-        JwtBuilder jwtBuilder = new JJwtBuilder(Jwts.builder().signWith(key()).setHeaderParam(JwsHeader.KEY_ID, kid).setIssuer(issuer));
+        JWTBuilder jwtBuilder = new JJWTBuilder(Jwts.builder().signWith(key()).setHeaderParam(JwsHeader.KEY_ID, kid).setIssuer(issuer));
         return jwtBuilder;
     }
 

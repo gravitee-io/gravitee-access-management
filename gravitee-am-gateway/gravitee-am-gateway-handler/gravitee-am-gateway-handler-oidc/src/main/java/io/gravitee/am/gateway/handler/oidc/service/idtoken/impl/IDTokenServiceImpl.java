@@ -21,7 +21,8 @@ import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.idtoken.IDToken;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.jwt.JwtService;
+import io.gravitee.am.gateway.handler.common.jwe.JWEService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
@@ -49,7 +50,10 @@ public class IDTokenServiceImpl implements IDTokenService {
     private CertificateManager certificateManager;
 
     @Autowired
-    private JwtService jwtService;
+    private JWTService jwtService;
+
+    @Autowired
+    private JWEService jweService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -132,6 +136,12 @@ public class IDTokenServiceImpl implements IDTokenService {
                         });
                     }
                     return jwtService.encode(idToken, certificateProvider);
+                })
+                .flatMap(signedIdToken -> {
+                    if(client.getIdTokenEncryptedResponseAlg()!=null) {
+                        return jweService.encryptIdToken(signedIdToken, client);
+                    }
+                    return Single.just(signedIdToken);
                 });
     }
 

@@ -33,7 +33,7 @@ public enum KeyType {
     EC("EC","Elliptic Curve"),
     RSA("RSA","RSA"),
     OCT("oct","Octet sequence"),
-    OKP("OKP","Octet string key pairs");
+    OKP("OKP","Octet key pair");
 
     private String keyType;
     private String name;
@@ -46,6 +46,26 @@ public enum KeyType {
     public String getKeyType() { return keyType; }
     public String getName() { return name;}
 
+    public static KeyType parse(String keyType) {
+        if (keyType == null) {
+            throw new NullPointerException("KeyType name is null");
+        }
+
+        if(keyType.equals(RSA.getKeyType())) {
+            return RSA;
+        }
+        else if(keyType.equals(EC.getKeyType())) {
+            return EC;
+        }
+        else if(keyType.equals(OCT.getKeyType())) {
+            return OCT;
+        }
+        else if(keyType.equals(OKP.getKeyType())) {
+            return OKP;
+        }
+
+        throw new IllegalArgumentException("No enum constant with key type" + keyType);
+    }
 
     @Override
     public String toString() {

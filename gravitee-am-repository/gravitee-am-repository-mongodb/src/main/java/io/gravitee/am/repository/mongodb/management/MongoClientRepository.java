@@ -22,6 +22,8 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.KeyType;
+import io.gravitee.am.model.jose.OCTKey;
+import io.gravitee.am.model.jose.OKPKey;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ClientRepository;
@@ -309,12 +311,12 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
 
         JWK result;
 
-        switch (KeyType.valueOf(jwkMongo.getKty())) {
+        switch (KeyType.parse(jwkMongo.getKty())) {
             case EC: result = convertEC(jwkMongo);break;
             case RSA:result = convertRSA(jwkMongo);break;
-            case OCT:result = null;break;//TODO
-            case OKP:result = null;break;//TODO
-            default: result = null;//TODO
+            case OCT:result = convertOCT(jwkMongo);break;
+            case OKP:result = convertOKP(jwkMongo);break;
+            default: result = null;
         }
 
         result.setAlg(jwkMongo.getAlg());
@@ -345,6 +347,19 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         return key;
     }
 
+    private OCTKey convertOCT(JWKMongo ecKeyMongo) {
+        OCTKey key = new OCTKey();
+        key.setK(ecKeyMongo.getK());
+        return key;
+    }
+
+    private OKPKey convertOKP(JWKMongo ecKeyMongo) {
+        OKPKey key = new OKPKey();
+        key.setCrv(ecKeyMongo.getCrv());
+        key.setX(ecKeyMongo.getX());
+        return key;
+    }
+
     private List<JWKMongo> convert(JWKSet jwkSet) {
         if (jwkSet==null) {
             return null;
@@ -362,12 +377,12 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
 
         JWKMongo result;
 
-        switch (KeyType.valueOf(jwk.getKty())) {
+        switch (KeyType.parse(jwk.getKty())) {
             case EC: result = convert((ECKey)jwk);break;
             case RSA:result = convert((RSAKey)jwk);break;
-            case OCT:result = new JWKMongo();break;//TODO
-            case OKP:result = new JWKMongo();break;//TODO
-            default: result = new JWKMongo();//TODO
+            case OCT:result = convert((OCTKey)jwk);break;
+            case OKP:result = convert((OKPKey)jwk);break;
+            default: result = null;
         }
 
         result.setAlg(jwk.getAlg());
@@ -395,6 +410,19 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         key.setCrv(ecKey.getCrv());
         key.setX(ecKey.getX());
         key.setY(ecKey.getY());
+        return key;
+    }
+
+    private JWKMongo convert(OKPKey okpKey) {
+        JWKMongo key = new JWKMongo();
+        key.setCrv(okpKey.getCrv());
+        key.setX(okpKey.getX());
+        return key;
+    }
+
+    private JWKMongo convert(OCTKey octKey) {
+        JWKMongo key = new JWKMongo();
+        key.setK(octKey.getK());
         return key;
     }
 }

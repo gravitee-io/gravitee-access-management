@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.oidc;
 
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.am.gateway.handler.common.jwk.JwkService;
-import io.gravitee.am.gateway.handler.common.jwt.JwtService;
+import io.gravitee.am.gateway.handler.common.jwk.JWKService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
@@ -74,10 +74,10 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
     private ClientService clientService;
 
     @Autowired
-    private JwtService jwtService;
+    private JWTService jwtService;
 
     @Autowired
-    private JwkService jwkService;
+    private JWKService jwkService;
 
     @Autowired
     private DynamicClientRegistrationService dcrService;

@@ -23,12 +23,14 @@ import io.gravitee.am.gateway.handler.common.auth.idp.impl.IdentityProviderManag
 import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
-import io.gravitee.am.gateway.handler.common.jwk.JwkService;
-import io.gravitee.am.gateway.handler.common.jwk.impl.JwkServiceImpl;
-import io.gravitee.am.gateway.handler.common.jws.JwsService;
-import io.gravitee.am.gateway.handler.common.jws.impl.JwsServiceImpl;
-import io.gravitee.am.gateway.handler.common.jwt.JwtService;
-import io.gravitee.am.gateway.handler.common.jwt.impl.JwtServiceImpl;
+import io.gravitee.am.gateway.handler.common.jwe.JWEService;
+import io.gravitee.am.gateway.handler.common.jwe.impl.JWEServiceImpl;
+import io.gravitee.am.gateway.handler.common.jwk.JWKService;
+import io.gravitee.am.gateway.handler.common.jwk.impl.JWKServiceImpl;
+import io.gravitee.am.gateway.handler.common.jws.JWSService;
+import io.gravitee.am.gateway.handler.common.jws.impl.JWSServiceImpl;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
@@ -90,18 +92,23 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public JwtService jwtService() {
-        return new JwtServiceImpl();
+    public JWEService jweService() {
+        return new JWEServiceImpl();
     }
 
     @Bean
-    public JwkService jwkService() {
-        return new JwkServiceImpl();
+    public JWTService jwtService() {
+        return new JWTServiceImpl();
     }
 
     @Bean
-    public JwsService jwsService() {
-        return new JwsServiceImpl();
+    public JWKService jwkService() {
+        return new JWKServiceImpl();
+    }
+
+    @Bean
+    public JWSService jwsService() {
+        return new JWSServiceImpl();
     }
 
     @Bean

@@ -20,7 +20,8 @@ import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.jwt.JwtService;
+import io.gravitee.am.gateway.handler.common.jwe.JWEService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.impl.IDTokenServiceImpl;
@@ -36,11 +37,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
 
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -66,7 +67,10 @@ public class IDTokenServiceTest {
     private OpenIDDiscoveryService openIDDiscoveryService;
 
     @Mock
-    private JwtService jwtService;
+    private JWTService jwtService;
+
+    @Mock
+    private JWEService jweService;
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -158,6 +162,38 @@ public class IDTokenServiceTest {
         verify(certificateManager, times(1)).get(anyString());
         verify(certificateManager, times(1)).defaultCertificateProvider();
         verify(jwtService, times(1)).encode(any(), eq(defaultCert));
+    }
+
+    @Test
+    public void shouldCreateIDToken_clientOnly_defaultCertificate_withEncryption() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Collections.singleton("openid"));
+
+        Client client = new Client();
+        client.setCertificate("certificate-client");
+        client.setIdTokenEncryptedResponseAlg("expectEncryption");
+
+        String idTokenPayload = "payload";
+
+        io.gravitee.am.gateway.handler.common.certificate.CertificateProvider defaultCert = new io.gravitee.am.gateway.handler.common.certificate.CertificateProvider(defaultCertificateProvider);
+
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
+        when(certificateManager.get(any())).thenReturn(Maybe.empty());
+        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
+        when(jwtService.encode(any(), any(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
+        when(jweService.encryptIdToken(anyString(),any())).thenReturn(Single.just("encryptedToken"));
+
+        TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(certificateManager, times(1)).findByAlgorithm(any());
+        verify(certificateManager, times(1)).get(anyString());
+        verify(certificateManager, times(1)).defaultCertificateProvider();
+        verify(jwtService, times(1)).encode(any(), eq(defaultCert));
+        verify(jweService, times(1)).encryptIdToken(anyString(),any());
     }
 
     @Test

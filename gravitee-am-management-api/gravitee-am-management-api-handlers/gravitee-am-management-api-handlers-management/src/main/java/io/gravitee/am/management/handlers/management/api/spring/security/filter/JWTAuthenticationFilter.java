@@ -63,7 +63,7 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
     public JWTAuthenticationFilter(RequestMatcher requiresAuthenticationRequestMatcher) {
         super(requiresAuthenticationRequestMatcher);
         setAuthenticationManager(new NoopAuthenticationManager());
-        setAuthenticationSuccessHandler(new JwtAuthenticationSuccessHandler());
+        setAuthenticationSuccessHandler(new JWTAuthenticationSuccessHandler());
     }
 
     @Override
@@ -144,7 +144,7 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
     }
 
-    private static class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+    private static class JWTAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
         @Override
         public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {

@@ -26,8 +26,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Collections;
 import java.util.Set;
 
+import static org.junit.Assert.fail;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 public class MongoClientRepositoryTest extends AbstractManagementRepositoryTest {
@@ -156,4 +159,13 @@ public class MongoClientRepositoryTest extends AbstractManagementRepositoryTest 
         clientRepository.findById(clientCreated.getId()).test().assertEmpty();
     }
 
+    @Test
+    public void testConvertionAtoB() {
+        fail("to implement");
+    }
+
+    @Test
+    public void testConvertionBtoA() {
+        fail("to implement");
+    }
 }

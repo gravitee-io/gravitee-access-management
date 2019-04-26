@@ -23,8 +23,8 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.common.jwk.JwkService;
-import io.gravitee.am.gateway.handler.common.jws.JwsService;
+import io.gravitee.am.gateway.handler.common.jwk.JWKService;
+import io.gravitee.am.gateway.handler.common.jws.JWSService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.ClientAssertionServiceImpl;
@@ -54,6 +54,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
@@ -74,10 +75,10 @@ public class ClientAssertionServiceTest {
     private ClientSyncService clientSyncService;
 
     @Mock
-    private JwkService jwkService;
+    private JWKService jwkService;
 
     @Mock
-    private JwsService jwsService;
+    private JWSService jwsService;
 
     @Mock
     private OpenIDDiscoveryService openIDDiscoveryService;
@@ -358,7 +359,7 @@ public class ClientAssertionServiceTest {
         when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
-        when(jwkService.getKeys(any())).thenReturn(Maybe.just(jwkSet));
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(jwkSet));
         when(jwkService.getKey(any(),any())).thenReturn(Maybe.just(key));
         when(jwsService.isValidSignature(any(),any())).thenReturn(true);
 
@@ -370,7 +371,7 @@ public class ClientAssertionServiceTest {
 
     private KeyPair generareRsaKeyPair() throws NoSuchAlgorithmException{
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-        kpg.initialize(512);
+        kpg.initialize(2048);
         return kpg.generateKeyPair();
     }
 

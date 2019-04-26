@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.certificate;
 
+import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
 import io.gravitee.am.model.Domain;
 import io.reactivex.observers.TestObserver;
@@ -26,7 +27,9 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.mockito.Mockito.when;
+import java.util.Arrays;
+
+import static org.mockito.Mockito.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -44,7 +47,18 @@ public class CertificateManagerTest {
 
     @Before
     public void setUp() {
-        when(domain.getId()).thenReturn("domain-id");
+        CertificateProvider rs256CertificateProvider = mock(CertificateProvider.class);
+        CertificateProvider rs512CertificateProvider = mock(CertificateProvider.class);
+        when(rs256CertificateProvider.signatureAlgorithm()).thenReturn("RS256");
+        when(rs512CertificateProvider.signatureAlgorithm()).thenReturn("RS512");
+
+        io.gravitee.am.gateway.handler.common.certificate.CertificateProvider rs256CertProvider =
+                mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
+        io.gravitee.am.gateway.handler.common.certificate.CertificateProvider rs512CertProvider =
+                mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
+        when(rs256CertProvider.getProvider()).thenReturn(rs256CertificateProvider);
+        when(rs512CertProvider.getProvider()).thenReturn(rs512CertificateProvider);
+        doReturn(Arrays.asList(rs256CertProvider,rs512CertProvider)).when(certificateManager).providers();
     }
 
     @Test
@@ -74,17 +88,16 @@ public class CertificateManagerTest {
                 .assertNoValues();
     }
 
-    // TODO
-   /* @Test
+    @Test
     public void findByAlgorithm_foundAlgorithm() {
         TestObserver testObserver = certificateManager.findByAlgorithm("RS512").test();
         testObserver.assertComplete();
         testObserver
                 .assertComplete()
                 .assertValue(o -> "RS512".equals(
-                        ((CertificateProvider)o)
-                        .getProvider()
-                        .signatureAlgorithm()
+                        ((io.gravitee.am.gateway.handler.common.certificate.CertificateProvider)o)
+                                .getProvider()
+                                .signatureAlgorithm()
                 ));
-    }*/
+    }
 }

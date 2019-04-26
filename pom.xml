@@ -54,7 +54,8 @@
         <jjwt.version>0.10.6</jjwt.version>
         <rxjava.version>2.1.12</rxjava.version>
         <com.fasterxml.jackson.version>2.9.6</com.fasterxml.jackson.version>
-        <nimbus.version>5.14</nimbus.version>
+        <nimbus.version>7.1</nimbus.version>
+        <tink.version>1.2.2</tink.version>
         <freemarker.version>2.3.28</freemarker.version>
         <jsoup.version>1.10.1</jsoup.version>
         <mail.version>1.4.7</mail.version>
@@ -118,6 +119,12 @@
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
                 <version>${nimbus.version}</version>
+            </dependency>
+            <!-- Required in addition to nimbus for OKP keys -->
+            <dependency>
+                <groupId>com.google.crypto.tink</groupId>
+                <artifactId>tink</artifactId>
+                <version>${tink.version}</version>
             </dependency>
 
             <!-- Spring -->
