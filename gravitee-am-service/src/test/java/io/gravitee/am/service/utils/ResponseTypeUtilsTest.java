@@ -34,13 +34,16 @@ public class ResponseTypeUtilsTest {
 
     @Test
     public void test_code_token_id_token() {
-        boolean isValid = ResponseTypeUtils.isValidResponseType(Arrays.asList("code", "token", "id_token"));
+        boolean isValid = ResponseTypeUtils.isValidResponseType(Arrays.asList(
+                "code", "token", "id_token",
+                "id_token token", "code token", "code id_token","code id_token token")
+        );
         assertTrue("Were expecting to be true",isValid);
     }
 
     @Test
     public void test_unknown_response_type() {
-        boolean isValid = ResponseTypeUtils.isValidResponseType(Arrays.asList("unknown"));
+        boolean isValid = ResponseTypeUtils.isValidResponseType(Arrays.asList("code token id_token"));
         assertFalse("Were expecting to be false",isValid);
     }
 

@@ -13638,7 +13638,7 @@
 													"    var body = pm.response.json();",
 													"    pm.expect(body).to.have.property(\"responseTypes\");",
 													"    pm.expect(body).to.have.property(\"authorizedGrantTypes\");",
-													"    pm.expect(body.responseTypes).to.eql(['token', 'code']);",
+													"    pm.expect(body.responseTypes).to.eql(['token', 'code', 'code token']);",
 													"    pm.expect(body.authorizedGrantTypes).to.eql([ 'implicit', 'authorization_code' ]);",
 													"});",
 													"",
@@ -13665,7 +13665,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n   \"responseTypes\": [\"token\", \"code\"],\n   \"clientName\": \"Client was created via DCR\"\n  }"
+											"raw": "{\n   \"responseTypes\": [\"token\", \"code\", \"code token\"],\n   \"clientName\": \"Client was created via DCR\"\n  }"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/domains/test/clients/{{newClientForDCRTests}}",
@@ -13700,7 +13700,7 @@
 													"    var body = pm.response.json();",
 													"    pm.expect(body).to.have.property(\"redirect_uris\");",
 													"    pm.expect(body).to.have.property(\"grant_types\");",
-													"    pm.expect(body.response_types).to.eql([ 'token','code' ]);",
+													"    pm.expect(body.response_types).to.eql([ 'token','code','code token' ]);",
 													"    pm.expect(body.grant_types).to.eql([ 'implicit','authorization_code' ]);",
 													"    pm.expect(body.client_name).to.eql('Client was created via DCR');",
 													"    ",
@@ -13756,6 +13756,8 @@
 													"    pm.response.to.be.header('Content-Type', 'application/json');",
 													"    var body = pm.response.json();",
 													"    pm.expect(body.client_name).to.eql('Client patched via DCR');",
+													"    pm.expect(body).to.have.property(\"response_types\");",
+													"    pm.expect(body.response_types).to.eql(['token', 'code', 'code id_token']);",
 													"});",
 													"",
 													"pm.test(\"One time Token\", function() {",
@@ -13786,7 +13788,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n   \"client_name\": \"Client patched via DCR\"\n}"
+											"raw": "{\n   \"client_name\": \"Client patched via DCR\",\n   \"response_types\" : [\"token\", \"code\", \"code id_token\"]\n}"
 										},
 										"url": {
 											"raw": "{{registrationClientUri}}",
@@ -13813,6 +13815,8 @@
 													"    pm.response.to.be.header('Content-Type', 'application/json');",
 													"    var body = pm.response.json();",
 													"    pm.expect(body.client_name).to.eql('Client name updated via DCR');",
+													"    pm.expect(body).to.have.property(\"response_types\");",
+													"    pm.expect(body.response_types).to.eql(['code']);",
 													"});",
 													"",
 													"pm.test(\"One time Token\", function() {",
