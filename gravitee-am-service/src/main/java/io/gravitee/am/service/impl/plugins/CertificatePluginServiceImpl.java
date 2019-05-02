@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.plugins;
+package io.gravitee.am.service.impl.plugins;
 
-import io.gravitee.am.management.service.CertificatePluginService;
+import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.CertificatePlugin;

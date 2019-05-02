@@ -16,9 +16,11 @@
 package io.gravitee.am.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.plugins.certificate.core.CertificateSchema;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -27,12 +29,13 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 import java.util.List;
@@ -63,6 +66,9 @@ public class CertificateServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private CertificatePluginService certificatePluginService;
 
     private final static String DOMAIN = "domain1";
 
@@ -182,5 +188,50 @@ public class CertificateServiceTest {
         verify(certificateRepository, times(1)).findById("my-certificate");
         verify(clientService, times(1)).findByCertificate("my-certificate");
         verify(certificateRepository, never()).delete("my-certificate");
+    }
+
+    @Test
+    @Ignore
+    public void shouldCreate_defaultCertificate() throws Exception {
+        when(objectMapper.readValue(anyString(), eq(CertificateSchema.class))).thenReturn(new CertificateSchema());
+        when(objectMapper.createObjectNode()).thenReturn(mock(ObjectNode.class));
+        when(certificatePluginService.getSchema(CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN))
+                .thenReturn(Maybe.just("{\n" +
+                        "  \"type\" : \"object\",\n" +
+                        "  \"id\" : \"urn:jsonschema:io:gravitee:am:certificate:pkcs12:PKCS12Configuration\",\n" +
+                        "  \"properties\" : {\n" +
+                        "    \"content\" : {\n" +
+                        "      \"title\": \"PKCS#12 file\",\n" +
+                        "      \"description\": \"PKCS file\",\n" +
+                        "      \"type\" : \"string\",\n" +
+                        "      \"widget\" : \"file\"\n" +
+                        "    },\n" +
+                        "    \"storepass\" : {\n" +
+                        "      \"title\": \"Keystore password\",\n" +
+                        "      \"description\": \"The password which is used to protect the integrity of the keystore.\",\n" +
+                        "      \"type\" : \"string\"\n" +
+                        "    },\n" +
+                        "    \"alias\" : {\n" +
+                        "      \"title\": \"Key alias\",\n" +
+                        "      \"description\": \"Alias which identify the keystore entry.\",\n" +
+                        "      \"type\" : \"string\"\n" +
+                        "    },\n" +
+                        "    \"keypass\" : {\n" +
+                        "      \"title\": \"Key password\",\n" +
+                        "      \"description\": \"The password used to protect the private key of the generated key pair.\",\n" +
+                        "      \"type\" : \"string\"\n" +
+                        "    }\n" +
+                        "  },\n" +
+                        "  \"required\": [\n" +
+                        "    \"content\",\n" +
+                        "    \"storepass\",\n" +
+                        "    \"alias\",\n" +
+                        "    \"keypass\"\n" +
+                        "  ]\n" +
+                        "}"));
+        TestObserver testObserver = certificateService.create("my-domain").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
     }
 }

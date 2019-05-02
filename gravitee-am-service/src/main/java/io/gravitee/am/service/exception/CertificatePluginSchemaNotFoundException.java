@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.exception;
+package io.gravitee.am.service.exception;
 
 import io.gravitee.am.service.exception.AbstractNotFoundException;
 
@@ -21,16 +21,16 @@ import io.gravitee.am.service.exception.AbstractNotFoundException;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificatePluginNotFoundException extends AbstractNotFoundException {
+public class CertificatePluginSchemaNotFoundException extends AbstractNotFoundException {
 
     private final String certificate;
 
-    public CertificatePluginNotFoundException(String certificate) {
+    public CertificatePluginSchemaNotFoundException(String certificate) {
         this.certificate = certificate;
     }
 
     @Override
     public String getMessage() {
-        return "Certificate plugin [" + certificate + "] can not be found.";
+        return "Certificate plugin schema for [" + certificate + "] can not be found.";
     }
 }
