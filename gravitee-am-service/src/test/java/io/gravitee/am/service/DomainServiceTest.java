@@ -24,10 +24,7 @@ import io.gravitee.am.service.exception.DomainDeleteMasterException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.DomainServiceImpl;
-import io.gravitee.am.service.model.NewDomain;
-import io.gravitee.am.service.model.NewSystemScope;
-import io.gravitee.am.service.model.PatchDomain;
-import io.gravitee.am.service.model.UpdateDomain;
+import io.gravitee.am.service.model.*;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -224,6 +221,7 @@ public class DomainServiceTest {
         domain.setId("domain-id");
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(certificateService.create(eq(domain.getId()))).thenReturn(Single.just(new Certificate()));
 
         TestObserver testObserver = domainService.create(newDomain).test();
         testObserver.awaitTerminalEvent();
@@ -234,6 +232,7 @@ public class DomainServiceTest {
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).create(any(Domain.class));
         verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(anyString(), any(NewSystemScope.class));
+        verify(certificateService).create(eq(domain.getId()));
     }
 
     @Test

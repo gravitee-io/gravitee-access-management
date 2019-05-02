@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
-import io.gravitee.am.management.service.CertificatePluginService;
+import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.model.plugin.CertificatePlugin;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

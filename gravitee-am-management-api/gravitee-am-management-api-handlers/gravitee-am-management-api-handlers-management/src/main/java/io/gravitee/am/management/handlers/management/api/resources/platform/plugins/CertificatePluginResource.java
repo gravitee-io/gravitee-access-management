@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
-import io.gravitee.am.management.service.CertificatePluginService;
-import io.gravitee.am.management.service.exception.CertificatePluginNotFoundException;
-import io.gravitee.am.management.service.exception.CertificatePluginSchemaNotFoundException;
+import io.gravitee.am.service.CertificatePluginService;
+import io.gravitee.am.service.exception.CertificatePluginNotFoundException;
+import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;

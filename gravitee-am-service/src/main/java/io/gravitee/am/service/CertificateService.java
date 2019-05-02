@@ -39,9 +39,15 @@ public interface CertificateService {
 
     Single<List<Certificate>> findByDomain(String domain);
 
-    Single<Certificate> create(String domain, NewCertificate newCertificate, String schema, User principal);
+    /**
+     * This method is used to create a default certificate (mainly used when creating a new domain).
+     * @return
+     */
+    Single<Certificate> create(String domain);
 
-    Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema, User principal);
+    Single<Certificate> create(String domain, NewCertificate newCertificate, User principal);
+
+    Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal);
 
     Single<Certificate> update(Certificate certificate);
 
@@ -53,12 +59,12 @@ public interface CertificateService {
 
     Maybe<CertificateProvider> getCertificateProvider(String certificateId);
 
-    default Single<Certificate> create(String domain, NewCertificate newCertificate, String schema) {
-        return create(domain, newCertificate, schema, null);
+    default Single<Certificate> create(String domain, NewCertificate newCertificate) {
+        return create(domain, newCertificate, null);
     }
 
-    default Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, String schema) {
-        return update(domain, id, updateCertificate, schema, null);
+    default Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate) {
+        return update(domain, id, updateCertificate, null);
     }
 
     default Completable delete(String certificateId) {
