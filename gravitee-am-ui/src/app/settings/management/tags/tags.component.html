@@ -52,7 +52,7 @@
                   [subMessage]="'Start creating a sharding tag'"
                   [icon]="'filter_none'"></app-emptystate>
 
-  <div *ngIf="!adminContext" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>
