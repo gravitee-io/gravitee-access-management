@@ -18878,12 +18878,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/gravitee/scim/ServiceProviderConfig",
+									"raw": "{{gateway_url}}/test/scim/ServiceProviderConfig",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"gravitee",
+										"test",
 										"scim",
 										"ServiceProviderConfig"
 									]
@@ -18928,12 +18928,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/gravitee/scim/Users",
+									"raw": "{{gateway_url}}/test/scim/Users",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"gravitee",
+										"test",
 										"scim",
 										"Users"
 									]
