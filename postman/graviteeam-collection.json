@@ -11943,6 +11943,398 @@
 							"_postman_isSubFolder": true
 						},
 						{
+							"name": "Case - open DCR",
+							"item": [
+								{
+									"name": "Configure open DCR",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "286df3a2-0e06-4b00-9614-3b0fd9ceecb9",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"DCR enabled for domain\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled).to.eql(true);",
+													"    pm.expect(jsonData.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled).to.eql(true);",
+													"});",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 5000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"oidc\": {\n    \"clientRegistrationSettings\": {\n      \"allowLocalhostRedirectUri\": false,\n      \"allowHttpSchemeRedirectUri\": false,\n      \"allowWildCardRedirectUri\": false,\n      \"isDynamicClientRegistrationEnabled\": true,\n      \"isOpenDynamicClientRegistrationEnabled\": true\n    }\n  }\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Register open client",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"Has default attributes\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.client_name).to.eql('open_dcr_client');",
+													"    ",
+													"    pm.environment.set('newClientForDCRTests', body.id);",
+													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"client_name\": \"open_dcr_client\",\t\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"public\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
+										},
+										"url": {
+											"raw": "{{registrationEndpoint}}",
+											"host": [
+												"{{registrationEndpoint}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch open client",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Patch client with response types\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property(\"responseTypes\");",
+													"    pm.expect(body).to.have.property(\"authorizedGrantTypes\");",
+													"    pm.expect(body.responseTypes).to.eql(['token', 'code', 'code token']);",
+													"    pm.expect(body.authorizedGrantTypes).to.eql([ 'implicit', 'authorization_code' ]);",
+													"});",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 5000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"responseTypes\": [\"token\", \"code\", \"code token\"],\n   \"clientName\": \"Client was created via DCR\"\n  }"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/test/clients/{{newClientForDCRTests}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"test",
+												"clients",
+												"{{newClientForDCRTests}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get open client - with registration token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Get client with response types\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property(\"redirect_uris\");",
+													"    pm.expect(body).to.have.property(\"grant_types\");",
+													"    pm.expect(body.response_types).to.eql([ 'token','code','code token' ]);",
+													"    pm.expect(body.grant_types).to.eql([ 'implicit','authorization_code' ]);",
+													"    pm.expect(body.client_name).to.eql('Client was created via DCR');",
+													"    ",
+													"    //The Authorization Server need not include the registration_access_token or registration_client_uri value in this response unless they have been updated.",
+													"    pm.expect(body).to.not.have.property('registration_access_token');",
+													"    pm.expect(body).to.not.have.property('registration_client_uri');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch open client - with registration token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Get client with response types\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.client_name).to.eql('Client patched via DCR');",
+													"    pm.expect(body).to.have.property(\"response_types\");",
+													"    pm.expect(body.response_types).to.eql(['token', 'code', 'code id_token']);",
+													"});",
+													"",
+													"pm.test(\"One time Token\", function() {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('registration_access_token');",
+													"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
+													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   \"client_name\": \"Client patched via DCR\",\n   \"response_types\" : [\"token\", \"code\", \"code id_token\"]\n}"
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update open client - with registration token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Get client with response types\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.client_name).to.eql('Client name updated via DCR');",
+													"    pm.expect(body).to.have.property(\"response_types\");",
+													"    pm.expect(body.response_types).to.eql(['code']);",
+													"});",
+													"",
+													"pm.test(\"One time Token\", function() {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('registration_access_token');",
+													"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
+													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"redirect_uris\": [\n        \"https://client.example.org/callback\",\n        \"https://client.example.org/callback2\"\n    ],\n    \"response_types\": [\n        \"code\"\n    ],\n    \"grant_types\": [\n        \"authorization_code\"\n    ],\n    \"application_type\": \"web\",\n    \"contacts\": [\n        \"marie@example.org\",\n        \"jeanne@example.org\"\n    ],\n\t\"client_name\": \"Client name updated via DCR\",\n    \"logo_uri\": \"https://client.example.org/logo.png\",\n    \"subject_type\": \"public\",\n    \"userinfo_encrypted_response_alg\": \"RSA1_5\",\n    \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"require_auth_time\": false,\n    \"request_uris\": [\n        \"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"\n    ],\n    \"scope\": \"openid\"\n}"
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete open client - with registration token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+												"exec": [
+													"pm.test(\"Status code is 204\", function () {",
+													"    pm.response.to.have.status(204);",
+													"});",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{registrationAccessToken}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{registrationClientUri}}",
+											"host": [
+												"{{registrationClientUri}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
 							"name": "Configure domain",
 							"item": [
 								{

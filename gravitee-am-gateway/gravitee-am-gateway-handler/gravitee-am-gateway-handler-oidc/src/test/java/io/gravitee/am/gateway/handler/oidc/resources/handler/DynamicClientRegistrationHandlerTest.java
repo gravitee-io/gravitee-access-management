@@ -15,31 +15,17 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.handler;
 
-import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
-import io.gravitee.am.common.oidc.Scope;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.common.jwt.JwtService;
-import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
-import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
+import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbiddenException;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Date;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.Mockito.*;
 
@@ -47,34 +33,20 @@ import static org.mockito.Mockito.*;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-// TODO
-//@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class DynamicClientRegistrationHandlerTest {
-
-   /* @Mock
-    private TokenService tokenService;
-
-    @Mock
-    private ClientSyncService clientSyncService;
-
-    @Mock
-    private JwtService jwtService;
 
     @Mock
     private Domain domain;
 
+    @Mock
+    private OAuth2AuthHandler oAuth2AuthHandler;
+
     @InjectMocks
-    private DynamicClientRegistrationHandler handler = new DynamicClientRegistrationHandler(tokenService, clientSyncService, jwtService, domain);
+    private DynamicClientRegistrationHandler handler = new DynamicClientRegistrationHandler(domain, oAuth2AuthHandler);
 
     @Mock
     private RoutingContext context;
-
-    @Before
-    public void setUp() {
-        HttpServerRequest request = Mockito.mock(HttpServerRequest.class);
-        when(context.request()).thenReturn(request);
-        when(request.getHeader("Authorization")).thenReturn("Bearer abc");
-    }
 
     @Test
     public void register_withNullOidcSettings() {
@@ -97,7 +69,6 @@ public class DynamicClientRegistrationHandlerTest {
         Assert.assertTrue("Should return a DCR disabled exception", exceptionCaptor.getValue() instanceof ClientRegistrationForbiddenException);
     }
 
-
     @Test
     public void register_withOidcDcrEnabled_openDcrEnabled() {
         when(domain.isOpenDynamicClientRegistrationEnabled()).thenReturn(true);
@@ -105,11 +76,20 @@ public class DynamicClientRegistrationHandlerTest {
         handler.handle(context);
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(context, times(1)).put(keyCaptor.capture(), any());
-        Assert.assertTrue("Should put the domain in context", keyCaptor.getValue().equals("domain"));
         verify(context, times(1)).next();
     }
 
+    @Test
+    public void register_withOidcDcrEnabled() {
+        when(domain.isDynamicClientRegistrationEnabled()).thenReturn(true);
+
+        handler.handle(context);
+
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(oAuth2AuthHandler, times(1)).handle(context);
+    }
+
+    /*
     @Test
     public void register_withOidcDcrEnabled_notAuthenticated() {
         when(domain.isDynamicClientRegistrationEnabled()).thenReturn(true);
@@ -210,5 +190,6 @@ public class DynamicClientRegistrationHandlerTest {
         verify(context, times(2)).put(keyCaptor.capture(), any());
         Assert.assertTrue("Should put the domain in context", keyCaptor.getValue().equals("domain"));
         verify(context, times(1)).next();
-    }*/
+    }
+    */
 }
