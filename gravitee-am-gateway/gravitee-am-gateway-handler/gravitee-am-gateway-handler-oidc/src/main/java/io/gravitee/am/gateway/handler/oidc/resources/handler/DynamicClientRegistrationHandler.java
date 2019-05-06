@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.handler;
 
+import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbiddenException;
 import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
@@ -36,11 +37,13 @@ import org.slf4j.LoggerFactory;
 public class DynamicClientRegistrationHandler implements Handler<RoutingContext> {
 
     private Domain domain;
+    private OAuth2AuthHandler oAuth2AuthHandler;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DynamicClientRegistrationHandler.class);
 
-    public DynamicClientRegistrationHandler(Domain domain) {
+    public DynamicClientRegistrationHandler(Domain domain, OAuth2AuthHandler oAuth2AuthHandler) {
         this.domain = domain;
+        this.oAuth2AuthHandler = oAuth2AuthHandler;
     }
 
     @Override
@@ -60,6 +63,6 @@ public class DynamicClientRegistrationHandler implements Handler<RoutingContext>
             return;
         }
 
-        context.next();
+        this.oAuth2AuthHandler.handle(context);
     }
 }

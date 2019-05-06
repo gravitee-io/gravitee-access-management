@@ -156,13 +156,12 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
         dynamicClientRegistrationAuthHandler.extractClient(true);
         dynamicClientRegistrationAuthHandler.forceClientToken(true);
 
-        DynamicClientRegistrationHandler dynamicClientRegistrationHandler = new DynamicClientRegistrationHandler(domain);
+        DynamicClientRegistrationHandler dynamicClientRegistrationHandler = new DynamicClientRegistrationHandler(domain, dynamicClientRegistrationAuthHandler);
         DynamicClientRegistrationEndpoint dynamicClientRegistrationEndpoint = new DynamicClientRegistrationEndpoint(dcrService, clientService, clientSyncService);
         oidcRouter
                 .route(HttpMethod.POST, "/register")
                 .consumes(MediaType.APPLICATION_JSON)
                 .handler(dynamicClientRegistrationHandler)
-                .handler(dynamicClientRegistrationAuthHandler)
                 .handler(dynamicClientRegistrationEndpoint);
 
         // Dynamic Client Configuration
