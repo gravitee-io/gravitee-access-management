@@ -147,6 +147,14 @@ connectMongo: ## Connect to mongo repository on gravitee-am database
 
 reset: stop deleteData start ## Stop containers, delete mongodb data and restart container
 
+postman: ## Run postman non regression test (require newman npm module)
+	@newman run postman/collections/graviteeio-am-openid-discovery-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+	@newman run postman/collections/graviteeio-am-oauth2-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+	@newman run postman/collections/graviteeio-am-openid-core-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+	@newman run postman/collections/graviteeio-am-openid-dcr-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+	@newman run postman/collections/graviteeio-am-scim-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+	@newman run postman/collections/graviteeio-am-user-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+
 oidctest-run: oidctest-install oidctest-start ## Run openid-certification tools, using same docker network
 
 oidctest-install: # Clone openid-certification tools and set same docker network
@@ -189,4 +197,4 @@ prune: deleteData deleteContainer deleteImage deleteNetwork ## /!\ Erase all (re
 	@rm -rf .working
 
 .DEFAULT_GOAL := help
-.PHONY: all test clean build version
+.PHONY: all test clean build version postman
