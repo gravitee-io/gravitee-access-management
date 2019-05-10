@@ -20,6 +20,7 @@ import io.gravitee.am.common.oauth2.exception.InvalidRequestException;
 import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.gateway.handler.common.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
@@ -59,11 +60,13 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
 
     private UserService userService;
     private JWTService jwtService;
+    private JWEService jweService;
     private OpenIDDiscoveryService openIDDiscoveryService;
 
-    public UserInfoEndpoint(UserService userService, JWTService jwtService, OpenIDDiscoveryService openIDDiscoveryService) {
+    public UserInfoEndpoint(UserService userService, JWTService jwtService, JWEService jweService, OpenIDDiscoveryService openIDDiscoveryService) {
         this.userService = userService;
         this.jwtService = jwtService;
+        this.jweService = jweService;
         this.openIDDiscoveryService = openIDDiscoveryService;
     }
 
@@ -106,11 +109,13 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                     return (requestForSpecificClaims) ? requestedClaims : userClaims;
                  })
                 .flatMapSingle(claims -> {
-                        if(client.getUserinfoSignedResponseAlg()==null) {
+                        if(!expectSignedOrEncyptedUserinfo(client)) {
                             context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
                             return Single.just(Json.encodePrettily(claims));
                         }
                         else {
+                            context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JWT);
+
                             JWT jwt = new JWT(claims);
                             jwt.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.extractBasePath(context)));
                             jwt.setSub(accessToken.getSub());
@@ -118,8 +123,8 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                             jwt.setIat(new Date().getTime() / 1000l);
                             jwt.setExp(accessToken.getExp() / 1000l);
 
-                            context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JWT);
-                            return jwtService.encodeUserinfo(jwt,client);
+                            return jwtService.encodeUserinfo(jwt,client)//Sign if needed, else return unsigned JWT
+                                    .flatMap(userinfo -> jweService.encryptUserinfo(userinfo,client));//Encrypt if needed, else return JWT
                         }
                     }
                 )
@@ -131,6 +136,14 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                         ,
                         error -> context.fail(error)
                 );
+    }
+
+    /**
+     * @param client Client
+     * @return Return true if client request signed or encrypted (or both) userinfo.
+     */
+    private boolean expectSignedOrEncyptedUserinfo(Client client) {
+        return client.getUserinfoSignedResponseAlg()!=null || client.getUserinfoEncryptedResponseAlg()!=null;
     }
 
     /**

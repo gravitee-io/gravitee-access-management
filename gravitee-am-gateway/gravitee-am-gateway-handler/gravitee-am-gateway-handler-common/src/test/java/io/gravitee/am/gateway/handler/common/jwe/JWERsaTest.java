@@ -130,4 +130,42 @@ public class JWERsaTest {
             fail(e.getMessage());
         }
     }
+
+    @Test
+    public void encryptUserinfo() {
+        try {
+            KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+            gen.initialize(this.keySize);
+            KeyPair keyPair = gen.generateKeyPair();
+
+            com.nimbusds.jose.jwk.RSAKey jwk = new com.nimbusds.jose.jwk.RSAKey.Builder((RSAPublicKey)keyPair.getPublic())
+                    .privateKey((RSAPrivateKey)keyPair.getPrivate())
+                    .build();
+
+            RSAKey key = new RSAKey();
+            key.setKid("rsaEnc");
+            key.setUse("enc");
+            key.setE(jwk.getPublicExponent().toString());
+            key.setN(jwk.getModulus().toString());
+
+            Client client = new Client();
+            client.setUserinfoEncryptedResponseAlg(this.alg);
+            client.setUserinfoEncryptedResponseEnc(this.enc);
+
+            when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
+            when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+
+            TestObserver testObserver = jweService.encryptUserinfo("JWT", client).test();
+            testObserver.assertNoErrors();
+            testObserver.assertComplete();
+            testObserver.assertValue(jweString -> {
+                JWEObject jwe = JWEObject.parse((String)jweString);
+                jwe.decrypt(new RSADecrypter(jwk));
+                return "JWT".equals(jwe.getPayload().toString());
+            });
+        }
+        catch(NoSuchAlgorithmException e) {
+            fail(e.getMessage());
+        }
+    }
 }

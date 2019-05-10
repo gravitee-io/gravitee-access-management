@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.jwt;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Client;
 import io.reactivex.Maybe;
 import io.reactivex.observers.TestObserver;
@@ -27,6 +28,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.Date;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -50,9 +53,11 @@ public class JWTServiceTest {
         JWTBuilder rs256JWTBuilder = mock(JWTBuilder.class);
         JWTBuilder rs512JWTBuilder = mock(JWTBuilder.class);
         JWTBuilder defaultJWTBuilder = mock(JWTBuilder.class);
+        JWTBuilder noneAlgBuilder = mock(JWTBuilder.class);
         when(rs256JWTBuilder.sign(any())).thenReturn("token_rs_256");
         when(rs512JWTBuilder.sign(any())).thenReturn("token_rs_512");
         when(defaultJWTBuilder.sign(any())).thenReturn("token_default");
+        when(noneAlgBuilder.sign(any())).thenReturn("not_signed_jwt");
 
         io.gravitee.am.gateway.handler.common.certificate.CertificateProvider rs256CertProvider =
                 mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
@@ -60,17 +65,20 @@ public class JWTServiceTest {
                 mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
         io.gravitee.am.gateway.handler.common.certificate.CertificateProvider defaultCertProvider =
                 mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
+        io.gravitee.am.gateway.handler.common.certificate.CertificateProvider noneAlgCertProvider =
+                mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
         when(rs256CertProvider.getJwtBuilder()).thenReturn(rs256JWTBuilder);
         when(rs512CertProvider.getJwtBuilder()).thenReturn(rs512JWTBuilder);
         when(defaultCertProvider.getJwtBuilder()).thenReturn(defaultJWTBuilder);
+        when(noneAlgCertProvider.getJwtBuilder()).thenReturn(noneAlgBuilder);
 
-        when(certificateManager.findByAlgorithm(null)).thenReturn(Maybe.empty());
         when(certificateManager.findByAlgorithm("unknown")).thenReturn(Maybe.empty());
         when(certificateManager.findByAlgorithm("RS512")).thenReturn(Maybe.just(rs512CertProvider));
         when(certificateManager.get(null)).thenReturn(Maybe.empty());
         when(certificateManager.get("notExistingId")).thenReturn(Maybe.empty());
         when(certificateManager.get("existingId")).thenReturn(Maybe.just(rs256CertProvider));
         when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCertProvider);
+        when(certificateManager.noneAlgorithmCertificateProvider()).thenReturn(noneAlgCertProvider);
     }
 
     @Test
@@ -97,10 +105,9 @@ public class JWTServiceTest {
         testObserver.assertValue(o -> o.equals(expectedResult));
     }
 
-
     @Test
-    public void encodeUserinfo_defaultCertificate() {
-        this.testEncodeUserinfo(null, null,"token_default");
+    public void encodeUserinfo_withoutSignature() {
+        this.testEncodeUserinfo(null, null,"not_signed_jwt");
     }
 
     @Test

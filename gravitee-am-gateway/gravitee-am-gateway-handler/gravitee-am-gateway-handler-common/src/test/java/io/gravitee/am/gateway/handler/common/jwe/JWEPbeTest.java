@@ -104,4 +104,31 @@ public class JWEPbeTest {
             return "JWT".equals(jwe.getPayload().toString());
         });
     }
+
+    @Test
+    public void encryptUserinfo() {
+        // Convert to JWK format
+        OctetSequenceKey jwk = new OctetSequenceKey.Builder("secret".getBytes()).build();
+
+        OCTKey key = new OCTKey();
+        key.setKid("octEnc");
+        key.setUse("enc");
+        key.setK(jwk.getKeyValue().toString());
+
+        Client client = new Client();
+        client.setUserinfoEncryptedResponseAlg(this.alg);
+        client.setUserinfoEncryptedResponseEnc(this.enc);
+
+        when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+
+        TestObserver testObserver = jweService.encryptUserinfo("JWT", client).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(jweString -> {
+            JWEObject jwe = JWEObject.parse((String)jweString);
+            jwe.decrypt(new PasswordBasedDecrypter(jwk.getKeyValue().decode()));
+            return "JWT".equals(jwe.getPayload().toString());
+        });
+    }
 }

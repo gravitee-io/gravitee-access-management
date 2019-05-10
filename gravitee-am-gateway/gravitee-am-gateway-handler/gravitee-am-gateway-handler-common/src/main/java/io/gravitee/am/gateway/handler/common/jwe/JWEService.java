@@ -25,10 +25,18 @@ import io.reactivex.Single;
 public interface JWEService {
 
     /**
-     * Encode raw JWT to JWT signed representation using userinfo_signed_response_alg Client preferences.
+     * Encode raw JWT to JWT signed representation using id_token_encrypted_response_alg Client preferences.
      * @param signedJwt Signed JWT to encrypt
-     * @param client client which want to sign the token
-     * @return JWT signed string representation
+     * @param client client which want to encrypt the token
+     * @return JWT encrypted string representation
      */
     Single<String> encryptIdToken(String signedJwt, Client client);
+
+    /**
+     * Encode raw JWT to JWT signed representation using userinfo_encrypted_response_alg Client preferences.
+     * @param signedJwt Signed JWT to encrypt
+     * @param client client which want to encrypt the token
+     * @return JWT encrypted string representation
+     */
+    Single<String> encryptUserinfo(String signedJwt, Client client);
 }

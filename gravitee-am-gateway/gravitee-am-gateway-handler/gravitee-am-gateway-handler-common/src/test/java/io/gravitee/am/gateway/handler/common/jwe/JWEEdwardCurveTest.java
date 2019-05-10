@@ -123,4 +123,40 @@ public class JWEEdwardCurveTest {
             fail(e.getMessage());
         }
     }
+
+    @Test
+    public void encryptUserinfo() {
+        try {
+            final OctetKeyPair jwk = new OctetKeyPairGenerator(Curve.X25519).generate();
+            OKPKey key = new OKPKey();
+            key.setKid("okpEnc");
+            key.setUse("enc");
+            key.setCrv(jwk.getCurve().getName());
+            key.setX(jwk.getX().toString());
+
+            Client client = new Client();
+            client.setUserinfoEncryptedResponseAlg(alg);
+            client.setUserinfoEncryptedResponseEnc(enc);
+
+            when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
+            when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+
+            TestObserver testObserver = jweService.encryptUserinfo("JWT", client).test();
+            testObserver.assertNoErrors();
+            testObserver.assertComplete();
+            testObserver.assertValue(jweString -> {
+                try {
+                    JWEObject jwe = JWEObject.parse((String)jweString);
+                    jwe.decrypt(new X25519Decrypter(jwk));
+                    return "JWT".equals(jwe.getPayload().toString());
+                }catch (JOSEException e) {
+                    fail(e.getMessage());
+                }
+                return false;
+            });
+        }
+        catch (JOSEException e) {
+            fail(e.getMessage());
+        }
+    }
 }
