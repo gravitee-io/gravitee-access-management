@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oidc;
 
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.common.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwk.JWKService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
@@ -80,6 +81,9 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
     private JWKService jwkService;
 
     @Autowired
+    private JWEService jweService;
+
+    @Autowired
     private DynamicClientRegistrationService dcrService;
 
     @Autowired
@@ -131,7 +135,7 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
         userInfoAuthHandler.extractClient(true);
         userInfoAuthHandler.forceEndUserToken(true);
 
-        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, discoveryService);
+        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, jweService, discoveryService);
         oidcRouter.route("/userinfo").handler(corsHandler);
         oidcRouter
                 .route(HttpMethod.GET, "/userinfo")

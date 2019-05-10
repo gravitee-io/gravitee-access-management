@@ -61,6 +61,11 @@ public class JWTServiceImpl implements JWTService {
 
     @Override
     public Single<String> encodeUserinfo(JWT jwt, Client client) {
+        //Userinfo may not be signed but only encrypted
+        if(client.getUserinfoSignedResponseAlg()==null) {
+            return encode(jwt,certificateManager.noneAlgorithmCertificateProvider());
+        }
+
         return certificateManager.findByAlgorithm(client.getUserinfoSignedResponseAlg())
                 .switchIfEmpty(certificateManager.get(client.getCertificate()))
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())

@@ -169,6 +169,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateSectorIdentifierUri)
                 .flatMap(this::validateJKWs)
                 .flatMap(this::validateUserinfoSigningAlgorithm)
+                .flatMap(this::validateUserinfoEncryptionAlgorithm)
                 .flatMap(this::validateIdTokenSigningAlgorithm)
                 .flatMap(this::validateIdTokenEncryptionAlgorithm)
                 .flatMap(this::validateScopes);
@@ -189,6 +190,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateSectorIdentifierUri)
                 .flatMap(this::validateJKWs)
                 .flatMap(this::validateUserinfoSigningAlgorithm)
+                .flatMap(this::validateUserinfoEncryptionAlgorithm)
                 .flatMap(this::validateIdTokenSigningAlgorithm)
                 .flatMap(this::validateIdTokenEncryptionAlgorithm);
     }
@@ -241,6 +243,28 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         return Single.just(request);
     }
 
+    private Single<DynamicClientRegistrationRequest> validateUserinfoEncryptionAlgorithm(DynamicClientRegistrationRequest request) {
+        if(request.getUserinfoEncryptedResponseEnc()!=null && request.getUserinfoEncryptedResponseAlg()==null) {
+            return Single.error(new InvalidClientMetadataException("When userinfo_encrypted_response_enc is included, userinfo_encrypted_response_alg MUST also be provided"));
+        }
+        //if userinfo_encrypted_response_alg is provided, it must be valid.
+        if(request.getUserinfoEncryptedResponseAlg()!=null) {
+            if(!JWAlgorithmUtils.isValidUserinfoResponseAlg(request.getUserinfoEncryptedResponseAlg().get())) {
+                return Single.error(new InvalidClientMetadataException("Unsupported userinfo_encrypted_response_alg value"));
+            }
+            if(request.getUserinfoEncryptedResponseEnc()!=null) {
+                if(!JWAlgorithmUtils.isValidUserinfoResponseEnc(request.getUserinfoEncryptedResponseEnc().get())) {
+                    return Single.error(new InvalidClientMetadataException("Unsupported userinfo_encrypted_response_enc value"));
+                }
+            }
+            else {
+                //Apply default value if userinfo_encrypted_response_alg is informed and not userinfo_encrypted_response_enc.
+                request.setUserinfoEncryptedResponseEnc(Optional.of(JWAlgorithmUtils.getDefaultUserinfoResponseEnc()));
+            }
+        }
+        return Single.just(request);
+    }
+
     private Single<DynamicClientRegistrationRequest> validateIdTokenSigningAlgorithm(DynamicClientRegistrationRequest request) {
         //if userinfo_signed_response_alg is provided, it must be valid.
         if(request.getIdTokenSignedResponseAlg()!=null) {
@@ -255,7 +279,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         if(request.getIdTokenEncryptedResponseEnc()!=null && request.getIdTokenEncryptedResponseAlg()==null) {
             return Single.error(new InvalidClientMetadataException("When id_token_encrypted_response_enc is included, id_token_encrypted_response_alg MUST also be provided"));
         }
-        //if userinfo_signed_response_alg is provided, it must be valid.
+        //if id_token_encrypted_response_alg is provided, it must be valid.
         if(request.getIdTokenEncryptedResponseAlg()!=null) {
             if(!JWAlgorithmUtils.isValidIdTokenResponseAlg(request.getIdTokenEncryptedResponseAlg().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported id_token_encrypted_response_alg value"));

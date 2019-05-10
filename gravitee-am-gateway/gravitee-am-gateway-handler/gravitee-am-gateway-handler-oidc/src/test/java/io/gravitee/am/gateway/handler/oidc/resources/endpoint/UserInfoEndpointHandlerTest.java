@@ -19,6 +19,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.gateway.handler.common.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
@@ -69,10 +70,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     private JWTService jwtService;
 
     @Mock
+    private JWEService jweService;
+
+    @Mock
     private OpenIDDiscoveryService openIDDiscoveryService;
 
     @InjectMocks
-    private UserInfoEndpoint userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, openIDDiscoveryService);
+    private UserInfoEndpoint userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, jweService, openIDDiscoveryService);
 
     @Override
     public void setUp() throws Exception {
@@ -434,6 +438,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
         when(jwtService.encodeUserinfo(any(),any())).thenReturn(Single.just("signedJwtBearer"));
+        when(jweService.encryptUserinfo("signedJwtBearer",client)).thenReturn(Single.just("encryptedJwtBearer"));
 
         testRequest(
                 HttpMethod.GET,

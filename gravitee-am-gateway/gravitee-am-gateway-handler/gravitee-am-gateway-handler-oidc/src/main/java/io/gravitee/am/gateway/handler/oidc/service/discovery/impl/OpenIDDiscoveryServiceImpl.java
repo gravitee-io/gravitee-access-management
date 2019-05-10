@@ -84,6 +84,8 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         openIDProviderMetadata.setClaimsParameterSupported(true);
         openIDProviderMetadata.setSubjectTypesSupported(SubjectTypeUtils.getSupportedSubjectTypes());
         openIDProviderMetadata.setUserinfoSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedUserinfoSigningAlg());
+        openIDProviderMetadata.setUserinfoEncryptionAlgValuesSupported(JWAlgorithmUtils.getSupportedUserinfoResponseAlg());
+        openIDProviderMetadata.setUserinfoEncryptionEncValuesSupported(JWAlgorithmUtils.getSupportedUserinfoResponseEnc());
 
         return openIDProviderMetadata;
     }

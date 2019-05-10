@@ -138,4 +138,50 @@ public class JWEEllipticCurveTest {
             return false;
         });
     }
+
+
+    @Test
+    public void encryptUserinfo() {
+        //prepare encryption private & public key
+        ECKeyPairGenerator generator = new ECKeyPairGenerator();
+        try {
+            generator.initialize(crv.toECParameterSpec(),null);
+        }
+        catch (InvalidAlgorithmParameterException e) {
+            fail(e.getMessage());
+        }
+        KeyPair keyPair = generator.generateKeyPair();
+
+        com.nimbusds.jose.jwk.ECKey jwk = new com.nimbusds.jose.jwk.ECKey.Builder(crv,(ECPublicKey)keyPair.getPublic())
+                .privateKey(keyPair.getPrivate())
+                .build();
+
+        ECKey key = new ECKey();
+        key.setKid("ecEnc");
+        key.setUse("enc");
+        key.setCrv(jwk.getCurve().getName());
+        key.setX(jwk.getX().toString());
+        key.setY(jwk.getY().toString());
+
+        Client client = new Client();
+        client.setUserinfoEncryptedResponseAlg(alg);
+        client.setUserinfoEncryptedResponseEnc(enc);
+
+        when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+
+        TestObserver testObserver = jweService.encryptUserinfo("JWT", client).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(jweString -> {
+            try {
+                JWEObject jwe = JWEObject.parse((String)jweString);
+                jwe.decrypt(new ECDHDecrypter(jwk));
+                return "JWT".equals(jwe.getPayload().toString());
+            }catch (JOSEException e) {
+                fail(e.getMessage());
+            }
+            return false;
+        });
+    }
 }

@@ -90,6 +90,8 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     private CertificateProvider defaultCertificateProvider;
 
+    private CertificateProvider noneAlgorithmCertificateProvider;
+
     @Override
     public Maybe<CertificateProvider> get(String id) {
         return id == null ? Maybe.empty() : findByDomainAndId(domain.getId(), id);
@@ -142,9 +144,17 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     }
 
     @Override
+    public CertificateProvider noneAlgorithmCertificateProvider() {
+        return noneAlgorithmCertificateProvider;
+    }
+
+    @Override
     public void afterPropertiesSet() {
         logger.info("Initializing default certificate provider for domain {}", domain.getName());
         initDefaultCertificateProvider();
+
+        logger.info("Initializing none algorithm certificate provider for domain {}", domain.getName());
+        initNoneAlgorithmCertificateProvider();
 
         logger.info("Initializing certificates for domain {}", domain.getName());
         certificateRepository.findAll()
@@ -288,5 +298,42 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         certificateProvider.setJwtBuilder(new JJWTBuilder(jjwtBuilder));
 
         return certificateProvider;
+    }
+
+    private void initNoneAlgorithmCertificateProvider() {
+        CertificateMetadata certificateMetadata = new CertificateMetadata();
+        certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, "none"));
+
+        io.gravitee.am.certificate.api.CertificateProvider noneProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
+
+            @Override
+            public Single<io.gravitee.am.certificate.api.Key> key() {
+                throw new UnsupportedOperationException("No key for \"none\" algorithm");
+            }
+
+            @Override
+            public Single<String> publicKey() {
+                throw new UnsupportedOperationException("No public key for \"none\" algorithm");
+            }
+
+            @Override
+            public Flowable<JWK> keys() {
+                throw new UnsupportedOperationException("No keys for \"none\" algorithm");
+            }
+
+            @Override
+            public String signatureAlgorithm() {
+                return "none";
+            }
+
+            @Override
+            public CertificateMetadata certificateMetadata() {
+                return certificateMetadata;
+            }
+        };
+
+        this.noneAlgorithmCertificateProvider = new CertificateProvider(noneProvider);
+        this.noneAlgorithmCertificateProvider.setJwtParser(new JJWTParser(Jwts.parser().deserializeJsonWith(new JacksonDeserializer(objectMapper))));
+        this.noneAlgorithmCertificateProvider.setJwtBuilder(new JJWTBuilder(Jwts.builder().serializeToJsonWith(new JacksonSerializer(objectMapper))));
     }
 }

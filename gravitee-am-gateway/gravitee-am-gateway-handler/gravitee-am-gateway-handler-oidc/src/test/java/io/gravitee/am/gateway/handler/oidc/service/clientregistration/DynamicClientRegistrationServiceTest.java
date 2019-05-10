@@ -242,6 +242,55 @@ public class DynamicClientRegistrationServiceTest {
     }
 
     @Test
+    public void validateClientRegistrationRequest_unsupportedUserinfoResponseAlgPayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setUserinfoEncryptedResponseAlg(Optional.of("unknownEncryptionAlg"));
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Unsupported userinfo_encrypted_response_alg value");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_missingUserinfoResponseAlgPayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setUserinfoEncryptedResponseEnc(Optional.of("unknownEncryptionAlg"));
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("When userinfo_encrypted_response_enc is included, userinfo_encrypted_response_alg MUST also be provided");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_unsupportedUserinfoResponseEncPayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setUserinfoEncryptedResponseAlg(Optional.of("RSA-OAEP-256"));
+        request.setUserinfoEncryptedResponseEnc(Optional.of("unknownEncryptionAlg"));
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Unsupported userinfo_encrypted_response_enc value");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_defaultUserinfoResponseEncPayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setUserinfoEncryptedResponseAlg(Optional.of("RSA-OAEP-256"));
+
+        TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(result -> result.getUserinfoEncryptedResponseEnc()!=null);
+    }
+
+    @Test
     public void validateClientRegistrationRequest_unsupportedIdTokenSigningAlgorithmPayload() {
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));

@@ -103,6 +103,37 @@ public class JWEDirectTest {
         });
     }
 
+
+    @Test
+    public void encryptUserinfo() {
+        byte[] secretKey = new byte[EncryptionMethod.parse(this.enc).cekBitLength()/8];
+        new SecureRandom().nextBytes(secretKey);
+
+        // Convert to JWK format
+        OctetSequenceKey jwk = new OctetSequenceKey.Builder(secretKey).build();
+
+        OCTKey key = new OCTKey();
+        key.setKid("octEnc");
+        key.setUse("enc");
+        key.setK(jwk.getKeyValue().toString());
+
+        Client client = new Client();
+        client.setUserinfoEncryptedResponseAlg("dir");
+        client.setUserinfoEncryptedResponseEnc(this.enc);
+
+        when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+
+        TestObserver testObserver = jweService.encryptUserinfo("JWT", client).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(jweString -> {
+            JWEObject jwe = JWEObject.parse((String)jweString);
+            jwe.decrypt(new DirectDecrypter(jwk));
+            return "JWT".equals(jwe.getPayload().toString());
+        });
+    }
+
     @Test
     public void encryptIdToken_wronkKeySize() {
         byte[] secretKey = new byte[(EncryptionMethod.parse(this.enc).cekBitLength()/8)-8];
@@ -124,6 +155,31 @@ public class JWEDirectTest {
         when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
 
         TestObserver testObserver = jweService.encryptIdToken("JWT", client).test();
+        testObserver.assertError(ServerErrorException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void encryptUserinfo_wronkKeySize() {
+        byte[] secretKey = new byte[(EncryptionMethod.parse(this.enc).cekBitLength()/8)-8];
+        new SecureRandom().nextBytes(secretKey);
+
+        // Convert to JWK format
+        OctetSequenceKey jwk = new OctetSequenceKey.Builder(secretKey).build();
+
+        OCTKey key = new OCTKey();
+        key.setKid("octEnc");
+        key.setUse("enc");
+        key.setK(jwk.getKeyValue().toString());
+
+        Client client = new Client();
+        client.setUserinfoEncryptedResponseAlg("dir");
+        client.setUserinfoEncryptedResponseEnc(this.enc);
+
+        when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+
+        TestObserver testObserver = jweService.encryptUserinfo("JWT", client).test();
         testObserver.assertError(ServerErrorException.class);
         testObserver.assertNotComplete();
     }

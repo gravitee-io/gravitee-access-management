@@ -52,6 +52,23 @@ public class JWEServiceTest {
     @Mock
     private JWKService jwkService;
 
+    @Test
+    public void encryptUserinfo_noEncryption() {
+        String jwt = "JWT";
+        TestObserver testObserver = jweService.encryptUserinfo(jwt, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertResult(jwt);
+    }
+
+    @Test
+    public void encryptUserinfo_unknownAlg() {
+        Client client = new Client();
+        client.setUserinfoEncryptedResponseAlg("unknown");
+        TestObserver testObserver = jweService.encryptUserinfo(JWT, client).test();
+        testObserver.assertError(ServerErrorException.class);
+        testObserver.assertNotComplete();
+    }
 
     @Test
     public void encryptIdToken_noEncryption() {
