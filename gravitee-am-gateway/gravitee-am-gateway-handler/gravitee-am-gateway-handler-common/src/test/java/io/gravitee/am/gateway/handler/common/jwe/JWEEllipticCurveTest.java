@@ -20,6 +20,7 @@ import com.nimbusds.jose.JWEAlgorithm;
 import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.crypto.ECDHDecrypter;
 import com.nimbusds.jose.jwk.Curve;
+import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import io.gravitee.am.gateway.handler.common.jwa.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.common.jwe.impl.JWEServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwk.JWKService;
@@ -36,11 +37,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-import sun.security.ec.ECKeyPairGenerator;
 
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyPair;
-import java.security.interfaces.ECPublicKey;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -96,46 +93,35 @@ public class JWEEllipticCurveTest {
 
     @Test
     public void encryptIdToken() {
-        //prepare encryption private & public key
-        ECKeyPairGenerator generator = new ECKeyPairGenerator();
         try {
-            generator.initialize(crv.toECParameterSpec(),null);
-        }
-        catch (InvalidAlgorithmParameterException e) {
-            fail(e.getMessage());
-        }
-        KeyPair keyPair = generator.generateKeyPair();
+            //prepare encryption private & public key
+            com.nimbusds.jose.jwk.ECKey jwk = new ECKeyGenerator(this.crv).generate();
 
-        com.nimbusds.jose.jwk.ECKey jwk = new com.nimbusds.jose.jwk.ECKey.Builder(crv,(ECPublicKey)keyPair.getPublic())
-                .privateKey(keyPair.getPrivate())
-                .build();
+            ECKey key = new ECKey();
+            key.setKid("ecEnc");
+            key.setUse("enc");
+            key.setCrv(jwk.getCurve().getName());
+            key.setX(jwk.getX().toString());
+            key.setY(jwk.getY().toString());
 
-        ECKey key = new ECKey();
-        key.setKid("ecEnc");
-        key.setUse("enc");
-        key.setCrv(jwk.getCurve().getName());
-        key.setX(jwk.getX().toString());
-        key.setY(jwk.getY().toString());
+            Client client = new Client();
+            client.setIdTokenEncryptedResponseAlg(alg);
+            client.setIdTokenEncryptedResponseEnc(enc);
 
-        Client client = new Client();
-        client.setIdTokenEncryptedResponseAlg(alg);
-        client.setIdTokenEncryptedResponseEnc(enc);
+            when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
+            when(jwkService.filter(any(), any())).thenReturn(Maybe.just(key));
 
-        when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
-        when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
-
-        TestObserver testObserver = jweService.encryptIdToken("JWT", client).test();
-        testObserver.assertNoErrors();
-        testObserver.assertComplete();
-        testObserver.assertValue(jweString -> {
-            try {
-                JWEObject jwe = JWEObject.parse((String)jweString);
+            TestObserver testObserver = jweService.encryptIdToken("JWT", client).test();
+            testObserver.assertNoErrors();
+            testObserver.assertComplete();
+            testObserver.assertValue(jweString -> {
+                JWEObject jwe = JWEObject.parse((String) jweString);
                 jwe.decrypt(new ECDHDecrypter(jwk));
                 return "JWT".equals(jwe.getPayload().toString());
-            }catch (JOSEException e) {
-                fail(e.getMessage());
-            }
-            return false;
-        });
+            });
+        }
+        catch (JOSEException e) {
+            fail(e.getMessage());
+        }
     }
 }
