@@ -127,4 +127,49 @@ public class JWEAesTest {
             fail(e.getMessage());
         }
     }
+
+    @Test
+    public void encryptUserinfo() {
+        try {
+            int keySize = 128;
+            if (alg.startsWith("A192")) {
+                keySize = 192;
+            } else if (alg.startsWith("A256")) {
+                keySize = 256;
+            }
+
+            // Generate a secret AES key with 128 bits
+            KeyGenerator gen = KeyGenerator.getInstance("AES");
+            gen.init(keySize);
+            SecretKey aesKey = gen.generateKey();
+
+            // Convert to JWK format
+            OctetSequenceKey jwk = new OctetSequenceKey.Builder(aesKey).build();
+
+            OCTKey key = new OCTKey();
+            key.setKid("octEnc");
+            key.setUse("enc");
+            key.setK(jwk.getKeyValue().toString());
+
+            Client client = new Client();
+            client.setUserinfoEncryptedResponseAlg(this.alg);
+            client.setUserinfoEncryptedResponseEnc(this.enc);
+
+            when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
+            when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+
+            TestObserver testObserver = jweService.encryptUserinfo("JWT", client).test();
+            testObserver.assertNoErrors();
+            testObserver.assertComplete();
+
+            testObserver.assertValue(jweString -> {
+                JWEObject jwe = JWEObject.parse((String)jweString);
+                jwe.decrypt(new AESDecrypter(jwk));
+                return "JWT".equals(jwe.getPayload().toString());
+            });
+        }
+        catch(NoSuchAlgorithmException e) {
+            fail(e.getMessage());
+        }
+    }
 }

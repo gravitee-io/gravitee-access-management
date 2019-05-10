@@ -35,4 +35,6 @@ public interface CertificateManager extends Service {
     Collection<CertificateProvider> providers();
 
     CertificateProvider defaultCertificateProvider();
+
+    CertificateProvider noneAlgorithmCertificateProvider();
 }

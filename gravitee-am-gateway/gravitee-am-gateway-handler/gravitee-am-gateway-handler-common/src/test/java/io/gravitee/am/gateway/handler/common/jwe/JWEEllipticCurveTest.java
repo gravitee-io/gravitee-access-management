@@ -124,4 +124,38 @@ public class JWEEllipticCurveTest {
             fail(e.getMessage());
         }
     }
+
+    @Test
+    public void encryptUserinfo() {
+        try {
+            //prepare encryption private & public key
+            com.nimbusds.jose.jwk.ECKey jwk = new ECKeyGenerator(this.crv).generate();
+
+            ECKey key = new ECKey();
+            key.setKid("ecEnc");
+            key.setUse("enc");
+            key.setCrv(jwk.getCurve().getName());
+            key.setX(jwk.getX().toString());
+            key.setY(jwk.getY().toString());
+
+            Client client = new Client();
+            client.setUserinfoEncryptedResponseAlg(alg);
+            client.setUserinfoEncryptedResponseEnc(enc);
+
+            when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
+            when(jwkService.filter(any(), any())).thenReturn(Maybe.just(key));
+
+            TestObserver testObserver = jweService.encryptUserinfo("JWT", client).test();
+            testObserver.assertNoErrors();
+            testObserver.assertComplete();
+            testObserver.assertValue(jweString -> {
+                JWEObject jwe = JWEObject.parse((String) jweString);
+                jwe.decrypt(new ECDHDecrypter(jwk));
+                return "JWT".equals(jwe.getPayload().toString());
+            });
+        }
+        catch (JOSEException e) {
+            fail(e.getMessage());
+        }
+    }
 }

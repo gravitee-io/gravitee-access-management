@@ -92,6 +92,8 @@ makefile := $(MAKEFILE_LIST)
 help: ## Print this message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(makefile) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
+gravitee: stop prune install run ## Stop and delete containers if exists, then install and run new ones
+
 certificate: ## Generate certificate that can be used
 	@mkdir -p .working/certificate
 	@$(call generateCertificate);

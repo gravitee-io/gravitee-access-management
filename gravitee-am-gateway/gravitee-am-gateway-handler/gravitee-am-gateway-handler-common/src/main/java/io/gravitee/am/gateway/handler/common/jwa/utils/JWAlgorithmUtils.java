@@ -35,18 +35,18 @@ import static com.nimbusds.jose.JWEAlgorithm.*;
  */
 public class JWAlgorithmUtils {
 
-    private static final Set<String> SUPPORTED_USERINFO_SIGNING_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            JWSAlgorithm.RS256.getName(), JWSAlgorithm.RS384.getName(), JWSAlgorithm.RS512.getName()
-    )));
-
-    private static final Set<String> SUPPORTED_ID_TOKEN_SIGNING_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            JWSAlgorithm.RS256.getName(), JWSAlgorithm.RS512.getName(), JWSAlgorithm.HS512.getName()
+    /**
+     * Unless we want specific values for id_token, userinfo and so on, we will share same settings.
+     */
+    private static final Set<String> SUPPORTED_SIGNING_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            JWSAlgorithm.RS256.getName(), JWSAlgorithm.RS384.getName(), JWSAlgorithm.RS512.getName(),
+            JWSAlgorithm.HS256.getName(), JWSAlgorithm.HS384.getName(), JWSAlgorithm.HS512.getName()
     )));
 
     /**
      * https://tools.ietf.org/html/rfc7518#section-4.1
      */
-    private static final Set<String> SUPPORTED_ID_TOKEN_KEY_ENCRYPTION_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+    private static final Set<String> SUPPORTED_KEY_ENCRYPTION_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             //Elliptic/Edward Curve algorithm
             ECDH_ES.getName(), ECDH_ES_A128KW.getName(), ECDH_ES_A192KW.getName(), ECDH_ES_A256KW.getName(),
             //RSA algorithm
@@ -65,7 +65,7 @@ public class JWAlgorithmUtils {
     /**
      * See https://tools.ietf.org/html/rfc7518#section-5.1
      */
-    private static final Set<String> SUPPORTED_ID_TOKEN_CONTENT_ENCRYPTION_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+    private static final Set<String> SUPPORTED_CONTENT_ENCRYPTION_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             EncryptionMethod.A128CBC_HS256.getName(), EncryptionMethod.A192CBC_HS384.getName(), EncryptionMethod.A256CBC_HS512.getName(),
             EncryptionMethod.A128GCM.getName(), EncryptionMethod.A192GCM.getName(), EncryptionMethod.A256GCM.getName()
     )));
@@ -74,7 +74,7 @@ public class JWAlgorithmUtils {
      * @return the supported list of userinfo signing algorithm.
      */
     public static List<String> getSupportedUserinfoSigningAlg() {
-        return Collections.unmodifiableList(SUPPORTED_USERINFO_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
     }
 
     /**
@@ -83,14 +83,51 @@ public class JWAlgorithmUtils {
      * @return True if signingAlg is supported, false otherwise.
      */
     public static boolean isValidUserinfoSigningAlg(String signingAlg) {
-        return SUPPORTED_USERINFO_SIGNING_ALG.contains(signingAlg);
+        return SUPPORTED_SIGNING_ALG.contains(signingAlg);
+    }
+
+    /**
+     * @return the supported list of userinfo key encryption algorithm.
+     */
+    public static List<String> getSupportedUserinfoResponseAlg() {
+        return Collections.unmodifiableList(SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+    }
+
+    /**
+     * @param algorithm String userinfo key encryption algorithm to validate.
+     * @return True if algorithm is supported, false otherwise.
+     */
+    public static boolean isValidUserinfoResponseAlg(String algorithm) {
+        return SUPPORTED_KEY_ENCRYPTION_ALG.contains(algorithm);
+    }
+
+    /**
+     * @return the supported list of userinfo content encryption algorithm.
+     */
+    public static List<String> getSupportedUserinfoResponseEnc() {
+        return Collections.unmodifiableList(SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+    }
+
+    /**
+     * @return the default userinfo content encryption algorithm when userinfo_encrypted_response_alg is informed
+     */
+    public static String getDefaultUserinfoResponseEnc() {
+        return EncryptionMethod.A128CBC_HS256.getName();
+    }
+
+    /**
+     * @param algorithm String id token content encryption algorithm to validate.
+     * @return True if algorithm is supported, false otherwise.
+     */
+    public static boolean isValidUserinfoResponseEnc(String algorithm) {
+        return SUPPORTED_CONTENT_ENCRYPTION_ALG.contains(algorithm);
     }
 
     /**
      * @return the supported list of id token signing algorithm.
      */
     public static List<String> getSupportedIdTokenSigningAlg() {
-        return Collections.unmodifiableList(SUPPORTED_ID_TOKEN_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
     }
 
     /**
@@ -98,14 +135,14 @@ public class JWAlgorithmUtils {
      * @return True if signingAlg is supported, false otherwise.
      */
     public static boolean isValidIdTokenSigningAlg(String signingAlg) {
-        return SUPPORTED_ID_TOKEN_SIGNING_ALG.contains(signingAlg);
+        return SUPPORTED_SIGNING_ALG.contains(signingAlg);
     }
 
     /**
      * @return the supported list of id token key encryption algorithm.
      */
     public static List<String> getSupportedIdTokenResponseAlg() {
-        return Collections.unmodifiableList(SUPPORTED_ID_TOKEN_KEY_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+        return Collections.unmodifiableList(SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
     }
 
     /**
@@ -113,14 +150,14 @@ public class JWAlgorithmUtils {
      * @return True if algorithm is supported, false otherwise.
      */
     public static boolean isValidIdTokenResponseAlg(String algorithm) {
-        return SUPPORTED_ID_TOKEN_KEY_ENCRYPTION_ALG.contains(algorithm);
+        return SUPPORTED_KEY_ENCRYPTION_ALG.contains(algorithm);
     }
 
     /**
      * @return the supported list of id token content encryption algorithm.
      */
     public static List<String> getSupportedIdTokenResponseEnc() {
-        return Collections.unmodifiableList(SUPPORTED_ID_TOKEN_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+        return Collections.unmodifiableList(SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
     }
 
     /**
@@ -135,6 +172,6 @@ public class JWAlgorithmUtils {
      * @return True if algorithm is supported, false otherwise.
      */
     public static boolean isValidIdTokenResponseEnc(String algorithm) {
-        return SUPPORTED_ID_TOKEN_CONTENT_ENCRYPTION_ALG.contains(algorithm);
+        return SUPPORTED_CONTENT_ENCRYPTION_ALG.contains(algorithm);
     }
 }

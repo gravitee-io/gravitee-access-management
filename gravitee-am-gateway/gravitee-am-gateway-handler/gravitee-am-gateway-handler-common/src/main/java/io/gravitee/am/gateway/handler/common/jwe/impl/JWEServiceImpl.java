@@ -55,6 +55,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.function.Predicate;
 
 import static io.gravitee.am.gateway.handler.common.jwa.utils.JWAlgorithmUtils.getDefaultIdTokenResponseEnc;
+import static io.gravitee.am.gateway.handler.common.jwa.utils.JWAlgorithmUtils.getDefaultUserinfoResponseEnc;
 import static io.gravitee.am.gateway.handler.common.jwk.JWKFilter.*;
 
 /**
@@ -90,6 +91,31 @@ public class JWEServiceImpl implements JWEService {
                     }
                     LOGGER.error(throwable.getMessage(), throwable);
                     return Single.error(new ServerErrorException("Unable to encrypt id_token"));
+                });
+    }
+
+    @Override
+    public Single<String> encryptUserinfo(String signedJwt, Client client) {
+        //Return input without encryption if client does not require JWE or algorithm is set to none
+        if(client.getUserinfoEncryptedResponseAlg()==null || JWEAlgorithm.NONE.equals(client.getUserinfoEncryptedResponseAlg())) {
+            return Single.just(signedJwt);
+        }
+
+        JWEObject jwe = new JWEObject(
+                new JWEHeader.Builder(
+                        JWEAlgorithm.parse(client.getUserinfoEncryptedResponseAlg()),
+                        EncryptionMethod.parse(client.getUserinfoEncryptedResponseEnc()!=null?client.getUserinfoEncryptedResponseEnc():getDefaultUserinfoResponseEnc())
+                ).contentType("JWT").build(),
+                new Payload(signedJwt)
+        );
+
+        return encrypt(jwe,client)
+                .onErrorResumeNext(throwable -> {
+                    if(throwable instanceof OAuth2Exception) {
+                        return Single.error(throwable);
+                    }
+                    LOGGER.error(throwable.getMessage(), throwable);
+                    return Single.error(new ServerErrorException("Unable to encrypt userinfo"));
                 });
     }
 
