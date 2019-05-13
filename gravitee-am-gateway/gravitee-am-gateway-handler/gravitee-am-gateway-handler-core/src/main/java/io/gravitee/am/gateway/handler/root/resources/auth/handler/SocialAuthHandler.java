@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.auth.handler;
 
-import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.impl.SocialAuthHandlerImpl;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.reactivex.ext.web.handler.AuthHandler;
@@ -32,7 +31,7 @@ public interface SocialAuthHandler {
      * @param authProvider  the auth provider to use
      * @return the auth handler
      */
-    static AuthHandler create(AuthProvider authProvider, IdentityProviderManager identityProviderManager) {
-        return AuthHandler.newInstance(new SocialAuthHandlerImpl(authProvider, identityProviderManager));
+    static AuthHandler create(AuthProvider authProvider) {
+        return AuthHandler.newInstance(new SocialAuthHandlerImpl(authProvider));
     }
 }

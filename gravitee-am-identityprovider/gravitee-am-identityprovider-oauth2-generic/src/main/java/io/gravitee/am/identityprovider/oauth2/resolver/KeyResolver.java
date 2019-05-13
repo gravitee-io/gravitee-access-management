@@ -13,33 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.service.revocation;
-
-import io.gravitee.am.common.oauth2.TokenTypeHint;
+package io.gravitee.am.identityprovider.oauth2.resolver;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RevocationTokenRequest {
+public enum KeyResolver {
 
-    private final String token;
-
-    private TokenTypeHint hint;
-
-    public RevocationTokenRequest(final String token) {
-        this.token = token;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public TokenTypeHint getHint() {
-        return hint;
-    }
-
-    public void setHint(TokenTypeHint hint) {
-        this.hint = hint;
-    }
+    GIVEN_KEY,
+    JWKS_URL
 }

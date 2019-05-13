@@ -13,33 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.service.revocation;
-
-import io.gravitee.am.common.oauth2.TokenTypeHint;
+package io.gravitee.am.common.oauth2;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ *
+ * See <a href="https://tools.ietf.org/html/rfc7009#section-2.1"></a>
+ *
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RevocationTokenRequest {
+public enum TokenTypeHint {
 
-    private final String token;
+    ACCESS_TOKEN,
+    REFRESH_TOKEN,
+    ID_TOKEN;
 
-    private TokenTypeHint hint;
-
-    public RevocationTokenRequest(final String token) {
-        this.token = token;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public TokenTypeHint getHint() {
-        return hint;
-    }
-
-    public void setHint(TokenTypeHint hint) {
-        this.hint = hint;
+    public static TokenTypeHint from(String name) throws IllegalArgumentException {
+        return TokenTypeHint.valueOf(name.toUpperCase());
     }
 }

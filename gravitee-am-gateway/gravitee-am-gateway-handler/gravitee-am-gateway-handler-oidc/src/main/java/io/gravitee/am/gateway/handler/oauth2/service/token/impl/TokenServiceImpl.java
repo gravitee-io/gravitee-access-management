@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
@@ -69,8 +70,8 @@ public class TokenServiceImpl implements TokenService {
     @Autowired
     private ClientSyncService clientSyncService;
 
- /*   @Autowired
-    private OpenIDDiscoveryService openIDDiscoveryService;*/
+    @Autowired
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
     @Override
     public Maybe<Token> getAccessToken(String token, Client client) {
@@ -296,7 +297,7 @@ public class TokenServiceImpl implements TokenService {
      */
     private JWT convert(io.gravitee.am.repository.oauth2.model.Token token, OAuth2Request oAuth2Request) {
         JWT jwt = new JWT();
-        //jwt.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
+        jwt.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
         jwt.setSub(token.getSubject() != null ? token.getSubject() : token.getClient());
         jwt.setAud(oAuth2Request.getClientId());
         jwt.setDomain(token.getDomain());

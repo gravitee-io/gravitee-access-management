@@ -36,6 +36,7 @@ import java.util.Set;
 public class UserApprovalEndpoint implements Handler<RoutingContext>  {
 
     private static final String CLIENT_CONTEXT_KEY = "client";
+    private static final String ID_TOKEN_CONTEXT_KEY = "id_token";
     private ThymeleafTemplateEngine engine;
     private ScopeService scopeService;
 
@@ -50,6 +51,8 @@ public class UserApprovalEndpoint implements Handler<RoutingContext>  {
         Client client = routingContext.get(CLIENT_CONTEXT_KEY);
         // retrieve authorization request
         AuthorizationRequest authorizationRequest = routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
+
+
 
         // fetch scope information (name + description) from the authorization request
         scopeService.getAll()
@@ -72,6 +75,11 @@ public class UserApprovalEndpoint implements Handler<RoutingContext>  {
                             Client safeClient = safeClient(client);
                             routingContext.put("client", safeClient);
                             routingContext.put("scopes", requestedScopes);
+                            // add id_token if exists
+                            String idToken = routingContext.session().get(ID_TOKEN_CONTEXT_KEY);
+                            if (idToken != null) {
+                                routingContext.put(ID_TOKEN_CONTEXT_KEY, idToken);
+                            }
                             engine.render(routingContext.data(), getTemplateFileName(safeClient), res -> {
                                 if (res.succeeded()) {
                                     routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
