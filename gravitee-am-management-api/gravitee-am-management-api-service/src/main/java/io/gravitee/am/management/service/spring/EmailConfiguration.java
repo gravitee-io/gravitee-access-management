@@ -19,6 +19,7 @@ import freemarker.cache.FileTemplateLoader;
 import freemarker.cache.MultiTemplateLoader;
 import freemarker.cache.StringTemplateLoader;
 import freemarker.cache.TemplateLoader;
+import freemarker.core.TemplateClassResolver;
 import io.gravitee.common.util.EnvironmentUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,6 +101,7 @@ public class EmailConfiguration {
                 new freemarker.template.Configuration(freemarker.template.Configuration.VERSION_2_3_22);
         configuration.setLocalizedLookup(false);
         try {
+            configuration.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
             TemplateLoader[] templateLoaders = { overrideTemplateLoader(), new FileTemplateLoader(new File(templatesPath)) };
             configuration.setTemplateLoader(new MultiTemplateLoader(templateLoaders));
         } catch (final IOException e) {
