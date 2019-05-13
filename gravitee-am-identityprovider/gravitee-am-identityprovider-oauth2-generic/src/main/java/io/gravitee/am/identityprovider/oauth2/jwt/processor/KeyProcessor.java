@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.service.utils;
+package io.gravitee.am.identityprovider.oauth2.jwt.processor;
+
+import com.nimbusds.jwt.proc.JWTProcessor;
+import io.gravitee.am.identityprovider.oauth2.jwt.algo.Signature;
 
 /**
- *
- * See <a href="https://tools.ietf.org/html/rfc7009#section-2.1"></a>
- *
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum TokenTypeHint {
+public interface KeyProcessor {
 
-    ACCESS_TOKEN,
-    REFRESH_TOKEN;
-
-    public static TokenTypeHint from(String name) throws IllegalArgumentException {
-        return TokenTypeHint.valueOf(name.toUpperCase());
-    }
+    JWTProcessor create(Signature signature);
 }

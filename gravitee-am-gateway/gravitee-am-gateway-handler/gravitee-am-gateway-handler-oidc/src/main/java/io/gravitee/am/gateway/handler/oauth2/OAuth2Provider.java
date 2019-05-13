@@ -164,6 +164,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         // Revocation token endpoint
         Handler<RoutingContext> revocationTokenEndpoint = new RevocationTokenEndpoint(revocationTokenService);
 
+        // static handler
+        staticHandler(oauth2Router);
+
         // session cookie handler
         sessionAndCookieHandler(oauth2Router);
 
@@ -213,6 +216,10 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     @Override
     public String path() {
         return "/oauth";
+    }
+
+    private void staticHandler(Router router) {
+        router.route().handler(StaticHandler.create());
     }
 
     private void sessionAndCookieHandler(Router router) {

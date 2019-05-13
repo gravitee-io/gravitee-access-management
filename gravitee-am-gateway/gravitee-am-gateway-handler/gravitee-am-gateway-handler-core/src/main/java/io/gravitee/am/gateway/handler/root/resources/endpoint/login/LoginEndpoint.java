@@ -16,7 +16,9 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.form.FormManager;
@@ -163,9 +165,13 @@ public class LoginEndpoint implements Handler<RoutingContext> {
                     UriBuilder builder = UriBuilder.fromHttpUrl(configuration.getUserAuthorizationUri());
                     builder.addParameter(Parameters.CLIENT_ID, configuration.getClientId());
                     builder.addParameter(Parameters.REDIRECT_URI, buildRedirectUri(request, identityProviderId));
-                    builder.addParameter(Parameters.RESPONSE_TYPE, Parameters.CODE);
+                    builder.addParameter(Parameters.RESPONSE_TYPE, configuration.getResponseType());
                     if (configuration.getScopes() != null && !configuration.getScopes().isEmpty()) {
                         builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, configuration.getScopes()));
+                    }
+                    // nonce parameter is required for implicit/hybrid flow
+                    if (!ResponseType.CODE.equals(configuration.getResponseType())) {
+                        builder.addParameter(io.gravitee.am.common.oidc.Parameters.NONCE, SecureRandomString.generate());
                     }
                     return builder.build().toString();
                 }).toSingle();

@@ -20,7 +20,13 @@ import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
+import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
+import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
+import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.error.ErrorEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginCallbackEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ResetPasswordEndpoint;
@@ -31,6 +37,12 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.Regi
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackOpenIDConnectFlowHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordSubmissionRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordSubmissionRequestParseHandler;
@@ -38,16 +50,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationSubmissionRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
-import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
-import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginCallbackEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
@@ -116,10 +118,10 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     protected void doStart() throws Exception {
         super.doStart();
 
-        // router the root router
+        // create the root router
         final Router rootRouter = Router.router(vertx);
 
-        // router social authentication handler
+        // social authentication handler
         final AuthProvider socialAuthProvider = new SocialAuthenticationProvider(identityProviderManager, userAuthenticationManager);
 
         // router user management handler
@@ -158,19 +160,32 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LoginRequestParseHandler())
                 .handler(clientRequestParseHandler)
                 .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, identityProviderManager));
-        rootRouter.post("/login").handler(FormLoginHandler.create(userAuthProvider));
+        rootRouter.post("/login")
+                .handler(FormLoginHandler.create(userAuthProvider));
 
         // oauth 2.0 login callback route
+        Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager);
+        Handler<RoutingContext> loginCallbackOpenIDConnectFlowHandler = new LoginCallbackOpenIDConnectFlowHandler(thymeleafTemplateEngine);
+        Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler();
+        Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(socialAuthProvider);
+        Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint();
         rootRouter.get("/login/callback")
-                .handler(new LoginCallbackParseHandler(clientSyncService))
-                .handler(SocialAuthHandler.create(socialAuthProvider, identityProviderManager))
-                .handler(new LoginCallbackEndpoint());
+                .handler(loginCallbackParseHandler)
+                .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(socialAuthHandler)
+                .handler(loginCallbackEndpoint)
+                .failureHandler(loginCallbackFailureHandler);
+        rootRouter.post("/login/callback")
+                .handler(loginCallbackParseHandler)
+                .handler(socialAuthHandler)
+                .handler(loginCallbackEndpoint)
+                .failureHandler(loginCallbackFailureHandler);
 
         // logout route
         rootRouter.route("/logout").handler(LogoutEndpoint.create(domain, auditService));
 
         // error route
-        router.route(HttpMethod.GET, "/error")
+        rootRouter.route(HttpMethod.GET, "/error")
                 .handler(new ErrorEndpoint(thymeleafTemplateEngine));
 
         // mount forgot/reset registration pages only if the option is enabled

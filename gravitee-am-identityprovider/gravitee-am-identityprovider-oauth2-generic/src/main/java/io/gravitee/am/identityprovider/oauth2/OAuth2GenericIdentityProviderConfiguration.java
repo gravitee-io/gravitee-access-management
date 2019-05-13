@@ -16,6 +16,8 @@
 package io.gravitee.am.identityprovider.oauth2;
 
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.oauth2.jwt.algo.Signature;
+import io.gravitee.am.identityprovider.oauth2.resolver.KeyResolver;
 
 import java.util.Set;
 
@@ -28,10 +30,16 @@ public class OAuth2GenericIdentityProviderConfiguration implements OAuth2Identit
     private static final String CODE_PARAMETER = "code";
     private String clientId;
     private String clientSecret;
+    private String wellKnownUri;
     private String userAuthorizationUri;
     private String accessTokenUri;
     private String userProfileUri;
     private Set<String> scopes;
+    private String responseType;
+    private boolean useIdTokenForUserInfo;
+    private Signature signature = Signature.RSA_RS256;
+    private KeyResolver publicKeyResolver;
+    private String resolverParameter;
 
     @Override
     public String getClientId() {
@@ -49,6 +57,14 @@ public class OAuth2GenericIdentityProviderConfiguration implements OAuth2Identit
 
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
+    }
+
+    public String getWellKnownUri() {
+        return wellKnownUri;
+    }
+
+    public void setWellKnownUri(String wellKnownUri) {
+        this.wellKnownUri = wellKnownUri;
     }
 
     @Override
@@ -90,5 +106,46 @@ public class OAuth2GenericIdentityProviderConfiguration implements OAuth2Identit
 
     public void setScopes(Set<String> scopes) {
         this.scopes = scopes;
+    }
+
+    @Override
+    public String getResponseType() {
+        return responseType;
+    }
+
+    public void setResponseType(String responseType) {
+        this.responseType = responseType;
+    }
+
+    public boolean isUseIdTokenForUserInfo() {
+        return useIdTokenForUserInfo;
+    }
+
+    public void setUseIdTokenForUserInfo(boolean useIdTokenForUserInfo) {
+        this.useIdTokenForUserInfo = useIdTokenForUserInfo;
+    }
+
+    public Signature getSignature() {
+        return signature;
+    }
+
+    public void setSignature(Signature signature) {
+        this.signature = signature;
+    }
+
+    public KeyResolver getPublicKeyResolver() {
+        return publicKeyResolver;
+    }
+
+    public void setPublicKeyResolver(KeyResolver publicKeyResolver) {
+        this.publicKeyResolver = publicKeyResolver;
+    }
+
+    public String getResolverParameter() {
+        return resolverParameter;
+    }
+
+    public void setResolverParameter(String resolverParameter) {
+        this.resolverParameter = resolverParameter;
     }
 }

@@ -31,7 +31,6 @@ import io.vertx.ext.auth.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,9 +41,10 @@ import java.util.Map;
 public class SocialAuthenticationProvider implements AuthProvider {
 
     private final Logger logger = LoggerFactory.getLogger(SocialAuthenticationProvider.class);
-    private final static String USERNAME_PARAMETER = "username";
-    private final static String PASSWORD_PARAMETER = "password";
+    private static final String USERNAME_PARAMETER = "username";
+    private static final String PASSWORD_PARAMETER = "password";
     private static final String PROVIDER_PARAMETER = "provider";
+    private static final String ADDITIONAL_PARAMETERS = "additionalParameters";
     private IdentityProviderManager identityProviderManager;
     private UserAuthenticationManager userAuthenticationManager;
 
@@ -68,7 +68,7 @@ public class SocialAuthenticationProvider implements AuthProvider {
                 .get(authInfo.getString(PROVIDER_PARAMETER))
                 .flatMap(authenticationProvider -> {
                     EndUserAuthentication endUserAuthentication = new EndUserAuthentication(username, password);
-                    endUserAuthentication.setAdditionalInformation(Collections.singletonMap(Parameters.REDIRECT_URI, authInfo.getString(Parameters.REDIRECT_URI)));
+                    endUserAuthentication.setAdditionalInformation(authInfo.getJsonObject(ADDITIONAL_PARAMETERS).getMap());
                     return authenticationProvider.loadUserByUsername(endUserAuthentication)
                             .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate oauth2 provider, authentication provider has returned empty value")));
                 })

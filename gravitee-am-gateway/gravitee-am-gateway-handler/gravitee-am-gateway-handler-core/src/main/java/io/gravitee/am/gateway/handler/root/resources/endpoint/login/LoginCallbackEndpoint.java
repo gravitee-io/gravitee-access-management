@@ -28,10 +28,17 @@ import io.vertx.reactivex.ext.web.Session;
  */
 public class LoginCallbackEndpoint implements Handler<RoutingContext> {
 
+    private static final String ID_TOKEN_CONTEXT_KEY = "id_token";
+
     @Override
     public void handle(RoutingContext routingContext) {
         Session session = routingContext.session();
         if (session != null && session.get(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM) != null) {
+            // if we have an id_token, put in the session context for post step (mainly the user consent step)
+            if (routingContext.data().containsKey(ID_TOKEN_CONTEXT_KEY)) {
+                session.put(ID_TOKEN_CONTEXT_KEY, routingContext.get(ID_TOKEN_CONTEXT_KEY));
+            }
+
             final String redirectUrl = session.get(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM);
             doRedirect(routingContext.response(), redirectUrl);
         } else {

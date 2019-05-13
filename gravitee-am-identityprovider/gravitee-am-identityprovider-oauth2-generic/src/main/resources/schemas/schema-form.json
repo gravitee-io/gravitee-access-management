@@ -1,32 +1,100 @@
 {
   "type" : "object",
-  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:github:GithubIdentityProviderConfiguration",
-  "description": "OAuth 2.0 Auhtorization Server identity provider, let you register and set up permissions and authorization options for OAuth 2.0 protocol.\n\nhttps://tools.ietf.org/html/rfc6749",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:oauth2:OAuth2GenericIdentityProvider",
+  "description": "OpenID Connect identity provider, let you register and set up permissions and authorization options for OpenID Connect protocol.\n\nhttps://openid.net/specs/openid-connect-core-1_0.html",
   "properties" : {
     "clientId" : {
       "type" : "string",
       "title": "Client ID",
-      "description": "OAuth2 client id"
+      "description": "OAuth 2.0 client id"
     },
     "clientSecret" : {
       "type" : "string",
       "title": "Client Secret",
-      "description": "OAuth2 client secret"
+      "description": "OAuth 2.0 client secret"
+    },
+    "wellKnownUri": {
+      "type" : "string",
+      "title": "Well-Known Endpoint",
+      "description": "OpenID Connect Well-Known Endpoint '/.well-known/openid-configuration' to get OpenID Provider Configuration"
     },
     "userAuthorizationUri" : {
       "type" : "string",
-      "title": "User Authorization URI",
-      "description": "User authorization uri"
+      "title": "Authorization Endpoint",
+      "description": "OAuth 2.0 Authorization Endpoint '/authorize' that initializes OIDC authentication flow"
     },
     "accessTokenUri" : {
       "type" : "string",
-      "title": "Access Token URI",
-      "description": "Access token uri"
+      "title": "Token Endpoint",
+      "description": "OAuth 2.0 Token Endpoint '/token' that exchanges authorization code for a token (Authorization Code Flow)"
     },
     "userProfileUri": {
       "type" : "string",
-      "title": "User Profile URI",
-      "description": "OpenID Connect endpoint '/userinfo' that returns claims about the authenticated End-User, http://openid.net/specs/openid-connect-core-1_0.html#UserInfo"
+      "title": "UserInfo Endpoint",
+      "description": "OpenID Connect UserInfo Endpoint '/userinfo' that returns claims about the authenticated End-User"
+    },
+    "responseType": {
+      "type" : "string",
+      "title": "OpenID Connect Flow",
+      "description": "OpenId Connect Authentication Flow (Authorization Code or Implicit based on the response_type parameter)",
+      "enum": [
+        "code",
+        "id_token",
+        "id_token token"
+      ],
+      "default": "code"
+    },
+    "useIdTokenForUserInfo": {
+      "type": "boolean",
+      "title": "Use the ID Token to retrieve user information ? (response_type=id_token or UserInfo Endpoint is missing)"
+    },
+    "signature": {
+      "title": "Signature",
+      "description": "Define how the ID Token has been signed.",
+      "type" : "string",
+      "default": "RSA_RS256",
+      "enum" : [
+        "RSA_RS256",
+        "RSA_RS384",
+        "RSA_RS512",
+        "HMAC_HS256",
+        "HMAC_HS384",
+        "HMAC_HS512"
+      ],
+      "x-schema-form": {
+        "type": "select",
+        "titleMap": {
+          "RSA_RS256": "RS256 - RSA signature with SHA-256",
+          "RSA_RS384": "RS384 - RSA signature with SHA-384",
+          "RSA_RS512": "RS512 - RSA signature with SHA-512",
+          "HMAC_HS256": "HS256 - HMAC with SHA-256, requires 256+ bit secret",
+          "HMAC_HS384": "HS384 - HMAC with SHA-384, requires 384+ bit secret",
+          "HMAC_HS512": "HS512 - HMAC with SHA-512, requires 512+ bit secret"
+        }
+      }
+    },
+    "publicKeyResolver" : {
+      "title": "Public Key resolver",
+      "description": "Define how the ID Token (JWT) will be verify",
+      "type" : "string",
+      "default": "GIVEN_KEY",
+      "enum" : [
+        "GIVEN_KEY",
+        "JWKS_URL"
+      ],
+      "x-schema-form": {
+        "type": "select",
+        "titleMap": {
+          "GIVEN_KEY": "GIVEN_KEY: You must provide a signature key (PEM format or HMAC secret key)",
+          "JWKS_URL": "JWKS_URL: Retrieve JWKS from URL (Basically, URL ending with '/.well-known/jwks.json')"
+        }
+      }
+    },
+    "resolverParameter" : {
+      "title": "Resolver parameter",
+      "description": "Set the signature key <i><b>(GIVEN_KEY)</b></i> or a JWKS URL <i><b>(JWKS_URL)</b></i> following selected resolver.",
+      "type" : "string",
+      "widget": "textarea"
     },
     "scopes": {
       "type": "array",
@@ -41,8 +109,20 @@
   "required": [
     "clientId",
     "clientSecret",
-    "userAuthorizationUri",
-    "accessTokenUri",
-    "userProfileUri"
+    "responseType"
+  ],
+  "oneOf":[
+    {
+      "required": [
+        "wellKnownUri"
+      ]
+    },
+    {
+      "required": [
+        "userAuthorizationUri",
+        "accessTokenUri",
+        "userProfileUri"
+      ]
+    }
   ]
 }

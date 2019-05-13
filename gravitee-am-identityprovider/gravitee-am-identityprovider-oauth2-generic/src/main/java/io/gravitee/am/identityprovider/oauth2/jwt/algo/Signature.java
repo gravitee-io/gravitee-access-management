@@ -13,33 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.service.revocation;
+package io.gravitee.am.identityprovider.oauth2.jwt.algo;
 
-import io.gravitee.am.common.oauth2.TokenTypeHint;
+import com.nimbusds.jose.JWSAlgorithm;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RevocationTokenRequest {
+public enum Signature {
+    RSA_RS256(JWSAlgorithm.RS256),
+    RSA_RS384(JWSAlgorithm.RS384),
+    RSA_RS512(JWSAlgorithm.RS512),
+    HMAC_HS256(JWSAlgorithm.HS256),
+    HMAC_HS384(JWSAlgorithm.HS384),
+    HMAC_HS512(JWSAlgorithm.HS512);
 
-    private final String token;
+    private JWSAlgorithm alg;
 
-    private TokenTypeHint hint;
-
-    public RevocationTokenRequest(final String token) {
-        this.token = token;
+    Signature(JWSAlgorithm alg) {
+        this.alg = alg;
     }
 
-    public String getToken() {
-        return token;
-    }
-
-    public TokenTypeHint getHint() {
-        return hint;
-    }
-
-    public void setHint(TokenTypeHint hint) {
-        this.hint = hint;
+    public JWSAlgorithm getAlg() {
+        return alg;
     }
 }

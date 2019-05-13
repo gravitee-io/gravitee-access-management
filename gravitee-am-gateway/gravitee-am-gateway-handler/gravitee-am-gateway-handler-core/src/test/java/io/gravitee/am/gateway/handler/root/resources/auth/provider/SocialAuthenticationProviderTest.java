@@ -32,6 +32,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -65,6 +66,7 @@ public class SocialAuthenticationProviderTest {
         credentials.put("username", "my-user-id");
         credentials.put("password", "my-user-password");
         credentials.put("provider", "idp");
+        credentials.put("additionalParameters", Collections.emptyMap());
 
         io.gravitee.am.identityprovider.api.User user  = new io.gravitee.am.identityprovider.api.DefaultUser("username");
 
@@ -91,7 +93,6 @@ public class SocialAuthenticationProviderTest {
         credentials.put("password", "my-user-password");
         credentials.put("provider", "idp");
 
-        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.error(new BadCredentialsException()));
         when(identityProviderManager.get(anyString())).thenReturn(Maybe.just(authenticationProvider));
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -113,7 +114,6 @@ public class SocialAuthenticationProviderTest {
         credentials.put("password", "my-user-password");
         credentials.put("provider", "idp");
 
-        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.empty());
         when(identityProviderManager.get(anyString())).thenReturn(Maybe.just(authenticationProvider));
 
         CountDownLatch latch = new CountDownLatch(1);

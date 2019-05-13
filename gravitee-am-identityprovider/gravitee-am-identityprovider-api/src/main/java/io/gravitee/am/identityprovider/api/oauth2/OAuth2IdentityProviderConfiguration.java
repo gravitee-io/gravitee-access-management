@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.api.oauth2;
 
+import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 
 import java.util.Set;
@@ -38,5 +39,9 @@ public interface OAuth2IdentityProviderConfiguration extends IdentityProviderCon
     String getCodeParameter();
 
     Set<String> getScopes();
+
+    default String getResponseType() {
+        return ResponseType.CODE;
+    }
 
 }

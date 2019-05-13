@@ -21,7 +21,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedTokenType;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.user.Client;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
-import io.gravitee.am.gateway.handler.oauth2.service.utils.TokenTypeHint;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;

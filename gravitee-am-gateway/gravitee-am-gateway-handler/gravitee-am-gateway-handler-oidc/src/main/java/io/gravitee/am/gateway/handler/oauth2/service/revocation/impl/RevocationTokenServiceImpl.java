@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
-import io.gravitee.am.gateway.handler.oauth2.service.utils.TokenTypeHint;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.Client;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
