@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.management.service.spring;
 
-import freemarker.cache.FileTemplateLoader;
-import freemarker.cache.MultiTemplateLoader;
-import freemarker.cache.StringTemplateLoader;
-import freemarker.cache.TemplateLoader;
+import freemarker.cache.*;
+import freemarker.core.HTMLOutputFormat;
+import freemarker.core.TemplateConfiguration;
 import freemarker.core.TemplateClassResolver;
 import io.gravitee.common.util.EnvironmentUtils;
 import org.slf4j.Logger;
@@ -47,6 +46,8 @@ public class EmailConfiguration {
 
     private final static String EMAIL_PROPERTIES_PREFIX = "email.properties";
     private final static String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
+
+    private final static String HTML_TEMPLATE_EXTENSION = "html";
 
     @Value("${email.host}")
     private String host;
@@ -100,8 +101,14 @@ public class EmailConfiguration {
         final freemarker.template.Configuration configuration =
                 new freemarker.template.Configuration(freemarker.template.Configuration.VERSION_2_3_22);
         configuration.setLocalizedLookup(false);
+        configuration.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
+        TemplateConfiguration tcHTML = new TemplateConfiguration();
+        tcHTML.setOutputFormat(HTMLOutputFormat.INSTANCE);
+
+        configuration.setTemplateConfigurations(
+                new ConditionalTemplateConfigurationFactory(new FileExtensionMatcher(HTML_TEMPLATE_EXTENSION), tcHTML));
+
         try {
-            configuration.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
             TemplateLoader[] templateLoaders = { overrideTemplateLoader(), new FileTemplateLoader(new File(templatesPath)) };
             configuration.setTemplateLoader(new MultiTemplateLoader(templateLoaders));
         } catch (final IOException e) {
