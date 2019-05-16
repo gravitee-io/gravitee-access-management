@@ -40,9 +40,9 @@
                    (page)='setPage($event)'>
       <ngx-datatable-column>
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <mat-icon [ngStyle]="{'color': row.enabled ? 'green' : 'orange'}"  matTooltip="{{row.enabled ? 'User enabled' : 'User disabled'}}">
-            {{row.enabled ? 'done' : 'priority_high'}}
-          </mat-icon>
+          <mat-icon *ngIf="row.enabled && !accountLocked(row)" matTooltip="User enabled" style="color: green;">done</mat-icon>
+          <mat-icon *ngIf="!row.enabled" matTooltip="User disabled" style="color: orange;">priority_high</mat-icon>
+          <mat-icon *ngIf="accountLocked(row)" matTooltip="User locked" style="color: red;">blocked</mat-icon>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Username" [flexGrow]="1">

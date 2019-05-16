@@ -45,6 +45,8 @@ public interface UserService {
 
     Completable sendRegistrationConfirmation(String userId, io.gravitee.am.identityprovider.api.User principal);
 
+    Completable unlock(String userId, io.gravitee.am.identityprovider.api.User principal);
+
     default Single<User> create(String domain, NewUser newUser) {
         return create(domain, newUser, null);
     }
@@ -65,5 +67,7 @@ public interface UserService {
         return sendRegistrationConfirmation(userId, null);
     }
 
-
+    default Completable unlock(String userId) {
+        return unlock(userId, null);
+    }
 }

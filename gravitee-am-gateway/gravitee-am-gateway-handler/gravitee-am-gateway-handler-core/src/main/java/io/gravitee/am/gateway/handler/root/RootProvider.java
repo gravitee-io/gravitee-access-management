@@ -37,10 +37,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.Regi
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackOpenIDConnectFlowHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordSubmissionRequestParseHandler;
@@ -52,6 +49,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
@@ -114,6 +112,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Qualifier("managementUserService")
     private UserService userService;
 
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -159,6 +160,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.get("/login")
                 .handler(new LoginRequestParseHandler())
                 .handler(clientRequestParseHandler)
+                .handler(new LoginErrorHandler(loginAttemptService))
                 .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, identityProviderManager));
         rootRouter.post("/login")
                 .handler(FormLoginHandler.create(userAuthProvider));

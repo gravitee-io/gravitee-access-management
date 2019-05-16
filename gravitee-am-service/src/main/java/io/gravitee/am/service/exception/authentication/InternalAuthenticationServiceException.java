@@ -28,4 +28,9 @@ public class InternalAuthenticationServiceException extends AuthenticationExcept
     public InternalAuthenticationServiceException(String message) {
         super(message);
     }
+
+    @Override
+    public String getErrorCode() {
+        return "internal_authentication_service";
+    }
 }

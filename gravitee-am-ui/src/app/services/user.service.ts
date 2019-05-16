@@ -61,6 +61,10 @@ export class UserService {
     });
   }
 
+  unlock(domainId, id) {
+    return this.http.post(this.usersURL + domainId + "/users/" + id + "/unlock", {});
+  }
+
   search(domainId, searchTerm, page, size) {
     return this.http.get(this.usersURL + domainId + "/users?q=" + searchTerm + "&page=" + page + "&size=" + size);
   }

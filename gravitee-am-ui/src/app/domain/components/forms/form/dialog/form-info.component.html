@@ -32,7 +32,10 @@
             <input type="password" name="password" required/>
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
-            <p th:if="${param.error}">Wrong user or password</p>
+            <p th:if="${param.error}" class="error">
+              <span th:if="${error.errorCode == 'invalid_account'}">Wrong user or password</span>
+              <span th:if="${error.errorCode == 'account_locked'}">User account is locked</span>
+            </p>
             <button type="submit">login</button>
             <a th:if="${allowForgotPassword}" th:href="@{forgotPassword(client_id=${param.client_id})}">Forgot Password ?</a>
              <a th:if="${allowRegister}" th:href="@{register(client_id=${param.client_id})}">Register</a>

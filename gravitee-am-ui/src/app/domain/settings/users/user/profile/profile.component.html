@@ -24,15 +24,6 @@
             <input matInput placeholder="Username" disabled name="username" [value]="user.username" required>
           </mat-form-field>
         </div>
-        <div *ngIf="editMode()" fxLayout="column" style="margin-bottom: 20px;">
-          <mat-slide-toggle
-            (change)="enableUser($event)"
-            [checked]="isUserEnabled()">
-            Enable User
-          </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Enable or disable user to restrict application access.
-            By disabled the user, he will not be able to log to their applications.</mat-hint>
-        </div>
         <div fxLayout="row">
           <mat-form-field *ngIf="user.firstName" style="margin-right: 20px;">
             <input matInput type="text" placeholder="First name" [disabled]="!editMode()" #firstName="ngModel" name="firstName" [(ngModel)]="user.firstName" required>
@@ -53,22 +44,8 @@
             <mat-error *ngIf="user.email && email.errors?.email">Not a valid email</mat-error>
           </mat-form-field>
         </div>
-        <div fxLayout="column" *ngIf="editMode() && user.preRegistration && !user.registrationCompleted" class="additional-information">
-          <div fxLayout="row" style="color: orange;"><mat-icon>warning</mat-icon><h4 style="margin-top: 5px;">User does not complete registration</h4></div>
-          <span>An email will be sent to the user asking to complete his account.</span>
-          <a (click)="resendConfirmationRegistration()">Resend confirmation e-mail</a>
-        </div>
         <div *ngIf="editMode()">
           <app-select-clients [selectedClient]="user.clientEntity" (onSelectClient)="onClientSelectionChanged($event)" (onRemoveClient)="onClientDeleted($event)"></app-select-clients>
-        </div>
-        <div *ngIf="editMode()" fxLayout="column" class="additional-information">
-          <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" fxLayout="row" style="background: #f1f1f1; border: none;">
-            <mat-form-field style="margin-right: 20px" fxFlex="75">
-              <input matInput type="password" name="password" placeholder="Password" required [(ngModel)]="password"/>
-              <mat-hint>User's password</mat-hint>
-            </mat-form-field>
-            <button style="height:36px; margin-top: 20px;" mat-raised-button color="primary" [disabled]="!passwordForm.valid || passwordForm.pristine" type="submit">RESET PASSWORD</button>
-          </form>
         </div>
         <div fxLayout="column" class="additional-information" *ngIf="!isEmptyObject(user.additionalInformation) || editMode()">
           <h4>Additional information</h4>
@@ -84,6 +61,52 @@
                 <input matInput type="text" name="claimValue" [value]="keyValuePair.value" (change)="formChanged = true;" [disabled]="!editMode()">
               </mat-form-field>
               <button mat-icon-button *ngIf="editMode()" (click)="removeExistingClaim(keyValuePair.key, $event)"><mat-icon>clear</mat-icon></button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h5>Actions</h5>
+          <mat-divider></mat-divider>
+          <div class="additional-information" fxLayout="column">
+            <div fxLayout="column" style="padding: 20px;">
+              <mat-slide-toggle
+                (change)="enableUser($event)"
+                [checked]="isUserEnabled()">
+                Enable User
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%;">Enable or disable user to restrict application access.
+                By disabled the user, he will not be able to log to their applications.</mat-hint>
+            </div>
+            <div fxLayout="column" *ngIf="editMode() && user.preRegistration && !user.registrationCompleted">
+              <mat-divider></mat-divider>
+              <div fxLayout="row" style="padding: 20px;">
+                <div fxLayout="column" fxFlex="75">
+                  <div fxLayout="row" style="color: orange;"><mat-icon>warning</mat-icon><h4 style="margin-top: 5px;">User does not complete registration</h4></div>
+                  <span>An email will be sent to the user asking to complete his account.</span>
+                </div>
+                <button (click)="resendConfirmationRegistration($event)" mat-stroked-button color="primary">SEND CONFIRMATION</button>
+              </div>
+            </div>
+            <div fxLayout="column" *ngIf="accountLocked(user)">
+              <mat-divider></mat-divider>
+              <div fxLayout="row" style="padding: 20px;">
+                <div fxLayout="column" fxFlex="75">
+                  <div fxLayout="row" style="color: red;"><mat-icon>blocked</mat-icon><h4 style="margin-top: 5px;">User account is locked</h4></div>
+                  <span>The account is locked due to to many failed login attempts. Unlock the user to regain access.</span>
+                </div>
+                <button (click)="unlock($event)" mat-stroked-button color="primary">UNLOCK ACCOUNT</button>
+              </div>
+            </div>
+            <div *ngIf="editMode()" fxLayout="column">
+              <mat-divider></mat-divider>
+              <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" fxLayout="row" style="background: #f1f1f1; border: none;">
+                <mat-form-field style="margin-right: 20px" fxFlex="72">
+                  <input matInput type="password" name="password" placeholder="Password" required [(ngModel)]="password"/>
+                  <mat-hint>User's password</mat-hint>
+                </mat-form-field>
+                <button style="height:36px; margin-top: 20px;" mat-stroked-button color="primary" [disabled]="!passwordForm.valid || passwordForm.pristine" type="submit">RESET PASSWORD</button>
+              </form>
             </div>
           </div>
         </div>
@@ -133,6 +156,11 @@
             <mat-icon mat-list-icon>device_hub</mat-icon>
             <h4 matLine>Identity provider</h4>
             <p matLine>{{user.source}}</p>
+          </mat-list-item>
+          <mat-list-item *ngIf="accountLocked(user)">
+            <mat-icon mat-list-icon>blocked</mat-icon>
+            <h4 matLine>Account blocked</h4>
+            <p matLine>Until : {{user.accountLockedUntil | date:'medium'}}</p>
           </mat-list-item>
         </mat-list>
       </div>

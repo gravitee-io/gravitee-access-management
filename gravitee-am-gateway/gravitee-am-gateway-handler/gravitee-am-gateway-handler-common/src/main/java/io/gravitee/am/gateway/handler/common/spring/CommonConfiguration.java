@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.gateway.handler.common.authentication.listener.AuthenticationEventListener;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
 import io.gravitee.am.gateway.handler.common.jwe.JWEService;
@@ -124,6 +125,11 @@ public class CommonConfiguration {
     @Bean
     public OAuth2AuthProvider oAuth2AuthProvider() {
         return new OAuth2AuthProviderImpl();
+    }
+
+    @Bean
+    public AuthenticationEventListener authenticationEventListener() {
+        return new AuthenticationEventListener();
     }
 
 }

@@ -1,0 +1,804 @@
+{
+	"info": {
+		"_postman_id": "19f3263a-edd8-4dc5-83cd-2a34f5b7b25d",
+		"name": "Gravitee.io - AM - Login",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Prepare",
+			"item": [
+				{
+					"name": "Generate admin token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "571e9b59-b9e7-452c-9469-9786ded290a6",
+								"exec": [
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var token = JSON.parse(responseBody);",
+									"pm.environment.set('token', token.access_token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "adminadmin",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{management_url}}/admin/token",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"admin",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create login domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set('domain', jsonData.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"login\", \n\t\"description\": \"test login flows\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create in-memory IDP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2e92f1ea-5d06-4aa3-9ddc-95b0359a8f20",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var body = JSON.parse(responseBody);",
+									"pm.environment.set('idp.inmemory', body.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"},{\\\"firstname\\\":\\\"Jensen\\\",\\\"lastname\\\":\\\"Barbara\\\",\\\"username\\\":\\\"jensen.barbara\\\",\\\"email\\\":\\\"jensen.barbara@mail.com\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/identities",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"identities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var body = JSON.parse(responseBody);",
+									"pm.environment.set('client', body.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"clientId\": \"my-client\",\n  \"clientSecret\": \"my-client-secret\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Configure client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"redirectUris\": [],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\",\n    \"refresh_token\"\n  ],\n  \"scopes\": [\"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"idTokenCustomClaims\": {},\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{client}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients",
+								"{{client}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
+								"exec": [
+									"// wait for sync process",
+									"setTimeout(function(){}, 5000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"enabled\": true\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Account Locked",
+			"item": [
+				{
+					"name": "Configure domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
+								"exec": [
+									"// wait for sync process",
+									"setTimeout(function(){}, 5000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"accountSettings\": {\n  \t\"inherited\" : false,\n  \t\"loginAttemptsDetectionEnabled\": true,\n  \t\"maxLoginAttempts\": 1,\n  \t\"loginAttemptsResetTime\": 60,\n  \t\"accountBlockedDuration\": 120\n  }\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Initiate Login Flow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"});",
+									"",
+									"pm.test(\"Should be a redirection to login page\", function() {",
+									"    var location = postman.getResponseHeader('Location');",
+									"    let domain = pm.environment.get(\"domain\");",
+									"    ",
+									"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client';",
+									"    ",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "904f0113-b2b9-4645-9511-48bb10791506",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{gateway_url}}/login/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"login",
+								"oauth",
+								"authorize",
+								""
+							],
+							"query": [
+								{
+									"key": "response_type",
+									"value": "code"
+								},
+								{
+									"key": "client_id",
+									"value": "my-client"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "http://localhost:4000/"
+								},
+								{
+									"key": "state",
+									"value": "1234-5678-9876"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect to login form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "67df9bf8-89a2-4c95-9728-097aad6d2be4",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Should be ok\", function () {",
+									"    pm.response.to.be.ok;",
+									"    ",
+									"    // Extract the XSRF token to send it with the next request.",
+									"    var responseHTML = cheerio(pm.response.text());",
+									"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    pm.environment.set('xsrf', xsrfToken);",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "904f0113-b2b9-4645-9511-48bb10791506",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Post login form - first attempt",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4afec9f2-a5ba-4647-9a78-6d74cb9c157c",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected to login with invalid account\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    var location = postman.getResponseHeader(\"Location\");",
+									"    pm.environment.set('redirection', location);",
+									"    tests['Redirect to login page'] = location.includes('/login?client_id=my-client&error=login_failed&error_code=invalid_account');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "904f0113-b2b9-4645-9511-48bb10791506",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "X-XSRF-TOKEN",
+									"value": "{{xsrf}}",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "my-client",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "user",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "wrong-password",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{gateway_url}}/{{domain}}/login",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domain}}",
+								"login"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Follow redirection",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "368681d3-a8c7-4036-980e-9f5117e71036",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Should be ok\", function () {",
+									"    pm.response.to.be.ok;",
+									"    ",
+									"    // Extract the XSRF token to send it with the next request.",
+									"    var responseHTML = cheerio(pm.response.text());",
+									"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    pm.environment.set('xsrf', xsrfToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "904f0113-b2b9-4645-9511-48bb10791506",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Post login form - second attempt",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4afec9f2-a5ba-4647-9a78-6d74cb9c157c",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected to login with account locked\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    var location = postman.getResponseHeader(\"Location\");",
+									"    pm.environment.set('redirection', location);",
+									"    tests['Redirect to login page'] = location.includes('/login?client_id=my-client&error=login_failed&error_code=account_locked');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "904f0113-b2b9-4645-9511-48bb10791506",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "X-XSRF-TOKEN",
+									"value": "{{xsrf}}",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "my-client",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "user",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "wrong-password",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{gateway_url}}/{{domain}}/login",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domain}}",
+								"login"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Follow redirection",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "368681d3-a8c7-4036-980e-9f5117e71036",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "904f0113-b2b9-4645-9511-48bb10791506",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Delete domain",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "abfa8366-3ee2-45b0-b658-0040b79d565c",
+						"exec": [
+							"pm.test(\"Status code is 204\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{management_url}}/management/domains/{{domain}}",
+					"host": [
+						"{{management_url}}"
+					],
+					"path": [
+						"management",
+						"domains",
+						"{{domain}}"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -98,22 +98,51 @@ export class UserProfileComponent implements OnInit {
       });
   }
 
-  resendConfirmationRegistration() {
-    this.userService.resendRegistrationConfirmation(this.domainId, this.user.id).map(res => res.json()).subscribe(() => {
-      this.snackbarService.open("Email sent");
-    });
+  resendConfirmationRegistration(event) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Send Email', 'Are you sure you wand to send the confirmation registration email ?')
+      .subscribe( res => {
+        if (res) {
+          this.userService.resendRegistrationConfirmation(this.domainId, this.user.id).map(res => res.json()).subscribe(() => {
+            this.snackbarService.open("Email sent");
+          });
+        }
+      });
   }
 
   resetPassword() {
-    this.userService.resetPassword(this.domainId, this.user.id, this.password).map(res => res.json()).subscribe(() => {
-      this.password = null;
-      this.passwordForm.reset();
-      // reset the errors of all the controls
-      for (let name in this.passwordForm.controls) {
-        this.passwordForm.controls[name].setErrors(null);
-      }
-      this.snackbarService.open("Password reset");
-    });
+    this.dialogService
+      .confirm('Reset Password', 'Are you sure you wand to reset the password ?')
+      .subscribe(res => {
+        if (res) {
+          this.userService.resetPassword(this.domainId, this.user.id, this.password).map(res => res.json()).subscribe(() => {
+            this.password = null;
+            this.passwordForm.reset();
+            // reset the errors of all the controls
+            for (let name in this.passwordForm.controls) {
+              this.passwordForm.controls[name].setErrors(null);
+            }
+            this.snackbarService.open("Password reset");
+          });
+        }
+      });
+  }
+
+  unlock(event) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Unlock User', 'Are you sure you wand to unlock the user ?')
+      .subscribe(res => {
+        if (res) {
+          this.userService.unlock(this.domainId, this.user.id).map(res => res.json()).subscribe(() => {
+            this.user.accountNonLocked = true;
+            this.user.accountLockedAt = null;
+            this.user.accountLockedUntil = null;
+            this.snackbarService.open("User unlocked");
+          });
+        }
+      });
   }
 
   editMode() {
@@ -177,5 +206,9 @@ export class UserProfileComponent implements OnInit {
       return (this.user.clientEntity.clientName) ? this.user.clientEntity.clientName : this.user.clientEntity.clientId;
     }
     return this.user.client;
+  }
+
+  accountLocked(user) {
+    return !user.accountNonLocked && user.accountLockedUntil > new Date();
   }
 }

@@ -149,6 +149,8 @@ public class ClientMongo extends Auditable {
      */
     private Document scopeApprovals;
 
+    private AccountSettingsMongo accountSettings;
+
     public String getId() {
         return id;
     }
@@ -571,6 +573,14 @@ public class ClientMongo extends Auditable {
 
     public void setScopeApprovals(Document scopeApprovals) {
         this.scopeApprovals = scopeApprovals;
+    }
+
+    public AccountSettingsMongo getAccountSettings() {
+        return accountSettings;
+    }
+
+    public void setAccountSettings(AccountSettingsMongo accountSettings) {
+        this.accountSettings = accountSettings;
     }
 
     @Override

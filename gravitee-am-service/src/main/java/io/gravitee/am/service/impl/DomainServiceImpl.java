@@ -190,6 +190,7 @@ public class DomainServiceImpl implements DomainService {
                     domain.setOidc(oldDomain.getOidc());
                     domain.setScim(updateDomain.getScim());
                     domain.setLoginSettings(updateDomain.getLoginSettings());
+                    domain.setAccountSettings(updateDomain.getAccountSettings());
 
                     return domainRepository.update(domain)
                             .doOnSuccess(domain1 -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1)))

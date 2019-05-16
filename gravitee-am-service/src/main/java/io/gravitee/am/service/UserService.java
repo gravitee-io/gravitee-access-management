@@ -43,11 +43,15 @@ public interface UserService {
 
     Maybe<User> findByDomainAndUsername(String domain, String username);
 
+    Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
+
     Maybe<User> findById(String id);
 
     Single<User> create(String domain, NewUser newUser);
 
     Single<User> update(String domain, String id, UpdateUser updateUser);
+
+    Single<User> update(User user);
 
     Completable delete(String userId);
 

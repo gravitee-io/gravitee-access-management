@@ -90,4 +90,7 @@ export class UsersComponent implements OnInit {
     this.loadUsers();
   }
 
+  accountLocked(user) {
+    return !user.accountNonLocked && user.accountLockedUntil > new Date();
+  }
 }

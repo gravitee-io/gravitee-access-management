@@ -55,6 +55,8 @@ public class DomainMongo extends Auditable {
 
     private LoginSettingsMongo loginSettings;
 
+    private AccountSettingsMongo accountSettings;
+
     private Set<String> tags;
 
     public String getId() {
@@ -159,6 +161,14 @@ public class DomainMongo extends Auditable {
 
     public void setLoginSettings(LoginSettingsMongo loginSettings) {
         this.loginSettings = loginSettings;
+    }
+
+    public AccountSettingsMongo getAccountSettings() {
+        return accountSettings;
+    }
+
+    public void setAccountSettings(AccountSettingsMongo accountSettings) {
+        this.accountSettings = accountSettings;
     }
 
     public Set<String> getTags() {

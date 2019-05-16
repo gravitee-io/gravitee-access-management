@@ -33,6 +33,7 @@ import {DomainSettingsLoginComponent} from "./domain/settings/login/login.compon
 import {DomainSettingsEmailsComponent} from "./domain/settings/emails/emails.component";
 import {DomainSettingsEmailComponent} from "./domain/settings/emails/email/email.component";
 import {DomainSettingsExtensionGrantsComponent} from "./domain/settings/extension-grants/extension-grants.component";
+import {DomainSettingsAccountComponent} from "./domain/settings/account/account.component";
 import {ClientsComponent} from "./clients/clients.component";
 import {ClientComponent} from "./domain/clients/client/client.component";
 import {ClientCreationComponent} from "./clients/creation/client-creation.component";
@@ -57,6 +58,7 @@ import {ClientEmailsComponent} from "./domain/clients/client/emails/emails.compo
 import {ClientEmailComponent} from "./domain/clients/client/emails/email/email.component";
 import {ClientFormsComponent} from "./domain/clients/client/forms/forms.component";
 import {ClientFormComponent} from "./domain/clients/client/forms/form/form.component";
+import {ClientAccountSettingsComponent} from "./domain/clients/client/account/account.component";
 import {CertificatesResolver} from "./resolvers/certificates.resolver";
 import {CertificateCreationComponent} from "./domain/settings/certificates/creation/certificate-creation.component";
 import {CertificateComponent} from "./domain/settings/certificates/certificate/certificate.component";
@@ -417,7 +419,8 @@ const routes: Routes = [
           { path: 'forms', component: ClientFormsComponent, resolve: { domain: DomainResolver } },
           { path: 'forms/form', component: ClientFormComponent, resolve: { form: FormResolver } },
           { path: 'emails', component: ClientEmailsComponent, resolve: { domain: DomainResolver } },
-          { path: 'emails/email', component: ClientEmailComponent, resolve: { email: EmailResolver} }
+          { path: 'emails/email', component: ClientEmailComponent, resolve: { email: EmailResolver} },
+          { path: 'account', component: ClientAccountSettingsComponent },
         ]
       },
       { path: 'settings', component: DomainSettingsComponent,
@@ -567,6 +570,18 @@ const routes: Routes = [
             component: AuditComponent,
             resolve: {
               audit: AuditResolver
+            }
+          },
+          { path: 'account',
+            component: DomainSettingsAccountComponent,
+            resolve: {
+              domain: DomainResolver
+            },
+            data: {
+              menu: {
+                label: 'User Accounts',
+                section: 'Security'
+              }
             }
           },
           { path: 'certificates',

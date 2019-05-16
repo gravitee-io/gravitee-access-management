@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
@@ -28,6 +29,7 @@ import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
+import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ClientMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
 import io.reactivex.Completable;
@@ -221,6 +223,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setCreatedAt(clientMongo.getCreatedAt());
         client.setUpdatedAt(clientMongo.getUpdatedAt());
         client.setScopeApprovals((Map)clientMongo.getScopeApprovals());
+        client.setAccountSettings(convert(clientMongo.getAccountSettings()));
         return client;
     }
 
@@ -285,6 +288,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setCreatedAt(client.getCreatedAt());
         clientMongo.setUpdatedAt(client.getUpdatedAt());
         clientMongo.setScopeApprovals(client.getScopeApprovals() != null ? new Document((Map)client.getScopeApprovals()) : new Document());
+        clientMongo.setAccountSettings(convert(client.getAccountSettings()));
         return clientMongo;
     }
 
@@ -424,5 +428,33 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         JWKMongo key = new JWKMongo();
         key.setK(octKey.getK());
         return key;
+    }
+
+    private AccountSettings convert(AccountSettingsMongo accountSettingsMongo) {
+        if (accountSettingsMongo == null) {
+            return null;
+        }
+
+        AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setInherited(accountSettingsMongo.isInherited());
+        accountSettings.setLoginAttemptsDetectionEnabled(accountSettingsMongo.isLoginAttemptsDetectionEnabled());
+        accountSettings.setMaxLoginAttempts(accountSettingsMongo.getMaxLoginAttempts());
+        accountSettings.setLoginAttemptsResetTime(accountSettingsMongo.getLoginAttemptsResetTime());
+        accountSettings.setAccountBlockedDuration(accountSettingsMongo.getAccountBlockedDuration());
+        return accountSettings;
+    }
+
+    private AccountSettingsMongo convert(AccountSettings accountSettings) {
+        if (accountSettings == null) {
+            return null;
+        }
+
+        AccountSettingsMongo accountSettingsMongo = new AccountSettingsMongo();
+        accountSettingsMongo.setInherited(accountSettings.isInherited());
+        accountSettingsMongo.setLoginAttemptsDetectionEnabled(accountSettings.isLoginAttemptsDetectionEnabled());
+        accountSettingsMongo.setMaxLoginAttempts(accountSettings.getMaxLoginAttempts());
+        accountSettingsMongo.setLoginAttemptsResetTime(accountSettings.getLoginAttemptsResetTime());
+        accountSettingsMongo.setAccountBlockedDuration(accountSettings.getAccountBlockedDuration());
+        return accountSettingsMongo;
     }
 }

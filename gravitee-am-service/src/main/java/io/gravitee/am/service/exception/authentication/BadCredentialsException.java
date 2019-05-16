@@ -31,4 +31,9 @@ public class BadCredentialsException extends AuthenticationException {
     public BadCredentialsException(String msg, Throwable t) {
         super(msg, t);
     }
+
+    @Override
+    public String getErrorCode() {
+        return "bad_credentials";
+    }
 }

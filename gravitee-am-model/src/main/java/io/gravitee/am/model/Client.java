@@ -19,6 +19,7 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ApplicationType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 
 import java.time.ZoneId;
@@ -134,6 +135,38 @@ public class Client implements Cloneable{
 
     private Map<String, Object> idTokenCustomClaims;
 
+    /**
+     * Security domain associated to the client
+     */
+    private String domain;
+
+    /**
+     * Client enabled.
+     */
+    private boolean enabled;
+
+    /**
+     * The Client creation date
+     */
+    private Date createdAt;
+
+    /**
+     * The Client last updated date
+     */
+    private Date updatedAt;
+
+    private Set<String> identities;
+
+    private Set<String> oauth2Identities;
+
+    private String certificate;
+
+    private boolean enhanceScopesWithUserPermissions;
+
+    private Map<String, Integer> scopeApprovals;
+
+    private AccountSettings accountSettings;
+
     public Client() { }
 
     public Client(Client other) {
@@ -192,37 +225,8 @@ public class Client implements Cloneable{
         this.certificate = other.certificate;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
         this.scopeApprovals = other.scopeApprovals;
+        this.accountSettings = other.accountSettings;
     }
-
-    /**
-     * Security domain associated to the client
-     */
-    private String domain;
-
-    /**
-     * Client enabled.
-     */
-    private boolean enabled;
-
-    /**
-     * The Client creation date
-     */
-    private Date createdAt;
-
-    /**
-     * The Client last updated date
-     */
-    private Date updatedAt;
-
-    private Set<String> identities;
-
-    private Set<String> oauth2Identities;
-
-    private String certificate;
-
-    private boolean enhanceScopesWithUserPermissions;
-
-    private Map<String, Integer> scopeApprovals;
 
     public String getId() {
         return id;
@@ -665,6 +669,14 @@ public class Client implements Cloneable{
 
     public void setScopeApprovals(Map<String, Integer> scopeApprovals) {
         this.scopeApprovals = scopeApprovals;
+    }
+
+    public AccountSettings getAccountSettings() {
+        return accountSettings;
+    }
+
+    public void setAccountSettings(AccountSettings accountSettings) {
+        this.accountSettings = accountSettings;
     }
 
     @Override

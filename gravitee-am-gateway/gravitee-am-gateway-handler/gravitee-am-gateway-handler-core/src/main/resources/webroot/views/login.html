@@ -36,7 +36,10 @@
                         <label class="mdl-textfield__label mdl-required" for="password">Password</label>
                     </div>
 
-                    <p th:if="${param.error}" class="error">Wrong user or password</p>
+                    <p th:if="${param.error}" class="error">
+                        <span th:if="${error.errorCode == 'invalid_account'}">Wrong user or password</span>
+                        <span th:if="${error.errorCode == 'account_locked'}">User account is locked</span>
+                    </p>
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary">Log in</button>

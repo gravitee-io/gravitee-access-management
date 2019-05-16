@@ -42,6 +42,7 @@ public class AuthenticationAuditBuilder extends AuditBuilder<AuthenticationAudit
                 userAgent((String) principal.getAdditionalInformation().get(Claims.user_agent));
             }
         }
+        setActor(null, EntityType.USER, (String) principal.getPrincipal(), null, null);
         return this;
     }
 

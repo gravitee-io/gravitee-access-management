@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.model.login.LoginSettings;
@@ -84,6 +85,8 @@ public class Domain {
 
     private SCIMSettings scim;
 
+    private AccountSettings accountSettings;
+
     private Set<String> tags;
 
     public Domain() {
@@ -105,6 +108,7 @@ public class Domain {
         this.oidc = other.oidc;
         this.loginSettings = other.loginSettings;
         this.scim = other.scim;
+        this.accountSettings = other.accountSettings;
         this.tags = other.tags;
     }
 
@@ -226,6 +230,14 @@ public class Domain {
 
     public void setLoginSettings(LoginSettings loginSettings) {
         this.loginSettings = loginSettings;
+    }
+
+    public AccountSettings getAccountSettings() {
+        return accountSettings;
+    }
+
+    public void setAccountSettings(AccountSettings accountSettings) {
+        this.accountSettings = accountSettings;
     }
 
     public Set<String> getTags() {

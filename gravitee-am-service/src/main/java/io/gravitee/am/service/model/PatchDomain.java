@@ -17,6 +17,7 @@ package io.gravitee.am.service.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
@@ -45,6 +46,7 @@ public class PatchDomain {
     private Optional<PatchOIDCSettings> oidc;
     private Optional<SCIMSettings> scim;
     private Optional<LoginSettings> loginSettings;
+    private Optional<AccountSettings> accountSettings;
     private Optional<Set<String>> tags;
 
     public Optional<String> getName() {
@@ -119,6 +121,14 @@ public class PatchDomain {
         this.loginSettings = loginSettings;
     }
 
+    public Optional<AccountSettings> getAccountSettings() {
+        return accountSettings;
+    }
+
+    public void setAccountSettings(Optional<AccountSettings> accountSettings) {
+        this.accountSettings = accountSettings;
+    }
+
     public Optional<Set<String>> getTags() {
         return tags;
     }
@@ -139,6 +149,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setOauth2Identities, this.getOauth2Identities());
         SetterUtils.safeSet(toPatch::setScim, this.getScim());
         SetterUtils.safeSet(toPatch::setLoginSettings, this.getLoginSettings());
+        SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
         SetterUtils.safeSet(toPatch::setTags, this.getTags());
 
         if (this.getOidc() != null) {

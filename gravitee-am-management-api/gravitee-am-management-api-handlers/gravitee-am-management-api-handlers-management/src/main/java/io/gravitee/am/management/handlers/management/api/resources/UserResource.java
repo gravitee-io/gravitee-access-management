@@ -185,6 +185,27 @@ public class UserResource extends AbstractResource {
 
     }
 
+
+    @POST
+    @Path("unlock")
+    @ApiOperation(value = "Unlock a user")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "User unlocked"),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void unlockUser(@PathParam("domain") String domain,
+                                             @PathParam("user") String user,
+                                             @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+
+        domainService.findById(domain)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapCompletable(irrelevant -> userService.unlock(user, authenticatedUser))
+                .subscribe(
+                        () -> response.resume(Response.noContent().build()),
+                        error -> response.resume(error));
+
+    }
+
     @Path("{consents}")
     public UserConsentsResource getUserConsentsResource() {
         return resourceContext.getResource(UserConsentsResource.class);

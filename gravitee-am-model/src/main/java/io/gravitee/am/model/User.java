@@ -77,6 +77,10 @@ public class User {
 
     private boolean accountNonLocked = true;
 
+    private Date accountLockedAt;
+
+    private Date accountLockedUntil;
+
     private boolean credentialsNonExpired = true;
 
     private boolean enabled = true;
@@ -269,6 +273,22 @@ public class User {
 
     public void setAccountNonLocked(boolean accountNonLocked) {
         this.accountNonLocked = accountNonLocked;
+    }
+
+    public Date getAccountLockedAt() {
+        return accountLockedAt;
+    }
+
+    public void setAccountLockedAt(Date accountLockedAt) {
+        this.accountLockedAt = accountLockedAt;
+    }
+
+    public Date getAccountLockedUntil() {
+        return accountLockedUntil;
+    }
+
+    public void setAccountLockedUntil(Date accountLockedUntil) {
+        this.accountLockedUntil = accountLockedUntil;
     }
 
     public boolean isCredentialsNonExpired() {

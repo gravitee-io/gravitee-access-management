@@ -31,4 +31,9 @@ public class AccountDisabledException extends AuthenticationException {
     public AccountDisabledException(String msg) {
         super(msg);
     }
+
+    @Override
+    public String getErrorCode() {
+        return "account_disabled";
+    }
 }
