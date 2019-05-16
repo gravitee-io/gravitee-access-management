@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 
@@ -56,6 +57,8 @@ public class UpdateDomain {
     private SCIMSettings scim;
 
     private LoginSettings loginSettings;
+
+    private AccountSettings accountSettings;
 
     public String getName() {
         return name;
@@ -119,5 +122,13 @@ public class UpdateDomain {
 
     public void setLoginSettings(LoginSettings loginSettings) {
         this.loginSettings = loginSettings;
+    }
+
+    public AccountSettings getAccountSettings() {
+        return accountSettings;
+    }
+
+    public void setAccountSettings(AccountSettings accountSettings) {
+        this.accountSettings = accountSettings;
     }
 }

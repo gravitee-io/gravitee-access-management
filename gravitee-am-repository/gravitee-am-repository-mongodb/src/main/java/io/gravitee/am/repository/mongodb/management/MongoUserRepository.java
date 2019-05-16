@@ -162,6 +162,8 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         user.setFirstName(userMongo.getFirstName());
         user.setLastName(userMongo.getLastName());
         user.setAccountNonExpired(userMongo.isAccountNonExpired());
+        user.setAccountLockedAt(userMongo.getAccountLockedAt());
+        user.setAccountLockedUntil(userMongo.getAccountLockedUntil());
         user.setAccountNonLocked(userMongo.isAccountNonLocked());
         user.setCredentialsNonExpired(userMongo.isCredentialsNonExpired());
         user.setEnabled(userMongo.isEnabled());
@@ -202,6 +204,8 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         userMongo.setFirstName(user.getFirstName());
         userMongo.setLastName(user.getLastName());
         userMongo.setAccountNonExpired(user.isAccountNonExpired());
+        userMongo.setAccountLockedAt(user.getAccountLockedAt());
+        userMongo.setAccountLockedUntil(user.getAccountLockedUntil());
         userMongo.setAccountNonLocked(user.isAccountNonLocked());
         userMongo.setCredentialsNonExpired(user.isCredentialsNonExpired());
         userMongo.setEnabled(user.isEnabled());

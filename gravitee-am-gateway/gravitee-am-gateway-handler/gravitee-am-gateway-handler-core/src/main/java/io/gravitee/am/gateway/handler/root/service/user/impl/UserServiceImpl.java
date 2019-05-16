@@ -35,7 +35,9 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
@@ -96,6 +98,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private LoginAttemptService loginAttemptService;
 
     @Override
     public Maybe<User> findById(String id) {
@@ -192,7 +197,15 @@ public class UserServiceImpl implements UserService {
                     user.setUpdatedAt(new Date());
                     return userRepository.update(user);
                 })
-                .toCompletable()
+                // reset login attempts in case of reset password action
+                .flatMapCompletable(user1 -> {
+                    LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
+                            .domain(user1.getDomain())
+                            .client(user1.getClient())
+                            .username(user1.getUsername())
+                            .build();
+                    return loginAttemptService.reset(criteria);
+                })
                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)));
     }

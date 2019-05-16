@@ -80,6 +80,12 @@ export class DomainService {
     });
   }
 
+  patchAccountSettings(id, accountSettings): Observable<Response> {
+    return this.http.patch(this.domainsURL + id, {
+      'accountSettings': accountSettings
+    });
+  }
+
   delete(id): Observable<Response> {
     return this.http.delete(this.domainsURL + id);
   }

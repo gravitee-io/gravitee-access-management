@@ -69,6 +69,7 @@ import { ClientEmailsComponent } from './domain/clients/client/emails/emails.com
 import { ClientEmailComponent } from './domain/clients/client/emails/email/email.component';
 import { ClientFormsComponent } from './domain/clients/client/forms/forms.component';
 import { ClientFormComponent } from './domain/clients/client/forms/form/form.component';
+import { ClientAccountSettingsComponent } from './domain/clients/client/account/account.component';
 import { ProviderCreationStep1Component } from './domain/settings/providers/creation/steps/step1/step1.component';
 import { ProviderCreationStep2Component } from './domain/settings/providers/creation/steps/step2/step2.component';
 import { ProviderComponent } from './domain/settings/providers/provider/provider.component';
@@ -98,6 +99,7 @@ import { DomainSettingsFormComponent } from "./domain/settings/forms/form/form.c
 import { DomainSettingsLoginComponent } from "./domain/settings/login/login.component";
 import { DomainSettingsEmailsComponent } from "./domain/settings/emails/emails.component";
 import { DomainSettingsEmailComponent } from "./domain/settings/emails/email/email.component";
+import { DomainSettingsAccountComponent } from "./domain/settings/account/account.component";
 import { ClientsResolver } from "./resolvers/clients.resolver";
 import { ClientResolver } from "./resolvers/client.resolver";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
@@ -195,6 +197,7 @@ import {TagService} from "./services/tag.service";
 import {TagsComponent} from "./settings/management/tags/tags.component";
 import {TagCreationComponent} from "./settings/management/tags/creation/tag-creation.component";
 import {TagComponent} from "./settings/management/tags/tag/tag.component";
+import {AccountSettingsComponent} from "./domain/components/account/account-settings.component";
 
 @NgModule({
   declarations: [
@@ -219,6 +222,7 @@ import {TagComponent} from "./settings/management/tags/tag/tag.component";
     DomainSettingsLoginComponent,
     DomainSettingsEmailsComponent,
     DomainSettingsEmailComponent,
+    DomainSettingsAccountComponent,
     ClientsComponent,
     ConfirmComponent,
     EmptystateComponent,
@@ -233,6 +237,7 @@ import {TagComponent} from "./settings/management/tags/tag/tag.component";
     ClientEmailComponent,
     ClientFormsComponent,
     ClientFormComponent,
+    ClientAccountSettingsComponent,
     ProviderCreationStep1Component,
     ProviderCreationStep2Component,
     ProviderComponent,
@@ -304,7 +309,8 @@ import {TagComponent} from "./settings/management/tags/tag/tag.component";
     ReporterFormComponent,
     TagsComponent,
     TagCreationComponent,
-    TagComponent
+    TagComponent,
+    AccountSettingsComponent
   ],
   imports: [
     BrowserModule,

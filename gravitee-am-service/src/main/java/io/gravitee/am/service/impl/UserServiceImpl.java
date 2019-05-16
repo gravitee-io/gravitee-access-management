@@ -123,6 +123,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
+        LOGGER.debug("Find user by domain, username and source: {} {}", domain, username, source);
+        return userRepository.findByDomainAndUsernameAndSource(domain, username, source)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a user using its username: {} for the domain and source {}", username, domain, source, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a user using its username: %s for the domain %s and source %s", username, domain, source), ex));
+                });
+    }
+
+    @Override
     public Single<User> create(String domain, NewUser newUser) {
         LOGGER.debug("Create a new user {} for domain {}", newUser, domain);
 
@@ -188,6 +199,21 @@ public class UserServiceImpl implements UserService {
                         return Single.error(ex);
                     }
 
+                    LOGGER.error("An error occurs while trying to update a user", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
+                });
+    }
+
+    @Override
+    public Single<User> update(User user) {
+        LOGGER.debug("Update a user {}", user);
+        // updated date
+        user.setUpdatedAt(new Date());
+        return userRepository.update(user)
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
                     LOGGER.error("An error occurs while trying to update a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
                 });

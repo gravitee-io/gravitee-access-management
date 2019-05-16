@@ -27,6 +27,8 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.authentication.AccountDisabledException;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
+import io.gravitee.am.service.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.common.event.EventManager;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -65,7 +67,7 @@ public class UserAuthenticationManagerTest {
     private IdentityProviderManager identityProviderManager;
 
     @Mock
-    private AuditService auditService;
+    private EventManager eventManager;
 
     @Test
     public void shouldNotAuthenticateUser_noIdentityProvider() {
@@ -75,7 +77,7 @@ public class UserAuthenticationManagerTest {
 
         TestObserver<User> observer = userAuthenticationManager.authenticate(client, null).test();
         observer.assertNotComplete();
-        observer.assertError(BadCredentialsException.class);
+        observer.assertError(InternalAuthenticationServiceException.class);
         verifyZeroInteractions(userService);
     }
 

@@ -61,6 +61,12 @@ export class ClientService {
     });
   }
 
+  patchAccountSettings(domainId, id, accountSettings): Observable<Response> {
+    return this.http.patch(this.clientsURL + domainId + "/clients/" + id, {
+      "accountSettings" : accountSettings
+    });
+  }
+
   delete(domainId, id): Observable<Response> {
     return this.http.delete(this.clientsURL + domainId + "/clients/" + id);
   }

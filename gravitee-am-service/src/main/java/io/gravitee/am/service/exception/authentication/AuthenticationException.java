@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.service.exception.authentication;
 
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public abstract class AuthenticationException extends RuntimeException {
+
+    private Map<String, String> details;
 
     public AuthenticationException() {
     }
@@ -30,5 +34,29 @@ public abstract class AuthenticationException extends RuntimeException {
 
     public AuthenticationException(String msg) {
         super(msg);
+    }
+
+    public AuthenticationException(Map<String, String> details) {
+        this.details = details;
+    }
+
+    public AuthenticationException(String msg, Map<String, String> details) {
+        this(msg);
+        this.details = details;
+    }
+
+    public AuthenticationException(String msg, Throwable throwable, Map<String, String> details) {
+        this(msg, throwable);
+        this.details = details;
+    }
+
+    public abstract String getErrorCode();
+
+    public Map<String, String> getDetails() {
+        return details;
+    }
+
+    public void setDetails(Map<String, String> details) {
+        this.details = details;
     }
 }

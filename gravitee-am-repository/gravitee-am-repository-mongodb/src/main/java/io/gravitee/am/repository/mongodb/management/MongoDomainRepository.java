@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -28,10 +29,7 @@ import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
-import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.LoginFormMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.SCIMSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.*;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.reactivex.Completable;
@@ -119,6 +117,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setOidc(convert(domainMongo.getOidc()));
         domain.setScim(convert(domainMongo.getScim()));
         domain.setLoginSettings(convert(domainMongo.getLoginSettings()));
+        domain.setAccountSettings(convert(domainMongo.getAccountSettings()));
         domain.setTags(domainMongo.getTags());
 
         // set last event
@@ -150,6 +149,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setOidc(convert(domain.getOidc()));
         domainMongo.setScim(convert(domain.getScim()));
         domainMongo.setLoginSettings(convert(domain.getLoginSettings()));
+        domainMongo.setAccountSettings(convert(domain.getAccountSettings()));
         domainMongo.setTags(domain.getTags());
 
         // save last event
@@ -299,4 +299,33 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         loginSettingsMongo.setRememberMeEnabled(loginSettings.isRememberMeEnabled());
         return loginSettingsMongo;
     }
+
+    private AccountSettings convert(AccountSettingsMongo accountSettingsMongo) {
+        if (accountSettingsMongo == null) {
+            return null;
+        }
+
+        AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setInherited(accountSettingsMongo.isInherited());
+        accountSettings.setLoginAttemptsDetectionEnabled(accountSettingsMongo.isLoginAttemptsDetectionEnabled());
+        accountSettings.setMaxLoginAttempts(accountSettingsMongo.getMaxLoginAttempts());
+        accountSettings.setLoginAttemptsResetTime(accountSettingsMongo.getLoginAttemptsResetTime());
+        accountSettings.setAccountBlockedDuration(accountSettingsMongo.getAccountBlockedDuration());
+        return accountSettings;
+    }
+
+    private AccountSettingsMongo convert(AccountSettings accountSettings) {
+        if (accountSettings == null) {
+            return null;
+        }
+
+        AccountSettingsMongo accountSettingsMongo = new AccountSettingsMongo();
+        accountSettingsMongo.setInherited(accountSettings.isInherited());
+        accountSettingsMongo.setLoginAttemptsDetectionEnabled(accountSettings.isLoginAttemptsDetectionEnabled());
+        accountSettingsMongo.setMaxLoginAttempts(accountSettings.getMaxLoginAttempts());
+        accountSettingsMongo.setLoginAttemptsResetTime(accountSettings.getLoginAttemptsResetTime());
+        accountSettingsMongo.setAccountBlockedDuration(accountSettings.getAccountBlockedDuration());
+        return accountSettingsMongo;
+    }
+
 }

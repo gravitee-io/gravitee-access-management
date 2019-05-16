@@ -44,6 +44,8 @@ public class UserMongo extends Auditable {
     private String type;
     private String preferredLanguage;
     private boolean accountNonExpired = true;
+    private Date accountLockedAt;
+    private Date accountLockedUntil;
     private boolean accountNonLocked = true;
     private boolean credentialsNonExpired = true;
     private boolean enabled = true;
@@ -170,6 +172,22 @@ public class UserMongo extends Auditable {
 
     public void setAccountNonLocked(boolean accountNonLocked) {
         this.accountNonLocked = accountNonLocked;
+    }
+
+    public Date getAccountLockedAt() {
+        return accountLockedAt;
+    }
+
+    public void setAccountLockedAt(Date accountLockedAt) {
+        this.accountLockedAt = accountLockedAt;
+    }
+
+    public Date getAccountLockedUntil() {
+        return accountLockedUntil;
+    }
+
+    public void setAccountLockedUntil(Date accountLockedUntil) {
+        this.accountLockedUntil = accountLockedUntil;
     }
 
     public boolean isCredentialsNonExpired() {

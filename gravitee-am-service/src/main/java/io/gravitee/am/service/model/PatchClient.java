@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
 
@@ -76,6 +77,7 @@ public class PatchClient {
     private Optional<String> certificate;
     private Optional<Boolean> enhanceScopesWithUserPermissions;
     private Optional<Map<String, Integer>> scopeApprovals;
+    private Optional<AccountSettings> accountSettings;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -469,6 +471,14 @@ public class PatchClient {
         this.scopeApprovals = scopeApprovals;
     }
 
+    public Optional<AccountSettings> getAccountSettings() {
+        return accountSettings;
+    }
+
+    public void setAccountSettings(Optional<AccountSettings> accountSettings) {
+        this.accountSettings = accountSettings;
+    }
+
     public Client patch(Client _toPatch, boolean forceNull) {
         // create new object for audit purpose (patch json result)
         Client toPatch = new Client(_toPatch);
@@ -527,6 +537,7 @@ public class PatchClient {
         }
         SetterUtils.safeSet(toPatch::setEnhanceScopesWithUserPermissions, this.getEnhanceScopesWithUserPermissions(), boolean.class);
         SetterUtils.safeSet(toPatch::setScopeApprovals, this.getScopeApprovals());
+        SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
 
         return toPatch;
     }

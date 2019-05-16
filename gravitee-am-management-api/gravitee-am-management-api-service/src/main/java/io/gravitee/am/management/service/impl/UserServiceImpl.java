@@ -29,7 +29,9 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -88,6 +90,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private LoginAttemptService loginAttemptService;
 
     @Override
     public Single<Page<User>> search(String domain, String query, int limit) {
@@ -220,7 +225,15 @@ public class UserServiceImpl implements UserService {
                         })
                         .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)))
-                ).toCompletable();
+                // reset login attempts in case of reset password action
+                ).flatMapCompletable(user -> {
+                    LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
+                            .domain(user.getDomain())
+                            .client(user.getClient())
+                            .username(user.getUsername())
+                            .build();
+                    return loginAttemptService.reset(criteria);
+                });
     }
 
     @Override
@@ -240,6 +253,28 @@ public class UserServiceImpl implements UserService {
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).user(user1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).throwable(throwable)))
                 .toSingle()
+                .toCompletable();
+    }
+
+    @Override
+    public Completable unlock(String userId, io.gravitee.am.identityprovider.api.User principal) {
+        return findById(userId)
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                .flatMapSingle(user -> {
+                    user.setAccountNonLocked(true);
+                    user.setAccountLockedAt(null);
+                    user.setAccountLockedUntil(null);
+                    // reset login attempts and update user
+                    LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
+                            .domain(user.getDomain())
+                            .client(user.getClient())
+                            .username(user.getUsername())
+                            .build();
+                    return loginAttemptService.reset(criteria)
+                            .andThen(userService.update(user));
+                })
+                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).user(user1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).throwable(throwable)))
                 .toCompletable();
     }
 
