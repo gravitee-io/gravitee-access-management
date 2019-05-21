@@ -31,6 +31,7 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 
@@ -68,6 +69,9 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private OAuth2AuthProvider oAuth2AuthProvider;
 
+    @Autowired
+    private CorsHandler corsHandler;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -75,6 +79,9 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
         if (isSCIMEnabled()) {
             // Create the SCIM router
             final Router scimRouter = Router.router(vertx);
+
+            // CORS handler
+            scimRouter.route().handler(corsHandler);
 
             // Declare SCIM routes
             // see <a href="https://tools.ietf.org/html/rfc7644#section-3.2">3.2. SCIM Endpoints and HTTP Methods</a>
