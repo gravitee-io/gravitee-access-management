@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM nginx:1.15-alpine
+FROM nginx:1.16-alpine
 MAINTAINER Gravitee Team <http://gravitee.io>
 
 ARG GRAVITEEAM_VERSION=0
