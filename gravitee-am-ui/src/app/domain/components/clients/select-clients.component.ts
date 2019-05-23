@@ -35,7 +35,7 @@ export class SelectClientsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.params['domainId'] ? this.route.snapshot.parent.parent.params['domainId'] : this.route.snapshot.parent.parent.parent.params['domainId'];
     this.clientCtrl.valueChanges
       .subscribe(searchTerm => {
         if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
