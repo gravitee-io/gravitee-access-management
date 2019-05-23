@@ -128,6 +128,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         // router user management handler
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
         Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
+        ((ClientRequestParseHandler) clientRequestParseHandler).setRequired(true);
+        Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
         Handler<RoutingContext> registerHandler = new RegisterEndpoint(thymeleafTemplateEngine);
         Handler<RoutingContext> registerSubmissionRequestHandler = new RegisterSubmissionRequestParseHandler();
         Handler<RoutingContext> registerSubmissionHandler = new RegisterSubmissionEndpoint(userService, domain);
@@ -203,6 +205,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         rootRouter.route(HttpMethod.GET,"/confirmRegistration")
                 .handler(registerConfirmationRequestParseHandler)
+                .handler(clientRequestParseHandlerOptional)
                 .handler(registerConfirmationEndpointHandler);
         rootRouter.route(HttpMethod.POST, "/confirmRegistration")
                 .handler(registerConfirmationSubmissionRequestParseHandler)
@@ -221,6 +224,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                     .handler(forgotPasswordSubmissionEndpointHandler);
             rootRouter.route(HttpMethod.GET, "/resetPassword")
                     .handler(resetPasswordRequestParseHandler)
+                    .handler(clientRequestParseHandlerOptional)
                     .handler(resetPasswordHandler);
             rootRouter.route(HttpMethod.POST, "/resetPassword")
                     .handler(resetPasswordSubmissionRequestParseHandler)

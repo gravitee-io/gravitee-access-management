@@ -15,12 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -41,9 +45,20 @@ public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
         User user = context.get("user");
         user.setPassword(password);
 
+        // add client_id parameter for future use
+        Client client = context.get("client");
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put(Parameters.CLIENT_ID, client.getClientId());
+
         userService.resetPassword(user, getAuthenticatedUser(context))
                 .subscribe(
-                        () -> redirectToPage(context, Collections.singletonMap("success", "reset_password_completed")),
-                        error -> redirectToPage(context, Collections.singletonMap("error", "reset_password_failed"), error));
+                        () -> {
+                            queryParams.put("success", "reset_password_completed");
+                            redirectToPage(context, queryParams);
+                        },
+                        error -> {
+                            queryParams.put("error", "reset_password_failed");
+                            redirectToPage(context, queryParams, error);
+                        });
     }
 }

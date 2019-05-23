@@ -33,6 +33,7 @@ public class ClientRequestParseHandler implements Handler<RoutingContext> {
 
     public static final String CLIENT_CONTEXT_KEY = "client";
     private ClientSyncService clientSyncService;
+    private boolean required;
 
     public ClientRequestParseHandler(ClientSyncService clientSyncService) {
         this.clientSyncService = clientSyncService;
@@ -42,7 +43,12 @@ public class ClientRequestParseHandler implements Handler<RoutingContext> {
     public void handle(RoutingContext context) {
         final String clientId = context.request().getParam(Parameters.CLIENT_ID);
         if (clientId == null || clientId.isEmpty()) {
-            throw new InvalidRequestException("Missing parameter: client_id is required");
+            if (required) {
+                throw new InvalidRequestException("Missing parameter: client_id is required");
+            } else {
+                context.next();
+                return;
+            }
         }
 
         authenticate(clientId, authHandler -> {
@@ -54,6 +60,10 @@ public class ClientRequestParseHandler implements Handler<RoutingContext> {
             context.put(CLIENT_CONTEXT_KEY, authHandler.result());
             context.next();
         });
+    }
+
+    public void setRequired(boolean required) {
+        this.required = required;
     }
 
     private void authenticate(String clientId, Handler<AsyncResult<Client>> authHandler) {
