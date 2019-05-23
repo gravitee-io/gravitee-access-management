@@ -21,18 +21,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.gravitee.am.gateway.handlers</groupId>
-        <artifactId>gravitee-am-gateway-handlers</artifactId>
+        <groupId>io.gravitee.am.gateway.handler</groupId>
+        <artifactId>gravitee-am-gateway-handler</artifactId>
         <version>2.6.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-gateway-handler-core</artifactId>
-    <name>Gravitee IO - Access Management - Gateway - Domain Handler</name>
+    <name>Gravitee IO - Access Management - Gateway - Domain Handler - Core</name>
 
     <dependencies>
         <!-- Gravitee.io AM dependencies -->
         <dependency>
-            <groupId>io.gravitee.am.gateway.handlers</groupId>
+            <groupId>io.gravitee.am.gateway.handler</groupId>
             <artifactId>gravitee-am-gateway-handler-api</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -108,7 +108,7 @@
 
         <!-- Testing -->
         <dependency>
-            <groupId>io.gravitee.am.gateway.handlers</groupId>
+            <groupId>io.gravitee.am.gateway.handler</groupId>
             <artifactId>gravitee-am-gateway-handler-common</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>

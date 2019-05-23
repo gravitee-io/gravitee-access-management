@@ -26,9 +26,9 @@
         <version>2.6.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.gravitee.am.gateway.handlers</groupId>
-    <artifactId>gravitee-am-gateway-handlers</artifactId>
-    <name>Gravitee IO - Access Management - Gateway - Handlers</name>
+    <groupId>io.gravitee.am.gateway.handler</groupId>
+    <artifactId>gravitee-am-gateway-handler</artifactId>
+    <name>Gravitee IO - Access Management - Gateway - Handler</name>
     <packaging>pom</packaging>
 
     <modules>
