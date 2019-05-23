@@ -43,8 +43,11 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
+        ClientRequestParseHandler clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
+        clientRequestParseHandler.setRequired(true);
+
         router.route(HttpMethod.GET, "/login")
-                .handler(new ClientRequestParseHandler(clientSyncService))
+                .handler(clientRequestParseHandler)
                 .failureHandler(new ErrorHandler());
     }
 
