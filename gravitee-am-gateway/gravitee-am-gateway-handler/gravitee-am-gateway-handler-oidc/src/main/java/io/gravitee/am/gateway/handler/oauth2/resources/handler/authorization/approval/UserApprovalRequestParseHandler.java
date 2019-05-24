@@ -35,6 +35,9 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 public class UserApprovalRequestParseHandler implements Handler<RoutingContext> {
 
     private static final String CLIENT_CONTEXT_KEY = "client";
+    private static final String USER_CONTEXT_KEY = "user";
+    private static final String AUTHORIZATION_REQUEST_CONTEXT_KEY = "authorizationRequest";
+    private static final String ID_TOKEN_CONTEXT_KEY = "idToken";
     private ClientSyncService clientSyncService;
 
     public UserApprovalRequestParseHandler(ClientSyncService clientSyncService) {
@@ -56,9 +59,6 @@ public class UserApprovalRequestParseHandler implements Handler<RoutingContext> 
                 routingContext.fail(resultHandler.cause());
                 return;
             }
-            // put client in the execution context
-            Client client = resultHandler.result();
-            routingContext.put(CLIENT_CONTEXT_KEY, client);
 
             // check user
             User authenticatedUser = routingContext.user();
@@ -66,11 +66,16 @@ public class UserApprovalRequestParseHandler implements Handler<RoutingContext> 
                 routingContext.fail(new AccessDeniedException());
                 return;
             }
+
+            // prepare context
+            Client client = resultHandler.result();
+            io.gravitee.am.model.User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
+            prepareContext(routingContext, client, user, authorizationRequest);
+
             routingContext.next();
         });
 
     }
-
 
     private void authenticate(String clientId, Handler<AsyncResult<Client>> authHandler) {
         clientSyncService
@@ -80,5 +85,17 @@ public class UserApprovalRequestParseHandler implements Handler<RoutingContext> 
                         error -> authHandler.handle(Future.failedFuture(new ServerErrorException("Server error: unable to find client with client_id " + clientId))),
                         () -> authHandler.handle(Future.failedFuture(new InvalidRequestException("No client found for client_id " + clientId)))
                 );
+    }
+
+    private void prepareContext(RoutingContext context, Client client, io.gravitee.am.model.User user, AuthorizationRequest authorizationRequest) {
+        context.put(CLIENT_CONTEXT_KEY, client);
+        context.put(USER_CONTEXT_KEY, user);
+        context.put(AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
+
+        // add id_token if exists
+        String idToken = context.session().get(ID_TOKEN_CONTEXT_KEY);
+        if (idToken != null) {
+            context.put(ID_TOKEN_CONTEXT_KEY, idToken);
+        }
     }
 }

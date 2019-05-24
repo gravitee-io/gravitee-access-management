@@ -35,6 +35,12 @@
             <artifactId>gravitee-am-model</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.gateway</groupId>
+            <artifactId>gravitee-gateway-api</artifactId>
+            <version>${gravitee-gateway-api.version}</version>
+        </dependency>
     </dependencies>
 
 </project>

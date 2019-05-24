@@ -37,5 +37,6 @@
         <module>gravitee-am-plugins-handlers-certificate</module>
         <module>gravitee-am-plugins-handlers-reporter</module>
         <module>gravitee-am-plugins-handlers-protocol</module>
+        <module>gravitee-am-plugins-handlers-policy</module>
     </modules>
 </project>

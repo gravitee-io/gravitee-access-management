@@ -62,6 +62,7 @@ public class DomainServiceTest {
     private static final String FORM_ID = "id-form";
     private static final String EMAIL_ID = "id-email";
     private static final String REPORTER_ID = "id-reporter";
+    private static final String POLICY_ID = "id-policy";
 
     @InjectMocks
     private DomainService domainService = new DomainServiceImpl();
@@ -98,6 +99,9 @@ public class DomainServiceTest {
 
     @Mock
     private Reporter reporter;
+
+    @Mock
+    private Policy policy;
 
     @Mock
     private DomainRepository domainRepository;
@@ -137,6 +141,9 @@ public class DomainServiceTest {
 
     @Mock
     private ReporterService reporterService;
+
+    @Mock
+    private PolicyService policyService;
 
     @Test
     public void shouldFindById() {
@@ -427,6 +434,9 @@ public class DomainServiceTest {
         when(reporter.getId()).thenReturn(REPORTER_ID);
         when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(reporter)));
         when(reporterService.delete(anyString())).thenReturn(Completable.complete());
+        when(policy.getId()).thenReturn(POLICY_ID);
+        when(policyService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(policy)));
+        when(policyService.delete(anyString())).thenReturn(Completable.complete());
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -444,6 +454,8 @@ public class DomainServiceTest {
         verify(groupService, times(1)).delete(GROUP_ID);
         verify(formService, times(1)).delete(FORM_ID);
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
+        verify(reporterService, times(1)).delete(REPORTER_ID);
+        verify(policyService, times(1)).delete(POLICY_ID);
     }
 
     @Test
@@ -461,6 +473,7 @@ public class DomainServiceTest {
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(emailTemplateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(policyService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -477,6 +490,8 @@ public class DomainServiceTest {
         verify(scopeService, never()).delete(anyString(), anyBoolean());
         verify(formService, never()).delete(anyString());
         verify(emailTemplateService, never()).delete(anyString());
+        verify(reporterService, never()).delete(anyString());
+        verify(policyService, never()).delete(anyString());
     }
 
     @Test

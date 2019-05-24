@@ -52,10 +52,21 @@
     width: calc(100% - 48px);
 }
 
-.error {
+.login-error-info {
     font-weight: bold;
     color: #EF3B3A;
-    text-align: center;
+    padding: 20px;
+    border-radius: 2px;
+    border: 1px solid #e2e5e7;
+    margin-bottom: 20px;
+}
+
+.login-error-info .error {
+    font-weight: bold;
+}
+
+.login-error-info .error_description:before {
+    content: " : ";
 }
 
 a, a:hover, a:focus {

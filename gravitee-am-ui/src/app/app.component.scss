@@ -1,5 +1,5 @@
-mat-sidenav {
-  min-width: 0%;
+:host /deep/ .mat-drawer-inner-container {
+  overflow: initial;
 }
 
 mat-sidenav-content.gs-sidenav-content-min {

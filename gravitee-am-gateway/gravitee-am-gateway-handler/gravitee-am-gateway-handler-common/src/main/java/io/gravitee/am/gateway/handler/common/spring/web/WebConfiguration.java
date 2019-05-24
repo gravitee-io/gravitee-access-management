@@ -15,10 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.spring.web;
 
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSRFHandlerFactory;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.CookieHandlerFactory;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.CorsHandlerFactory;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.SessionHandlerFactory;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.*;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.PolicyChainHandlerImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -43,5 +41,10 @@ public class WebConfiguration {
     @Bean
     public CSRFHandlerFactory csrfHandler() {
         return new CSRFHandlerFactory();
+    }
+
+    @Bean
+    public PolicyChainHandler policyChainHandler() {
+        return new PolicyChainHandlerImpl();
     }
 }

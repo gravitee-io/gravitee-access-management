@@ -34,7 +34,7 @@ import java.security.Key;
  */
 @Configuration
 @ComponentScan("io.gravitee.am.management.service")
-@Import(EmailConfiguration.class)
+@Import({EmailConfiguration.class})
 public class ServiceConfiguration {
 
     @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")

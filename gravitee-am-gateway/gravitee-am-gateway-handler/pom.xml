@@ -38,5 +38,6 @@
         <module>gravitee-am-gateway-handler-oidc</module>
         <module>gravitee-am-gateway-handler-scim</module>
         <module>gravitee-am-gateway-handler-users</module>
+        <module>gravitee-am-gateway-handler-context</module>
     </modules>
 </project>

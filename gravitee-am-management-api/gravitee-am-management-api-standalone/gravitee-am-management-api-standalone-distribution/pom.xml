@@ -41,6 +41,8 @@
         <packaging.gravitee.am.services.dir>/etc/init.d</packaging.gravitee.am.services.dir>
         <packaging.gravitee.am.user>gravitee-am</packaging.gravitee.am.user>
         <packaging.gravitee.am.group>gravitee-am</packaging.gravitee.am.group>
+        <!-- External plugins versions -->
+        <gravitee-policy-callout-http.version>1.4.0</gravitee-policy-callout-http.version>
     </properties>
 
     <dependencies>
@@ -160,6 +162,15 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- External Plugins -->
+        <dependency>
+            <groupId>io.gravitee.policy</groupId>
+            <artifactId>gravitee-policy-callout-http</artifactId>
+            <version>${gravitee-policy-callout-http.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -268,6 +279,14 @@
                                     <groupId>io.gravitee.node.services</groupId>
                                     <artifactId>gravitee-node-services-monitoring</artifactId>
                                     <version>${gravitee-node.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- External Plugins -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.policy</groupId>
+                                    <artifactId>gravitee-policy-callout-http</artifactId>
+                                    <version>${gravitee-policy-callout-http.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
                             </artifactItems>

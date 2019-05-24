@@ -30,7 +30,7 @@
     <name>Gravitee IO - Access Management - Management API - Service</name>
 
     <dependencies>
-        <!-- Gravitee dependencies -->
+        <!-- Gravitee.io AM dependencies -->
         <dependency>
             <groupId>io.gravitee.am.model</groupId>
             <artifactId>gravitee-am-model</artifactId>
@@ -76,6 +76,12 @@
         <dependency>
             <groupId>io.gravitee.am.plugins.handlers</groupId>
             <artifactId>gravitee-am-plugins-handlers-reporter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-policy</artifactId>
             <version>${project.version}</version>
         </dependency>
 

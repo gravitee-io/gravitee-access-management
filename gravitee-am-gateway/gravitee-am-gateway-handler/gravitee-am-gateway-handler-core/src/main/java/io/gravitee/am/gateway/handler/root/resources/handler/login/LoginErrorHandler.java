@@ -40,9 +40,11 @@ public class LoginErrorHandler implements Handler<RoutingContext> {
     private LoginAttemptService loginAttemptService;
     private static final String ERROR_PARAM = "error";
     private static final String ERROR_CODE_PARAM = "error_code";
+    private static final String ERROR_DESCRIPTION_PARAM = "error_description";
     private static final String ATTEMPT_ID_PARAM = "attempt_id";
     private static final String ERROR_CONTEXT_KEY = "error";
     private static final String ERROR_CODE_CONTEXT_KEY = "errorCode";
+    private static final String ERROR_DESCRIPTION_CONTEXT_KEY = "errorDescription";
     private static final String ERROR_DETAILS_CONTEXT_KEY = "details";
     private static final String ACCOUNT_LOCKED_UNTIL_CONTEXT_KEY = "accountLockedUntil";
 
@@ -55,6 +57,7 @@ public class LoginErrorHandler implements Handler<RoutingContext> {
         final HttpServerRequest request = context.request();
         final String error = request.getParam(ERROR_PARAM);
         final String errorCode = request.getParam(ERROR_CODE_PARAM);
+        final String errorDescription = request.getParam(ERROR_DESCRIPTION_PARAM);
 
         // no error to handle, continue
         if (error == null) {
@@ -65,6 +68,7 @@ public class LoginErrorHandler implements Handler<RoutingContext> {
         // put error data in context
         Map<String, Object> errorContext = new HashMap<>();
         errorContext.put(ERROR_CODE_CONTEXT_KEY, errorCode);
+        errorContext.put(ERROR_DESCRIPTION_CONTEXT_KEY, errorDescription);
         if (AccountLockedException.ERROR_CODE.equals(errorCode)) {
             // handle account locked exception
             final String attemptId = request.getParam(ATTEMPT_ID_PARAM);

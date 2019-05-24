@@ -15,7 +15,7 @@
  */
 import { Component, Input, OnInit } from '@angular/core';
 import { AbstractControl } from '@angular/forms';
-import { JsonSchemaFormService } from "angular6-json-schema-form";
+import { JsonSchemaFormService } from "angular7-json-schema-form";
 
 @Component({
   selector: 'material-file-widget',

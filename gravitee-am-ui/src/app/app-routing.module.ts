@@ -34,6 +34,7 @@ import {DomainSettingsEmailsComponent} from "./domain/settings/emails/emails.com
 import {DomainSettingsEmailComponent} from "./domain/settings/emails/email/email.component";
 import {DomainSettingsExtensionGrantsComponent} from "./domain/settings/extension-grants/extension-grants.component";
 import {DomainSettingsAccountComponent} from "./domain/settings/account/account.component";
+import {DomainSettingsPoliciesComponent} from "./domain/settings/policies/policies.component";
 import {ClientsComponent} from "./clients/clients.component";
 import {ClientComponent} from "./domain/clients/client/client.component";
 import {ClientCreationComponent} from "./clients/creation/client-creation.component";
@@ -112,6 +113,7 @@ import {TagsComponent} from "./settings/management/tags/tags.component";
 import {TagCreationComponent} from "./settings/management/tags/creation/tag-creation.component";
 import {TagComponent} from "./settings/management/tags/tag/tag.component";
 import {TagResolver} from "./resolvers/tag.resolver";
+import {PoliciesResolver} from "./resolvers/policies.resolver";
 
 const routes: Routes = [
   { path: 'dashboard',
@@ -459,33 +461,47 @@ const routes: Routes = [
               }
             }
           },
-          { path: 'scopes',
-            component: DomainSettingsScopesComponent,
-            resolve: {
-              scopes: ScopesResolver
-            },
+          { path: 'forms',
+            component: DomainSettingsFormsComponent,
+            resolve: { domain: DomainResolver },
             data: {
               menu: {
-                label: 'Scopes',
-                section: 'OAuth 2.0'
+                label: 'Forms',
+                section: 'Settings'
               }
             }
           },
-          { path: 'scopes/new',
-            component: ScopeCreationComponent
-          },
-          { path: 'scopes/:scopeId',
-            component: ScopeComponent,
+          { path: 'forms/form',
+            component: DomainSettingsFormComponent,
             resolve: {
-              scope: ScopeResolver
-            }
+              form: FormResolver
+            },
           },
-          { path: 'openid/clientRegistration',
-            component: DomainSettingsOpenidClientRegistrationComponent,
+          { path: 'emails',
+            component: DomainSettingsEmailsComponent,
+            resolve: { domain: DomainResolver },
             data: {
               menu: {
-                label: 'Client Registration',
-                section: 'Openid'
+                label: 'Emails',
+                section: 'Settings'
+              }
+            }
+          },
+          { path: 'emails/email',
+            component: DomainSettingsEmailComponent,
+            resolve: {
+              email: EmailResolver
+            },
+          },
+          { path: 'policies',
+            component: DomainSettingsPoliciesComponent,
+            resolve: {
+              policies: PoliciesResolver
+            },
+            data: {
+              menu: {
+                label: 'Extension Points',
+                section: 'Design'
               }
             }
           },
@@ -515,32 +531,6 @@ const routes: Routes = [
               { path: 'mappers', component: ProviderMappersComponent },
               { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver, groups: GroupsResolver } }
             ]
-          },
-          { path: 'extensionGrants',
-            component: DomainSettingsExtensionGrantsComponent,
-            resolve: {
-              extensionGrants: ExtensionGrantsResolver
-            },
-            data: {
-              menu: {
-                label: 'Extension Grants',
-                section: 'OAuth 2.0'
-              }
-            }
-          },
-          { path: 'extensionGrants/new',
-            component: ExtensionGrantCreationComponent,
-            resolve: {
-              identityProviders: ProvidersResolver
-            }
-          },
-          {
-            path: 'extensionGrants/:extensionGrantId',
-            component: ExtensionGrantComponent,
-            resolve: {
-              extensionGrant: ExtensionGrantResolver,
-              identityProviders: ProvidersResolver
-            }
           },
           { path: 'audits',
             component: AuditsComponent,
@@ -605,49 +595,6 @@ const routes: Routes = [
             resolve: {
               certificate: CertificateResolver
             }
-          },
-          { path: 'scim', component: ScimComponent,
-            resolve: {
-              domain: DomainResolver
-            },
-            data: {
-              menu: {
-                label: 'SCIM',
-                section: 'User Management'
-              }
-            }
-          },
-          { path: 'forms',
-            component: DomainSettingsFormsComponent,
-            resolve: { domain: DomainResolver },
-            data: {
-              menu: {
-                label: 'Forms',
-                section: 'User Management'
-              }
-            }
-          },
-          { path: 'forms/form',
-            component: DomainSettingsFormComponent,
-            resolve: {
-              form: FormResolver
-            },
-          },
-          { path: 'emails',
-            component: DomainSettingsEmailsComponent,
-            resolve: { domain: DomainResolver },
-            data: {
-              menu: {
-                label: 'Emails',
-                section: 'User Management'
-              }
-            }
-          },
-          { path: 'emails/email',
-            component: DomainSettingsEmailComponent,
-            resolve: {
-              email: EmailResolver
-            },
           },
           { path: 'users', component: UsersComponent,
             resolve: {
@@ -725,6 +672,73 @@ const routes: Routes = [
             resolve: {
               role: RoleResolver,
               scopes: ScopesResolver
+            }
+          },
+          { path: 'scim', component: ScimComponent,
+            resolve: {
+              domain: DomainResolver
+            },
+            data: {
+              menu: {
+                label: 'SCIM',
+                section: 'User Management'
+              }
+            }
+          },
+          { path: 'scopes',
+            component: DomainSettingsScopesComponent,
+            resolve: {
+              scopes: ScopesResolver
+            },
+            data: {
+              menu: {
+                label: 'Scopes',
+                section: 'OAuth 2.0'
+              }
+            }
+          },
+          { path: 'scopes/new',
+            component: ScopeCreationComponent
+          },
+          { path: 'scopes/:scopeId',
+            component: ScopeComponent,
+            resolve: {
+              scope: ScopeResolver
+            }
+          },
+          { path: 'extensionGrants',
+            component: DomainSettingsExtensionGrantsComponent,
+            resolve: {
+              extensionGrants: ExtensionGrantsResolver
+            },
+            data: {
+              menu: {
+                label: 'Extension Grants',
+                section: 'OAuth 2.0'
+              }
+            }
+          },
+          { path: 'extensionGrants/new',
+            component: ExtensionGrantCreationComponent,
+            resolve: {
+              identityProviders: ProvidersResolver
+            }
+          },
+          {
+            path: 'extensionGrants/:extensionGrantId',
+            component: ExtensionGrantComponent,
+            resolve: {
+              extensionGrant: ExtensionGrantResolver,
+              identityProviders: ProvidersResolver
+            }
+          },
+          { path: 'openid/clientRegistration',
+            component: DomainSettingsOpenidClientRegistrationComponent,
+            data: {
+              menu: {
+                label: 'Client Registration',
+                section: 'Openid'
+              }
             }
           }
         ]

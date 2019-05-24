@@ -15,10 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform;
 
-import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.CertificatesPluginResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.ExtensionGrantsPluginResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.IdentityProvidersPluginResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.ReportersPluginResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.*;
 import io.swagger.annotations.Api;
 
 import javax.ws.rs.Path;
@@ -53,5 +50,10 @@ public class PluginsResource {
     @Path("reporters")
     public ReportersPluginResource getReportersPlugins() {
         return resourceContext.getResource(ReportersPluginResource.class);
+    }
+
+    @Path("policies")
+    public PoliciesPluginResource getPoliciesPlugins() {
+        return resourceContext.getResource(PoliciesPluginResource.class);
     }
 }
