@@ -1,5 +1,42 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/issues/milestone/129?closed=1[AM - 2.6.0 (2019-05-24)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [forms] Custom client forms are not used after redirection https://github.com/gravitee-io/issues/issues/2285[#2285]
+- [scim] Configure CORS https://github.com/gravitee-io/issues/issues/2262[#2262]
+
+*_Oidc_*
+
+- [dcr] Missing openid response_type https://github.com/gravitee-io/issues/issues/2178[#2178]
+
+=== Features
+
+*_Gateway_*
+
+- Brute force authentication attempt https://github.com/gravitee-io/issues/issues/2216[#2216]
+- Internal refactoring - protocols are now plugins https://github.com/gravitee-io/issues/issues/2185[#2185]
+- OpenID Connect Identity Provider https://github.com/gravitee-io/issues/issues/1848[#1848]
+
+*_Global_*
+
+- Manage security domains deployment https://github.com/gravitee-io/issues/issues/2017[#2017]
+
+*_Management_*
+
+- Create default certificate per domain  https://github.com/gravitee-io/issues/issues/2146[#2146]
+
+=== Improvements
+
+*_Oidc_*
+
+- [dcr] Manage userinfo encryption https://github.com/gravitee-io/issues/issues/2180[#2180]
+- [dcr] Manage id_token encryption https://github.com/gravitee-io/issues/issues/2174[#2174]
+
+
 == https://github.com/gravitee-io/issues/issues/milestone/122?closed=1[AM - 2.5.0 (2019-04-24)]
 
 === Bug fixes
