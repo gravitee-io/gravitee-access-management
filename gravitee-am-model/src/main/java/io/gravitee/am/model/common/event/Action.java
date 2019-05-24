@@ -23,5 +23,8 @@ public enum Action {
 
     CREATE,
     UPDATE,
-    DELETE
+    DELETE,
+    BULK_CREATE,
+    BULK_UPDATE,
+    BULK_DELETE
 }

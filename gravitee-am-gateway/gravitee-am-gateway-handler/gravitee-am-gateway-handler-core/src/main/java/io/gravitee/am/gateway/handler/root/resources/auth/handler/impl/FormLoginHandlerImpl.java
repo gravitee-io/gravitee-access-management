@@ -20,6 +20,7 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.service.exception.authentication.AuthenticationException;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
+import io.gravitee.am.service.exception.authentication.UsernameNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
@@ -148,7 +149,7 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
             if (throwable != null && throwable instanceof AuthenticationException) {
                 AuthenticationException authenticationException = (AuthenticationException) throwable;
                 // we don't want to expose potential security leaks
-                if (!(throwable instanceof BadCredentialsException) && !(throwable instanceof BadCredentialsException)) {
+                if (!(throwable instanceof BadCredentialsException) && !(throwable instanceof UsernameNotFoundException)) {
                     parameters.put("error_code", authenticationException.getErrorCode());
                 } else {
                     parameters.put("error_code", "invalid_account");

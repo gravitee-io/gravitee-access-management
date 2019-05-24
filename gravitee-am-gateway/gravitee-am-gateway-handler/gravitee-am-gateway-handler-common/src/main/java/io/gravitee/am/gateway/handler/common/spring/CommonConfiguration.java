@@ -34,11 +34,17 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
+import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
+import io.gravitee.am.gateway.handler.common.policy.impl.PolicyManagerImpl;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.impl.OAuth2AuthProviderImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.impl.UserAuthProviderImpl;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.am.gateway.handler.context.TemplateVariableProviderFactory;
+import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
+import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
@@ -53,7 +59,7 @@ import org.springframework.core.env.Environment;
  * @author GraviteeSource Team
  */
 @Configuration
-@Import(WebConfiguration.class)
+@Import({WebConfiguration.class, PolicyConfiguration.class, ContextConfiguration.class})
 public class CommonConfiguration {
 
     @Autowired
@@ -132,4 +138,18 @@ public class CommonConfiguration {
         return new AuthenticationEventListener();
     }
 
+    @Bean
+    public PolicyManager policyManager() {
+        return new PolicyManagerImpl();
+    }
+
+    @Bean
+    public ExecutionContextFactory executionContextFactory() {
+        return new ExecutionContextFactory();
+    }
+
+    @Bean
+    public TemplateVariableProviderFactory templateVariableProviderFactory() {
+        return new TemplateVariableProviderFactory();
+    }
 }

@@ -31,6 +31,11 @@
     <name>Gravitee IO - Access Management - Gateway - Standalone - Distribution</name>
     <packaging>pom</packaging>
 
+    <properties>
+        <!-- External plugins versions -->
+        <gravitee-policy-callout-http.version>1.4.0</gravitee-policy-callout-http.version>
+    </properties>
+
     <modules>
         <module>gravitee-am-gateway-standalone-distribution-zip</module>
     </modules>
@@ -184,6 +189,15 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- External Plugins -->
+        <dependency>
+            <groupId>io.gravitee.policy</groupId>
+            <artifactId>gravitee-policy-callout-http</artifactId>
+            <version>${gravitee-policy-callout-http.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -314,6 +328,14 @@
                                     <groupId>io.gravitee.am.gateway.handler</groupId>
                                     <artifactId>gravitee-am-gateway-handler-users</artifactId>
                                     <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- External Plugins -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.policy</groupId>
+                                    <artifactId>gravitee-policy-callout-http</artifactId>
+                                    <version>${gravitee-policy-callout-http.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
                             </artifactItems>

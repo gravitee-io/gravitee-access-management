@@ -51,6 +51,12 @@ public abstract class Event {
             case EMAIL:
                 event1 =  EmailEvent.actionOf(event.getPayload().getAction());
                 break;
+            case REPORTER:
+                event1 =  ReporterEvent.actionOf(event.getPayload().getAction());
+                break;
+            case POLICY:
+                event1 =  PolicyEvent.actionOf(event.getPayload().getAction());
+                break;
         }
 
         return event1;

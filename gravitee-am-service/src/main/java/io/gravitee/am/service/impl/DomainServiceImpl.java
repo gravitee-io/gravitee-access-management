@@ -96,6 +96,9 @@ public class DomainServiceImpl implements DomainService {
     private ReporterService reporterService;
 
     @Autowired
+    private PolicyService policyService;
+
+    @Autowired
     private AuditService auditService;
 
     @Override
@@ -373,6 +376,13 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(reporterService.findByDomain(domainId)
                                     .flatMapCompletable(reporters -> {
                                         List<Completable> deleteReportersCompletable = reporters.stream().map(r -> reporterService.delete(r.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteReportersCompletable);
+                                    })
+                            )
+                            // delete policies
+                            .andThen(policyService.findByDomain(domainId)
+                                    .flatMapCompletable(policies -> {
+                                        List<Completable> deleteReportersCompletable = policies.stream().map(p -> policyService.delete(p.getId())).collect(Collectors.toList());
                                         return Completable.concat(deleteReportersCompletable);
                                     })
                             )

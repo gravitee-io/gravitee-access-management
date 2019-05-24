@@ -1,0 +1,112 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="policies-container">
+  <mat-toolbar>Extension Points <button mat-icon-button (click)="openDialog()"><mat-icon>info_outline</mat-icon></button></mat-toolbar>
+  <mat-drawer-container>
+    <mat-drawer mode="side" opened>
+      <div>
+        <mat-accordion [multi]="true">
+          <div *ngFor="let extensionPoint of extensionPoints">
+            <button class="menu-button" mat-icon-button [matMenuTriggerFor]="menu">
+              <mat-icon>add_circle_outline</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item  *ngFor="let policy of policyPlugins" (click)="addPolicy(extensionPoint.value, policy.id)">
+                <mat-icon>shuffle</mat-icon>
+                <span>{{policy.name}}</span>
+              </button>
+            </mat-menu>
+            <mat-expansion-panel [expanded]="extensionPoint.expanded">
+              <mat-expansion-panel-header>
+                <mat-panel-title><pre matBadge="{{getPolicies(extensionPoint.value)?.length}}" matBadgeOverlap="false" matBadgeColor="accent">{{extensionPoint.stage}}</pre></mat-panel-title>
+              </mat-expansion-panel-header>
+              <div cdkDropList class="policy-list" (cdkDropListDropped)="drop($event, extensionPoint.value)">
+                <div class="policy-box" [class.active]="policy.id === selectedPolicyId" *ngFor="let policy of getPolicies(extensionPoint.value)" cdkDrag>
+                  <div fxLayout="column" fxFlex="70">
+                    <span fxFlex>{{policy.name}}</span>
+                    <small style="font-size: 75%; color:grey;">{{policy.type}}</small>
+                  </div>
+                  <div class="policy-actions">
+                    <mat-slide-toggle matTooltip="{{policy.enabled ? 'Disable policy ?' : 'Enable policy ?'}}"
+                      (change)="enablePolicy($event, policy)"
+                      [checked]="isPolicyEnabled(policy)">
+                    </mat-slide-toggle>
+                    <button style="margin-left: 5px;" mat-icon-button matTooltip="Settings" (click)="loadPolicy($event, policy)">
+                      <mat-icon>settings</mat-icon>
+                    </button>
+                    <button mat-icon-button matTooltip="Delete" (click)="deletePolicy($event, policy)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+                <div *ngIf="noPolicies(extensionPoint.value)" style="text-align: center; margin-top: 20px; color: grey;">
+                  <span>No policies ...</span>
+                </div>
+              </div>
+            </mat-expansion-panel>
+          </div>
+        </mat-accordion>
+      </div>
+    </mat-drawer>
+    <mat-drawer-content>
+      <div *ngIf="policy && !isLoading" fxLayout="column" fxFlex>
+        <div fxFlex fxLayoutAlign="end">
+          <button class="close-current-policy" mat-icon-button aria-label="Close policy management screen" (click)="clearPolicy()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <form *ngIf="policy" #policyForm="ngForm" fxLayout="column">
+          <h5>General</h5>
+          <mat-divider></mat-divider>
+          <mat-card>
+            <mat-card-content>
+              <mat-form-field>
+                <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="policy.name" required>
+                <mat-hint>A name for your policy.</mat-hint>
+              </mat-form-field>
+            </mat-card-content>
+          </mat-card>
+          <h5>Configuration</h5>
+          <mat-divider></mat-divider>
+          <mat-card>
+            <mat-card-content>
+              <div class="policy-configuration">
+                <policy-form *ngIf="policy" [policyConfiguration]="policyConfiguration" [policySchema]="policySchema" (configurationCompleted)="enablePolicyUpdate($event)"></policy-form>
+              </div>
+            </mat-card-content>
+          </mat-card>
+          <div class="form-actions" fxLayout="row" fxLayoutAlign="end end">
+            <button mat-raised-button [disabled]="((!policyForm.valid || !configurationIsValid) || (policyForm.pristine && configurationPristine))" (click)="save()">SAVE</button>
+          </div>
+        </form>
+      </div>
+
+      <div *ngIf="isLoading" fxFlex fxLayout="column" fxLayoutAlign="center center">
+        <div class="policy-loader"><div></div><div></div><div></div></div>
+        <span style="color: grey;">Loading the <small>{{policy.type}}</small> for <small>{{policy.extensionPoint.toUpperCase()}}</small> extension point ...</span>
+      </div>
+
+      <div *ngIf="!policy" fxFlex>
+        <app-emptystate
+                      [message]="'Extension Point Management'"
+                      [subMessage]="'Extension Points allow you to extend the behavior of the Gateway Server by executing policies on specific stages. <br /> Policies can be added by clicking on the (+) button available for each extension point.'"
+                      [icon]="'extension'"></app-emptystate>
+      </div>
+    </mat-drawer-content>
+  </mat-drawer-container>
+</div>

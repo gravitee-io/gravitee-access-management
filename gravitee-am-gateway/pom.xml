@@ -38,5 +38,6 @@
         <module>gravitee-am-gateway-core</module>
         <module>gravitee-am-gateway-repository</module>
         <module>gravitee-am-gateway-reactor</module>
+        <module>gravitee-am-gateway-policy</module>
     </modules>
 </project>

@@ -1,0 +1,77 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div>
+  <h1 matDialogTitle>Extension Point Management</h1>
+  <mat-dialog-content>
+    <h5>Information</h5>
+    <mat-divider></mat-divider>
+    <mat-list dense>
+      <mat-list-item>
+        <mat-icon matListIcon>info</mat-icon>
+        <h3 matLine> Extension points allow you to extend the behavior of the Gateway Server by executing policies on <b> specific stages.</b> </h3>
+      </mat-list-item>
+      <mat-list-item>
+        <mat-icon matListIcon>info</mat-icon>
+        <h3 matLine> Each extension point has access to the <b> Execution Context </b> to retrieve and set information required to execute the policy code. </h3>
+      </mat-list-item>
+      <mat-list-item>
+        <mat-icon matListIcon>info</mat-icon>
+        <h3 matLine> Those <b> Execution Context data </b> will be propagate to the next steps to be used later on (e.g custom HTML forms). </h3>
+      </mat-list-item>
+    </mat-list>
+
+    <h5>Execution Context</h5>
+    <mat-divider></mat-divider>
+    <small>When the gateway handles an incoming HTTP request, some attributes are automatically created.</small>
+    <pre>
+      <![CDATA[
+      {#request} : Current HTTP Request with parameters, headers, path, ...
+      {#context.attributes['client']} : OAuth 2.0 Client (if available) with clientId, clientName, ...
+      {#context.attributes['user']} : Authenticated User (if available) with username, firstName, lastName, email, roles, ...
+      {#context.attributes['authorizationRequest']} : OAuth 2.0 Authorization Request (if available) with scopes, redirect_uri, ...
+      {#context.attributes['idToken']} : OpenID Connect ID Token (if the User has been authenticated with an OIDC Identity Provider)
+      ]]>
+    </pre>
+
+    <h5>Extension Points</h5>
+    <mat-divider></mat-divider>
+
+    <mat-list dense>
+      <mat-list-item>
+        <mat-icon matListIcon>extension</mat-icon>
+        <h3 matLine> <b>PRE_CONSENT</b> </h3>
+        <p matLine>
+          <span>Pre End-User Consent step happens after the user has logged in.</span><br />
+          <span style="color:grey;">It allows you to fetch more information or validate incoming data before displaying the User Consent HTML Page.</span>
+        </p>
+      </mat-list-item>
+      <mat-list-item>
+        <mat-icon matListIcon>extension</mat-icon>
+        <h3 matLine> <b>POST_CONSENT</b> </h3>
+        <p matLine>
+          <span>Post End-User Consent step happens after the user has given his consent to the processing of personal data.</span><br />
+          <span style="color:grey;">It allows you to validate incoming data (user consent) before giving access to the application.</span>
+        </p>
+      </mat-list-item>
+    </mat-list>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <span fxFlex></span>
+    <button type="button" mat-raised-button (click)="dialogRef.close()" class="dialog-cancel">Close</button>
+  </mat-dialog-actions>
+</div>

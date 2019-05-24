@@ -290,6 +290,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     private void errorHandler(Router router) {
         Handler<RoutingContext> errorHandler = new ErrorHandler("/" + domain.getPath() + "/error");
+        router.route("/login").failureHandler(errorHandler);
         router.route("/forgotPassword").failureHandler(errorHandler);
     }
 }

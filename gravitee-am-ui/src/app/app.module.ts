@@ -23,7 +23,8 @@ import {
   MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatDialogModule, MatExpansionModule,
   MatGridListModule, MatIconModule, MatListModule, MatNativeDateModule, MatProgressBarModule, MatProgressSpinnerModule,
   MatRadioModule, MatRippleModule, MatSelectModule, MatSliderModule, MatSnackBarModule, MatSortModule, MatTableModule,
-  MatTabsModule, MatToolbarModule, MatTooltipModule, MatStepperModule } from '@angular/material';
+  MatTabsModule, MatToolbarModule, MatTooltipModule, MatStepperModule, MatBadgeModule
+} from '@angular/material';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -32,11 +33,12 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { CodemirrorModule } from 'ng2-codemirror';
-import { MaterialDesignFrameworkModule } from "angular6-json-schema-form";
+import { MaterialDesignFrameworkModule } from "angular7-json-schema-form";
 import 'hammerjs';
 import 'codemirror';
 import "codemirror/mode/htmlmixed/htmlmixed";
@@ -98,6 +100,7 @@ import { DomainSettingsLoginComponent } from "./domain/settings/login/login.comp
 import { DomainSettingsEmailsComponent } from "./domain/settings/emails/emails.component";
 import { DomainSettingsEmailComponent } from "./domain/settings/emails/email/email.component";
 import { DomainSettingsAccountComponent } from "./domain/settings/account/account.component";
+import { DomainSettingsPoliciesComponent, PoliciesInfoDialog } from "./domain/settings/policies/policies.component";
 import { ClientsResolver } from "./resolvers/clients.resolver";
 import { ClientResolver } from "./resolvers/client.resolver";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
@@ -198,6 +201,9 @@ import { TagComponent } from "./settings/management/tags/tag/tag.component";
 import { AccountSettingsComponent } from "./domain/components/account/account-settings.component";
 import { UnauthorizedInterceptor } from "./interceptors/unauthorized.interceptor";
 import { HttpRequestInterceptor } from "./interceptors/http-request.interceptor";
+import { PolicyFormComponent } from "./domain/settings/policies/policy/form/form.component";
+import { PolicyService } from "./services/policy.service";
+import { PoliciesResolver } from "./resolvers/policies.resolver";
 
 @NgModule({
   declarations: [
@@ -223,6 +229,7 @@ import { HttpRequestInterceptor } from "./interceptors/http-request.interceptor"
     DomainSettingsEmailsComponent,
     DomainSettingsEmailComponent,
     DomainSettingsAccountComponent,
+    DomainSettingsPoliciesComponent,
     ClientsComponent,
     ConfirmComponent,
     EmptystateComponent,
@@ -310,7 +317,9 @@ import { HttpRequestInterceptor } from "./interceptors/http-request.interceptor"
     TagsComponent,
     TagCreationComponent,
     TagComponent,
-    AccountSettingsComponent
+    AccountSettingsComponent,
+    PolicyFormComponent,
+    PoliciesInfoDialog
   ],
   imports: [
     BrowserModule,
@@ -319,7 +328,8 @@ import { HttpRequestInterceptor } from "./interceptors/http-request.interceptor"
     ReactiveFormsModule,
     HttpClientModule,
     AppRoutingModule,
-    MatAutocompleteModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule, MatDialogModule, MatExpansionModule, MatGridListModule, MatIconModule, MatInputModule, MatListModule, MatMenuModule, MatNativeDateModule, MatPaginatorModule, MatProgressBarModule, MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule, MatSidenavModule, MatSliderModule, MatSlideToggleModule, MatSnackBarModule, MatSortModule, MatTableModule, MatTabsModule, MatToolbarModule, MatTooltipModule, MatStepperModule,
+    MatAutocompleteModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule, MatDialogModule, MatExpansionModule, MatGridListModule, MatIconModule, MatInputModule, MatListModule, MatMenuModule, MatNativeDateModule, MatPaginatorModule, MatProgressBarModule, MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule, MatSidenavModule, MatSliderModule, MatSlideToggleModule, MatSnackBarModule, MatSortModule, MatTableModule, MatTabsModule, MatToolbarModule, MatTooltipModule, MatStepperModule, MatBadgeModule,
+    DragDropModule,
     FlexLayoutModule,
     NgxDatatableModule,
     MaterialDesignFrameworkModule,
@@ -376,6 +386,8 @@ import { HttpRequestInterceptor } from "./interceptors/http-request.interceptor"
     TagService,
     TagsResolver,
     TagResolver,
+    PolicyService,
+    PoliciesResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,
@@ -398,7 +410,8 @@ import { HttpRequestInterceptor } from "./interceptors/http-request.interceptor"
     UserClaimComponent,
     FormInfoDialog,
     AddMemberComponent,
-    EmailInfoDialog
+    EmailInfoDialog,
+    PoliciesInfoDialog
   ],
   bootstrap: [AppComponent]
 })

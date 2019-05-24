@@ -59,4 +59,12 @@ export class PlatformService {
   auditEventTypes(): Observable<any> {
     return this.http.get<any>(this.platformURL + 'audit/events');
   }
+
+  policies(): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'plugins/policies');
+  }
+
+  policySchema(id): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'plugins/policies/' + id + '/schema');
+  }
 }

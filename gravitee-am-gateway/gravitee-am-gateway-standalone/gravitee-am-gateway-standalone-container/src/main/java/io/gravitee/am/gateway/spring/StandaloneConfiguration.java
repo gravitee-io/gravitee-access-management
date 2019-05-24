@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.vertx.VertxServerConfiguration;
 import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
+import io.gravitee.am.plugins.policy.spring.PolicyConfiguration;
 import io.gravitee.am.plugins.protocol.spring.ProtocolConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
 import io.gravitee.common.event.EventManager;
@@ -52,7 +53,8 @@ import org.springframework.context.annotation.Import;
         CertificateConfiguration.class,
         ExtensionGrantConfiguration.class,
         ReporterConfiguration.class,
-        ProtocolConfiguration.class
+        ProtocolConfiguration.class,
+        PolicyConfiguration.class
 })
 public class StandaloneConfiguration {
 

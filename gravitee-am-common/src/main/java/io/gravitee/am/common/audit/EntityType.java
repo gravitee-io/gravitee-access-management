@@ -35,4 +35,5 @@ public interface EntityType {
     String FORM = "FORM";
     String REPORTER = "REPORTER";
     String TAG = "TAG";
+    String POLICY = "POLICY";
 }

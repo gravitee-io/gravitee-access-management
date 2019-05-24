@@ -180,4 +180,8 @@ public class DomainResource extends AbstractResource {
         return resourceContext.getResource(ReportersResource.class);
     }
 
+    @Path("policies")
+    public PoliciesResource getPoliciesResource() {
+        return resourceContext.getResource(PoliciesResource.class);
+    }
 }

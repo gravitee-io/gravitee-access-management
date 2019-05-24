@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.oauth2;
 
+import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAssertionAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientCredentialsAuthHandler;
@@ -38,6 +41,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseClientHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseParametersHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequiredParametersHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval.UserApprovalFailureHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval.UserApprovalRequestParseHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.token.TokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.approval.ApprovalService;
@@ -122,6 +126,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     @Autowired
     private CSRFHandler csrfHandler;
 
+    @Autowired
+    private PolicyChainHandler policyChainHandler;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -183,7 +190,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         oauth2Router.route(HttpMethod.POST, "/authorize")
                 .handler(userAuthHandler)
                 .handler(userApprovalRequestParseHandler)
-                .handler(userApprovalSubmissionEndpointHandler);
+                .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
+                .handler(userApprovalSubmissionEndpointHandler)
+                .failureHandler(new UserApprovalFailureHandler(domain, "/login"));
         oauth2Router.route(HttpMethod.POST, "/token")
                 .handler(tokenRequestParseHandler)
                 .handler(clientAuthHandler)
@@ -201,8 +210,11 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(clientAuthHandler)
                 .handler(revocationTokenEndpoint);
         oauth2Router.route(HttpMethod.GET, "/confirm_access")
+                .handler(userAuthHandler)
                 .handler(userApprovalRequestParseHandler)
-                .handler(userApprovalEndpoint);
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
+                .handler(userApprovalEndpoint)
+                .failureHandler(new UserApprovalFailureHandler(domain, "/login"));
         oauth2Router.route(HttpMethod.GET, "/error")
                 .handler(new ErrorEndpoint(thymeleafTemplateEngine));
 
