@@ -162,7 +162,7 @@
         </dependency>
 
         <dependency>
-            <groupId>io.gravitee.am.gateway.handlers</groupId>
+            <groupId>io.gravitee.am.gateway.handler</groupId>
             <artifactId>gravitee-am-gateway-handler-oidc</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
@@ -170,7 +170,7 @@
         </dependency>
 
         <dependency>
-            <groupId>io.gravitee.am.gateway.handlers</groupId>
+            <groupId>io.gravitee.am.gateway.handler</groupId>
             <artifactId>gravitee-am-gateway-handler-scim</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
@@ -178,7 +178,7 @@
         </dependency>
 
         <dependency>
-            <groupId>io.gravitee.am.gateway.handlers</groupId>
+            <groupId>io.gravitee.am.gateway.handler</groupId>
             <artifactId>gravitee-am-gateway-handler-users</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
@@ -297,21 +297,21 @@
 
                                 <!-- Protocols -->
                                 <artifactItem>
-                                    <groupId>io.gravitee.am.gateway.handlers</groupId>
+                                    <groupId>io.gravitee.am.gateway.handler</groupId>
                                     <artifactId>gravitee-am-gateway-handler-oidc</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
 
                                 <artifactItem>
-                                    <groupId>io.gravitee.am.gateway.handlers</groupId>
+                                    <groupId>io.gravitee.am.gateway.handler</groupId>
                                     <artifactId>gravitee-am-gateway-handler-scim</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
 
                                 <artifactItem>
-                                    <groupId>io.gravitee.am.gateway.handlers</groupId>
+                                    <groupId>io.gravitee.am.gateway.handler</groupId>
                                     <artifactId>gravitee-am-gateway-handler-users</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
