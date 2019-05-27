@@ -92,7 +92,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
     this.domain.tags = _.map(this.selectedTags, tag => tag.id);
 
     this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe(response => {
-      this.domain = response.json();
+      this.domain = response;
       this.domainService.notify(this.domain);
       this.sidenavService.notify(this.domain);
       this.breadcrumbService.addFriendlyNameForRoute('/domains/'+this.domain.id, this.domain.name);

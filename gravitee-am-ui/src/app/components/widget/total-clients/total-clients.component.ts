@@ -28,7 +28,7 @@ export class WidgetTotalClientsComponent implements OnInit {
   constructor(private dashboardService: DashboardService) { }
 
   ngOnInit() {
-    this.dashboardService.findTotalClients(this.domainId).map(res => res.json()).subscribe(data => this.totalClient = data);
+    this.dashboardService.findTotalClients(this.domainId).subscribe(data => this.totalClient = data);
   }
 
 }

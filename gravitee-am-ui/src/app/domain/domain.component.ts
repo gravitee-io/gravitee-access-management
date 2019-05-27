@@ -53,7 +53,7 @@ export class DomainComponent implements OnInit {
   enable() {
     this.domain.enabled = true;
     this.domainService.enable(this.domain.id, this.domain).subscribe(response => {
-      this.domain = response.json();
+      this.domain = response;
       this.snackbarService.open("Domain " + this.domain.name + " enabled");
     });
   }

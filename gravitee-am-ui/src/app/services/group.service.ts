@@ -15,40 +15,40 @@
  */
 import {Injectable} from '@angular/core';
 import {AppConfig} from "../../config/app.config";
-import {Http, Response} from "@angular/http";
-import {Observable} from "rxjs/Observable";
+import {HttpClient} from "@angular/common/http";
+import {Observable} from "rxjs";
 
 @Injectable()
 export class GroupService {
   private groupsURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  findByDomain(domainId, page, size): Observable<Response>  {
-    return this.http.get(this.groupsURL + domainId + "/groups?page=" + page + "&size=" + size);
+  findByDomain(domainId, page, size): Observable<any> {
+    return this.http.get<any>(this.groupsURL + domainId + "/groups?page=" + page + "&size=" + size);
   }
 
-  get(domainId, id): Observable<Response>  {
-    return this.http.get(this.groupsURL + domainId + "/groups/" + id);
+  get(domainId, id): Observable<any> {
+    return this.http.get<any>(this.groupsURL + domainId + "/groups/" + id);
   }
 
-  create(domainId, user): Observable<Response>  {
-    return this.http.post(this.groupsURL + domainId + "/groups", user);
+  create(domainId, user): Observable<any> {
+    return this.http.post<any>(this.groupsURL + domainId + "/groups", user);
   }
 
-  update(domainId, id, group): Observable<Response>  {
-    return this.http.put(this.groupsURL + domainId + "/groups/" + id, {
+  update(domainId, id, group): Observable<any> {
+    return this.http.put<any>(this.groupsURL + domainId + "/groups/" + id, {
       'name' : group.name,
       'members' : group.members
     });
   }
 
-  delete(domainId, id): Observable<Response>  {
-    return this.http.delete(this.groupsURL + domainId + "/groups/" + id);
+  delete(domainId, id): Observable<any> {
+    return this.http.delete<any>(this.groupsURL + domainId + "/groups/" + id);
   }
 
-  findMembers(domainId, groupId, page, size): Observable<Response>  {
-    return this.http.get(this.groupsURL + domainId + "/groups/" + groupId + "/members?page=" + page + "&size=" + size);
+  findMembers(domainId, groupId, page, size): Observable<any> {
+    return this.http.get<any>(this.groupsURL + domainId + "/groups/" + groupId + "/members?page=" + page + "&size=" + size);
   }
 
 }

@@ -14,38 +14,38 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Http, Response } from "@angular/http";
-import { Observable } from "rxjs";
+import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
+import { Observable } from "rxjs";
 
 @Injectable()
 export class RoleService {
   private rolesURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  findByDomain(domainId): Observable<Response>  {
-    return this.http.get(this.rolesURL + domainId + "/roles");
+  findByDomain(domainId): Observable<any> {
+    return this.http.get<any>(this.rolesURL + domainId + "/roles");
   }
 
-  get(domainId, id): Observable<Response>  {
-    return this.http.get(this.rolesURL + domainId + "/roles/" + id);
+  get(domainId, id): Observable<any> {
+    return this.http.get<any>(this.rolesURL + domainId + "/roles/" + id);
   }
 
-  create(domainId, role): Observable<Response>  {
-    return this.http.post(this.rolesURL + domainId + "/roles", role);
+  create(domainId, role): Observable<any> {
+    return this.http.post<any>(this.rolesURL + domainId + "/roles", role);
   }
 
-  update(domainId, id, role): Observable<Response>  {
-    return this.http.put(this.rolesURL + domainId + "/roles/" + id, {
+  update(domainId, id, role): Observable<any> {
+    return this.http.put<any>(this.rolesURL + domainId + "/roles/" + id, {
       'name' : role.name,
       'description' : role.description,
       'permissions' : role.permissions
     });
   }
 
-  delete(domainId, id): Observable<Response>  {
-    return this.http.delete(this.rolesURL + domainId + "/roles/" + id);
+  delete(domainId, id): Observable<any> {
+    return this.http.delete<any>(this.rolesURL + domainId + "/roles/" + id);
   }
 
 }

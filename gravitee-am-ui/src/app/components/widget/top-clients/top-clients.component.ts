@@ -28,7 +28,7 @@ export class WidgetTopClientsComponent implements OnInit {
   constructor(private dashboardService: DashboardService) { }
 
   ngOnInit() {
-    this.dashboardService.findTopClients(this.domainId).map(res => res.json()).subscribe(data => this.topClients = data);
+    this.dashboardService.findTopClients(this.domainId).subscribe(data => this.topClients = data);
   }
 
 }

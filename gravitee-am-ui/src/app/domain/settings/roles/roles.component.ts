@@ -45,7 +45,7 @@ export class DomainSettingsRolesComponent implements OnInit {
   }
 
   loadRoles() {
-    this.roleService.findByDomain(this.domainId).subscribe(response => this.roles = response.json());
+    this.roleService.findByDomain(this.domainId).subscribe(response => this.roles = response);
   }
 
   delete(id, event) {

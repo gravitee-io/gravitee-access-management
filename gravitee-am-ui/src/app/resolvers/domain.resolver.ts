@@ -29,7 +29,7 @@ export class DomainResolver implements Resolve<any> {
     if (!state.url.startsWith('/settings')) {
       domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
     }
-    return this.domainService.get(domainId).map(res => res.json());
+    return this.domainService.get(domainId);
   }
 
 }

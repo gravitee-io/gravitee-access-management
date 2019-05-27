@@ -30,7 +30,7 @@ export class ExtensionGrantCreationStep1Component implements OnInit {
   }
 
   ngOnInit() {
-    this.platformService.extensionGrants().map(res => res.json()).subscribe(data => this.extensionGrants = data);
+    this.platformService.extensionGrants().subscribe(data => this.extensionGrants = data);
   }
 
   selectExtensionGrantType() {

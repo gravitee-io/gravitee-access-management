@@ -57,7 +57,7 @@ export class AuditsComponent implements OnInit {
 
     this.userCtrl.valueChanges
       .subscribe(searchTerm => {
-        this.userService.search(this.domainId, searchTerm, 0, 30).map(res => res.json()).subscribe(response => {
+        this.userService.search(this.domainId, searchTerm, 0, 30).subscribe(response => {
           this.filteredUsers = response.data;
         });
       });
@@ -74,12 +74,12 @@ export class AuditsComponent implements OnInit {
     this.page.totalElements = this.pagedAudits.totalCount;
 
     // load event types
-    this.platformService.auditEventTypes().map(res => res.json()).subscribe(data => this.eventTypes = data);
+    this.platformService.auditEventTypes().subscribe(data => this.eventTypes = data);
   }
 
 
   loadAudits() {
-    this.auditService.findByDomain(this.domainId, this.page.pageNumber, this.page.size).map(res => res.json()).subscribe(pagedAudits => {
+    this.auditService.findByDomain(this.domainId, this.page.pageNumber, this.page.size).subscribe(pagedAudits => {
       this.page.totalElements = pagedAudits.totalCount;
       this.audits = pagedAudits.data;
     });
@@ -193,7 +193,7 @@ export class AuditsComponent implements OnInit {
     this.page.pageNumber = 0;
     let from = this.startDateChanged ? moment(this.startDate).valueOf() : null;
     let to = this.endDateChanged ? moment(this.endDate).valueOf() : null;
-    this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, this.selectedUser, from, to).map(res => res.json()).subscribe(pagedAudits => {
+    this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, this.selectedUser, from, to).subscribe(pagedAudits => {
       this.page.totalElements = pagedAudits.totalCount;
       this.audits = pagedAudits.data;
     });

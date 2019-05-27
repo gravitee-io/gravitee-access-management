@@ -46,13 +46,13 @@ export class ExtensionGrantComponent implements OnInit {
     this.identityProviders = this.route.snapshot.data['identityProviders'];
     this.extensionGrantConfiguration = JSON.parse(this.extensionGrant.configuration);
     this.updateTokenGranterConfiguration = this.extensionGrantConfiguration;
-    this.platformService.extensionGrantSchema(this.extensionGrant.type).map(res => res.json()).subscribe(data => this.extensionGrantSchema = data);
+    this.platformService.extensionGrantSchema(this.extensionGrant.type).subscribe(data => this.extensionGrantSchema = data);
     this.initBreadcrumb();
   }
 
   update() {
     this.extensionGrant.configuration = JSON.stringify(this.updateTokenGranterConfiguration);
-    this.extensionGrantService.update(this.domainId, this.extensionGrant.id, this.extensionGrant).map(res => res.json()).subscribe(data => {
+    this.extensionGrantService.update(this.domainId, this.extensionGrant.id, this.extensionGrant).subscribe(data => {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/extensionGrants/'+this.extensionGrant.id+'$', this.extensionGrant.name);
       this.snackbarService.open("Extension grant updated");
     })

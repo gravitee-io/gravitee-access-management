@@ -78,8 +78,8 @@ export class ClientSettingsComponent implements OnInit {
     this.selectedScopeApprovals = this.client.scopeApprovals || {};
     (!this.client.redirectUris) ? this.client.redirectUris = [] : this.client.redirectUris = this.client.redirectUris;
     (!this.client.scopes) ? this.client.scopes = [] : this.client.scopes = this.client.scopes;
-    this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.identityProviders = data);
-    this.certificateService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => this.certificates = data);
+    this.providerService.findByDomain(this.domainId).subscribe(data => this.identityProviders = data);
+    this.certificateService.findByDomain(this.domainId).subscribe(data => this.certificates = data);
     this.initScopes();
     this.initGrantTypes();
     this.initResponseTypes();
@@ -253,7 +253,7 @@ export class ClientSettingsComponent implements OnInit {
     this.client.responseTypes = this.selectedResponseTypes;
     this.client.scopes = _.map(this.selectedScopes, scope => scope.key);
     this.client.scopeApprovals = this.selectedScopeApprovals;
-    this.clientService.update(this.domainId, this.client.id, this.client).map(res => res.json()).subscribe(data => {
+    this.clientService.update(this.domainId, this.client.id, this.client).subscribe(data => {
       this.client = data;
       this.formChanged = false;
       this.snackbarService.open("Client updated");
@@ -331,7 +331,7 @@ export class ClientSettingsComponent implements OnInit {
       .confirm('Renew Client secret', 'Are you sure you want to renew the client secret ?')
       .subscribe(res => {
         if (res) {
-          this.clientService.renewClientSecret(this.domainId, this.client.id).map(res => res.json()).subscribe(data => {
+          this.clientService.renewClientSecret(this.domainId, this.client.id).subscribe(data => {
             this.client = data;
             this.snackbarService.open("Client secret updated");
           });

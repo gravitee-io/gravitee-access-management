@@ -15,28 +15,28 @@
  */
 import { Injectable } from '@angular/core';
 import { AppConfig } from "../../config/app.config";
-import { Observable } from "rxjs/Observable";
-import { Http, Response } from "@angular/http";
+import { HttpClient } from "@angular/common/http";
+import { Observable } from "rxjs";
 
 @Injectable()
 export class DashboardService {
   private dashboardURL = AppConfig.settings.baseURL + '/dashboard/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  findClients(domainId: any): Observable<Response> {
-    return this.http.get(this.dashboardURL + "clients" + ((domainId) ? "?domainId="+domainId : ""));
+  findClients(domainId: any): Observable<any> {
+    return this.http.get<any>(this.dashboardURL + "clients" + ((domainId) ? "?domainId="+domainId : ""));
   }
 
-  findTopClients(domainId: any): Observable<Response> {
-    return this.http.get(this.dashboardURL + "clients/top" + ((domainId) ? "?domainId="+domainId : ""));
+  findTopClients(domainId: any): Observable<any> {
+    return this.http.get<any>(this.dashboardURL + "clients/top" + ((domainId) ? "?domainId="+domainId : ""));
   }
 
-  findTotalClients(domainId: any): Observable<Response> {
-    return this.http.get(this.dashboardURL + "clients/total" + ((domainId) ? "?domainId="+domainId : ""));
+  findTotalClients(domainId: any): Observable<any> {
+    return this.http.get<any>(this.dashboardURL + "clients/total" + ((domainId) ? "?domainId="+domainId : ""));
   }
 
-  findTotalTokens(domainId: any): Observable<Response> {
-    return this.http.get(this.dashboardURL + "tokens" + ((domainId) ? "?domainId="+domainId : ""));
+  findTotalTokens(domainId: any): Observable<any> {
+    return this.http.get<any>(this.dashboardURL + "tokens" + ((domainId) ? "?domainId="+domainId : ""));
   }
 }

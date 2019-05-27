@@ -29,7 +29,7 @@ export class RolesResolver implements Resolve<any> {
     if (!state.url.startsWith('/settings')) {
       domainId = (route.parent.parent.paramMap.get('domainId')) ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
     }
-    return this.roleService.findByDomain(domainId).map(res => res.json());
+    return this.roleService.findByDomain(domainId);
   }
 
 }

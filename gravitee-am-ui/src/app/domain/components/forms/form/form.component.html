@@ -28,7 +28,7 @@
     </div>
   </div>
 
-  <mat-tab-group (selectChange)="onTabSelectedChanged($event);">
+  <mat-tab-group (selectedTabChange)="onTabSelectedChanged($event);">
     <mat-tab label="Html" [disabled]="!isEnabled()">
       <div style= "position:relative;">
         <codemirror #editor [(ngModel)]="formContent" [config]="config" (change)="onContentChanges($event)"></codemirror>

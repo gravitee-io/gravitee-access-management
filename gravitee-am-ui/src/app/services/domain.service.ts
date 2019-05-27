@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Observable } from "rxjs";
-import { Http, Response } from "@angular/http";
+import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
-import { Subject } from "rxjs/Subject";
+import { Subject , Observable} from "rxjs";
 
 @Injectable()
 export class DomainService {
@@ -25,28 +24,28 @@ export class DomainService {
   private domainUpdatedSource = new Subject<any>();
   domainUpdated$ = this.domainUpdatedSource.asObservable();
 
-  constructor(private http: Http) {}
+  constructor(private http: HttpClient) {}
 
-  list(): Observable<Response> {
-    return this.http.get(this.domainsURL);
+  list(): Observable<any> {
+    return this.http.get<any>(this.domainsURL);
   }
 
-  get(id: string): Observable<Response>  {
-    return this.http.get(this.domainsURL + id);
+  get(id: string): Observable<any> {
+    return this.http.get<any>(this.domainsURL + id);
   }
 
-  create(domain): Observable<Response>  {
-    return this.http.post(this.domainsURL, domain);
+  create(domain): Observable<any> {
+    return this.http.post<any>(this.domainsURL, domain);
   }
 
-  enable(id, domain): Observable<Response> {
-    return this.http.patch(this.domainsURL + id, {
+  enable(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
       'enabled': domain.enabled,
     });
   }
 
-  patchGeneralSettings(id, domain): Observable<Response> {
-    return this.http.patch(this.domainsURL + id, {
+  patchGeneralSettings(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
       'name': domain.name,
       'description': domain.description,
       'path': domain.path,
@@ -55,39 +54,39 @@ export class DomainService {
     });
   }
 
-  patchIdentityProviders(id, domain): Observable<Response> {
-    return this.http.patch(this.domainsURL + id, {
+  patchIdentityProviders(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
       'identities' : domain.identities,
       'oauth2Identities': domain.oauth2Identities
     });
   }
 
-  patchOpenidDCRSettings(id, domain): Observable<Response> {
-    return this.http.patch(this.domainsURL + id, {
+  patchOpenidDCRSettings(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
        'oidc':domain.oidc
     });
   }
 
-  patchScimSettings(id, domain): Observable<Response> {
-    return this.http.patch(this.domainsURL + id, {
+  patchScimSettings(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
       'scim': domain.scim
     });
   }
 
-  patchLoginSettings(id, domain): Observable<Response> {
-    return this.http.patch(this.domainsURL + id, {
+  patchLoginSettings(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
       'loginSettings': domain.loginSettings
     });
   }
 
-  patchAccountSettings(id, accountSettings): Observable<Response> {
-    return this.http.patch(this.domainsURL + id, {
+  patchAccountSettings(id, accountSettings): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
       'accountSettings': accountSettings
     });
   }
 
-  delete(id): Observable<Response> {
-    return this.http.delete(this.domainsURL + id);
+  delete(id): Observable<any> {
+    return this.http.delete<any>(this.domainsURL + id);
   }
 
   notify(domain): void {

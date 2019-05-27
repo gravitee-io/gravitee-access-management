@@ -53,7 +53,7 @@ export class ReporterComponent implements OnInit {
     this.reporter = this.route.snapshot.data['reporter'];
     this.reporterConfiguration = JSON.parse(this.reporter.configuration);
     this.updateReporterConfiguration = this.reporterConfiguration;
-    this.platformService.reporterSchema(this.reporter.type).map(res => res.json()).subscribe(data => {
+    this.platformService.reporterSchema(this.reporter.type).subscribe(data => {
       this.reporterSchema = data;
       // handle default null values
       let self = this;
@@ -66,7 +66,7 @@ export class ReporterComponent implements OnInit {
 
   update() {
     this.reporter.configuration = JSON.stringify(this.updateReporterConfiguration);
-    this.reporterService.update(this.domainId, this.reporter.id, this.reporter).map(res => res.json()).subscribe(data => {
+    this.reporterService.update(this.domainId, this.reporter.id, this.reporter).subscribe(data => {
       this.reporter = data;
       this.reporterConfiguration = JSON.parse(this.reporter.configuration);
       this.updateReporterConfiguration = this.reporterConfiguration;

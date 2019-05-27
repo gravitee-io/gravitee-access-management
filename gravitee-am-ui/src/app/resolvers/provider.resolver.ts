@@ -30,7 +30,7 @@ export class ProviderResolver implements Resolve<any> {
        domainId = route.parent.parent.paramMap.get('domainId');
     }
     let providerId: string = route.paramMap.get('providerId');
-    return this.providerService.get(domainId, providerId).map(res => res.json());
+    return this.providerService.get(domainId, providerId);
   }
 
 }

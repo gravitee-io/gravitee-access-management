@@ -47,7 +47,7 @@ export class TagComponent implements OnInit {
   }
 
   update() {
-    this.tagService.update(this.tag.id, this.tag).map(res => res.json()).subscribe(data => {
+    this.tagService.update(this.tag.id, this.tag).subscribe(data => {
       this.tag = data;
       this.initBreadcrumb();
       this.tagForm.reset(Object.assign({}, this.tag));

@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {AppConfig} from "../../config/app.config";
-import {Http, Response} from "@angular/http";
-import {Observable} from "rxjs/Observable";
+import { Injectable } from '@angular/core';
+import { AppConfig } from "../../config/app.config";
+import { HttpClient } from "@angular/common/http";
 
 @Injectable()
 export class AuditService {
   private auditsURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  findByDomain(domainId, page, size): Observable<Response>  {
+  findByDomain(domainId, page, size): any  {
     return this.http.get(this.auditsURL + domainId + "/audits?page=" + page + "&size=" + size);
   }
 
-  get(domainId, auditId): Observable<Response>  {
+  get(domainId, auditId): any  {
     return this.http.get(this.auditsURL + domainId + "/audits/" + auditId);
   }
 
-  search(domainId, page, size, type, status, user, from, to): Observable<Response>  {
+  search(domainId, page, size, type, status, user, from, to): any {
     return this.http.get(this.auditsURL + domainId + "/audits?page=" + page + "&size=" + size +
       (type ? "&type=" + type : "") +
       (status ? "&status=" + status : "") +

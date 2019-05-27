@@ -36,7 +36,7 @@ export class CertificateCreationStep2Component implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.platformService.certificateSchema(this.certificate.type).map(resp => resp.json()).subscribe(data => this.certificateSchema = data);
+    this.platformService.certificateSchema(this.certificate.type).subscribe(data => this.certificateSchema = data);
   }
 
   enableCertificateCreation(configurationWrapper) {
@@ -46,7 +46,7 @@ export class CertificateCreationStep2Component implements OnInit {
 
   create() {
     this.certificate.configuration = JSON.stringify(this.certificate.configuration);
-    this.certificateService.create(this.domainId, this.certificate).map(res => res.json()).subscribe(data => {
+    this.certificateService.create(this.domainId, this.certificate).subscribe(data => {
       this.snackbarService.open("Certificate " + data.name + " created");
       this.router.navigate(['/domains', this.domainId, 'settings', 'certificates', data.id]);
     });

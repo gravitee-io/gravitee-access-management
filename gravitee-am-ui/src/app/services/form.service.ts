@@ -14,33 +14,33 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Http, Response } from "@angular/http";
-import { Observable } from "rxjs";
+import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
+import { Observable } from "rxjs";
 
 @Injectable()
 export class FormService {
   private formsUrl = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  get(domainId, clientId, formTemplate): Observable<Response>  {
-    return this.http.get(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms?template=" + formTemplate);
+  get(domainId, clientId, formTemplate): Observable<any> {
+    return this.http.get<any>(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms?template=" + formTemplate);
   }
 
-  create(domainId, clientId, form): Observable<Response>  {
-    return this.http.post(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms", form);
+  create(domainId, clientId, form): Observable<any> {
+    return this.http.post<any>(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms", form);
   }
 
-  update(domainId, clientId, id, form): Observable<Response>  {
-    return this.http.put(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms/" + id, {
+  update(domainId, clientId, id, form): Observable<any> {
+    return this.http.put<any>(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms/" + id, {
       'enabled' : form.enabled,
       'content' : form.content
     });
   }
 
-  delete(domainId, clientId, id): Observable<Response>  {
-    return this.http.delete(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms/" + id);
+  delete(domainId, clientId, id): Observable<any> {
+    return this.http.delete<any>(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms/" + id);
   }
 
 }

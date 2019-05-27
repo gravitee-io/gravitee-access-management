@@ -113,7 +113,7 @@ export class EmailComponent implements OnInit, AfterViewInit {
 
   create() {
     this.email['content'] = this.emailContent;
-    this.emailService.create(this.domainId, this.clientId, this.email).map(res => res.json()).subscribe(data => {
+    this.emailService.create(this.domainId, this.clientId, this.email).subscribe(data => {
       this.snackbarService.open("Email created");
       this.emailFound = true;
       this.email = data;
@@ -124,7 +124,7 @@ export class EmailComponent implements OnInit, AfterViewInit {
 
   update() {
     this.email['content'] = this.emailContent;
-    this.emailService.update(this.domainId, this.clientId, this.email.id, this.email).map(res => res.json()).subscribe(data => {
+    this.emailService.update(this.domainId, this.clientId, this.email.id, this.email).subscribe(data => {
       this.snackbarService.open("Email updated");
       this.emailFound = true;
       this.email = data;

@@ -124,7 +124,7 @@ export class FormComponent implements OnInit, AfterViewInit {
 
   create() {
     this.form['content'] = this.formContent;
-    this.formService.create(this.domainId, this.clientId, this.form).map(res => res.json()).subscribe(data => {
+    this.formService.create(this.domainId, this.clientId, this.form).subscribe(data => {
       this.snackbarService.open("Form created");
       this.formFound = true;
       this.form = data;
@@ -134,7 +134,7 @@ export class FormComponent implements OnInit, AfterViewInit {
 
   update() {
     this.form['content'] = this.formContent;
-    this.formService.update(this.domainId, this.clientId, this.form.id, this.form).map(res => res.json()).subscribe(data => {
+    this.formService.update(this.domainId, this.clientId, this.form.id, this.form).subscribe(data => {
       this.snackbarService.open("Form updated");
       this.formFound = true;
       this.form = data;

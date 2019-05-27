@@ -46,7 +46,7 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.provider) {
-      this.platformService.identitySchema(changes.provider.currentValue.type).map(resp => resp.json()).subscribe(data => this.providerSchema = data);
+      this.platformService.identitySchema(changes.provider.currentValue.type).subscribe(data => this.providerSchema = data);
     }
   }
 
@@ -57,7 +57,7 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
 
   create() {
     this.provider.configuration = JSON.stringify(this.provider.configuration);
-    this.providerService.create(this.domainId, this.provider).map(res => res.json()).subscribe(data => {
+    this.providerService.create(this.domainId, this.provider).subscribe(data => {
       this.snackbarService.open("Provider " + data.name + " created");
       if (this.adminContext) {
         this.router.navigate(['/settings', 'management', 'providers', data.id]);

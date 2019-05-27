@@ -80,7 +80,7 @@ export class ProviderMappersComponent implements OnInit {
 
   update(message) {
     this.provider.mappers = this.mappers.reduce(function(map, obj) { map[obj.key] = obj.value; return map; }, {});
-    this.providerService.update(this.domainId, this.provider.id, this.provider).map(res => res.json()).subscribe(data => {
+    this.providerService.update(this.domainId, this.provider.id, this.provider).subscribe(data => {
       this.snackbarService.open(message);
     })
   }

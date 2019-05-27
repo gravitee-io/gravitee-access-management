@@ -40,7 +40,7 @@ export class ExtensionGrantCreationStep2Component implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.identityProviders = this.route.snapshot.data['identityProviders'];
-    this.platformService.extensionGrantSchema(this.extensionGrant.type).map(resp => resp.json()).subscribe(data => this.extensionGrantSchema = data);
+    this.platformService.extensionGrantSchema(this.extensionGrant.type).subscribe(data => this.extensionGrantSchema = data);
   }
 
   enableTokenGranterCreation(configurationWrapper) {
@@ -50,7 +50,7 @@ export class ExtensionGrantCreationStep2Component implements OnInit {
 
   create() {
     this.extensionGrant.configuration = JSON.stringify(this.extensionGrant.configuration);
-    this.extensionGrantService.create(this.domainId, this.extensionGrant).map(res => res.json()).subscribe(data => {
+    this.extensionGrantService.create(this.domainId, this.extensionGrant).subscribe(data => {
       this.snackbarService.open("Extension Grant " + data.name + " created");
       this.router.navigate(['/domains', this.domainId, 'settings', 'extensionGrants', data.id]);
     });

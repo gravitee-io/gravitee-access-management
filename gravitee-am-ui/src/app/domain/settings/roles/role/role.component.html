@@ -31,7 +31,7 @@
       <mat-form-field>
         <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" #chipListPermissions>
           <mat-chip *ngFor="let permission of selectedPermissions" color="accent"
-                    selected="true" (remove)="removePermission(permission)">
+                    selected="true" (removed)="removePermission(permission)">
             <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
             &nbsp;<span>{{permission.key}}</span>&nbsp;|&nbsp;<small>{{permission.name}}</small>
             <mat-icon matChipRemove>cancel</mat-icon>

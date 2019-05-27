@@ -15,8 +15,9 @@
  */
 import { Injectable } from '@angular/core';
 import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
+import { Observable , of} from "rxjs";
 import { EmailService } from "../services/email.service";
+import {catchError} from "rxjs/operators";
 
 @Injectable()
 export class EmailResolver implements Resolve<any> {
@@ -29,10 +30,11 @@ export class EmailResolver implements Resolve<any> {
     let clientId = route.parent.paramMap.get('clientId');
 
     return this.emailService.get(domainId, clientId, emailTemplate)
-      .map(res => res.json())
-      .catch(res => {
-        return Observable.of({});
-      });
+      .pipe(
+        catchError(__ => {
+          return of({});
+        })
+      );;
   }
 
 }

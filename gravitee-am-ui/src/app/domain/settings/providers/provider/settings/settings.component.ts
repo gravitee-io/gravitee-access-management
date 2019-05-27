@@ -46,11 +46,11 @@ export class ProviderSettingsComponent implements OnInit {
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.domainId = AppConfig.settings.authentication.domainId;
     }
-    this.domainService.get(this.domainId).map(res => res.json()).subscribe(data => this.domain = data);
+    this.domainService.get(this.domainId).subscribe(data => this.domain = data);
     this.provider = this.route.snapshot.parent.data['provider'];
     this.providerConfiguration = JSON.parse(this.provider.configuration);
     this.updateProviderConfiguration = this.providerConfiguration;
-    this.platformService.identitySchema(this.provider.type).map(res => res.json()).subscribe(data => {
+    this.platformService.identitySchema(this.provider.type).subscribe(data => {
       this.providerSchema = data;
       // handle default null values
       let self = this;
@@ -62,7 +62,7 @@ export class ProviderSettingsComponent implements OnInit {
 
   update() {
     this.provider.configuration = JSON.stringify(this.updateProviderConfiguration);
-    this.providerService.update(this.domainId, this.provider.id, this.provider).map(res => res.json()).subscribe(data => {
+    this.providerService.update(this.domainId, this.provider.id, this.provider).subscribe(data => {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/providers/'+this.provider.id+'$', this.provider.name);
       this.snackbarService.open("Provider updated");
     });

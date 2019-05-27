@@ -31,8 +31,8 @@ export class ProviderCreationStep1Component implements OnInit {
   }
 
   ngOnInit() {
-    this.platformService.identities().map(res => res.json()).subscribe(data => this.providers = data);
-    this.platformService.oauth2Identities().map(res => res.json()).subscribe(data => this.oauth2Providers = data);
+    this.platformService.identities().subscribe(data => this.providers = data);
+    this.platformService.oauth2Identities().subscribe(data => this.oauth2Providers = data);
   }
 
   selectProviderType(isExternal: boolean) {

@@ -43,7 +43,7 @@ export class NavbarComponent implements OnInit {
   }
 
   listDomains() {
-    this.domainService.list().map(res => res.json()).subscribe(data => this.domains = data);
+    this.domainService.list().subscribe(data => this.domains = data);
   }
 
   goTo(routerLink) {

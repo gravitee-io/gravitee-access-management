@@ -59,7 +59,7 @@ export class UsersComponent implements OnInit {
       this.userService.search(this.domainId, this.searchValue, this.page.pageNumber, this.page.size) :
       this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size)
 
-    findUsers.map(res => res.json()).subscribe(pagedUsers => {
+    findUsers.subscribe(pagedUsers => {
       this.page.totalElements = pagedUsers.totalCount;
       this.users = pagedUsers.data;
     });

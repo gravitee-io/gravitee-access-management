@@ -79,7 +79,7 @@ export class RoleComponent implements OnInit {
 
   update() {
     this.role.permissions = _.map(this.selectedPermissions, permission => permission.key);
-    this.roleService.update(this.domainId, this.role.id, this.role).map(res => res.json()).subscribe(data => {
+    this.roleService.update(this.domainId, this.role.id, this.role).subscribe(data => {
       this.role = data;
       this.initBreadcrumb();
       this.snackbarService.open("Role updated");

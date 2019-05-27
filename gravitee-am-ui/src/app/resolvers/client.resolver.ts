@@ -26,7 +26,7 @@ export class ClientResolver implements Resolve<any> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     let domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId');
     let clientId: string = route.paramMap.get('clientId');
-    return this.clientService.get(domainId, clientId).map(res => res.json());
+    return this.clientService.get(domainId, clientId);
   }
 
 }

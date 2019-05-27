@@ -44,7 +44,7 @@ export class ScimComponent implements OnInit {
   }
 
   save() {
-    this.domainService.patchScimSettings(this.domainId, this.domain).map(res => res.json()).subscribe(data => {
+    this.domainService.patchScimSettings(this.domainId, this.domain).subscribe(data => {
       this.domain = data;
       this.formChanged = false;
       this.snackbarService.open("SCIM configuration updated");

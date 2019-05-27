@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Http, Response } from "@angular/http";
+import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { AppConfig } from "../../config/app.config";
 
@@ -22,41 +22,41 @@ import { AppConfig } from "../../config/app.config";
 export class PlatformService {
   private platformURL = AppConfig.settings.baseURL + '/platform/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  identities(): Observable<Response> {
-    return this.http.get(this.platformURL + 'plugins/identities');
+  identities(): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'plugins/identities');
   }
 
-  oauth2Identities(): Observable<Response> {
-    return this.http.get(this.platformURL + 'plugins/identities?external=true')
+  oauth2Identities(): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'plugins/identities?external=true')
   }
 
-  identitySchema(id): Observable<Response> {
-    return this.http.get(this.platformURL + 'plugins/identities/' + id + '/schema');
+  identitySchema(id): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'plugins/identities/' + id + '/schema');
   }
 
-  certificates(): Observable<Response> {
-    return this.http.get(this.platformURL + 'plugins/certificates');
+  certificates(): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'plugins/certificates');
   }
 
-  certificateSchema(id): Observable<Response> {
-    return this.http.get(this.platformURL + 'plugins/certificates/' + id + '/schema');
+  certificateSchema(id): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'plugins/certificates/' + id + '/schema');
   }
 
-  extensionGrants(): Observable<Response> {
-    return this.http.get(this.platformURL + 'plugins/extensionGrants');
+  extensionGrants(): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'plugins/extensionGrants');
   }
 
-  extensionGrantSchema(id): Observable<Response> {
-    return this.http.get(this.platformURL + 'plugins/extensionGrants/' + id + '/schema');
+  extensionGrantSchema(id): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'plugins/extensionGrants/' + id + '/schema');
   }
 
-  reporterSchema(id): Observable<Response> {
-    return this.http.get(this.platformURL + 'plugins/reporters/' + id + '/schema');
+  reporterSchema(id): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'plugins/reporters/' + id + '/schema');
   }
 
-  auditEventTypes(): Observable<Response> {
-    return this.http.get(this.platformURL + 'audit/events');
+  auditEventTypes(): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'audit/events');
   }
 }

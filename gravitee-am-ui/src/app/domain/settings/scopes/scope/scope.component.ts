@@ -50,7 +50,7 @@ export class ScopeComponent implements OnInit {
     if (this.expiresIn && this.unitTime) {
       this.scope.expiresIn = moment.duration(this.expiresIn, this.unitTime).asSeconds();
     }
-    this.scopeService.update(this.domainId, this.scope.id, this.scope).map(res => res.json()).subscribe(data => {
+    this.scopeService.update(this.domainId, this.scope.id, this.scope).subscribe(data => {
       this.scope = data;
       this.initBreadcrumb();
       this.formChanged = false;

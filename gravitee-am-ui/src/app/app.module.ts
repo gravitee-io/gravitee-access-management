@@ -18,8 +18,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpModule } from '@angular/http';
-import { Http } from '@angular/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import {
   MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatDialogModule, MatExpansionModule,
   MatGridListModule, MatIconModule, MatListModule, MatNativeDateModule, MatProgressBarModule, MatProgressSpinnerModule,
@@ -37,7 +36,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { CodemirrorModule } from 'ng2-codemirror';
-import { JsonSchemaFormModule } from "./components/json-schema-form/json-schema-form.module";
+import { MaterialDesignFrameworkModule } from "angular6-json-schema-form";
 import 'hammerjs';
 import 'codemirror';
 import "codemirror/mode/htmlmixed/htmlmixed";
@@ -78,7 +77,6 @@ import { CreateRoleMapperComponent, ProviderRolesComponent } from "app/domain/se
 import { ClientService } from "./services/client.service";
 import { ProviderService } from "./services/provider.service";
 import { PlatformService } from "./services/platform.service";
-import { HttpService } from "./services/http.service";
 import { AuthService } from "./services/auth.service";
 import { AppConfig } from "../config/app.config";
 import { LogoutComponent } from './logout/logout.component';
@@ -116,7 +114,7 @@ import { CertificateCreationStep1Component } from "./domain/settings/certificate
 import { CertificateCreationStep2Component } from "app/domain/settings/certificates/creation/steps/step2/step2.component";
 import { CertificateFormComponent } from "./domain/settings/certificates/certificate/form/form.component";
 import { CertificateResolver } from "./resolvers/certificate.resolver";
-import { ClipboardModule } from "ngx-clipboard/dist";
+import { ClipboardModule } from "ngx-clipboard";
 import { RoleService } from "./services/role.service";
 import { RolesResolver } from "./resolvers/roles.resolver";
 import { RoleResolver } from "./resolvers/role.resolver";
@@ -191,13 +189,15 @@ import { ReportersResolver } from "./resolvers/reporters.resolver";
 import { ReporterResolver } from "./resolvers/reporter.resolver";
 import { ReporterComponent } from "./domain/settings/audits/settings/reporter/reporter.component";
 import { ReporterFormComponent } from "./domain/settings/audits/settings/reporter/form/form.component";
-import {TagsResolver} from "./resolvers/tags.resolver";
-import {TagResolver} from "./resolvers/tag.resolver";
-import {TagService} from "./services/tag.service";
-import {TagsComponent} from "./settings/management/tags/tags.component";
-import {TagCreationComponent} from "./settings/management/tags/creation/tag-creation.component";
-import {TagComponent} from "./settings/management/tags/tag/tag.component";
-import {AccountSettingsComponent} from "./domain/components/account/account-settings.component";
+import { TagsResolver } from "./resolvers/tags.resolver";
+import { TagResolver } from "./resolvers/tag.resolver";
+import { TagService } from "./services/tag.service";
+import { TagsComponent } from "./settings/management/tags/tags.component";
+import { TagCreationComponent } from "./settings/management/tags/creation/tag-creation.component";
+import { TagComponent } from "./settings/management/tags/tag/tag.component";
+import { AccountSettingsComponent } from "./domain/components/account/account-settings.component";
+import { UnauthorizedInterceptor } from "./interceptors/unauthorized.interceptor";
+import { HttpRequestInterceptor } from "./interceptors/http-request.interceptor";
 
 @NgModule({
   declarations: [
@@ -317,12 +317,12 @@ import {AccountSettingsComponent} from "./domain/components/account/account-sett
     BrowserAnimationsModule,
     FormsModule,
     ReactiveFormsModule,
-    HttpModule,
+    HttpClientModule,
     AppRoutingModule,
     MatAutocompleteModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule, MatDialogModule, MatExpansionModule, MatGridListModule, MatIconModule, MatInputModule, MatListModule, MatMenuModule, MatNativeDateModule, MatPaginatorModule, MatProgressBarModule, MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule, MatSidenavModule, MatSliderModule, MatSlideToggleModule, MatSnackBarModule, MatSortModule, MatTableModule, MatTabsModule, MatToolbarModule, MatTooltipModule, MatStepperModule,
     FlexLayoutModule,
     NgxDatatableModule,
-    JsonSchemaFormModule,
+    MaterialDesignFrameworkModule,
     CodemirrorModule,
     Ng2BreadcrumbModule.forRoot(),
     ClipboardModule
@@ -376,7 +376,16 @@ import {AccountSettingsComponent} from "./domain/components/account/account-sett
     TagService,
     TagsResolver,
     TagResolver,
-    { provide: Http, useClass: HttpService }
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: HttpRequestInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: UnauthorizedInterceptor,
+      multi: true,
+    }
   ],
   entryComponents: [
     ConfirmComponent,

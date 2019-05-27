@@ -44,7 +44,7 @@
         <mat-form-field>
           <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" #chipListTags>
             <mat-chip *ngFor="let tag of selectedTags" color="accent"
-                      selected="true" (remove)="removeTag(tag)">
+                      selected="true" (removed)="removeTag(tag)">
               <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
               &nbsp;<span>{{tag.id}}</span>&nbsp;|&nbsp;<small>{{tag.name}}</small>
               <mat-icon matChipRemove>cancel</mat-icon>

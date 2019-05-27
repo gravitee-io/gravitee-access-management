@@ -30,7 +30,7 @@ export class ReporterResolver implements Resolve<any> {
        domainId = route.parent.parent.paramMap.get('domainId');
     }
     let reporterId: string = route.paramMap.get('reporterId');
-    return this.reporterService.get(domainId, reporterId).map(res => res.json());
+    return this.reporterService.get(domainId, reporterId);
   }
 
 }

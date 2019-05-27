@@ -25,7 +25,7 @@ export class TagResolver implements Resolve<any> {
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     let tagId: string = route.paramMap.get('tagId');
-    return this.tagService.get(tagId).map(res => res.json());
+    return this.tagService.get(tagId);
   }
 
 }

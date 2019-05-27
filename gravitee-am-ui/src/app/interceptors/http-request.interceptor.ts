@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TestBed, inject } from '@angular/core/testing';
+import {Injectable} from "@angular/core";
+import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from "@angular/common/http";
+import {Observable} from "rxjs";
 
-import { HttpService } from './http.service';
+@Injectable()
+export class HttpRequestInterceptor implements HttpInterceptor {
 
-describe('HttpService', () => {
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [HttpService]
+  intercept(req: HttpRequest<any>, next: HttpHandler):
+    Observable<HttpEvent<any>> {
+
+    req = req.clone({
+      withCredentials: true
     });
-  });
 
-  it('should ...', inject([HttpService], (service: HttpService) => {
-    expect(service).toBeTruthy();
-  }));
-});
+    return next.handle(req);
+  }
+}

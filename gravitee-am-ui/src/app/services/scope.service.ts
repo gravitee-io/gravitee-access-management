@@ -14,38 +14,38 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Http, Response } from "@angular/http";
-import { Observable } from "rxjs";
+import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
+import { Observable } from "rxjs";
 
 @Injectable()
 export class ScopeService {
   private scopes = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  findByDomain(domainId): Observable<Response>  {
-    return this.http.get(this.scopes + domainId + "/scopes");
+  findByDomain(domainId): Observable<any> {
+    return this.http.get<any>(this.scopes + domainId + "/scopes");
   }
 
-  get(domainId, id): Observable<Response>  {
-    return this.http.get(this.scopes + domainId + "/scopes/" + id);
+  get(domainId, id): Observable<any> {
+    return this.http.get<any>(this.scopes + domainId + "/scopes/" + id);
   }
 
-  create(domainId, scope): Observable<Response>  {
-    return this.http.post(this.scopes + domainId + "/scopes", scope);
+  create(domainId, scope): Observable<any> {
+    return this.http.post<any>(this.scopes + domainId + "/scopes", scope);
   }
 
-  update(domainId, id, scope): Observable<Response>  {
-    return this.http.put(this.scopes + domainId + "/scopes/" + id, {
+  update(domainId, id, scope): Observable<any> {
+    return this.http.put<any>(this.scopes + domainId + "/scopes/" + id, {
       'name' : scope.name,
       'description' : scope.description,
       'expiresIn' : scope.expiresIn
     });
   }
 
-  delete(domainId, id): Observable<Response>  {
-    return this.http.delete(this.scopes + domainId + "/scopes/" + id);
+  delete(domainId, id): Observable<any> {
+    return this.http.delete<any>(this.scopes + domainId + "/scopes/" + id);
   }
 
 }

@@ -27,9 +27,9 @@ export class ClientsResolver implements Resolve<any> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     let domainId = route.parent.paramMap.get('domainId');
     if (domainId) {
-      return this.clientService.findByDomain(route.parent.paramMap.get('domainId')).map(res => res.json());
+      return this.clientService.findByDomain(route.parent.paramMap.get('domainId'));
     } else {
-      return this.dashboardService.findClients(null).map(res => res.json());
+      return this.dashboardService.findClients(null);
     }
   }
 

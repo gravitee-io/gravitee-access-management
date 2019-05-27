@@ -24,7 +24,7 @@ export class DomainsResolver implements Resolve<any> {
   constructor(private domainService: DomainService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    return this.domainService.list().map(res => res.json());
+    return this.domainService.list();
   }
 
 }

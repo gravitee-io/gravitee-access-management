@@ -23,6 +23,7 @@ import {AppConfig} from "../../../../../../config/app.config";
 import { MatSelect } from "@angular/material";
 import {GroupService} from "../../../../../services/group.service";
 import {NgForm} from "@angular/forms";
+import {filter} from "rxjs/operators";
 
 @Component({
   selector: 'app-roles',
@@ -114,7 +115,7 @@ export class ProviderRolesComponent implements OnInit {
 
   update() {
     this.provider.roleMapper = this.providerRoleMapper;
-    this.providerService.update(this.domainId, this.provider.id, this.provider).map(res => res.json()).subscribe(data => {
+    this.providerService.update(this.domainId, this.provider.id, this.provider).subscribe(data => {
       this.snackbarService.open("Role mapping updated");
     })
   }
@@ -185,7 +186,7 @@ export class CreateRoleMapperComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.selectElem.onOpen.subscribe(() => this.registerPanelScrollEvent());
+    this.selectElem.openedChange.pipe(filter(isOpen => isOpen)).subscribe(() => this.registerPanelScrollEvent());
   }
 
   get formInvalid() {
@@ -200,7 +201,7 @@ export class CreateRoleMapperComponent implements OnInit {
 
   loadGroupsOnScroll(event) {
     if (event.target.scrollTop > this.RELOAD_TOP_SCROLL_POSITION) {
-      this.groupService.findByDomain(this.data.domain, ++this.page, this.size).map(res => res.json()).subscribe(response => {
+      this.groupService.findByDomain(this.data.domain, ++this.page, this.size).subscribe(response => {
         this.groups = response.data;
         this.RELOAD_TOP_SCROLL_POSITION += this.groups.length * this.page;
       });

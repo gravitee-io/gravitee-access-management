@@ -41,7 +41,7 @@ export class GroupCreationComponent implements OnInit {
   }
 
   create() {
-    this.groupService.create(this.domainId, this.group).map(res => res.json()).subscribe(data => {
+    this.groupService.create(this.domainId, this.group).subscribe(data => {
       this.snackbarService.open("Group " + data.name + " created");
       if (this.adminContext) {
         this.router.navigate(['/settings', 'management', 'groups', data.id]);

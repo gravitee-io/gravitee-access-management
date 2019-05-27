@@ -30,7 +30,7 @@ export class GroupResolver implements Resolve<any> {
       domainId = route.parent.parent.paramMap.get('domainId');
     }
     let userId: string = route.paramMap.get('groupId');
-    return this.groupService.get(domainId, userId).map(res => res.json());
+    return this.groupService.get(domainId, userId);
   }
 
 }

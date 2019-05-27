@@ -15,9 +15,8 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpService } from "./services/http.service";
-import { Http}  from "@angular/http";
 import { SidenavService } from "./components/sidenav/sidenav.service";
+import { AuthService } from "./services/auth.service";
 
 @Component({
   selector: 'app-root',
@@ -27,10 +26,12 @@ import { SidenavService } from "./components/sidenav/sidenav.service";
 export class AppComponent implements OnInit {
   reducedMode: boolean = false;
 
-  constructor(public router : Router, private http: Http, private sidenavService: SidenavService) {}
+  constructor(public router : Router,
+              private authService: AuthService,
+              private sidenavService: SidenavService) {}
 
   ngOnInit() {
-    (<HttpService>this.http).notifyObservable$.subscribe(response => {
+    this.authService.notifyObservable$.subscribe(response => {
       if (response && response === 'Unauthorized') {
         sessionStorage.removeItem('access_token');
         sessionStorage.removeItem('user');

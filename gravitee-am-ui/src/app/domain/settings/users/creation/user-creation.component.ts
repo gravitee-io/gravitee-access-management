@@ -69,13 +69,13 @@ export class UserCreationComponent implements OnInit {
       this.adminContext = true;
     }
 
-    this.providerService.findUserProvidersByDomain(this.domainId).map(res => res.json()).subscribe(response => {
+    this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
       this.userProviders = response;
     });
 
     this.clientCtrl.valueChanges
       .subscribe(searchTerm => {
-        this.clientService.findByDomain(this.domainId).map(res => res.json()).subscribe(response => {
+        this.clientService.findByDomain(this.domainId).subscribe(response => {
           this.filteredClients = response.filter(client => client.clientId.toLowerCase().indexOf(searchTerm.toLowerCase()) === 0);;
         });
       });
@@ -92,7 +92,7 @@ export class UserCreationComponent implements OnInit {
     }
     // set pre-registration
     this.user.preRegistration = this.preRegistration;
-    this.userService.create(this.domainId, this.user).map(res => res.json()).subscribe(data => {
+    this.userService.create(this.domainId, this.user).subscribe(data => {
       this.snackbarService.open("User " + data.username + " created");
       if (this.adminContext) {
         this.router.navigate(['/settings', 'management', 'users', data.id]);

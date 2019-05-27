@@ -37,7 +37,7 @@ export class ClientCreationComponent implements OnInit {
   }
 
   create() {
-    this.clientService.create(this.selectedDomainId, this.client).map(res => res.json()).subscribe(data => {
+    this.clientService.create(this.selectedDomainId, this.client).subscribe(data => {
       this.snackbarService.open("Client " + data.clientId + " created");
       this.router.navigate(['/domains', this.selectedDomainId, 'clients', data.id]);
     });

@@ -51,7 +51,7 @@ export class GroupSettingsComponent implements OnInit {
   }
 
   update() {
-    this.groupService.update(this.domainId, this.group.id, this.group).map(res => res.json()).subscribe(data => {
+    this.groupService.update(this.domainId, this.group.id, this.group).subscribe(data => {
       this.group = data;
       this.initBreadcrumb();
       this.snackbarService.open("Group updated");

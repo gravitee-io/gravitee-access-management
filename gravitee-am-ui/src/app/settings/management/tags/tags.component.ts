@@ -40,7 +40,7 @@ export class TagsComponent implements OnInit {
   }
 
   loadTags() {
-    this.tagService.list().subscribe(response => this.tags = response.json());
+    this.tagService.list().subscribe(response => this.tags = response);
   }
 
   delete(id, event) {

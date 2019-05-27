@@ -43,7 +43,7 @@ export class ClientIdPComponent implements OnInit {
     if (!this.client.oauth2Identities) {
       this.client.oauth2Identities = [];
     }
-    this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => {
+    this.providerService.findByDomain(this.domainId).subscribe(data => {
       this.identityProviders = data.filter(idp => !idp.external);
       this.oauth2IdentityProviders = data.filter(idp => idp.external);
       this.loadIdentities = false;
@@ -51,7 +51,7 @@ export class ClientIdPComponent implements OnInit {
   }
 
   update() {
-    this.clientService.update(this.domainId, this.client.id, this.client).map(res => res.json()).subscribe(data => {
+    this.clientService.update(this.domainId, this.client.id, this.client).subscribe(data => {
       this.client = data;
       this.snackbarService.open("Client updated");
     });

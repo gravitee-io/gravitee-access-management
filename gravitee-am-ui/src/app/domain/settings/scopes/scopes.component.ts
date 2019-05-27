@@ -39,7 +39,7 @@ export class DomainSettingsScopesComponent implements OnInit {
   }
 
   loadScopes() {
-    this.scopeService.findByDomain(this.domainId).subscribe(response => this.scopes = response.json());
+    this.scopeService.findByDomain(this.domainId).subscribe(response => this.scopes = response);
   }
 
   get isEmpty() {
