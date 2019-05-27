@@ -1,3 +1,5 @@
+
+import {map} from 'rxjs/operators';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -15,7 +17,7 @@
  */
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from "rxjs";
-import { Http, Response } from "@angular/http";
+import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
 
 @Injectable()
@@ -30,7 +32,7 @@ export class AuthService {
   private subject = new Subject();
   notifyObservable$ = this.subject.asObservable();
 
-  constructor(private http: Http) {
+  constructor(private http: HttpClient) {
     this.currentUser = sessionStorage.getItem('user');
   }
 
@@ -47,11 +49,11 @@ export class AuthService {
     return this._logoutEndpoint;
   }
 
-  userInfo(): Observable<Response> {
-    return this.http.get(this.userInfoUrl).map(res => {
-      this.setUser(res.json());
-      return res;
-    });
+  userInfo() {
+    return this.http.get<any>(this.userInfoUrl).pipe(map(user => {
+      this.setUser(user);
+      return user;
+    }));
   }
 
   setUser(user: any) {

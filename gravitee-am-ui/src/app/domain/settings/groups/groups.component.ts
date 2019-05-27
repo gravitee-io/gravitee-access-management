@@ -52,7 +52,7 @@ export class GroupsComponent implements OnInit {
   }
 
   loadGroups() {
-    this.groupService.findByDomain(this.domainId, this.page.pageNumber, this.page.size).map(res => res.json()).subscribe(pagedGroups => {
+    this.groupService.findByDomain(this.domainId, this.page.pageNumber, this.page.size).subscribe(pagedGroups => {
       this.page.totalElements = pagedGroups.totalCount;
       this.groups = pagedGroups.data;
     });

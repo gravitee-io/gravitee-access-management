@@ -44,7 +44,7 @@ export class DomainSettingsLoginComponent implements OnInit {
   }
 
   save() {
-    this.domainService.patchLoginSettings(this.domainId, this.domain).map(res => res.json()).subscribe(data => {
+    this.domainService.patchLoginSettings(this.domainId, this.domain).subscribe(data => {
       this.domain = data;
       this.formChanged = false;
       this.snackbarService.open("Login configuration updated");

@@ -30,7 +30,7 @@ export class AuditResolver implements Resolve<any> {
       domainId = route.parent.parent.paramMap.get('domainId');
     }
     let auditId: string = route.paramMap.get('auditId');
-    return this.auditService.get(domainId, auditId).map(res => res.json());
+    return this.auditService.get(domainId, auditId);
   }
 
 }

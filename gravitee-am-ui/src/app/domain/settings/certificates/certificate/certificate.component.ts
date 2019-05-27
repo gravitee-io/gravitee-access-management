@@ -42,13 +42,13 @@ export class CertificateComponent implements OnInit {
     this.certificate = this.route.snapshot.data['certificate'];
     this.certificateConfiguration = JSON.parse(this.certificate.configuration);
     this.updateCertificateConfiguration = this.certificateConfiguration;
-    this.platformService.certificateSchema(this.certificate.type).map(res => res.json()).subscribe(data => this.certificateSchema = data);
+    this.platformService.certificateSchema(this.certificate.type).subscribe(data => this.certificateSchema = data);
     this.initBreadcrumb();
   }
 
   update() {
     this.certificate.configuration = JSON.stringify(this.updateCertificateConfiguration);
-    this.certificateService.update(this.domainId, this.certificate.id, this.certificate).map(res => res.json()).subscribe(data => {
+    this.certificateService.update(this.domainId, this.certificate.id, this.certificate).subscribe(data => {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/certificates/'+this.certificate.id+'$', this.certificate.name);
       this.snackbarService.open("Certificate updated");
     })

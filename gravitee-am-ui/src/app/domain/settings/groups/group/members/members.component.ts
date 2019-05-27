@@ -59,7 +59,6 @@ export class GroupMembersComponent implements OnInit {
 
   loadMembers() {
     this.groupService.findMembers(this.domainId, this.group.id,  this.page.pageNumber,  this.page.size)
-      .map(res => res.json())
       .subscribe(pagedMembers => {
         this.page.totalElements = pagedMembers.totalCount;
         this.members = Object.assign([], pagedMembers.data);
@@ -101,7 +100,7 @@ export class GroupMembersComponent implements OnInit {
   }
 
   private update(message) {
-    this.groupService.update(this.domainId, this.group.id, this.group).map(res => res.json()).subscribe(data => {
+    this.groupService.update(this.domainId, this.group.id, this.group).subscribe(data => {
       this.group = data;
       this.loadMembers();
       this.snackbarService.open(message);
@@ -123,7 +122,7 @@ export class AddMemberComponent {
               private userService: UserService) {
     this.memberCtrl.valueChanges
       .subscribe(searchTerm => {
-        this.userService.search(data.domain, searchTerm, 0, 30).map(res => res.json()).subscribe(response => {
+        this.userService.search(data.domain, searchTerm, 0, 30).subscribe(response => {
           this.filteredUsers = response.data;
         });
       });

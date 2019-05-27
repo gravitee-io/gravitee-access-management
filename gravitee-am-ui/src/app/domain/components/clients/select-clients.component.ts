@@ -39,7 +39,7 @@ export class SelectClientsComponent implements OnInit {
     this.clientCtrl.valueChanges
       .subscribe(searchTerm => {
         if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
-          this.clientService.search(this.domainId, searchTerm).map(res => res.json()).subscribe(response => {
+          this.clientService.search(this.domainId, searchTerm).subscribe(response => {
             this.filteredClients = response;
           });
         }

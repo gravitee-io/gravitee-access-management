@@ -15,35 +15,35 @@
  */
 import {Injectable} from '@angular/core';
 import {AppConfig} from "../../config/app.config";
-import {Http, Response} from "@angular/http";
-import {Observable} from "rxjs/Observable";
+import {HttpClient} from "@angular/common/http";
+import {Observable} from "rxjs";
 
 @Injectable()
 export class TagService {
   private tagsURL = AppConfig.settings.baseURL + '/platform/tags/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  list(): Observable<Response> {
-    return this.http.get(this.tagsURL);
+  list(): Observable<any> {
+    return this.http.get<any>(this.tagsURL);
   }
 
-  get(id): Observable<Response>  {
-    return this.http.get(this.tagsURL + id);
+  get(id): Observable<any> {
+    return this.http.get<any>(this.tagsURL + id);
   }
 
-  create(tag): Observable<Response>  {
-    return this.http.post(this.tagsURL, tag);
+  create(tag): Observable<any> {
+    return this.http.post<any>(this.tagsURL, tag);
   }
 
-  update(id, tag): Observable<Response>  {
-    return this.http.put(this.tagsURL + id, {
+  update(id, tag): Observable<any> {
+    return this.http.put<any>(this.tagsURL + id, {
       'name' : tag.name,
       'description' : tag.description
     });
   }
 
-  delete(id): Observable<Response>  {
-    return this.http.delete(this.tagsURL + id);
+  delete(id): Observable<any> {
+    return this.http.delete<any>(this.tagsURL + id);
   }
 }

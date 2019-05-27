@@ -90,7 +90,7 @@ export class DomainSettingsOpenidClientRegistrationComponent implements OnInit {
 
   patch() {
     this.domainService.patchOpenidDCRSettings(this.domain.id, this.domain).subscribe(response => {
-      this.domain = response.json();
+      this.domain = response;
       this.domainService.notify(this.domain);
       this.sidenavService.notify(this.domain);
       this.breadcrumbService.addFriendlyNameForRoute('/domains/'+this.domain.id, this.domain.name);

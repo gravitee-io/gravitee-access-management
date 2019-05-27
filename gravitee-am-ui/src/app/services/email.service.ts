@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Http, Response } from "@angular/http";
-import { Observable } from "rxjs";
+import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
+import { Observable } from "rxjs";
 
 @Injectable()
 export class EmailService {
   private emailsUrl = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  get(domainId, clientId, emailTemplate): Observable<Response>  {
-    return this.http.get(this.emailsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/emails?template=" + emailTemplate);
+  get(domainId, clientId, emailTemplate): Observable<any> {
+    return this.http.get<any>(this.emailsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/emails?template=" + emailTemplate);
   }
 
-  create(domainId, clientId, email): Observable<Response>  {
-    return this.http.post(this.emailsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/emails", email);
+  create(domainId, clientId, email): Observable<any> {
+    return this.http.post<any>(this.emailsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/emails", email);
   }
 
-  update(domainId, clientId, id, email): Observable<Response>  {
-    return this.http.put(this.emailsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/emails/" + id, {
+  update(domainId, clientId, id, email): Observable<any> {
+    return this.http.put<any>(this.emailsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/emails/" + id, {
       'enabled' : email.enabled,
       'from': email.from,
       'fromName': email.fromName,
@@ -43,8 +43,8 @@ export class EmailService {
     });
   }
 
-  delete(domainId, clientId, id): Observable<Response>  {
-    return this.http.delete(this.emailsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/emails/" + id);
+  delete(domainId, clientId, id): Observable<any> {
+    return this.http.delete<any>(this.emailsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/emails/" + id);
   }
 
 }

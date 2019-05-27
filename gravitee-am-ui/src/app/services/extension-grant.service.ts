@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Http, Response } from "@angular/http";
-import { Observable } from "rxjs";
+import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
+import { Observable } from "rxjs";
 
 @Injectable()
 export class ExtensionGrantService {
   private extensionGrantsUrl = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  findByDomain(domainId): Observable<Response>  {
-    return this.http.get(this.extensionGrantsUrl + domainId + "/extensionGrants");
+  findByDomain(domainId): Observable<any> {
+    return this.http.get<any>(this.extensionGrantsUrl + domainId + "/extensionGrants");
   }
 
-  get(domainId, id): Observable<Response>  {
-    return this.http.get(this.extensionGrantsUrl + domainId + "/extensionGrants/" + id);
+  get(domainId, id): Observable<any> {
+    return this.http.get<any>(this.extensionGrantsUrl + domainId + "/extensionGrants/" + id);
   }
 
-  create(domainId, tokenGranter): Observable<Response>  {
-    return this.http.post(this.extensionGrantsUrl + domainId + "/extensionGrants", tokenGranter);
+  create(domainId, tokenGranter): Observable<any> {
+    return this.http.post<any>(this.extensionGrantsUrl + domainId + "/extensionGrants", tokenGranter);
   }
 
-  update(domainId, id, tokenGranter): Observable<Response>  {
-    return this.http.put(this.extensionGrantsUrl + domainId + "/extensionGrants/" + id, {
+  update(domainId, id, tokenGranter): Observable<any> {
+    return this.http.put<any>(this.extensionGrantsUrl + domainId + "/extensionGrants/" + id, {
       'name' : tokenGranter.name,
       'configuration' : tokenGranter.configuration,
       'grantType': tokenGranter.grantType,
@@ -47,7 +47,7 @@ export class ExtensionGrantService {
     });
   }
 
-  delete(domainId, id): Observable<Response>  {
-    return this.http.delete(this.extensionGrantsUrl + domainId + "/extensionGrants/" + id);
+  delete(domainId, id): Observable<any> {
+    return this.http.delete<any>(this.extensionGrantsUrl + domainId + "/extensionGrants/" + id);
   }
 }

@@ -42,7 +42,7 @@ export class DomainSettingsProvidersComponent implements OnInit {
   }
 
   loadProviders() {
-    this.providerService.findByDomain(this.domainId).subscribe(response => this.providers = response.json());
+    this.providerService.findByDomain(this.domainId).subscribe(response => this.providers = response);
   }
 
   get isEmpty() {

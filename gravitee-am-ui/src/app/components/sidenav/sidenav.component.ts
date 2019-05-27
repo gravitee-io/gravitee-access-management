@@ -1,3 +1,5 @@
+
+import {filter} from 'rxjs/operators';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -62,8 +64,8 @@ export class SidenavComponent implements OnInit, OnDestroy {
 
   watchRoute() {
     let that = this;
-    this.router.events
-      .filter(event => event instanceof NavigationEnd)
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd))
       .subscribe(event => {
         for (let route of that.paths) {
           route.data.menu.active = false;

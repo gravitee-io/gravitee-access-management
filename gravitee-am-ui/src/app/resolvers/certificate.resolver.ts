@@ -26,7 +26,7 @@ export class CertificateResolver implements Resolve<any> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     let domainId: string = route.parent.parent.paramMap.get('domainId');
     let certificateId: string = route.paramMap.get('certificateId');
-    return this.certificateService.get(domainId, certificateId).map(res => res.json());
+    return this.certificateService.get(domainId, certificateId);
   }
 
 }

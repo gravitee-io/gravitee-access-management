@@ -30,7 +30,7 @@ export class ScopeResolver implements Resolve<any> {
       domainId = route.parent.parent.paramMap.get('domainId');
     }
     let scopeId: string = route.paramMap.get('scopeId');
-    return this.scopeService.get(domainId, scopeId).map(res => res.json());
+    return this.scopeService.get(domainId, scopeId);
   }
 
 }

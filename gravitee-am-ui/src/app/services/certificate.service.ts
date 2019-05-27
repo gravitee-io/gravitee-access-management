@@ -14,41 +14,41 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Http, Response } from "@angular/http";
-import { Observable } from "rxjs";
+import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
+import { Observable } from "rxjs";
 
 @Injectable()
 export class CertificateService {
   private certificatesURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  findByDomain(domainId): Observable<Response>  {
-    return this.http.get(this.certificatesURL + domainId + "/certificates");
+  findByDomain(domainId): Observable<any> {
+    return this.http.get<any>(this.certificatesURL + domainId + "/certificates");
   }
 
-  get(domainId, id): Observable<Response>  {
-    return this.http.get(this.certificatesURL + domainId + "/certificates/" + id);
+  get(domainId, id): Observable<any> {
+    return this.http.get<any>(this.certificatesURL + domainId + "/certificates/" + id);
   }
 
-  create(domainId, provider): Observable<Response>  {
-    return this.http.post(this.certificatesURL + domainId + "/certificates", provider);
+  create(domainId, provider): Observable<any> {
+    return this.http.post<any>(this.certificatesURL + domainId + "/certificates", provider);
   }
 
-  update(domainId, id, provider): Observable<Response>  {
-    return this.http.put(this.certificatesURL + domainId + "/certificates/" + id, {
+  update(domainId, id, provider): Observable<any> {
+    return this.http.put<any>(this.certificatesURL + domainId + "/certificates/" + id, {
       'name' : provider.name,
       'configuration' : provider.configuration
     });
   }
 
-  delete(domainId, id): Observable<Response>  {
-    return this.http.delete(this.certificatesURL + domainId + "/certificates/" + id);
+  delete(domainId, id): Observable<any> {
+    return this.http.delete<any>(this.certificatesURL + domainId + "/certificates/" + id);
   }
 
-  publicKey(domainId, id): Observable<Response>  {
-    return this.http.get(this.certificatesURL + domainId + "/certificates/" + id + "/key");
+  publicKey(domainId, id): Observable<any> {
+    return this.http.get(this.certificatesURL + domainId + "/certificates/" + id + "/key", {responseType: 'text'});
   }
 
 }

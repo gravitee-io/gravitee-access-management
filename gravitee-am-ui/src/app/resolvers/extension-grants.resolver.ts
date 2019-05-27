@@ -25,7 +25,7 @@ export class ExtensionGrantsResolver implements Resolve<any> {
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     let domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
-    return this.extensionGrantService.findByDomain(domainId).map(res => res.json());
+    return this.extensionGrantService.findByDomain(domainId);
   }
 
 }

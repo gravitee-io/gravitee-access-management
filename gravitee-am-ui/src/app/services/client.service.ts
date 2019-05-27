@@ -14,34 +14,34 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Http, Response } from "@angular/http";
-import { Observable } from "rxjs";
+import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
+import { Observable } from "rxjs";
 
 @Injectable()
 export class ClientService {
   private clientsURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  findByDomain(domainId): Observable<Response> {
-    return this.http.get(this.clientsURL + domainId + "/clients");
+  findByDomain(domainId): Observable<any> {
+    return this.http.get<any>(this.clientsURL + domainId + "/clients");
   }
 
-  search(domainId, searchTerm) {
-    return this.http.get(this.clientsURL + domainId + "/clients?q=" + searchTerm);
+  search(domainId, searchTerm): Observable<any> {
+    return this.http.get<any>(this.clientsURL + domainId + "/clients?q=" + searchTerm);
   }
 
-  get(domainId, id): Observable<Response> {
-    return this.http.get(this.clientsURL + domainId + "/clients/" + id);
+  get(domainId, id): Observable<any> {
+    return this.http.get<any>(this.clientsURL + domainId + "/clients/" + id);
   }
 
-  create(domainId, client): Observable<Response> {
-    return this.http.post(this.clientsURL + domainId + "/clients", client);
+  create(domainId, client): Observable<any> {
+    return this.http.post<any>(this.clientsURL + domainId + "/clients", client);
   }
 
-  update(domainId, id, client): Observable<Response> {
-    return this.http.put(this.clientsURL + domainId + "/clients/" + id, {
+  update(domainId, id, client): Observable<any> {
+    return this.http.put<any>(this.clientsURL + domainId + "/clients/" + id, {
       'clientName': client.clientName,
       'redirectUris': client.redirectUris,
       'authorizedGrantTypes': client.authorizedGrantTypes,
@@ -61,17 +61,17 @@ export class ClientService {
     });
   }
 
-  patchAccountSettings(domainId, id, accountSettings): Observable<Response> {
-    return this.http.patch(this.clientsURL + domainId + "/clients/" + id, {
+  patchAccountSettings(domainId, id, accountSettings): Observable<any> {
+    return this.http.patch<any>(this.clientsURL + domainId + "/clients/" + id, {
       "accountSettings" : accountSettings
     });
   }
 
-  delete(domainId, id): Observable<Response> {
-    return this.http.delete(this.clientsURL + domainId + "/clients/" + id);
+  delete(domainId, id): Observable<any> {
+    return this.http.delete<any>(this.clientsURL + domainId + "/clients/" + id);
   }
 
-  renewClientSecret(domainId, id): Observable<Response> {
-    return this.http.post(this.clientsURL + domainId + "/clients/" + id + "/secret/_renew", {});
+  renewClientSecret(domainId, id): Observable<any> {
+    return this.http.post<any>(this.clientsURL + domainId + "/clients/" + id + "/secret/_renew", {});
   }
 }

@@ -42,13 +42,13 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   }
 
   loadCertificates() {
-    this.certificateService.findByDomain(this.domainId).subscribe(response => this.certificates = response.json());
+    this.certificateService.findByDomain(this.domainId).subscribe(response => this.certificates = response);
   }
 
   publicKey(id, event) {
     event.preventDefault();
     this.certificateService.publicKey(this.domainId, id).subscribe(response => {
-      this.openPublicKeyInfo(response.text(), false);
+      this.openPublicKeyInfo(response, false);
     }, error => {
       this.openPublicKeyInfo('Failed to load public key', true);
     });

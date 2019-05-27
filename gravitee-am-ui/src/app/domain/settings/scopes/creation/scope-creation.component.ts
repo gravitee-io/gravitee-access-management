@@ -50,7 +50,7 @@ export class ScopeCreationComponent implements OnInit {
     if (this.expiresIn && this.unitTime) {
       this.scope.expiresIn = moment.duration(this.expiresIn, this.unitTime).asSeconds();
     }
-    this.scopeService.create(this.domainId, this.scope).map(res => res.json()).subscribe(data => {
+    this.scopeService.create(this.domainId, this.scope).subscribe(data => {
       this.snackbarService.open("Scope " + data.name + " created");
       if (this.adminContext) {
         this.router.navigate(['/settings', 'management', 'scopes', data.id]);

@@ -15,7 +15,7 @@
  */
 import { Component, Input, OnInit } from '@angular/core';
 import { AbstractControl } from '@angular/forms';
-import { JsonSchemaFormService } from "angular2-json-schema-form";
+import { JsonSchemaFormService } from "angular6-json-schema-form";
 
 @Component({
   selector: 'material-file-widget',
@@ -81,7 +81,7 @@ export class MaterialFileComponent implements OnInit {
         jsonFile["name"] = file.name;
         jsonFile["type"] = file.type;
         jsonFile["size"] = file.size;
-        jsonFile["content"] = reader.result.split(",")[1];
+        jsonFile["content"] = reader.result.toString().split(",")[1];
         self.jsf.updateValue(self, JSON.stringify(jsonFile));
         self.editMode = false;
       };

@@ -42,7 +42,7 @@ export class DomainSettingsAccountComponent implements OnInit {
   }
   updateAccountSettings(accountSettings) {
     this.domain.accountSettings = accountSettings;
-    this.domainService.patchAccountSettings(this.domainId, accountSettings).map(res => res.json()).subscribe(data => {
+    this.domainService.patchAccountSettings(this.domainId, accountSettings).subscribe(data => {
       this.domain = data;
       this.snackbarService.open("User Accounts Settings updated");
     });

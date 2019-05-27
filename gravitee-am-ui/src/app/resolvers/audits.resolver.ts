@@ -31,7 +31,7 @@ export class AuditsResolver implements Resolve<any> {
     if (!state.url.startsWith('/settings')) {
       domainId = (route.parent.parent.paramMap.get('domainId')) ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
     }
-    return this.auditService.findByDomain(domainId, this.default_page, this.default_size).map(res => res.json());
+    return this.auditService.findByDomain(domainId, this.default_page, this.default_size);
   }
 
 }

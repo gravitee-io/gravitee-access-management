@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Http, Response } from "@angular/http";
-import { Observable } from "rxjs";
+import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
+import { Observable } from "rxjs";
 
 @Injectable()
 export class ReporterService {
   private reportersURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  findByDomain(domainId): Observable<Response>  {
-    return this.http.get(this.reportersURL + domainId + "/reporters");
+  findByDomain(domainId): Observable<any> {
+    return this.http.get<any>(this.reportersURL + domainId + "/reporters");
   }
 
-  get(domainId, id): Observable<Response>  {
-    return this.http.get(this.reportersURL + domainId + "/reporters/" + id);
+  get(domainId, id): Observable<any> {
+    return this.http.get<any>(this.reportersURL + domainId + "/reporters/" + id);
   }
 
-  update(domainId, id, reporter): Observable<Response>  {
-    return this.http.put(this.reportersURL + domainId + "/reporters/" + id, {
+  update(domainId, id, reporter): Observable<any> {
+    return this.http.put<any>(this.reportersURL + domainId + "/reporters/" + id, {
       'name' : reporter.name,
       'enabled': reporter.enabled,
       'configuration' : reporter.configuration

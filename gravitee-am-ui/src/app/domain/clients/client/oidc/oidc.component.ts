@@ -85,7 +85,7 @@ export class ClientOIDCComponent implements OnInit {
 
   update(message: string) {
     this.client.idTokenCustomClaims = this.claims.reduce(function(map, obj) { map[obj.key] = obj.value; return map; }, {});
-    this.clientService.update(this.domainId, this.client.id, this.client).map(res => res.json()).subscribe(data => {
+    this.clientService.update(this.domainId, this.client.id, this.client).subscribe(data => {
       this.client = data;
       this.snackbarService.open(message);
       this.formChanged = false;

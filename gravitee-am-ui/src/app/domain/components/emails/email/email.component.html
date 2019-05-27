@@ -44,7 +44,7 @@
       <mat-hint>The email link will be expired after the specified time (in seconds). Default: 86400 seconds (1 day).</mat-hint>
     </mat-form-field>
   </form>
-  <mat-tab-group (selectChange)="onTabSelectedChanged($event);">
+  <mat-tab-group (selectedTabChange)="onTabSelectedChanged($event);">
     <mat-tab label="Html" [disabled]="!isEnabled()">
       <div style= "position:relative;">
         <codemirror #editor [(ngModel)]="emailContent" [config]="config" (change)="onContentChanges($event)"></codemirror>

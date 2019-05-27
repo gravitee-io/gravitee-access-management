@@ -41,7 +41,7 @@ export class DomainSettingsExtensionGrantsComponent implements OnInit {
   }
 
   loadTokenGranters() {
-    this.extensionGrantService.findByDomain(this.domainId).subscribe(response => this.extensionGrants = response.json());
+    this.extensionGrantService.findByDomain(this.domainId).subscribe(response => this.extensionGrants = response);
   }
 
   delete(id, event) {

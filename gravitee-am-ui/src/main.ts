@@ -19,7 +19,7 @@ import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 import { AppConfig }  from "./config/app.config";
-import { Observable } from 'rxjs/Rx';
+import {forkJoin, Observable} from 'rxjs';
 
 if (environment.production) {
   enableProdMode();
@@ -43,7 +43,7 @@ let build = Observable.create(observer => {
   })
 });
 
-Observable.forkJoin([constants, build])
+forkJoin(constants, build)
   .subscribe((response) => {
     let config = {};
     Object.keys(response[0]).forEach((key) => config[key] = response[0][key]);

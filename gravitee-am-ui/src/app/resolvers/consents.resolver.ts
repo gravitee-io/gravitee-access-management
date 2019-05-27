@@ -31,6 +31,6 @@ export class ConsentsResolver implements Resolve<any> {
     }
     let userId = route.parent.paramMap.get('userId');
     let clientId = route.paramMap.get('clientId');
-    return this.userService.consents(domainId, userId, clientId).map(res => res.json());
+    return this.userService.consents(domainId, userId, clientId);
   }
 }

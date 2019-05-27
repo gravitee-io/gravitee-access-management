@@ -30,7 +30,7 @@ export class CertificateCreationStep1Component implements OnInit {
   }
 
   ngOnInit() {
-    this.platformService.certificates().map(res => res.json()).subscribe(data => this.certificates = data);
+    this.platformService.certificates().subscribe(data => this.certificates = data);
   }
 
   selectCertificateType() {

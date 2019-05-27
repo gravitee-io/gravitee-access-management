@@ -72,7 +72,7 @@ export class UserProfileComponent implements OnInit {
       this.user.additionalInformation = additionalInformation;
     }
 
-    this.userService.update(this.domainId, this.user.id, this.user).map(res => res.json()).subscribe(data => {
+    this.userService.update(this.domainId, this.user.id, this.user).subscribe(data => {
       this.user = data;
       this.userAdditionalInformation = Object.assign({}, this.user.additionalInformation);
       this.userClaims = {};
@@ -104,7 +104,7 @@ export class UserProfileComponent implements OnInit {
       .confirm('Send Email', 'Are you sure you wand to send the confirmation registration email ?')
       .subscribe( res => {
         if (res) {
-          this.userService.resendRegistrationConfirmation(this.domainId, this.user.id).map(res => res.json()).subscribe(() => {
+          this.userService.resendRegistrationConfirmation(this.domainId, this.user.id).subscribe(() => {
             this.snackbarService.open("Email sent");
           });
         }
@@ -116,7 +116,7 @@ export class UserProfileComponent implements OnInit {
       .confirm('Reset Password', 'Are you sure you wand to reset the password ?')
       .subscribe(res => {
         if (res) {
-          this.userService.resetPassword(this.domainId, this.user.id, this.password).map(res => res.json()).subscribe(() => {
+          this.userService.resetPassword(this.domainId, this.user.id, this.password).subscribe(() => {
             this.password = null;
             this.passwordForm.reset();
             // reset the errors of all the controls
@@ -135,7 +135,7 @@ export class UserProfileComponent implements OnInit {
       .confirm('Unlock User', 'Are you sure you wand to unlock the user ?')
       .subscribe(res => {
         if (res) {
-          this.userService.unlock(this.domainId, this.user.id).map(res => res.json()).subscribe(() => {
+          this.userService.unlock(this.domainId, this.user.id).subscribe(() => {
             this.user.accountNonLocked = true;
             this.user.accountLockedAt = null;
             this.user.accountLockedUntil = null;

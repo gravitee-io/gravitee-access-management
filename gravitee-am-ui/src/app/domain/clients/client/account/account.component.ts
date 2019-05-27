@@ -38,7 +38,7 @@ export class ClientAccountSettingsComponent {
   }
 
   updateAccountSettings(accountSettings) {
-    this.clientService.patchAccountSettings(this.domainId, this.client.id, accountSettings).map(res => res.json()).subscribe(data => {
+    this.clientService.patchAccountSettings(this.domainId, this.client.id, accountSettings).subscribe(data => {
       this.client = data;
       this.snackbarService.open("User Accounts Settings updated");
     });

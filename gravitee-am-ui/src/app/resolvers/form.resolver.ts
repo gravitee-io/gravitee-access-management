@@ -15,9 +15,10 @@
  */
 import { Injectable } from '@angular/core';
 import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
+import { Observable , of} from "rxjs";
 import { AppConfig } from "../../config/app.config";
 import { FormService } from "../services/form.service";
+import {catchError} from "rxjs/operators";
 
 @Injectable()
 export class FormResolver implements Resolve<any> {
@@ -33,10 +34,11 @@ export class FormResolver implements Resolve<any> {
       domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
     }
     return this.formService.get(domainId, clientId, pageTemplate)
-      .map(res => res.json())
-      .catch(res => {
-        return Observable.of({});
-      });
+      .pipe(
+        catchError(__ => {
+          return of({});
+        })
+      );;
   }
 
 }

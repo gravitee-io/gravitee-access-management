@@ -24,7 +24,7 @@ export class TagsResolver implements Resolve<any> {
   constructor(private tagService: TagService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    return this.tagService.list().map(res => res.json());
+    return this.tagService.list();
   }
 
 }

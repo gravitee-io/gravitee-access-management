@@ -15,29 +15,29 @@
  */
 import {Injectable} from '@angular/core';
 import {AppConfig} from "../../config/app.config";
-import {Http, Response} from "@angular/http";
-import {Observable} from "rxjs/Observable";
+import {HttpClient} from "@angular/common/http";
+import {Observable} from "rxjs";
 
 @Injectable()
 export class UserService {
   private usersURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
-  findByDomain(domainId, page, size): Observable<Response>  {
-    return this.http.get(this.usersURL + domainId + "/users?page=" + page + "&size=" + size);
+  findByDomain(domainId, page, size): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + "/users?page=" + page + "&size=" + size);
   }
 
-  get(domainId, id): Observable<Response>  {
-    return this.http.get(this.usersURL + domainId + "/users/" + id);
+  get(domainId, id): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + "/users/" + id);
   }
 
-  create(domainId, user): Observable<Response>  {
-    return this.http.post(this.usersURL + domainId + "/users", user);
+  create(domainId, user): Observable<any> {
+    return this.http.post<any>(this.usersURL + domainId + "/users", user);
   }
 
-  update(domainId, id, user): Observable<Response>  {
-    return this.http.put(this.usersURL + domainId + "/users/" + id, {
+  update(domainId, id, user): Observable<any> {
+    return this.http.put<any>(this.usersURL + domainId + "/users/" + id, {
       'firstName' : user.firstName,
       'lastName' : user.lastName,
       'email' : user.email,
@@ -47,37 +47,37 @@ export class UserService {
     });
   }
 
-  delete(domainId, id): Observable<Response>  {
-    return this.http.delete(this.usersURL + domainId + "/users/" + id);
+  delete(domainId, id): Observable<any> {
+    return this.http.delete<any>(this.usersURL + domainId + "/users/" + id);
   }
 
-  resendRegistrationConfirmation(domainId, id) {
-    return this.http.post(this.usersURL + domainId + "/users/" + id + "/sendRegistrationConfirmation", {});
+  resendRegistrationConfirmation(domainId, id): Observable<any> {
+    return this.http.post<any>(this.usersURL + domainId + "/users/" + id + "/sendRegistrationConfirmation", {});
   }
 
-  resetPassword(domainId, id, password) {
-    return this.http.post(this.usersURL + domainId + "/users/" + id + "/resetPassword", {
+  resetPassword(domainId, id, password): Observable<any> {
+    return this.http.post<any>(this.usersURL + domainId + "/users/" + id + "/resetPassword", {
       'password': password
     });
   }
 
-  unlock(domainId, id) {
-    return this.http.post(this.usersURL + domainId + "/users/" + id + "/unlock", {});
+  unlock(domainId, id): Observable<any> {
+    return this.http.post<any>(this.usersURL + domainId + "/users/" + id + "/unlock", {});
   }
 
-  search(domainId, searchTerm, page, size) {
-    return this.http.get(this.usersURL + domainId + "/users?q=" + searchTerm + "&page=" + page + "&size=" + size);
+  search(domainId, searchTerm, page, size): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + "/users?q=" + searchTerm + "&page=" + page + "&size=" + size);
   }
 
-  consents(domainId, userId, clientId) {
-    return this.http.get(this.usersURL + domainId + "/users/" + userId + "/consents" + (clientId ? "?clientId=" + clientId : ""));
+  consents(domainId, userId, clientId): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + "/users/" + userId + "/consents" + (clientId ? "?clientId=" + clientId : ""));
   }
 
-  revokeConsents(domainId, userId, clientId) {
-    return this.http.delete(this.usersURL + domainId + "/users/" + userId + "/consents" + (clientId ? "?clientId=" + clientId : ""));
+  revokeConsents(domainId, userId, clientId): Observable<any> {
+    return this.http.delete<any>(this.usersURL + domainId + "/users/" + userId + "/consents" + (clientId ? "?clientId=" + clientId : ""));
   }
 
-  revokeConsent(domainId, userId, consentId) {
-    return this.http.delete(this.usersURL + domainId + "/users/" + userId + "/consents/" + consentId);
+  revokeConsent(domainId, userId, consentId): Observable<any> {
+    return this.http.delete<any>(this.usersURL + domainId + "/users/" + userId + "/consents/" + consentId);
   }
 }

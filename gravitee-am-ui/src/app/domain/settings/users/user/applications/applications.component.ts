@@ -80,7 +80,7 @@ export class UserApplicationsComponent implements OnInit {
   }
 
   loadConsents() {
-    this.userService.consents(this.domainId, this.user.id, null).map(res => res.json()).subscribe(consents => {
+    this.userService.consents(this.domainId, this.user.id, null).subscribe(consents => {
       this.consents = consents;
       this.appConsents = _.uniqBy(this.consents, 'clientId');
     });

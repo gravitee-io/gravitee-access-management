@@ -36,7 +36,7 @@ export class ManagementGeneralComponent implements OnInit {
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
-    this.providerService.findByDomain(this.domainId).map(res => res.json()).subscribe(data => {
+    this.providerService.findByDomain(this.domainId).subscribe(data => {
       this.identityProviders = data.filter(idp => !idp.external);
       this.oauth2IdentityProviders = data.filter(idp => idp.external);
     });
@@ -44,7 +44,7 @@ export class ManagementGeneralComponent implements OnInit {
 
   update() {
     this.domainService.patchIdentityProviders(this.domain.id, this.domain).subscribe(response => {
-      this.domain = response.json();
+      this.domain = response;
       this.snackbarService.open("Settings updated");
     });
   }
