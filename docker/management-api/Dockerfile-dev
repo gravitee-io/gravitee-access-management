@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM alpine:3.9
+FROM alpine:3.9 AS build-env
 MAINTAINER Gravitee Team <http://gravitee.io>
 
 ARG GRAVITEEAM_VERSION=0
