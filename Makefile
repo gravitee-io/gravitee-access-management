@@ -102,6 +102,7 @@ clean: # remove .working directory
 	@rm -rf .working/gateway
 	@rm -rf .working/management-api
 	@mvn clean -pl '!gravitee-am-ui'
+
 version: # Get version and save it into a file
 	@mkdir -p .working
 	@rm -f .working/.version
@@ -139,7 +140,7 @@ start: ## Start gravitee Access Management containers
 	@cd .working/compose; docker-compose up -d gateway management
 
 stop: ## Stop gravitee Access Management running containers
-	@cd .working/compose; docker-compose stop
+	@cd .working/compose; docker-compose stop || true
 
 status: ## See Access Management containers status
 	@cd .working/compose; docker-compose ps
@@ -185,8 +186,8 @@ deleteContainer: # delete image
 	@$(shell docker-compose -f .working/oidctest/docker/docker-compose.yml down &>/dev/null || true)
 
 deleteImage: # delete image
-	@docker rmi -f $(GIO_AM_GATEWAY_IMAGE):$(GIO_AM_VERSION)
-	@docker rmi -f $(GIO_AM_MANAGEMENT_API_IMAGE):$(GIO_AM_VERSION)
+	@docker rmi -f $(GIO_AM_GATEWAY_IMAGE):$(GIO_AM_VERSION) || true
+	@docker rmi -f $(GIO_AM_MANAGEMENT_API_IMAGE):$(GIO_AM_VERSION) || true
 
 deleteNetwork: # delete network
 	@$(shell docker network rm $(GIO_AM_NETWORK) &>/dev/null || true)
