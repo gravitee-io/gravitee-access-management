@@ -69,6 +69,8 @@ public interface ClientService {
 
     Single<Client> renewClientSecret(String domain, String id, User principal);
 
+    Single<Client> renewClientSecret(Client client, User principal);
+
     Completable delete(String clientId, User principal);
 
     Single<Client> update(Client client);
@@ -87,6 +89,10 @@ public interface ClientService {
 
     default Single<Client> renewClientSecret(String domain, String id) {
         return renewClientSecret(domain, id, null);
+    }
+
+    default Single<Client> renewClientSecret(Client client) {
+        return renewClientSecret(client, null);
     }
 
     default Completable delete(String clientId) {

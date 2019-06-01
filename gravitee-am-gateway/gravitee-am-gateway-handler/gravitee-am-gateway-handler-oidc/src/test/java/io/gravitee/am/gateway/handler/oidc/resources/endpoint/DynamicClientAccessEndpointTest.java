@@ -18,22 +18,19 @@ package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
-import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.common.http.HttpStatusCode;
-import io.gravitee.common.http.MediaType;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -65,6 +62,7 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
         router.route(HttpMethod.PATCH, "/register/:client_id").handler(endpoint::patch);
         router.route(HttpMethod.PUT, "/register/:client_id").handler(endpoint::update);
         router.route(HttpMethod.DELETE, "/register/:client_id").handler(endpoint::delete);
+        router.route(HttpMethod.POST, "/register/:client_id/renew_secret").handler(endpoint::renewClientSecret);
         router.route().failureHandler(new ExceptionHandler());
 
         Client client = new Client();
@@ -98,6 +96,17 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
         testRequest(
                 HttpMethod.DELETE, "/register/my-test-client_id",
                 HttpStatusCode.NO_CONTENT_204, "No Content");
+    }
+
+    @Test
+    public void renewClientSecret() throws Exception{
+        when(dcrService.applyRegistrationAccessToken(any(),any())).thenReturn(Single.just(new Client()));
+        when(clientService.renewClientSecret(any())).thenReturn(Single.just(new Client()));
+        when(clientSyncService.addDynamicClientRegistred(any())).thenReturn(new Client());
+
+        testRequest(
+                HttpMethod.POST, "/register/my-test-client_id/renew_secret",
+                HttpStatusCode.OK_200, "OK");
     }
 
     @Test

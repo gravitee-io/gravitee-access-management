@@ -206,6 +206,12 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(dynamicClientAccessAuthHandler)
                 .handler(dynamicClientAccessTokenHandler)
                 .handler(dynamicClientAccessEndpoint::delete);
+        oidcRouter
+                .route(HttpMethod.POST, "/register/:"+CLIENT_ID+"/renew_secret")
+                .handler(dynamicClientAccessHandler)
+                .handler(dynamicClientAccessAuthHandler)
+                .handler(dynamicClientAccessTokenHandler)
+                .handler(dynamicClientAccessEndpoint::renewClientSecret);
 
         // error handler
         errorHandler(oidcRouter);

@@ -670,6 +670,8 @@
 									"    pm.expect(body.response_types[0]).to.eql('code');",
 									"    ",
 									"    pm.environment.set('newClientForDCRTests', body.id);",
+									"    pm.environment.set('newClientIdForDCRTests', body.client_id);",
+									"    pm.environment.set('newClientSecretForDCRTests', body.client_secret);",
 									"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
 									"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
 									"});"
@@ -873,6 +875,67 @@
 							"raw": "{{registrationClientUri}}",
 							"host": [
 								"{{registrationClientUri}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Renew open client secret - with registration token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Get client with response types\", function () {",
+									"    pm.response.to.be.header('Content-Type', 'application/json');",
+									"    var body = pm.response.json();",
+									"    pm.expect(body.client_id).to.eql(pm.environment.get('newClientIdForDCRTests'));",
+									"    pm.expect(body.client_secret).to.not.eql(pm.environment.get('newClientSecretForDCRTests'));",
+									"});",
+									"",
+									"pm.test(\"One time Token\", function() {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('registration_access_token');",
+									"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
+									"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+									"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{registrationAccessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{registrationClientUri}}/renew_secret",
+							"host": [
+								"{{registrationClientUri}}"
+							],
+							"path": [
+								"renew_secret"
 							]
 						}
 					},
@@ -3506,6 +3569,8 @@
 											"    pm.expect(body.client_name).to.eql('Unknown Client');",
 											"    ",
 											"    pm.environment.set('newClientForDCRTests', body.id);",
+											"    pm.environment.set('newClientIdForDCRTests', body.client_id);",
+											"    pm.environment.set('newClientSecretForDCRTests', body.client_secret);",
 											"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
 											"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
 											"});"
@@ -3712,6 +3777,67 @@
 									"raw": "{{registrationClientUri}}",
 									"host": [
 										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Renew client secret - with registration token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Get client with response types\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.client_id).to.eql(pm.environment.get('newClientIdForDCRTests'));",
+											"    pm.expect(body.client_secret).to.not.eql(pm.environment.get('newClientSecretForDCRTests'));",
+											"});",
+											"",
+											"pm.test(\"One time Token\", function() {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('registration_access_token');",
+											"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
+											"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+											"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}/renew_secret",
+									"host": [
+										"{{registrationClientUri}}"
+									],
+									"path": [
+										"renew_secret"
 									]
 								}
 							},
@@ -4049,6 +4175,67 @@
 									"raw": "{{registrationClientUri}}",
 									"host": [
 										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Renew client secret - with registration token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Get client with response types\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.client_id).to.eql(pm.environment.get('newClientIdForDCRTests'));",
+											"    pm.expect(body.client_secret).to.not.eql(pm.environment.get('newClientSecretForDCRTests'));",
+											"});",
+											"",
+											"pm.test(\"One time Token\", function() {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('registration_access_token');",
+											"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
+											"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+											"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}/renew_secret",
+									"host": [
+										"{{registrationClientUri}}"
+									],
+									"path": [
+										"renew_secret"
 									]
 								}
 							},
