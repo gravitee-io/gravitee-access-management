@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "508e6cf2-cd56-43c7-b8d5-df032f7604da",
+		"_postman_id": "583cba4d-3351-44a3-a3e8-a99d88e2b448",
 		"name": "Gravitee.io - AM - Openid DCR",
 		"description": "Test openid connect dynamc client registration specifications: https://openid.net/specs/openid-connect-registration-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -226,6 +226,99 @@
 					"response": []
 				},
 				{
+					"name": "Get default certificate ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2e92f1ea-5d06-4aa3-9ddc-95b0359a8f20",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Get default certificate id\", function () {",
+									"    pm.response.to.be.header('Content-Type', 'application/json');",
+									"    var body = pm.response.json();",
+									"    pm.environment.set('defaultCertificateId', body[0].id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/certificates",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"certificates"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete default certificate",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2e92f1ea-5d06-4aa3-9ddc-95b0359a8f20",
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/certificates/{{defaultCertificateId}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"certificates",
+								"{{defaultCertificateId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Create jks certificate rs256",
 					"event": [
 						{
@@ -421,10 +514,6 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
 							"host": [
@@ -643,10 +732,6 @@
 								"value": "Bearer {{registrationAccessToken}}"
 							}
 						],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{registrationClientUri}}",
 							"host": [
@@ -3142,10 +3227,6 @@
 								"value": "Bearer {{registrationAccessToken}}"
 							}
 						],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{registrationClientUri}}",
 							"host": [
@@ -21152,10 +21233,6 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{userinfoEndpoint}}",
 							"host": [
@@ -21374,10 +21451,6 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{userinfoEndpoint}}",
 							"host": [
@@ -21876,7 +21949,7 @@
 									]
 								},
 								"url": {
-									"raw": "{{userinfoEndpoint}}",
+									"raw": "{{userinfoEndpoint}}?=",
 									"host": [
 										"{{userinfoEndpoint}}"
 									],
