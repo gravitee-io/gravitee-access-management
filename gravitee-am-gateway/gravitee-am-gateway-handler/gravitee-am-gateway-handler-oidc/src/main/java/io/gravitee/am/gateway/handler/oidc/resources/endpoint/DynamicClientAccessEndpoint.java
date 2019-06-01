@@ -147,6 +147,29 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
                 );
     }
 
+    /**
+     * Renew client_secret
+     * @param context
+     */
+    public void renewClientSecret(RoutingContext context) {
+        LOGGER.debug("Dynamic client registration RENEW SECRET endpoint");
+
+        this.getClient(context)
+                .flatMapSingle(Single::just)
+                .flatMap(client -> dcrService.applyRegistrationAccessToken(UriBuilderRequest.extractBasePath(context), client))
+                .flatMap(clientService::renewClientSecret)
+                .map(clientSyncService::addDynamicClientRegistred)
+                .subscribe(
+                        client -> context.response()
+                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                                .setStatusCode(HttpStatusCode.OK_200)
+                                .end(Json.encodePrettily(DynamicClientRegistrationResponse.fromClient(client)))
+                        , error -> context.fail(error)
+                );
+    }
+
     private Maybe<Client> getClient(RoutingContext context) {
         String clientId = context.request().getParam("client_id");
 

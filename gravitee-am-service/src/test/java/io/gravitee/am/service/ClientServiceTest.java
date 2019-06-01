@@ -941,12 +941,12 @@ public class ClientServiceTest {
 
     @Test
     public void shouldRenewSecret() {
-        Client client = Mockito.mock(Client.class);
+        Client client = new Client();
+        client.setDomain(DOMAIN);
 
-        when(client.getDomain()).thenReturn(DOMAIN);
         when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(client));
-        when(clientRepository.update(any(Client.class))).thenReturn(Single.just(client));
+        when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
 
         TestObserver testObserver = clientService.renewClientSecret(DOMAIN, "my-client").test();
         testObserver.awaitTerminalEvent();

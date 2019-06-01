@@ -439,15 +439,20 @@ public class ClientServiceImpl implements ClientService {
         LOGGER.debug("Renew client secret for client {} in domain {}", id, domain);
         return clientRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(id)))
-                .flatMapSingle(client -> {
-                    // update client secret
-                    client.setClientSecret(SecureRandomString.generate());
+                .flatMapSingle(client -> this.renewClientSecret(client, principal))
+                .onErrorResumeNext(this::handleError);
+    }
 
-                    // update client and reload domain
-                    return updateClientAndReloadDomain(client);
-                })
+    @Override
+    public Single<Client> renewClientSecret(Client client, User principal) {
+        LOGGER.debug("Renew client secret for client {} in domain {}", client.getId(), client.getDomain());
+
+        // update client secret
+        client.setClientSecret(SecureRandomString.generate());
+        // update client and reload domain
+        return updateClientAndReloadDomain(client)
                 .onErrorResumeNext(this::handleError)
-                .doOnSuccess(client -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_SECRET_RENEWED).client(client)))
+                .doOnSuccess(updatedClient -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_SECRET_RENEWED).client(updatedClient)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_SECRET_RENEWED).throwable(throwable)));
     }
 
