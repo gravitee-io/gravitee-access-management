@@ -30,43 +30,45 @@ import java.util.regex.Pattern;
  */
 public class UriBuilder {
 
-    private static final Pattern QUERY_PARAM_PATTERN = Pattern.compile("([^&=]+)(=?)([^&]+)?");
+    //private static final Pattern QUERY_PARAM_PATTERN = Pattern.compile("([^&=]+)(=?)([^&]+)?");
 
-    private static final String SCHEME_PATTERN = "([^:/?#]+):";
+    private static final String SCHEME_REGEX = "([^:/?#]+):";
 
-    private static final String HTTP_PATTERN = "(?i)(http|https):";
+    private static final String HTTP_REGEX = "(?i)(http|https):";
 
-    private static final String USERINFO_PATTERN = "([^@\\[/?#]*)";
+    private static final String USERINFO_REGEX = "([^@\\[/?#]*)";
 
-    private static final String HOST_IPV4_PATTERN = "[^\\[/?#:]*";
+    private static final String HOST_IPV4_REGEX = "[^\\[/?#:]*";
 
-    private static final String HOST_IPV6_PATTERN = "\\[[\\p{XDigit}\\:\\.]*[%\\p{Alnum}]*\\]";
+    private static final String HOST_IPV6_REGEX = "\\[[\\p{XDigit}\\:\\.]*[%\\p{Alnum}]*\\]";
 
-    private static final String HOST_PATTERN = "(" + HOST_IPV6_PATTERN + "|" + HOST_IPV4_PATTERN + ")";
+    private static final String HOST_REGEX = "(" + HOST_IPV6_REGEX + "|" + HOST_IPV4_REGEX + ")";
 
-    private static final String PORT_PATTERN = "(\\d*(?:\\{[^/]+?\\})?)";
+    private static final String PORT_REGEX = "(\\d*(?:\\{[^/]+?\\})?)";
 
-    private static final String PATH_PATTERN = "([^?#]*)";
+    private static final String PATH_REGEX = "([^?#]*)";
 
-    private static final String QUERY_PATTERN = "([^#]*)";
+    private static final String QUERY_REGEX = "([^#]*)";
 
-    private static final String LAST_PATTERN = "(.*)";
+    private static final String LAST_REGEX = "(.*)";
 
     // Regex patterns that matches URIs. See RFC 3986, appendix B
     private static final Pattern URI_PATTERN = Pattern.compile(
-            "^(" + SCHEME_PATTERN + ")?" + "(//(" + USERINFO_PATTERN + "@)?" + HOST_PATTERN + "(:" + PORT_PATTERN +
-                    ")?" + ")?" + PATH_PATTERN + "(\\?" + QUERY_PATTERN + ")?" + "(#" + LAST_PATTERN + ")?");
+            "^(" + SCHEME_REGEX + ")?" + "(//(" + USERINFO_REGEX + "@)?" + HOST_REGEX + "(:" + PORT_REGEX +
+                    ")?" + ")?" + PATH_REGEX + "(\\?" + QUERY_REGEX + ")?" + "(#" + LAST_REGEX + ")?");
 
     private static final Pattern HTTP_URL_PATTERN = Pattern.compile(
-            "^" + HTTP_PATTERN + "(//(" + USERINFO_PATTERN + "@)?" + HOST_PATTERN + "(:" + PORT_PATTERN +
-                    ")?" + ")?" + PATH_PATTERN + "(\\?" + QUERY_PATTERN + ")?" + "(#" + LAST_PATTERN + ")?");
+            "^" + HTTP_REGEX + "(//(" + USERINFO_REGEX + "@)?" + HOST_REGEX + "(:" + PORT_REGEX +
+                    ")?" + ")?" + PATH_REGEX + "(\\?" + QUERY_REGEX + ")?" + "(#" + LAST_REGEX + ")?");
 
-    private static final String LOCALHOST_HOST_PATTERN = "^localhost$";
-    private static final String LOCALHOST_IPV4_PATTERN = "^127(?:\\.[0-9]+){0,2}\\.[0-9]+$";
-    private static final String LOCALHOST_IPV6_PATTERN = "^(?:0*\\:)*?:?0*1$";
+    private static final Pattern HTTP_PATTERN = Pattern.compile(HTTP_REGEX.replace(":",""));
+
+    private static final String LOCALHOST_HOST_REGEX = "^localhost$";
+    private static final String LOCALHOST_IPV4_REGEX = "^127(?:\\.[0-9]+){0,2}\\.[0-9]+$";
+    private static final String LOCALHOST_IPV6_REGEX = "^(?:0*\\:)*?:?0*1$";
 
     private static final Pattern LOCALHOST_PATTERN = Pattern.compile(
-            LOCALHOST_HOST_PATTERN +"|"+LOCALHOST_IPV4_PATTERN+"|"+ LOCALHOST_IPV6_PATTERN);
+            LOCALHOST_HOST_REGEX +"|"+ LOCALHOST_IPV4_REGEX +"|"+ LOCALHOST_IPV6_REGEX);
 
     private String scheme;
     private String host;
@@ -212,6 +214,10 @@ public class UriBuilder {
 
     public URI build() throws URISyntaxException {
         return new URI(scheme, userInfo, host, port, path, query, fragment);
+    }
+
+    public static boolean isHttp(String scheme) {
+        return HTTP_PATTERN.matcher(scheme.toLowerCase()).matches();
     }
 
     public static boolean isLocalhost(String host) {

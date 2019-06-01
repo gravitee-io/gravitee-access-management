@@ -16,6 +16,8 @@
 package io.gravitee.am.service.utils;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.reactivex.Single;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,21 +33,82 @@ import static io.gravitee.am.common.oidc.ResponseType.*;
  */
 public class GrantTypeUtils {
 
-    private static final Set<String> VALID_GRANT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            AUTHORIZATION_CODE, IMPLICIT, REFRESH_TOKEN, CLIENT_CREDENTIALS, PASSWORD, JWT_BEARER, SAML2_BEARER
+    private static final Set<String> SUPPORTED_GRANT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            AUTHORIZATION_CODE, IMPLICIT, REFRESH_TOKEN, CLIENT_CREDENTIALS, PASSWORD, JWT_BEARER//, DEVIDE_CODE, SAML2_BEARER
     )));
 
     /**
-     * Throw InvalidClientMetadataException if null or empty, or contains unknown grant types.
+     * <pre>
+     * Check:
+     *  - grant types are null or empty, or contains unknown grant types.
+     *  - refresh_token does not come with authorization_code, password or client_credentials grant.
+     *  - client_credentials grant come with another grant that require user authentication.
+     * </pre>
+     * @param client Client with grant_type to validate.
+     * @return Single client or error
+     */
+    public static Single<Client> validateGrantTypes(Client client) {
+
+        if(client==null) {
+            return Single.error(new InvalidClientMetadataException("No client to validate grant"));
+        }
+
+        if(client.getAuthorizedGrantTypes()==null || client.getAuthorizedGrantTypes().isEmpty()) {
+            return Single.just(client);
+        }
+
+        if(!isSupportedGrantType(client.getAuthorizedGrantTypes())) {
+            return Single.error(new InvalidClientMetadataException("Missing or invalid grant type."));
+        }
+
+        //Ensure correspondance between response & grant types.
+        completeGrantTypeCorrespondance(client);
+
+        //refresh_token are not allowed for all grant types...
+        Set<String> grantTypeSet = Collections.unmodifiableSet(new HashSet<>(client.getAuthorizedGrantTypes()));
+        if(grantTypeSet.contains(REFRESH_TOKEN)) {
+            //Hybrid is not managed yet and AM does not support refresh token for client_credentials for now...
+            List<String> allowedRefreshTokenGrant = Arrays.asList(AUTHORIZATION_CODE, PASSWORD, JWT_BEARER);//, CLIENT_CREDENTIALS, HYBRID);
+            //return true if there is no element in common
+            if(Collections.disjoint(client.getAuthorizedGrantTypes(), allowedRefreshTokenGrant)) {
+                return Single.error(new InvalidClientMetadataException(
+                        REFRESH_TOKEN+" grant type must be associated with one of "+String.join(", ",allowedRefreshTokenGrant)
+                ));
+            }
+        }
+
+        /*
+         * Uncomment when ready to setup a "non expert mode" on the AM user interface"
+         * It is not recommended to mix client and user authentication within the same application.
+         * (Aka client_credentials and authorization_code, implicit or password...)
+        if(grantTypeSet.contains(CLIENT_CREDENTIALS)) {
+            //If client_credentials come with at least one of belows grant
+            if(!Collections.disjoint(client.getAuthorizedGrantTypes(),Arrays.asList(AUTHORIZATION_CODE, IMPLICIT, PASSWORD, HYBRID, DEVIDE_CODE))) {
+                return Single.error(new InvalidClientMetadataException(
+                        CLIENT_CREDENTIALS+" must not be associated with another grant that imply user authentication"
+                ));
+            }
+        }
+        */
+
+        return Single.just(client);
+    }
+
+    public static List<String> getSupportedGrantTypes() {
+        return Collections.unmodifiableList(SUPPORTED_GRANT_TYPES.stream().sorted().collect(Collectors.toList()));
+    }
+
+    /**
      * @param grantTypes Array of grant_type to validate.
      */
-    public static boolean isValidGrantType(List<String> grantTypes) {
+    public static boolean isSupportedGrantType(List<String> grantTypes) {
         if(grantTypes==null || grantTypes.isEmpty()) {
             return false;
         }
 
+        //Check grant types are all known
         for(String grantType:grantTypes) {
-            if(!isValidGrantType(grantType)) {
+            if(!isSupportedGrantType(grantType)) {
                 return false;
             }
         }
@@ -57,8 +120,29 @@ public class GrantTypeUtils {
      * Check if grant type is known/supported.
      * @param grantType String grant_type to validate.
      */
-    public static boolean isValidGrantType(String grantType) {
-        return VALID_GRANT_TYPES.contains(grantType);
+    public static boolean isSupportedGrantType(String grantType) {
+        return SUPPORTED_GRANT_TYPES.contains(grantType);
+    }
+
+    /**
+     * <pre>
+     * According to the specification: https://tools.ietf.org/html/rfc6749#section-10.6
+     * Authorization Server MUST require public clients and SHOULD require confidential clients to register their redirection URIs.
+     * confidential clients are clients that can keep their credentials secrets, ex:
+     *  - web application (using a web server to save their credentials) : authorization_code
+     *  - server application (considering credentials saved on a server as safe) : client_credentials
+     * by opposition to confidential, public clients are clients than can not keep their credentials as secret, ex:
+     *  - Single Page Application : implicit
+     *  - Native mobile application : authorization_code
+     * Because mobile and web application use the same grant, we force redirect_uri only for implicit grant.
+     * </pre>
+     * @param grantTypes Array of grant_type
+     * @return true if at least one of the grant type included in the array require a redirect_uri.
+     */
+    public static boolean isRedirectUriRequired(List<String> grantTypes) {
+        List<String> requireRedirectUri = Arrays.asList(IMPLICIT);//, HYBRID); Add Hybrid once supported...
+        //return true if there's no grant type matching
+        return grantTypes!=null && !Collections.disjoint(grantTypes, requireRedirectUri);
     }
 
     /**
@@ -69,7 +153,7 @@ public class GrantTypeUtils {
      * token id_token      : implicit
      * code id_token       : authorization_code, implicit
      * code token          : authorization_code, implicit
-     * code token id_token : authorization_code, implicit
+     * code id_token token : authorization_code, implicit
      *
      * @param client Client to analyse.
      */

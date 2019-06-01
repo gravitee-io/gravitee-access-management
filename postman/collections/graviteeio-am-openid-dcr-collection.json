@@ -135,7 +135,7 @@
 							"script": {
 								"id": "2e92f1ea-5d06-4aa3-9ddc-95b0359a8f20",
 								"exec": [
-									"pm.test(\"Status code is 201\", function () {",
+									"pm.test(\"Status code is 204\", function () {",
 									"    pm.response.to.have.status(204);",
 									"});"
 								],
@@ -255,6 +255,10 @@
 								"value": "Bearer {{token}}"
 							}
 						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/{{domain}}/certificates",
 							"host": [
@@ -514,6 +518,10 @@
 					"request": {
 						"method": "GET",
 						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
 						"url": {
 							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
 							"host": [
@@ -657,6 +665,9 @@
 									"pm.test(\"Has default attributes\", function () {",
 									"    var body = pm.response.json();",
 									"    pm.expect(body.client_name).to.eql('open_dcr_client');",
+									"    pm.expect(body.application_type).to.eql('web');",
+									"    pm.expect(body.grant_types[0]).to.eql('authorization_code');",
+									"    pm.expect(body.response_types[0]).to.eql('code');",
 									"    ",
 									"    pm.environment.set('newClientForDCRTests', body.id);",
 									"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
@@ -678,7 +689,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n   \"client_name\": \"open_dcr_client\",\t\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"public\",\n\t\"response_types\": [\"token\", \"code\", \"code token\"],\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
+							"raw": "{\n   \"client_name\": \"open_dcr_client\",\t\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"public\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
 						},
 						"url": {
 							"raw": "{{registrationEndpoint}}",
@@ -706,8 +717,8 @@
 									"    var body = pm.response.json();",
 									"    pm.expect(body).to.have.property(\"redirect_uris\");",
 									"    pm.expect(body).to.have.property(\"grant_types\");",
-									"    pm.expect(body.response_types).to.eql([ 'token','code','code token' ]);",
-									"    pm.expect(body.grant_types).to.eql([ 'implicit','authorization_code' ]);",
+									"    pm.expect(body.response_types).to.eql([ 'code' ]);//default value",
+									"    pm.expect(body.grant_types).to.eql([ 'authorization_code' ]);//default value",
 									"    ",
 									"    //The Authorization Server need not include the registration_access_token or registration_client_uri value in this response unless they have been updated.",
 									"    pm.expect(body).to.not.have.property('registration_access_token');",
@@ -732,6 +743,10 @@
 								"value": "Bearer {{registrationAccessToken}}"
 							}
 						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
 						"url": {
 							"raw": "{{registrationClientUri}}",
 							"host": [
@@ -759,6 +774,8 @@
 									"    pm.expect(body.client_name).to.eql('Client patched via DCR');",
 									"    pm.expect(body).to.have.property(\"response_types\");",
 									"    pm.expect(body.response_types).to.eql(['token', 'code', 'code id_token']);",
+									"    pm.expect(body).to.have.property(\"grant_types\");",
+									"    pm.expect(body.grant_types).to.eql(['implicit', 'authorization_code']);",
 									"});",
 									"",
 									"pm.test(\"One time Token\", function() {",
@@ -818,6 +835,8 @@
 									"    pm.expect(body.client_name).to.eql('Client name updated via DCR');",
 									"    pm.expect(body).to.have.property(\"response_types\");",
 									"    pm.expect(body.response_types).to.eql(['code']);",
+									"    pm.expect(body).to.have.property(\"grant_types\");",
+									"    pm.expect(body.grant_types).to.eql(['authorization_code']);",
 									"});",
 									"",
 									"pm.test(\"One time Token\", function() {",
@@ -1056,7 +1075,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"authorizedGrantTypes\": [\"client_credentials\"]\n}"
+							"raw": "{\n  \"authorizedGrantTypes\": [\"client_credentials\"],\n  \"responseTypes\": [],\n  \"applicationType\": \"server\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{clientDCR}}",
@@ -1420,6 +1439,206 @@
 							"response": []
 						},
 						{
+							"name": "Invalid redirect uri - null - implicit grant",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Redirect uris are missing\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_redirect_uri');",
+											"    pm.expect(body.error_description).to.eql('Missing or invalid redirect_uris.');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"redirect_uris\": null,\n  \"grant_types\": [\"implicit\"],\n  \"response_types\": [\"token\"],\n  \"client_name\": \"My implicit Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
+								},
+								"url": {
+									"raw": "{{registrationEndpoint}}",
+									"host": [
+										"{{registrationEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid redirect uri - empty - implicit grant",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Redirect uris are missing\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_redirect_uri');",
+											"    pm.expect(body.error_description).to.eql('Missing or invalid redirect_uris.');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"redirect_uris\": [],\n  \"grant_types\": [\"implicit\"],\n  \"response_types\": [\"token\"],\n  \"client_name\": \"My implicit Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
+								},
+								"url": {
+									"raw": "{{registrationEndpoint}}",
+									"host": [
+										"{{registrationEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid redirect uri - no scheme uri",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Redirect uris localhost forbidden\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_redirect_uri');",
+											"    pm.expect(body.error_description).to.eql('redirect_uri : no_scheme is malformed');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"redirect_uris\": [\"no_scheme\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
+								},
+								"url": {
+									"raw": "{{registrationEndpoint}}",
+									"host": [
+										"{{registrationEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid redirect uri - malformed uri",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Redirect uris localhost forbidden\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_redirect_uri');",
+											"    pm.expect(body.error_description).to.eql('redirect_uri : malformed:uri:exception is malformed');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"redirect_uris\": [\"malformed:uri:exception\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
+								},
+								"url": {
+									"raw": "{{registrationEndpoint}}",
+									"host": [
+										"{{registrationEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Invalid redirect uri - localhost",
 							"event": [
 								{
@@ -1659,6 +1878,106 @@
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"grant_types\": [\n\t\"unknown\"\n   ],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
+								},
+								"url": {
+									"raw": "{{registrationEndpoint}}",
+									"host": [
+										"{{registrationEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid grant type - empty",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Invalid grant type\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+											"    pm.expect(body.error_description).to.eql('Missing or invalid grant type.');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"grant_types\": [],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\",\n  \"jwks_uri\": \"https://client.example.org/my_public_keys.jwks\"\n}"
+								},
+								"url": {
+									"raw": "{{registrationEndpoint}}",
+									"host": [
+										"{{registrationEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid grant type - refresh_token alone",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c557fd6b-d770-4568-8db7-ccb3267b0256",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Invalid grant type\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+											"    pm.expect(body.error_description).to.include('refresh_token grant type must be associated with one of');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"redirect_uris\": [],\n  \"response_types\": [],\n  \"grant_types\": [\"refresh_token\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
 								},
 								"url": {
 									"raw": "{{registrationEndpoint}}",
@@ -2263,13 +2582,11 @@
 											"    var body = pm.response.json();",
 											"    pm.expect(body).to.have.property('response_types');",
 											"    pm.expect(body).to.have.property('grant_types');",
-											"    pm.expect(body).to.have.property('scope');",
 											"    pm.expect(body).to.have.property('client_name');",
 											"    pm.expect(body).to.have.property('client_id');",
 											"    pm.expect(body).to.have.property('client_secret');",
 											"    pm.expect(body.response_types).to.eql(['code']);",
 											"    pm.expect(body.grant_types).to.eql(['authorization_code']);",
-											"    pm.expect(body.scope).to.eql('openid');",
 											"    pm.expect(body.client_name).to.eql('Unknown Client');",
 											"    ",
 											"    pm.environment.set('newClientForDCRTests', body.id);",
@@ -2398,6 +2715,56 @@
 								"body": {
 									"mode": "raw",
 									"raw": "{\n   \"client_name\": \"Should have not been updated\"\n}\n"
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}",
+									"host": [
+										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid redirect uri - can not be empty",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Redirect uris are missing\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_redirect_uri');",
+											"    pm.expect(body.error_description).to.eql('Missing or invalid redirect_uris.');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n   \"client_name\": \"Client with implicit flow should not allow empty redirect_uris\",\n   \"grant_types\": [\"implicit\"],\n   \"response_types\": [\"token\"],\n   \"redirect_uris\": []\n}\n"
 								},
 								"url": {
 									"raw": "{{registrationClientUri}}",
@@ -2548,6 +2915,56 @@
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"redirect_uris\": [\n    \"https://client.example.org/callback\",\n    \"https://client.example.org/callback2\"],\n  \"grant_types\": [\n\t\"unknown\"\n   ],\n   \"client_name\": \"Should have not been updated\"\n}"
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}",
+									"host": [
+										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid grant type - refresh_token alone",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Invalid grant type\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+											"    pm.expect(body.error_description).to.include('refresh_token grant type must be associated with one of');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"redirect_uris\": [],\n  \"response_types\": [],\n  \"grant_types\": [\"refresh_token\"],\n  \"client_name\": \"My Example Client\",\n  \"token_endpoint_auth_method\": \"client_secret_basic\",\n  \"logo_uri\": \"https://client.example.org/logo.png\"\n}"
 								},
 								"url": {
 									"raw": "{{registrationClientUri}}",
@@ -3061,342 +3478,628 @@
 			"name": "Case - Nominal",
 			"item": [
 				{
-					"name": "Register client",
-					"event": [
+					"name": "web application",
+					"item": [
 						{
-							"listen": "test",
-							"script": {
-								"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
-								"exec": [
-									"pm.test(\"Status code is 201\", function () {",
-									"    pm.response.to.have.status(201);",
-									"});",
-									"",
-									"pm.test(\"Has default attributes\", function () {",
-									"    var body = pm.response.json();",
-									"    pm.expect(body).to.have.property('response_types');",
-									"    pm.expect(body).to.have.property('grant_types');",
-									"    pm.expect(body).to.have.property('scope');",
-									"    pm.expect(body).to.have.property('client_name');",
-									"    pm.expect(body).to.have.property('client_id');",
-									"    pm.expect(body).to.have.property('client_secret');",
-									"    pm.expect(body.response_types).to.eql(['code']);",
-									"    pm.expect(body.grant_types).to.eql(['authorization_code']);",
-									"    pm.expect(body.scope).to.eql('openid');",
-									"    pm.expect(body.client_name).to.eql('Unknown Client');",
-									"    ",
-									"    pm.environment.set('newClientForDCRTests', body.id);",
-									"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
-									"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"type": "text",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"type": "text",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n   \"application_type\": \"web\",\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"public\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"userinfo_encrypted_response_alg\": \"RSA-OAEP-256\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
-						},
-						"url": {
-							"raw": "{{registrationEndpoint}}",
-							"host": [
-								"{{registrationEndpoint}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Patch client",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Patch client with response types\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"responseTypes\");",
-									"    pm.expect(body).to.have.property(\"authorizedGrantTypes\");",
-									"    pm.expect(body.responseTypes).to.eql(['token', 'code', 'code token']);",
-									"    pm.expect(body.authorizedGrantTypes).to.eql([ 'implicit', 'authorization_code' ]);",
-									"});",
-									"",
-									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Content-Type",
-								"type": "text",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"type": "text",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n   \"responseTypes\": [\"token\", \"code\", \"code token\"],\n   \"clientName\": \"Client was created via DCR\"\n  }"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{newClientForDCRTests}}",
-							"host": [
-								"{{management_url}}"
+							"name": "Register client - web application",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Has default attributes\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('application_type');",
+											"    pm.expect(body).to.have.property('response_types');",
+											"    pm.expect(body).to.have.property('grant_types');",
+											"    pm.expect(body).to.have.property('client_name');",
+											"    pm.expect(body).to.have.property('client_id');",
+											"    pm.expect(body).to.have.property('client_secret');",
+											"    pm.expect(body.application_type).to.eql('web');",
+											"    pm.expect(body.response_types).to.eql(['code']);",
+											"    pm.expect(body.grant_types).to.eql(['authorization_code']);",
+											"    pm.expect(body.client_name).to.eql('Unknown Client');",
+											"    ",
+											"    pm.environment.set('newClientForDCRTests', body.id);",
+											"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+											"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
 							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"clients",
-								"{{newClientForDCRTests}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get client - with registration token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Get client with response types\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"redirect_uris\");",
-									"    pm.expect(body).to.have.property(\"grant_types\");",
-									"    pm.expect(body.response_types).to.eql([ 'token','code','code token' ]);",
-									"    pm.expect(body.grant_types).to.eql([ 'implicit','authorization_code' ]);",
-									"    pm.expect(body.client_name).to.eql('Client was created via DCR');",
-									"    ",
-									"    //The Authorization Server need not include the registration_access_token or registration_client_uri value in this response unless they have been updated.",
-									"    pm.expect(body).to.not.have.property('registration_access_token');",
-									"    pm.expect(body).to.not.have.property('registration_client_uri');",
-									"});"
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									}
 								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"body": {
+									"mode": "raw",
+									"raw": "{\n   \"redirect_uris\":\n     [\"https://client.example.org/callback\",\n      \"https://client.example.org/callback2\"],\n   \"logo_uri\": \"https://client.example.org/logo.png\",\n   \"subject_type\": \"public\",\n   \"token_endpoint_auth_method\": \"client_secret_basic\",\n   \"userinfo_encrypted_response_alg\": \"RSA-OAEP-256\",\n   \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n   \"contacts\": [\"ve7jtb@example.org\", \"mary@example.org\"],\n   \"request_uris\":\n     [\"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"]\n  }"
+								},
+								"url": {
+									"raw": "{{registrationEndpoint}}",
+									"host": [
+										"{{registrationEndpoint}}"
+									]
+								}
 							},
-							{
-								"key": "Authorization",
-								"type": "text",
-								"value": "Bearer {{registrationAccessToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{registrationClientUri}}",
-							"host": [
-								"{{registrationClientUri}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Patch client - with registration token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Get client with response types\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"    pm.expect(body.client_name).to.eql('Client patched via DCR');",
-									"    pm.expect(body).to.have.property(\"response_types\");",
-									"    pm.expect(body.response_types).to.eql(['token', 'code', 'code id_token']);",
-									"});",
-									"",
-									"pm.test(\"One time Token\", function() {",
-									"    var body = pm.response.json();",
-									"    pm.expect(body).to.have.property('registration_access_token');",
-									"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
-									"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
-									"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Content-Type",
-								"type": "text",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"type": "text",
-								"value": "Bearer {{registrationAccessToken}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n   \"client_name\": \"Client patched via DCR\",\n   \"response_types\" : [\"token\", \"code\", \"code id_token\"]\n}"
+							"response": []
 						},
-						"url": {
-							"raw": "{{registrationClientUri}}",
-							"host": [
-								"{{registrationClientUri}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update client - with registration token",
-					"event": [
 						{
-							"listen": "test",
-							"script": {
-								"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Get client with response types\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"    pm.expect(body.client_name).to.eql('Client name updated via DCR');",
-									"    pm.expect(body).to.have.property(\"response_types\");",
-									"    pm.expect(body.response_types).to.eql(['code']);",
-									"});",
-									"",
-									"pm.test(\"One time Token\", function() {",
-									"    var body = pm.response.json();",
-									"    pm.expect(body).to.have.property('registration_access_token');",
-									"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
-									"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
-									"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
-									"});"
+							"name": "Get client - with registration token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Get client with response types\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"redirect_uris\");",
+											"    pm.expect(body).to.have.property(\"grant_types\");",
+											"    pm.expect(body.response_types).to.eql([ 'code' ]);",
+											"    pm.expect(body.grant_types).to.eql([ 'authorization_code' ]);",
+											"    pm.expect(body.client_name).to.eql('Unknown Client');",
+											"    ",
+											"    //The Authorization Server need not include the registration_access_token or registration_client_uri value in this response unless they have been updated.",
+											"    pm.expect(body).to.not.have.property('registration_access_token');",
+											"    pm.expect(body).to.not.have.property('registration_client_uri');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
 								],
-								"type": "text/javascript"
-							}
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}",
+									"host": [
+										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Patch client - with registration token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Get client with response types\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.client_name).to.eql('Client patched via DCR');",
+											"    pm.expect(body).to.have.property(\"response_types\");",
+											"    pm.expect(body.response_types).to.eql(['token', 'code', 'code id_token']);",
+											"    pm.expect(body.grant_types).to.eql([ 'implicit','authorization_code' ]);",
+											"});",
+											"",
+											"pm.test(\"One time Token\", function() {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('registration_access_token');",
+											"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
+											"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+											"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n   \"client_name\": \"Client patched via DCR\",\n   \"response_types\" : [\"token\", \"code\", \"code id_token\"]\n}"
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}",
+									"host": [
+										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update client - with registration token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Get client with response types\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.client_name).to.eql('Client name updated via DCR');",
+											"    pm.expect(body).to.have.property(\"response_types\");",
+											"    pm.expect(body.response_types).to.eql(['code']);",
+											"});",
+											"",
+											"pm.test(\"One time Token\", function() {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('registration_access_token');",
+											"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
+											"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+											"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"redirect_uris\": [\n        \"https://client.example.org/callback\",\n        \"https://client.example.org/callback2\"\n    ],\n    \"response_types\": [\n        \"code\"\n    ],\n    \"grant_types\": [\n        \"authorization_code\"\n    ],\n    \"application_type\": \"web\",\n    \"contacts\": [\n        \"marie@example.org\",\n        \"jeanne@example.org\"\n    ],\n\t\"client_name\": \"Client name updated via DCR\",\n    \"logo_uri\": \"https://client.example.org/logo.png\",\n    \"subject_type\": \"public\",\n    \"userinfo_encrypted_response_alg\": \"RSA-OAEP-256\",\n    \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"require_auth_time\": false,\n    \"request_uris\": [\n        \"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"\n    ],\n    \"scope\": \"openid\"\n}"
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}",
+									"host": [
+										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete client - with registration token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}",
+									"host": [
+										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
 						}
 					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"type": "text",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"type": "text",
-								"value": "Bearer {{registrationAccessToken}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"redirect_uris\": [\n        \"https://client.example.org/callback\",\n        \"https://client.example.org/callback2\"\n    ],\n    \"response_types\": [\n        \"code\"\n    ],\n    \"grant_types\": [\n        \"authorization_code\"\n    ],\n    \"application_type\": \"web\",\n    \"contacts\": [\n        \"marie@example.org\",\n        \"jeanne@example.org\"\n    ],\n\t\"client_name\": \"Client name updated via DCR\",\n    \"logo_uri\": \"https://client.example.org/logo.png\",\n    \"subject_type\": \"public\",\n    \"userinfo_encrypted_response_alg\": \"RSA-OAEP-256\",\n    \"userinfo_encrypted_response_enc\": \"A128CBC-HS256\",\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"require_auth_time\": false,\n    \"request_uris\": [\n        \"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"\n    ],\n    \"scope\": \"openid\"\n}"
-						},
-						"url": {
-							"raw": "{{registrationClientUri}}",
-							"host": [
-								"{{registrationClientUri}}"
-							]
-						}
-					},
-					"response": []
+					"_postman_isSubFolder": true
 				},
 				{
-					"name": "Delete client - with registration token",
-					"event": [
+					"name": "client application",
+					"item": [
 						{
-							"listen": "test",
-							"script": {
-								"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
-								"exec": [
-									"pm.test(\"Status code is 204\", function () {",
-									"    pm.response.to.have.status(204);",
-									"});",
-									""
+							"name": "Register client - client application",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Has default attributes\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('application_type');",
+											"    pm.expect(body).to.have.property('response_types');",
+											"    pm.expect(body).to.have.property('grant_types');",
+											"    pm.expect(body).to.have.property('client_name');",
+											"    pm.expect(body).to.have.property('client_id');",
+											"    pm.expect(body).to.have.property('client_secret');",
+											"    pm.expect(body.response_types).to.eql([]);",
+											"    pm.expect(body.application_type).to.eql('server');",
+											"    pm.expect(body.grant_types).to.eql(['client_credentials']);",
+											"    pm.expect(body.client_name).to.eql('Unknown Client');",
+											"    ",
+											"    pm.environment.set('newClientForDCRTests', body.id);",
+											"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+											"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									}
 								],
-								"type": "text/javascript"
-							}
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"application_type\": \"server\",\n\t\"redirect_uris\": null,\n\t\"grant_types\": [\"client_credentials\"],\n\t\"response_types\": null\n}"
+								},
+								"url": {
+									"raw": "{{registrationEndpoint}}",
+									"host": [
+										"{{registrationEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get client - with registration token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Get client with response types\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"grant_types\");",
+											"    pm.expect(body.response_types).to.eql([]);",
+											"    pm.expect(body.grant_types).to.eql([ 'client_credentials' ]);",
+											"    ",
+											"    //The Authorization Server need not include the registration_access_token or registration_client_uri value in this response unless they have been updated.",
+											"    pm.expect(body).to.not.have.property('registration_access_token');",
+											"    pm.expect(body).to.not.have.property('registration_client_uri');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}",
+									"host": [
+										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Patch client - invalidRedirectUri",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Redirect uris are missing\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_redirect_uri');",
+											"    pm.expect(body.error_description).to.eql('Missing or invalid redirect_uris.');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n   \"client_name\": \"Adding code or token response type means a redirect_uri will be required.\",\n   \"response_types\" : [\"token\", \"code\", \"code id_token\"]\n}"
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}",
+									"host": [
+										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Patch client - with registration token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Get client with response types\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"response_types\");",
+											"    pm.expect(body.response_types).to.eql(['token', 'code', 'code id_token']);",
+											"    pm.expect(body).to.have.property(\"grant_types\");",
+											"    pm.expect(body.grant_types).to.eql(['implicit', 'client_credentials', 'authorization_code']);",
+											"});",
+											"",
+											"pm.test(\"One time Token\", function() {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('registration_access_token');",
+											"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
+											"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+											"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n   \"client_name\": \"Do not block even if we add code/implicit in addition to client_credentials\",\n   \"response_types\" : [\"token\", \"code\", \"code id_token\"],\n   \"redirect_uris\": [\"https://callback\"]\n}"
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}",
+									"host": [
+										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update client - with registration token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Get client with response types\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.client_name).to.eql('Client name updated via DCR');",
+											"    pm.expect(body).to.have.property(\"response_types\");",
+											"    pm.expect(body.response_types).to.eql([]);",
+											"    pm.expect(body).to.have.property(\"grant_types\");",
+											"    pm.expect(body.grant_types).to.eql([\"client_credentials\"]);",
+											"});",
+											"",
+											"pm.test(\"One time Token\", function() {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('registration_access_token');",
+											"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
+											"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+											"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"application_type\": \"server\",\n\t\"redirect_uris\": null,\n\t\"grant_types\": [\"client_credentials\"],\n\t\"response_types\": null,\n\t\n    \"contacts\": [\n        \"marie@example.org\",\n        \"jeanne@example.org\"\n    ],\n\t\"client_name\": \"Client name updated via DCR\",\n    \"logo_uri\": \"https://client.example.org/logo.png\",\n    \"subject_type\": \"public\",\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"require_auth_time\": false,\n    \"request_uris\": [\n        \"https://client.example.org/rf.txt#qpXaRLh_n93TTR9F252ValdatUQvQiJi5BDub2BeznA\"\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}",
+									"host": [
+										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete client - with registration token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}",
+									"host": [
+										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
 						}
 					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Content-Type",
-								"type": "text",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"type": "text",
-								"value": "Bearer {{registrationAccessToken}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{registrationClientUri}}",
-							"host": [
-								"{{registrationClientUri}}"
-							]
-						}
-					},
-					"response": []
+					"_postman_isSubFolder": true
 				}
 			]
 		},
@@ -3404,7 +4107,7 @@
 			"name": "Case - Signing id_token",
 			"item": [
 				{
-					"name": "Generate token - client",
+					"name": "Generate token - Case signing id_token",
 					"event": [
 						{
 							"listen": "test",
@@ -3519,7 +4222,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"client_name\":\"client_rs256\",\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"grant_types\": [\"authorization_code\",\"implicit\",\"password\"],\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"response_types\": [\"code\",\"token\",\"id_token\"],\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"id_token_signed_response_alg\": \"RS256\"\n}"
+							"raw": "{\n\t\"client_name\":\"client_rs256\",\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"response_types\": [\"code\",\"token\",\"id_token\"],\n    \"grant_types\": [\"authorization_code\",\"implicit\",\"password\"],\n    \"scope\": \"openid\",\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"id_token_signed_response_alg\": \"RS256\"\n}"
 						},
 						"url": {
 							"raw": "{{registrationEndpoint}}",
@@ -3602,7 +4305,8 @@
 								{
 									"key": "scope",
 									"value": "openid",
-									"type": "text"
+									"type": "text",
+									"disabled": true
 								}
 							]
 						},
@@ -3922,7 +4626,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"client_name\": \"Client test for JWE - no jwks\",\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"grant_types\": [\"authorization_code\",\"implicit\",\"password\"],\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"request_uris\": [\"https://op-test:60001/requests/4472f1ee2cd34273a9b8bff4be1549418e5dd1b182639b7b2ae21d93e387467e#hNN9dc7MUCrZF0Jq\"],\n    \"response_types\": [\"code\",\"id_token\"],\n    \"token_endpoint_auth_method\": \"private_key_jwt\",\n    \"id_token_encrypted_response_alg\": \"RSA-OAEP-256\"\n}"
+									"raw": "{\n\t\"client_name\": \"Client test for JWE - no jwks\",\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"grant_types\": [\"authorization_code\",\"implicit\",\"password\"],\n    \"scope\": \"openid\",\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"request_uris\": [\"https://op-test:60001/requests/4472f1ee2cd34273a9b8bff4be1549418e5dd1b182639b7b2ae21d93e387467e#hNN9dc7MUCrZF0Jq\"],\n    \"response_types\": [\"code\",\"id_token\"],\n    \"token_endpoint_auth_method\": \"private_key_jwt\",\n    \"id_token_encrypted_response_alg\": \"RSA-OAEP-256\"\n}"
 								},
 								"url": {
 									"raw": "{{registrationEndpoint}}",
@@ -4101,7 +4805,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"client_name\": \"Client test for JWE - no jwks\",\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"grant_types\": [\"authorization_code\",\"implicit\",\"password\"],\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"request_uris\": [\"https://op-test:60001/requests/4472f1ee2cd34273a9b8bff4be1549418e5dd1b182639b7b2ae21d93e387467e#hNN9dc7MUCrZF0Jq\"],\n    \"response_types\": [\"code\",\"id_token\"],\n    \"token_endpoint_auth_method\": \"private_key_jwt\",\n    \"jwks\": {\n        \"keys\": [\n\t\t\t{  \n\t\t\t\t\"kty\": \"RSA\",\n\t\t\t\t\"use\": \"enc\",\n\t\t\t\t\"kid\": \"rsa-encryption-256\",\n\t\t\t\t\"e\": \"AQAB\",\n\t\t\t\t\"n\": \"lFAsvOm58TV5q9zyb3psQSESezZtYLZryGjq8LMnuqRt9cdPQCvMrnjcqdFWiXkD4ZXRO2Wp1iyzgprecx3dAnaD-KHlZR7vsFEmDh27DgNvEx5jKRSy5N2quI2LJw66Jb9JeMqoX6vtv_z3PRHb-zUhnIw6tBwZtuNE-AZSC6atr8ZCLXn6RPqJq_eoGgG-xaAzWPyRXDIqWPVO0RD3odjs6er7BcqVyHg54DyylrmRI4m6xERxpuNYI57bQN5_7a_3tR7hLeHJ8J1mNraMLH7H5_aAM_oSqKBEG9jHSTR7JsI3gSvsNOG-nP9jYxw7fH_c1XfRuTEJfBPEZxzD2Q\"\n\t\t\t},\n            {\n                \"kty\": \"RSA\",\n                \"use\": \"sig\",\n                \"kid\": \"rsa-signature\",\n                \"e\": \"AQAB\",\n                \"n\": \"pRXXMvbZC4-I8nmeirMmr_wlo-lpZo2cyfXLPSduieEsfLeO38vIFdXbVTQ-OAeihFrvbxHELt2mNwCH3gbosd0P-pyYtUOaGmi7rLW9Wik8JcNCKA-v7q2JWmBeRFyRAuwf343gnxNL1mpUHfhqd4eswRiO55iwFT8a8gmxSOm8VXjg2aeUjkI3diT84rGR-wK77OcXeF2zJzjRDe0yFla0Tjb1RNTNkVQBJAQ3VQOOaNL7bXajR79ERlMKCjRFIZ0QCB7Nf6LtMwp9QWRdFrm7RXIPpN1V03E4v51gq82URjuQvEANe-VGRVSBij_GcOSLGjyZQi-yGVyPjNVl1Q\"\n            },\n            {\n                \"kty\": \"EC\",\n                \"use\": \"sig\",\n                \"crv\": \"P-256\",\n                \"kid\": \"elliptic-curve-signature\",\n                \"x\": \"R4JmPwezbzLuyGkonWIkezzplUfed5b6F5PL4j0zdf8\",\n                \"y\": \"QQRGKwRV9jHSlHjUhOQ0FqdQEddFBPCHZXpoFjvGmcY\"\n            },\n\t\t\t{  \n\t\t\t\t\"kty\":\"EC\",\n\t\t\t\t\"use\":\"enc\",\n\t\t\t\t\"crv\":\"P-521\",\n                \"kid\": \"elliptic-curve-encryption\",\n\t\t\t\t\"x\":\"AfEFyeYAr1TwmvCxvqgWPEg4Vvf50RC2OdkYfTS30dInZwX-Ebn6elp4fQ0GOdOBbYRq9b2gQ79Cd1AytQhdF6To\",\n\t\t\t\t\"y\":\"Abj0w4nSumQWtO6AV7ufQN6VpmJoKlWmz9KB6BUU0ANcj4aTJjBE9WNiGCqFpvaIdEWZWcSsZNYGKT3rJ71AfLdm\"\n\t\t\t},\n\t\t\t{  \n\t\t\t\t\"kty\":\"OKP\",\n\t\t\t\t\"use\":\"enc\",\n\t\t\t\t\"kid\":\"edwards-curve-encryption\",\n\t\t\t\t\"crv\":\"X25519\",\n\t\t\t\t\"x\":\"vBNW8f19leF79U4U6NrDDQaK_i5kL0iMKghB39AUT2I\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"128bits\",\n\t\t\t\t\"k\" : \"p94TA_PhiVUdi_yxPbviAw\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"192bits\",\n\t\t\t\t\"k\" : \"G9jUYv3b0-0wZWCGxAnIUH6gI0kjeXj4\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"256bits\",\n\t\t\t\t\"k\" : \"pzx01XDfexcfxHWtk_MzjfCin5NMy3KBx2xtjrX1G-E\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"384bits\",\n\t\t\t\t\"k\" : \"MBNrGN8nwS7hlOVfqEy6qA98bzyo1BLGxr-kyN1E4UXYWQDkBg4L7AQRwpZdrKKS\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"512bits\",\n\t\t\t\t\"k\" : \"LfWisS5p-ohMbNbeWdiSapnHgA62XPu8DXzyzNZQHtQPglHf0Lb6NUM-8aQGj_YWErvODY5rQkpKeolrBKkcmg\"\n\t\t\t}\n        ]\n    }\n}"
+									"raw": "{\n\t\"client_name\": \"Client test for JWE - no jwks\",\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"grant_types\": [\"authorization_code\",\"implicit\",\"password\"],\n    \"scope\": \"openid\",\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"request_uris\": [\"https://op-test:60001/requests/4472f1ee2cd34273a9b8bff4be1549418e5dd1b182639b7b2ae21d93e387467e#hNN9dc7MUCrZF0Jq\"],\n    \"response_types\": [\"code\",\"id_token\"],\n    \"token_endpoint_auth_method\": \"private_key_jwt\",\n    \"jwks\": {\n        \"keys\": [\n\t\t\t{  \n\t\t\t\t\"kty\": \"RSA\",\n\t\t\t\t\"use\": \"enc\",\n\t\t\t\t\"kid\": \"rsa-encryption-256\",\n\t\t\t\t\"e\": \"AQAB\",\n\t\t\t\t\"n\": \"lFAsvOm58TV5q9zyb3psQSESezZtYLZryGjq8LMnuqRt9cdPQCvMrnjcqdFWiXkD4ZXRO2Wp1iyzgprecx3dAnaD-KHlZR7vsFEmDh27DgNvEx5jKRSy5N2quI2LJw66Jb9JeMqoX6vtv_z3PRHb-zUhnIw6tBwZtuNE-AZSC6atr8ZCLXn6RPqJq_eoGgG-xaAzWPyRXDIqWPVO0RD3odjs6er7BcqVyHg54DyylrmRI4m6xERxpuNYI57bQN5_7a_3tR7hLeHJ8J1mNraMLH7H5_aAM_oSqKBEG9jHSTR7JsI3gSvsNOG-nP9jYxw7fH_c1XfRuTEJfBPEZxzD2Q\"\n\t\t\t},\n            {\n                \"kty\": \"RSA\",\n                \"use\": \"sig\",\n                \"kid\": \"rsa-signature\",\n                \"e\": \"AQAB\",\n                \"n\": \"pRXXMvbZC4-I8nmeirMmr_wlo-lpZo2cyfXLPSduieEsfLeO38vIFdXbVTQ-OAeihFrvbxHELt2mNwCH3gbosd0P-pyYtUOaGmi7rLW9Wik8JcNCKA-v7q2JWmBeRFyRAuwf343gnxNL1mpUHfhqd4eswRiO55iwFT8a8gmxSOm8VXjg2aeUjkI3diT84rGR-wK77OcXeF2zJzjRDe0yFla0Tjb1RNTNkVQBJAQ3VQOOaNL7bXajR79ERlMKCjRFIZ0QCB7Nf6LtMwp9QWRdFrm7RXIPpN1V03E4v51gq82URjuQvEANe-VGRVSBij_GcOSLGjyZQi-yGVyPjNVl1Q\"\n            },\n            {\n                \"kty\": \"EC\",\n                \"use\": \"sig\",\n                \"crv\": \"P-256\",\n                \"kid\": \"elliptic-curve-signature\",\n                \"x\": \"R4JmPwezbzLuyGkonWIkezzplUfed5b6F5PL4j0zdf8\",\n                \"y\": \"QQRGKwRV9jHSlHjUhOQ0FqdQEddFBPCHZXpoFjvGmcY\"\n            },\n\t\t\t{  \n\t\t\t\t\"kty\":\"EC\",\n\t\t\t\t\"use\":\"enc\",\n\t\t\t\t\"crv\":\"P-521\",\n                \"kid\": \"elliptic-curve-encryption\",\n\t\t\t\t\"x\":\"AfEFyeYAr1TwmvCxvqgWPEg4Vvf50RC2OdkYfTS30dInZwX-Ebn6elp4fQ0GOdOBbYRq9b2gQ79Cd1AytQhdF6To\",\n\t\t\t\t\"y\":\"Abj0w4nSumQWtO6AV7ufQN6VpmJoKlWmz9KB6BUU0ANcj4aTJjBE9WNiGCqFpvaIdEWZWcSsZNYGKT3rJ71AfLdm\"\n\t\t\t},\n\t\t\t{  \n\t\t\t\t\"kty\":\"OKP\",\n\t\t\t\t\"use\":\"enc\",\n\t\t\t\t\"kid\":\"edwards-curve-encryption\",\n\t\t\t\t\"crv\":\"X25519\",\n\t\t\t\t\"x\":\"vBNW8f19leF79U4U6NrDDQaK_i5kL0iMKghB39AUT2I\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"128bits\",\n\t\t\t\t\"k\" : \"p94TA_PhiVUdi_yxPbviAw\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"192bits\",\n\t\t\t\t\"k\" : \"G9jUYv3b0-0wZWCGxAnIUH6gI0kjeXj4\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"256bits\",\n\t\t\t\t\"k\" : \"pzx01XDfexcfxHWtk_MzjfCin5NMy3KBx2xtjrX1G-E\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"384bits\",\n\t\t\t\t\"k\" : \"MBNrGN8nwS7hlOVfqEy6qA98bzyo1BLGxr-kyN1E4UXYWQDkBg4L7AQRwpZdrKKS\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"512bits\",\n\t\t\t\t\"k\" : \"LfWisS5p-ohMbNbeWdiSapnHgA62XPu8DXzyzNZQHtQPglHf0Lb6NUM-8aQGj_YWErvODY5rQkpKeolrBKkcmg\"\n\t\t\t}\n        ]\n    }\n}"
 								},
 								"url": {
 									"raw": "{{registrationEndpoint}}",
@@ -21089,7 +21793,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"client_name\":\"client_rs384\",\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"grant_types\": [\"authorization_code\",\"implicit\",\"password\"],\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"response_types\": [\"code\",\"token\"],\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"userinfo_signed_response_alg\": \"RS384\"\n}"
+							"raw": "{\n\t\"client_name\":\"client_rs384\",\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"grant_types\": [\"authorization_code\",\"implicit\",\"password\"],\n    \"scope\": \"openid\",\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"response_types\": [\"code\",\"token\"],\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"userinfo_signed_response_alg\": \"RS384\"\n}"
 						},
 						"url": {
 							"raw": "{{registrationEndpoint}}",
@@ -21233,6 +21937,10 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
 						"url": {
 							"raw": "{{userinfoEndpoint}}",
 							"host": [
@@ -21451,6 +22159,10 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
 						"url": {
 							"raw": "{{userinfoEndpoint}}",
 							"host": [
@@ -21717,7 +22429,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"client_name\": \"Client test for JWE - no jwks\",\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"grant_types\": [\"password\"],\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"request_uris\": [\"https://op-test:60001/requests/4472f1ee2cd34273a9b8bff4be1549418e5dd1b182639b7b2ae21d93e387467e#hNN9dc7MUCrZF0Jq\"],\n    \"token_endpoint_auth_method\": \"private_key_jwt\",\n    \"userinfo_encrypted_response_alg\": \"RSA-OAEP-256\"\n}"
+									"raw": "{\n\t\"client_name\": \"Client test for JWE - no jwks\",\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"grant_types\": [\"password\"],\n    \"scope\": \"openid\",\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"request_uris\": [\"https://op-test:60001/requests/4472f1ee2cd34273a9b8bff4be1549418e5dd1b182639b7b2ae21d93e387467e#hNN9dc7MUCrZF0Jq\"],\n    \"token_endpoint_auth_method\": \"private_key_jwt\",\n    \"userinfo_encrypted_response_alg\": \"RSA-OAEP-256\"\n}"
 								},
 								"url": {
 									"raw": "{{registrationEndpoint}}",
@@ -22056,7 +22768,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"client_name\": \"Client test for JWE - no jwks\",\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"grant_types\": [\"password\"],\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"request_uris\": [\"https://op-test:60001/requests/4472f1ee2cd34273a9b8bff4be1549418e5dd1b182639b7b2ae21d93e387467e#hNN9dc7MUCrZF0Jq\"],\n    \"token_endpoint_auth_method\": \"private_key_jwt\",\n    \"jwks\": {\n        \"keys\": [\n\t\t\t{  \n\t\t\t\t\"kty\": \"RSA\",\n\t\t\t\t\"use\": \"enc\",\n\t\t\t\t\"kid\": \"rsa-encryption-256\",\n\t\t\t\t\"e\": \"AQAB\",\n\t\t\t\t\"n\": \"lFAsvOm58TV5q9zyb3psQSESezZtYLZryGjq8LMnuqRt9cdPQCvMrnjcqdFWiXkD4ZXRO2Wp1iyzgprecx3dAnaD-KHlZR7vsFEmDh27DgNvEx5jKRSy5N2quI2LJw66Jb9JeMqoX6vtv_z3PRHb-zUhnIw6tBwZtuNE-AZSC6atr8ZCLXn6RPqJq_eoGgG-xaAzWPyRXDIqWPVO0RD3odjs6er7BcqVyHg54DyylrmRI4m6xERxpuNYI57bQN5_7a_3tR7hLeHJ8J1mNraMLH7H5_aAM_oSqKBEG9jHSTR7JsI3gSvsNOG-nP9jYxw7fH_c1XfRuTEJfBPEZxzD2Q\"\n\t\t\t},\n            {\n                \"kty\": \"RSA\",\n                \"use\": \"sig\",\n                \"kid\": \"rsa-signature\",\n                \"e\": \"AQAB\",\n                \"n\": \"pRXXMvbZC4-I8nmeirMmr_wlo-lpZo2cyfXLPSduieEsfLeO38vIFdXbVTQ-OAeihFrvbxHELt2mNwCH3gbosd0P-pyYtUOaGmi7rLW9Wik8JcNCKA-v7q2JWmBeRFyRAuwf343gnxNL1mpUHfhqd4eswRiO55iwFT8a8gmxSOm8VXjg2aeUjkI3diT84rGR-wK77OcXeF2zJzjRDe0yFla0Tjb1RNTNkVQBJAQ3VQOOaNL7bXajR79ERlMKCjRFIZ0QCB7Nf6LtMwp9QWRdFrm7RXIPpN1V03E4v51gq82URjuQvEANe-VGRVSBij_GcOSLGjyZQi-yGVyPjNVl1Q\"\n            },\n            {\n                \"kty\": \"EC\",\n                \"use\": \"sig\",\n                \"crv\": \"P-256\",\n                \"kid\": \"elliptic-curve-signature\",\n                \"x\": \"R4JmPwezbzLuyGkonWIkezzplUfed5b6F5PL4j0zdf8\",\n                \"y\": \"QQRGKwRV9jHSlHjUhOQ0FqdQEddFBPCHZXpoFjvGmcY\"\n            },\n\t\t\t{  \n\t\t\t\t\"kty\":\"EC\",\n\t\t\t\t\"use\":\"enc\",\n\t\t\t\t\"crv\":\"P-521\",\n                \"kid\": \"elliptic-curve-encryption\",\n\t\t\t\t\"x\":\"AfEFyeYAr1TwmvCxvqgWPEg4Vvf50RC2OdkYfTS30dInZwX-Ebn6elp4fQ0GOdOBbYRq9b2gQ79Cd1AytQhdF6To\",\n\t\t\t\t\"y\":\"Abj0w4nSumQWtO6AV7ufQN6VpmJoKlWmz9KB6BUU0ANcj4aTJjBE9WNiGCqFpvaIdEWZWcSsZNYGKT3rJ71AfLdm\"\n\t\t\t},\n\t\t\t{  \n\t\t\t\t\"kty\":\"OKP\",\n\t\t\t\t\"use\":\"enc\",\n\t\t\t\t\"kid\":\"edwards-curve-encryption\",\n\t\t\t\t\"crv\":\"X25519\",\n\t\t\t\t\"x\":\"vBNW8f19leF79U4U6NrDDQaK_i5kL0iMKghB39AUT2I\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"128bits\",\n\t\t\t\t\"k\" : \"p94TA_PhiVUdi_yxPbviAw\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"192bits\",\n\t\t\t\t\"k\" : \"G9jUYv3b0-0wZWCGxAnIUH6gI0kjeXj4\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"256bits\",\n\t\t\t\t\"k\" : \"pzx01XDfexcfxHWtk_MzjfCin5NMy3KBx2xtjrX1G-E\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"384bits\",\n\t\t\t\t\"k\" : \"MBNrGN8nwS7hlOVfqEy6qA98bzyo1BLGxr-kyN1E4UXYWQDkBg4L7AQRwpZdrKKS\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"512bits\",\n\t\t\t\t\"k\" : \"LfWisS5p-ohMbNbeWdiSapnHgA62XPu8DXzyzNZQHtQPglHf0Lb6NUM-8aQGj_YWErvODY5rQkpKeolrBKkcmg\"\n\t\t\t}\n        ]\n    }\n}"
+									"raw": "{\n\t\"client_name\": \"Client test for JWE - no jwks\",\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"grant_types\": [\"password\"],\n    \"scope\": \"openid\",\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"request_uris\": [\"https://op-test:60001/requests/4472f1ee2cd34273a9b8bff4be1549418e5dd1b182639b7b2ae21d93e387467e#hNN9dc7MUCrZF0Jq\"],\n    \"token_endpoint_auth_method\": \"private_key_jwt\",\n    \"jwks\": {\n        \"keys\": [\n\t\t\t{  \n\t\t\t\t\"kty\": \"RSA\",\n\t\t\t\t\"use\": \"enc\",\n\t\t\t\t\"kid\": \"rsa-encryption-256\",\n\t\t\t\t\"e\": \"AQAB\",\n\t\t\t\t\"n\": \"lFAsvOm58TV5q9zyb3psQSESezZtYLZryGjq8LMnuqRt9cdPQCvMrnjcqdFWiXkD4ZXRO2Wp1iyzgprecx3dAnaD-KHlZR7vsFEmDh27DgNvEx5jKRSy5N2quI2LJw66Jb9JeMqoX6vtv_z3PRHb-zUhnIw6tBwZtuNE-AZSC6atr8ZCLXn6RPqJq_eoGgG-xaAzWPyRXDIqWPVO0RD3odjs6er7BcqVyHg54DyylrmRI4m6xERxpuNYI57bQN5_7a_3tR7hLeHJ8J1mNraMLH7H5_aAM_oSqKBEG9jHSTR7JsI3gSvsNOG-nP9jYxw7fH_c1XfRuTEJfBPEZxzD2Q\"\n\t\t\t},\n            {\n                \"kty\": \"RSA\",\n                \"use\": \"sig\",\n                \"kid\": \"rsa-signature\",\n                \"e\": \"AQAB\",\n                \"n\": \"pRXXMvbZC4-I8nmeirMmr_wlo-lpZo2cyfXLPSduieEsfLeO38vIFdXbVTQ-OAeihFrvbxHELt2mNwCH3gbosd0P-pyYtUOaGmi7rLW9Wik8JcNCKA-v7q2JWmBeRFyRAuwf343gnxNL1mpUHfhqd4eswRiO55iwFT8a8gmxSOm8VXjg2aeUjkI3diT84rGR-wK77OcXeF2zJzjRDe0yFla0Tjb1RNTNkVQBJAQ3VQOOaNL7bXajR79ERlMKCjRFIZ0QCB7Nf6LtMwp9QWRdFrm7RXIPpN1V03E4v51gq82URjuQvEANe-VGRVSBij_GcOSLGjyZQi-yGVyPjNVl1Q\"\n            },\n            {\n                \"kty\": \"EC\",\n                \"use\": \"sig\",\n                \"crv\": \"P-256\",\n                \"kid\": \"elliptic-curve-signature\",\n                \"x\": \"R4JmPwezbzLuyGkonWIkezzplUfed5b6F5PL4j0zdf8\",\n                \"y\": \"QQRGKwRV9jHSlHjUhOQ0FqdQEddFBPCHZXpoFjvGmcY\"\n            },\n\t\t\t{  \n\t\t\t\t\"kty\":\"EC\",\n\t\t\t\t\"use\":\"enc\",\n\t\t\t\t\"crv\":\"P-521\",\n                \"kid\": \"elliptic-curve-encryption\",\n\t\t\t\t\"x\":\"AfEFyeYAr1TwmvCxvqgWPEg4Vvf50RC2OdkYfTS30dInZwX-Ebn6elp4fQ0GOdOBbYRq9b2gQ79Cd1AytQhdF6To\",\n\t\t\t\t\"y\":\"Abj0w4nSumQWtO6AV7ufQN6VpmJoKlWmz9KB6BUU0ANcj4aTJjBE9WNiGCqFpvaIdEWZWcSsZNYGKT3rJ71AfLdm\"\n\t\t\t},\n\t\t\t{  \n\t\t\t\t\"kty\":\"OKP\",\n\t\t\t\t\"use\":\"enc\",\n\t\t\t\t\"kid\":\"edwards-curve-encryption\",\n\t\t\t\t\"crv\":\"X25519\",\n\t\t\t\t\"x\":\"vBNW8f19leF79U4U6NrDDQaK_i5kL0iMKghB39AUT2I\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"128bits\",\n\t\t\t\t\"k\" : \"p94TA_PhiVUdi_yxPbviAw\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"192bits\",\n\t\t\t\t\"k\" : \"G9jUYv3b0-0wZWCGxAnIUH6gI0kjeXj4\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"256bits\",\n\t\t\t\t\"k\" : \"pzx01XDfexcfxHWtk_MzjfCin5NMy3KBx2xtjrX1G-E\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"384bits\",\n\t\t\t\t\"k\" : \"MBNrGN8nwS7hlOVfqEy6qA98bzyo1BLGxr-kyN1E4UXYWQDkBg4L7AQRwpZdrKKS\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"kty\": \"oct\",\n\t\t\t\t\"kid\": \"512bits\",\n\t\t\t\t\"k\" : \"LfWisS5p-ohMbNbeWdiSapnHgA62XPu8DXzyzNZQHtQPglHf0Lb6NUM-8aQGj_YWErvODY5rQkpKeolrBKkcmg\"\n\t\t\t}\n        ]\n    }\n}"
 								},
 								"url": {
 									"raw": "{{registrationEndpoint}}",

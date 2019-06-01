@@ -50,8 +50,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
-import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
-
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
@@ -156,35 +154,23 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     @Override
     public Single<DynamicClientRegistrationRequest> validateClientRegistrationRequest(final DynamicClientRegistrationRequest request) {
         LOGGER.debug("Validating dynamic client registration payload");
-
-        if(request==null) {
-            return Single.error(new InvalidClientMetadataException());
-        }
-
-        return this.validateRedirectUri(request)
-                .flatMap(this::validateResponseType)
-                .flatMap(this::validateGrantType)
-                .flatMap(this::validateSubjectType)
-                .flatMap(this::validateRequestUri)
-                .flatMap(this::validateSectorIdentifierUri)
-                .flatMap(this::validateJKWs)
-                .flatMap(this::validateUserinfoSigningAlgorithm)
-                .flatMap(this::validateUserinfoEncryptionAlgorithm)
-                .flatMap(this::validateIdTokenSigningAlgorithm)
-                .flatMap(this::validateIdTokenEncryptionAlgorithm)
-                .flatMap(this::validateScopes);
+        return this.validateClientRegistrationRequest(request,false);
     }
 
     @Override
     public Single<DynamicClientRegistrationRequest> validateClientPatchRequest(DynamicClientRegistrationRequest request) {
         LOGGER.debug("Validating dynamic client registration payload : patch");
+        return this.validateClientRegistrationRequest(request,true);
+    }
 
+    private Single<DynamicClientRegistrationRequest> validateClientRegistrationRequest(final DynamicClientRegistrationRequest request, boolean isPatch) {
         if(request==null) {
             return Single.error(new InvalidClientMetadataException());
         }
 
-        return this.validateResponseType(request)
+        return this.validateRedirectUri(request, isPatch)
                 .flatMap(this::validateGrantType)
+                .flatMap(this::validateResponseType)
                 .flatMap(this::validateSubjectType)
                 .flatMap(this::validateRequestUri)
                 .flatMap(this::validateSectorIdentifierUri)
@@ -195,18 +181,30 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateIdTokenEncryptionAlgorithm);
     }
 
-    private Single<DynamicClientRegistrationRequest> validateRedirectUri(DynamicClientRegistrationRequest request) {
-        //Redirect_uri is required, must be informed and filled without null values.
-        if(request.getRedirectUris()==null || !request.getRedirectUris().isPresent() || request.getRedirectUris().get().isEmpty()) {
+    /**
+     * According to openid specification, redirect_uris are REQUIRED in the request for creation.
+     * But according to the grant type, it may be null or empty.
+     * @param request DynamicClientRegistrationRequest
+     * @param isPatch true if only updating some fields (else means all fields will overwritten)
+     * @return DynamicClientRegistrationRequest
+     */
+    private Single<DynamicClientRegistrationRequest> validateRedirectUri(DynamicClientRegistrationRequest request, boolean isPatch) {
+
+        //Except for patching a client, redirect_uris metadata is required but may be null or empty.
+        if(!isPatch && request.getRedirectUris() == null) {
             return Single.error(new InvalidRedirectUriException());
         }
+
         return Single.just(request);
     }
 
     private Single<DynamicClientRegistrationRequest> validateResponseType(DynamicClientRegistrationRequest request) {
         //if response_type provided, they must be valid.
         if(request.getResponseTypes()!=null) {
-            if(!ResponseTypeUtils.isValidResponseType(request.getResponseTypes().get())) {
+            if(!request.getResponseTypes().isPresent()) {
+                request.setResponseTypes(Optional.of(Arrays.asList()));
+            }
+            if(!ResponseTypeUtils.isSupportedResponseType(request.getResponseTypes().get())) {
                 return Single.error(new InvalidClientMetadataException("Invalid response type."));
             }
         }
@@ -216,7 +214,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private Single<DynamicClientRegistrationRequest> validateGrantType(DynamicClientRegistrationRequest request) {
         //if grant_type provided, they must be valid.
         if(request.getGrantTypes()!=null) {
-            if(!GrantTypeUtils.isValidGrantType(request.getGrantTypes().get())) {
+            if (!GrantTypeUtils.isSupportedGrantType(request.getGrantTypes().get())) {
                 return Single.error(new InvalidClientMetadataException("Missing or invalid grant type."));
             }
         }
@@ -371,27 +369,6 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                         */
                         return Single.just(request);
                     });
-        }
-
-        return Single.just(request);
-    }
-
-    /**
-     * Here the target is not to validate all scopes but ensure that openid is well included.
-     * The scopes validations are done later (validateMetadata) on the process.
-     * @param request DynamicClientRegistrationRequest
-     * @return DynamicClientRegistrationRequest
-     */
-    private Single<DynamicClientRegistrationRequest> validateScopes(DynamicClientRegistrationRequest request) {
-
-        if(request.getScope()!=null && request.getScope().isPresent()) {
-            if(request.getScope().get().stream().filter(Scope.OPENID.getKey()::equals).count()==0) {
-                List scopes = new LinkedList(request.getScope().get());
-                scopes.add(Scope.OPENID.getKey());
-                request.setScope(Optional.of(String.join(SCOPE_DELIMITER,scopes)));
-            }
-        } else {
-            request.setScope(Optional.of(Scope.OPENID.getKey()));
         }
 
         return Single.just(request);

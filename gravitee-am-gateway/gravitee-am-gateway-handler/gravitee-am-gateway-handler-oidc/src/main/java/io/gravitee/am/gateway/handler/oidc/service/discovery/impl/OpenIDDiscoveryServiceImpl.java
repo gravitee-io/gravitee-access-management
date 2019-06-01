@@ -26,6 +26,8 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.utils.GrantTypeUtils;
+import io.gravitee.am.service.utils.ResponseTypeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
@@ -72,8 +74,8 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
 
         // supported parameters
         openIDProviderMetadata.setScopesSupported(Stream.of(Scope.values()).map(Scope::getKey).collect(Collectors.toList()));
-        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE, ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN));
-        openIDProviderMetadata.setGrantTypesSupported(Arrays.asList(GrantType.CLIENT_CREDENTIALS, GrantType.PASSWORD, GrantType.IMPLICIT, GrantType.AUTHORIZATION_CODE, GrantType.REFRESH_TOKEN, GrantType.JWT_BEARER));
+        openIDProviderMetadata.setResponseTypesSupported(ResponseTypeUtils.getSupportedResponseTypes());
+        openIDProviderMetadata.setGrantTypesSupported(GrantTypeUtils.getSupportedGrantTypes());
         openIDProviderMetadata.setIdTokenSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedIdTokenSigningAlg());
         openIDProviderMetadata.setIdTokenEncryptionAlgValuesSupported(JWAlgorithmUtils.getSupportedIdTokenResponseAlg());
         openIDProviderMetadata.setIdTokenEncryptionEncValuesSupported(JWAlgorithmUtils.getSupportedIdTokenResponseEnc());

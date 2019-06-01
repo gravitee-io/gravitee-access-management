@@ -28,8 +28,20 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.FormService;
+import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.ClientAlreadyExistsException;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.am.service.model.PatchClient;
 import io.gravitee.am.service.model.TopClient;
@@ -46,9 +58,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.net.URI;
-import java.util.*;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -284,6 +304,9 @@ public class ClientServiceImpl implements ClientService {
                     client.setClientSecret(newClient.getClientSecret());
                     client.setClientName(newClient.getClientName());
                     client.setDomain(domain);
+                    //AM UI first step client creation does not provide field to specify redirect_uris, so better no use code grant by default.
+                    client.setAuthorizedGrantTypes(Arrays.asList());
+                    client.setResponseTypes(Arrays.asList());
                     return Single.just(client);
                 })
                 .flatMap(client -> this.create(client))
@@ -322,7 +345,7 @@ public class ClientServiceImpl implements ClientService {
         client.setCreatedAt(new Date());
         client.setUpdatedAt(client.getCreatedAt());
 
-        return this.validateClientMetadata(client.getDomain(), client)
+        return this.validateClientMetadata(client)
                 .flatMap(clientRepository::create)
                 .flatMap(justCreatedClient -> {
                     // Reload domain to take care about client creation
@@ -343,8 +366,8 @@ public class ClientServiceImpl implements ClientService {
         return clientRepository.findById(client.getId())
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(client.getId())))
                 .flatMapSingle(found -> Single.just(client))
-                .flatMap(toUpdate -> this.validateClientMetadata(toUpdate.getDomain(), toUpdate))
-                .flatMap(toUpdate -> this.updateClientAndReloadDomain(toUpdate.getDomain(), toUpdate))
+                .flatMap(this::validateClientMetadata)
+                .flatMap(this::updateClientAndReloadDomain)
                 .onErrorResumeNext(this::handleError);
     }
 
@@ -366,8 +389,8 @@ public class ClientServiceImpl implements ClientService {
                     }
                 })
                 .flatMap(toPatch -> Single.just(patchClient.patch(toPatch, forceNull))
-                        .flatMap(client -> this.validateClientMetadata(domain, client))
-                        .flatMap(client -> this.updateClientAndReloadDomain(domain, client))
+                        .flatMap(this::validateClientMetadata)
+                        .flatMap(this::updateClientAndReloadDomain)
                         .doOnSuccess(client -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_UPDATED).oldValue(toPatch).client(client)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_UPDATED).throwable(throwable))))
                 .onErrorResumeNext(this::handleError);
@@ -421,7 +444,7 @@ public class ClientServiceImpl implements ClientService {
                     client.setClientSecret(SecureRandomString.generate());
 
                     // update client and reload domain
-                    return updateClientAndReloadDomain(domain, client);
+                    return updateClientAndReloadDomain(client);
                 })
                 .onErrorResumeNext(this::handleError)
                 .doOnSuccess(client -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_SECRET_RENEWED).client(client)))
@@ -434,71 +457,91 @@ public class ClientServiceImpl implements ClientService {
      * We try to enable Dynamic Client Registration on client side while it is not enabled on domain.
      * The redirect_uris do not respect domain conditions (localhost, scheme and wildcard)
      * </pre>
-     * @param domainId domain
      * @param client client to check
      * @return a client only if every conditions are respected.
      */
-    private Single<Client> validateClientMetadata(String domainId, Client client) {
+    private Single<Client> validateClientMetadata(Client client) {
+        return GrantTypeUtils.validateGrantTypes(client)
+                .flatMap(this::validateRedirectUris)
+                .flatMap(this::validateScopes);
+    }
 
-        return domainService.findById(domainId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+    private Single<Client> validateRedirectUris(Client client) {
+        return domainService.findById(client.getDomain())
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(client.getDomain())))
                 .flatMapSingle(domain -> {
+
                     //check redirect_uri
+                    if(GrantTypeUtils.isRedirectUriRequired(client.getAuthorizedGrantTypes()) && CollectionUtils.isEmpty(client.getRedirectUris())) {
+                        return Single.error(new InvalidRedirectUriException());
+                    }
+
+                    //check redirect_uri content
                     if (client.getRedirectUris() != null) {
                         for (String redirectUri : client.getRedirectUris()) {
 
-                            URI uri = UriBuilder.fromURIString(redirectUri).build();
+                            try {
+                                URI uri = UriBuilder.fromURIString(redirectUri).build();
 
-                            if (!domain.isRedirectUriLocalhostAllowed() && UriBuilder.isLocalhost(uri.getHost())) {
-                                return Single.error(new InvalidRedirectUriException("localhost is forbidden"));
+                                if(uri.getScheme()==null) {
+                                    return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + " is malformed"));
+                                }
+
+                                if (!domain.isRedirectUriLocalhostAllowed() && UriBuilder.isHttp(uri.getScheme()) && UriBuilder.isLocalhost(uri.getHost())) {
+                                    return Single.error(new InvalidRedirectUriException("localhost is forbidden"));
+                                }
+                                //check http scheme
+                                if (!domain.isRedirectUriUnsecuredHttpSchemeAllowed() && uri.getScheme().equalsIgnoreCase("http")) {
+                                    return Single.error(new InvalidRedirectUriException("Unsecured http scheme is forbidden"));
+                                }
+                                //check wildcard
+                                if (!domain.isRedirectUriWildcardAllowed() && uri.getPath().contains("*")) {
+                                    return Single.error(new InvalidRedirectUriException("Wildcard are forbidden"));
+                                }
                             }
-                            //check http scheme
-                            if (!domain.isRedirectUriUnsecuredHttpSchemeAllowed() && uri.getScheme().equalsIgnoreCase("http")) {
-                                return Single.error(new InvalidRedirectUriException("Unsecured http scheme is forbidden"));
-                            }
-                            //check wildcard
-                            if (!domain.isRedirectUriWildcardAllowed() && uri.getPath().contains("*")) {
-                                return Single.error(new InvalidRedirectUriException("Wildcard are forbidden"));
+                            catch (IllegalArgumentException | URISyntaxException ex) {
+                                return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + " is malformed"));
                             }
                         }
                     }
+                    return Single.just(client);
+                });
+    }
 
-                    // check scopes and scope approvals
-                    return scopeService.validateScope(domainId, client.getScopes())
-                            .map(isValid -> {
-                                // scopes are valid, let's check scope approvals
-                                if (isValid && client.getScopeApprovals() != null) {
-                                    Map<String, Integer> scopeApprovals = client.getScopeApprovals()
-                                            .entrySet()
-                                            .stream()
-                                            .filter(entry -> client.getScopes() != null && client.getScopes().contains(entry.getKey()))
-                                            .collect(Collectors.toMap(
-                                                    entry -> entry.getKey(),
-                                                    entry -> entry.getValue()));
-                                    client.setScopeApprovals(scopeApprovals);
-                                }
-                                return isValid;
-                            });
+    private Single<Client> validateScopes(Client client) {
+        // check scopes and scope approvals
+        return scopeService.validateScope(client.getDomain(), client.getScopes())
+                .map(isValid -> {
+                    // scopes are valid, let's check scope approvals
+                    if (isValid && client.getScopeApprovals() != null) {
+                        Map<String, Integer> scopeApprovals = client.getScopeApprovals()
+                                .entrySet()
+                                .stream()
+                                .filter(entry -> client.getScopes() != null && client.getScopes().contains(entry.getKey()))
+                                .collect(Collectors.toMap(
+                                        entry -> entry.getKey(),
+                                        entry -> entry.getValue()));
+                        client.setScopeApprovals(scopeApprovals);
+                    }
+                    return isValid;
                 })
                 .flatMap(isValid -> {
                     if (!isValid) {
                         //last boolean come from scopes validation...
                         return Single.error(new InvalidClientMetadataException("non valid scopes"));
                     }
-                    //ensure correspondance between response & grant types.
-                    GrantTypeUtils.completeGrantTypeCorrespondance(client);
 
                     return Single.just(client);
                 });
     }
 
-    private Single<Client> updateClientAndReloadDomain(String domain, Client client) {
+    private Single<Client> updateClientAndReloadDomain(Client client) {
         client.setUpdatedAt(new Date());
         return clientRepository.update(client)
                 .flatMap(updatedClient -> {
                     // Reload domain to take care about client update
                     Event event = new Event(Type.CLIENT, new Payload(updatedClient.getId(), client.getDomain(), Action.UPDATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(updatedClient));
+                    return domainService.reload(client.getDomain(), event).flatMap(domain1 -> Single.just(updatedClient));
                 });
     }
 

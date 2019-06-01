@@ -192,7 +192,6 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNotComplete();
     }
 
-
     @Test
     public void validateClientRegistrationRequest_unknownResponseTypePayload() {
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
@@ -206,6 +205,17 @@ public class DynamicClientRegistrationServiceTest {
     }
 
     @Test
+    public void validateClientRegistrationRequest_ok_emptyResponseTypePayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setResponseTypes(Optional.empty());
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+    }
+
+    @Test
     public void validateClientRegistrationRequest_unknownGrantTypePayload() {
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
@@ -214,6 +224,18 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertErrorMessage("Missing or invalid grant type.");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_RefreshTokenGrantTypeOnly() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setGrantTypes(Optional.of(Arrays.asList("refresh_token")));
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertError(err -> ((Throwable)err).getMessage().startsWith("refresh_token grant type must be associated with"));
         testObserver.assertNotComplete();
     }
 
@@ -499,22 +521,21 @@ public class DynamicClientRegistrationServiceTest {
     }
 
     @Test
-    public void validateClientRegistrationRequest_validateScope_noOpenidScopeRequested() {
-        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
-        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
-        request.setScope(Optional.of("scope1 test"));
-
-        TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
-        testObserver.assertNoErrors();
-        testObserver.assertComplete();
-        testObserver.assertValue(req -> req!=null && req.getScope().get().contains("openid"));
-    }
-
-    @Test
     public void validateClientRegistrationRequest_ok() {
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
 
+        TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_client_credentials_ok() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList()));
+        request.setGrantTypes(Optional.of(Arrays.asList("client_credentials")));
+        request.setResponseTypes(Optional.of(Arrays.asList()));
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
@@ -526,6 +547,15 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertErrorMessage("One of the Client Metadata value is invalid.");
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void validatePatchRequest_emptyRequest() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+
+        TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientPatchRequest(request).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
     }
 
     @Test
