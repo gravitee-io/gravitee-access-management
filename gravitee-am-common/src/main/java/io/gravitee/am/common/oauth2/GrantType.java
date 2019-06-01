@@ -55,14 +55,20 @@ public interface GrantType {
      *
      * See <a href="https://tools.ietf.org/html/rfc7523#section-2.1">2.1. Using JWTs as Authorization Grant</a>
      */
-    String JWT_BEARER ="urn:ietf:params:oauth:grant-type:jwt-bearer";
+    String JWT_BEARER = "urn:ietf:params:oauth:grant-type:jwt-bearer";
+
+    /**
+     * Device code flow
+     * See <a href="https://tools.ietf.org/html/draft-ietf-oauth-device-flow-15#section-3.4">3.4 Device Access Token Request</a>
+     */
+    String DEVIDE_CODE = "urn:ietf:params:oauth:grant-type:device_code";
 
     /**
      * SAML 2.0 Bearer
      *
      * See <a href="https://tools.ietf.org/html/rfc7522#section-2.1">2.1. Using SAML Assertions as Authorization Grants</a>
      */
-    String SAML2_BEARER ="urn:ietf:params:oauth:grant-type:saml2-bearer";
+    String SAML2_BEARER = "urn:ietf:params:oauth:grant-type:saml2-bearer";
 
     /**
      * Hybrid

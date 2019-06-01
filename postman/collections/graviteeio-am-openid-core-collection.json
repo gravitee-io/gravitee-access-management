@@ -402,7 +402,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"redirectUris\": [],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\",\n    \"refresh_token\"\n  ],\n  \"scopes\": [\"scope1\", \"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"idTokenCustomClaims\": {},\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+							"raw": "{\n  \"redirectUris\": [\"https://domain/callback\",\"https://another/callback\"],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\",\n    \"refresh_token\"\n  ],\n  \"scopes\": [\"scope1\", \"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"idTokenCustomClaims\": {},\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{client1}}",
@@ -3025,7 +3025,7 @@
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('?error=invalid_request');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=A+redirect_uri+must+be+supplied');",
+													"    tests['Contains an error description query-parameter'] = location.includes('a+redirect_uri+must+be+supplied');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -4704,7 +4704,7 @@
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('?error=invalid_request');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=A+redirect_uri+must+be+supplied');",
+													"    tests['Contains an error description query-parameter'] = location.includes('a+redirect_uri+must+be+supplied');",
 													"});"
 												],
 												"type": "text/javascript"

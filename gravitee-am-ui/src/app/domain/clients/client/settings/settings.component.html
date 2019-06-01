@@ -219,7 +219,8 @@
         <b><i>authorization_code</i></b> for server side applications (web) or native applications (then combined with PKCE).<br>
         <b><i>implicit</i></b> must be used for Single Page Applications.<br>
         <b><i>password</i></b> should only be used for trusted applications <i>(means application and authorization server are managed within the same organization.)</i><br>
-        <b><i>client_credentials</i></b> should be used for server to server communications.<br>
+        <b><i>client_credentials</i></b> should be used for server to server communications.<br><br>
+        <b>It is not recommended to mix client and user authentication within the same application.</b> <i>(Aka client_credentials and authorization_code, implicit or password)</i><br>
     </small>
   </div>
   <h3>Response types</h3>
@@ -235,7 +236,7 @@
       <b><i>token id_token:</i></b> implicit<br>
       <b><i>code id_token:</i></b> authorization_code, implicit<br>
       <b><i>code token:</i></b> authorization_code, implicit<br>
-      <b><i>code token id_token:</i></b> authorization_code, implicit<br>
+      <b><i>code id_token token:</i></b> authorization_code, implicit<br>
     </small>
 
   </div>

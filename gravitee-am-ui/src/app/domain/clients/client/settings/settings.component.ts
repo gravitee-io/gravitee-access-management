@@ -46,11 +46,11 @@ export class ClientSettingsComponent implements OnInit {
   identityProviders: any[] = [];
   certificates: any[] = [];
   scopes: any[] = [];
-  //responseTypes: any[] = ['code','token','id_token','id_token token','code token','code token id_token'];
+  //responseTypes: any[] = ['code','token','id_token','id_token token','code token','code id_token token'];
   responseTypes: any[] = [
     { value:'code', checked:false },
-    { value:'token', checked:false },
-    { value:'id_token', checked:false }
+    { value:'id_token', checked:false },
+    { value:'token', checked:false }
   ];
   grantTypes: any[] = [
     { name:'AUTHORIZATION CODE', value:'authorization_code', checked:false },

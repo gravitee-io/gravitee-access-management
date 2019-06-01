@@ -21,9 +21,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.Arrays;
+import java.util.List;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -34,7 +34,7 @@ public class ResponseTypeUtilsTest {
 
     @Test
     public void test_code_token_id_token() {
-        boolean isValid = ResponseTypeUtils.isValidResponseType(Arrays.asList(
+        boolean isValid = ResponseTypeUtils.isSupportedResponseType(Arrays.asList(
                 "code", "token", "id_token",
                 "id_token token", "code token", "code id_token","code id_token token")
         );
@@ -43,16 +43,21 @@ public class ResponseTypeUtilsTest {
 
     @Test
     public void test_unknown_response_type() {
-        boolean isValid = ResponseTypeUtils.isValidResponseType(Arrays.asList("code token id_token"));
+        boolean isValid = ResponseTypeUtils.isSupportedResponseType(Arrays.asList("code token id_token"));
         assertFalse("Were expecting to be false",isValid);
     }
 
     @Test
     public void test_empty_response_type() {
-        boolean isValid = ResponseTypeUtils.isValidResponseType(Arrays.asList());
-        assertFalse("Were expecting to be false",isValid);
+        boolean isValid = ResponseTypeUtils.isSupportedResponseType(Arrays.asList());
+        assertTrue("Were expecting to be true",isValid);//Can be empty for client_credentials...
     }
 
+    @Test
+    public void test_null_response_type() {
+        boolean isValid = ResponseTypeUtils.isSupportedResponseType((List<String>)null);
+        assertFalse("Were expecting to be false",isValid);//Can be empty for client_credentials...
+    }
     @Test
     public void applyDefaultResponseType() {
         Client client = new Client();
@@ -98,5 +103,11 @@ public class ResponseTypeUtilsTest {
         assertTrue(ResponseTypeUtils.requireNonce("code id_token token"));
         assertTrue(ResponseTypeUtils.requireNonce("id_token"));
         assertTrue(ResponseTypeUtils.requireNonce("id_token token"));
+    }
+
+    @Test
+    public void supportedResponseTypes() {
+        assertTrue("should have at least code", ResponseTypeUtils.getSupportedResponseTypes().contains("code"));
+        assertTrue("should have at least token", ResponseTypeUtils.getSupportedResponseTypes().contains("token"));
     }
 }

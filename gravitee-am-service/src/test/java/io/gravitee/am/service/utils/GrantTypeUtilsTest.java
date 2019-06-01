@@ -16,14 +16,15 @@
 package io.gravitee.am.service.utils;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -33,21 +34,104 @@ import static org.junit.Assert.assertTrue;
 public class GrantTypeUtilsTest {
 
     @Test
-    public void isValidGrantType_authorization_code_implicit_refresh_token() {
-        boolean isValid = GrantTypeUtils.isValidGrantType(Arrays.asList("authorization_code", "implicit", "refresh_token"));
-        assertTrue("Were expecting to be true",isValid);
+    public void validateGrantTypes_nullClient() {
+        TestObserver<Client> testObserver = GrantTypeUtils.validateGrantTypes(null).test();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidClientMetadataException.class);
     }
 
     @Test
-    public void isValidGrantType_unknown_response_type() {
-        boolean isValid = GrantTypeUtils.isValidGrantType(Arrays.asList("unknown"));
-        assertFalse("Were expecting to be false",isValid);
+    public void validateGrantTypes_authorization_code_implicit_refresh_token() {
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Arrays.asList("authorization_code", "implicit", "refresh_token"));
+
+        TestObserver<Client> testObserver = GrantTypeUtils.validateGrantTypes(client).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
     }
 
     @Test
-    public void isValidGrantType_empty_response_type() {
-        boolean isValid = GrantTypeUtils.isValidGrantType(Arrays.asList());
-        assertFalse("Were expecting to be false",isValid);
+    public void validateGrantTypes_unknown_grant_type() {
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Arrays.asList("unknown"));
+
+        TestObserver<Client> testObserver = GrantTypeUtils.validateGrantTypes(client).test();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    public void validateGrantTypes_empty_grant_type() {
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Arrays.asList());
+
+        TestObserver<Client> testObserver = GrantTypeUtils.validateGrantTypes(client).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void validateGrantTypes_refreshToken_nok() {
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Arrays.asList("refresh_token","implicit"));
+        client.setResponseTypes(Arrays.asList("token"));
+
+        TestObserver<Client> testObserver = GrantTypeUtils.validateGrantTypes(client).test();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    public void validateGrantTypes_refreshToken_client_credentials_nok() {
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Arrays.asList("refresh_token","client_credentials"));
+        client.setResponseTypes(Arrays.asList());
+
+        TestObserver<Client> testObserver = GrantTypeUtils.validateGrantTypes(client).test();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    public void validateGrantTypes_refreshToken_ok() {
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Arrays.asList("refresh_token","authorization_code"));
+
+        TestObserver<Client> testObserver = GrantTypeUtils.validateGrantTypes(client).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void isSupportedGrantType_empty_grant_type() {
+        boolean isSupportedGrantType = GrantTypeUtils.isSupportedGrantType(Arrays.asList());
+        assertFalse("Were expecting to be false",isSupportedGrantType);
+    }
+
+    @Test
+    public void supportedGrantTypes() {
+        assertTrue("should have at least authorization_code", GrantTypeUtils.getSupportedGrantTypes().contains("authorization_code"));
+    }
+
+    @Test
+    public void isRedirectUriRequired() {
+        //isRedirectUriRequired("authorization_code",true);//should be true for mobile app, false for web app...
+        isRedirectUriRequired("implicit",true);
+        //isRedirectUriRequired("hybrid",true);
+        isRedirectUriRequired("password",false);
+        isRedirectUriRequired("client_credentials",false);
+    }
+
+    private void isRedirectUriRequired(String grant, boolean expected) {
+        boolean isValid = GrantTypeUtils.isRedirectUriRequired(Arrays.asList(grant));
+        assertEquals("not expected result for "+grant,expected, isValid);
     }
 
     @Test

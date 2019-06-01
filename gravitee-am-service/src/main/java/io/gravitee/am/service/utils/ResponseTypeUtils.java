@@ -32,21 +32,25 @@ import static io.gravitee.am.common.oidc.ResponseType.*;
  */
 public class ResponseTypeUtils {
 
-    private static final Set<String> VALID_RESPONSE_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+    private static final Set<String> SUPPORTED_RESPONSE_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             CODE, TOKEN, ID_TOKEN, ID_TOKEN_TOKEN, CODE_TOKEN, CODE_ID_TOKEN, CODE_ID_TOKEN_TOKEN
     )));
 
+    public static List<String> getSupportedResponseTypes() {
+        return Collections.unmodifiableList(SUPPORTED_RESPONSE_TYPES.stream().sorted().collect(Collectors.toList()));
+    }
+
     /**
-     * Throw InvalidClientMetadataException if null or empty, or contains unknown response types.
+     * Throw InvalidClientMetadataException if null, or contains unknown response types.
      * @param responseTypes Array of response_type to validate.
      */
-    public static boolean isValidResponseType(List<String> responseTypes) {
-        if (responseTypes == null || responseTypes.isEmpty()) {
+    public static boolean isSupportedResponseType(List<String> responseTypes) {
+        if (responseTypes == null) {
             return false;
         }
 
         for (String responseType : responseTypes) {
-            if (!isValidResponseType(responseType)) {
+            if (!isSupportedResponseType(responseType)) {
                 return false;
             }
         }
@@ -58,8 +62,8 @@ public class ResponseTypeUtils {
      * Throw InvalidClientMetadataException if null or contains unknown response types.
      * @param responseType String to response_type validate.
      */
-    public static boolean isValidResponseType(String responseType) {
-        return VALID_RESPONSE_TYPES.contains(responseType);
+    public static boolean isSupportedResponseType(String responseType) {
+        return SUPPORTED_RESPONSE_TYPES.contains(responseType);
     }
 
     /**
