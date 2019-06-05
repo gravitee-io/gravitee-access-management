@@ -25,17 +25,16 @@ import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.exception.UserAlreadyExistsException;
-import io.gravitee.am.service.exception.UserInvalidException;
-import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -94,6 +93,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private LoginAttemptService loginAttemptService;
 
+    @Autowired
+    private ClientService clientService;
+
     @Override
     public Single<Page<User>> search(String domain, String query, int limit) {
         return userService.search(domain, query, limit);
@@ -116,9 +118,22 @@ public class UserServiceImpl implements UserService {
             newUser.setSource(DEFAULT_IDP_PREFIX + domain);
         }
 
+        // check user provider
         return identityProviderManager.getUserProvider(newUser.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
+                // check client
                 .flatMapSingle(userProvider -> {
+                    if (newUser.getClient() != null) {
+                        return checkClient(domain, newUser.getClient())
+                                .flatMapSingle(client -> {
+                                    newUser.setClient(client.getId());
+                                    return Single.just(userProvider);
+                                });
+                    }
+                    return Single.just(userProvider);
+                })
+                // save the user
+                .flatMap(userProvider -> {
                     // user is flagged as internal user
                     newUser.setInternal(true);
                     if (newUser.isPreRegistration()) {
@@ -162,7 +177,20 @@ public class UserServiceImpl implements UserService {
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
                 .flatMapSingle(user -> identityProviderManager.getUserProvider(user.getSource())
                         .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                        .flatMapSingle(userProvider ->  userProvider.update(user.getExternalId(), convert(user.getUsername(), updateUser)))
+                        // check client
+                        .flatMapSingle(userProvider -> {
+                            String client = updateUser.getClient() != null ? updateUser.getClient() : user.getClient();
+                            if (client != null) {
+                                return checkClient(domain, client)
+                                        .flatMapSingle(client1 -> {
+                                            updateUser.setClient(client1.getId());
+                                            return Single.just(userProvider);
+                                        });
+                            }
+                            return Single.just(userProvider);
+                        })
+                        // update the user
+                        .flatMap(userProvider ->  userProvider.update(user.getExternalId(), convert(user.getUsername(), updateUser)))
                         .flatMap(idpUser ->  {
                             // set external id
                             updateUser.setExternalId(idpUser.getId());
@@ -276,6 +304,18 @@ public class UserServiceImpl implements UserService {
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).user(user1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).throwable(throwable)))
                 .toCompletable();
+    }
+
+    private Maybe<Client> checkClient(String domain, String client) {
+        return clientService.findById(client)
+                .switchIfEmpty(Maybe.defer(() -> clientService.findByDomainAndClientId(domain, client)))
+                .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
+                .map(client1 -> {
+                    if (!domain.equals(client1.getDomain())) {
+                        throw new ClientNotFoundException(client);
+                    }
+                    return client1;
+                });
     }
 
     private void completeUserRegistration(User user) {
