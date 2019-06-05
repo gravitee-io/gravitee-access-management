@@ -15,11 +15,16 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Maybe;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
@@ -48,6 +53,12 @@ public class UserServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private ClientService clientService;
+
+    @Mock
+    private io.gravitee.am.service.UserService commonUserService;
+
     @Test
     public void shouldCreateUser_invalid_identity_provider() {
         final String domain = "domain";
@@ -61,4 +72,95 @@ public class UserServiceTest {
         testObserver.assertNotComplete();
         testObserver.assertError(UserProviderNotFoundException.class);
     }
+
+    @Test
+    public void shouldNotCreateUser_unknown_client() {
+        final String domain = "domain";
+
+        NewUser newUser = mock(NewUser.class);
+        when(newUser.getSource()).thenReturn("idp");
+        when(newUser.getClient()).thenReturn("client");
+
+        UserProvider userProvider = mock(UserProvider.class);
+
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(clientService.findById(newUser.getClient())).thenReturn(Maybe.empty());
+        when(clientService.findByDomainAndClientId(domain, newUser.getClient())).thenReturn(Maybe.empty());
+
+        TestObserver<User> testObserver = userService.create(domain, newUser).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(ClientNotFoundException.class);
+    }
+
+    @Test
+    public void shouldNotCreateUser_invalid_client() {
+        final String domain = "domain";
+
+        NewUser newUser = mock(NewUser.class);
+        when(newUser.getSource()).thenReturn("idp");
+        when(newUser.getClient()).thenReturn("client");
+
+        UserProvider userProvider = mock(UserProvider.class);
+
+        Client client = mock(Client.class);
+        when(client.getDomain()).thenReturn("other-domain");
+
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(clientService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
+
+        TestObserver<User> testObserver = userService.create(domain, newUser).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(ClientNotFoundException.class);
+    }
+
+    @Test
+    public void shouldNotUpdateUser_unknown_client() {
+        final String domain = "domain";
+        final String id = "id";
+
+        User user = mock(User.class);
+        when(user.getSource()).thenReturn("idp");
+
+        UpdateUser updateUser = mock(UpdateUser.class);
+        when(updateUser.getSource()).thenReturn("idp");
+        when(updateUser.getClient()).thenReturn("client");
+
+        UserProvider userProvider = mock(UserProvider.class);
+
+        when(commonUserService.findById(id)).thenReturn(Maybe.just(user));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(clientService.findById(updateUser.getClient())).thenReturn(Maybe.empty());
+        when(clientService.findByDomainAndClientId(domain, updateUser.getClient())).thenReturn(Maybe.empty());
+
+        TestObserver<User> testObserver = userService.update(domain, id, updateUser).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(ClientNotFoundException.class);
+    }
+
+    @Test
+    public void shouldNotUpdateUser_invalid_client() {
+        final String domain = "domain";
+        final String id = "id";
+
+        User user = mock(User.class);
+        when(user.getSource()).thenReturn("idp");
+
+        UpdateUser updateUser = mock(UpdateUser.class);
+        when(updateUser.getSource()).thenReturn("idp");
+        when(updateUser.getClient()).thenReturn("client");
+
+        UserProvider userProvider = mock(UserProvider.class);
+
+        Client client = mock(Client.class);
+        when(client.getDomain()).thenReturn("other-domain");
+
+        when(commonUserService.findById(id)).thenReturn(Maybe.just(user));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(clientService.findById(updateUser.getClient())).thenReturn(Maybe.just(client));
+
+        TestObserver<User> testObserver = userService.update(domain, id, updateUser).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(ClientNotFoundException.class);
+    }
+
 }
