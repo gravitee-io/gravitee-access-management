@@ -122,7 +122,6 @@ public class UserServiceTest {
         when(user.getSource()).thenReturn("idp");
 
         UpdateUser updateUser = mock(UpdateUser.class);
-        when(updateUser.getSource()).thenReturn("idp");
         when(updateUser.getClient()).thenReturn("client");
 
         UserProvider userProvider = mock(UserProvider.class);
@@ -146,7 +145,6 @@ public class UserServiceTest {
         when(user.getSource()).thenReturn("idp");
 
         UpdateUser updateUser = mock(UpdateUser.class);
-        when(updateUser.getSource()).thenReturn("idp");
         when(updateUser.getClient()).thenReturn("client");
 
         UserProvider userProvider = mock(UserProvider.class);
