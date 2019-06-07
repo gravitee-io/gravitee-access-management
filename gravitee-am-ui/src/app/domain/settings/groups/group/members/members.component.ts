@@ -122,9 +122,11 @@ export class AddMemberComponent {
               private userService: UserService) {
     this.memberCtrl.valueChanges
       .subscribe(searchTerm => {
-        this.userService.search(data.domain, searchTerm, 0, 30).subscribe(response => {
-          this.filteredUsers = response.data;
-        });
+        if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
+          this.userService.search(data.domain, searchTerm + '*', 0, 30).subscribe(response => {
+            this.filteredUsers = response.data;
+          });
+        }
       });
   }
 

@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
@@ -160,12 +161,55 @@ public class MongoClientRepositoryTest extends AbstractManagementRepositoryTest 
     }
 
     @Test
-    public void testConvertionAtoB() {
-        fail("to implement");
+    public void testSearch_strict() {
+        final String domain = "domain";
+        // create client
+        Client client = new Client();
+        client.setDomain(domain);
+        client.setClientId("clientId");
+        clientRepository.create(client).blockingGet();
+
+        Client client2 = new Client();
+        client2.setDomain(domain);
+        client2.setClientId("clientId2");
+        clientRepository.create(client2).blockingGet();
+
+        // fetch user
+        TestObserver<Set<Client>> testObserver = clientRepository.search(domain, "clientId").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(clients -> clients.size() == 1);
+        testObserver.assertValue(clients -> clients.iterator().next().getClientId().equals(client.getClientId()));
+
     }
 
     @Test
-    public void testConvertionBtoA() {
-        fail("to implement");
+    public void testSearch_wildcard() {
+        final String domain = "domain";
+        // create client
+        Client client = new Client();
+        client.setDomain(domain);
+        client.setClientId("clientId");
+        clientRepository.create(client).blockingGet();
+
+        Client client2 = new Client();
+        client2.setDomain(domain);
+        client2.setClientId("clientId2");
+        clientRepository.create(client2).blockingGet();
+
+        Client client3 = new Client();
+        client3.setDomain(domain);
+        client3.setClientId("test");
+        clientRepository.create(client3).blockingGet();
+
+        // fetch user
+        TestObserver<Set<Client>> testObserver = clientRepository.search(domain, "clientId*").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(clients -> clients.size() == 2);
     }
 }
