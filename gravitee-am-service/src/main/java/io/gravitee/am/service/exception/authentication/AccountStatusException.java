@@ -21,16 +21,13 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AccountLockedException extends AccountStatusException {
+public abstract class AccountStatusException extends AuthenticationException {
 
-    public static final String ERROR_CODE = "account_locked";
-
-    public AccountLockedException(String msg, Map<String, String> details) {
-        super(msg, details);
+    public AccountStatusException(String msg) {
+        super(msg);
     }
 
-    @Override
-    public String getErrorCode() {
-        return ERROR_CODE;
+    public AccountStatusException(String msg, Map<String, String> details) {
+        super(msg, details);
     }
 }

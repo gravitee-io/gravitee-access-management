@@ -41,6 +41,7 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(RegisterConfirmationEndpoint.class);
     private static final String ERROR_PARAM = "error";
     private static final String SUCCESS_PARAM = "success";
+    private static final String WARNING_PARAM = "warning";
     private static final String TOKEN_PARAM = "token";
     private ThymeleafTemplateEngine engine;
 
@@ -53,10 +54,12 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
         final HttpServerRequest request = routingContext.request();
         final String error = request.getParam(ERROR_PARAM);
         final String success = request.getParam(SUCCESS_PARAM);
+        final String warning = request.getParam(WARNING_PARAM);
         final String token = request.getParam(TOKEN_PARAM);
         // add query params to context
         routingContext.put(ERROR_PARAM, error);
         routingContext.put(SUCCESS_PARAM, success);
+        routingContext.put(WARNING_PARAM, warning);
         routingContext.put(TOKEN_PARAM, token);
 
         // retrieve user who want to register

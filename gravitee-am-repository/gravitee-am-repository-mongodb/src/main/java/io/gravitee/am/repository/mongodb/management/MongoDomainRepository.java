@@ -311,6 +311,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         accountSettings.setMaxLoginAttempts(accountSettingsMongo.getMaxLoginAttempts());
         accountSettings.setLoginAttemptsResetTime(accountSettingsMongo.getLoginAttemptsResetTime());
         accountSettings.setAccountBlockedDuration(accountSettingsMongo.getAccountBlockedDuration());
+        accountSettings.setCompleteRegistrationWhenResetPassword(accountSettingsMongo.isCompleteRegistrationWhenResetPassword());
         return accountSettings;
     }
 
@@ -325,6 +326,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         accountSettingsMongo.setMaxLoginAttempts(accountSettings.getMaxLoginAttempts());
         accountSettingsMongo.setLoginAttemptsResetTime(accountSettings.getLoginAttemptsResetTime());
         accountSettingsMongo.setAccountBlockedDuration(accountSettings.getAccountBlockedDuration());
+        accountSettingsMongo.setCompleteRegistrationWhenResetPassword(accountSettings.isCompleteRegistrationWhenResetPassword());
         return accountSettingsMongo;
     }
 

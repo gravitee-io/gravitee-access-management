@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
 import * as moment from "moment";
 
 @Component({
@@ -21,13 +21,12 @@ import * as moment from "moment";
   templateUrl: './account-settings.component.html',
   styleUrls: ['./account-settings.component.scss']
 })
-export class AccountSettingsComponent implements OnInit {
+export class AccountSettingsComponent implements OnInit, OnChanges {
   @Output() onSavedAccountSettings = new EventEmitter<any>();
   @Input() accountSettings: any = {};
   @Input() inheritMode: boolean = false;
   @ViewChild('accountForm') form: any;
   formChanged: boolean = false;
-  localAccountSettings: any;
   private defaultMaxAttempts: number = 10;
   private defaultLoginAttemptsResetTime: number = 12;
   private defaultLoginAttemptsResetTimeUnit: string = "hours";
@@ -37,7 +36,7 @@ export class AccountSettingsComponent implements OnInit {
   constructor() {}
 
   save() {
-    let accountSettings = Object.assign({}, this.localAccountSettings);
+    let accountSettings = Object.assign({}, this.accountSettings);
     if (accountSettings.inherited) {
       accountSettings = { 'inherited' : true };
     } else {
@@ -50,52 +49,68 @@ export class AccountSettingsComponent implements OnInit {
 
     this.onSavedAccountSettings.emit(accountSettings);
     this.formChanged = false;
-    this.form.reset(this.localAccountSettings);
+    this.form.reset(this.accountSettings);
   }
 
   ngOnInit(): void {
-    this.localAccountSettings = Object.assign({}, this.accountSettings || { 'inherited' : this.inheritMode });
+    this.accountSettings = this.accountSettings || { 'inherited' : this.inheritMode };
     this.initDateValues();
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.accountSettings.previousValue && changes.accountSettings.currentValue) {
+      this.accountSettings = changes.accountSettings.currentValue;
+      this.initDateValues();
+    }
+  }
+
   enableInheritMode(event) {
-    this.localAccountSettings.inherited = event.checked;
+    this.accountSettings.inherited = event.checked;
     this.formChanged = true;
   }
 
   isInherited() {
-    return this.localAccountSettings && this.localAccountSettings.inherited;
+    return this.accountSettings && this.accountSettings.inherited;
   }
 
   enableBrutForceAuthenticationDetection(event) {
-    this.localAccountSettings.loginAttemptsDetectionEnabled = event.checked;
+    this.accountSettings.loginAttemptsDetectionEnabled = event.checked;
     this.formChanged = true;
 
     // apply default values
-    this.localAccountSettings.maxLoginAttempts = this.localAccountSettings.maxLoginAttempts || this.defaultMaxAttempts;
-    this.localAccountSettings.loginAttemptsResetTime = this.localAccountSettings.loginAttemptsResetTime || this.defaultLoginAttemptsResetTime;
-    this.localAccountSettings.loginAttemptsResetTimeUnitTime = this.localAccountSettings.loginAttemptsResetTimeUnitTime || this.defaultLoginAttemptsResetTimeUnit;
-    this.localAccountSettings.accountBlockedDuration = this.localAccountSettings.accountBlockedDuration || this.defaultAccountBlockedDuration;
-    this.localAccountSettings.accountBlockedDurationUnitTime = this.localAccountSettings.accountBlockedDurationUnitTime || this.defaultAccountBlockedDurationUnit;
+    this.accountSettings.maxLoginAttempts = this.accountSettings.maxLoginAttempts || this.defaultMaxAttempts;
+    this.accountSettings.loginAttemptsResetTime = this.accountSettings.loginAttemptsResetTime || this.defaultLoginAttemptsResetTime;
+    this.accountSettings.loginAttemptsResetTimeUnitTime = this.accountSettings.loginAttemptsResetTimeUnitTime || this.defaultLoginAttemptsResetTimeUnit;
+    this.accountSettings.accountBlockedDuration = this.accountSettings.accountBlockedDuration || this.defaultAccountBlockedDuration;
+    this.accountSettings.accountBlockedDurationUnitTime = this.accountSettings.accountBlockedDurationUnitTime || this.defaultAccountBlockedDurationUnit;
   }
 
   isBrutForceAuthenticationEnabled() {
-    return this.localAccountSettings && this.localAccountSettings.loginAttemptsDetectionEnabled;
+    return this.accountSettings && this.accountSettings.loginAttemptsDetectionEnabled;
+  }
+
+  enableCompleteRegistration(event) {
+    this.accountSettings.completeRegistrationWhenResetPassword = event.checked;
+    this.formChanged = true;
+  }
+
+  isCompleteRegistrationEnabled() {
+    return this.accountSettings && this.accountSettings.completeRegistrationWhenResetPassword;
   }
 
   formIsValid() {
-    if (this.localAccountSettings.loginAttemptsDetectionEnabled) {
-      if (this.localAccountSettings.maxLoginAttempts < 1) {
+    if (this.accountSettings.loginAttemptsDetectionEnabled) {
+      if (this.accountSettings.maxLoginAttempts < 1) {
         return false;
       }
-      if (this.localAccountSettings.loginAttemptsResetTime < 1) {
+      if (this.accountSettings.loginAttemptsResetTime < 1) {
         return false;
-      } else if (!this.localAccountSettings.loginAttemptsResetTimeUnitTime) {
+      } else if (!this.accountSettings.loginAttemptsResetTimeUnitTime) {
         return false;
       }
-      if (this.localAccountSettings.accountBlockedDuration < 1) {
+      if (this.accountSettings.accountBlockedDuration < 1) {
         return false;
-      } else if (!this.localAccountSettings.accountBlockedDurationUnitTime) {
+      } else if (!this.accountSettings.accountBlockedDurationUnitTime) {
         return false;
       }
     }
@@ -103,16 +118,16 @@ export class AccountSettingsComponent implements OnInit {
   }
 
   private initDateValues() {
-    if (this.localAccountSettings.loginAttemptsResetTime > 0) {
-      let loginAttemptsResetTime = this.getHumanizeDuration(this.localAccountSettings.loginAttemptsResetTime);
-      this.localAccountSettings.loginAttemptsResetTime = loginAttemptsResetTime[0];
-      this.localAccountSettings.loginAttemptsResetTimeUnitTime = loginAttemptsResetTime[1];
+    if (this.accountSettings.loginAttemptsResetTime > 0) {
+      let loginAttemptsResetTime = this.getHumanizeDuration(this.accountSettings.loginAttemptsResetTime);
+      this.accountSettings.loginAttemptsResetTime = loginAttemptsResetTime[0];
+      this.accountSettings.loginAttemptsResetTimeUnitTime = loginAttemptsResetTime[1];
     }
 
-    if (this.localAccountSettings.accountBlockedDuration > 0) {
-      let accountBlockedDuration = this.getHumanizeDuration(this.localAccountSettings.accountBlockedDuration);
-      this.localAccountSettings.accountBlockedDuration = accountBlockedDuration[0];
-      this.localAccountSettings.accountBlockedDurationUnitTime = accountBlockedDuration[1];
+    if (this.accountSettings.accountBlockedDuration > 0) {
+      let accountBlockedDuration = this.getHumanizeDuration(this.accountSettings.accountBlockedDuration);
+      this.accountSettings.accountBlockedDuration = accountBlockedDuration[0];
+      this.accountSettings.accountBlockedDurationUnitTime = accountBlockedDuration[1];
     }
   }
 

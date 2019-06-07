@@ -18,7 +18,7 @@
 <div class="client-account-container">
   <div class="client-account-content">
     <div fxFlex="70">
-      <app-account-settings [accountSettings]="client.accountSettings" [inheritMode]="true" (onSavedAccountSettings)="updateAccountSettings($event)"></app-account-settings>
+      <app-account-settings [accountSettings]="accountSettings" [inheritMode]="true" (onSavedAccountSettings)="updateAccountSettings($event)"></app-account-settings>
     </div>
     <div class="client-account-description" fxFlex>
       <h3>User Accounts settings</h3>

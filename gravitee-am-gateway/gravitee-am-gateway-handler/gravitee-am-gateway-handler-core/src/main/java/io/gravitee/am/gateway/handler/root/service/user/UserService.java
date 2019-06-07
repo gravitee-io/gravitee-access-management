@@ -36,7 +36,7 @@ public interface UserService {
 
     Completable confirmRegistration(User user, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable resetPassword(User user, io.gravitee.am.identityprovider.api.User principal);
+    Completable resetPassword(User user, Client client, io.gravitee.am.identityprovider.api.User principal);
 
     Completable forgotPassword(String email, Client client, io.gravitee.am.identityprovider.api.User principal);
 
@@ -44,8 +44,8 @@ public interface UserService {
         return register(user, null);
     }
 
-    default Completable resetPassword(User user) {
-        return resetPassword(user, null);
+    default Completable resetPassword(User user, Client client) {
+        return resetPassword(user, client, null);
     }
 
     default Completable forgotPassword(String email, Client client) {

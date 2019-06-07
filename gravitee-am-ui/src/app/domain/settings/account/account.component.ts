@@ -27,6 +27,7 @@ import {ActivatedRoute, Router} from "@angular/router";
 export class DomainSettingsAccountComponent implements OnInit {
   domainId: string;
   domain: any = {};
+  accountSettings: any;
 
   constructor(private domainService: DomainService,
               private snackbarService: SnackbarService,
@@ -39,11 +40,14 @@ export class DomainSettingsAccountComponent implements OnInit {
       this.domainId = AppConfig.settings.authentication.domainId;
     }
     this.domain = this.route.snapshot.data['domain'];
+    this.accountSettings = Object.assign({}, this.domain.accountSettings);
   }
   updateAccountSettings(accountSettings) {
-    this.domain.accountSettings = accountSettings;
+    // force inherit false
+    accountSettings.inherited = false;
     this.domainService.patchAccountSettings(this.domainId, accountSettings).subscribe(data => {
       this.domain = data;
+      this.route.snapshot.data['domain'] = this.domain;
       this.snackbarService.open("User Accounts Settings updated");
     });
   }
