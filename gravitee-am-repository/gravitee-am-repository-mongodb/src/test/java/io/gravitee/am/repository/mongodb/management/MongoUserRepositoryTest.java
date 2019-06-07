@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.reactivex.observers.TestObserver;
@@ -130,6 +131,54 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
 
         // fetch user
         userRepository.findById(userCreated.getId()).test().assertEmpty();
+    }
+
+    @Test
+    public void testSearch_strict() {
+        final String domain = "domain";
+        // create user
+        User user = new User();
+        user.setDomain(domain);
+        user.setUsername("testUsername");
+        userRepository.create(user).blockingGet();
+
+        User user2 = new User();
+        user2.setDomain(domain);
+        user2.setUsername("testUsername2");
+        userRepository.create(user2).blockingGet();
+
+        // fetch user
+        TestObserver<Page<User>> testObserver = userRepository.search(domain, "testUsername", 10).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() == 1);
+        testObserver.assertValue(users -> users.getData().iterator().next().getUsername().equals(user.getUsername()));
+
+    }
+
+    @Test
+    public void testSearch_wildcard() {
+        final String domain = "domain";
+        // create user
+        User user = new User();
+        user.setDomain(domain);
+        user.setUsername("testUsername");
+        userRepository.create(user).blockingGet();
+
+        User user2 = new User();
+        user2.setDomain(domain);
+        user2.setUsername("testUsername2");
+        userRepository.create(user2).blockingGet();
+
+        // fetch user
+        TestObserver<Page<User>> testObserver = userRepository.search(domain, "testUsername*", 10).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() == 2);
     }
 
 }

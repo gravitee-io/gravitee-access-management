@@ -83,9 +83,17 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     @Override
     public Single<Page<User>> search(String domain, String query, int limit) {
         // currently search on username field
+        Bson searchQuery = new BasicDBObject(FIELD_USERNAME, query);
+        // if query contains wildcard, use the regex query
+        if (query.contains("*")) {
+            String compactQuery = query.replaceAll(".?\\*+.?", ".*");
+            String regex = "^" + compactQuery;
+            searchQuery = new BasicDBObject(FIELD_USERNAME, Pattern.compile(regex, Pattern.CASE_INSENSITIVE));
+        }
+
         Bson mongoQuery = and(
                 eq(FIELD_DOMAIN, domain),
-                regex(FIELD_USERNAME, "^(?)" + Pattern.quote(query), "i"));
+                searchQuery);
 
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery)).first(0l);
         Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(mongoQuery).limit(limit)).map(this::convert).collect(LinkedHashSet::new, Set::add);

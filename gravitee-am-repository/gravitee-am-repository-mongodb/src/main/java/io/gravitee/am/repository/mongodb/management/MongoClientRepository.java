@@ -15,17 +15,13 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.jose.ECKey;
-import io.gravitee.am.model.jose.JWK;
-import io.gravitee.am.model.jose.KeyType;
-import io.gravitee.am.model.jose.OCTKey;
-import io.gravitee.am.model.jose.OKPKey;
-import io.gravitee.am.model.jose.RSAKey;
+import io.gravitee.am.model.jose.*;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
@@ -41,7 +37,10 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -83,9 +82,17 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     @Override
     public Single<Set<Client>> search(String domain, String query) {
         // currently search on client_id field
+        Bson searchQuery = new BasicDBObject(FIELD_CLIENT_ID, query);
+        // if query contains wildcard, use the regex query
+        if (query.contains("*")) {
+            String compactQuery = query.replaceAll(".?\\*+.?", ".*");
+            String regex = "^" + compactQuery;
+            searchQuery = new BasicDBObject(FIELD_CLIENT_ID, Pattern.compile(regex, Pattern.CASE_INSENSITIVE));
+        }
+
         Bson mongoQuery = and(
                 eq(FIELD_DOMAIN, domain),
-                regex(FIELD_CLIENT_ID, "^(?)" + Pattern.quote(query), "i"));
+                searchQuery);
 
         return Observable.fromPublisher(clientsCollection.find(mongoQuery)).map(this::convert).collect(HashSet::new, Set::add);
     }
