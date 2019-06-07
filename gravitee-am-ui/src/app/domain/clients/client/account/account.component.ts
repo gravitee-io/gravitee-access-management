@@ -26,6 +26,7 @@ import {SnackbarService} from "../../../../services/snackbar.service";
 export class ClientAccountSettingsComponent {
   private domainId: string;
   client: any;
+  accountSettings: any;
 
   constructor(private route: ActivatedRoute,
               private clientService: ClientService,
@@ -35,11 +36,14 @@ export class ClientAccountSettingsComponent {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.client = this.route.snapshot.parent.data['client'];
+    this.accountSettings = Object.assign({}, this.client.accountSettings);
   }
 
   updateAccountSettings(accountSettings) {
+    this.accountSettings = accountSettings;
     this.clientService.patchAccountSettings(this.domainId, this.client.id, accountSettings).subscribe(data => {
       this.client = data;
+      this.route.snapshot.parent.data['client'] = this.client;
       this.snackbarService.open("User Accounts Settings updated");
     });
   }

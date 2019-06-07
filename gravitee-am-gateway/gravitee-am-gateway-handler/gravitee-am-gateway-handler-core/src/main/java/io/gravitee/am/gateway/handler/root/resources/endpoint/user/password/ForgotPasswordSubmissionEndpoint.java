@@ -17,13 +17,14 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.authentication.AccountStatusException;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.HashMap;
@@ -60,6 +61,9 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
                         error -> {
                             if (error instanceof UserNotFoundException) {
                                 requestParams.put("warning", "user_not_found");
+                                redirectToPage(context, requestParams);
+                            } else if (error instanceof AccountStatusException) {
+                                requestParams.put("warning", ((AccountStatusException) error).getErrorCode());
                                 redirectToPage(context, requestParams);
                             } else {
                                 requestParams.put("error", error.getMessage());

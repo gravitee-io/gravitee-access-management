@@ -19,7 +19,7 @@
   <h1>User Accounts</h1>
   <div class="domain-account-content">
     <div fxFlex="70">
-      <app-account-settings [accountSettings]="domain.accountSettings" [inheritMode]="false" (onSavedAccountSettings)="updateAccountSettings($event)"></app-account-settings>
+      <app-account-settings [accountSettings]="accountSettings" [inheritMode]="false" (onSavedAccountSettings)="updateAccountSettings($event)"></app-account-settings>
     </div>
     <div class="domain-account-description" fxFlex>
       <h3>User Accounts settings</h3>

@@ -15,22 +15,18 @@
  */
 package io.gravitee.am.service.exception.authentication;
 
-import java.util.Map;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AccountLockedException extends AccountStatusException {
+public class AccountInactiveException extends AccountStatusException {
 
-    public static final String ERROR_CODE = "account_locked";
-
-    public AccountLockedException(String msg, Map<String, String> details) {
-        super(msg, details);
+    public AccountInactiveException(String msg) {
+        super(msg);
     }
 
     @Override
     public String getErrorCode() {
-        return ERROR_CODE;
+        return "account_inactive";
     }
 }

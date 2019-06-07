@@ -19,14 +19,7 @@ package io.gravitee.am.service.exception.authentication;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AccountDisabledException extends AuthenticationException {
-
-    public AccountDisabledException() {
-    }
-
-    public AccountDisabledException(String msg, Throwable t) {
-        super(msg, t);
-    }
+public class AccountDisabledException extends AccountStatusException {
 
     public AccountDisabledException(String msg) {
         super(msg);

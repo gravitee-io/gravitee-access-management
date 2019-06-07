@@ -50,7 +50,7 @@ public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(Parameters.CLIENT_ID, client.getClientId());
 
-        userService.resetPassword(user, getAuthenticatedUser(context))
+        userService.resetPassword(user, client, getAuthenticatedUser(context))
                 .subscribe(
                         () -> {
                             queryParams.put("success", "reset_password_completed");
