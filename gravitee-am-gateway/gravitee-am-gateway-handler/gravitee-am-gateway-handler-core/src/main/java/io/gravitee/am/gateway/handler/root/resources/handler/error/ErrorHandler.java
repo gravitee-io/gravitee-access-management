@@ -15,20 +15,20 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.error;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.utils.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -39,6 +39,7 @@ import java.util.Map;
 public class ErrorHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(ErrorHandler.class);
+    private static final String CLIENT_CONTEXT_KEY = "client";
     private String errorPage;
 
     public ErrorHandler(String errorPage) {
@@ -76,8 +77,24 @@ public class ErrorHandler implements Handler<RoutingContext> {
 
     private void handleException(RoutingContext routingContext, String errorCode, String errorDetail) {
         try {
-            String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(routingContext.request(),  errorPage, null);
-            doRedirect(routingContext.response(), buildRedirectUri(proxiedErrorPage, errorCode, errorDetail));
+            final HttpServerRequest request = routingContext.request();
+            // prepare query parameters
+            Map<String, String> parameters = new LinkedHashMap<>();
+            // get client if exists
+            Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+            if (client != null) {
+                parameters.put(Parameters.CLIENT_ID, client.getClientId());
+            } else if (request.getParam(Parameters.CLIENT_ID) != null) {
+                parameters.put(Parameters.CLIENT_ID, (request.getParam(Parameters.CLIENT_ID)));
+            }
+            // append error information
+            parameters.put("error", errorCode);
+            if (errorDetail != null) {
+                parameters.put("error_description", errorDetail);
+            }
+            // redirect
+            String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request,  errorPage, parameters, true);
+            doRedirect(routingContext.response(), proxiedErrorPage);
         } catch (Exception e) {
             logger.error("Unable to handle root error response", e);
             doRedirect(routingContext.response(),  errorPage);
@@ -86,37 +103,5 @@ public class ErrorHandler implements Handler<RoutingContext> {
 
     private void doRedirect(HttpServerResponse response, String url) {
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
-    }
-
-    private String buildRedirectUri(String redirectUri, String errorCode, String errorDetail) throws URISyntaxException {
-        // prepare query
-        Map<String, String> query = new LinkedHashMap<>();
-        query.put("error", errorCode);
-        if (errorDetail != null) {
-            query.put("error_description", errorDetail);
-        }
-
-        return append(redirectUri, query);
-    }
-
-    private String append(String base, Map<String, String> query) throws URISyntaxException {
-        // prepare final redirect uri
-        UriBuilder template = UriBuilder.newInstance();
-
-        // get URI from the redirect_uri parameter
-        UriBuilder builder = UriBuilder.fromURIString(base);
-        URI redirectUri = builder.build();
-
-        // router final redirect uri
-        template.scheme(redirectUri.getScheme())
-                .host(redirectUri.getHost())
-                .port(redirectUri.getPort())
-                .userInfo(redirectUri.getUserInfo())
-                .path(redirectUri.getPath());
-
-        // append error parameters in "application/x-www-form-urlencoded" format
-        query.forEach((k, v) -> template.addParameter(k, UriBuilder.encodeURIComponent(v)));
-
-        return template.build().toString();
     }
 }

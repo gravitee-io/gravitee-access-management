@@ -20,10 +20,10 @@ import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
+import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.error.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginCallbackEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
@@ -190,7 +190,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // error route
         rootRouter.route(HttpMethod.GET, "/error")
-                .handler(new ErrorEndpoint(thymeleafTemplateEngine));
+                .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService));
 
         // mount forgot/reset registration pages only if the option is enabled
         if (domain.getLoginSettings() != null && domain.getLoginSettings().isRegisterEnabled()) {
