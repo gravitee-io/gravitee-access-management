@@ -114,6 +114,9 @@ public class AuthorizationFailureEndpoint extends AbstractAuthorizationEndpoint 
     private String buildRedirectUri(OAuth2Exception oAuth2Exception, AuthorizationRequest authorizationRequest) throws URISyntaxException {
         // prepare query
         Map<String, String> query = new LinkedHashMap<>();
+        if (authorizationRequest.getClientId() != null) {
+            query.put(Parameters.CLIENT_ID, authorizationRequest.getClientId());
+        }
         query.put("error", oAuth2Exception.getOAuth2ErrorCode());
         if (oAuth2Exception.getMessage() != null) {
             query.put("error_description", oAuth2Exception.getMessage());

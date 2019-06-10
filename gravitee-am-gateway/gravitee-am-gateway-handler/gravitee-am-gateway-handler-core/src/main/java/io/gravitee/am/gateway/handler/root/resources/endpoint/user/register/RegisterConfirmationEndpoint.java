@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.model.Client;
@@ -28,6 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -65,7 +68,10 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
 
         // check if user has already completed its registration
         if (user != null && user.isPreRegistration() && user.isRegistrationCompleted()) {
-            redirectToPage(routingContext, Collections.singletonMap("error", "invalid_registration_context"));
+            Map<String, String> parameters = new LinkedHashMap<>();
+            parameters.put(Parameters.CLIENT_ID, client.getClientId());
+            parameters.put(ERROR_PARAM, "invalid_registration_context");
+            redirectToPage(routingContext, parameters);
             return;
         }
 
