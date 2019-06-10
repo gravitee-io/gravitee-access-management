@@ -151,10 +151,10 @@ public class ScopeServiceTest {
     }
 
     @Test
-    public void shouldCreate_keyLowerCase() {
+    public void shouldCreate_keyUpperCase() {
         NewScope newScope = Mockito.mock(NewScope.class);
         when(newScope.getKey()).thenReturn("MY-SCOPE");
-        when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.empty());
+        when(scopeRepository.findByDomainAndKey(DOMAIN, "MY-SCOPE")).thenReturn(Maybe.empty());
         when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
         when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
 
@@ -168,7 +168,31 @@ public class ScopeServiceTest {
         verify(scopeRepository, times(1)).create(argThat(new ArgumentMatcher<Scope>() {
             @Override
             public boolean matches(Scope scope) {
-                return scope.getKey().equals("my-scope");
+                return scope.getKey().equals("MY-SCOPE");
+            }
+        }));
+        verify(domainService, times(1)).reload(any(), any());
+    }
+
+    @Test
+    public void shouldCreate_whiteSpaces() {
+        NewScope newScope = Mockito.mock(NewScope.class);
+        when(newScope.getKey()).thenReturn("MY scope");
+        when(scopeRepository.findByDomainAndKey(DOMAIN, "MY_scope")).thenReturn(Maybe.empty());
+        when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
+        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+
+        TestObserver testObserver = scopeService.create(DOMAIN, newScope).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(scopeRepository, times(1)).create(any(Scope.class));
+        verify(scopeRepository, times(1)).create(argThat(new ArgumentMatcher<Scope>() {
+            @Override
+            public boolean matches(Scope scope) {
+                return scope.getKey().equals("MY_scope");
             }
         }));
         verify(domainService, times(1)).reload(any(), any());

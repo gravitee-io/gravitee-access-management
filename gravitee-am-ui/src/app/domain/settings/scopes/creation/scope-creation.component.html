@@ -16,6 +16,7 @@
 
 -->
 <div class="new-scope-container">
+  <a [routerLink]="['..']" class="back-link"><small><< Back to scopes</small></a>
   <h1>New Scope</h1>
   <div class="new-scope-content">
     <form (ngSubmit)="create()" #scopeForm="ngForm" fxLayout="column" fxFlex="70">

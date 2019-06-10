@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from "@angular/router";
 import { ScopeService } from "../../../../services/scope.service";
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import * as moment from "moment";
-import {NgForm} from "@angular/forms";
+import { NgForm } from "@angular/forms";
+import { DialogService } from "../../../../services/dialog.service";
 
 @Component({
   selector: 'app-scope',
@@ -34,8 +35,12 @@ export class ScopeComponent implements OnInit {
   unitTime: any;
   @ViewChild('scopeForm') public scopeForm: NgForm;
 
-  constructor(private scopeService: ScopeService, private snackbarService: SnackbarService, private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService) { }
+  constructor(private scopeService: ScopeService,
+              private snackbarService: SnackbarService,
+              private route: ActivatedRoute,
+              private router: Router,
+              private breadcrumbService: BreadcrumbService,
+              private dialogService: DialogService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
@@ -76,5 +81,19 @@ export class ScopeComponent implements OnInit {
   clearExpiry() {
     this.scope.expiresIn = null;
     this.formChanged = true;
+  }
+
+  delete(event) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Delete Scope', 'Are you sure you want to delete this scope ?')
+      .subscribe(res => {
+        if (res) {
+          this.scopeService.delete(this.domainId, this.scope.id).subscribe(() => {
+            this.snackbarService.open("Scope deleted");
+            this.router.navigate(['/domains', this.domainId, 'settings', 'scopes']);
+          });
+        }
+      });
   }
 }

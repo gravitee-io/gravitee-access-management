@@ -91,7 +91,8 @@ public class ScopeServiceImpl implements ScopeService {
     @Override
     public Single<Scope> create(String domain, NewScope newScope, User principal) {
         LOGGER.debug("Create a new scope {} for domain {}", newScope, domain);
-        String scopeKey = newScope.getKey().toLowerCase();
+        // replace all whitespace by an underscore (whitespace is a reserved keyword to separate tokens)
+        String scopeKey = newScope.getKey().replaceAll("\\s+","_");
         return scopeRepository.findByDomainAndKey(domain, scopeKey)
                 .isEmpty()
                 .flatMap(empty -> {

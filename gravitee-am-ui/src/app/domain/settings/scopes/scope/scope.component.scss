@@ -3,8 +3,15 @@
   h1 {
     font-weight: 400;
   }
+  a.back-link {
+    color: #006CAB;
+    text-decoration: none;
+    &:hover {
+      color: #2196f3;
+      text-decoration: underline;
+    }
+  }
   .scope-content {
-    padding: 50px 0 20px;
     form {
       padding: 20px;
       background: #fafafa;
@@ -23,6 +30,17 @@
         }
       }
       .scope-form-actions {
+        margin-top: 20px;
+      }
+    }
+    .scope-delete-zone {
+      color: #f44336;
+      font-size: 75%;
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 2px;
+      border: 1px solid #e2e5e7;
+      .scope-delete-button {
         margin-top: 20px;
       }
     }
