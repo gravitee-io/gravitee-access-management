@@ -108,7 +108,6 @@
   },
   "required": [
     "clientId",
-    "clientSecret",
     "responseType"
   ],
   "oneOf":[
@@ -124,5 +123,11 @@
         "userProfileUri"
       ]
     }
-  ]
+  ],
+  "if": {
+    "properties": {
+      "responseType": { "const": "code" }
+    }
+  },
+  "then": { "required": ["clientSecret"] }
 }
