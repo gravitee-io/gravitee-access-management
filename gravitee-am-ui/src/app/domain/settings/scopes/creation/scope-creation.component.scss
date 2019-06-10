@@ -3,8 +3,15 @@
   h1 {
     font-weight: 400;
   }
+  a.back-link {
+    color: #006CAB;
+    text-decoration: none;
+    &:hover {
+      color: #2196f3;
+      text-decoration: underline;
+    }
+  }
   .new-scope-content {
-    padding: 50px 0 20px;
     form {
       padding: 20px;
       background: #fafafa;

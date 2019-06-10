@@ -44,8 +44,6 @@ export class ScopeCreationComponent implements OnInit {
   }
 
   create() {
-    // Force lowercase for scope key
-    this.scope.key = this.scope.key.toLowerCase();
     // set duration time for user consent
     if (this.expiresIn && this.unitTime) {
       this.scope.expiresIn = moment.duration(this.expiresIn, this.unitTime).asSeconds();
