@@ -203,6 +203,13 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
     public void afterPropertiesSet() throws Exception {
         OAuth2GenericIdentityProviderConfiguration configuration = (OAuth2GenericIdentityProviderConfiguration) this.configuration;
 
+        // check configuration
+        // a client secret is required if authorization code flow is used
+        if (io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType())
+                && (configuration.getClientSecret() == null || configuration.getClientSecret().isEmpty())) {
+            throw new IllegalArgumentException("A client_secret must be supplied in order to use the Authorization Code flow");
+        }
+
         // fetch OpenID Provider information
         getOpenIDProviderConfiguration(configuration);
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ProviderService } from "../../../../../services/provider.service";
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -21,6 +21,7 @@ import { PlatformService } from "../../../../../services/platform.service";
 import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { DomainService } from "../../../../../services/domain.service";
 import { AppConfig } from "../../../../../../config/app.config";
+import { NgForm } from "@angular/forms";
 
 @Component({
   selector: 'provider-settings',
@@ -28,6 +29,7 @@ import { AppConfig } from "../../../../../../config/app.config";
   styleUrls: ['./settings.component.scss']
 })
 export class ProviderSettingsComponent implements OnInit {
+  @ViewChild('providerForm') public form: NgForm;
   private domainId: string;
   domain: any = {};
   configurationIsValid: boolean = true;
@@ -65,6 +67,8 @@ export class ProviderSettingsComponent implements OnInit {
     this.providerService.update(this.domainId, this.provider.id, this.provider).subscribe(data => {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/providers/'+this.provider.id+'$', this.provider.name);
       this.snackbarService.open("Provider updated");
+      this.configurationPristine = true;
+      this.form.reset(data);
     });
   }
 
