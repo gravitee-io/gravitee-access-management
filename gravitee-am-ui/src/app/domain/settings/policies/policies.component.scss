@@ -1,10 +1,13 @@
 .policies-container {
   padding: 20px;
-  height: 88%;
+  height: 86%;
 
-  mat-toolbar {
-    border: 1px solid #E0E0E0;
-    background: #ffffff;
+  div.title {
+    align-items: center;
+    h1 {
+      margin-left: 30px;
+      font-weight: 400;
+    }
     button {
       color: grey;
     }
@@ -13,7 +16,6 @@
   mat-drawer-container {
     height: 100%;
     border: 1px solid #E0E0E0;
-    border-top: none;
 
     mat-drawer {
       padding: 20px;

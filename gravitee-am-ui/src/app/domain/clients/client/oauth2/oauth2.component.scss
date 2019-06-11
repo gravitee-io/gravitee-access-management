@@ -1,5 +1,5 @@
-.oidc-container {
-  .oidc-content {
+.oauth2-container {
+  .oauth2-content {
     form {
       padding: 20px;
       background: #fafafa;
@@ -16,14 +16,37 @@
           margin: 5px 0;
         }
       }
+      .client-scopes {
+        a {
+          cursor: pointer;
+          font-size: 75%;
+          color: #2196f3;
+        }
+        ngx-datatable {
+          background: transparent;
+          box-shadow: none;
+        }
+        .client-scope-actions {
+          button {
+            top: -7px;
+          }
+        }
+      }
+      .type-section {
+        width: 50%;
+      }
+      .type-selection {
+        display: inline-flex;
+        width: 100%;
+      }
     }
   }
-  .oidc-description {
+  .oauth2-description {
     margin-left: 20px;
     h3 {
       font-weight: 400;
     }
-    .oidc-description-content {
+    .oauth2-description-content {
       border-top: 1px solid rgb(226, 229, 231);
       p {
         margin-top: 20px;
@@ -34,39 +57,5 @@
         color: rgba(0, 0, 0, 0.38);
       }
     }
-  }
-}
-
-span.code {
-  color: #cccccc;
-  font-size: small;
-}
-
-mat-list-item {
-  color: grey;
-
-  span.code {
-    margin-right: 10px;
-  }
-}
-
-.idtoken-description {
-  margin-top: 20px;
-  font-size: smaller;
-}
-
-.idtoken-validity {
-  margin-top: 20px;
-}
-
-ngx-datatable.material {
-  background: transparent;
-  box-shadow: none;
-}
-
-.provider-claims-actions {
-  button, a {
-    top: -7px;
-    color: grey;
   }
 }

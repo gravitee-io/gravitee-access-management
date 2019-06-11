@@ -16,46 +16,60 @@
 
 -->
 <div class="role-container">
+  <a [routerLink]="['..']" class="back-link"><small><< Back to roles</small></a>
   <h1>{{role.name}}</h1>
-  <div class="role-content">
-    <form (keydown.enter)="false" (ngSubmit)="update()" #roleForm="ngForm" fxLayout="column" fxFlex="70">
-      <mat-form-field fxFlex>
-        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required>
-      </mat-form-field>
+  <div fxLayout="row">
+    <div class="role-content" fxLayout="column" fxFlex="70">
+      <form (keydown.enter)="false" (ngSubmit)="update()" #roleForm="ngForm" fxLayout="column">
+        <mat-form-field fxFlex>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required>
+          <mat-hint>A name for your role.</mat-hint>
+        </mat-form-field>
 
-      <mat-form-field fxFlex>
-        <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description">
-      </mat-form-field>
+        <mat-form-field fxFlex>
+          <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description">
+          <mat-hint>A description for your role.</mat-hint>
+        </mat-form-field>
 
-      <h4 style="margin-bottom: 0px;">Permissions</h4>
-      <mat-form-field>
-        <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" #chipListPermissions>
-          <mat-chip *ngFor="let permission of selectedPermissions" color="accent"
-                    selected="true" (removed)="removePermission(permission)">
-            <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
-            &nbsp;<span>{{permission.key}}</span>&nbsp;|&nbsp;<small>{{permission.name}}</small>
-            <mat-icon matChipRemove>cancel</mat-icon>
-          </mat-chip>
-          <input matInput
-                 placeholder="Permissions"
-                 aria-label="Permissions"
-                 [matAutocomplete]="auto"
-                 [matChipInputFor]="chipListPermissions"
-                 #chipInput>
-        </mat-chip-list>
+        <h4 style="margin-bottom: 0px;">Permissions</h4>
+        <mat-form-field>
+          <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" #chipListPermissions>
+            <mat-chip *ngFor="let permission of selectedPermissions" color="accent"
+                      selected="true" (removed)="removePermission(permission)">
+              <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
+              &nbsp;<span>{{permission.key}}</span>&nbsp;|&nbsp;<small>{{permission.name}}</small>
+              <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+            <input matInput
+                   placeholder="Permissions"
+                   aria-label="Permissions"
+                   [matAutocomplete]="auto"
+                   [matChipInputFor]="chipListPermissions"
+                   #chipInput>
+          </mat-chip-list>
 
-        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addPermission($event)">
-          <mat-option *ngFor="let scope of scopes" [value]="scope.key">
-            <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
-            <span>{{ scope.key }}</span> | <small>{{scope.name}}</small>
-          </mat-option>
-        </mat-autocomplete>
-      </mat-form-field>
+          <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addPermission($event)">
+            <mat-option *ngFor="let scope of scopes" [value]="scope.key">
+              <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
+              <span>{{ scope.key }}</span> | <small>{{scope.name}}</small>
+            </mat-option>
+          </mat-autocomplete>
+          <mat-hint>Role's permissions</mat-hint>
+        </mat-form-field>
 
-      <div fxLayout="row" class="role-form-actions">
-        <button mat-raised-button [disabled]="(!roleForm.valid || roleForm.pristine) && !formChanged" type="submit">SAVE</button>
+        <div fxLayout="row" class="role-form-actions">
+          <button mat-raised-button [disabled]="(!roleForm.valid || roleForm.pristine) && !formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+      <div class="role-delete-zone" fxLayout="column">
+        <p>This operation cannot be undone.</p>
+        Role will be deleted, users and groups will not be able to use this role's permissions.
+        <div class="role-delete-button" fxLayout="row">
+          <span fxFlex></span>
+          <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+        </div>
       </div>
-    </form>
+    </div>
     <div class="role-description" fxFlex>
       <h3>Manage role</h3>
       <div class="role-description-content">

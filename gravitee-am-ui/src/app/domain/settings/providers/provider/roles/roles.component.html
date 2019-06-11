@@ -16,42 +16,53 @@
 
 -->
 <div class="provider-roles-container">
-  <div fxLayout="column">
-    <small>
-      Role mappers let you set roles and permissions for your users. You can map these roles with your identity provider users. This mapping occurs during user authentication.
-    </small>
-    <small>
-      To specify users and groups roles, you can use the following syntax <code>attributeName=attributeValue</code>
-      and choose the corresponding roles.
-    </small>
-    <small class="provider-roles-example">
-      For example :
-      <pre fxLayout="column">
+  <div class="provider-roles-content" fxLayout="column" fxFlex="70">
+    <mat-list *ngIf="!isEmpty">
+      <span *ngFor="let role of providerRoles">
+        <h3 matSubheader>{{getRole(role)}}</h3>
+        <mat-list-item *ngFor="let user of providerRoleMapper[role]">
+          <mat-icon mat-list-icon>person</mat-icon>
+          <h4 matLine>{{displayMapping(user)}}</h4>
+          <button mat-icon-button (click)="deleteUserFromRole(role, user, $event);"><mat-icon>delete</mat-icon></button>
+        </mat-list-item>
+        <mat-divider></mat-divider>
+      </span>
+    </mat-list>
+
+    <app-emptystate *ngIf="isEmpty"
+                    [message]="'Role mappers will appear here'"
+                    [subMessage]="'Start adding users to roles'"
+                    [icon]="'supervisor_account'"></app-emptystate>
+
+    <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+      <button mat-fab color="accent" (click)="add()">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+  </div>
+  <div class="provider-roles-description" fxFlex>
+    <h3>Role mappers</h3>
+    <div class="provider-roles-description-content">
+      <p>
+        Role mappers let you set roles and permissions for your users.
+      </p>
+      <p>
+        You can map these roles with your identity provider users.
+      </p>
+      <p>
+        This mapping occurs during user authentication.
+      </p>
+      <small>
+        To specify users and groups roles, you can use the following syntax <code>attributeName=attributeValue</code>
+        and choose the corresponding roles.
+      </small>
+      <small class="provider-roles-example">
+        For example :
+        <pre fxLayout="column">
         <code>- uid=sampleuser => ROLE_USER</code>
         <code>- memberOf=administrators => ROLE_ADMIN</code>
       </pre>
-    </small>
-  </div>
-  <mat-list *ngIf="!isEmpty">
-    <span *ngFor="let role of providerRoles">
-      <h3 matSubheader>{{getRole(role)}}</h3>
-      <mat-list-item *ngFor="let user of providerRoleMapper[role]">
-        <mat-icon mat-list-icon>person</mat-icon>
-        <h4 matLine>{{displayMapping(user)}}</h4>
-        <button mat-icon-button (click)="deleteUserFromRole(role, user, $event);"><mat-icon>delete</mat-icon></button>
-      </mat-list-item>
-      <mat-divider></mat-divider>
-    </span>
-  </mat-list>
-
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Role mappers will appear here'"
-                  [subMessage]="'Start adding users to roles'"
-                  [icon]="'supervisor_account'"></app-emptystate>
-
-  <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
-    <button mat-fab color="accent" (click)="add()">
-      <mat-icon>add</mat-icon>
-    </button>
+      </small>
+    </div>
   </div>
 </div>

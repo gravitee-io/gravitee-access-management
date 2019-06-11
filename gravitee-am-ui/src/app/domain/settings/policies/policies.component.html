@@ -16,7 +16,10 @@
 
 -->
 <div class="policies-container">
-  <mat-toolbar>Extension Points <button mat-icon-button (click)="openDialog()"><mat-icon>info_outline</mat-icon></button></mat-toolbar>
+  <div fxLayout="row" class="title">
+    <h1>Extension Points</h1>
+    <button mat-icon-button (click)="openDialog()"><mat-icon>info_outline</mat-icon></button>
+  </div>
   <mat-drawer-container>
     <mat-drawer mode="side" opened>
       <div>

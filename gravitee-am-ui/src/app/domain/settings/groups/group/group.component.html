@@ -16,6 +16,7 @@
 
 -->
 <div *ngIf="group" class="group-container">
+  <a [routerLink]="['..']" class="back-link"><small><< Back to groups</small></a>
   <h1>{{group.name}}</h1>
   <nav mat-tab-nav-bar>
     <a mat-tab-link
