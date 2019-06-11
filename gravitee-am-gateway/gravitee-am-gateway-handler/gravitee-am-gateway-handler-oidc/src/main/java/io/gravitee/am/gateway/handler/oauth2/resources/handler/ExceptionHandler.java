@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler;
 
 import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.service.response.OAuth2ErrorResponse;
+import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
@@ -49,6 +50,17 @@ public class ExceptionHandler implements Handler<RoutingContext> {
                         .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")
                         .setStatusCode(oAuth2Exception.getHttpStatusCode())
+                        .end(Json.encodePrettily(oAuth2ErrorResponse));
+            } else if (throwable instanceof PolicyChainException) {
+                PolicyChainException policyChainException = (PolicyChainException) throwable;
+                OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse(policyChainException.key());
+                oAuth2ErrorResponse.setDescription(policyChainException.getMessage());
+                routingContext
+                        .response()
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .setStatusCode(policyChainException.statusCode())
                         .end(Json.encodePrettily(oAuth2ErrorResponse));
             } else if (throwable instanceof HttpStatusException) {
                 routingContext

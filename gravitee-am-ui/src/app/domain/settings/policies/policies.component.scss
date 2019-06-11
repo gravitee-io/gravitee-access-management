@@ -30,6 +30,12 @@
         mat-expansion-panel {
           box-shadow: none;
           border: 1px solid #E0E0E0;
+
+          .no-policies {
+            text-align: center;
+            padding: 20px;
+            color: grey;
+          }
         }
       }
     }
