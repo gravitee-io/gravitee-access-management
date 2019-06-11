@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.error;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpHeaders;
@@ -58,6 +59,9 @@ public class ErrorHandler implements Handler<RoutingContext> {
             } else if (throwable instanceof OAuth2Exception) {
                 OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
                 handleException(routingContext, oAuth2Exception.getOAuth2ErrorCode(), oAuth2Exception.getMessage());
+            } else if (throwable instanceof PolicyChainException) {
+                PolicyChainException policyChainException = (PolicyChainException) throwable;
+                handleException(routingContext, policyChainException.key(), policyChainException.getMessage());
             } else {
                 logger.error("An exception occurs while handling incoming request", throwable);
                 if (routingContext.statusCode() != -1) {

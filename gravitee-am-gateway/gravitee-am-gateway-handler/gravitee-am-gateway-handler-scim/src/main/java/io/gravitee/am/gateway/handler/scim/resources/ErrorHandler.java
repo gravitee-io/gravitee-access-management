@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UnauthorizedException;
 import io.gravitee.am.gateway.handler.scim.model.Error;
 import io.gravitee.am.gateway.handler.scim.model.ScimType;
+import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
@@ -80,6 +81,9 @@ public class ErrorHandler implements Handler<RoutingContext> {
                     UnauthorizedException unauthorizedException = new UnauthorizedException();
                     handleException(routingContext, unauthorizedException.getHttpStatusCode(), unauthorizedException.getMessage(), null);
                 }
+            } else if (throwable instanceof PolicyChainException) {
+                PolicyChainException policyChainException = (PolicyChainException) throwable;
+                handleException(routingContext, policyChainException.statusCode(), policyChainException.key() + " : " + policyChainException.getMessage(), null);
             } else {
                 logger.error(throwable.getMessage(), throwable);
                 if (routingContext.statusCode() != -1) {

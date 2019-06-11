@@ -15,12 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.root;
 
+import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
@@ -115,6 +117,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private LoginAttemptService loginAttemptService;
 
+    @Autowired
+    private PolicyChainHandler policyChainHandler;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -157,6 +162,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // CSRF handler
         csrfHandler(rootRouter);
+
+        // Root policy chain handler
+        rootRouter.route().handler(policyChainHandler.create(ExtensionPoint.ROOT));
 
         // login route
         rootRouter.get("/login")

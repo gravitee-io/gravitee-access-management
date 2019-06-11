@@ -43,9 +43,14 @@ export class DomainSettingsPoliciesComponent implements OnInit {
   selectedPolicyId: string;
   extensionPoints: any = [
     {
+      value: 'ROOT',
+      stage: 'ROOT',
+      expanded: true
+    },
+    {
       value: 'PRE_CONSENT',
       stage: 'PRE_CONSENT',
-      expanded: true
+      expanded: false,
     },
     {
       value: 'POST_CONSENT',
