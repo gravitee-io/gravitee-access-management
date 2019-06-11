@@ -17,15 +17,9 @@ import {Component, OnInit, ViewChild} from "@angular/core";
 import {ActivatedRoute, Router} from "@angular/router";
 import {SnackbarService} from "../../../../services/snackbar.service";
 import {BreadcrumbService} from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import {MatInput} from "@angular/material/input";
 import {TagService} from "../../../../services/tag.service";
 import {NgForm} from "@angular/forms";
-
-export interface Tag {
-  id: string;
-  name: string;
-  description: string;
-}
+import {DialogService} from "../../../../services/dialog.service";
 
 @Component({
   selector: 'app-tag',
@@ -33,16 +27,18 @@ export interface Tag {
   styleUrls: ['./tag.component.scss']
 })
 export class TagComponent implements OnInit {
-
   tag: any;
   @ViewChild('tagForm') public tagForm: NgForm;
 
-  constructor(private tagService: TagService, private snackbarService: SnackbarService, private route: ActivatedRoute,
-              private router: Router, private breadcrumbService: BreadcrumbService) { }
+  constructor(private tagService: TagService,
+              private snackbarService: SnackbarService,
+              private route: ActivatedRoute,
+              private router: Router,
+              private breadcrumbService: BreadcrumbService,
+              private dialogService: DialogService) { }
 
   ngOnInit() {
     this.tag = this.route.snapshot.data['tag'];
-
     this.initBreadcrumb();
   }
 
@@ -53,6 +49,20 @@ export class TagComponent implements OnInit {
       this.tagForm.reset(Object.assign({}, this.tag));
       this.snackbarService.open("Sharding tag updated");
     });
+  }
+
+  delete(event) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Delete Sharding Tag', 'Are you sure you want to delete this sharding tag ?')
+      .subscribe(res => {
+        if (res) {
+          this.tagService.delete(this.tag.id).subscribe(response => {
+            this.snackbarService.open("Sharding tag deleted");
+            this.router.navigate(['/settings', 'management', 'tags']);
+          });
+        }
+      });
   }
 
   initBreadcrumb() {

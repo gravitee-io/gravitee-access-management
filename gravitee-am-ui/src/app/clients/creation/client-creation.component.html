@@ -16,6 +16,7 @@
 
 -->
 <div class="new-client-container">
+  <a [routerLink]="['..']" class="back-link"><small><< Back to clients</small></a>
   <h1>New Client</h1>
   <div class="new-client-content">
     <form (ngSubmit)="create()" #clientForm="ngForm" fxLayout="column" fxFlex="70">
@@ -23,7 +24,7 @@
         <mat-select placeholder="Domain" [(ngModel)]="selectedDomainId" name="domain" required>
           <mat-option *ngFor="let domain of domains" [value]="domain.id">{{ domain.name }}</mat-option>
         </mat-select>
-        <mat-hint style="font-size: 75%;">Client's security domain.</mat-hint>
+        <mat-hint>Client's security domain.</mat-hint>
       </mat-form-field>
 
       <mat-form-field fxFlex>

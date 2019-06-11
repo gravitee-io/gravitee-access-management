@@ -16,6 +16,7 @@
 
 -->
 <div class="new-group-container">
+  <a [routerLink]="['..']" class="back-link"><small><< Back to groups</small></a>
   <h1>New Group</h1>
   <div class="new-group-content">
     <form (ngSubmit)="create()" #groupForm="ngForm" fxLayout="column" fxFlex="70">

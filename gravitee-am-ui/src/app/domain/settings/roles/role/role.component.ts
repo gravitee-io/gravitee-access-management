@@ -21,6 +21,7 @@ import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/compo
 import { MatInput } from "@angular/material/input";
 import * as _ from "lodash";
 import { AppConfig } from "../../../../../config/app.config";
+import { DialogService } from "../../../../services/dialog.service";
 
 export interface Scope {
   id: string;
@@ -43,8 +44,12 @@ export class RoleComponent implements OnInit {
   role: any;
   formChanged: boolean = false;
 
-  constructor(private roleService: RoleService, private snackbarService: SnackbarService, private route: ActivatedRoute,
-              private router: Router, private breadcrumbService: BreadcrumbService) { }
+  constructor(private roleService: RoleService,
+              private snackbarService: SnackbarService,
+              private route: ActivatedRoute,
+              private router: Router,
+              private breadcrumbService: BreadcrumbService,
+              private dialogService: DialogService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
@@ -84,6 +89,20 @@ export class RoleComponent implements OnInit {
       this.initBreadcrumb();
       this.snackbarService.open("Role updated");
     });
+  }
+
+  delete(event) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Delete Role', 'Are you sure you want to delete this role ?')
+      .subscribe(res => {
+        if (res) {
+          this.roleService.delete(this.domainId, this.role.id).subscribe(() => {
+            this.snackbarService.open('Group '+ this.role.name + ' deleted');
+            this.router.navigate(['/domains', this.domainId, 'settings', 'roles']);
+          });
+        }
+      });
   }
 
   addPermission(event) {

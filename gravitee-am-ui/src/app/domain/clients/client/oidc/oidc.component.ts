@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { SnackbarService } from "../../../../services/snackbar.service";
-import { DialogService } from "../../../../services/dialog.service";
 import { ClientService } from "../../../../services/client.service";
-import { DomainService } from "../../../../services/domain.service";
+import { NgForm} from "@angular/forms";
 
 @Component({
   selector: 'app-oidc',
@@ -33,8 +31,9 @@ export class ClientOIDCComponent implements OnInit {
   editing = {};
   formChanged: boolean = false;
 
-  constructor(private route: ActivatedRoute, private dialog: MatDialog, private clientService: ClientService,
-              private snackbarService: SnackbarService, private dialogService: DialogService, private domainService: DomainService) { }
+  constructor(private route: ActivatedRoute,
+              private clientService: ClientService,
+              private snackbarService: SnackbarService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
@@ -53,20 +52,17 @@ export class ClientOIDCComponent implements OnInit {
     }
   }
 
-  addClaim(event) {
-    event.preventDefault();
-    let dialogRef = this.dialog.open(CreateClaimComponent, { width : '500px'});
-    dialogRef.afterClosed().subscribe(claim => {
-      if (claim) {
-        if (!this.claimExits(claim.key)) {
-          this.claims.push(claim);
-          this.claims = [...this.claims];
-          this.update("Claim added");
-        } else {
-          this.snackbarService.open(`Error : claim ${claim.key} already exists`);
-        }
+  addClaim(claim) {
+    if (claim) {
+      if (!this.claimExits(claim.key)) {
+        this.claims.push(claim);
+        this.claims = [...this.claims];
+        this.client.idTokenCustomClaims = this.claims.reduce(function(map, obj) { map[obj.key] = obj.value; return map; }, {});
+        this.formChanged = true;
+      } else {
+        this.snackbarService.open(`Error : claim ${claim.key} already exists`);
       }
-    });
+    }
   }
 
   updateClaim(event, cell, rowIndex) {
@@ -79,12 +75,12 @@ export class ClientOIDCComponent implements OnInit {
       this.editing[rowIndex + '-' + cell] = false;
       this.claims[rowIndex][cell] = claim;
       this.claims = [...this.claims];
-      this.update("Claim updated");
+      this.client.idTokenCustomClaims = this.claims.reduce(function(map, obj) { map[obj.key] = obj.value; return map; }, {});
+      this.formChanged = true;
     }
   }
 
   update(message: string) {
-    this.client.idTokenCustomClaims = this.claims.reduce(function(map, obj) { map[obj.key] = obj.value; return map; }, {});
     this.clientService.update(this.domainId, this.client.id, this.client).subscribe(data => {
       this.client = data;
       this.snackbarService.open(message);
@@ -94,14 +90,9 @@ export class ClientOIDCComponent implements OnInit {
 
   delete(key, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Claim', 'Are you sure you want to delete this claim ?')
-      .subscribe(res => {
-        if (res) {
-          this.claims = this.claims.filter(function(el) { return el.key !== key; });
-          this.update("Claim deleted");
-        }
-      });
+    this.claims = this.claims.filter(function(el) { return el.key !== key; });
+    this.client.idTokenCustomClaims = this.claims.reduce(function(map, obj) { map[obj.key] = obj.value; return map; }, {});
+    this.formChanged = true;
   }
 
   claimExits(attribute): boolean {
@@ -114,9 +105,19 @@ export class ClientOIDCComponent implements OnInit {
 }
 
 @Component({
-  selector: 'create-claim',
-  templateUrl: './claims/add-claim.component.html',
+  selector: 'app-create-claim',
+  templateUrl: './claims/add-claim.component.html'
 })
 export class CreateClaimComponent {
-  constructor(public dialogRef: MatDialogRef<CreateClaimComponent>) { }
+  claim: any = {};
+  @Output() addClaimChange = new EventEmitter();
+  @ViewChild('claimForm') form: NgForm;
+
+  constructor() {}
+
+  addClaim() {
+    this.addClaimChange.emit(this.claim);
+    this.claim = {};
+    this.form.reset(this.claim);
+  }
 }

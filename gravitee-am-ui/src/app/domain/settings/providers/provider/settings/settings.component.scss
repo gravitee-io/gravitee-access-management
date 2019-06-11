@@ -15,6 +15,18 @@ form {
   }
 }
 
+.provider-settings-delete-zone {
+  color: #f44336;
+  font-size: 75%;
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 2px;
+  border: 1px solid #e2e5e7;
+  .provider-settings-delete-button {
+    margin-top: 20px;
+  }
+}
+
 .provider-settings-description {
   margin-left: 20px;
   h3 {

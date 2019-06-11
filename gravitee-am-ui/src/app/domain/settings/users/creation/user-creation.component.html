@@ -16,6 +16,7 @@
 
 -->
 <div class="new-user-container">
+  <a [routerLink]="['..']" class="back-link"><small><< Back to users</small></a>
   <h1>New User</h1>
   <div class="new-user-content">
     <form (ngSubmit)="create()" #userForm="ngForm" fxLayout="column" fxFlex="70">
