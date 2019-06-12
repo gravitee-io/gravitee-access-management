@@ -67,9 +67,10 @@ public class OpenIDScopeUpgrader implements Upgrader, Ordered {
     }
 
     private Single<Scope> createSystemScope(String domain, io.gravitee.am.common.oidc.Scope systemScope) {
-        return scopeService.findByDomain(domain)
-                .flatMap(scopes -> {
-                    Optional<Scope> optScope = scopes.stream().filter(scope -> scope.getKey().equalsIgnoreCase(systemScope.getKey())).findFirst();
+        return scopeService.findByDomainAndKey(domain, systemScope.getKey())
+                .map(scope -> Optional.of(scope))
+                .defaultIfEmpty(Optional.empty())
+                .flatMapSingle(optScope -> {
                     if (!optScope.isPresent()) {
                         logger.info("Create a new system scope key[{}] for domain[{}]", systemScope.getKey(), domain);
                         NewSystemScope scope = new NewSystemScope();
@@ -77,8 +78,9 @@ public class OpenIDScopeUpgrader implements Upgrader, Ordered {
                         scope.setClaims(systemScope.getClaims());
                         scope.setName(systemScope.getLabel());
                         scope.setDescription(systemScope.getDescription());
+                        scope.setDiscovery(systemScope.isDiscovery());
                         return scopeService.create(domain, scope);
-                    } else if (!optScope.get().isSystem()){
+                    } else if (shouldUpdateSystemScope(optScope, systemScope)){
                         logger.info("Update a system scope key[{}] for domain[{}]", systemScope.getKey(), domain);
                         final Scope existingScope = optScope.get();
                         UpdateSystemScope scope = new UpdateSystemScope();
@@ -86,11 +88,24 @@ public class OpenIDScopeUpgrader implements Upgrader, Ordered {
                         scope.setDescription(existingScope.getDescription() != null ? existingScope.getDescription() : systemScope.getDescription());
                         scope.setClaims(systemScope.getClaims());
                         scope.setExpiresIn(existingScope.getExpiresIn());
+                        scope.setDiscovery(systemScope.isDiscovery());
                         return scopeService.update(domain, optScope.get().getId(), scope);
                     }
                     return Single.just(optScope.get());
                 });
     }
+
+    /**
+     * Update System scope if it is not currently set as system or if discovery property does not match.
+     * @param optScope
+     * @param systemScope
+     * @return
+     */
+    private boolean shouldUpdateSystemScope(Optional<Scope> optScope, io.gravitee.am.common.oidc.Scope systemScope) {
+        //If not currently set as system or if discovery property does not match
+        return !optScope.get().isSystem() || optScope.get().isDiscovery() != systemScope.isDiscovery();
+    }
+
     @Override
     public int getOrder() {
         return 162;

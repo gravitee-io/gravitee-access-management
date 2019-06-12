@@ -26,24 +26,30 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.ScopeServiceImpl;
 import io.gravitee.am.service.model.NewScope;
 import io.gravitee.am.service.model.PatchClient;
+import io.gravitee.am.service.model.PatchScope;
 import io.gravitee.am.service.model.UpdateRole;
+import io.gravitee.am.service.model.UpdateScope;
+import io.gravitee.am.service.model.UpdateSystemScope;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -226,6 +232,236 @@ public class ScopeServiceTest {
         testObserver.assertNotComplete();
 
         verify(scopeRepository, never()).create(any(Scope.class));
+    }
+
+    @Test
+    public void shouldPatch_systemScope_discoveryNotReplaced() {
+        PatchScope patch = new PatchScope();
+        patch.setDiscovery(Optional.of(true));
+        patch.setName(Optional.of("name"));
+
+        final String scopeId = "toPatchId";
+
+        Scope toPatch = new Scope();
+        toPatch.setId(scopeId);
+        toPatch.setSystem(true);
+        toPatch.setDiscovery(false);
+        toPatch.setName("oldName");
+        toPatch.setDescription("oldDescription");
+
+        ArgumentCaptor<Scope> argument = ArgumentCaptor.forClass(Scope.class);
+
+        when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toPatch));
+        when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
+        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+
+        TestObserver testObserver = scopeService.patch(DOMAIN,scopeId, patch).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(scopeRepository, times(1)).update(any(Scope.class));
+        assertNotNull(argument.getValue());
+        assertEquals("name",argument.getValue().getName());
+        assertEquals("oldDescription",argument.getValue().getDescription());
+        assertFalse(argument.getValue().isDiscovery());
+    }
+
+    @Test
+    public void shouldPatch_nonSystemScope_discoveryNotReplaced() {
+        PatchScope patch = new PatchScope();
+        patch.setDiscovery(Optional.of(true));
+        patch.setName(Optional.of("name"));
+
+        final String scopeId = "toPatchId";
+
+        Scope toPatch = new Scope();
+        toPatch.setId(scopeId);
+        toPatch.setSystem(false);
+        toPatch.setDiscovery(false);
+        toPatch.setName("oldName");
+        toPatch.setDescription("oldDescription");
+
+        ArgumentCaptor<Scope> argument = ArgumentCaptor.forClass(Scope.class);
+
+        when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toPatch));
+        when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
+        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+
+        TestObserver testObserver = scopeService.patch(DOMAIN,scopeId, patch).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(scopeRepository, times(1)).update(any(Scope.class));
+        assertNotNull(argument.getValue());
+        assertEquals("name",argument.getValue().getName());
+        assertEquals("oldDescription",argument.getValue().getDescription());
+        assertTrue(argument.getValue().isDiscovery());
+    }
+
+    @Test
+    public void shouldNotPatch() {
+        Scope toPatch = new Scope();
+        toPatch.setId("toPatchId");
+
+        when(scopeRepository.findById("toPatchId")).thenReturn(Maybe.error(TechnicalException::new));
+
+        TestObserver testObserver = scopeService.patch(DOMAIN,"toPatchId", new PatchScope()).test();
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldUpdate_systemScope_discoveryNotReplaced() {
+        UpdateScope updateScope = new UpdateScope();
+        updateScope.setDiscovery(true);
+        updateScope.setName("name");
+
+        final String scopeId = "toUpdateId";
+
+        Scope toUpdate = new Scope();
+        toUpdate.setId(scopeId);
+        toUpdate.setSystem(true);
+        toUpdate.setDiscovery(false);
+        toUpdate.setName("oldName");
+        toUpdate.setDescription("oldDescription");
+
+        ArgumentCaptor<Scope> argument = ArgumentCaptor.forClass(Scope.class);
+
+        when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toUpdate));
+        when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
+        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+
+        TestObserver testObserver = scopeService.update(DOMAIN,scopeId, updateScope).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(scopeRepository, times(1)).update(any(Scope.class));
+        assertNotNull(argument.getValue());
+        assertEquals("name",argument.getValue().getName());
+        assertNull(argument.getValue().getDescription());
+        assertFalse(argument.getValue().isDiscovery());
+    }
+
+    @Test
+    public void shouldUpdate_nonSystemScope_discoveryNotReplaced() {
+        UpdateScope updateScope = new UpdateScope();
+        updateScope.setName("name");
+
+        final String scopeId = "toUpdateId";
+
+        Scope toUpdate = new Scope();
+        toUpdate.setId(scopeId);
+        toUpdate.setSystem(false);
+        toUpdate.setDiscovery(true);
+        toUpdate.setName("oldName");
+        toUpdate.setDescription("oldDescription");
+
+        ArgumentCaptor<Scope> argument = ArgumentCaptor.forClass(Scope.class);
+
+        when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toUpdate));
+        when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
+        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+
+        TestObserver testObserver = scopeService.update(DOMAIN,scopeId, updateScope).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(scopeRepository, times(1)).update(any(Scope.class));
+        assertNotNull(argument.getValue());
+        assertEquals("name",argument.getValue().getName());
+        assertNull(argument.getValue().getDescription());
+        assertTrue(argument.getValue().isDiscovery());
+    }
+
+    @Test
+    public void shouldUpdate_nonSystemScope_discoveryReplaced() {
+        UpdateScope updateScope = new UpdateScope();
+        updateScope.setDiscovery(true);
+        updateScope.setName("name");
+
+        final String scopeId = "toUpdateId";
+
+        Scope toUpdate = new Scope();
+        toUpdate.setId(scopeId);
+        toUpdate.setSystem(false);
+        toUpdate.setDiscovery(false);
+        toUpdate.setName("oldName");
+        toUpdate.setDescription("oldDescription");
+
+        ArgumentCaptor<Scope> argument = ArgumentCaptor.forClass(Scope.class);
+
+        when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toUpdate));
+        when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
+        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+
+        TestObserver testObserver = scopeService.update(DOMAIN,scopeId, updateScope).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(scopeRepository, times(1)).update(any(Scope.class));
+        assertNotNull(argument.getValue());
+        assertEquals("name",argument.getValue().getName());
+        assertNull(argument.getValue().getDescription());
+        assertTrue(argument.getValue().isDiscovery());
+    }
+
+    @Test
+    public void shouldNotUpdate() {
+        Scope toUpdate = new Scope();
+        toUpdate.setId("toUpdateId");
+
+        when(scopeRepository.findById("toUpdateId")).thenReturn(Maybe.error(TechnicalException::new));
+
+        TestObserver testObserver = scopeService.update(DOMAIN,"toUpdateId", new UpdateScope()).test();
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldUpdateSystemScope() {
+        UpdateSystemScope updateScope = new UpdateSystemScope();
+        updateScope.setDiscovery(true);
+        updateScope.setName("name");
+
+        final String scopeId = "toUpdateId";
+
+        Scope toUpdate = new Scope();
+        toUpdate.setId(scopeId);
+        toUpdate.setSystem(true);
+        toUpdate.setDiscovery(false);
+        toUpdate.setName("oldName");
+        toUpdate.setDescription("oldDescription");
+
+        ArgumentCaptor<Scope> argument = ArgumentCaptor.forClass(Scope.class);
+
+        when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toUpdate));
+        when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
+        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+
+        TestObserver testObserver = scopeService.update(DOMAIN,scopeId, updateScope).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(scopeRepository, times(1)).update(any(Scope.class));
+        assertNotNull(argument.getValue());
+        assertEquals("name",argument.getValue().getName());
+        assertNull(argument.getValue().getDescription());
+        assertTrue(argument.getValue().isDiscovery());
+    }
+
+    @Test
+    public void shouldNotUpdateSystemScope() {
+        Scope toUpdate = new Scope();
+        toUpdate.setId("toUpdateId");
+
+        when(scopeRepository.findById("toUpdateId")).thenReturn(Maybe.error(TechnicalException::new));
+
+        TestObserver testObserver = scopeService.update(DOMAIN,"toUpdateId", new UpdateSystemScope()).test();
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
     }
 
     @Test

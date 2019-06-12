@@ -32,6 +32,8 @@ public class UpdateScope {
 
     private Integer expiresIn;
 
+    private Boolean discovery;
+
     public String getName() {
         return name;
     }
@@ -54,5 +56,17 @@ public class UpdateScope {
 
     public void setExpiresIn(Integer expiresIn) {
         this.expiresIn = expiresIn;
+    }
+
+    public boolean isDiscovery() {
+        return discovery;
+    }
+
+    public void setDiscovery(boolean discovery) {
+        this.discovery = discovery;
+    }
+
+    public Boolean getDiscovery() {
+        return discovery;
     }
 }

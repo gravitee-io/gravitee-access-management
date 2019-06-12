@@ -65,4 +65,12 @@ export class ScopeCreationComponent implements OnInit {
   getScopeExpiry() {
     return (this.scope.expiresIn) ? moment.duration(this.scope.expiresIn, 'seconds').humanize() : 'no time set';
   }
+
+  enableScopeDiscovery(event) {
+    this.scope.discovery = event.checked;
+  }
+
+  isDiscovery() {
+    return this.scope.discovery;
+  }
 }

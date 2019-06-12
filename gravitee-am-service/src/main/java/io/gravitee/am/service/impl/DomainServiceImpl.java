@@ -430,6 +430,7 @@ public class DomainServiceImpl implements DomainService {
                     scope.setClaims(systemScope.getClaims());
                     scope.setName(systemScope.getLabel());
                     scope.setDescription(systemScope.getDescription());
+                    scope.setDiscovery(systemScope.isDiscovery());
                     return scopeService.create(domain.getId(), scope);
                 })
                 .lastOrError()

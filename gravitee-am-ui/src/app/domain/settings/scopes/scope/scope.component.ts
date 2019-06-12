@@ -83,6 +83,15 @@ export class ScopeComponent implements OnInit {
     this.formChanged = true;
   }
 
+  enableScopeDiscovery(event) {
+    this.scope.discovery = event.checked;
+    this.formChanged = true;
+  }
+
+  isDiscovery() {
+    return this.scope.discovery;
+  }
+
   delete(event) {
     event.preventDefault();
     this.dialogService

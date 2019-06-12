@@ -106,6 +106,7 @@ public class ScopeServiceImpl implements ScopeService {
                     scope.setName(newScope.getName());
                     scope.setDescription(newScope.getDescription());
                     scope.setExpiresIn(newScope.getExpiresIn());
+                    scope.setDiscovery(newScope.isDiscovery());
                     scope.setCreatedAt(new Date());
                     scope.setUpdatedAt(new Date());
 
@@ -147,6 +148,7 @@ public class ScopeServiceImpl implements ScopeService {
                     scope.setName(newScope.getName());
                     scope.setDescription(newScope.getDescription());
                     scope.setExpiresIn(newScope.getExpiresIn());
+                    scope.setDiscovery(newScope.isDiscovery());
                     scope.setCreatedAt(new Date());
                     scope.setUpdatedAt(new Date());
                     return scopeRepository.create(scope);
@@ -166,6 +168,24 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
+    public Single<Scope> patch(String domain, String id, PatchScope patchScope, User principal) {
+        LOGGER.debug("Patching a scope {} for domain {}", id, domain);
+        return scopeRepository.findById(id)
+                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
+                .flatMapSingle(oldScope -> {
+                    Scope scopeToUpdate = patchScope.patch(oldScope);
+                    return update(domain, scopeToUpdate, oldScope, principal);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to patch a scope", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to patch a scope", ex));
+                });
+    }
+
+    @Override
     public Single<Scope> update(String domain, String id, UpdateScope updateScope, User principal) {
         LOGGER.debug("Update a scope {} for domain {}", id, domain);
         return scopeRepository.findById(id)
@@ -175,16 +195,11 @@ public class ScopeServiceImpl implements ScopeService {
                     scopeToUpdate.setName(updateScope.getName());
                     scopeToUpdate.setDescription(updateScope.getDescription());
                     scopeToUpdate.setExpiresIn(updateScope.getExpiresIn());
-                    scopeToUpdate.setUpdatedAt(new Date());
+                    if(!oldScope.isSystem() && updateScope.getDiscovery()!=null) {
+                        scopeToUpdate.setDiscovery(updateScope.isDiscovery());
+                    }
 
-                    return scopeRepository.update(scopeToUpdate)
-                            .flatMap(scope1 -> {
-                                // Reload domain to take care about scope update
-                                Event event = new Event(Type.SCOPE, new Payload(scope1.getId(), scope1.getDomain(), Action.UPDATE));
-                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(scope1));
-                            })
-                            .doOnSuccess(scope1 -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).oldValue(oldScope).scope(scope1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).throwable(throwable)));
+                    return update(domain, scopeToUpdate, oldScope, principal);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -193,6 +208,19 @@ public class ScopeServiceImpl implements ScopeService {
                     LOGGER.error("An error occurs while trying to update a scope", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a scope", ex));
                 });
+    }
+
+    private Single<Scope> update(String domain, Scope toUpdate, Scope oldValue, User principal) {
+
+        toUpdate.setUpdatedAt(new Date());
+        return scopeRepository.update(toUpdate)
+                .flatMap(scope1 -> {
+                    // Reload domain to take care about scope update
+                    Event event = new Event(Type.SCOPE, new Payload(scope1.getId(), scope1.getDomain(), Action.UPDATE));
+                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(scope1));
+                })
+                .doOnSuccess(scope1 -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).oldValue(oldValue).scope(scope1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).throwable(throwable)));
     }
 
     @Override
@@ -207,6 +235,7 @@ public class ScopeServiceImpl implements ScopeService {
                     scope.setSystem(true);
                     scope.setClaims(updateScope.getClaims());
                     scope.setExpiresIn(updateScope.getExpiresIn());
+                    scope.setDiscovery(updateScope.isDiscovery());
                     return scopeRepository.update(scope);
                 })
                 .flatMap(scope -> {

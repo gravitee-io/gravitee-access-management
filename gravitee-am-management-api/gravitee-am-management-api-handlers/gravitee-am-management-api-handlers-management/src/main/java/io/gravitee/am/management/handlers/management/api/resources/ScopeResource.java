@@ -22,6 +22,7 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.ScopeNotFoundException;
+import io.gravitee.am.service.model.PatchScope;
 import io.gravitee.am.service.model.UpdateScope;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
@@ -43,6 +44,7 @@ import javax.ws.rs.core.Response;
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 public class ScopeResource extends AbstractResource {
@@ -81,12 +83,35 @@ public class ScopeResource extends AbstractResource {
                         error -> response.resume(error));
     }
 
+    @PATCH
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Patch a scope")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Scope successfully patched", response = Scope.class),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void patch(
+            @PathParam("domain") String domain,
+            @PathParam("scope") String scope,
+            @ApiParam(name = "scope", required = true) @Valid @NotNull PatchScope patchScope,
+            @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
+        domainService.findById(domain)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> scopeService.patch(domain, scope, patchScope, authenticatedUser))
+                .map(scope1 -> Response.ok(scope1).build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
+    }
+
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Update a scope")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Scope successfully updated", response = Client.class),
+            @ApiResponse(code = 200, message = "Scope successfully updated", response = Scope.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void update(
             @PathParam("domain") String domain,
