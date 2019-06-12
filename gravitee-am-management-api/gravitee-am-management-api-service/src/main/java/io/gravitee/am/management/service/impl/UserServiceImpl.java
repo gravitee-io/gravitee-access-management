@@ -209,6 +209,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Single<User> updateStatus(String domain, String id, boolean status, io.gravitee.am.identityprovider.api.User principal) {
+        return userService.findById(id)
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
+                .flatMapSingle(user -> {
+                    user.setEnabled(status);
+                    return userService.update(user);
+                })
+                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)));
+    }
+
+    @Override
     public Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal) {
         return userService.findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))

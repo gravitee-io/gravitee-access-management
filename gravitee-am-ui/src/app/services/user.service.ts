@@ -47,6 +47,12 @@ export class UserService {
     });
   }
 
+  updateStatus(domainId, id, status): Observable<any> {
+    return this.http.put<any>(this.usersURL + domainId + "/users/" + id + '/status', {
+      'enabled' : status
+    });
+  }
+
   delete(domainId, id): Observable<any> {
     return this.http.delete<any>(this.usersURL + domainId + "/users/" + id);
   }

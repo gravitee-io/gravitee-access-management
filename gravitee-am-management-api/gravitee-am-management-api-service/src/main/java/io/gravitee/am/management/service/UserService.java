@@ -39,6 +39,8 @@ public interface UserService {
 
     Single<User> update(String domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal);
 
+    Single<User> updateStatus(String domain, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
+
     Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal);
 
     Completable resetPassword(String domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
@@ -53,6 +55,10 @@ public interface UserService {
 
     default Single<User> update(String domain, String id, UpdateUser updateUser) {
         return update(domain, id, updateUser, null);
+    }
+
+    default Single<User> updateStatus(String domain, String userId, boolean status) {
+        return updateStatus(domain, userId, status, null);
     }
 
     default Completable delete(String userId) {

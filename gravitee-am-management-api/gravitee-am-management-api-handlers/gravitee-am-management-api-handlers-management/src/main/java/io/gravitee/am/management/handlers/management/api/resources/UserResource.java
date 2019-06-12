@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.model.ClientEntity;
 import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
+import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.User;
@@ -114,6 +115,30 @@ public class UserResource extends AbstractResource {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapSingle(irrelevant -> userService.update(domain, user, updateUser, authenticatedUser))
+                .map(user1 -> Response.ok(user1).build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
+    }
+
+    @PUT
+    @Path("/status")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Update a user status")
+    @ApiResponses({
+            @ApiResponse(code = 201, message = "User status successfully updated", response = User.class),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void updateUserStatus(
+            @PathParam("domain") String domain,
+            @PathParam("user") String user,
+            @ApiParam(name = "status", required = true) @Valid @NotNull StatusEntity status,
+            @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+
+        domainService.findById(domain)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .flatMapSingle(irrelevant -> userService.updateStatus(domain, user, status.isEnabled(), authenticatedUser))
                 .map(user1 -> Response.ok(user1).build())
                 .subscribe(
                         result -> response.resume(result),
