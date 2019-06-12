@@ -104,6 +104,7 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         scope.setExpiresIn(scopeMongo.getExpiresIn());
         scope.setCreatedAt(scopeMongo.getCreatedAt());
         scope.setUpdatedAt(scopeMongo.getUpdatedAt());
+        scope.setDiscovery(scopeMongo.isDiscovery());
 
         return scope;
     }
@@ -124,6 +125,7 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         scopeMongo.setExpiresIn(scope.getExpiresIn());
         scopeMongo.setCreatedAt(scope.getCreatedAt());
         scopeMongo.setUpdatedAt(scope.getUpdatedAt());
+        scopeMongo.setDiscovery(scope.isDiscovery());
 
         return scopeMongo;
     }

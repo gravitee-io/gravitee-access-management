@@ -40,7 +40,14 @@ export class ScopeService {
     return this.http.put<any>(this.scopes + domainId + "/scopes/" + id, {
       'name' : scope.name,
       'description' : scope.description,
-      'expiresIn' : scope.expiresIn
+      'expiresIn' : scope.expiresIn,
+      'discovery' : scope.discovery
+    });
+  }
+
+  patchDiscovery(domainId, id, discovery): Observable<any> {
+    return this.http.patch<any>(this.scopes + domainId + "/scopes/" + id, {
+      'discovery' : discovery
     });
   }
 

@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.model.NewScope;
 import io.gravitee.am.service.model.NewSystemScope;
+import io.gravitee.am.service.model.PatchScope;
 import io.gravitee.am.service.model.UpdateScope;
 import io.gravitee.am.service.model.UpdateSystemScope;
 import io.reactivex.Completable;
@@ -47,6 +48,8 @@ public interface ScopeService {
 
     Maybe<Scope> findByDomainAndKey(String domain, String scopeKey);
 
+    Single<Scope> patch(String domain, String id, PatchScope patchScope, User principal);
+
     Single<Scope> update(String domain, String id, UpdateScope updateScope, User principal);
 
     Single<Scope> update(String domain, String id, UpdateSystemScope updateScope);
@@ -61,6 +64,10 @@ public interface ScopeService {
 
     default Single<Scope> create(String domain, NewScope scope) {
         return create(domain, scope, null);
+    }
+
+    default Single<Scope> patch(String domain, String id, PatchScope patchScope) {
+        return patch(domain, id, patchScope, null);
     }
 
     default Single<Scope> update(String domain, String id, UpdateScope updateScope) {

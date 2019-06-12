@@ -63,6 +63,8 @@ public class Scope {
      */
     private Integer expiresIn;
 
+    private boolean discovery;
+
     public Scope() {
     }
 
@@ -81,6 +83,7 @@ public class Scope {
         this.system = other.system;
         this.claims = other.claims;
         this.expiresIn = other.expiresIn;
+        this.discovery = other.discovery;
     }
 
     public String getId() {
@@ -161,6 +164,14 @@ public class Scope {
 
     public void setExpiresIn(Integer expiresIn) {
         this.expiresIn = expiresIn;
+    }
+
+    public boolean isDiscovery() {
+        return discovery;
+    }
+
+    public void setDiscovery(boolean discovery) {
+        this.discovery = discovery;
     }
 
     @Override
