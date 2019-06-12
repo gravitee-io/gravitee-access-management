@@ -223,7 +223,7 @@ public class ClientServiceImpl implements ClientService {
         LOGGER.debug("Find top clients");
         return clientRepository.findAll()
                 .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .flatMapSingle(client -> accessTokenRepository.countByClientId(client.getId())
+                .flatMapSingle(client -> accessTokenRepository.countByClientId(client.getClientId())
                         .map(oAuth2AccessTokens -> {
                             TopClient topClient = new TopClient();
                             topClient.setClient(client);
@@ -243,7 +243,7 @@ public class ClientServiceImpl implements ClientService {
         LOGGER.debug("Find top clients by domain: {}", domain);
         return clientRepository.findByDomain(domain)
                 .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .flatMapSingle(client -> accessTokenRepository.countByClientId(client.getId())
+                .flatMapSingle(client -> accessTokenRepository.countByClientId(client.getClientId())
                         .map(oAuth2AccessTokens -> {
                             TopClient topClient = new TopClient();
                             topClient.setClient(client);
