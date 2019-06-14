@@ -3919,6 +3919,8 @@
 											"    pm.expect(body.client_name).to.eql('Unknown Client');",
 											"    ",
 											"    pm.environment.set('newClientForDCRTests', body.id);",
+											"    pm.environment.set('newClientIdForDCRTests', body.client_id);",
+											"    pm.environment.set('newClientSecretForDCRTests', body.client_secret);",
 											"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
 											"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
 											"});"
