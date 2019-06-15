@@ -1,5 +1,45 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/issues/milestone/134?closed=1[AM - 2.7.0 (2019-06-15)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [Dcr] A redirect_uri is required even if the client is created for the client_credentials flow https://github.com/gravitee-io/issues/issues/2297[#2297]
+
+*_Management_*
+
+- Check client while setting it to a user https://github.com/gravitee-io/issues/issues/2335[#2335]
+- Dashboard top clients doesn't work https://github.com/gravitee-io/issues/issues/2362[#2362]
+- Enable/Disable users not working with external identity providers https://github.com/gravitee-io/issues/issues/2361[#2361]
+- OAuth 2.0 scope keys should be case sensitive https://github.com/gravitee-io/issues/issues/2343[#2343]
+- [OIDC Provider] Client secret value should be optional https://github.com/gravitee-io/issues/issues/2344[#2344]
+
+=== Features
+
+*_Gateway_*
+
+- Add extension point for more granular OAuth2 scope save/check https://github.com/gravitee-io/issues/issues/1849[#1849]
+- Manage policies at root level https://github.com/gravitee-io/issues/issues/2356[#2356]
+
+*_Management_*
+
+- Add an option to complete an account during reset password https://github.com/gravitee-io/issues/issues/2345[#2345]
+- Handle custom error page https://github.com/gravitee-io/issues/issues/2312[#2312]
+- [am] I should be able to search user by username using management API https://github.com/gravitee-io/issues/issues/2120[#2120]
+
+*_Oidc_*
+
+- [Dcr] implement renew secret https://github.com/gravitee-io/issues/issues/2323[#2323]
+
+=== Improvements
+
+*_Management-ui_*
+
+- UI enhancements https://github.com/gravitee-io/issues/issues/2357[#2357]
+
+
 == https://github.com/gravitee-io/issues/issues/milestone/129?closed=1[AM - 2.6.0 (2019-05-24)]
 
 === Bug fixes
