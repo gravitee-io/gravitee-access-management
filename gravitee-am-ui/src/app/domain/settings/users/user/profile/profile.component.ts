@@ -155,7 +155,7 @@ export class UserProfileComponent implements OnInit {
 
   enableUser(event) {
     this.dialogService
-      .confirm( (event.checked ? 'Enable' : 'Disable') + ' User', 'Are you sure you wand to ' + (event.checked ? 'enable' : 'disable') + ' the user ?')
+      .confirm( (event.checked ? 'Enable' : 'Disable') + ' User', 'Are you sure you want to ' + (event.checked ? 'enable' : 'disable') + ' the user ?')
       .subscribe(res => {
         if (res) {
           this.userService.updateStatus(this.domainId, this.user.id, event.checked).subscribe(() => {
