@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "16fea8fd-7126-4b48-a74e-351b20e24f67",
+		"_postman_id": "5e76e524-2857-4be0-90ea-b1d246da6c7a",
 		"name": "Gravitee.io - AM - Policies",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -248,7 +248,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"redirectUris\": [],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\",\n    \"refresh_token\"\n  ],\n  \"scopes\": [\"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"idTokenCustomClaims\": {},\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+							"raw": "{\n  \"redirectUris\": [\"https://auth-nightly.gravitee.io/myApp/callback\"],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\",\n    \"refresh_token\"\n  ],\n  \"scopes\": [\"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"idTokenCustomClaims\": {},\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{client}}",
@@ -416,7 +416,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/policies/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876&scope=openid",
+							"raw": "{{gateway_url}}/policies/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
 							"host": [
 								"{{gateway_url}}"
 							],
@@ -437,7 +437,7 @@
 								},
 								{
 									"key": "redirect_uri",
-									"value": "http://localhost:4000/"
+									"value": "https://auth-nightly.gravitee.io/myApp/callback"
 								},
 								{
 									"key": "state",
@@ -826,7 +826,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/policies/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876&scope=openid",
+							"raw": "{{gateway_url}}/policies/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
 							"host": [
 								"{{gateway_url}}"
 							],
@@ -847,7 +847,7 @@
 								},
 								{
 									"key": "redirect_uri",
-									"value": "http://localhost:4000/"
+									"value": "https://auth-nightly.gravitee.io/myApp/callback"
 								},
 								{
 									"key": "state",
