@@ -1,64 +1,17 @@
-.domain-client-registration-container {
+.client-registration-container {
   padding: 20px 70px 20px 50px;
+  a.back-link {
+    color: #006CAB;
+    text-decoration: none;
+    &:hover {
+      color: #2196f3;
+      text-decoration: underline;
+    }
+  }
   h1 {
     font-weight: 400;
   }
-  .domain-client-registration-content {
-    form {
-      padding: 20px;
-      background: #fafafa;
-      border-radius: 2px;
-      border: 1px solid rgb(226, 229, 231);
-      .domain-client-registration-state {
-        margin-bottom: 30px;
-        mat-hint {
-          font-size: 75%;
-        }
-      }
-      .domain-client-registration-form-actions {
-        margin-top: 20px;
-      }
-    }
-    .domain-client-registration-description {
-      margin-left: 20px;
-      h3 {
-        font-weight: 400;
-      }
-      .domain-client-registration-description-content {
-        border-top: 1px solid rgb(226, 229, 231);
-        p {
-          margin-top: 20px;
-          font-size: 14px;
-        }
-        small {
-          font-size: 12px;
-          color: rgba(0, 0, 0, 0.38);
-        }
-      }
-    }
-  }
-}
-
-.clients-container {
-  h1 {
-    font-weight: 400;
-  }
-  ngx-datatable {
-    font-size: 14px;
-    box-shadow: none;
-  }
-
-  .badge {
-    margin-left: 5px;
-    padding: 3px 6px;
-  }
-}
-
-.clients-actions {
-  margin-left: -10px;
-
-  button, a {
-    top: -9px;
-    color: grey;
+  .client-registration-content {
+    padding: 25px 0 20px;
   }
 }

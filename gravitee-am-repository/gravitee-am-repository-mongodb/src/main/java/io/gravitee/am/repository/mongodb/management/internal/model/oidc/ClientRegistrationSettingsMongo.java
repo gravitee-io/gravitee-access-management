@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model.oidc;
 
+import java.util.List;
+
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
@@ -26,6 +28,10 @@ public class ClientRegistrationSettingsMongo {
     private boolean allowWildCardRedirectUri;
     private boolean isDynamicClientRegistrationEnabled;
     private boolean isOpenDynamicClientRegistrationEnabled;
+    private List<String> defaultScopes;
+    private boolean isAllowedScopesEnabled;
+    private List<String> allowedScopes;
+
 
     public boolean isAllowLocalhostRedirectUri() {
         return allowLocalhostRedirectUri;
@@ -65,5 +71,29 @@ public class ClientRegistrationSettingsMongo {
 
     public void setAllowWildCardRedirectUri(boolean allowWildCardRedirectUri) {
         this.allowWildCardRedirectUri = allowWildCardRedirectUri;
+    }
+
+    public List<String> getDefaultScopes() {
+        return defaultScopes;
+    }
+
+    public void setDefaultScopes(List<String> defaultScopes) {
+        this.defaultScopes = defaultScopes;
+    }
+
+    public boolean isAllowedScopesEnabled() {
+        return isAllowedScopesEnabled;
+    }
+
+    public void setAllowedScopesEnabled(boolean allowedScopesEnabled) {
+        isAllowedScopesEnabled = allowedScopesEnabled;
+    }
+
+    public List<String> getAllowedScopes() {
+        return allowedScopes;
+    }
+
+    public void setAllowedScopes(List<String> allowedScopes) {
+        this.allowedScopes = allowedScopes;
     }
 }

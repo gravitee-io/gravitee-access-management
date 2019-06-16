@@ -23,6 +23,9 @@ import {DomainDashboardComponent} from "./domain/dashboard/dashboard.component";
 import {DomainSettingsComponent} from "./domain/settings/settings.component";
 import {DomainSettingsGeneralComponent} from "./domain/settings/general/general.component";
 import {DomainSettingsOpenidClientRegistrationComponent} from "./domain/settings/openid/client-registration/client-registration.component";
+import {ClientRegistrationSettingsComponent} from "./domain/settings/openid/client-registration/settings/settings.component";
+import {ClientRegistrationDefaultScopeComponent} from "./domain/settings/openid/client-registration/default-scope/default-scope.component";
+import {ClientRegistrationAllowedScopeComponent} from "./domain/settings/openid/client-registration/allowed-scope/allowed-scope.component";
 import {DomainSettingsCertificatesComponent} from "./domain/settings/certificates/certificates.component";
 import {DomainSettingsProvidersComponent} from "./domain/settings/providers/providers.component";
 import {DomainSettingsRolesComponent} from "./domain/settings/roles/roles.component";
@@ -735,7 +738,13 @@ const routes: Routes = [
                 label: 'Client Registration',
                 section: 'Openid'
               }
-            }
+            },
+            children: [
+              { path: '', redirectTo: 'settings', pathMatch: 'full' },
+              { path: 'settings', component: ClientRegistrationSettingsComponent, resolve: {domain: DomainResolver} },
+              { path: 'default-scope', component: ClientRegistrationDefaultScopeComponent, resolve: {domain: DomainResolver, scopes: ScopesResolver}},
+              { path: 'allowed-scope', component: ClientRegistrationAllowedScopeComponent, resolve: {domain: DomainResolver, scopes: ScopesResolver}},
+            ]
           }
         ]
       }

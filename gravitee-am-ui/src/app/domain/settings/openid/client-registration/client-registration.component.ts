@@ -13,20 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import { DomainService } from "../../../../services/domain.service";
-import { DialogService } from "../../../../services/dialog.service";
-import { ActivatedRoute, Router } from "@angular/router";
-import { SnackbarService } from "../../../../services/snackbar.service";
+import {Component, OnInit} from '@angular/core';
+import { ActivatedRoute } from "@angular/router";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { SidenavService } from "../../../../components/sidenav/sidenav.service";
-import { ClientService } from "../../../../services/client.service";
-import { MatInput } from "@angular/material";
-
-export interface Client {
-  id: string;
-  clientId: string;
-}
 
 @Component({
   selector: 'app-openid-client-registration',
@@ -34,67 +23,27 @@ export interface Client {
   styleUrls: ['./client-registration.component.scss']
 })
 export class DomainSettingsOpenidClientRegistrationComponent implements OnInit {
-
-  @ViewChild('chipInput') chipInput: MatInput;
+  private domainId: string;
+  navLinks: any = [
+    {'href': 'settings' , 'label': 'Settings'},
+    {'href': 'default-scope' , 'label': 'Default Scopes'},
+    {'href': 'allowed-scope' , 'label': 'Allowed Scopes'}
+  ];
 
   formChanged: boolean = false;
   domain: any = {};
-  clientDcrDisabled: boolean = false;
-  disableToolTip: boolean = false;
-  toolTipMessage = "";
 
-  constructor(private domainService: DomainService, private dialogService: DialogService, private snackbarService: SnackbarService,
-              private router: Router, private route: ActivatedRoute, private breadcrumbService: BreadcrumbService, private sidenavService: SidenavService,
-              private clientService: ClientService) {
+  constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) {
   }
 
   ngOnInit() {
-    this.domain = this.route.snapshot.parent.data['domain'];
+    this.domainId = this.route.snapshot.parent.data['domain'].name;
+    this.initBreadcrumb();
   }
 
-  enableDynamicClientRegistration(event) {
-    this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled = event.checked;
-    //If disabled, ensure to disable open dynamic client registration too and disable clients toogle too.
-    if(!event.checked) {
-      this.domain.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled = event.checked;
-      this.clientDcrDisabled = !event.checked;
-      this.disableToolTip = event.checked;
-      this.toolTipMessage = "Disable until settings are saved and feature is enabled.";
-    }
-    this.formChanged = true;
-  }
-
-  enableOpenDynamicClientRegistration(event) {
-    this.domain.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled = event.checked;
-    //If enabled, ensure to enable dynamic client registration too.
-    if(event.checked) {
-      this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled = event.checked;
-    }
-    this.formChanged = true;
-  }
-
-  allowLocalhostRedirectUri(event) {
-    this.domain.oidc.clientRegistrationSettings.allowLocalhostRedirectUri = event.checked;
-    this.formChanged = true;
-  }
-
-  allowHttpSchemeRedirectUri(event) {
-    this.domain.oidc.clientRegistrationSettings.allowHttpSchemeRedirectUri = event.checked;
-    this.formChanged = true;
-  }
-
-  allowWildCardRedirectUri(event) {
-    this.domain.oidc.clientRegistrationSettings.allowWildCardRedirectUri = event.checked;
-    this.formChanged = true;
-  }
-
-  patch() {
-    this.domainService.patchOpenidDCRSettings(this.domain.id, this.domain).subscribe(response => {
-      this.domain = response;
-      this.domainService.notify(this.domain);
-      this.sidenavService.notify(this.domain);
-      this.breadcrumbService.addFriendlyNameForRoute('/domains/'+this.domain.id, this.domain.name);
-      this.snackbarService.open("Domain " + this.domain.name + " updated");
-    });
+  initBreadcrumb() {
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/openid/clientRegistration/settings', 'settings');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/openid/clientRegistration/default-scope', 'default scopes');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/openid/clientRegistration/allowed-scope', 'allowed scopes');
   }
 }

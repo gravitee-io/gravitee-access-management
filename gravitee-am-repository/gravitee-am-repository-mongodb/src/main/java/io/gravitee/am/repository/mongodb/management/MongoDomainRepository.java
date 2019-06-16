@@ -226,6 +226,9 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAllowWildCardRedirectUri(dcrMongo.isAllowWildCardRedirectUri());
         result.setDynamicClientRegistrationEnabled(dcrMongo.isDynamicClientRegistrationEnabled());
         result.setOpenDynamicClientRegistrationEnabled(dcrMongo.isOpenDynamicClientRegistrationEnabled());
+        result.setDefaultScopes(dcrMongo.getDefaultScopes());
+        result.setAllowedScopesEnabled(dcrMongo.isAllowedScopesEnabled());
+        result.setAllowedScopes(dcrMongo.getAllowedScopes());
 
         return result;
     }
@@ -252,6 +255,9 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAllowWildCardRedirectUri(dcr.isAllowWildCardRedirectUri());
         result.setDynamicClientRegistrationEnabled(dcr.isDynamicClientRegistrationEnabled());
         result.setOpenDynamicClientRegistrationEnabled(dcr.isOpenDynamicClientRegistrationEnabled());
+        result.setDefaultScopes(dcr.getDefaultScopes());
+        result.setAllowedScopesEnabled(dcr.isAllowedScopesEnabled());
+        result.setAllowedScopes(dcr.getAllowedScopes());
 
         return result;
     }

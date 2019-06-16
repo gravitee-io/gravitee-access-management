@@ -15,68 +15,19 @@
     limitations under the License.
 
 -->
-<div class="domain-client-registration-container">
-  <h1>Client Registration</h1>
-  <div class="domain-client-registration-content">
-    <div fxLayout="column" fxFlex="70">
-      <form (ngSubmit)="patch()" #domainForm="ngForm" fxLayout="column">
-        <div class="domain-client-registration-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableDynamicClientRegistration($event)"
-            [checked]="domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled">
-            Enable/Disable Dynamic Client Registration.
-          </mat-slide-toggle>
-          <mat-hint>
-            Enable application owner to self register their application through an openid connect endpoint.<br>
-            The endpoint is available under the oidc Discovery service. <i>/.well-known/openid-configuration</i>
-          </mat-hint>
-        </div>
-        <div class="domain-client-registration-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableOpenDynamicClientRegistration($event)"
-            [checked]="domain.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled">
-            Enable/Disable Open Dynamic Client Registration
-          </mat-slide-toggle>
-          <mat-hint>Enable application owner to self register their application without needing to be authenticated.</mat-hint>
-        </div>
-        <div class="domain-client-registration-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="allowLocalhostRedirectUri($event)"
-            [checked]="domain.oidc.clientRegistrationSettings.allowLocalhostRedirectUri">
-            Allow localhost redirect uris.
-          </mat-slide-toggle>
-          <mat-hint>Allow clients to be registered with redirect_uris using localhost as host.</mat-hint>
-        </div>
-        <div class="domain-client-registration-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="allowHttpSchemeRedirectUri($event)"
-            [checked]="domain.oidc.clientRegistrationSettings.allowHttpSchemeRedirectUri">
-            Allow unsecured (http) redirect uris.
-          </mat-slide-toggle>
-          <mat-hint>Allow clients to be registered with redirect_uris using unsecured (http) scheme.</mat-hint>
-        </div>
-        <div class="domain-client-registration-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="allowWildCardRedirectUri($event)"
-            [checked]="domain.oidc.clientRegistrationSettings.allowWildCardRedirectUri">
-            Allow wildcards redirect_uris.
-          </mat-slide-toggle>
-          <mat-hint>Allow clients to be registered with redirect_uris containing wildcards.</mat-hint>
-        </div>
-        <div class="domain-client-registration-form-actions">
-          <button mat-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
-        </div>
-      </form>
-    </div>
+<div class="client-registration-container">
 
-    <div class="domain-client-registration-description" fxFlex>
-      <h3>Client Registration</h3>
-      <div class="domain-client-registration-description-content">
-        <p>
-          This section is used to define business rules regarding client (application) creation within the domain.
-        </p>
-        <small><i>For some security reasons, it is strongly recommended to not allow unsecured http scheme, localhost as well as wildcard in the redirect_uri.</i></small>
-      </div>
-    </div>
+  <h1>Client Registration Settings</h1>
+  <nav mat-tab-nav-bar>
+    <a mat-tab-link
+       *ngFor="let link of navLinks"
+       [routerLink]="link.href"
+       routerLinkActive #rla="routerLinkActive"
+       [active]="rla.isActive">
+      {{link.label}}
+    </a>
+  </nav>
+  <div class="client-registration-content">
+    <router-outlet></router-outlet>
   </div>
 </div>

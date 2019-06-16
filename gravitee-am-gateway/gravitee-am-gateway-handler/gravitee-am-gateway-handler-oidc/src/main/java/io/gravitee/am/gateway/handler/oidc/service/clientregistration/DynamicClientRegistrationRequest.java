@@ -25,6 +25,7 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -397,7 +398,10 @@ public class DynamicClientRegistrationRequest {
 
     public Optional<List<String>> getScope() {
         if (this.scope == null) return null; //Keep null to avoid patch...
-        return Optional.of(Arrays.asList(scope.orElse("").split(SCOPE_DELIMITER)));
+        if (!this.scope.isPresent() || this.scope.get().trim().isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(Arrays.asList(scope.get().split(SCOPE_DELIMITER)));
     }
 
     public void setScope(Optional<String> scope) {
@@ -436,9 +440,9 @@ public class DynamicClientRegistrationRequest {
     public Client patch(Client client) {
         /* set openid request metadata */
         SetterUtils.safeSet(client::setRedirectUris, this.getRedirectUris());
-        SetterUtils.safeSetOrElse(client::setResponseTypes, this.getResponseTypes(), Client.DEFAULT_RESPONSE_TYPES);
-        SetterUtils.safeSetOrElse(client::setAuthorizedGrantTypes, this.getGrantTypes(), Client.DEFAULT_GRANT_TYPES);
-        SetterUtils.safeSetOrElse(client::setApplicationType, this.getApplicationType(), ApplicationType.WEB);
+        SetterUtils.safeSet(client::setResponseTypes, this.getResponseTypes());
+        SetterUtils.safeSet(client::setAuthorizedGrantTypes, this.getGrantTypes());
+        SetterUtils.safeSet(client::setApplicationType, this.getApplicationType());
         SetterUtils.safeSet(client::setContacts, this.getContacts());
         SetterUtils.safeSet(client::setClientName, this.getClientName());
         SetterUtils.safeSet(client::setLogoUri, this.getLogoUri());

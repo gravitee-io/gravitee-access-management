@@ -90,6 +90,9 @@ import { DomainDashboardComponent } from "./domain/dashboard/dashboard.component
 import { DomainSettingsComponent } from './domain/settings/settings.component';
 import { DomainSettingsGeneralComponent } from "./domain/settings/general/general.component";
 import { DomainSettingsOpenidClientRegistrationComponent } from "./domain/settings/openid/client-registration/client-registration.component";
+import { ClientRegistrationSettingsComponent } from "./domain/settings/openid/client-registration/settings/settings.component";
+import { ClientRegistrationDefaultScopeComponent } from "./domain/settings/openid/client-registration/default-scope/default-scope.component";
+import { ClientRegistrationAllowedScopeComponent } from "./domain/settings/openid/client-registration/allowed-scope/allowed-scope.component";
 import { DomainSettingsRolesComponent } from "./domain/settings/roles/roles.component";
 import { DomainSettingsScopesComponent } from "./domain/settings/scopes/scopes.component";
 import { DomainSettingsCertificatesComponent, CertitificatePublicKeyDialog } from './domain/settings/certificates/certificates.component';
@@ -205,6 +208,7 @@ import { HttpRequestInterceptor } from "./interceptors/http-request.interceptor"
 import { PolicyFormComponent } from "./domain/settings/policies/policy/form/form.component";
 import { PolicyService } from "./services/policy.service";
 import { PoliciesResolver } from "./resolvers/policies.resolver";
+import { ScopeSelectionComponent} from "./domain/components/scope-selection/scope-selection.component";
 
 @NgModule({
   declarations: [
@@ -219,6 +223,9 @@ import { PoliciesResolver } from "./resolvers/policies.resolver";
     DomainSettingsComponent,
     DomainSettingsGeneralComponent,
     DomainSettingsOpenidClientRegistrationComponent,
+    ClientRegistrationSettingsComponent,
+    ClientRegistrationDefaultScopeComponent,
+    ClientRegistrationAllowedScopeComponent,
     DomainSettingsProvidersComponent,
     DomainSettingsScopesComponent,
     DomainSettingsRolesComponent,
@@ -321,7 +328,8 @@ import { PoliciesResolver } from "./resolvers/policies.resolver";
     TagComponent,
     AccountSettingsComponent,
     PolicyFormComponent,
-    PoliciesInfoDialog
+    PoliciesInfoDialog,
+    ScopeSelectionComponent
   ],
   imports: [
     BrowserModule,

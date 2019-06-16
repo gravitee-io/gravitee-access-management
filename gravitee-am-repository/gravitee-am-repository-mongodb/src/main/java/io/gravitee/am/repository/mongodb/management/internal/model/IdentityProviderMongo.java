@@ -19,8 +19,6 @@ import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 
-import java.util.Map;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team

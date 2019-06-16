@@ -1,0 +1,57 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="domain-client-registration-allowed-scope-container">
+  <div class="domain-client-registration-allowed-scope-content" *ngIf="dcrIsEnabled">
+    <div fxLayout="column" fxFlex="70">
+      <form (ngSubmit)="patch()" #allowedScopeForm="ngForm" fxLayout="column">
+
+        <div class="domain-client-registration-allowed-scope-state" fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableAllowedScopesFilter($event)"
+            [checked]="isAllowedScopesEnabled">
+            Enable scopes restriction on client registration
+          </mat-slide-toggle>
+        </div>
+
+        <scope-selection
+          [initialSelectedScopes]="initialSelectedScopes"
+          (onScopeSelection)="onChange($event)"
+          *ngIf="isAllowedScopesEnabled">
+        </scope-selection>
+
+        <div class="domain-client-registration-allowed-scope-form-actions">
+          <button mat-raised-button [disabled]="(!allowedScopeForm.valid || allowedScopeForm.pristine) && !formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="domain-client-registration-allowed-scope-description" fxFlex>
+      <h3>Allowed scopes</h3>
+      <div class="domain-client-registration-allowed-scope-description-content">
+        <p>
+          This section is used to define which scopes can be selected by third parties when they register a client through the Openid Connect Dynamic Client Registration endpoint.
+        </p>
+        <small><i>On the client registration process, access management will only retain the allowed scopes (if enabled).<br>
+          After applying this filter, if there is no more requested scopes, access management may add some default scopes.</i></small>
+      </div>
+    </div>
+  </div>
+  <app-emptystate *ngIf="!dcrIsEnabled"
+                  [message]="'Openid Connect Dynamic Client Registration is disabled.'"
+                  [subMessage]="'This feature can be enable through the Settings tab.'">
+  </app-emptystate>
+</div>

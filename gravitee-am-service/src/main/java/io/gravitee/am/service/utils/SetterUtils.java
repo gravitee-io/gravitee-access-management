@@ -70,20 +70,6 @@ public class SetterUtils {
         }
     }
 
-    /**
-     * Safe setter, apply setter only if Optional is not null.
-     * Apply default value if Optional is empty.
-     * @param setter Consumer setter method.
-     * @param value Optional value.
-     * @param defaultValue Default value to apply if Optional is empty.
-     * @param <T> value class
-     */
-    public static <T> void safeSetOrElse(final Consumer<T> setter, final Optional<T> value, final T defaultValue) {
-        if (value != null) {
-            setter.accept(value.orElse(defaultValue));
-        }
-    }
-
     private static Object getDefaultValue(Class primitive) {
 
         if (primitive.equals(boolean.class)) {
