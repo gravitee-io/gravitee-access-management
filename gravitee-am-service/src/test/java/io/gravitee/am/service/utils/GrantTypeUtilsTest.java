@@ -23,6 +23,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import static org.junit.Assert.*;
 
@@ -96,6 +97,19 @@ public class GrantTypeUtilsTest {
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    public void validateGrantTypes_refreshToken_ko() {
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Arrays.asList("refresh_token"));
+        client.setResponseTypes(Arrays.asList());
+
+        TestObserver<Client> testObserver = GrantTypeUtils.validateGrantTypes(client).test();
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertError(err -> ((Throwable)err).getMessage().startsWith("refresh_token grant type must be associated with"));
+        testObserver.assertNotComplete();
     }
 
     @Test

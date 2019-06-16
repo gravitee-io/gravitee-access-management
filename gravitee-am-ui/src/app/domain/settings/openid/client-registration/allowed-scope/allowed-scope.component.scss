@@ -1,0 +1,60 @@
+.mat-column-select {
+  overflow: initial;
+}
+
+.mat-form-field {
+  font-size: 14px;
+  width: 100%;
+}
+
+table {
+  width: 100%;
+  background: transparent;
+  box-shadow: none;
+}
+
+th.mat-sort-header-sorted {
+  color: black;
+}
+
+.domain-client-registration-allowed-scope-container {
+  padding: 10px 10px 10px 10px;
+  h1 {
+    font-weight: 400;
+  }
+  .domain-client-registration-allowed-scope-content {
+    form {
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 2px;
+      border: 1px solid rgb(226, 229, 231);
+
+      .domain-client-registration-allowed-scope-state {
+        margin-bottom: 30px;
+        mat-hint {
+          font-size: 75%;
+        }
+      }
+      .domain-client-registration-allowed-scope-form-actions {
+        margin-top: 20px;
+      }
+    }
+    .domain-client-registration-allowed-scope-description {
+      margin-left: 20px;
+      h3 {
+        font-weight: 400;
+      }
+      .domain-client-registration-allowed-scope-description-content {
+        border-top: 1px solid rgb(226, 229, 231);
+        p {
+          margin-top: 20px;
+          font-size: 14px;
+        }
+        small {
+          font-size: 12px;
+          color: rgba(0, 0, 0, 0.38);
+        }
+      }
+    }
+  }
+}

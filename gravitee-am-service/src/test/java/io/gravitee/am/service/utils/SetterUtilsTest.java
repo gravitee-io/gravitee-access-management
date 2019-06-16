@@ -116,29 +116,6 @@ public class SetterUtilsTest {
     }
 
     @Test
-    public void testSafeSetOrElse_optionalIsNull() {
-        BasicDto basic = new BasicDto();
-        SetterUtils.safeSetOrElse(basic::setString,null,"orElse");
-        assertNull("was expecting a null value",basic.getString());
-    }
-
-    @Test
-    public void testSafeSetOrElse_optionalIsEmpty() {
-        BasicDto basic = new BasicDto();
-        SetterUtils.safeSetOrElse(basic::setString,Optional.empty(),"orElse");
-        assertNotNull("was expecting a non null value",basic.getString());
-        assertEquals("orElse",basic.getString());
-    }
-
-    @Test
-    public void testSafeSetOrElse_optionalIsNotEmpty() {
-        BasicDto basic = new BasicDto();
-        SetterUtils.safeSetOrElse(basic::setString,Optional.of("succeed"),"wasEmpty");
-        assertNotNull(basic.getString());
-        assertEquals("succeed",basic.getString());
-    }
-
-    @Test
     public void testSet_optionalIsNull() {
         BasicDto basic = new BasicDto();
         SetterUtils.set(basic::setString,null);

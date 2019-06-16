@@ -18,13 +18,13 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.utils.SecureRandomString;
+import io.gravitee.am.gateway.handler.common.jwa.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.common.jwk.JWKService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
-import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
-import io.gravitee.am.gateway.handler.common.jwa.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
@@ -48,7 +48,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+
+import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -169,6 +177,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         }
 
         return this.validateRedirectUri(request, isPatch)
+                .flatMap(this::validateScopes)
                 .flatMap(this::validateGrantType)
                 .flatMap(this::validateResponseType)
                 .flatMap(this::validateSubjectType)
@@ -201,10 +210,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private Single<DynamicClientRegistrationRequest> validateResponseType(DynamicClientRegistrationRequest request) {
         //if response_type provided, they must be valid.
         if(request.getResponseTypes()!=null) {
-            if(!request.getResponseTypes().isPresent()) {
-                request.setResponseTypes(Optional.of(Arrays.asList()));
-            }
-            if(!ResponseTypeUtils.isSupportedResponseType(request.getResponseTypes().get())) {
+            if(!ResponseTypeUtils.isSupportedResponseType(request.getResponseTypes().orElse(Collections.emptyList()))) {
                 return Single.error(new InvalidClientMetadataException("Invalid response type."));
             }
         }
@@ -214,7 +220,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private Single<DynamicClientRegistrationRequest> validateGrantType(DynamicClientRegistrationRequest request) {
         //if grant_type provided, they must be valid.
         if(request.getGrantTypes()!=null) {
-            if (!GrantTypeUtils.isSupportedGrantType(request.getGrantTypes().get())) {
+            if (!GrantTypeUtils.isSupportedGrantType(request.getGrantTypes().orElse(Collections.emptyList()))) {
                 return Single.error(new InvalidClientMetadataException("Missing or invalid grant type."));
             }
         }
@@ -223,7 +229,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateSubjectType(DynamicClientRegistrationRequest request) {
         //if subject_type is provided, it must be valid.
-        if(request.getSubjectType()!=null) {
+        if(request.getSubjectType()!=null && request.getSubjectType().isPresent()) {
             if(!SubjectTypeUtils.isValidSubjectType(request.getSubjectType().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported subject type"));
             }
@@ -233,7 +239,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateUserinfoSigningAlgorithm(DynamicClientRegistrationRequest request) {
         //if userinfo_signed_response_alg is provided, it must be valid.
-        if(request.getUserinfoSignedResponseAlg()!=null) {
+        if(request.getUserinfoSignedResponseAlg()!=null && request.getUserinfoSignedResponseAlg().isPresent()) {
             if(!JWAlgorithmUtils.isValidUserinfoSigningAlg(request.getUserinfoSignedResponseAlg().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported userinfo signing algorithm"));
             }
@@ -246,11 +252,11 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             return Single.error(new InvalidClientMetadataException("When userinfo_encrypted_response_enc is included, userinfo_encrypted_response_alg MUST also be provided"));
         }
         //if userinfo_encrypted_response_alg is provided, it must be valid.
-        if(request.getUserinfoEncryptedResponseAlg()!=null) {
+        if(request.getUserinfoEncryptedResponseAlg()!=null && request.getUserinfoEncryptedResponseAlg().isPresent()) {
             if(!JWAlgorithmUtils.isValidUserinfoResponseAlg(request.getUserinfoEncryptedResponseAlg().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported userinfo_encrypted_response_alg value"));
             }
-            if(request.getUserinfoEncryptedResponseEnc()!=null) {
+            if(request.getUserinfoEncryptedResponseEnc()!=null && request.getUserinfoEncryptedResponseEnc().isPresent()) {
                 if(!JWAlgorithmUtils.isValidUserinfoResponseEnc(request.getUserinfoEncryptedResponseEnc().get())) {
                     return Single.error(new InvalidClientMetadataException("Unsupported userinfo_encrypted_response_enc value"));
                 }
@@ -265,7 +271,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateIdTokenSigningAlgorithm(DynamicClientRegistrationRequest request) {
         //if userinfo_signed_response_alg is provided, it must be valid.
-        if(request.getIdTokenSignedResponseAlg()!=null) {
+        if(request.getIdTokenSignedResponseAlg()!=null && request.getIdTokenSignedResponseAlg().isPresent()) {
             if(!JWAlgorithmUtils.isValidIdTokenSigningAlg(request.getIdTokenSignedResponseAlg().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported id_token signing algorithm"));
             }
@@ -278,11 +284,11 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             return Single.error(new InvalidClientMetadataException("When id_token_encrypted_response_enc is included, id_token_encrypted_response_alg MUST also be provided"));
         }
         //if id_token_encrypted_response_alg is provided, it must be valid.
-        if(request.getIdTokenEncryptedResponseAlg()!=null) {
+        if(request.getIdTokenEncryptedResponseAlg()!=null && request.getIdTokenEncryptedResponseAlg().isPresent()) {
             if(!JWAlgorithmUtils.isValidIdTokenResponseAlg(request.getIdTokenEncryptedResponseAlg().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported id_token_encrypted_response_alg value"));
             }
-            if(request.getIdTokenEncryptedResponseEnc()!=null) {
+            if(request.getIdTokenEncryptedResponseEnc()!=null && request.getIdTokenEncryptedResponseEnc().isPresent()) {
                 if(!JWAlgorithmUtils.isValidIdTokenResponseEnc(request.getIdTokenEncryptedResponseEnc().get())) {
                     return Single.error(new InvalidClientMetadataException("Unsupported id_token_encrypted_response_enc value"));
                 }
@@ -360,7 +366,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         //Check jwks_uri
         if(request.getJwksUri()!=null && request.getJwksUri().isPresent()) {
             return jwkService.getKeys(request.getJwksUri().get())
-                    .switchIfEmpty(Maybe.error(new InvalidClientMetadataException("No JWK found behing jws uri...")))
+                    .switchIfEmpty(Maybe.error(new InvalidClientMetadataException("No JWK found behind jws uri...")))
                     .flatMapSingle(jwkSet -> {
                         /* Uncomment if we expect to save it as fallback
                         if(jwkSet!=null && jwkSet.isPresent()) {
@@ -369,6 +375,44 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                         */
                         return Single.just(request);
                     });
+        }
+
+        return Single.just(request);
+    }
+
+    /**
+     * Remove non allowed scopes (if feature is enabled) and then apply default scopes.
+     * The scopes validations are done later (validateMetadata) on the process.
+     * @param request DynamicClientRegistrationRequest
+     * @return DynamicClientRegistrationRequest
+     */
+    private Single<DynamicClientRegistrationRequest> validateScopes(DynamicClientRegistrationRequest request) {
+
+        final boolean hasAllowedScopes = domain.getOidc()!=null && domain.getOidc().getClientRegistrationSettings()!=null &&
+                domain.getOidc().getClientRegistrationSettings().isAllowedScopesEnabled() &&
+                domain.getOidc().getClientRegistrationSettings().getAllowedScopes()!=null;
+
+        final boolean hasDefaultScopes = domain.getOidc()!=null && domain.getOidc().getClientRegistrationSettings()!=null &&
+                domain.getOidc().getClientRegistrationSettings().getDefaultScopes()!=null &&
+                !domain.getOidc().getClientRegistrationSettings().getDefaultScopes().isEmpty();
+
+        //Remove from the request every non allowed scope
+        if(request.getScope()!=null && request.getScope().isPresent() && hasAllowedScopes) {
+
+            final Set<String> allowedScopes = new HashSet<>(domain.getOidc().getClientRegistrationSettings().getAllowedScopes());
+            final Set<String> requestedScopes = new HashSet<>(request.getScope().get());
+
+            //Remove non allowed scope
+            requestedScopes.retainAll(allowedScopes);
+
+            //Update the request
+            request.setScope(Optional.of(String.join(SCOPE_DELIMITER,requestedScopes)));
+        }
+
+        //Apply default scope if scope metadata is empty
+        if((request.getScope()==null || !request.getScope().isPresent() || request.getScope().get().isEmpty()) && hasDefaultScopes) {
+            //Add default scopes if needed
+            request.setScope(Optional.of(String.join(SCOPE_DELIMITER,domain.getOidc().getClientRegistrationSettings().getDefaultScopes())));
         }
 
         return Single.just(request);

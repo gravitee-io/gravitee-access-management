@@ -18,6 +18,8 @@ package io.gravitee.am.service.model.openid;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -53,6 +55,20 @@ public class PatchClientRegistrationSettings {
      */
     private Optional<Boolean> isOpenDynamicClientRegistrationEnabled;
 
+    /**
+     * Define some default scope to add on each client registration request
+     */
+    private Optional<List<String>> defaultScopes;
+
+    /**
+     * Filter scopes on Client Registration through an allowed list of scopes enabled.
+     */
+    private Optional<Boolean> isAllowedScopesEnabled;
+
+    /**
+     * Define allowed scopes for each client registration request
+     */
+    private Optional<List<String>> allowedScopes;
 
     public Optional<Boolean> getAllowLocalhostRedirectUri() {
         return allowLocalhostRedirectUri;
@@ -94,6 +110,29 @@ public class PatchClientRegistrationSettings {
         this.isOpenDynamicClientRegistrationEnabled = isOpenDynamicClientRegistrationEnabled;
     }
 
+    public Optional<List<String>> getDefaultScopes() {
+        return defaultScopes;
+    }
+
+    public void setDefaultScopes(Optional<List<String>> defaultScopes) {
+        this.defaultScopes = defaultScopes;
+    }
+
+    public Optional<Boolean> isAllowedScopesEnabled() {
+        return isAllowedScopesEnabled;
+    }
+
+    public void setIsAllowedScopesEnabled(Optional<Boolean> isAllowedScopesEnabled) {
+        this.isAllowedScopesEnabled = isAllowedScopesEnabled;
+    }
+
+    public Optional<List<String>> getAllowedScopes() {
+        return allowedScopes;
+    }
+
+    public void setAllowedScopes(Optional<List<String>> allowedScopes) {
+        this.allowedScopes = allowedScopes;
+    }
 
     public ClientRegistrationSettings patch(ClientRegistrationSettings toPatch) {
         ClientRegistrationSettings result=toPatch!=null?toPatch: ClientRegistrationSettings.defaultSettings();
@@ -102,7 +141,10 @@ public class PatchClientRegistrationSettings {
         SetterUtils.safeSet(result::setAllowHttpSchemeRedirectUri, this.getAllowHttpSchemeRedirectUri(), boolean.class);
         SetterUtils.safeSet(result::setAllowLocalhostRedirectUri, this.getAllowLocalhostRedirectUri(), boolean.class);
         SetterUtils.safeSet(result::setOpenDynamicClientRegistrationEnabled, this.isOpenDynamicClientRegistrationEnabled(), boolean.class);
-        SetterUtils.safeSet(result::setDynamicClientRegistrationEnabled,this.isDynamicClientRegistrationEnabled(), boolean.class);
+        SetterUtils.safeSet(result::setDynamicClientRegistrationEnabled, this.isDynamicClientRegistrationEnabled(), boolean.class);
+        SetterUtils.safeSet(result::setDefaultScopes, this.getDefaultScopes());
+        SetterUtils.safeSet(result::setAllowedScopesEnabled, this.isAllowedScopesEnabled, boolean.class);
+        SetterUtils.safeSet(result::setAllowedScopes, this.getAllowedScopes());
 
         return result;
     }

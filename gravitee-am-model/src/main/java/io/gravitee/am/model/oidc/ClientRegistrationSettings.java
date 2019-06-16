@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.oidc;
 
+import java.util.List;
+
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
@@ -45,6 +47,21 @@ public class ClientRegistrationSettings {
      * Domain open Dynamic Client Registration enabled
      */
     private boolean isOpenDynamicClientRegistrationEnabled;
+
+    /**
+     * Define some default scopes to add on each client registration request
+     */
+    private List<String> defaultScopes;
+
+    /**
+     * Filter scopes on Client Registration through an allowed list of scopes enabled.
+     */
+    private boolean isAllowedScopesEnabled;
+
+    /**
+     * Define allowed scopes for each client registration request
+     */
+    private List<String> allowedScopes;
 
 
     public boolean isAllowLocalhostRedirectUri() {
@@ -90,5 +107,29 @@ public class ClientRegistrationSettings {
     public static ClientRegistrationSettings defaultSettings() {
         //By default all boolean are set to false.
         return new ClientRegistrationSettings();
+    }
+
+    public List<String> getDefaultScopes() {
+        return defaultScopes;
+    }
+
+    public void setDefaultScopes(List<String> defaultScopes) {
+        this.defaultScopes = defaultScopes;
+    }
+
+    public boolean isAllowedScopesEnabled() {
+        return isAllowedScopesEnabled;
+    }
+
+    public void setAllowedScopesEnabled(boolean allowedScopesEnabled) {
+        isAllowedScopesEnabled = allowedScopesEnabled;
+    }
+
+    public List<String> getAllowedScopes() {
+        return allowedScopes;
+    }
+
+    public void setAllowedScopes(List<String> allowedScopes) {
+        this.allowedScopes = allowedScopes;
     }
 }

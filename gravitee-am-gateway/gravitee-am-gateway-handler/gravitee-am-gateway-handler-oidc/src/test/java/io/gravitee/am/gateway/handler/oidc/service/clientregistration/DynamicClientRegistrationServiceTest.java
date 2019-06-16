@@ -25,6 +25,7 @@ import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.oidc.JWKSet;
+import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
@@ -36,6 +37,7 @@ import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -175,11 +177,12 @@ public class DynamicClientRegistrationServiceTest {
     @Test
     public void validateClientRegistrationRequest_emptyRedirectUriRequest() {
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
-        request.setRedirectUris(Optional.empty());
+        //Allow null values on redirect_uris (ex client_credentials...)
+        request.setRedirectUris(Optional.empty());//"redirect_uris": null
 
         TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
-        testObserver.assertError(InvalidRedirectUriException.class);
-        testObserver.assertNotComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
     }
 
     @Test
@@ -188,8 +191,96 @@ public class DynamicClientRegistrationServiceTest {
         request.setRedirectUris(Optional.of(Arrays.asList()));
 
         TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
-        testObserver.assertError(InvalidRedirectUriException.class);
-        testObserver.assertNotComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_notAllowedScopes() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList()));
+        request.setScope(Optional.of("not allowed"));
+
+        OIDCSettings oidc = OIDCSettings.defaultSettings();
+        oidc.getClientRegistrationSettings().setAllowedScopesEnabled(true);
+        oidc.getClientRegistrationSettings().setAllowedScopes(Arrays.asList("openid","profile"));
+        when(domain.getOidc()).thenReturn(oidc);
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        //scope is not allowed, so expecting to erase scope (no scope)
+        testObserver.assertValue(o -> !((DynamicClientRegistrationRequest)o).getScope().isPresent());
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_notAllowedScopes_defaultScopes() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList()));
+        request.setScope(Optional.of("not allowed"));
+
+        OIDCSettings oidc = OIDCSettings.defaultSettings();
+        oidc.getClientRegistrationSettings().setAllowedScopesEnabled(true);
+        oidc.getClientRegistrationSettings().setAllowedScopes(Arrays.asList("openid","profile"));
+        oidc.getClientRegistrationSettings().setDefaultScopes(Arrays.asList("phone","email"));
+        when(domain.getOidc()).thenReturn(oidc);
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(o -> ((DynamicClientRegistrationRequest)o).getScope().get().size()==2);
+        testObserver.assertValue(o -> ((DynamicClientRegistrationRequest)o).getScope().get().containsAll(Arrays.asList("phone","email")));
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_filteredScopes() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList()));
+        request.setScope(Optional.of("openid not allowed"));
+
+        OIDCSettings oidc = OIDCSettings.defaultSettings();
+        oidc.getClientRegistrationSettings().setAllowedScopesEnabled(true);
+        oidc.getClientRegistrationSettings().setAllowedScopes(Arrays.asList("openid","profile"));
+        when(domain.getOidc()).thenReturn(oidc);
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(o -> ((DynamicClientRegistrationRequest)o).getScope().get().size()==1);
+        testObserver.assertValue(o -> ((DynamicClientRegistrationRequest)o).getScope().get().get(0).equals("openid"));
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_defaultScopes_notUsed() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList()));
+        request.setScope(Optional.of("openid not allowed"));
+
+        OIDCSettings oidc = OIDCSettings.defaultSettings();
+        oidc.getClientRegistrationSettings().setDefaultScopes(Arrays.asList("phone","email"));
+        when(domain.getOidc()).thenReturn(oidc);
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(o -> ((DynamicClientRegistrationRequest)o).getScope().get().size()==3);
+        testObserver.assertValue(o -> ((DynamicClientRegistrationRequest)o).getScope().get().containsAll(Arrays.asList("openid","not","allowed")));
+    }
+
+    @Test
+    public void validateClientRegistrationRequest_defaultScopes() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList()));
+
+        OIDCSettings oidc = OIDCSettings.defaultSettings();
+        oidc.getClientRegistrationSettings().setDefaultScopes(Arrays.asList("phone","email"));
+        when(domain.getOidc()).thenReturn(oidc);
+
+        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(o -> ((DynamicClientRegistrationRequest)o).getScope().get().size()==2);
+        testObserver.assertValue(o -> ((DynamicClientRegistrationRequest)o).getScope().get().containsAll(Arrays.asList("phone","email")));
     }
 
     @Test
@@ -224,18 +315,6 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertErrorMessage("Missing or invalid grant type.");
-        testObserver.assertNotComplete();
-    }
-
-    @Test
-    public void validateClientRegistrationRequest_RefreshTokenGrantTypeOnly() {
-        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
-        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
-        request.setGrantTypes(Optional.of(Arrays.asList("refresh_token")));
-
-        TestObserver testObserver = dcrService.validateClientRegistrationRequest(request).test();
-        testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertError(err -> ((Throwable)err).getMessage().startsWith("refresh_token grant type must be associated with"));
         testObserver.assertNotComplete();
     }
 
@@ -503,7 +582,7 @@ public class DynamicClientRegistrationServiceTest {
 
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientRegistrationRequest(request).test();
         testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertErrorMessage("No JWK found behing jws uri...");
+        testObserver.assertErrorMessage("No JWK found behind jws uri...");
         testObserver.assertNotComplete();
     }
 
@@ -554,6 +633,16 @@ public class DynamicClientRegistrationServiceTest {
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
 
         TestObserver<DynamicClientRegistrationRequest> testObserver = dcrService.validateClientPatchRequest(request).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+    }
+
+    @Test
+    public void validatePatchRequest_emptyRedirectUri() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+
+        TestObserver testObserver = dcrService.validateClientPatchRequest(request).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
     }

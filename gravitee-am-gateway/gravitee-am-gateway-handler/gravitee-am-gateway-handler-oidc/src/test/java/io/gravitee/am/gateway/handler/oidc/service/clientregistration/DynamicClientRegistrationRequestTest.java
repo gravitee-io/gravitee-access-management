@@ -69,7 +69,27 @@ public class DynamicClientRegistrationRequestTest {
         assertEquals("Refresh token validity should have been kept",3600, result.getRefreshTokenValiditySeconds());
         assertEquals("Default Max Age should have been kept",Integer.valueOf(1),result.getDefaultMaxAge());
         assertArrayEquals("Grant types should have been replaced",Arrays.asList("grant1","grant2").toArray(),result.getAuthorizedGrantTypes().toArray());
-        assertArrayEquals("Response type should have been replaced by default values",Arrays.asList("code").toArray(),result.getResponseTypes().toArray());
+        assertNull("Response type should have been set to null", result.getResponseTypes());
+        assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopes().toArray());
+    }
+
+    @Test
+    public void testPatch_nullValues() {
+        patcher.setResponseTypes(null);
+
+        //Apply patch
+        Client result = patcher.patch(toPatch);
+
+        //Checks
+        assertNotNull(result);
+        assertEquals("Client name should have been replaced","expectedClientName",result.getClientName());
+        assertEquals("Client secret should have been kept","expectedSecret", result.getClientSecret());
+        assertNull("Client uri should have been erased",result.getClientUri());
+        assertEquals("Access token validity should have been kept",7200,result.getAccessTokenValiditySeconds());
+        assertEquals("Refresh token validity should have been kept",3600, result.getRefreshTokenValiditySeconds());
+        assertEquals("Default Max Age should have been kept",Integer.valueOf(1),result.getDefaultMaxAge());
+        assertArrayEquals("Grant types should have been replaced",Arrays.asList("grant1","grant2").toArray(),result.getAuthorizedGrantTypes().toArray());
+        assertArrayEquals("Response type should have not been replaced",Arrays.asList("old","old2").toArray(),result.getResponseTypes().toArray());
         assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopes().toArray());
     }
 
@@ -87,7 +107,33 @@ public class DynamicClientRegistrationRequestTest {
         assertEquals("Refresh token validity should have been kept",3600, result.getRefreshTokenValiditySeconds());
         assertArrayEquals("Grant types should have been replaced",Arrays.asList("grant1","grant2").toArray(),result.getAuthorizedGrantTypes().toArray());
         assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopes().toArray());
-        assertNull("Response type should be set to null", result.getResponseTypes());
+        assertNull("Response type should have been set to null", result.getResponseTypes());
         assertNull("Default max age should be set to null", result.getDefaultMaxAge());
+    }
+
+    @Test
+    public void testUpdate_nullValues() {
+        patcher.setResponseTypes(null);
+
+        //Apply update
+        Client result = patcher.update(toPatch);
+
+        //Checks
+        assertNotNull(result);
+        assertEquals("Client name should have been replaced","expectedClientName",result.getClientName());
+        assertEquals("Client secret should have been kept","expectedSecret", result.getClientSecret());
+        assertNull("Client uri should have been erased",result.getClientUri());
+        assertEquals("Access token validity should have been kept",7200,result.getAccessTokenValiditySeconds());
+        assertEquals("Refresh token validity should have been kept",3600, result.getRefreshTokenValiditySeconds());
+        assertArrayEquals("Grant types should have been replaced",Arrays.asList("grant1","grant2").toArray(),result.getAuthorizedGrantTypes().toArray());
+        assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopes().toArray());
+        assertNull("Response type should have been set to null", result.getResponseTypes());
+        assertNull("Default max age should be set to null", result.getDefaultMaxAge());
+    }
+
+    @Test
+    public void testGetScope() {
+        patcher.setScope(Optional.of(""));
+        assertFalse(patcher.getScope().isPresent());
     }
 }
