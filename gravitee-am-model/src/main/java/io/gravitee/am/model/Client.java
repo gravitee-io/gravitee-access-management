@@ -679,6 +679,10 @@ public class Client implements Cloneable{
         this.accountSettings = accountSettings;
     }
 
+    public boolean isSecretRequired() {
+        return getAuthorizedGrantTypes().contains(GrantType.CLIENT_CREDENTIALS);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

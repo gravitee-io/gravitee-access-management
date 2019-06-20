@@ -56,7 +56,10 @@ public class ClientAuthenticationProvider implements AuthProvider {
                 .findByClientId(clientId)
                 .subscribe(
                         client -> {
-                            if (client.getClientSecret().equals(clientSecret)) {
+                            boolean secretMatches = client.getClientSecret().equals(clientSecret);
+                            boolean secretIsRequired = client.isSecretRequired();
+
+                            if (secretMatches || !secretIsRequired) {
                                 authHandler.handle(Future.succeededFuture(new Client(client)));
                             } else {
                                 authHandler.handle(Future.failedFuture(new BadClientCredentialsException()));
