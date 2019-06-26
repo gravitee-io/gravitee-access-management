@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.auth.idp.impl;
 
+import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.core.event.IdentityProviderEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -26,7 +27,6 @@ import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
 import org.slf4j.Logger;
@@ -100,8 +100,16 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for identity provider events");
-        eventManager.subscribeForEvents(this, IdentityProviderEvent.class);
+        logger.info("Register event listener for identity provider events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, IdentityProviderEvent.class, domain.getId());
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+
+        logger.info("Dispose event listener for identity provider events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(this, IdentityProviderEvent.class, domain.getId());
     }
 
     @Override

@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.policy.impl;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
+import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.core.event.PolicyEvent;
 import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
 import io.gravitee.am.gateway.policy.Policy;
@@ -25,7 +26,6 @@ import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.am.service.PolicyService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -67,8 +67,16 @@ public class PolicyManagerImpl extends AbstractService implements PolicyManager,
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for policy events");
-        eventManager.subscribeForEvents(this, PolicyEvent.class);
+        logger.info("Register event listener for policy events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, PolicyEvent.class, domain.getId());
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+
+        logger.info("Dispose event listener for policy events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(this, PolicyEvent.class, domain.getId());
     }
 
     @Override

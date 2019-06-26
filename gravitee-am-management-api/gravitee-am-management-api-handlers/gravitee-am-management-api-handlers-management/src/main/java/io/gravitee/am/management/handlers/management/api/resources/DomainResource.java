@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -49,6 +50,9 @@ public class DomainResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
+
+    @Autowired
+    private AuditReporterManager auditReporterManager;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -115,6 +119,7 @@ public class DomainResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         domainService.delete(domain, authenticatedUser)
+                .doOnComplete(() -> auditReporterManager.removeReporter(domain))
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

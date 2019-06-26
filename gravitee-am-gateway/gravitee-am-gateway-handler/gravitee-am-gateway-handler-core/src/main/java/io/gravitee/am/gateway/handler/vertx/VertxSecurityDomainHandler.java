@@ -16,9 +16,17 @@
 package io.gravitee.am.gateway.handler.vertx;
 
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
+import io.gravitee.am.gateway.handler.email.EmailManager;
+import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.plugins.protocol.core.ProtocolPluginManager;
+import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.reactivex.ext.web.Router;
 import org.slf4j.Logger;
@@ -26,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,6 +47,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
     private static final Logger logger = LoggerFactory.getLogger(VertxSecurityDomainHandler.class);
     private static final List<String> PROTOCOLS = Arrays.asList("openid-connect", "scim", "users");
+    private List<ProtocolProvider> protocolProviders = new ArrayList<>();
 
     @Autowired
     private Domain domain;
@@ -62,6 +72,17 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         startSecurityDomainProtocols();
     }
 
+    @Override
+    protected void doStop() throws Exception {
+        logger.info("Security domain ["+ domain.getName() + "] handler is now stopping, closing context...");
+
+        stopComponents();
+        stopProtocols();
+
+        super.doStop();
+        logger.info("Security domain [" + domain.getName() + "] handler is now stopped", domain);
+    }
+
     public Router router() {
         return router;
     }
@@ -76,6 +97,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         try {
             ProtocolProvider protocolProvider = applicationContext.getBean(RootProvider.class);
             protocolProvider.start();
+            protocolProviders.add(protocolProvider);
             logger.info("\t Protocol root loaded");
         } catch (Exception e) {
             logger.error("\t An error occurs while loading root protocol", e);
@@ -90,9 +112,41 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
             try {
                 ProtocolProvider protocolProvider = protocolPluginManager.create(protocol, applicationContext);
                 protocolProvider.start();
+                protocolProviders.add(protocolProvider);
                 logger.info("\t Protocol {} loaded", protocol);
             } catch (Exception e) {
                 logger.error("\t An error occurs while loading {} protocol", protocol, e);
+            }
+        });
+    }
+
+    private void stopProtocols() {
+        protocolProviders.forEach(protocolProvider -> {
+            try {
+                protocolProvider.stop();
+                logger.info("\t Protocol {} stopped", protocolProvider.path());
+            } catch (Exception e) {
+                logger.error("\t An error occurs while stopping {} protocol", protocolProvider.path(), e);
+            }
+        });
+    }
+
+    private void stopComponents() {
+        List<Class<? extends LifecycleComponent>> components = new ArrayList<>();
+        components.add(ClientSyncService.class);
+        components.add(CertificateManager.class);
+        components.add(IdentityProviderManager.class);
+        components.add(FormManager.class);
+        components.add(EmailManager.class);
+        components.add(AuditReporterManager.class);
+        components.add(PolicyManager.class);
+
+        components.forEach(componentClass -> {
+            LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);
+            try {
+                lifecyclecomponent.stop();
+            } catch (Exception e) {
+                logger.error("An error occurs while stopping component {}", componentClass.getSimpleName(), e);
             }
         });
     }

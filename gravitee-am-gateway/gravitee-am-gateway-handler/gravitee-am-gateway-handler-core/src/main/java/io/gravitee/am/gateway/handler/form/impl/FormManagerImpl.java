@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.form.impl;
 
+import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.core.event.FormEvent;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.DomainBasedTemplateResolver;
@@ -24,7 +25,6 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,8 +74,16 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for form events");
-        eventManager.subscribeForEvents(this, FormEvent.class);
+        logger.info("Register event listener for form events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, FormEvent.class, domain.getId());
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+
+        logger.info("Dispose event listener for form events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(this, FormEvent.class, domain.getId());
     }
 
     @Override

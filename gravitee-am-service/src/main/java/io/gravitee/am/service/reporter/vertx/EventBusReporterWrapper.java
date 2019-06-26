@@ -106,4 +106,8 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
     public void unregister() {
         messageConsumer.unregister();
     }
+
+    public String getDomain() {
+        return domain;
+    }
 }

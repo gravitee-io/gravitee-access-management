@@ -203,15 +203,17 @@ public class CertificateServiceImpl implements CertificateService {
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), certificate.getDomain(), Action.CREATE));
                     return domainService.reload(domain, event).flatMap(domain1 -> Single.just(certificate));
                 })
-                .doOnSuccess(certificate -> {
-                    CertificateProvider provider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
-                    certificateProviders.put(certificate.getId(), provider);
-                })
                 .doOnError(ex -> {
                     LOGGER.error("An error occurs while trying to create a certificate", ex);
                     throw new TechnicalManagementException("An error occurs while trying to create a certificate", ex);
                 })
-                .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).certificate(certificate)))
+                .doOnSuccess(certificate -> {
+                    // load certificate provider
+                    CertificateProvider provider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
+                    certificateProviders.put(certificate.getId(), provider);
+                    // send notification
+                    auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).certificate(certificate));
+                })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).throwable(throwable)));
     }
 

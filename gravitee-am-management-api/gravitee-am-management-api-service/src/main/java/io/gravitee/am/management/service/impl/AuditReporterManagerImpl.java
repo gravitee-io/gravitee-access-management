@@ -158,6 +158,18 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         }
     }
 
+    @Override
+    public void removeReporter(String domain) {
+        try {
+            Reporter reporter = getReporter(domain);
+            reporter.stop();
+            auditReporters.entrySet().removeIf(entry -> entry.getKey().getDomain().equals(((EventBusReporterWrapper) reporter).getDomain()));
+        } catch (Exception e) {
+            logger.error("Unexpected error while removing reporter", e);
+        }
+
+    }
+
     private void deployReporterVerticle(Collection<Reporter> reporters) {
         Single<String> deployment = RxHelper.deployVerticle(vertx, applicationContext.getBean(AuditReporterVerticle.class));
 

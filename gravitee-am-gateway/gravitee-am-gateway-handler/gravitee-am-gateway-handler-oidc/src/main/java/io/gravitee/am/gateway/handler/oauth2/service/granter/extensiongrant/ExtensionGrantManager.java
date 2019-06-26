@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant;
 
+import io.gravitee.common.service.Service;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ExtensionGrantManager {
+public interface ExtensionGrantManager extends Service {
 
 }
