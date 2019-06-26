@@ -39,7 +39,7 @@ public class CoreConfiguration {
     }
 
     @Bean
-    public Vertx vertx() {
-        return Vertx.vertx();
+    public Vertx vertx(io.vertx.core.Vertx vertx) {
+        return Vertx.newInstance(vertx);
     }
 }
