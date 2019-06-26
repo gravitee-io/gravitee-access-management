@@ -30,7 +30,7 @@ import java.io.ObjectOutputStream;
  */
 public class ReportableMessageCodec implements MessageCodec<Reportable, Reportable> {
 
-    public static final String CODEC_NAME = "reportable-codec";
+    public static final String CODEC_NAME = "am-reportable-codec";
 
     @Override
     public void encodeToWire(Buffer buffer, Reportable reportable) {
