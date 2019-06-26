@@ -69,6 +69,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-reporter</artifactId>
+            <version>${gravitee-node.version}</version>
+        </dependency>
+
         <!-- Vertx dependencies -->
         <dependency>
             <groupId>io.vertx</groupId>
