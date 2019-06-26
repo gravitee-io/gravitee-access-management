@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.scope.impl;
 
+import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.core.event.ScopeEvent;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.model.Domain;
@@ -23,7 +24,7 @@ import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.event.EventManager;
+import io.gravitee.common.service.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -39,7 +40,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ScopeManagerImpl implements ScopeManager, InitializingBean, EventListener<ScopeEvent, Payload> {
+public class ScopeManagerImpl extends AbstractService implements ScopeManager, InitializingBean, EventListener<ScopeEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(ScopeManagerImpl.class);
     private ConcurrentMap<String, Scope> scopes = new ConcurrentHashMap<>();
@@ -64,9 +65,17 @@ public class ScopeManagerImpl implements ScopeManager, InitializingBean, EventLi
                         },
                         error -> logger.error("Unable to initialize scopes for domain {}", domain.getName(), error));
 
-        logger.info("Register event listener for scopes events");
-        eventManager.subscribeForEvents(this, ScopeEvent.class);
+        logger.info("Register event listener for scopes events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, ScopeEvent.class, domain.getId());
 
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+
+        logger.info("Dispose event listener for scopes events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(this, ScopeEvent.class, domain.getId());
     }
 
     @Override

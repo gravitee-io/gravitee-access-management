@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
-
-import io.gravitee.am.reporter.api.provider.Reporter;
-import io.gravitee.common.service.Service;
+package io.gravitee.am.gateway.core.event;
 
 /**
+ * Event manager for AM gateway context
+ *
+ * We should unregister event listeners when a domain is removed
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuditReporterManager extends Service<AuditReporterManager> {
+import io.gravitee.common.event.EventListener;
 
-    Reporter getReporter(String domain);
+public interface EventManager extends io.gravitee.common.event.EventManager {
 
-    void reloadReporter(io.gravitee.am.model.Reporter reporter);
+    <T extends Enum> void subscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain);
 
-    void loadReporter(io.gravitee.am.model.Reporter reporter);
-
-    void removeReporter(String domain);
+    <T extends Enum> void unsubscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain);
 }

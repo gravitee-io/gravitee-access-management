@@ -83,7 +83,7 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
 
             if (handler != null) {
                 try {
-                    //handler.stop();
+                    handler.stop();
                     handlers.remove(handler.contextPath());
                     reactor.unMountSubRouter(handler.contextPath());
                     logger.info("Security Domain has been unregistered");
@@ -98,7 +98,7 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
     public void clear() {
         handlers.forEach((s, handler) -> {
             try {
-               // handler.stop();
+                handler.stop();
                 handlers.remove(handler.contextPath());
             } catch (Exception e) {
                 logger.error("Unable to un-register handler", e);

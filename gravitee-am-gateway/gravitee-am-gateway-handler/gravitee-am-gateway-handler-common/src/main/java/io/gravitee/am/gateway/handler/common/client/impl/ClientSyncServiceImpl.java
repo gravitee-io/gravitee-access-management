@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.client.impl;
 
 import io.gravitee.am.gateway.core.event.ClientEvent;
+import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
@@ -23,7 +24,6 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -105,8 +105,16 @@ public class ClientSyncServiceImpl extends AbstractService implements ClientSync
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for client events");
-        eventManager.subscribeForEvents(this, ClientEvent.class);
+        logger.info("Register event listener for client events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, ClientEvent.class, domain.getId());
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+
+        logger.info("Dispose event listener for client events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(this, ClientEvent.class, domain.getId());
     }
 
     @Override

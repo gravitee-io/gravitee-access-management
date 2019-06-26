@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.impl;
 
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
+import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.core.event.ExtensionGrantEvent;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -33,7 +34,7 @@ import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.event.EventManager;
+import io.gravitee.common.service.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -43,7 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ExtensionGrantManagerImpl implements ExtensionGrantManager, InitializingBean, EventListener<ExtensionGrantEvent, Payload> {
+public class ExtensionGrantManagerImpl extends AbstractService implements ExtensionGrantManager, InitializingBean, EventListener<ExtensionGrantEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExtensionGrantManagerImpl.class);
     private TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
@@ -83,8 +84,16 @@ public class ExtensionGrantManagerImpl implements ExtensionGrantManager, Initial
                         },
                         error -> logger.error("Unable to initialize extension grants for domain {}", domain.getName(), error));
 
-        logger.info("Register event listener for extension grant events");
-        eventManager.subscribeForEvents(this, ExtensionGrantEvent.class);
+        logger.info("Register event listener for extension grant events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, ExtensionGrantEvent.class, domain.getId());
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+
+        logger.info("Dispose event listener for extension grant events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(this, ExtensionGrantEvent.class, domain.getId());
     }
 
     @Override

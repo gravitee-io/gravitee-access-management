@@ -25,6 +25,8 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHa
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
+import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantManager;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oidc.resources.endpoint.*;
 import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientAccessHandler;
 import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientAccessTokenHandler;
@@ -95,6 +97,12 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private ExtensionGrantManager extensionGrantManager;
+
+    @Autowired
+    private ScopeManager scopeManager;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -105,6 +113,14 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
 
         // Start OpenID Connect provider
         startOpenIDConnectProtocol();
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+
+        extensionGrantManager.stop();
+        scopeManager.stop();
     }
 
     @Override

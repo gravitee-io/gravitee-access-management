@@ -38,6 +38,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.processors.PublishProcessor;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -78,6 +79,8 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     private MongoCollection<AuditMongo> reportableCollection;
 
     private final PublishProcessor<Audit> bulkProcessor = PublishProcessor.create();
+
+    private Disposable disposable;
 
     @Override
     public Single<Page<Audit>> search(AuditReportableCriteria criteria, int page, int size) {
@@ -137,7 +140,7 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         reportableCollection = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getReportableCollection(), AuditMongo.class);
 
         // init bulk processor
-        bulkProcessor.buffer(
+        disposable = bulkProcessor.buffer(
                 configuration.getFlushInterval(),
                 TimeUnit.SECONDS,
                 configuration.getBulkActions())
@@ -150,6 +153,15 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     protected void doStop() throws Exception {
         super.doStop();
         try {
+            if (!disposable.isDisposed()) {
+                disposable.dispose();
+            }
+
+            // we wait until the bulk processor has stopped
+            while(bulkProcessor.hasSubscribers()) {
+                logger.debug("The bulk processor is processing data, wait.");
+            }
+
             mongoClient.close();
         } catch(Exception ex) {
             logger.error("Failed to close mongoDB client", ex);

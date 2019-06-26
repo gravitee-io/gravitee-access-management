@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.audit.impl;
 
+import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.core.event.ReporterEvent;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.model.Domain;
@@ -26,7 +27,6 @@ import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Single;
 import io.vertx.reactivex.core.RxHelper;
@@ -85,8 +85,8 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for reporter events");
-        eventManager.subscribeForEvents(this, ReporterEvent.class);
+        logger.info("Register event listener for reporter events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, ReporterEvent.class, domain.getId());
 
         logger.info("Initializing reporters for domain {}", domain.getName());
         logger.info("\t Starting reporter verticle for domain {}", domain.getName());
@@ -113,6 +113,9 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
     @Override
     protected void doStop() throws Exception {
         super.doStop();
+
+        logger.info("Dispose event listener for reporter events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(this, ReporterEvent.class, domain.getId());
 
         if (deploymentId != null) {
             vertx.undeploy(deploymentId, event -> {

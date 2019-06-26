@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.gateway.core.event.CertificateEvent;
+import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JJWTBuilder;
@@ -31,7 +32,6 @@ import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwts;
@@ -118,10 +118,13 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     @Override
     public Maybe<CertificateProvider> findByDomainAndId(String domain, String id) {
-        return id == null ? Maybe.empty() : Observable.fromIterable(domainsCertificateProviders.get(domain).entrySet())
-                .filter(certificateProviderEntry -> certificateProviderEntry.getKey().equals(id))
-                .firstElement()
-                .map(Map.Entry::getValue);
+        if (domainsCertificateProviders.containsKey(domain)) {
+            return id == null ? Maybe.empty() : Observable.fromIterable(domainsCertificateProviders.get(domain).entrySet())
+                    .filter(certificateProviderEntry -> certificateProviderEntry.getKey().equals(id))
+                    .firstElement()
+                    .map(Map.Entry::getValue);
+        }
+        return Maybe.empty();
     }
 
     @Override
@@ -175,8 +178,16 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for certificate events");
-        eventManager.subscribeForEvents(this, CertificateEvent.class);
+        logger.info("Register event listener for certificate events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, CertificateEvent.class, domain.getId());
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+
+        logger.info("Dispose event listener for certificate events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(this, CertificateEvent.class, domain.getId());
     }
 
     @Override
@@ -207,7 +218,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     private void removeCertificate(String certificateId, String domainId) {
         logger.info("Domain {} has received certificate event, delete certificate {}", domain.getName(), certificateId);
-        domainsCertificateProviders.get(domainId).remove(certificateId);
+        if (domainsCertificateProviders.containsKey(domainId)) {
+            domainsCertificateProviders.get(domainId).remove(certificateId);
+        }
     }
 
     private void updateCertificateProvider(Certificate certificate) {

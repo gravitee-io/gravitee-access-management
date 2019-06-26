@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.email.impl;
 import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
 import io.gravitee.am.gateway.core.event.EmailEvent;
+import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.handler.email.EmailManager;
 import io.gravitee.am.gateway.handler.vertx.view.freemarker.DomainBasedEmailTemplateLoader;
 import io.gravitee.am.model.Domain;
@@ -26,7 +27,6 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.EmailRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,10 +90,17 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for email events");
-        eventManager.subscribeForEvents(this, EmailEvent.class);
+        logger.info("Register event listener for email events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, EmailEvent.class, domain.getId());
     }
 
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+
+        logger.info("Dispose event listener for email events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(this, EmailEvent.class, domain.getId());
+    }
 
     @Override
     public void onEvent(Event<EmailEvent, Payload> event) {
