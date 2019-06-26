@@ -52,7 +52,7 @@
         <gravitee-gateway-api.version>1.16.1</gravitee-gateway-api.version>
         <gravitee-expression-language.version>1.2.0</gravitee-expression-language.version>
         <spring-security.version>4.2.4.RELEASE</spring-security.version>
-        <jetty.version>9.4.16.v20190411</jetty.version>
+        <jetty.version>9.4.19.v20190610</jetty.version>
         <jjwt.version>0.10.6</jjwt.version>
         <rxjava.version>2.1.12</rxjava.version>
         <com.fasterxml.jackson.version>2.9.6</com.fasterxml.jackson.version>
