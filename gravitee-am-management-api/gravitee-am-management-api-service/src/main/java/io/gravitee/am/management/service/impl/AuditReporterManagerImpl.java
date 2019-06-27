@@ -22,7 +22,6 @@ import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.ReporterNotFoundForDomainException;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
-import io.gravitee.am.service.reporter.vertx.ReportableMessageCodec;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Single;
 import io.vertx.reactivex.core.RxHelper;
@@ -65,9 +64,6 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-
-        // register specific codec
-        vertx.eventBus().getDelegate().registerCodec(new ReportableMessageCodec());
 
         reporterService.findAll()
                 .subscribe(reporters -> {
