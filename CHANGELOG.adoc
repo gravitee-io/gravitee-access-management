@@ -1,5 +1,15 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/issues/milestone/148?closed=1[AM - 2.7.1 (2019-06-27)]
+
+=== Bug fixes
+
+*_Management_*
+
+- Jetty server becomes unresponsive after being idle https://github.com/gravitee-io/issues/issues/2411[#2411]
+- Multiple Vertx instances https://github.com/gravitee-io/issues/issues/2410[#2410]
+
+
 == https://github.com/gravitee-io/issues/issues/milestone/134?closed=1[AM - 2.7.0 (2019-06-15)]
 
 === Bug fixes
