@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Group;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
@@ -36,8 +38,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -54,6 +55,9 @@ public class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private GroupRepository groupRepository;
 
     private final static String DOMAIN = "domain1";
 
@@ -287,5 +291,78 @@ public class UserServiceTest {
         testObserver.assertNotComplete();
 
         verify(userRepository, never()).delete("my-user");
+    }
+
+    @Test
+    public void shouldFindOrCreate_CreateEmptyUser() {
+        String domain = "Domain";
+        String username = "foo";
+        String source = "SRC";
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getUsername()).thenReturn(username);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+        when(userRepository.findByDomainAndUsernameAndSource(domain, username, source)).thenReturn(Maybe.empty());
+        when(userRepository.create(any())).thenReturn(Single.just(mock(User.class)));
+
+        TestObserver testObserver = userService.findOrCreate(domain, user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userRepository, times(1)).create(any());
+        verify(userRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldFindOrCreate_UpdateKnownUser() {
+        String domain = "Domain";
+        String username = "foo";
+        String source = "SRC";
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getUsername()).thenReturn(username);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+        when(userRepository.findByDomainAndUsernameAndSource(domain, username, source)).thenReturn(Maybe.just(mock(User.class)));
+        when(userRepository.update(any())).thenReturn(Single.just(mock(User.class)));
+
+        TestObserver testObserver = userService.findOrCreate(domain, user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userRepository, never()).create(any());
+        verify(userRepository, times(1)).update(any());
+    }
+
+    @Test
+    public void shouldFindOrCreate_UpdateKnownUserWithEmptyGroup() {
+        String domain = "Domain";
+        String username = "foo";
+        String source = "SRC";
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getUsername()).thenReturn(username);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        Map<String, List<String>> groupMapping = new HashMap<>();
+        groupMapping.put("foo", Collections.singletonList("bar"));
+        additionalInformation.put("_RESERVED_AM_GROUP_MAPPING_", groupMapping);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+        User existingUser = mock(User.class);
+        when(userRepository.findByDomainAndUsernameAndSource(domain, username, source)).thenReturn(Maybe.just(existingUser));
+        when(userRepository.update(any())).thenReturn(Single.just(mock(User.class)));
+        Group group = mock(Group.class);
+        when(group.getMembers()).thenReturn(null);
+        when(groupRepository.findByIdIn(any())).thenReturn(Single.just(Collections.singletonList(group)));
+
+        TestObserver testObserver = userService.findOrCreate(domain, user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userRepository, never()).create(any());
+        verify(userRepository, times(1)).update(any());
     }
 }
