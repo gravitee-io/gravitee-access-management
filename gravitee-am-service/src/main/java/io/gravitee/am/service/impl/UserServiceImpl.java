@@ -293,7 +293,7 @@ public class UserServiceImpl implements UserService {
                     .flatMapSingle(entry -> groupRepository.findByIdIn(entry.getValue())
                             .map(groups -> groups
                                     .stream()
-                                    .filter(group -> group.getMembers().contains(user.getId()))
+                                    .filter(group -> group.getMembers() != null && group.getMembers().contains(user.getId()))
                                     .findFirst())
                             .map(optionalGroup -> optionalGroup.isPresent() ? Optional.of(entry.getKey()) : Optional.<String>empty()))
                     .toList()
