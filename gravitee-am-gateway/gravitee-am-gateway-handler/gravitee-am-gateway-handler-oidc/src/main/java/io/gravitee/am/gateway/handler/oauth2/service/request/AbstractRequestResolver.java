@@ -33,7 +33,7 @@ import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AbstractRequestResolver<R extends BaseRequest> {
+public abstract class AbstractRequestResolver<R extends OAuth2Request> {
 
     /**
      * If the client omits the scope parameter when requesting authorization, the authorization server MUST either process the

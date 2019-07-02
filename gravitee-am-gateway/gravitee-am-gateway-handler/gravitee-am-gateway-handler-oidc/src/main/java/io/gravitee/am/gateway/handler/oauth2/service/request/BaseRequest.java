@@ -15,17 +15,187 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
+import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpMethod;
+import io.gravitee.common.http.HttpVersion;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
+import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.buffer.Buffer;
+import io.gravitee.gateway.api.handler.Handler;
+import io.gravitee.gateway.api.stream.ReadStream;
+import io.gravitee.gateway.api.ws.WebSocket;
+import io.gravitee.reporter.api.http.Metrics;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.net.ssl.SSLSession;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEHNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class BaseRequest {
+public abstract class BaseRequest implements Request {
+
+    private String id;
+    private String transactionId;
+    private String uri;
+    private String path;
+    private String pathInfo;
+    private String contextPath;
+    private MultiValueMap<String, String> parameters;
+    private HttpHeaders headers;
+    private HttpMethod method;
+    private String scheme;
+    private String rawMethod;
+    private long timestamp;
+    private String remoteAddress;
+    private String localAddress;
+    private HttpVersion version;
+    private SSLSession sslSession;
+
+    @Override
+    public String id() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    @Override
+    public String transactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    @Override
+    public String uri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
+    @Override
+    public String path() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    @Override
+    public String pathInfo() {
+        return path();
+    }
+
+    public void setPathInfo(String pathInfo) {
+        this.pathInfo = pathInfo;
+    }
+
+    @Override
+    public String contextPath() {
+        return contextPath;
+    }
+
+    public void setContextPath(String contextPath) {
+        this.contextPath = contextPath;
+    }
+
+    @Override
+    public MultiValueMap<String, String> parameters() {
+        return parameters;
+    }
+
+    public void setParameters(MultiValueMap<String, String> parameters) {
+        this.parameters = parameters;
+    }
+
+    @Override
+    public HttpHeaders headers() {
+        return headers;
+    }
+
+    public void setHeaders(HttpHeaders headers) {
+        this.headers = headers;
+    }
+
+    @Override
+    public HttpMethod method() {
+        return method;
+    }
+
+    public void setMethod(HttpMethod method) {
+        this.method = method;
+    }
+
+    @Override
+    public String scheme() {
+        return scheme;
+    }
+
+    public void setScheme(String scheme) {
+        this.scheme = scheme;
+    }
+
+    @Override
+    public String rawMethod() {
+        return rawMethod;
+    }
+
+    public void setRawMethod(String rawMethod) {
+        this.rawMethod = rawMethod;
+    }
+
+    @Override
+    public HttpVersion version() {
+        return version;
+    }
+
+    public void setVersion(HttpVersion version) {
+        this.version = version;
+    }
+
+    @Override
+    public long timestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    @Override
+    public String remoteAddress() {
+        return remoteAddress;
+    }
+
+    public void setRemoteAddress(String remoteAddress) {
+        this.remoteAddress = remoteAddress;
+    }
+
+    @Override
+    public String localAddress() {
+        return localAddress;
+    }
+
+    public void setLocalAddress(String localAddress) {
+        this.localAddress = localAddress;
+    }
+
+    @Override
+    public SSLSession sslSession() {
+        return sslSession;
+    }
+
+    public void setSslSession(SSLSession sslSession) {
+        this.sslSession = sslSession;
+    }
 
     /**
      * Request origin : scheme/host/port triple.
@@ -33,26 +203,8 @@ public abstract class BaseRequest {
     private String origin;
 
     /**
-     * The authorization server issues the registered client a client
-     * identifier -- a unique string representing the registration
-     * information provided by the client.  The client identifier is not a
-     * secret; it is exposed to the resource owner and MUST NOT be used
-     * alone for client authentication.  The client identifier is unique to
-     * the authorization server.
-     *
-     * The client identifier string size is left undefined by this
-     * specification.  The client should avoid making assumptions about the
-     * identifier size.  The authorization server SHOULD document the size
-     * of any identifier it issues.
-     *
-     * See <a href="https://tools.ietf.org/html/rfc6749#section-2.2"></a>
+     * All query parameters that do not belong to the OAuth 2.0/OIDC specifications
      */
-    private String clientId;
-
-    private Set<String> scopes = new HashSet<>();
-
-    private MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
-
     private MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
 
     public String getOrigin() {
@@ -63,30 +215,6 @@ public abstract class BaseRequest {
         this.origin = origin;
     }
 
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public Set<String> getScopes() {
-        return scopes;
-    }
-
-    public void setScopes(Set<String> scopes) {
-        this.scopes = scopes;
-    }
-
-    public MultiValueMap<String, String> getRequestParameters() {
-        return requestParameters;
-    }
-
-    public void setRequestParameters(MultiValueMap<String, String> requestParameters) {
-        this.requestParameters = requestParameters;
-    }
-
     public MultiValueMap<String, String> getAdditionalParameters() {
         return additionalParameters;
     }
@@ -95,23 +223,51 @@ public abstract class BaseRequest {
         this.additionalParameters = additionalParameters;
     }
 
+    /**
+     * ---------------------------------------------
+     * ---------------------------------------------
+     * The following information is not required for the OAuth 2.0/OIDC use cases
+     * ---------------------------------------------
+     * ---------------------------------------------
+     */
+
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        BaseRequest that = (BaseRequest) o;
-
-        if (clientId != null ? !clientId.equals(that.clientId) : that.clientId != null) return false;
-        if (scopes != null ? !scopes.equals(that.scopes) : that.scopes != null) return false;
-        return requestParameters != null ? requestParameters.equals(that.requestParameters) : that.requestParameters == null;
+    public Metrics metrics() {
+        return null;
     }
 
     @Override
-    public int hashCode() {
-        int result = clientId != null ? clientId.hashCode() : 0;
-        result = 31 * result + (scopes != null ? scopes.hashCode() : 0);
-        result = 31 * result + (requestParameters != null ? requestParameters.hashCode() : 0);
-        return result;
+    public boolean ended() {
+        return false;
+    }
+
+    @Override
+    public Request timeoutHandler(Handler<Long> timeoutHandler) {
+        return null;
+    }
+
+    @Override
+    public Handler<Long> timeoutHandler() {
+        return null;
+    }
+
+    @Override
+    public boolean isWebSocket() {
+        return false;
+    }
+
+    @Override
+    public WebSocket websocket() {
+        return null;
+    }
+
+    @Override
+    public ReadStream<Buffer> bodyHandler(Handler<Buffer> bodyHandler) {
+        return null;
+    }
+
+    @Override
+    public ReadStream<Buffer> endHandler(Handler<Void> endHandler) {
+        return null;
     }
 }

@@ -99,7 +99,7 @@ public class UserApprovalSubmissionEndpoint implements Handler<RoutingContext> {
                     }
 
                     // user approved access, replay authorization request
-                    final String authorizationRequestUrl = UriBuilderRequest.resolveProxyRequest(context.request(),"/" + domain.getPath() + "/oauth/authorize", authorizationRequest.getRequestParameters().toSingleValueMap());
+                    final String authorizationRequestUrl = UriBuilderRequest.resolveProxyRequest(context.request(),"/" + domain.getPath() + "/oauth/authorize", authorizationRequest.parameters().toSingleValueMap());
                     doRedirect(context.response(), authorizationRequestUrl);
                 },
                 error -> {

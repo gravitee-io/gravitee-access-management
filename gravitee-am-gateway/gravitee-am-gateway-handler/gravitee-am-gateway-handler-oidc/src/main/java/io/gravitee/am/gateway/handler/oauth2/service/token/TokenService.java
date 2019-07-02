@@ -34,7 +34,7 @@ public interface TokenService {
 
     Maybe<Token> getRefreshToken(String refreshToken, Client client);
 
-    Maybe<Token> introspect(String token);
+    Single<Token> introspect(String token);
 
     Single<Token> create(OAuth2Request oAuth2Request, Client client, User endUser);
 

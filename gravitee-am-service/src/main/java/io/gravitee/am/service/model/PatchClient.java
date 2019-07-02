@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
@@ -70,7 +71,6 @@ public class PatchClient {
     private Optional<Integer> accessTokenValiditySeconds;
     private Optional<Integer> refreshTokenValiditySeconds;
     private Optional<Integer> idTokenValiditySeconds;
-    private Optional<Map<String, Object>> idTokenCustomClaims;
     private Optional<Boolean> enabled;
     private Optional<Set<String>> identities;
     private Optional<Set<String>> oauth2Identities;
@@ -78,6 +78,7 @@ public class PatchClient {
     private Optional<Boolean> enhanceScopesWithUserPermissions;
     private Optional<Map<String, Integer>> scopeApprovals;
     private Optional<AccountSettings> accountSettings;
+    private Optional<List<TokenClaim>> tokenCustomClaims;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -415,14 +416,6 @@ public class PatchClient {
         this.idTokenValiditySeconds = idTokenValiditySeconds;
     }
 
-    public Optional<Map<String, Object>> getIdTokenCustomClaims() {
-        return idTokenCustomClaims;
-    }
-
-    public void setIdTokenCustomClaims(Optional<Map<String, Object>> idTokenCustomClaims) {
-        this.idTokenCustomClaims = idTokenCustomClaims;
-    }
-
     public Optional<Boolean> getEnabled() {
         return enabled;
     }
@@ -479,6 +472,14 @@ public class PatchClient {
         this.accountSettings = accountSettings;
     }
 
+    public Optional<List<TokenClaim>> getTokenCustomClaims() {
+        return tokenCustomClaims;
+    }
+
+    public void setTokenCustomClaims(Optional<List<TokenClaim>> tokenCustomClaims) {
+        this.tokenCustomClaims = tokenCustomClaims;
+    }
+
     public Client patch(Client _toPatch, boolean forceNull) {
         // create new object for audit purpose (patch json result)
         Client toPatch = new Client(_toPatch);
@@ -525,7 +526,6 @@ public class PatchClient {
         SetterUtils.safeSet(toPatch::setAccessTokenValiditySeconds, this.getAccessTokenValiditySeconds(), int.class);
         SetterUtils.safeSet(toPatch::setRefreshTokenValiditySeconds, this.getRefreshTokenValiditySeconds(), int.class);
         SetterUtils.safeSet(toPatch::setIdTokenValiditySeconds, this.getIdTokenValiditySeconds(), int.class);
-        SetterUtils.safeSet(toPatch::setIdTokenCustomClaims, this.getIdTokenCustomClaims());
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setIdentities, this.getIdentities());
         SetterUtils.safeSet(toPatch::setOauth2Identities, this.getOauth2Identities());
@@ -538,6 +538,7 @@ public class PatchClient {
         SetterUtils.safeSet(toPatch::setEnhanceScopesWithUserPermissions, this.getEnhanceScopesWithUserPermissions(), boolean.class);
         SetterUtils.safeSet(toPatch::setScopeApprovals, this.getScopeApprovals());
         SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
+        SetterUtils.safeSet(toPatch::setTokenCustomClaims, this.getTokenCustomClaims());
 
         return toPatch;
     }

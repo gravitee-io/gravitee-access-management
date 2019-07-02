@@ -122,11 +122,6 @@ public class ClientMongo extends Auditable {
     private int idTokenValiditySeconds;
 
     /**
-     * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
-     */
-    private Document idTokenCustomClaims;
-
-    /**
      * Security domain associated to the client
      */
     private String domain;
@@ -150,6 +145,8 @@ public class ClientMongo extends Auditable {
     private Document scopeApprovals;
 
     private AccountSettingsMongo accountSettings;
+
+    private List<TokenClaimMongo> tokenCustomClaims;
 
     public String getId() {
         return id;
@@ -543,14 +540,6 @@ public class ClientMongo extends Auditable {
         this.idTokenValiditySeconds = idTokenValiditySeconds;
     }
 
-    public Document getIdTokenCustomClaims() {
-        return idTokenCustomClaims;
-    }
-
-    public void setIdTokenCustomClaims(Document idTokenCustomClaims) {
-        this.idTokenCustomClaims = idTokenCustomClaims;
-    }
-
     public String getCertificate() {
         return certificate;
     }
@@ -581,6 +570,14 @@ public class ClientMongo extends Auditable {
 
     public void setAccountSettings(AccountSettingsMongo accountSettings) {
         this.accountSettings = accountSettings;
+    }
+
+    public List<TokenClaimMongo> getTokenCustomClaims() {
+        return tokenCustomClaims;
+    }
+
+    public void setTokenCustomClaims(List<TokenClaimMongo> tokenCustomClaims) {
+        this.tokenCustomClaims = tokenCustomClaims;
     }
 
     @Override

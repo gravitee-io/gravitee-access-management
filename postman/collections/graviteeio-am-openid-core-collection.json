@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "ee9ebc39-6fd7-4717-83ae-59edda80c2c6",
+		"_postman_id": "fd944c15-5a12-4ec9-a15e-10fead98828c",
 		"name": "Gravitee.io - AM - Openid Core",
 		"description": "Test Openid core specifications: https://openid.net/specs/openid-connect-core-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -402,7 +402,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"redirectUris\": [\"https://domain/callback\",\"https://another/callback\"],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\",\n    \"refresh_token\"\n  ],\n  \"scopes\": [\"scope1\", \"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"idTokenCustomClaims\": {},\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+							"raw": "{\n  \"redirectUris\": [\"https://domain/callback\",\"https://another/callback\"],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\",\n    \"refresh_token\"\n  ],\n  \"scopes\": [\"scope1\", \"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{client1}}",
@@ -500,7 +500,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"redirectUris\": [\"http://localhost:4000/\"],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\"\n  ],\n  \"scopes\": [\"scope1\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"idTokenCustomClaims\": {},\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+							"raw": "{\n  \"redirectUris\": [\"http://localhost:4000/\"],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\"\n  ],\n  \"scopes\": [\"scope1\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{client2}}",
@@ -754,7 +754,7 @@
 													"    tests['Contains an aud claim'] = jwt.aud === 'my-client';",
 													"    tests['Contains an exp claim'] = jwt.exp !== undefined;",
 													"    tests['Contains an iat claim'] = jwt.iat !== undefined;",
-													"    tests['Does not contain an auth_time claim'] = jwt.auth_time === undefined;",
+													"    tests['Contains an auth_time claim'] = jwt.auth_time !== undefined;",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1086,7 +1086,7 @@
 													"    tests['Contains an aud claim'] = jwt.aud === 'my-client';",
 													"    tests['Contains an exp claim'] = jwt.exp !== undefined;",
 													"    tests['Contains an iat claim'] = jwt.iat !== undefined;",
-													"    tests['Does not contain an auth_time claim'] = jwt.auth_time === undefined;",
+													"    tests['Contains an auth_time claim'] = jwt.auth_time !== undefined;",
 													"    tests['Contains a nonce claim'] = jwt.nonce === 'n-0S6_WzA2Mj';",
 													"});"
 												],
@@ -1277,7 +1277,7 @@
 													"    tests['Contains an aud claim'] = jwt.aud === 'my-client';",
 													"    tests['Contains an exp claim'] = jwt.exp !== undefined;",
 													"    tests['Contains an iat claim'] = jwt.iat !== undefined;",
-													"    tests['Does not contain an auth_time claim'] = jwt.auth_time === undefined;",
+													"    tests['Contains an auth_time claim'] = jwt.auth_time !== undefined;",
 													"    tests['Contains a nonce claim'] = jwt.nonce === 'nonce1';",
 													"});"
 												],
@@ -1381,7 +1381,7 @@
 													"    tests['Contains an aud claim'] = jwt.aud === 'my-client';",
 													"    tests['Contains an exp claim'] = jwt.exp !== undefined;",
 													"    tests['Contains an iat claim'] = jwt.iat !== undefined;",
-													"    tests['Does not contain an auth_time claim'] = jwt.auth_time === undefined;",
+													"    tests['Contains an auth_time claim'] = jwt.auth_time !== undefined;",
 													"    tests['Contains a nonce claim'] = jwt.nonce === 'nonce2';",
 													"    ",
 													"    // Access token is not the same as the previous request with nonce 1",

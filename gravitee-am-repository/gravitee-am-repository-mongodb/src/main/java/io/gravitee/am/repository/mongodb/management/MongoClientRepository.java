@@ -17,8 +17,10 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.jose.*;
@@ -28,6 +30,7 @@ import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ClientMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -224,13 +227,13 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setDomain(clientMongo.getDomain());
         client.setAuthorizedGrantTypes(clientMongo.getAuthorizedGrantTypes());
         client.setIdTokenValiditySeconds(clientMongo.getIdTokenValiditySeconds());
-        client.setIdTokenCustomClaims(clientMongo.getIdTokenCustomClaims());
         client.setCertificate(clientMongo.getCertificate());
         client.setEnhanceScopesWithUserPermissions(clientMongo.isEnhanceScopesWithUserPermissions());
         client.setCreatedAt(clientMongo.getCreatedAt());
         client.setUpdatedAt(clientMongo.getUpdatedAt());
         client.setScopeApprovals((Map)clientMongo.getScopeApprovals());
         client.setAccountSettings(convert(clientMongo.getAccountSettings()));
+        client.setTokenCustomClaims(getTokenClaims(clientMongo.getTokenCustomClaims()));
         return client;
     }
 
@@ -289,13 +292,13 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setOauth2Identities(client.getOauth2Identities());
         clientMongo.setDomain(client.getDomain());
         clientMongo.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
-        clientMongo.setIdTokenCustomClaims(client.getIdTokenCustomClaims() != null ? new Document(client.getIdTokenCustomClaims()) : new Document());
         clientMongo.setCertificate(client.getCertificate());
         clientMongo.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
         clientMongo.setCreatedAt(client.getCreatedAt());
         clientMongo.setUpdatedAt(client.getUpdatedAt());
         clientMongo.setScopeApprovals(client.getScopeApprovals() != null ? new Document((Map)client.getScopeApprovals()) : new Document());
         clientMongo.setAccountSettings(convert(client.getAccountSettings()));
+        clientMongo.setTokenCustomClaims(getMongoTokenClaims(client.getTokenCustomClaims()));
         return clientMongo;
     }
 
@@ -465,5 +468,35 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         accountSettingsMongo.setAccountBlockedDuration(accountSettings.getAccountBlockedDuration());
         accountSettingsMongo.setCompleteRegistrationWhenResetPassword(accountSettings.isCompleteRegistrationWhenResetPassword());
         return accountSettingsMongo;
+    }
+
+    private List<TokenClaim> getTokenClaims(List<TokenClaimMongo> mongoTokenClaims) {
+        if (mongoTokenClaims == null) {
+            return null;
+        }
+        return mongoTokenClaims.stream().map(this::convert).collect(Collectors.toList());
+    }
+
+    private List<TokenClaimMongo> getMongoTokenClaims(List<TokenClaim> tokenClaims) {
+        if (tokenClaims == null) {
+            return null;
+        }
+        return tokenClaims.stream().map(this::convert).collect(Collectors.toList());
+    }
+
+    private TokenClaim convert(TokenClaimMongo mongoTokenClaim) {
+        TokenClaim tokenClaim = new TokenClaim();
+        tokenClaim.setTokenType(TokenTypeHint.from(mongoTokenClaim.getTokenType()));
+        tokenClaim.setClaimName(mongoTokenClaim.getClaimName());
+        tokenClaim.setClaimValue(mongoTokenClaim.getClaimValue());
+        return tokenClaim;
+    }
+
+    private TokenClaimMongo convert(TokenClaim tokenClaim) {
+        TokenClaimMongo mongoTokenClaim = new TokenClaimMongo();
+        mongoTokenClaim.setTokenType(tokenClaim.getTokenType().toString());
+        mongoTokenClaim.setClaimName(tokenClaim.getClaimName());
+        mongoTokenClaim.setClaimValue(tokenClaim.getClaimValue());
+        return mongoTokenClaim;
     }
 }

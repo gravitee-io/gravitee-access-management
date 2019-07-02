@@ -71,7 +71,7 @@ public class RefreshTokenGranterTest {
 
         Token accessToken = new AccessToken("test-token");
 
-        when(tokenRequest.getRequestParameters()).thenReturn(parameters);
+        when(tokenRequest.parameters()).thenReturn(parameters);
         when(tokenRequest.createOAuth2Request()).thenReturn(oAuth2Request);
 
         when(tokenService.create(any(), any(), any())).thenReturn(Single.just(accessToken));
@@ -90,7 +90,7 @@ public class RefreshTokenGranterTest {
         Client client = new Client();
         client.setClientId("my-client-id");
 
-        when(tokenRequest.getRequestParameters()).thenReturn(parameters);
+        when(tokenRequest.parameters()).thenReturn(parameters);
 
         granter.grant(tokenRequest, client).test().assertError(InvalidRequestException.class);
     }
@@ -105,7 +105,7 @@ public class RefreshTokenGranterTest {
         client.setClientId("my-client-id");
         client.setAuthorizedGrantTypes(Arrays.asList(new String[]{"refresh_token"}));
 
-        when(tokenRequest.getRequestParameters()).thenReturn(parameters);
+        when(tokenRequest.parameters()).thenReturn(parameters);
 
         when(tokenService.refresh(refreshToken, tokenRequest, client)).thenReturn(Single.error(new InvalidGrantException()));
 

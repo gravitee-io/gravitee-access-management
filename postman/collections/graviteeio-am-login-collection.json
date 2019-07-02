@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "19f3263a-edd8-4dc5-83cd-2a34f5b7b25d",
+		"_postman_id": "6410e041-7875-4278-b114-e4d70957dbbd",
 		"name": "Gravitee.io - AM - Login",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -248,7 +248,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"redirectUris\": [],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"password\",\n    \"refresh_token\"\n  ],\n  \"scopes\": [\"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"idTokenCustomClaims\": {},\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+							"raw": "{\n  \"redirectUris\": [],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"password\",\n    \"refresh_token\"\n  ],\n  \"scopes\": [\"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{client}}",
@@ -404,10 +404,6 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{gateway_url}}/login/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
 							"host": [
@@ -479,10 +475,6 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{redirection}}",
 							"host": [
@@ -613,10 +605,6 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{redirection}}",
 							"host": [
@@ -738,10 +726,6 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{redirection}}",
 							"host": [

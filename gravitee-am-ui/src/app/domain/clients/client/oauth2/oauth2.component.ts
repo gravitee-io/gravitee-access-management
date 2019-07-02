@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { ClientService } from "../../../../services/client.service";
 import { Scope } from "../settings/settings.component";
 import * as _ from 'lodash';
 import * as moment from "moment";
+import { NgForm} from "@angular/forms";
+import { MatDialog, MatDialogRef}  from "@angular/material";
 
 @Component({
   selector: 'app-client-oauth2',
@@ -27,6 +29,7 @@ import * as moment from "moment";
   styleUrls: ['./oauth2.component.scss']
 })
 export class ClientOAuth2Component implements OnInit {
+  @ViewChild('claimsTable') table: any;
   private domainId: string;
   client: any;
   formChanged: boolean = false;
@@ -46,10 +49,12 @@ export class ClientOAuth2Component implements OnInit {
   selectedScopes: Scope[];
   selectedScopeApprovals: any;
   scopes: any[] = [];
+  editing = {};
 
   constructor(private route: ActivatedRoute,
               private clientService: ClientService,
-              private snackbarService: SnackbarService) { }
+              private snackbarService: SnackbarService,
+              public dialog: MatDialog) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
@@ -59,10 +64,12 @@ export class ClientOAuth2Component implements OnInit {
     this.selectedScopeApprovals = this.client.scopeApprovals || {};
     this.client.redirectUris = this.client.redirectUris || [];
     this.client.scopes =  this.client.scopes || [];
+    this.client.tokenCustomClaims = this.client.tokenCustomClaims || [];
     this.initGrantTypes();
     this.initResponseTypes();
     this.initCustomGrantTypes();
     this.initScopes();
+    this.initCustomClaims();
   }
 
   update() {
@@ -70,6 +77,7 @@ export class ClientOAuth2Component implements OnInit {
     this.client.responseTypes = this.selectedResponseTypes;
     this.client.scopes = _.map(this.selectedScopes, scope => scope.key);
     this.client.scopeApprovals = this.selectedScopeApprovals;
+    this.cleanCustomClaims();
     this.clientService.update(this.domainId, this.client.id, this.client).subscribe(data => {
       this.client = data;
       this.snackbarService.open('Client updated');
@@ -77,6 +85,7 @@ export class ClientOAuth2Component implements OnInit {
       this.initGrantTypes();
       this.initResponseTypes();
       this.initCustomGrantTypes();
+      this.initCustomClaims();
     });
   }
 
@@ -112,6 +121,22 @@ export class ClientOAuth2Component implements OnInit {
     });
 
     this.scopes = _.difference(this.scopes, this.selectedScopes);
+  }
+
+  initCustomClaims() {
+    if (this.client.tokenCustomClaims.length > 0) {
+      this.client.tokenCustomClaims.forEach(claim => {
+        claim.id = Math.random().toString(36).substring(7);
+      })
+    }
+  }
+
+  cleanCustomClaims() {
+    if (this.client.tokenCustomClaims.length > 0) {
+      this.client.tokenCustomClaims.forEach(claim => {
+        delete claim.id;
+      })
+    }
   }
 
   selectedGrantType(event) {
@@ -272,4 +297,85 @@ export class ClientOAuth2Component implements OnInit {
     }
   }
 
+  addClaim(claim) {
+    if (claim) {
+      if (!this.claimExits(claim.tokenType, claim.claimName)) {
+        claim.id = Math.random().toString(36).substring(7);
+        this.client.tokenCustomClaims.push(claim);
+        this.client.tokenCustomClaims = [...this.client.tokenCustomClaims];
+        this.formChanged = true;
+      } else {
+        this.snackbarService.open(`Error : claim ${claim.claimName} already exists`);
+      }
+    }
+  }
+
+  updateClaim(tokenType, event, cell, rowIndex) {
+    let claim = event.target.value;
+    if (claim) {
+      if (cell === 'claimName' && this.claimExits(tokenType, claim)) {
+        this.snackbarService.open(`Error : claim ${claim} already exists`);
+        return;
+      }
+      this.editing[rowIndex + '-' + cell] = false;
+      let index = _.findIndex(this.client.tokenCustomClaims, {id: rowIndex});
+      this.client.tokenCustomClaims[index][cell] = claim;
+      this.client.tokenCustomClaims = [...this.client.tokenCustomClaims];
+      this.formChanged = true;
+    }
+  }
+
+  deleteClaim(tokenType, key, event) {
+    event.preventDefault();
+    _.remove(this.client.tokenCustomClaims, function(el) {
+      return (el.tokenType === tokenType && el.claimName === key);
+    });
+    this.client.tokenCustomClaims = [...this.client.tokenCustomClaims];
+    this.formChanged = true;
+  }
+
+  claimExits(tokenType, attribute): boolean {
+    return _.find(this.client.tokenCustomClaims, function(el) { return  el.tokenType === tokenType && el.claimName === attribute; })
+  }
+
+  claimsIsEmpty() {
+    return this.client.tokenCustomClaims.length == 0;
+  }
+
+  openDialog(event) {
+    event.preventDefault();
+    this.dialog.open(ClaimsInfoDialog, {});
+  }
+
+  toggleExpandGroup(group) {
+    this.table.groupHeader.toggleExpandGroup(group);
+  }
+
+}
+
+@Component({
+  selector: 'app-create-claim',
+  templateUrl: './claims/add-claim.component.html'
+})
+export class CreateClaimComponent {
+  claim: any = {};
+  tokenTypes: any[] = ['ID_TOKEN', 'ACCESS_TOKEN'];
+  @Output() addClaimChange = new EventEmitter();
+  @ViewChild('claimForm') form: NgForm;
+
+  constructor() {}
+
+  addClaim() {
+    this.addClaimChange.emit(this.claim);
+    this.claim = {};
+    this.form.reset(this.claim);
+  }
+}
+
+@Component({
+  selector: 'claims-info-dialog',
+  templateUrl: './dialog/claims-info.component.html',
+})
+export class ClaimsInfoDialog {
+  constructor(public dialogRef: MatDialogRef<ClaimsInfoDialog>) {}
 }

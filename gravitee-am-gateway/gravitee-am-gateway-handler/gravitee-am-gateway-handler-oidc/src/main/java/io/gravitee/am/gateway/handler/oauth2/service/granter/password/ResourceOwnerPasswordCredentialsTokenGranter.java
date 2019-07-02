@@ -58,7 +58,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
 
     @Override
     protected Single<TokenRequest> parseRequest(TokenRequest tokenRequest, Client client) {
-        MultiValueMap<String, String> parameters = tokenRequest.getRequestParameters();
+        MultiValueMap<String, String> parameters = tokenRequest.parameters();
         String username = parameters.getFirst(USERNAME_PARAMETER);
         String password = parameters.getFirst(PASSWORD_PARAMETER);
 

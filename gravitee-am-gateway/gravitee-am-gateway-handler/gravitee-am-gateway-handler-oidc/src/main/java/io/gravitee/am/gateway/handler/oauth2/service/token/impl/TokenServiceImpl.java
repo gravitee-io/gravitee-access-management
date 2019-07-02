@@ -18,32 +18,41 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.exception.JWTException;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
+import io.gravitee.am.gateway.handler.context.provider.UserProperties;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
+import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.common.util.MultiValueMap;
+import io.gravitee.gateway.api.ExecutionContext;
+import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.Set;
+import java.time.Instant;
+import java.util.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -52,8 +61,7 @@ import java.util.Set;
  */
 public class TokenServiceImpl implements TokenService {
 
-    private int accessTokenValiditySeconds = 60 * 60 * 12; // default 12 hours.
-    private int refreshTokenValiditySeconds = 60 * 60 * 24 * 30; // default 30 days.
+    private static final Logger logger = LoggerFactory.getLogger(TokenServiceImpl.class);
 
     @Autowired
     private AccessTokenRepository accessTokenRepository;
@@ -68,10 +76,16 @@ public class TokenServiceImpl implements TokenService {
     private JWTService jwtService;
 
     @Autowired
-    private ClientSyncService clientSyncService;
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
     @Autowired
-    private OpenIDDiscoveryService openIDDiscoveryService;
+    private ExecutionContextFactory executionContextFactory;
+
+    @Autowired
+    private TokenManager tokenManager;
+
+    @Autowired
+    private IntrospectionTokenService introspectionTokenService;
 
     @Override
     public Maybe<Token> getAccessToken(String token, Client client) {
@@ -98,31 +112,31 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public Maybe<Token> introspect(String token) {
-        // any client can introspect a token, we first need to decode the token to get the client's certificate to verify the token
-        return jwtService.decode(token)
-                .flatMapMaybe(jwt -> clientSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud()))
-                .switchIfEmpty(Maybe.error(new InvalidTokenException("Invalid or unknown client for this token")))
-                .flatMap(client -> getAccessToken(token, client));
+    public Single<Token> introspect(String token) {
+        return introspectionTokenService.introspect(token, false)
+                .map(jwt -> convertAccessToken(jwt));
     }
 
     @Override
     public Single<Token> create(OAuth2Request oAuth2Request, Client client, User endUser) {
-        // store access token and refresh token (if exits)
-        // encode access/refresh token in JWT compact string format
-        // convert to access token response format
-        return Single.just(oAuth2Request.isSupportRefreshToken())
-                .flatMap(supportRefreshToken -> {
-                    if (supportRefreshToken) {
-                        return storeRefreshToken(client, endUser)
-                                .flatMap(refreshToken -> storeAccessToken(oAuth2Request, client, endUser, refreshToken.getToken())
-                                        .flatMap(accessToken -> convert(accessToken, refreshToken, client, oAuth2Request)));
-                    } else {
-                        return storeAccessToken(oAuth2Request, client, endUser, null)
-                                .flatMap(accessToken -> convert(accessToken, null, client, oAuth2Request));
-                    }
-                })
-                .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser));
+        // create execution context
+        return Single.fromCallable(() -> createExecutionContext(oAuth2Request, client, endUser))
+                .flatMap(executionContext -> {
+                    // create JWT access token
+                    JWT accessToken = createAccessTokenJWT(oAuth2Request, client, endUser, executionContext);
+                    // create JWT refresh token
+                    JWT refreshToken = oAuth2Request.isSupportRefreshToken() ? createRefreshTokenJWT(oAuth2Request, client, endUser, executionContext) : null;
+                    // encode and sign JWT tokens
+                    // and create token response (+ enhance information)
+                    return Single.zip(
+                            jwtService.encode(accessToken, client),
+                            (refreshToken != null ? jwtService.encode(refreshToken, client).map(Optional::of) : Single.just(Optional.<String>empty())),
+                            (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
+                            .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser, executionContext))
+                            // on success store tokens in the repository
+                            .doOnSuccess(token -> storeTokens(accessToken, refreshToken, oAuth2Request));
+
+                });
     }
 
     @Override
@@ -155,100 +169,61 @@ public class TokenServiceImpl implements TokenService {
         return refreshTokenRepository.delete(refreshToken);
     }
 
-    /**
-     * Store access token
-     * @param oAuth2Request oauth2 token or authorization request
-     * @param client oauth2 client
-     * @param endUser oauth2 resource owner
-     * @param refreshToken refresh token id
-     * @return access token
-     */
-    private Single<io.gravitee.am.repository.oauth2.model.AccessToken> storeAccessToken(OAuth2Request oAuth2Request, Client client, User endUser, String refreshToken) {
+    private void storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request) {
+        // store access token
+        tokenManager.storeAccessToken(convert(accessToken, refreshToken,  oAuth2Request));
+        // store refresh token (if exists)
+        if (refreshToken != null) {
+            tokenManager.storeRefreshToken(convert(refreshToken));
+        }
+    }
+
+    private io.gravitee.am.repository.oauth2.model.AccessToken convert(JWT token, JWT refreshToken, OAuth2Request oAuth2Request) {
         io.gravitee.am.repository.oauth2.model.AccessToken accessToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
         accessToken.setId(RandomString.generate());
-        accessToken.setToken(SecureRandomString.generate());
-        accessToken.setDomain(client.getDomain());
-        accessToken.setClient(client.getClientId());
-        accessToken.setSubject(endUser != null ? endUser.getId() : null);
-        accessToken.setCreatedAt(new Date());
-        accessToken.setExpireAt(new Date(System.currentTimeMillis() + (getAccessTokenValiditySeconds(client) * 1000L)));
+        accessToken.setToken(token.getJti());
+        accessToken.setDomain(token.getDomain());
+        accessToken.setClient(token.getAud());
+        accessToken.setSubject(token.getSub());
+        accessToken.setCreatedAt(new Date(token.getIat() * 1000));
+        accessToken.setExpireAt(new Date(token.getExp() * 1000));
         // set authorization code
-        if (oAuth2Request.getRequestParameters() != null) {
-            MultiValueMap<String, String> requestParameters = oAuth2Request.getRequestParameters();
-            String authorizationCode = requestParameters.getFirst(io.gravitee.am.common.oauth2.Parameters.CODE);
-            if (authorizationCode != null) {
-                accessToken.setAuthorizationCode(authorizationCode);
-            }
-        }
+        accessToken.setAuthorizationCode(oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(io.gravitee.am.common.oauth2.Parameters.CODE) : null);
         // set refresh token
-        if (refreshToken != null) {
-            accessToken.setRefreshToken(refreshToken);
-        }
-        return accessTokenRepository.create(accessToken);
+        accessToken.setRefreshToken(refreshToken != null ? refreshToken.getJti() : null);
+        return accessToken;
     }
 
-    /**
-     * Store refresh token
-     * @param client oauth2 client
-     * @param endUser oauth2 resource owner
-     * @return refresh token
-     */
-    private Single<io.gravitee.am.repository.oauth2.model.RefreshToken> storeRefreshToken(Client client, User endUser) {
+    private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token) {
         io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken = new io.gravitee.am.repository.oauth2.model.RefreshToken();
         refreshToken.setId(RandomString.generate());
-        refreshToken.setToken(SecureRandomString.generate());
-        refreshToken.setDomain(client.getDomain());
-        refreshToken.setClient(client.getClientId());
-        refreshToken.setSubject(endUser != null ? endUser.getId() : null);
-        refreshToken.setCreatedAt(new Date());
-        refreshToken.setExpireAt(new Date(System.currentTimeMillis() + (getRefreshTokenValiditySeconds(client) * 1000L)));
-
-        return refreshTokenRepository.create(refreshToken);
+        refreshToken.setToken(token.getJti());
+        refreshToken.setDomain(token.getDomain());
+        refreshToken.setClient(token.getAud());
+        refreshToken.setSubject(token.getSub());
+        refreshToken.setCreatedAt(new Date(token.getIat() * 1000));
+        refreshToken.setExpireAt(new Date(token.getExp() * 1000));
+        return refreshToken;
     }
 
     /**
-     * Convert to access token response format
-     * @param accessToken access token (compact JWT format)
-     * @param refreshToken refresh token (compact JWT format)
-     * @param oAuth2Request oauth2 token or authorization request
-     * @return access token response format
-     */
-    private Single<Token> convert(io.gravitee.am.repository.oauth2.model.AccessToken accessToken, io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken, Client client, OAuth2Request oAuth2Request) {
-        return jwtService.encode(convert(accessToken, oAuth2Request), client)
-                .flatMap(encodedAccessToken -> {
-                    if (refreshToken != null) {
-                        return jwtService.encode(convert(refreshToken, oAuth2Request), client)
-                                .map(encodedRefreshToken -> convert(accessToken, encodedAccessToken, encodedRefreshToken, oAuth2Request));
-                    } else {
-                        return Single.just(convert(accessToken, encodedAccessToken, null, oAuth2Request));
-                    }
-                }); // RSA Signer can be very slow, delegate work to a bounded thread-pool
-    }
-
-    /**
-     * Convert JWT object to Access Token Response Format after access/refresh token creation
-     * @param accessToken access token previously stored
+     * Convert JWT object to Access Token Response Format
+     * @param accessToken access token
      * @param encodedAccessToken access token JWT compact string format
      * @param encodedRefreshToken refresh token JWT compact string format
      * @param oAuth2Request oauth2 token or authorization request
      * @return Access Token Response Format
      */
-    private Token convert(io.gravitee.am.repository.oauth2.model.AccessToken accessToken, String encodedAccessToken, String encodedRefreshToken, OAuth2Request oAuth2Request) {
+    private Token convert(JWT accessToken, String encodedAccessToken, String encodedRefreshToken, OAuth2Request oAuth2Request) {
         AccessToken token = new AccessToken(encodedAccessToken);
-        int expiresIn = (accessToken.getExpireAt() != null) ?  (int) ((accessToken.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L) : 0;
-        token.setExpiresIn(expiresIn);
-        // set scopes
-        Set<String> scopes = oAuth2Request.getScopes();
-        if (scopes != null && !scopes.isEmpty()) {
-            token.setScope(String.join(" ", scopes));
-        }
+        token.setExpiresIn(Instant.ofEpochSecond(accessToken.getExp()).minusMillis(System.currentTimeMillis()).getEpochSecond());
+        token.setScope(accessToken.getScope());
         // set additional information
         if (oAuth2Request.getAdditionalParameters() != null && !oAuth2Request.getAdditionalParameters().isEmpty()) {
             oAuth2Request.getAdditionalParameters().toSingleValueMap().forEach((k, v) -> token.getAdditionalInformation().put(k, v));
         }
         // set refresh token
         token.setRefreshToken(encodedRefreshToken);
-
         return token;
     }
 
@@ -279,7 +254,7 @@ public class TokenServiceImpl implements TokenService {
         token.setScope(jwt.getScope());
         token.setCreatedAt(new Date(jwt.getIat() * 1000l));
         token.setExpireAt(new Date(jwt.getExp() * 1000l));
-        token.setExpiresIn(token.getExpireAt() != null ? Long.valueOf((token.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L).intValue() : 0);
+        token.setExpiresIn(token.getExpireAt() != null ? Long.valueOf((token.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L) : 0);
 
         // set add additional information (currently only claims parameter)
         if (jwt.getClaimsRequestParameter() != null) {
@@ -288,58 +263,76 @@ public class TokenServiceImpl implements TokenService {
         return token;
     }
 
-    /**
-     * Convert access/refresh token to JWT Object
-     *
-     * @param token access or refresh token
-     * @param oAuth2Request oauth2 token or authorization request
-     * @return JWT
-     */
-    private JWT convert(io.gravitee.am.repository.oauth2.model.Token token, OAuth2Request oAuth2Request) {
+    private JWT createAccessTokenJWT(OAuth2Request request, Client client, User user, ExecutionContext executionContext) {
+        JWT jwt = createJWT(request, client, user);
+        // set exp claim
+        jwt.setExp(Instant.ofEpochSecond(jwt.getIat()).plusSeconds(client.getAccessTokenValiditySeconds()).getEpochSecond());
+
+        // set claims parameter (only for an access token)
+        // useful for UserInfo Endpoint to request for specific claims
+        MultiValueMap<String, String> requestParameters = request.parameters();
+        if (requestParameters != null && requestParameters.getFirst(Parameters.CLAIMS) != null) {
+            jwt.setClaimsRequestParameter(requestParameters.getFirst(Parameters.CLAIMS));
+        }
+
+        // set custom claims
+        enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
+
+        return jwt;
+    }
+
+    private JWT createRefreshTokenJWT(OAuth2Request request, Client client, User user, ExecutionContext executionContext) {
+        JWT jwt = createJWT(request, client, user);
+        // set exp claim
+        jwt.setExp(Instant.ofEpochSecond(jwt.getIat()).plusSeconds(client.getRefreshTokenValiditySeconds()).getEpochSecond());
+        return jwt;
+    }
+
+
+    private JWT createJWT(OAuth2Request oAuth2Request, Client client, User user) {
         JWT jwt = new JWT();
         jwt.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
-        jwt.setSub(token.getSubject() != null ? token.getSubject() : token.getClient());
+        jwt.setSub(oAuth2Request.isClientOnly() ? client.getClientId() : user.getId());
         jwt.setAud(oAuth2Request.getClientId());
-        jwt.setDomain(token.getDomain());
-        jwt.setIat((token.getCreatedAt() != null) ? token.getCreatedAt().getTime() / 1000l : 0);
-        jwt.setExp((token.getExpireAt() != null) ? token.getExpireAt().getTime() / 1000l : 0);
-        jwt.setJti(token.getToken());
+        jwt.setDomain(client.getDomain());
+        jwt.setIat(Instant.now().getEpochSecond());
+        jwt.setJti(SecureRandomString.generate());
 
         // set scopes
         Set<String> scopes = oAuth2Request.getScopes();
         if (scopes != null && !scopes.isEmpty()) {
             jwt.setScope(String.join(" ", scopes));
         }
-
-        // set claims parameter (only for an access token)
-        // useful for UserInfo Endpoint to request for specific claims
-        MultiValueMap<String, String> requestParameters = oAuth2Request.getRequestParameters();
-        if (requestParameters != null && requestParameters.getFirst(Parameters.CLAIMS) != null) {
-            if (token instanceof io.gravitee.am.repository.oauth2.model.AccessToken) {
-                jwt.setClaimsRequestParameter(requestParameters.getFirst(Parameters.CLAIMS));
-            }
-        }
-
         return jwt;
     }
 
-    /**
-     * Get access token validity in seconds
-     * @param client client which set this option
-     * @return access token validity in seconds
-     */
-    private Integer getAccessTokenValiditySeconds(Client client) {
-        int validitySeconds = client.getAccessTokenValiditySeconds();
-        return validitySeconds > 0 ? validitySeconds : accessTokenValiditySeconds;
+    private void enhanceJWT(JWT jwt, List<TokenClaim> customClaims, TokenTypeHint tokenTypeHint, ExecutionContext executionContext) {
+        if (customClaims != null && !customClaims.isEmpty()) {
+            customClaims
+                    .stream()
+                    .filter(tokenClaim -> tokenTypeHint.equals(tokenClaim.getTokenType()))
+                    .forEach(tokenClaim -> {
+                        try {
+                            String claimName = tokenClaim.getClaimName();
+                            String claimExpression = tokenClaim.getClaimValue();
+                            Object extValue = (claimExpression != null) ? executionContext.getTemplateEngine().getValue(claimExpression, Object.class) : null;
+                            if (extValue != null) {
+                                jwt.putIfAbsent(claimName, extValue);
+                            }
+                        } catch (Exception ex) {
+                            logger.debug("An error occurs while parsing expression language : {}", tokenClaim.getClaimValue(), ex);
+                        }
+                    });
+        }
     }
 
-    /**
-     * Get refresh token validity in seconds
-     * @param client client which set this option
-     * @return refresh token validity in seconds
-     */
-    private Integer getRefreshTokenValiditySeconds(Client client) {
-        int validitySeconds = client.getRefreshTokenValiditySeconds();
-        return validitySeconds > 0 ? validitySeconds : refreshTokenValiditySeconds;
+    private ExecutionContext createExecutionContext(OAuth2Request request, Client client, User user) {
+        ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, null);
+        ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
+        executionContext.setAttribute("client", new ClientProperties(client));
+        if (user != null) {
+            executionContext.setAttribute("user", new UserProperties(user));
+        }
+        return executionContext;
     }
 }

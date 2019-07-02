@@ -79,7 +79,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
 
         Token accessToken = new AccessToken("test-token");
 
-        when(tokenRequest.getRequestParameters()).thenReturn(parameters);
+        when(tokenRequest.parameters()).thenReturn(parameters);
         when(tokenRequest.createOAuth2Request()).thenReturn(new OAuth2Request());
 
         when(tokenRequestResolver.resolve(any(), any(), any())).thenReturn(Single.just(tokenRequest));

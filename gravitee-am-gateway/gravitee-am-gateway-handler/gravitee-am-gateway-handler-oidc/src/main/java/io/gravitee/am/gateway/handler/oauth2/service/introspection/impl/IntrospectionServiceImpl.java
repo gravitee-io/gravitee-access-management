@@ -22,7 +22,6 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.UserService;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -42,22 +41,20 @@ public class IntrospectionServiceImpl implements IntrospectionService {
     @Override
     public Single<IntrospectionResponse> introspect(IntrospectionRequest introspectionRequest) {
         return tokenService.introspect(introspectionRequest.getToken())
-                .filter(token -> token.getExpiresIn() > 0)
                 .flatMap(token -> {
                     AccessToken accessToken = (AccessToken) token;
                     if (accessToken.getSubject() != null) {
                         return userService
                                 .findById(accessToken.getSubject())
                                 .map(user -> convert(accessToken, user))
-                                .defaultIfEmpty(convert(accessToken, null));
+                                .defaultIfEmpty(convert(accessToken, null))
+                                .toSingle();
 
                     } else {
-                        return Maybe.just(convert(accessToken, null));
+                        return Single.just(convert(accessToken, null));
                     }
                 })
-                .defaultIfEmpty(new IntrospectionResponse())
-                .onErrorResumeNext(Maybe.just(new IntrospectionResponse()))
-                .toSingle();
+                .onErrorResumeNext(Single.just(new IntrospectionResponse()));
     }
 
     private IntrospectionResponse convert(AccessToken accessToken, User user) {

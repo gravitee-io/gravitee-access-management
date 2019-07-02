@@ -50,7 +50,7 @@ export class ClientService {
       'accessTokenValiditySeconds': client.accessTokenValiditySeconds,
       'refreshTokenValiditySeconds': client.refreshTokenValiditySeconds,
       'idTokenValiditySeconds': client.idTokenValiditySeconds,
-      'idTokenCustomClaims': client.idTokenCustomClaims,
+      'tokenCustomClaims': client.tokenCustomClaims,
       'enabled': client.enabled,
       'identities': client.identities,
       'oauth2Identities': client.oauth2Identities,

@@ -55,7 +55,6 @@ import {ProviderResolver} from "./resolvers/provider.resolver";
 import {ProviderRolesComponent} from "./domain/settings/providers/provider/roles/roles.component";
 import {ProviderSettingsComponent} from "./domain/settings/providers/provider/settings/settings.component";
 import {ProviderMappersComponent} from "./domain/settings/providers/provider/mappers/mappers.component";
-import {ClientOIDCComponent} from "./domain/clients/client/oidc/oidc.component";
 import {ClientSettingsComponent} from "./domain/clients/client/settings/settings.component";
 import {ClientIdPComponent} from "./domain/clients/client/idp/idp.component";
 import {ClientOAuth2Component} from "./domain/clients/client/oauth2/oauth2.component";
@@ -416,7 +415,6 @@ const routes: Routes = [
           { path: 'settings', component: ClientSettingsComponent },
           { path: 'idp', component: ClientIdPComponent },
           { path: 'oauth2', component: ClientOAuth2Component, resolve: { domainGrantTypes: ExtensionGrantsResolver, scopes: ScopesResolver } },
-          { path: 'oidc', component: ClientOIDCComponent },
           { path: 'forms', component: ClientFormsComponent, resolve: { domain: DomainResolver } },
           { path: 'forms/form', component: ClientFormComponent, resolve: { form: FormResolver } },
           { path: 'emails', component: ClientEmailsComponent, resolve: { domain: DomainResolver } },

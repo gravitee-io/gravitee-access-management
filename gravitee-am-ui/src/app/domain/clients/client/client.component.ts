@@ -28,8 +28,7 @@ export class ClientComponent implements OnInit {
   navLinks: any = [
     {'href': 'settings' , 'label': 'Settings'},
     {'href': 'idp' , 'label': 'Identity Providers'},
-    {'href': 'oauth2' , 'label': 'OAuth 2.0'},
-    {'href': 'oidc' , 'label': 'OpenID Connect'},
+    {'href': 'oauth2' , 'label': 'OAuth 2.0 / OpenID Connect'},
     {'href': 'forms' , 'label': 'Forms'},
     {'href': 'emails' , 'label': 'Emails'},
     {'href': 'account', 'label': 'User Accounts'}

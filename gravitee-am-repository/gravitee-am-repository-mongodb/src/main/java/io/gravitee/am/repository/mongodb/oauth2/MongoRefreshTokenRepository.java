@@ -16,21 +16,24 @@
 package io.gravitee.am.repository.mongodb.oauth2;
 
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.WriteModel;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
+import io.gravitee.am.repository.mongodb.oauth2.internal.model.AccessTokenMongo;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.RefreshTokenMongo;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -81,8 +84,17 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     }
 
     @Override
+    public Flowable bulkWrite(List<RefreshToken> refreshTokens) {
+        return Flowable.fromPublisher(refreshTokenCollection.bulkWrite(convert(refreshTokens)));
+    }
+
+    @Override
     public Completable delete(String token) {
         return Completable.fromPublisher(refreshTokenCollection.deleteOne(eq(FIELD_TOKEN, token)));
+    }
+
+    private List<WriteModel<RefreshTokenMongo>> convert(List<RefreshToken> refreshTokens) {
+        return refreshTokens.stream().map(refreshToken -> new InsertOneModel<>(convert(refreshToken))).collect(Collectors.toList());
     }
 
     private RefreshTokenMongo convert(RefreshToken refreshToken) {

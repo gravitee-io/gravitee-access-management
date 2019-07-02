@@ -48,6 +48,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
+import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.model.Domain;
@@ -61,6 +62,8 @@ import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.*;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -68,6 +71,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author GraviteeSource Team
  */
 public class OAuth2Provider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
+
+    private static final Logger logger = LoggerFactory.getLogger(OAuth2Provider.class);
 
     @Autowired
     private Domain domain;
@@ -123,10 +128,29 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     @Autowired
     private PolicyChainHandler policyChainHandler;
 
+    @Autowired
+    private TokenManager tokenManager;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
 
+        // init services
+        initServices();
+
+        // init web router
+        initRouter();
+    }
+
+    private void initServices() {
+        try {
+            tokenManager.start();
+        } catch (Exception e) {
+            logger.error("An error occurs while starting oauth 2.0 services", e);
+        }
+    }
+
+    private void initRouter() {
         // Create the OAuth 2.0 router
         final Router oauth2Router = Router.router(vertx);
 

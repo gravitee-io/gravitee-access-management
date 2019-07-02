@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oidc.service.idtoken;
+package io.gravitee.am.gateway.handler.common.oauth2;
 
-import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.User;
-import io.gravitee.gateway.api.ExecutionContext;
+import io.gravitee.am.common.jwt.JWT;
 import io.reactivex.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IDTokenService {
+public interface IntrospectionTokenService {
 
-    default Single<String>  create(OAuth2Request oAuth2Request, Client client, User user) {
-        return create(oAuth2Request, client, user, null);
-    }
-
-    Single<String> create(OAuth2Request oAuth2Request, Client client, User user, ExecutionContext executionContext);
+    Single<JWT> introspect(String token, boolean offlineVerification);
 }

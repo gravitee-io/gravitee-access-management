@@ -16,6 +16,7 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -310,6 +311,7 @@ public class UserServiceImpl implements UserService {
     private void extractAdditionalInformation(User user, Map<String, Object> additionalInformation) {
         if (additionalInformation != null) {
             Map<String, Object> extraInformation = new HashMap<>(additionalInformation);
+            extraInformation.put(Claims.auth_time, user.getLoggedAt());
             user.setSource((String) extraInformation.remove(SOURCE_FIELD));
             user.setClient((String) extraInformation.remove(Parameters.CLIENT_ID));
             extraInformation.remove(GROUP_MAPPING_ATTRIBUTE);
