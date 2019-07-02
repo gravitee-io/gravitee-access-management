@@ -39,6 +39,17 @@
         display: inline-flex;
         width: 100%;
       }
+      ngx-datatable.material {
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .provider-claims-actions {
+        button, a {
+          top: -7px;
+          color: grey;
+        }
+      }
     }
   }
   .oauth2-description {
@@ -58,4 +69,8 @@
       }
     }
   }
+}
+
+:host /deep/ .ngx-datatable.material .datatable-header {
+  border-bottom: none;
 }

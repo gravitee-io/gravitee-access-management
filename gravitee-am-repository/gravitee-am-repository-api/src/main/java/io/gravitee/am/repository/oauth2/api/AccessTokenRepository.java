@@ -16,10 +16,9 @@
 package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.repository.oauth2.model.AccessToken;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
+
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -32,6 +31,8 @@ public interface AccessTokenRepository {
     Single<AccessToken> create(AccessToken accessToken);
 
     Completable delete(String token);
+
+    Flowable bulkWrite(List<AccessToken> accessTokens);
 
     /**
      * Retrieve access tokens stored against the provided client id.

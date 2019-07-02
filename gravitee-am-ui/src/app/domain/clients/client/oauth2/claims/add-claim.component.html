@@ -16,13 +16,22 @@
 
 -->
 <form fxLayout="row" #claimForm="ngForm" style="padding: 20px; border: 1px solid black; margin-top: 10px;">
-  <mat-form-field style="margin-right: 20px;">
-    <input matInput name="key" placeholder="Claim name" required [(ngModel)]="claim.key"/>
-    <mat-hint>The claim's name that will be displayed in the ID Token.</mat-hint>
+  <mat-form-field style="margin-right: 20px;" fxFlex="25">
+    <mat-label>Token type</mat-label>
+    <mat-select name="tokenType" required [(ngModel)]="claim.tokenType">
+      <mat-option *ngFor="let tokenType of tokenTypes" [value]="tokenType">
+        {{tokenType}}
+      </mat-option>
+    </mat-select>
+    <mat-hint>Token type.</mat-hint>
   </mat-form-field>
-  <mat-form-field style="margin-right: 20px;">
-    <input matInput name="value" placeholder="Claim value" required [(ngModel)]="claim.value"/>
-    <mat-hint>The claim's value contained in the user profile information.</mat-hint>
+  <mat-form-field style="margin-right: 20px;" fxFlex="25">
+    <input matInput name="claimName" placeholder="Claim name" required [(ngModel)]="claim.claimName"/>
+    <mat-hint>The claim's name that will be displayed in the token.</mat-hint>
+  </mat-form-field>
+  <mat-form-field style="margin-right: 20px;" fxFlex="50">
+    <input matInput name="claimValue" placeholder="Claim value" required [(ngModel)]="claim.claimValue"/>
+    <mat-hint>The claim's value (support EL).</mat-hint>
   </mat-form-field>
   <div>
     <button style="margin-top: 10px;" mat-stroked-button [disabled]="claimForm.invalid || claimForm.pristine" (click)="addClaim()">+ ADD</button>

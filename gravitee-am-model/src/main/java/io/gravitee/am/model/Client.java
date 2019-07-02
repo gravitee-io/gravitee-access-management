@@ -167,6 +167,8 @@ public class Client implements Cloneable{
 
     private AccountSettings accountSettings;
 
+    private List<TokenClaim> tokenCustomClaims;
+
     public Client() { }
 
     public Client(Client other) {
@@ -226,6 +228,7 @@ public class Client implements Cloneable{
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
         this.scopeApprovals = other.scopeApprovals;
         this.accountSettings = other.accountSettings;
+        this.tokenCustomClaims = other.tokenCustomClaims;
     }
 
     public String getId() {
@@ -677,6 +680,14 @@ public class Client implements Cloneable{
 
     public void setAccountSettings(AccountSettings accountSettings) {
         this.accountSettings = accountSettings;
+    }
+
+    public List<TokenClaim> getTokenCustomClaims() {
+        return tokenCustomClaims;
+    }
+
+    public void setTokenCustomClaims(List<TokenClaim> tokenCustomClaims) {
+        this.tokenCustomClaims = tokenCustomClaims;
     }
 
     @Override

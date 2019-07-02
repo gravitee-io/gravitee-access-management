@@ -116,7 +116,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         tokenRequest.setClientId(_tokenRequest.getClientId());
         tokenRequest.setGrantType(_tokenRequest.getGrantType());
         tokenRequest.setScope(_tokenRequest.getScopes());
-        tokenRequest.setRequestParameters(_tokenRequest.getRequestParameters().toSingleValueMap());
+        tokenRequest.setRequestParameters(_tokenRequest.parameters().toSingleValueMap());
 
         return tokenRequest;
     }

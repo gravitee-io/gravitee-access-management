@@ -13,23 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oidc.service.idtoken;
+package io.gravitee.am.model;
 
-import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.User;
-import io.gravitee.gateway.api.ExecutionContext;
-import io.reactivex.Single;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IDTokenService {
+public class TokenClaim {
 
-    default Single<String>  create(OAuth2Request oAuth2Request, Client client, User user) {
-        return create(oAuth2Request, client, user, null);
+    private TokenTypeHint tokenType;
+    private String claimName;
+    private String claimValue;
+
+    public TokenTypeHint getTokenType() {
+        return tokenType;
     }
 
-    Single<String> create(OAuth2Request oAuth2Request, Client client, User user, ExecutionContext executionContext);
+    public void setTokenType(TokenTypeHint tokenType) {
+        this.tokenType = tokenType;
+    }
+
+    public String getClaimName() {
+        return claimName;
+    }
+
+    public void setClaimName(String claimName) {
+        this.claimName = claimName;
+    }
+
+    public String getClaimValue() {
+        return claimValue;
+    }
+
+    public void setClaimValue(String claimValue) {
+        this.claimValue = claimValue;
+    }
 }

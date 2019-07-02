@@ -16,16 +16,22 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.request;
 
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpMethod;
+import io.gravitee.common.http.HttpVersion;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,21 +47,38 @@ public final class AuthorizationRequestFactory {
 
     public AuthorizationRequest create(HttpServerRequest request) {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        // set technical information
+        authorizationRequest.setTimestamp(System.currentTimeMillis());
+        authorizationRequest.setId(RandomString.generate());
+        authorizationRequest.setTransactionId(RandomString.generate());
+        authorizationRequest.setUri(request.uri());
         authorizationRequest.setOrigin(extractOrigin(request));
+        authorizationRequest.setContextPath(request.path() != null ? request.path().split("/")[0] : null);
+        authorizationRequest.setPath(request.path());
+        authorizationRequest.setHeaders(extractHeaders(request));
+        authorizationRequest.setParameters(extractRequestParameters(request));
+        authorizationRequest.setSslSession(request.sslSession());
+        authorizationRequest.setMethod(HttpMethod.valueOf(request.method().name()));
+        authorizationRequest.setScheme(request.scheme());
+        authorizationRequest.setRawMethod(request.rawMethod());
+        authorizationRequest.setVersion(HttpVersion.valueOf(request.version().name()));
+        authorizationRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
+        authorizationRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);
+
+        // set OAuth 2.0 information
         authorizationRequest.setClientId(request.params().get(Parameters.CLIENT_ID));
         authorizationRequest.setResponseType(request.params().get(Parameters.RESPONSE_TYPE));
         authorizationRequest.setRedirectUri(request.params().get(Parameters.REDIRECT_URI));
         String scope = request.params().get(Parameters.SCOPE);
         authorizationRequest.setScopes(scope != null ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
         authorizationRequest.setState(request.params().get(Parameters.STATE));
-        authorizationRequest.setRequestParameters(extractRequestParameters(request));
         authorizationRequest.setAdditionalParameters(extractAdditionalParameters(request));
         return authorizationRequest;
     }
 
     private MultiValueMap<String, String> extractRequestParameters(HttpServerRequest request) {
         MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>(request.params().size());
-        request.params().getDelegate().entries().forEach(entry -> requestParameters.add(entry.getKey(), entry.getValue()));
+        request.params().entries().forEach(entry -> requestParameters.add(entry.getKey(), entry.getValue()));
         return requestParameters;
     }
 
@@ -66,6 +89,15 @@ public final class AuthorizationRequestFactory {
         MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
         request.params().getDelegate().entries().stream().filter(entry -> !restrictedParameters.contains(entry.getKey())).forEach(entry -> additionalParameters.add(entry.getKey(), entry.getValue()));
         return additionalParameters;
+    }
+
+    private HttpHeaders extractHeaders(HttpServerRequest request) {
+        MultiMap vertxHeaders = request.headers();
+        HttpHeaders headers = new HttpHeaders(vertxHeaders.size());
+        for(Map.Entry<String, String> header : vertxHeaders.entries()) {
+            headers.add(header.getKey(), header.getValue());
+        }
+        return headers;
     }
 
     private String extractOrigin(HttpServerRequest request) {

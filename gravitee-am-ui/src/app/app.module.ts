@@ -65,8 +65,11 @@ import { ClientComponent } from './domain/clients/client/client.component';
 import { ClientCreationComponent } from './clients/creation/client-creation.component';
 import { ClientSettingsComponent } from './domain/clients/client/settings/settings.component';
 import { ClientIdPComponent } from './domain/clients/client/idp/idp.component';
-import { ClientOAuth2Component } from './domain/clients/client/oauth2/oauth2.component';
-import { ClientOIDCComponent, CreateClaimComponent } from './domain/clients/client/oidc/oidc.component';
+import {
+  ClaimsInfoDialog,
+  ClientOAuth2Component,
+  CreateClaimComponent
+} from './domain/clients/client/oauth2/oauth2.component';
 import { ClientEmailsComponent } from './domain/clients/client/emails/emails.component';
 import { ClientEmailComponent } from './domain/clients/client/emails/email/email.component';
 import { ClientFormsComponent } from './domain/clients/client/forms/forms.component';
@@ -247,7 +250,6 @@ import { ScopeSelectionComponent} from "./domain/components/scope-selection/scop
     ClientCreationComponent,
     ClientSettingsComponent,
     ClientOAuth2Component,
-    ClientOIDCComponent,
     ClientIdPComponent,
     ClientEmailsComponent,
     ClientEmailComponent,
@@ -329,7 +331,8 @@ import { ScopeSelectionComponent} from "./domain/components/scope-selection/scop
     AccountSettingsComponent,
     PolicyFormComponent,
     PoliciesInfoDialog,
-    ScopeSelectionComponent
+    ScopeSelectionComponent,
+    ClaimsInfoDialog
   ],
   imports: [
     BrowserModule,
@@ -421,7 +424,8 @@ import { ScopeSelectionComponent} from "./domain/components/scope-selection/scop
     FormInfoDialog,
     AddMemberComponent,
     EmailInfoDialog,
-    PoliciesInfoDialog
+    PoliciesInfoDialog,
+    ClaimsInfoDialog
   ],
   bootstrap: [AppComponent]
 })

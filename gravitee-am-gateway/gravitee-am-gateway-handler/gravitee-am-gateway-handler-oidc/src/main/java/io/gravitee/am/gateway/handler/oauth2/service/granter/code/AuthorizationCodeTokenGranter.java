@@ -66,7 +66,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
 
     @Override
     protected Single<TokenRequest> parseRequest(TokenRequest tokenRequest, Client client) {
-        MultiValueMap<String, String> parameters = tokenRequest.getRequestParameters();
+        MultiValueMap<String, String> parameters = tokenRequest.parameters();
         String code = parameters.getFirst(Parameters.CODE);
 
         if (code == null || code.isEmpty()) {
@@ -84,7 +84,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                             tokenRequest1.setScopes(authorizationCode.getScopes());
                             // set authorization code initial request parameters (step1 of authorization code flow)
                             if (authorizationCode.getRequestParameters() != null) {
-                                authorizationCode.getRequestParameters().forEach((key, value) -> tokenRequest1.getRequestParameters().putIfAbsent(key, value));
+                                authorizationCode.getRequestParameters().forEach((key, value) -> tokenRequest1.parameters().putIfAbsent(key, value));
                             }
                             return tokenRequest1;
                         }).toSingle());
@@ -103,7 +103,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
     }
 
     private void checkRedirectUris(TokenRequest tokenRequest, AuthorizationCode authorizationCode) {
-        String redirectUri = tokenRequest.getRequestParameters().getFirst(Parameters.REDIRECT_URI);
+        String redirectUri = tokenRequest.parameters().getFirst(Parameters.REDIRECT_URI);
 
         // This might be null, if the authorization was done without the redirect_uri parameter
         // https://tools.ietf.org/html/rfc6749#section-4.1.3 (4.1.3. Access Token Request); if provided
@@ -125,7 +125,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
      * @param authorizationCode
      */
     private void checkPCE(TokenRequest tokenRequest, AuthorizationCode authorizationCode) {
-        String codeVerifier = tokenRequest.getRequestParameters().getFirst(Parameters.CODE_VERIFIER);
+        String codeVerifier = tokenRequest.parameters().getFirst(Parameters.CODE_VERIFIER);
         MultiValueMap<String, String> parameters = authorizationCode.getRequestParameters();
 
         String codeChallenge = parameters.getFirst(Parameters.CODE_CHALLENGE);

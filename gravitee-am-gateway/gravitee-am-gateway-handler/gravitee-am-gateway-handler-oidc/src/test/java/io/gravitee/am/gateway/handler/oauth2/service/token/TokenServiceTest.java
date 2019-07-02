@@ -84,7 +84,7 @@ public class TokenServiceTest {
 
         when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
         when(accessTokenRepository.create(accessTokenCaptor.capture())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
-        when(tokenEnhancer.enhance(any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
 
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();

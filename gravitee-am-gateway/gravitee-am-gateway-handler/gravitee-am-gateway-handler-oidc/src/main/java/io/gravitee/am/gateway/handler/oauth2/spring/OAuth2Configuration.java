@@ -37,12 +37,18 @@ import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.impl.ScopeManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.impl.ScopeServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
+import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenEnhancerImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 @Configuration
 public class OAuth2Configuration implements ProtocolConfiguration {
 
@@ -104,5 +110,10 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     @Bean
     public ProtocolProvider oAuth2Provider() {
         return new OAuth2Provider();
+    }
+
+    @Bean
+    public TokenManager tokenManager() {
+        return new TokenManagerImpl();
     }
 }

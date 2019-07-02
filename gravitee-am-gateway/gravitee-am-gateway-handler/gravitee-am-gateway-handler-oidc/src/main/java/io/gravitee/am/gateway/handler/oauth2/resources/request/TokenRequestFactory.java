@@ -16,16 +16,22 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.request;
 
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpMethod;
+import io.gravitee.common.http.HttpVersion;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,21 +47,38 @@ public final class TokenRequestFactory {
 
     public TokenRequest create(HttpServerRequest request) {
         TokenRequest tokenRequest = new TokenRequest();
+        // set technical information
+        tokenRequest.setTimestamp(System.currentTimeMillis());
+        tokenRequest.setId(RandomString.generate());
+        tokenRequest.setTransactionId(RandomString.generate());
+        tokenRequest.setUri(request.uri());
         tokenRequest.setOrigin(extractOrigin(request));
+        tokenRequest.setContextPath(request.path() != null ? request.path().split("/")[0] : null);
+        tokenRequest.setPath(request.path());
+        tokenRequest.setHeaders(extractHeaders(request));
+        tokenRequest.setParameters(extractRequestParameters(request));
+        tokenRequest.setSslSession(request.sslSession());
+        tokenRequest.setMethod(HttpMethod.valueOf(request.method().name()));
+        tokenRequest.setScheme(request.scheme());
+        tokenRequest.setRawMethod(request.rawMethod());
+        tokenRequest.setVersion(HttpVersion.valueOf(request.version().name()));
+        tokenRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
+        tokenRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);
+
+        // set OAuth 2.0 information
         tokenRequest.setClientId(request.params().get(Parameters.CLIENT_ID));
         tokenRequest.setGrantType(request.params().get(Parameters.GRANT_TYPE));
         String scopes = request.params().get(Parameters.SCOPE);
         if (scopes != null) {
             tokenRequest.setScopes(new HashSet<>(Arrays.asList(scopes.split("\\s+"))));
         }
-        tokenRequest.setRequestParameters(extractRequestParameters(request));
         tokenRequest.setAdditionalParameters(extractAdditionalParameters(request));
         return tokenRequest;
     }
 
     private MultiValueMap<String, String> extractRequestParameters(HttpServerRequest request) {
         MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>(request.params().size());
-        request.params().getDelegate().entries().forEach(entry -> requestParameters.add(entry.getKey(), entry.getValue()));
+        request.params().entries().forEach(entry -> requestParameters.add(entry.getKey(), entry.getValue()));
         return requestParameters;
     }
 
@@ -66,6 +89,15 @@ public final class TokenRequestFactory {
         MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
         request.params().getDelegate().entries().stream().filter(entry -> !restrictedParameters.contains(entry.getKey())).forEach(entry -> additionalParameters.add(entry.getKey(), entry.getValue()));
         return additionalParameters;
+    }
+
+    private HttpHeaders extractHeaders(HttpServerRequest request) {
+        MultiMap vertxHeaders = request.headers();
+        HttpHeaders headers = new HttpHeaders(vertxHeaders.size());
+        for(Map.Entry<String, String> header : vertxHeaders.entries()) {
+            headers.add(header.getKey(), header.getValue());
+        }
+        return headers;
     }
 
     private String extractOrigin(HttpServerRequest request) {

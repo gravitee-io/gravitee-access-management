@@ -19,7 +19,9 @@ import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.Scope;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -27,11 +29,108 @@ import java.util.Map;
  */
 public class OAuth2Request extends BaseRequest {
 
-    private String subject;
-    private boolean supportRefreshToken;
+    /**
+     * OAuth 2.0 Client Identifier parameter
+     *
+     * The authorization server issues the registered client a client
+     * identifier -- a unique string representing the registration
+     * information provided by the client.  The client identifier is not a
+     * secret; it is exposed to the resource owner and MUST NOT be used
+     * alone for client authentication.  The client identifier is unique to
+     * the authorization server.
+     *
+     * The client identifier string size is left undefined by this
+     * specification.  The client should avoid making assumptions about the
+     * identifier size.  The authorization server SHOULD document the size
+     * of any identifier it issues.
+     *
+     * See <a href="https://tools.ietf.org/html/rfc6749#section-2.2">Client Identifier</a>
+     */
+    private String clientId;
+
+    /**
+     * OAuth 2.0 Grant Type parameter.
+     */
     private String grantType;
+
+    /**
+     * OAuth 2.0 Response Type parameter.
+     */
     private String responseType;
+
+    /**
+     * OAuth 2.0 scope parameter.
+     */
+    private Set<String> scopes = new HashSet<>();
+
+    /**
+     * OPTIONAL
+     *
+     * After completing its interaction with the resource owner, the
+     * authorization server directs the resource owner's user-agent back to
+     * the client.  The authorization server redirects the user-agent to the
+     * client's redirection endpoint previously established with the
+     * authorization server during the client registration process or when
+     * making the authorization request.
+     *
+     * See <a href="https://tools.ietf.org/html/rfc6749#section-3.1.2"></a>
+     */
+    private String redirectUri;
+
+    /**
+     * Resource owner technical id
+     */
+    private String subject;
+
+    /**
+     * Boolean indicates if the current request support OAuth 2.0 Refresh Token
+     */
+    private boolean supportRefreshToken;
+
+    /**
+     * OAuth 2.0 contextual data
+     */
     private Map<String, Object> context = new HashMap<>();
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getGrantType() {
+        return grantType;
+    }
+
+    public void setGrantType(String grantType) {
+        this.grantType = grantType;
+    }
+
+    public String getResponseType() {
+        return responseType;
+    }
+
+    public void setResponseType(String responseType) {
+        this.responseType = responseType;
+    }
+
+    public Set<String> getScopes() {
+        return scopes;
+    }
+
+    public void setScopes(Set<String> scopes) {
+        this.scopes = scopes;
+    }
+
+    public String getRedirectUri() {
+        return redirectUri;
+    }
+
+    public void setRedirectUri(String redirectUri) {
+        this.redirectUri = redirectUri;
+    }
 
     public boolean isClientOnly() {
         return subject == null;
@@ -51,22 +150,6 @@ public class OAuth2Request extends BaseRequest {
 
     public void setSupportRefreshToken(boolean supportRefreshToken) {
         this.supportRefreshToken = supportRefreshToken;
-    }
-
-    public String getGrantType() {
-        return grantType;
-    }
-
-    public void setGrantType(String grantType) {
-        this.grantType = grantType;
-    }
-
-    public String getResponseType() {
-        return responseType;
-    }
-
-    public void setResponseType(String responseType) {
-        this.responseType = responseType;
     }
 
     public Map<String, Object> getContext() {

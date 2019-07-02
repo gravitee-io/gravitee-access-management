@@ -57,7 +57,7 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
 
     @Override
     protected Single<TokenRequest> parseRequest(TokenRequest tokenRequest, Client client) {
-        String refreshToken = tokenRequest.getRequestParameters().getFirst("refresh_token");
+        String refreshToken = tokenRequest.parameters().getFirst("refresh_token");
 
         if (refreshToken == null || refreshToken.isEmpty()) {
             return Single.error(new InvalidRequestException("A refresh token must be supplied."));

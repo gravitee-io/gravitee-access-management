@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "5e76e524-2857-4be0-90ea-b1d246da6c7a",
+		"_postman_id": "ca17db97-e4f7-400d-9710-27b10390f7f3",
 		"name": "Gravitee.io - AM - Policies",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -248,7 +248,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"redirectUris\": [\"https://auth-nightly.gravitee.io/myApp/callback\"],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\",\n    \"refresh_token\"\n  ],\n  \"scopes\": [\"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"idTokenCustomClaims\": {},\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+							"raw": "{\n  \"redirectUris\": [\"https://auth-nightly.gravitee.io/myApp/callback\"],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"implicit\",\n    \"password\",\n    \"refresh_token\"\n  ],\n  \"scopes\": [\"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"enabled\": true,\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{client}}",

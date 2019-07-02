@@ -34,6 +34,8 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
+import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
+import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;
 import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
 import io.gravitee.am.gateway.handler.common.policy.impl.PolicyManagerImpl;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
@@ -151,5 +153,10 @@ public class CommonConfiguration {
     @Bean
     public TemplateVariableProviderFactory templateVariableProviderFactory() {
         return new TemplateVariableProviderFactory();
+    }
+
+    @Bean
+    public IntrospectionTokenService introspectiontokenservice() {
+        return new IntrospectionTokenServiceImpl();
     }
 }

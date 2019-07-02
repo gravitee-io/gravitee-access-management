@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oidc.service.idtoken;
+package io.gravitee.am.gateway.handler.oauth2.service.token;
 
-import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.User;
-import io.gravitee.gateway.api.ExecutionContext;
-import io.reactivex.Single;
+import io.gravitee.common.service.Service;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IDTokenService {
+public interface TokenManager extends Service {
 
-    default Single<String>  create(OAuth2Request oAuth2Request, Client client, User user) {
-        return create(oAuth2Request, client, user, null);
-    }
+    void storeAccessToken(io.gravitee.am.repository.oauth2.model.AccessToken accessToken);
 
-    Single<String> create(OAuth2Request oAuth2Request, Client client, User user, ExecutionContext executionContext);
+    void storeRefreshToken(io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken);
 }

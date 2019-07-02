@@ -17,11 +17,10 @@ package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -38,6 +37,11 @@ public class AccessTokenRepositoryProxy extends AbstractProxy<AccessTokenReposit
     @Override
     public Single<AccessToken> create(AccessToken accessToken) {
         return target.create(accessToken);
+    }
+
+    @Override
+    public Flowable bulkWrite(List<AccessToken> accessTokens) {
+        return target.bulkWrite(accessTokens);
     }
 
     @Override

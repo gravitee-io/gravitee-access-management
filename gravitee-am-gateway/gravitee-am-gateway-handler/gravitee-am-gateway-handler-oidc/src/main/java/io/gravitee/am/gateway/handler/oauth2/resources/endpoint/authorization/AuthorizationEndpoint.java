@@ -88,7 +88,7 @@ public class AuthorizationEndpoint extends AbstractAuthorizationEndpoint impleme
                         // if prompt=none and the Client does not have pre-configured consent for the requested Claims, throw interaction_required exception
                         // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
                         // else redirect to consent user approval page
-                        String prompt = request.getRequestParameters().getFirst(Parameters.PROMPT);
+                        String prompt = request.parameters().getFirst(Parameters.PROMPT);
                         if (prompt != null && Arrays.asList(prompt.split("\\s+")).contains("none")) {
                             context.fail(new InteractionRequiredException("Interaction required"));
                         } else {

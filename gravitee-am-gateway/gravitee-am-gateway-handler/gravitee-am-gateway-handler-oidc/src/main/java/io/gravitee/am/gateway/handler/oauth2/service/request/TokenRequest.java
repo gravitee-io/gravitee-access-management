@@ -15,30 +15,31 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
+import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 
 /**
- * See <a href="https://tools.ietf.org/html/rfc6749#section-4.1.3"></a>
+ * See <a href="https://tools.ietf.org/html/rfc6749#section-4.1.3">Access Token Request</a>
  *
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class TokenRequest extends BaseRequest {
+public class TokenRequest extends OAuth2Request {
 
-    private String grantType;
+    /**
+     * The resource owner username.
+     * REQUIRED for <a href="https://tools.ietf.org/html/rfc6749#section-4.3">Resource Owner Password Credentials Grant</a>
+     */
     private String username;
+
+    /**
+     * The resource owner password.
+     * REQUIRED for <a href="https://tools.ietf.org/html/rfc6749#section-4.3">Resource Owner Password Credentials Grant</a>
+     */
     private String password;
-    private String subject;
-
-    public String getGrantType() {
-        return grantType;
-    }
-
-    public void setGrantType(String grantType) {
-        this.grantType = grantType;
-    }
 
     public String getUsername() {
         return username;
@@ -56,27 +57,32 @@ public class TokenRequest extends BaseRequest {
         this.password = password;
     }
 
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
     public OAuth2Request createOAuth2Request() {
-        MultiValueMap<String, String> requestParameters = getRequestParameters();
+        MultiValueMap<String, String> requestParameters = parameters();
         MultiValueMap<String, String> safeRequestParameters = new LinkedMultiValueMap(requestParameters);
 
         // Remove password if present to prevent leaks
-        safeRequestParameters.remove("password");
-        safeRequestParameters.remove("client_secret");
+        safeRequestParameters.remove(Parameters.PASSWORD);
+        safeRequestParameters.remove(Parameters.CLIENT_SECRET);
 
         OAuth2Request oAuth2Request = new OAuth2Request();
+        // set technical information
+        oAuth2Request.setId(id());
+        oAuth2Request.setTransactionId(transactionId());
+        oAuth2Request.setTimestamp(timestamp());
+        oAuth2Request.setPath(path());
         oAuth2Request.setOrigin(getOrigin());
+        oAuth2Request.setUri(uri());
+        oAuth2Request.setScheme(scheme());
+        oAuth2Request.setContextPath(contextPath());
+        oAuth2Request.setMethod(method());
+        oAuth2Request.setVersion(version());
+        oAuth2Request.setHeaders(headers());
+        oAuth2Request.setParameters(safeRequestParameters);
+
+        // set OAuth 2.0 information
         oAuth2Request.setClientId(getClientId());
         oAuth2Request.setScopes(getScopes());
-        oAuth2Request.setRequestParameters(safeRequestParameters);
         oAuth2Request.setGrantType(getGrantType());
         oAuth2Request.setSubject(getSubject());
         oAuth2Request.setAdditionalParameters(getAdditionalParameters());

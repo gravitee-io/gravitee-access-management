@@ -32,7 +32,7 @@ public abstract class Token {
 
     private String value;
     private String tokenType = BEARER_TYPE.toLowerCase();
-    private int expiresIn;
+    private long expiresIn;
     private String scope;
     private String clientId;
     private String subject;
@@ -95,11 +95,11 @@ public abstract class Token {
         this.tokenType = tokenType;
     }
 
-    public int getExpiresIn() {
+    public long getExpiresIn() {
         return expiresIn;
     }
 
-    public void setExpiresIn(int expiresIn) {
+    public void setExpiresIn(long expiresIn) {
         this.expiresIn = expiresIn;
     }
 

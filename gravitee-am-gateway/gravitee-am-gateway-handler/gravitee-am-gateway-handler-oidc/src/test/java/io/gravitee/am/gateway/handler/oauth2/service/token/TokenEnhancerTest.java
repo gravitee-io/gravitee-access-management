@@ -55,7 +55,7 @@ public class TokenEnhancerTest {
 
         Token accessToken = new AccessToken("token-id");
 
-        TestObserver<Token> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null).test();
+        TestObserver<Token> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null, null).test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -76,7 +76,7 @@ public class TokenEnhancerTest {
 
         when(idTokenService.create(any(), any(), any())).thenReturn(Single.just(idTokenPayload));
 
-        TestObserver<Token> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null).test();
+        TestObserver<Token> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null, null).test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

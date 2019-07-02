@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
 
-import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,28 +25,7 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationRequest extends BaseRequest implements Serializable {
-
-    /**
-     * REQUIRED
-     *
-     * See <a href="https://tools.ietf.org/html/rfc6749#section-3.1.1"></a>
-     */
-    private String responseType;
-
-    /**
-     * OPTIONAL
-     *
-     * After completing its interaction with the resource owner, the
-     * authorization server directs the resource owner's user-agent back to
-     * the client.  The authorization server redirects the user-agent to the
-     * client's redirection endpoint previously established with the
-     * authorization server during the client registration process or when
-     * making the authorization request.
-     *
-     * See <a href="https://tools.ietf.org/html/rfc6749#section-3.1.2"></a>
-     */
-    private String redirectUri;
+public class AuthorizationRequest extends OAuth2Request {
 
     /**
      * RECOMMENDED
@@ -62,29 +40,25 @@ public class AuthorizationRequest extends BaseRequest implements Serializable {
      */
     private String state;
 
+    /**
+     * Indicates if the authorization request has been approved by the end-user (user consent)
+     */
     private boolean approved;
 
+    /**
+     * OAuth 2.0 Authorization Response
+     */
     private AuthorizationResponse response;
 
+    /**
+     * User consent parameters
+     */
     private Map<String, String> approvalParameters;
 
+    /**
+     * Current denied OAuth 2.0 scopes that the end-user need to approved in order to get a valid OAuth 2.0 response (i.e tokens)
+     */
     private Set<String> deniedScopes;
-
-    public String getResponseType() {
-        return responseType;
-    }
-
-    public void setResponseType(String responseType) {
-        this.responseType = responseType;
-    }
-
-    public String getRedirectUri() {
-        return redirectUri;
-    }
-
-    public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
-    }
 
     public String getState() {
         return state;
@@ -128,10 +102,23 @@ public class AuthorizationRequest extends BaseRequest implements Serializable {
 
     public OAuth2Request createOAuth2Request() {
         OAuth2Request oAuth2Request = new OAuth2Request();
+        // set technical information
+        oAuth2Request.setId(id());
+        oAuth2Request.setTransactionId(transactionId());
+        oAuth2Request.setTimestamp(timestamp());
+        oAuth2Request.setPath(path());
         oAuth2Request.setOrigin(getOrigin());
+        oAuth2Request.setUri(uri());
+        oAuth2Request.setScheme(scheme());
+        oAuth2Request.setContextPath(contextPath());
+        oAuth2Request.setMethod(method());
+        oAuth2Request.setVersion(version());
+        oAuth2Request.setHeaders(headers());
+        oAuth2Request.setParameters(parameters());
+
+        // set OAuth 2.0 information
         oAuth2Request.setClientId(getClientId());
         oAuth2Request.setScopes(getScopes());
-        oAuth2Request.setRequestParameters(getRequestParameters());
         oAuth2Request.setResponseType(getResponseType());
         oAuth2Request.setAdditionalParameters(getAdditionalParameters());
         return oAuth2Request;

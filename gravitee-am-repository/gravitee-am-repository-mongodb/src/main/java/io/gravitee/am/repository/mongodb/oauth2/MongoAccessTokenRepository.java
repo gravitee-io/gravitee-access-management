@@ -16,20 +16,21 @@
 package io.gravitee.am.repository.mongodb.oauth2;
 
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.WriteModel;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.AccessTokenMongo;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -89,6 +90,11 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     }
 
     @Override
+    public Flowable bulkWrite(List<AccessToken> accessTokens) {
+        return Flowable.fromPublisher(accessTokenCollection.bulkWrite(convert(accessTokens)));
+    }
+
+    @Override
     public Completable delete(String token) {
         return Completable.fromPublisher(accessTokenCollection.findOneAndDelete(eq(FIELD_TOKEN, token)));
     }
@@ -117,6 +123,10 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     @Override
     public Single<Long> countByClientId(String clientId) {
         return Single.fromPublisher(accessTokenCollection.count(eq(FIELD_CLIENT_ID, clientId)));
+    }
+
+    private List<WriteModel<AccessTokenMongo>> convert(List<AccessToken> accessTokens) {
+        return accessTokens.stream().map(accessToken -> new InsertOneModel<>(convert(accessToken))).collect(Collectors.toList());
     }
 
     private AccessTokenMongo convert(AccessToken accessToken) {

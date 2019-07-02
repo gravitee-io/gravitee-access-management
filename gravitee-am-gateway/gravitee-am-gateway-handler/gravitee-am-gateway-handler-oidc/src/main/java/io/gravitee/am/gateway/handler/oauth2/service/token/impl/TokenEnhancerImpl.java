@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -39,20 +40,20 @@ public class TokenEnhancerImpl implements TokenEnhancer {
     private IDTokenService idTokenService;
 
     @Override
-    public Single<Token> enhance(Token accessToken, OAuth2Request oAuth2Request, Client client, User endUser) {
+    public Single<Token> enhance(Token accessToken, OAuth2Request oAuth2Request, Client client, User endUser, ExecutionContext executionContext) {
         // enhance token with ID token
         if (oAuth2Request.shouldGenerateIDToken()) {
-            return enhanceIDToken(accessToken, client, endUser, oAuth2Request);
+            return enhanceIDToken(accessToken, client, endUser, oAuth2Request, executionContext);
         } else {
             return Single.just(accessToken);
         }
     }
 
-    private Single<Token> enhanceIDToken(Token accessToken, Client client, User user, OAuth2Request oAuth2Request) {
+    private Single<Token> enhanceIDToken(Token accessToken, Client client, User user, OAuth2Request oAuth2Request, ExecutionContext executionContext) {
         if (oAuth2Request.isSupportAtHashValue()) {
             oAuth2Request.getContext().put(Claims.at_hash, accessToken.getValue());
         }
-        return idTokenService.create(oAuth2Request, client, user)
+        return idTokenService.create(oAuth2Request, client, user, executionContext)
                 .flatMap(idToken -> {
                     Map<String, Object> additionalInformation = new HashMap<>(accessToken.getAdditionalInformation());
                     additionalInformation.put(ResponseType.ID_TOKEN, idToken);
