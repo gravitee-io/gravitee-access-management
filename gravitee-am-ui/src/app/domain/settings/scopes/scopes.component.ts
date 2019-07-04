@@ -43,7 +43,7 @@ export class DomainSettingsScopesComponent implements OnInit {
   }
 
   get isEmpty() {
-    return !this.scopes || this.scopes.length == 0;
+    return !this.scopes || this.scopes.length === 0;
   }
 
   delete(id, event) {
@@ -64,4 +64,10 @@ export class DomainSettingsScopesComponent implements OnInit {
     return expiresIn ? moment.duration(expiresIn, 'seconds').humanize() : 'no time set';
   }
 
+  enableScopeDiscovery(id, event) {
+    this.scopeService.patchDiscovery(this.domainId, id, event.checked).subscribe(response => {
+      this.snackbarService.open('Scope updated');
+      this.loadScopes();
+    });
+  }
 }

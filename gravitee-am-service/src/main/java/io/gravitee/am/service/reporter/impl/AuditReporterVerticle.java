@@ -17,7 +17,7 @@ package io.gravitee.am.service.reporter.impl;
 
 import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.service.reporter.AuditReporterService;
-import io.gravitee.am.service.reporter.vertx.ReportableMessageCodec;
+import io.gravitee.node.reporter.vertx.eventbus.ReportableMessageCodec;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.eventbus.MessageProducer;

@@ -26,6 +26,7 @@ public class AccountSettingsMongo {
     private Integer maxLoginAttempts;
     private Integer loginAttemptsResetTime;
     private Integer accountBlockedDuration;
+    private boolean completeRegistrationWhenResetPassword;
 
     public boolean isInherited() {
         return inherited;
@@ -65,5 +66,13 @@ public class AccountSettingsMongo {
 
     public void setAccountBlockedDuration(Integer accountBlockedDuration) {
         this.accountBlockedDuration = accountBlockedDuration;
+    }
+
+    public boolean isCompleteRegistrationWhenResetPassword() {
+        return completeRegistrationWhenResetPassword;
+    }
+
+    public void setCompleteRegistrationWhenResetPassword(boolean completeRegistrationWhenResetPassword) {
+        this.completeRegistrationWhenResetPassword = completeRegistrationWhenResetPassword;
     }
 }

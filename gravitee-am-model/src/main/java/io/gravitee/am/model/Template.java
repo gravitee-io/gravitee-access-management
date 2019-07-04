@@ -26,7 +26,8 @@ public enum Template {
     REGISTRATION_CONFIRMATION("registration_confirmation"),
     FORGOT_PASSWORD("forgot_password"),
     RESET_PASSWORD("reset_password"),
-    OAUTH2_USER_CONSENT("oauth2_user_consent");
+    OAUTH2_USER_CONSENT("oauth2_user_consent"),
+    ERROR("error");
 
     private final String template;
 

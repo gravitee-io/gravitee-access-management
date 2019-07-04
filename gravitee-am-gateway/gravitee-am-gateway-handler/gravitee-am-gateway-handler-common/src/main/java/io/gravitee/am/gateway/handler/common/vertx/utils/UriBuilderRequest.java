@@ -62,6 +62,23 @@ public class UriBuilderRequest {
      * @throws URISyntaxException
      */
     public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters) throws URISyntaxException {
+        return resolve(request, path, parameters, false);
+    }
+
+    /**
+     * Resolve proxy request
+     * @param request original request
+     * @param path request path
+     * @param parameters request query params
+     * @param encoded if request query params should be encoded
+     * @return request uri representation
+     * @throws URISyntaxException
+     */
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded) throws URISyntaxException {
+        return resolve(request, path, parameters, encoded);
+    }
+
+    private static String resolve(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded) throws URISyntaxException {
         UriBuilder builder = UriBuilder.newInstance();
 
         // scheme
@@ -90,7 +107,13 @@ public class UriBuilderRequest {
             builder.path(path);
         }
 
-        builder.parameters(parameters);
+        if (!encoded) {
+            builder.parameters(parameters);
+        } else {
+            if (parameters != null) {
+                parameters.forEach((k, v) -> builder.addParameter(k, UriBuilder.encodeURIComponent(v)));
+            }
+        }
         return builder.build().toString();
     }
 

@@ -63,6 +63,14 @@
           </mat-form-field>
         </div>
       </div>
+
+      <mat-slide-toggle
+        (change)="enableScopeDiscovery($event)"
+        [checked]="isDiscovery()">
+        Display scope into openid discovery endpoint
+      </mat-slide-toggle>
+      <mat-hint style="font-size: 75%;">Enable scope to be displayed into the openid discovery endpoint under <i>:domain/oidc/.well-known/openid-configuration</i></mat-hint>
+
       <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;">
         <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
         <button mat-raised-button [disabled]="(!scopeForm.valid || scopeForm.pristine) || formIsInvalid()" type="submit">CREATE</button>

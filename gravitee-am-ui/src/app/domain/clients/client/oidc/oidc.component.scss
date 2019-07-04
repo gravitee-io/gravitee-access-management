@@ -1,3 +1,42 @@
+.oidc-container {
+  .oidc-content {
+    form {
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 2px;
+      border: 1px solid rgb(226, 229, 231);
+      .role-form-actions {
+        margin-top: 20px;
+      }
+      .client-oauth-zone {
+        padding: 10px;
+        background-color: #f1f1f1;
+        margin-top: 20px;
+        h4 {
+          margin: 5px 0;
+        }
+      }
+    }
+  }
+  .oidc-description {
+    margin-left: 20px;
+    h3 {
+      font-weight: 400;
+    }
+    .oidc-description-content {
+      border-top: 1px solid rgb(226, 229, 231);
+      p {
+        margin-top: 20px;
+        font-size: 14px;
+      }
+      small {
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.38);
+      }
+    }
+  }
+}
+
 span.code {
   color: #cccccc;
   font-size: small;
@@ -12,6 +51,7 @@ mat-list-item {
 }
 
 .idtoken-description {
+  margin-top: 20px;
   font-size: smaller;
 }
 
@@ -20,9 +60,8 @@ mat-list-item {
 }
 
 ngx-datatable.material {
-  margin-top: 20px;
+  background: transparent;
   box-shadow: none;
-  font-size: 14px;
 }
 
 .provider-claims-actions {
@@ -30,16 +69,4 @@ ngx-datatable.material {
     top: -7px;
     color: grey;
   }
-}
-
-.datatable-input {
-  font-size: 12px;
-}
-
-.add-button {
-  text-align: right;
-}
-
-.add-button-center {
-  text-align: center;
 }

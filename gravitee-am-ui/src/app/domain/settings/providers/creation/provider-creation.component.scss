@@ -1,5 +1,13 @@
 .new-provider-container {
   padding: 20px 30px 0px 30px;
+  a.back-link {
+    color: #006CAB;
+    text-decoration: none;
+    &:hover {
+      color: #2196f3;
+      text-decoration: underline;
+    }
+  }
   h1 {
     font-weight: 400;
   }

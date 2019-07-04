@@ -34,6 +34,7 @@ import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
@@ -41,6 +42,7 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.exception.authentication.AccountInactiveException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.Completable;
@@ -185,13 +187,32 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Completable resetPassword(User user, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable resetPassword(User user, Client client, io.gravitee.am.identityprovider.api.User principal) {
+        // if user registration is not completed and force registration option is disabled throw invalid account exception
+        if (user.isInactive() && !forceUserRegistration(domain, client)) {
+            return Completable.error(new AccountInactiveException("User needs to complete the activation process"));
+        }
+
         // only idp manage password, find user idp and update its password
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                .flatMapSingle(userProvider -> userProvider.update(user.getExternalId(), convert(user)))
+                // update the idp user
+                .flatMapSingle(userProvider ->
+                        userProvider.update(user.getExternalId(), convert(user))
+                                .onErrorResumeNext(ex -> {
+                                    if (ex instanceof UserNotFoundException) {
+                                        // idp user not found, create its account
+                                        return userProvider.create(convert(user));
+                                    }
+                                    return Single.error(ex);
+                                }))
+                // update the user in the AM repository
                 .flatMap(idpUser -> {
                     // update 'users' collection for management and audit purpose
+                    // if user was in pre-registration mode, end the registration process
+                    if (user.isPreRegistration()) {
+                        user.setRegistrationCompleted(true);
+                    }
                     user.setPassword(null);
                     user.setExternalId(idpUser.getId());
                     user.setUpdatedAt(new Date());
@@ -216,13 +237,19 @@ public class UserServiceImpl implements UserService {
                 .map(users -> users.stream().filter(user -> user.isInternal()).findFirst())
                 .flatMapMaybe(optionalUser -> optionalUser.isPresent() ? Maybe.just(optionalUser.get()) : Maybe.empty())
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(email)))
-                .toSingle()
+                .map(user -> {
+                    // if user registration is not completed and force registration option is disabled throw invalid account exception
+                    if (user.isInactive() && !forceUserRegistration(domain, client)) {
+                        throw new AccountInactiveException("User needs to complete the activation process");
+                    }
+                    return user;
+                })
                 .doOnSuccess(user -> new Thread(() -> completeForgotPassword(user, client)).start())
                 .doOnSuccess(user1 -> {
                     // reload principal
                     io.gravitee.am.identityprovider.api.User principal1 = new DefaultUser(user1.getUsername());
                     ((DefaultUser) principal1).setId(user1.getId());
-                    ((DefaultUser) principal1).setAdditionalInformation(principal.getAdditionalInformation());
+                    ((DefaultUser) principal1).setAdditionalInformation(principal != null && principal.getAdditionalInformation() != null ? new HashMap<>(principal.getAdditionalInformation()) : new HashMap<>());
                     principal1.getAdditionalInformation()
                             .put(StandardClaims.NAME,
                                     user1.getDisplayName() != null ? user1.getDisplayName() :
@@ -230,7 +257,7 @@ public class UserServiceImpl implements UserService {
                     auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal1).type(EventType.FORGOT_PASSWORD_REQUESTED));
                 })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
-                .toCompletable();
+                .toSingle().toCompletable();
 
     }
 
@@ -295,6 +322,28 @@ public class UserServiceImpl implements UserService {
         return clientSyncService.findById(audience)
                 .map(client -> Optional.of(client))
                 .defaultIfEmpty(Optional.empty());
+    }
+
+    private boolean forceUserRegistration(Domain domain, Client client) {
+        AccountSettings accountSettings = getAccountSettings(domain, client);
+        return accountSettings != null && accountSettings.isCompleteRegistrationWhenResetPassword();
+    }
+
+    private AccountSettings getAccountSettings(Domain domain, Client client) {
+        // if client has no account config return domain config
+        if (client != null) {
+            if (client.getAccountSettings() == null) {
+                return domain.getAccountSettings();
+            }
+
+            // if client configuration is not inherited return the client config
+            if (!client.getAccountSettings().isInherited()) {
+                return client.getAccountSettings();
+            }
+        }
+
+        // return domain config
+        return domain.getAccountSettings();
     }
 
     private io.gravitee.am.identityprovider.api.User convert(User user) {

@@ -410,4 +410,8 @@ public class User {
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public boolean isInactive() {
+        return isPreRegistration() && !isRegistrationCompleted();
+    }
 }

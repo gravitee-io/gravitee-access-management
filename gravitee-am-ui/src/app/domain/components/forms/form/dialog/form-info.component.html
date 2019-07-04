@@ -246,6 +246,31 @@
         </html>
       ]]>
     </pre>
+    <pre *ngIf="data.rawTemplate === 'ERROR'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>Error</title>
+        </head>
+        <body>
+            <div>
+                <div>
+                    <div>
+                        <h1>Access error</h1>
+                        <p>Please go back to your client application and try again, or
+                            contact the owner and ask for support</p>
+                    </div>
+                    <div th:if="${error}">
+                        <span th:text="${error}"></span>
+                        <span th:if="${error_description}" th:text="${error_description}"></span>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
   </mat-dialog-content>
   <mat-dialog-actions>
     <span fxFlex></span>

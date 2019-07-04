@@ -15,102 +15,108 @@
     limitations under the License.
 
 -->
-<div fxLayout="column">
-
-  <form #clientForm="ngForm" (keydown.enter)="false" (ngSubmit)="update('Client updated')" fxLayout="column">
-    <h4>ID Token</h4>
-    <div class="idtoken-description">
-      <p>
-        The ID Token is a JSON Web Token (JWT) that contains claims (user profile information) about the End-User.
-        You must provide the OAuth 2 scope <span class="code">openid</span> in order to get the <span class="code">id_token</span> which contains the following default claims :
-      </p>
-      <table>
-        <tbody>
-        <tr>
-          <td><span class="code">iss</span></td>
-          <td>Issuer Identifier for the Issuer of the response.</td>
-        </tr>
-        <tr>
-          <td><span class="code">sub</span></td>
-          <td>Subject Identifier.</td>
-        </tr>
-        <tr>
-          <td><span class="code">aud</span></td>
-          <td>Audience(s) that this ID Token is intended for.</td>
-        </tr>
-        <tr>
-          <td><span class="code">exp</span> </td>
-          <td>Expiration time on or after which the ID Token MUST NOT be accepted for processing.</td>
-        </tr>
-        <tr>
-          <td><span class="code">iat</span></td>
-          <td>Time at which the JWT was issued.</td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="idtoken-validity">
-      <mat-form-field fxFlex>
-        <mat-icon matPrefix>timer</mat-icon>
-        <input matInput type="number" placeholder="ID token validity" name="idTokenValidity" [(ngModel)]="client.idTokenValiditySeconds" />
-        <span matSuffix>seconds</span>
-      </mat-form-field>
-    </div>
-    <div fxLayout="row">
-      <button mat-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>
-    </div>
-
-  </form>
-
-  <h4>Custom Claims</h4>
-  <div class="idtoken-description">
-    You can add custom claims to the ID Token by picking user attributes provided by the client identity provider.
-    <p><small *ngIf="!isEmpty"><i>Double click to edit and press enter to save changes</i></small></p>
-  </div>
-  <ngx-datatable *ngIf="!isEmpty" [columnMode]="'flex'" class="material" [headerHeight]="40" [footerHeight]="40" [rowHeight]="55" [rows]='claims'>
-    <ngx-datatable-column name="Claims name" [flexGrow]="1">
-      <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
-        <span (dblclick)="editing[rowIndex + '-key'] = true" *ngIf="!editing[rowIndex + '-key']">
-          {{row.key}}
-        </span>
-        <mat-form-field *ngIf="editing[rowIndex + '-key']" class="datatable-input">
-          <input matInput type="text" required autofocus placeholder="Claim name"
-                 (keyup.enter)="updateClaim($event, 'key', rowIndex)"
-                 (blur)="editing[rowIndex + '-key'] = false"
-                 [value]="row.key" />
-        </mat-form-field>
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="Claims value" [flexGrow]="1">
-      <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
-        <span (dblclick)="editing[rowIndex + '-value'] = true" *ngIf="!editing[rowIndex + '-value']">
-          {{row.value}}
-        </span>
-        <mat-form-field *ngIf="editing[rowIndex + '-value']" class="datatable-input">
-          <input matInput type="text" required autofocus placeholder="Claim value"
-                 (keyup.enter)="updateClaim($event, 'value', rowIndex)"
-                 (blur)="editing[rowIndex + '-value'] = false"
-                 [value]="row.value" />
-        </mat-form-field>
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="Actions" [flexGrow]="1">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        <div fxLayout="row" class="provider-claims-actions">
-          <button mat-icon-button (click)="delete(row.key, $event)"><mat-icon>delete</mat-icon></button>
+<div class="oidc-container" fxLayout="column">
+  <div fxLayout="row">
+    <div class="oidc-content" fxLayout="column" fxFlex="70">
+      <form #clientForm="ngForm" (keydown.enter)="false" (ngSubmit)="update('Client updated')" fxLayout="column">
+        <div class="client-oauth-zone" fxLayout="column">
+          <h4>ID Token</h4>
+          <div class="idtoken-validity">
+            <mat-form-field fxFlex>
+              <mat-icon matPrefix>timer</mat-icon>
+              <input matInput type="number" placeholder="ID token validity" name="idTokenValidity" [(ngModel)]="client.idTokenValiditySeconds" />
+              <span matSuffix>seconds</span>
+              <mat-hint>Expiration of the ID tokens (in seconds).</mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="idtoken-description">
+            You can add custom claims to the ID Token by picking user attributes provided by the client identity provider.
+          </div>
+          <app-create-claim (addClaimChange)="addClaim($event)"></app-create-claim>
+          <p><small *ngIf="!isEmpty"><i>Double click to edit and press enter to save changes</i></small></p>
+          <ngx-datatable *ngIf="!isEmpty"
+                         [columnMode]="'flex'"
+                         class="material"
+                         [headerHeight]="40"
+                         [footerHeight]="40"
+                         [rowHeight]="55"
+                         [rows]='claims'>
+            <ngx-datatable-column name="Claim name" [flexGrow]="1">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <span (dblclick)="editing[rowIndex + '-key'] = true" *ngIf="!editing[rowIndex + '-key']">
+                  {{row.key}}
+                </span>
+                <mat-form-field *ngIf="editing[rowIndex + '-key']" class="datatable-input">
+                  <input matInput type="text" required autofocus placeholder="Claim name"
+                         (keyup.enter)="updateClaim($event, 'key', rowIndex)"
+                         (blur)="editing[rowIndex + '-key'] = false"
+                         [value]="row.key" />
+                </mat-form-field>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Claim value" [flexGrow]="1">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <span (dblclick)="editing[rowIndex + '-value'] = true" *ngIf="!editing[rowIndex + '-value']">
+                  {{row.value}}
+                </span>
+                <mat-form-field *ngIf="editing[rowIndex + '-value']" class="datatable-input">
+                  <input matInput type="text" required autofocus placeholder="Claim value"
+                         (keyup.enter)="updateClaim($event, 'value', rowIndex)"
+                         (blur)="editing[rowIndex + '-value'] = false"
+                         [value]="row.value" />
+                </mat-form-field>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Actions" [flexGrow]="1">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div fxLayout="row" class="provider-claims-actions">
+                  <button mat-icon-button (click)="delete(row.key, $event)"><mat-icon>close</mat-icon></button>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
         </div>
-      </ng-template>
-    </ngx-datatable-column>
-  </ngx-datatable>
 
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'ID Token claims will appear here'"
-                  [subMessage]="'Start creating a claim'"
-                  [icon]="'compare_arrows'"></app-emptystate>
-
-  <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
-    <button mat-fab color="accent" (click)="addClaim($event)">
-      <mat-icon>add</mat-icon>
-    </button>
+        <div fxLayout="row" style="margin-top: 20px;">
+          <button mat-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="oidc-description" fxFlex>
+      <h3>OpenID Connect</h3>
+      <div class="oidc-description-content">
+        <h4>ID Token</h4>
+        <p>
+          The ID Token is a JSON Web Token (JWT) that contains claims (user profile information) about the End-User.
+        </p>
+        <p>
+          You must provide the OAuth 2 scope <span class="code">openid</span> in order to get the <span class="code">id_token</span> which contains the following default claims :
+        </p>
+        <table>
+          <tbody>
+          <tr>
+            <td><span class="code">iss</span></td>
+            <td><small>Issuer Identifier for the Issuer of the response.</small></td>
+          </tr>
+          <tr>
+            <td><span class="code">sub</span></td>
+            <td><small>Subject Identifier.</small></td>
+          </tr>
+          <tr>
+            <td><span class="code">aud</span></td>
+            <td><small>Audience(s) that this ID Token is intended for.</small></td>
+          </tr>
+          <tr>
+            <td><span class="code">exp</span> </td>
+            <td><small>Expiration time on or after which the ID Token MUST NOT be accepted for processing.</small></td>
+          </tr>
+          <tr>
+            <td><span class="code">iat</span></td>
+            <td><small>Time at which the JWT was issued.</small></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>

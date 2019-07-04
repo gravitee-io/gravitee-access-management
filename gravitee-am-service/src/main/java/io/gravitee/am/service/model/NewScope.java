@@ -34,6 +34,8 @@ public class NewScope {
 
     private Integer expiresIn;
 
+    private boolean discovery;
+
     public String getKey() {
         return key;
     }
@@ -64,5 +66,13 @@ public class NewScope {
 
     public void setExpiresIn(Integer expiresIn) {
         this.expiresIn = expiresIn;
+    }
+
+    public boolean isDiscovery() {
+        return discovery;
+    }
+
+    public void setDiscovery(boolean discovery) {
+        this.discovery = discovery;
     }
 }

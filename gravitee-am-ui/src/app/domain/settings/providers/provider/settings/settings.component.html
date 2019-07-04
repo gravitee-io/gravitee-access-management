@@ -19,21 +19,32 @@
   <div *ngIf="providerSchema && providerSchema.description" class="provider-settings-contextual-help">
     <pre [innerHTML]="providerSchema?.description"></pre>
   </div>
-  <div class="provider-settings-content" fxLayout="row">
-    <form #providerForm="ngForm" fxLayout="column" fxFlex="70">
-      <h4 style="margin-top: 0px;">General</h4>
-      <mat-form-field>
-        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
-        <mat-hint>A name for your identity provider.</mat-hint>
-      </mat-form-field>
+  <div fxLayout="row">
+    <div class="provider-settings-content" fxLayout="column" fxFlex="70">
+      <form #providerForm="ngForm">
+        <h4 style="margin-top: 0px;">General</h4>
+        <mat-form-field>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
+          <mat-hint>A name for your identity provider.</mat-hint>
+        </mat-form-field>
 
-      <h4 style="margin-top: 10px;">Configuration</h4>
-      <provider-form *ngIf="provider" [providerConfiguration]="providerConfiguration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderUpdate($event)"></provider-form>
+        <h4 style="margin-top: 10px;">Configuration</h4>
+        <provider-form *ngIf="provider" [providerConfiguration]="providerConfiguration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderUpdate($event)"></provider-form>
 
-      <div fxLayout="row" fxLayoutAlign="end end" class="update-provider">
-        <button mat-raised-button [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
+        <div fxLayout="row" fxLayoutAlign="end end" class="update-provider">
+          <button mat-raised-button [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
+        </div>
+      </form>
+
+      <div class="provider-settings-delete-zone" fxLayout="column">
+        <p>This operation cannot be undone.</p>
+        Identity provider will be deleted, clients will not be able to use this identity provider to authenticate users.
+        <div class="provider-settings-delete-button" fxLayout="row">
+          <span fxFlex></span>
+          <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+        </div>
       </div>
-    </form>
+    </div>
     <div class="provider-settings-description" fxFlex>
       <h3>Manage identity provider</h3>
       <div class="provider-settings-description-content">

@@ -21,7 +21,10 @@ import io.gravitee.am.model.oauth2.Scope;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -35,5 +38,15 @@ public class ScopeServiceImpl implements ScopeService {
     @Override
     public Single<Set<Scope>> getAll() {
         return Single.just(scopeManager.findAll());
+    }
+
+    @Override
+    public List<String> getDiscoveryScope() {
+        return scopeManager.findAll()
+                .stream()
+                .filter(scope -> scope.isDiscovery())
+                .map(Scope::getKey)
+                .sorted()
+                .collect(Collectors.toList());
     }
 }

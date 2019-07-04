@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.model.Client;
@@ -28,6 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -38,6 +41,7 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(RegisterConfirmationEndpoint.class);
     private static final String ERROR_PARAM = "error";
     private static final String SUCCESS_PARAM = "success";
+    private static final String WARNING_PARAM = "warning";
     private static final String TOKEN_PARAM = "token";
     private ThymeleafTemplateEngine engine;
 
@@ -50,10 +54,12 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
         final HttpServerRequest request = routingContext.request();
         final String error = request.getParam(ERROR_PARAM);
         final String success = request.getParam(SUCCESS_PARAM);
+        final String warning = request.getParam(WARNING_PARAM);
         final String token = request.getParam(TOKEN_PARAM);
         // add query params to context
         routingContext.put(ERROR_PARAM, error);
         routingContext.put(SUCCESS_PARAM, success);
+        routingContext.put(WARNING_PARAM, warning);
         routingContext.put(TOKEN_PARAM, token);
 
         // retrieve user who want to register
@@ -65,7 +71,10 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
 
         // check if user has already completed its registration
         if (user != null && user.isPreRegistration() && user.isRegistrationCompleted()) {
-            redirectToPage(routingContext, Collections.singletonMap("error", "invalid_registration_context"));
+            Map<String, String> parameters = new LinkedHashMap<>();
+            parameters.put(Parameters.CLIENT_ID, client.getClientId());
+            parameters.put(ERROR_PARAM, "invalid_registration_context");
+            redirectToPage(routingContext, parameters);
             return;
         }
 

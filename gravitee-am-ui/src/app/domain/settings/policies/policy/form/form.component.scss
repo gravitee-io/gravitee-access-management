@@ -5,3 +5,7 @@
     content: '';
   }
 }
+
+:host /deep/ mat-hint ul {
+  display: none;
+}

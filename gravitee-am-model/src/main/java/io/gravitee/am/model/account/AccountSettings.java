@@ -43,6 +43,11 @@ public class AccountSettings {
      */
     private Integer accountBlockedDuration;
 
+    /**
+     * Complete user registration when the user renewed his password
+     */
+    private boolean completeRegistrationWhenResetPassword;
+
     public boolean isInherited() {
         return inherited;
     }
@@ -81,5 +86,13 @@ public class AccountSettings {
 
     public void setAccountBlockedDuration(Integer accountBlockedDuration) {
         this.accountBlockedDuration = accountBlockedDuration;
+    }
+
+    public boolean isCompleteRegistrationWhenResetPassword() {
+        return completeRegistrationWhenResetPassword;
+    }
+
+    public void setCompleteRegistrationWhenResetPassword(boolean completeRegistrationWhenResetPassword) {
+        this.completeRegistrationWhenResetPassword = completeRegistrationWhenResetPassword;
     }
 }

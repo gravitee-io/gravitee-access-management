@@ -16,6 +16,7 @@
 
 -->
 <div class="new-tag-container">
+  <a [routerLink]="['..']" class="back-link"><small><< Back to sharding tags</small></a>
   <h1>New Sharding Tag</h1>
   <div class="new-tag-content">
     <form (ngSubmit)="create()" #tagForm="ngForm" fxLayout="column" fxFlex="70">

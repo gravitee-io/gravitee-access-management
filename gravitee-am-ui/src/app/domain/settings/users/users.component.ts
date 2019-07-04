@@ -56,7 +56,7 @@ export class UsersComponent implements OnInit {
 
   loadUsers() {
     let findUsers = (this.searchValue) ?
-      this.userService.search(this.domainId, this.searchValue, this.page.pageNumber, this.page.size) :
+      this.userService.search(this.domainId, this.searchValue + '*', this.page.pageNumber, this.page.size) :
       this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size)
 
     findUsers.subscribe(pagedUsers => {

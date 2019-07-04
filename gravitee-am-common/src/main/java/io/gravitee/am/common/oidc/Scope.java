@@ -34,30 +34,32 @@ public enum Scope {
             StandardClaims.NAME, StandardClaims.FAMILY_NAME, StandardClaims.GIVEN_NAME, StandardClaims.MIDDLE_NAME,
             StandardClaims.NICKNAME, StandardClaims.PREFERRED_USERNAME, StandardClaims.PROFILE, StandardClaims.PICTURE,
             StandardClaims.WEBSITE, StandardClaims.GENDER, StandardClaims.BIRTHDATE, StandardClaims.ZONEINFO, StandardClaims.LOCALE,
-            StandardClaims.UPDATED_AT)),
-    EMAIL("email","Email","Access to the email and email_verified Claims", Arrays.asList(StandardClaims.EMAIL, StandardClaims.EMAIL_VERIFIED)),
-    ADDRESS("address", "Address","Access to the address Claim", Arrays.asList(StandardClaims.ADDRESS)),
-    PHONE("phone", "Phone", "Access to the phone_number and phone_number_verified Claims", Arrays.asList(StandardClaims.PHONE_NUMBER, StandardClaims.PHONE_NUMBER_VERIFIED)),
-    OPENID("openid","Openid","Used to perform Openid requests", Collections.emptyList()),
-    OFFLINE_ACCESS("offline_access", "Offline_access","Access to End-User UserInfo even when he is not logged in.", Collections.emptyList()),
-    DCR("dcr", "Client_registration", "Access to client information through openid register endpoint.", Collections.emptyList()),
-    DCR_ADMIN("dcr_admin", "Client_registration_admin", "Access to Dynamic Client Registration endpoint.", Collections.emptyList()),
-    SCIM("scim", "SCIM", "Access to System for Cross-domain Identity Management endpoint.", Collections.emptyList()),
-    CONSENT_ADMIN("consent_admin", "Consent_admin", "Access to End-User consents", Collections.emptyList());
+            StandardClaims.UPDATED_AT),true),
+    EMAIL("email","Email","Access to the email and email_verified Claims", Arrays.asList(StandardClaims.EMAIL, StandardClaims.EMAIL_VERIFIED),true),
+    ADDRESS("address", "Address","Access to the address Claim", Arrays.asList(StandardClaims.ADDRESS),true),
+    PHONE("phone", "Phone", "Access to the phone_number and phone_number_verified Claims", Arrays.asList(StandardClaims.PHONE_NUMBER, StandardClaims.PHONE_NUMBER_VERIFIED),true),
+    OPENID("openid","Openid","Used to perform Openid requests", Collections.emptyList(),true),
+    OFFLINE_ACCESS("offline_access", "Offline_access","Access to End-User UserInfo even when he is not logged in.", Collections.emptyList(),true),
+    DCR("dcr", "Client_registration", "Access to client information through openid register endpoint.", Collections.emptyList(),false),
+    DCR_ADMIN("dcr_admin", "Client_registration_admin", "Access to Dynamic Client Registration endpoint.", Collections.emptyList(),false),
+    SCIM("scim", "SCIM", "Access to System for Cross-domain Identity Management endpoint.", Collections.emptyList(),false),
+    CONSENT_ADMIN("consent_admin", "Consent_admin", "Access to End-User consents", Collections.emptyList(),false);
 
     private final String key;
     private final String label;
     private final String description;
     private final List<String> claims;
+    private final boolean discovery;
 
     //See https://tools.ietf.org/html/rfc6749#section-3.3
     public final static String SCOPE_DELIMITER = " ";
 
-    Scope(String key, String label, String description, List<String> claims) {
+    Scope(String key, String label, String description, List<String> claims, boolean discovery) {
         this.key = key;
         this.label = label;
         this.description = description;
         this.claims = claims;
+        this.discovery = discovery;
     }
 
     public String getKey() {
@@ -83,5 +85,9 @@ public enum Scope {
         } catch (IllegalArgumentException e) {
             return false;
         }
+    }
+
+    public boolean isDiscovery() {
+        return discovery;
     }
 }

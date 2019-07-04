@@ -69,6 +69,12 @@ export class DomainSettingsFormsComponent {
         'description': 'User consent to acknowledge and accept data access',
         'template': 'OAUTH2_USER_CONSENT',
         'enabled': true
+      },
+      {
+        'name': 'Error',
+        'description': 'Error page to display a message describing the problem',
+        'template': 'ERROR',
+        'enabled': true
       }
     ]
   }

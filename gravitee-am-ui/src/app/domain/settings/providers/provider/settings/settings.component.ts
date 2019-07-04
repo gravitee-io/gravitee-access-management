@@ -22,6 +22,7 @@ import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/co
 import { DomainService } from "../../../../../services/domain.service";
 import { AppConfig } from "../../../../../../config/app.config";
 import { NgForm } from "@angular/forms";
+import { DialogService } from "../../../../../services/dialog.service";
 
 @Component({
   selector: 'provider-settings',
@@ -39,9 +40,14 @@ export class ProviderSettingsComponent implements OnInit {
   providerConfiguration: any;
   updateProviderConfiguration: any;
 
-  constructor(private providerService: ProviderService, private platformService: PlatformService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute, private router: Router, private breadcrumbService: BreadcrumbService,
-              private domainService: DomainService) { }
+  constructor(private providerService: ProviderService,
+              private platformService: PlatformService,
+              private snackbarService: SnackbarService,
+              private route: ActivatedRoute,
+              private router: Router,
+              private breadcrumbService: BreadcrumbService,
+              private domainService: DomainService,
+              private dialogService: DialogService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
@@ -70,6 +76,20 @@ export class ProviderSettingsComponent implements OnInit {
       this.configurationPristine = true;
       this.form.reset(data);
     });
+  }
+
+  delete(event) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Delete Provider', 'Are you sure you want to delete this provider ?')
+      .subscribe(res => {
+        if (res) {
+          this.providerService.delete(this.domainId, this.provider.id).subscribe(() => {
+            this.snackbarService.open("Identity provider deleted");
+            this.router.navigate(['/domains', this.domainId, 'settings', 'providers']);
+          });
+        }
+      });
   }
 
   enableProviderUpdate(configurationWrapper) {

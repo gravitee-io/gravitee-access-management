@@ -16,12 +16,11 @@
 package io.gravitee.am.gateway.handler.oidc.service.discovery.impl;
 
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
-import io.gravitee.am.common.oauth2.GrantType;
-import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ClaimType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.common.jwa.utils.JWAlgorithmUtils;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
@@ -55,6 +54,9 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
     @Autowired
     private Domain domain;
 
+    @Autowired
+    private ScopeService scopeService;
+
     @Override
     public OpenIDProviderMetadata getConfiguration(String basePath) {
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
@@ -73,7 +75,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         openIDProviderMetadata.setRegistrationEndpoint(getEndpointAbsoluteURL(basePath, REGISTRATION_ENDPOINT));
 
         // supported parameters
-        openIDProviderMetadata.setScopesSupported(Stream.of(Scope.values()).map(Scope::getKey).collect(Collectors.toList()));
+        openIDProviderMetadata.setScopesSupported(scopeService.getDiscoveryScope());
         openIDProviderMetadata.setResponseTypesSupported(ResponseTypeUtils.getSupportedResponseTypes());
         openIDProviderMetadata.setGrantTypesSupported(GrantTypeUtils.getSupportedGrantTypes());
         openIDProviderMetadata.setIdTokenSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedIdTokenSigningAlg());

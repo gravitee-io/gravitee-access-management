@@ -1,0 +1,181 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="oauth2-container" fxLayout="column">
+  <div fxLayout="row">
+    <div class="oauth2-content" fxLayout="column" fxFlex="70">
+      <form #clientOAuth2Form="ngForm" (keydown.enter)="false" (ngSubmit)="update()" fxLayout="column">
+        <div class="client-oauth-zone" fxLayout="column">
+          <h4>Redirect URIs</h4>
+          <mat-hint style="font-size: 75%;">
+            Set of allowed URLs where the user will be redirected after successfully login to your client.
+            It prevents some vulnerabilities like being redirected to unsafe websites.
+          </mat-hint>
+          <mat-chip-list style="margin-top: 10px;" class="mat-chip-list-stacked">
+            <mat-chip *ngFor="let redirectURI of client.redirectUris" color="accent" selected="true" fxLayout="row">
+              <span fxFlex style="margin-top: 3px;">{{redirectURI}}</span>
+              <mat-icon class="delete-chip" (click)="removeRedirectURI(redirectURI, $event)">clear</mat-icon>
+            </mat-chip>
+          </mat-chip-list>
+          <mat-form-field fxFlex>
+            <input matInput #inputRedirectURI (keyup.enter)="addRedirectURI($event, inputRedirectURI)" placeholder="New redirect URI..."/>
+            <mat-hint>Once written, press enter to add the redirect URI.</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div fxLayout="row" class="client-oauth-zone">
+          <section class="type-section">
+            <h4>Grant types</h4>
+            <mat-hint style="font-size: 75%; margin-bottom: 20px;">OAuth 2.0 grant types used by the client to obtain an access token.<br> Each grant type is specific to a type of application.</mat-hint>
+            <mat-checkbox class="type-selection" *ngFor="let grantType of grantTypes"
+                          name="grantTypes"
+                          value="{{grantType.value}}"
+                          [checked]="grantType.checked"
+                          (change)="selectedGrantType($event)">
+              {{grantType.name}}
+            </mat-checkbox>
+            <mat-checkbox *ngFor="let extensionGrant of customGrantTypes"
+                          name="customGrantTypes"
+                          value="{{extensionGrant.value}}"
+                          [checked]="extensionGrant.checked"
+                          (change)="selectedCustomGrantType($event)">
+              <span style="text-transform: uppercase;">{{extensionGrant.name}}</span>
+            </mat-checkbox>
+          </section>
+          <section class="type-section">
+            <h4>Response types</h4>
+            <mat-hint style="font-size: 75%; margin-bottom: 20px;">OAuth 2.0 response types used by the client to obtain an access token.<br> Each response type must correspond to a selected grant type</mat-hint>
+            <mat-checkbox class="type-selection" *ngFor="let responseType of responseTypes"
+                          name="responseTypes"
+                          value="{{responseType.value}}"
+                          [checked]="responseType.checked"
+                          (change)="selectedResponseType($event)">
+              {{responseType.value | uppercase}}
+            </mat-checkbox>
+          </section>
+        </div>
+
+        <div class="client-oauth-zone client-scopes" fxLayout="column">
+          <h4>Scopes</h4>
+          <div fxLayout="column">
+            <mat-hint style="font-size: 75%;">Let you limit client's access to protected resources/APIs.</mat-hint>
+            <client-scope [scopes]="scopes" (addScopeChange)="addScope($event)"></client-scope>
+            <ngx-datatable style="margin-top: 20px;" *ngIf="!isSelectedScopesEmpty"
+                           [columnMode]="'flex'"
+                           class="material"
+                           [headerHeight]="40"
+                           [footerHeight]="40"
+                           [rowHeight]="55"
+                           [rows]='selectedScopes'>
+              <ngx-datatable-column name="Scope" [flexGrow]="1">
+                <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                  <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
+                  <span>{{ row.key }}</span> | <small>{{row.name}}</small>
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="User consent expiry period" [flexGrow]="1">
+                <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                  <div>
+                    <span *ngIf="!(scopeApprovalExists(row.key))" style="color: grey; font-size: 85%; font-style: italic;">No time set</span>
+                    <span *ngIf="(scopeApprovalExists(row.key))">{{ getScopeApproval(row.key) }}</span>
+                  </div>
+                  <div>
+                    <small style="color: grey;">
+                      ( default value :
+                      <span *ngIf="!row.expiresIn" style="font-style: italic;">No time set</span>
+                      <span *ngIf="row.expiresIn">{{ getScopeExpiry(row.expiresIn) }}</span>
+                      )
+                    </small>
+                  </div>
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Actions" [flexGrow]="1">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <div fxLayout="row" class="client-scope-actions">
+                    <button mat-icon-button (click)="removeScope(row.key, $event)"><mat-icon>clear</mat-icon></button>
+                  </div>
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+          <div fxLayout="column">
+            <h5 style="margin: 10px 0 10px 0;">Enhance scopes</h5>
+            <mat-slide-toggle
+              (change)="enhanceScopesWithUserPermissions($event)"
+              [checked]="isScopesEnhanceWithUserPermissions()">
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%;">Enhance client scopes with user permissions. Useful for fine tuned resources access.</mat-hint>
+          </div>
+        </div>
+
+        <div class="client-oauth-zone" fxLayout="column">
+          <h4>Tokens</h4>
+          <div fxLayout="row">
+            <mat-form-field fxFlex style="margin-right: 20px;">
+              <mat-icon matPrefix>timer</mat-icon>
+              <input matInput type="number" placeholder="Access token validity" name="accessTokenValidity" [(ngModel)]="client.accessTokenValiditySeconds" />
+              <span matSuffix>seconds</span>
+              <mat-hint>Expiration of the OAuth 2.0 access tokens (in seconds).</mat-hint>
+            </mat-form-field>
+            <mat-form-field fxFlex>
+              <mat-icon matPrefix>timer</mat-icon>
+              <input matInput type="number" placeholder="Refresh token validity" name="refreshTokenValidity" [(ngModel)]="client.refreshTokenValiditySeconds" />
+              <span matSuffix>seconds</span>
+              <mat-hint>Expiration of the OAuth 2.0 refresh tokens (in seconds).</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div fxLayout="row" style="margin-top: 20px;">
+          <button mat-raised-button [disabled]="(!clientOAuth2Form.valid || clientOAuth2Form.pristine) && !formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="oauth2-description" fxFlex>
+      <h3>OAuth 2.0</h3>
+      <div class="oauth2-description-content">
+        <h4>Grant types</h4>
+        <p>
+          To authenticate an user, the application must first decide which oauth2 flow must be used. Oauth2 flows are enabled on the client through the grant_type.
+          You should select the grant_type according to your application type.
+        </p>
+        <small>
+          <b><i>authorization_code</i></b> for server side applications (web) or native applications (then combined with PKCE).<br>
+          <b><i>implicit</i></b> must be used for Single Page Applications.<br>
+          <b><i>password</i></b> should only be used for trusted applications <i>(means application and authorization server are managed within the same organization.)</i><br>
+          <b><i>client_credentials</i></b> should be used for server to server communications.<br><br>
+          <b>It is not recommended to mix client and user authentication within the same application.</b> <i>(Aka client_credentials and authorization_code, implicit or password)</i><br>
+        </small>
+
+        <h4>Response types</h4>
+        <p>
+          A combination of <i>code, token and id_token</i> values that must corresponds to the selected grant types.
+          <i>ID token are used to provide information about the connected end user, it can't be used with client_credentials grant type.</i>
+        </p>
+        <small>
+          <b><i>code:</i></b> authorization_code<br>
+          <b><i>token:</i></b> implicit<br>
+          <b><i>id_token:</i></b> implicit<br>
+          <b><i>token id_token:</i></b> implicit<br>
+          <b><i>code id_token:</i></b> authorization_code, implicit<br>
+          <b><i>code token:</i></b> authorization_code, implicit<br>
+          <b><i>code id_token token:</i></b> authorization_code, implicit<br>
+        </small>
+      </div>
+    </div>
+  </div>
+</div>

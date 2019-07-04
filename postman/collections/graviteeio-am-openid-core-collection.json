@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "a725fbe5-7c53-4c19-a282-0471328e617c",
+		"_postman_id": "ee9ebc39-6fd7-4717-83ae-59edda80c2c6",
 		"name": "Gravitee.io - AM - Openid Core",
 		"description": "Test Openid core specifications: https://openid.net/specs/openid-connect-core-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -601,10 +601,6 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
 							"host": [
@@ -1661,10 +1657,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -1713,10 +1705,6 @@
 												"type": "text"
 											}
 										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -1768,10 +1756,6 @@
 												"value": "Bearer a bearer-header-value"
 											}
 										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -1929,10 +1913,6 @@
 												"value": "Bearer {{access_token}}"
 											}
 										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -2212,10 +2192,6 @@
 												"value": "Bearer {{access_token}}"
 											}
 										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -2374,10 +2350,6 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
 								"url": {
 									"raw": "{{authorizationEndpoint}}?response_type=token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj",
 									"host": [
@@ -2443,10 +2415,6 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
 								"url": {
 									"raw": "{{redirection}}",
 									"host": [
@@ -2583,10 +2551,6 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
 								"url": {
 									"raw": "{{redirection}}",
 									"host": [
@@ -2635,10 +2599,6 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
 								"url": {
 									"raw": "{{redirection}}",
 									"host": [
@@ -2769,10 +2729,6 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
 								"url": {
 									"raw": "{{redirection}}",
 									"host": [
@@ -2819,10 +2775,6 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
 								"url": {
 									"raw": "{{logoutEndpoint}}",
 									"host": [
@@ -2909,10 +2861,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=id_token token",
 											"host": [
@@ -2952,7 +2900,7 @@
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
-													"    tests['Contains an error query-parameter'] = location.includes('?error=invalid_request');",
+													"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request');",
 													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow');",
 													"});"
 												],
@@ -2973,10 +2921,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=id_token token&client_id=my-client2&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -3024,7 +2968,7 @@
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
-													"    tests['Contains an error query-parameter'] = location.includes('?error=invalid_request');",
+													"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request');",
 													"    tests['Contains an error description query-parameter'] = location.includes('a+redirect_uri+must+be+supplied');",
 													"});"
 												],
@@ -3045,10 +2989,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=id_token token&client_id=my-client&nonce=n-0S6_WzA2Mj",
 											"host": [
@@ -3143,10 +3083,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=id_token token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj",
 											"host": [
@@ -3212,10 +3148,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -3365,10 +3297,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -3526,10 +3454,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=id_token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj",
 											"host": [
@@ -3595,10 +3519,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -3746,10 +3666,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -3907,10 +3823,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=id_token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj&state=af0ifjsldkj",
 											"host": [
@@ -3980,10 +3892,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -4120,10 +4028,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -4281,10 +4185,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=id_token token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj&state=af0ifjsldkj",
 											"host": [
@@ -4354,10 +4254,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -4494,10 +4390,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -4660,10 +4552,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code",
 											"host": [
@@ -4703,7 +4591,7 @@
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
-													"    tests['Contains an error query-parameter'] = location.includes('?error=invalid_request');",
+													"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request');",
 													"    tests['Contains an error description query-parameter'] = location.includes('a+redirect_uri+must+be+supplied');",
 													"});"
 												],
@@ -4724,10 +4612,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client",
 											"host": [

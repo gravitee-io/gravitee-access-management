@@ -16,28 +16,40 @@
 
 -->
 <div class="tag-container">
+  <a [routerLink]="['..']" class="back-link"><small><< Back to sharding tags</small></a>
   <h1>{{tag.name}}</h1>
-  <div class="tag-content">
-    <form (keydown.enter)="false" (ngSubmit)="update()" #tagForm="ngForm" fxLayout="column" fxFlex="70">
-      <mat-form-field fxFlex>
-        <input matInput type="text" placeholder="ID" name="id" [(ngModel)]="tag.id" required disabled>
-        <mat-hint align="end">Sharding tag's technical id which will be set to the gateway configuration file</mat-hint>
-      </mat-form-field>
+  <div fxLayout="row">
+    <div class="tag-content" fxLayout="column" fxFlex="70">
+      <form (keydown.enter)="false" (ngSubmit)="update()" #tagForm="ngForm" fxLayout="column">
+        <mat-form-field fxFlex>
+          <input matInput type="text" placeholder="ID" name="id" [(ngModel)]="tag.id" required disabled>
+          <mat-hint align="end">Sharding tag's technical id which will be set to the gateway configuration file</mat-hint>
+        </mat-form-field>
 
-      <mat-form-field fxFlex>
-        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="tag.name" required>
-        <mat-hint align="end">Sharding tag's name</mat-hint>
-      </mat-form-field>
+        <mat-form-field fxFlex>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="tag.name" required>
+          <mat-hint align="end">Sharding tag's name</mat-hint>
+        </mat-form-field>
 
-      <mat-form-field fxFlex>
-        <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="tag.description">
-        <mat-hint align="end">Sharding tag's description</mat-hint>
-      </mat-form-field>
+        <mat-form-field fxFlex>
+          <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="tag.description">
+          <mat-hint align="end">Sharding tag's description</mat-hint>
+        </mat-form-field>
 
-      <div fxLayout="row" class="tag-form-actions">
-        <button mat-raised-button [disabled]="(!tagForm.valid || tagForm.pristine)" type="submit">SAVE</button>
+        <div fxLayout="row" class="tag-form-actions">
+          <button mat-raised-button [disabled]="(!tagForm.valid || tagForm.pristine)" type="submit">SAVE</button>
+        </div>
+      </form>
+
+      <div class="tag-delete-zone" fxLayout="column">
+        <p>This operation cannot be undone.</p>
+        Sharding tag will be deleted and will not be used for gateway deployment.
+        <div class="tag-delete-button" fxLayout="row">
+          <span fxFlex></span>
+          <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+        </div>
       </div>
-    </form>
+    </div>
     <div class="tag-description" fxFlex>
       <h3>Manage sharding tag</h3>
       <div class="tag-description-content">

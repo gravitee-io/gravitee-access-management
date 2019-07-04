@@ -55,6 +55,7 @@ import {ProviderMappersComponent} from "./domain/settings/providers/provider/map
 import {ClientOIDCComponent} from "./domain/clients/client/oidc/oidc.component";
 import {ClientSettingsComponent} from "./domain/clients/client/settings/settings.component";
 import {ClientIdPComponent} from "./domain/clients/client/idp/idp.component";
+import {ClientOAuth2Component} from "./domain/clients/client/oauth2/oauth2.component";
 import {ClientEmailsComponent} from "./domain/clients/client/emails/emails.component";
 import {ClientEmailComponent} from "./domain/clients/client/emails/email/email.component";
 import {ClientFormsComponent} from "./domain/clients/client/forms/forms.component";
@@ -409,14 +410,9 @@ const routes: Routes = [
         },
         children: [
           { path: '', redirectTo: 'settings', pathMatch: 'full' },
-          { path: 'settings',
-            component: ClientSettingsComponent,
-            resolve: {
-              scopes: ScopesResolver,
-              domainGrantTypes: ExtensionGrantsResolver
-            }
-          },
+          { path: 'settings', component: ClientSettingsComponent },
           { path: 'idp', component: ClientIdPComponent },
+          { path: 'oauth2', component: ClientOAuth2Component, resolve: { domainGrantTypes: ExtensionGrantsResolver, scopes: ScopesResolver } },
           { path: 'oidc', component: ClientOIDCComponent },
           { path: 'forms', component: ClientFormsComponent, resolve: { domain: DomainResolver } },
           { path: 'forms/form', component: ClientFormComponent, resolve: { form: FormResolver } },

@@ -16,6 +16,7 @@
 
 -->
 <div class="new-role-container">
+  <a [routerLink]="['..']" class="back-link"><small><< Back to roles</small></a>
   <h1>New Role</h1>
   <div class="new-role-content">
     <form (ngSubmit)="create()" #roleForm="ngForm" fxLayout="column" fxFlex="70">

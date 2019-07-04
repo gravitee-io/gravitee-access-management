@@ -16,21 +16,34 @@
 
 -->
 <div class="certificate-container">
+  <a [routerLink]="['..']" class="back-link"><small><< Back to certificates</small></a>
   <h1>{{certificate.name}}</h1>
-  <div class="certificate-content">
-    <form #certificateForm="ngForm" fxLayout="column" fxFlex="70">
-      <h4>General</h4>
-      <mat-form-field>
-        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
-      </mat-form-field>
+  <div fxLayout="row">
+    <div class="certificate-content" fxLayout="column" fxFlex="70">
+      <form #certificateForm="ngForm">
+        <h4>General</h4>
+        <mat-form-field>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
+        </mat-form-field>
 
-      <h4>Configuration</h4>
-      <certificate-form *ngIf="certificate" [certificateConfiguration]="certificateConfiguration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateUpdate($event)"></certificate-form>
+        <h4>Configuration</h4>
+        <certificate-form *ngIf="certificate" [certificateConfiguration]="certificateConfiguration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateUpdate($event)"></certificate-form>
 
-      <div fxLayout="row" fxLayoutAlign="end end" class="certificate-actions">
-        <button mat-raised-button [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
+        <div fxLayout="row" fxLayoutAlign="end end" class="certificate-actions">
+          <button mat-raised-button [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
+        </div>
+      </form>
+
+      <div class="certificate-delete-zone" fxLayout="column">
+        <p>This operation cannot be undone.</p>
+        Certificate will be deleted, clients will not be able to use this certificate to sign tokens.
+        <div class="certificate-delete-button" fxLayout="row">
+          <span fxFlex></span>
+          <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+        </div>
       </div>
-    </form>
+    </div>
+
     <div class="certificate-description" fxFlex>
       <h3>Manage certificate</h3>
       <div class="certificate-description-content">
