@@ -88,7 +88,7 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
         if (searchFilter != null) {
             // Search filter can be uid={0} or mail={0}
             try {
-                identifierAttribute = searchFilter.replaceAll("[()]", "").split("=")[0];
+                identifierAttribute = io.gravitee.am.identityprovider.ldap.utils.LdapUtils.extractAttribute(searchFilter);
             } catch (Exception e) {
                 LOGGER.debug("Fail to set identifierAttribute from searchFilter : {}", searchFilter);
             }

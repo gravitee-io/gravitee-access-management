@@ -82,7 +82,7 @@ public class LdapComparePasswordAuthenticationProviderTest extends LdapAuthentic
             configuration.setContextSourceUrl("ldap://localhost:61000");
 
             configuration.setUserSearchBase("ou=people");
-            configuration.setUserSearchFilter("uid={user}");
+            configuration.setUserSearchFilter("uid={0}");
 
             configuration.setGroupSearchBase("ou=GRAVITEE,ou=company,ou=applications");
             configuration.setGroupSearchFilter("member={0}");
