@@ -32,7 +32,6 @@ import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.Au
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationFailureEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.approval.UserApprovalEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.approval.UserApprovalSubmissionEndpoint;
-import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection.CheckTokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection.IntrospectionEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpoint;
@@ -49,7 +48,6 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
-import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.model.Domain;
@@ -97,9 +95,6 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
     @Autowired
     private TokenGranter tokenGranter;
-
-    @Autowired
-    private TokenService tokenService;
 
     @Autowired
     private IntrospectionService introspectionService;
@@ -163,7 +158,6 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         Handler<RoutingContext> tokenRequestParseHandler = new TokenRequestParseHandler();
 
         // Check_token is provided only for backward compatibility and must be remove in the future
-        Handler<RoutingContext> checkTokenEndpoint = new CheckTokenEndpoint(tokenService);
         Handler<RoutingContext> introspectionEndpoint = new IntrospectionEndpoint();
         ((IntrospectionEndpoint) introspectionEndpoint).setIntrospectionService(introspectionService);
 
@@ -196,10 +190,6 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(tokenRequestParseHandler)
                 .handler(clientAuthHandler)
                 .handler(tokenEndpoint);
-        oauth2Router.route(HttpMethod.POST, "/check_token")
-                .consumes(MediaType.APPLICATION_FORM_URLENCODED)
-                .handler(clientAuthHandler)
-                .handler(checkTokenEndpoint);
         oauth2Router.route(HttpMethod.POST, "/introspect")
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(clientAuthHandler)

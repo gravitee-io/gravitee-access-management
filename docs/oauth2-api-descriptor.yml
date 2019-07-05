@@ -180,34 +180,6 @@ paths:
             $ref: '#/definitions/IntrospectionResponse'
       security:
       - client_auth: []
-  /check_token:
-    post:
-      tags:
-      - OAuth 2.0
-      summary: Check token validity
-      description: The token intropsection endpoint defines a method for a protected resource to query an OAuth 2.0 authorization server to determine the active state of an
-        OAuth 2.0 token and to determine meta-information about this token.
-      consumes:
-      - application/x-www-form-urlencoded
-      produces:
-      - application/json
-      parameters:
-      - in: formData
-        name: token
-        description: The string value of the token. For access tokens, this is the "access_token" value returned from the token endpoint defined in OAuth 2.0.
-        required: true
-        type: string
-
-      responses:
-        '401':
-          description: Invalid client or Invalid token
-        '200':
-          description: Check Token Response
-          schema:
-            $ref: '#/definitions/AccessToken'
-      security:
-      - client_auth: []
-      deprecated: true
   /revoke:
     post:
       tags:
