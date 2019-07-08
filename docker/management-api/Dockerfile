@@ -28,14 +28,11 @@ RUN wget --no-check-certificate -O /tmp/gravitee-am-management-api-standalone-${
     && mv /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION} /opt/graviteeio-am-management-api \
     && rm -rf /tmp/*
 
-RUN addgroup -g 1000 gravitee \
-    && adduser -D -u 1000 -G gravitee -h ${GRAVITEEAM_HOME} gravitee \
-    && chown -R gravitee:gravitee ${GRAVITEEAM_HOME}
-
-USER 1000
+RUN chgrp -R 0 ${GRAVITEEAM_HOME} && \
+    chmod -R g=u ${GRAVITEEAM_HOME}
 
 WORKDIR ${GRAVITEEAM_HOME}
 
 EXPOSE 8093
-VOLUME ["/opt/graviteeio-am-management-api/logs"]
+
 CMD ["./bin/gravitee"]
