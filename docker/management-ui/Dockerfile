@@ -19,15 +19,11 @@ MAINTAINER Gravitee Team <http://gravitee.io>
 
 ARG GRAVITEEAM_VERSION=0
 
-COPY files/entrypoint.sh /usr/local/bin/
-RUN chmod u+x /usr/local/bin/entrypoint.sh
+ENV CONFD_VERSION="0.16.0"
+ENV CONFD_URL="https://github.com/kelseyhightower/confd/releases/download"
 
 # Update to get support for Zip/Unzip, Bash
 RUN apk --update add zip unzip bash wget
-
-RUN rm /etc/nginx/nginx.conf
-
-COPY nginx.conf /etc/nginx/nginx.conf
 
 ENV WWW_TARGET /var/www/html/
 
@@ -35,13 +31,16 @@ RUN wget --no-check-certificate -O /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.
     && unzip /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
     && mkdir -p ${WWW_TARGET} \
     && mv /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}/* ${WWW_TARGET} \
-    && rm -rf /tmp/*
+    && rm -rf /tmp/* \
+    && wget -T 5 ${CONFD_URL}/v${CONFD_VERSION}/confd-${CONFD_VERSION}-linux-amd64 -O /bin/confd \
+    && chmod +x /bin/confd
 
-ENV MGMT_API_URL http://localhost:8093/
-ENV MGMT_UI_URL http://localhost:4200/
+# support running as arbitrary user which belongs to the root group
+RUN chgrp -R 0 /var/www/ /var/log/nginx /var/cache/nginx/ /etc/nginx/ /var/run/ && \
+    chmod -R g=u /var/www/ /var/log/nginx /var/cache/nginx/ /etc/nginx/ /var/run/
 
-RUN cp /var/www/html/constants.json /var/www/html/constants.json.template
+ADD config /etc/confd
 
-EXPOSE 80 443
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["nginx", "-g", "daemon off;"]
+COPY run.sh /run.sh
+
+CMD ["sh", "/run.sh"]
