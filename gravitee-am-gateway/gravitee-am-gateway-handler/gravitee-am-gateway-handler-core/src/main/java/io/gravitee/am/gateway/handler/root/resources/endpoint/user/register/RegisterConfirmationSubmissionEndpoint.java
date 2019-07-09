@@ -45,10 +45,12 @@ public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
         User user = context.get("user");
         user.setPassword(password);
 
-        // add client_id parameter for future use
-        Client client = context.get("client");
         Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(Parameters.CLIENT_ID, client.getClientId());
+        // add client_id parameter for future use (if exists)
+        Client client = context.get("client");
+        if (client != null) {
+            queryParams.put(Parameters.CLIENT_ID, client.getClientId());
+        }
 
         userService.confirmRegistration(user, getAuthenticatedUser(context))
                 .subscribe(

@@ -76,7 +76,10 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
 
     @Override
     public Single<User> create(User user) {
-        return findByUsername(user.getUsername())
+        // lowercase username to avoid duplicate account
+        final String username = user.getUsername().toLowerCase();
+
+        return findByUsername(username)
                 .isEmpty()
                 .flatMap(isEmpty -> {
                     if (!isEmpty) {
@@ -86,7 +89,7 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
                         // set technical id
                         document.put(FIELD_ID, user.getId() != null ? user.getId() : RandomString.generate());
                         // set username
-                        document.put(configuration.getUsernameField(), user.getUsername());
+                        document.put(configuration.getUsernameField(), username);
                         // set password
                         if (user.getCredentials() != null) {
                             document.put(configuration.getPasswordField(), passwordEncoder.encode(user.getCredentials()));

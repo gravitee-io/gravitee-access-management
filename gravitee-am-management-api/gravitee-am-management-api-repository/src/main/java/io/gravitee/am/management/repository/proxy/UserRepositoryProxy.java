@@ -49,8 +49,8 @@ public class UserRepositoryProxy extends AbstractProxy<UserRepository> implement
     }
 
     @Override
-    public Single<List<User>> findByDomainAndEmail(String domain, String email) {
-        return target.findByDomainAndEmail(domain, email);
+    public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
+        return target.findByDomainAndEmail(domain, email, strict);
     }
 
     @Override
@@ -61,6 +61,11 @@ public class UserRepositoryProxy extends AbstractProxy<UserRepository> implement
     @Override
     public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
         return target.findByDomainAndUsernameAndSource(domain, username, source);
+    }
+
+    @Override
+    public Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source) {
+        return target.findByDomainAndExternalIdAndSource(domain, externalId, source);
     }
 
     @Override

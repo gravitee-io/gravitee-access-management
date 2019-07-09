@@ -101,7 +101,7 @@ export class UserProfileComponent implements OnInit {
   resendConfirmationRegistration(event) {
     event.preventDefault();
     this.dialogService
-      .confirm('Send Email', 'Are you sure you wand to send the confirmation registration email ?')
+      .confirm('Send Email', 'Are you sure you want to send the confirmation registration email ?')
       .subscribe( res => {
         if (res) {
           this.userService.resendRegistrationConfirmation(this.domainId, this.user.id).subscribe(() => {
@@ -113,7 +113,7 @@ export class UserProfileComponent implements OnInit {
 
   resetPassword() {
     this.dialogService
-      .confirm('Reset Password', 'Are you sure you wand to reset the password ?')
+      .confirm('Reset Password', 'Are you sure you want to reset the password ?')
       .subscribe(res => {
         if (res) {
           this.userService.resetPassword(this.domainId, this.user.id, this.password).subscribe(() => {
@@ -132,7 +132,7 @@ export class UserProfileComponent implements OnInit {
   unlock(event) {
     event.preventDefault();
     this.dialogService
-      .confirm('Unlock User', 'Are you sure you wand to unlock the user ?')
+      .confirm('Unlock User', 'Are you sure you want to unlock the user ?')
       .subscribe(res => {
         if (res) {
           this.userService.unlock(this.domainId, this.user.id).subscribe(() => {

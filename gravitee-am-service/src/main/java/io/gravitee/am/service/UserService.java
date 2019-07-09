@@ -56,6 +56,15 @@ public interface UserService {
     Completable delete(String userId);
 
     /**
+     * ------------------------------------------------------
+     * ------------------------------------------------------
+     * /!\
+     *  Not sure it's the best place for this method
+     *  the module gravitee-am-service should not be aware of the gravitee-am-identityprovider-api module
+     * /!\
+     * ------------------------------------------------------
+     * ------------------------------------------------------
+     *
      * Moved from io.gravitee.am.gateway.service.UserService to current interface.
      *
      * Used after a successful authentication.

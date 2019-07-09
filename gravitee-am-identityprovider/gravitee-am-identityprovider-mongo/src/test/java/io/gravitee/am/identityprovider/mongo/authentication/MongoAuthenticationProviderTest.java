@@ -69,6 +69,32 @@ public class MongoAuthenticationProviderTest {
     }
 
     @Test
+    public void shouldLoadUserByUsername_authentication_case_insensitive() {
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return "bobspassword";
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "BOB";
+            }
+
+            @Override
+            public Map<String, Object> getAdditionalInformation() {
+                return null;
+            }
+        }).test();
+
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "bob".equals(u.getUsername()));
+    }
+
+    @Test
     public void shouldLoadUserByUsername_authentication_badCredentials() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             @Override

@@ -144,7 +144,7 @@ public class UserServiceTest {
         when(user.isInternal()).thenReturn(true);
         when(user.isInactive()).thenReturn(true);
 
-        when(userRepository.findByDomainAndEmail(domain.getId(), user.getEmail())).thenReturn(Single.just(Collections.singletonList(user)));
+        when(userRepository.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
@@ -166,7 +166,7 @@ public class UserServiceTest {
         when(domain.getId()).thenReturn("domain-id");
         when(domain.getAccountSettings()).thenReturn(accountSettings);
 
-        when(userRepository.findByDomainAndEmail(domain.getId(), user.getEmail())).thenReturn(Single.just(Collections.singletonList(user)));
+        when(userRepository.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
@@ -184,7 +184,7 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(userRepository.findByDomainAndEmail(domain.getId(), user.getEmail())).thenReturn(Single.just(Collections.singletonList(user)));
+        when(userRepository.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();

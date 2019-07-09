@@ -298,11 +298,14 @@ public class UserServiceTest {
         String domain = "Domain";
         String username = "foo";
         String source = "SRC";
+        String id = "id";
         io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
         when(user.getUsername()).thenReturn(username);
+        when(user.getId()).thenReturn(id);
         HashMap<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put("source", source);
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+        when(userRepository.findByDomainAndExternalIdAndSource(domain, id, source)).thenReturn(Maybe.empty());
         when(userRepository.findByDomainAndUsernameAndSource(domain, username, source)).thenReturn(Maybe.empty());
         when(userRepository.create(any())).thenReturn(Single.just(mock(User.class)));
 
@@ -318,14 +321,14 @@ public class UserServiceTest {
     @Test
     public void shouldFindOrCreate_UpdateKnownUser() {
         String domain = "Domain";
-        String username = "foo";
         String source = "SRC";
+        String id = "id";
         io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
-        when(user.getUsername()).thenReturn(username);
+        when(user.getId()).thenReturn(id);
         HashMap<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put("source", source);
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
-        when(userRepository.findByDomainAndUsernameAndSource(domain, username, source)).thenReturn(Maybe.just(mock(User.class)));
+        when(userRepository.findByDomainAndExternalIdAndSource(domain, id, source)).thenReturn(Maybe.just(mock(User.class)));
         when(userRepository.update(any())).thenReturn(Single.just(mock(User.class)));
 
         TestObserver testObserver = userService.findOrCreate(domain, user).test();
@@ -340,10 +343,10 @@ public class UserServiceTest {
     @Test
     public void shouldFindOrCreate_UpdateKnownUserWithEmptyGroup() {
         String domain = "Domain";
-        String username = "foo";
         String source = "SRC";
+        String id = "id";
         io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
-        when(user.getUsername()).thenReturn(username);
+        when(user.getId()).thenReturn(id);
         HashMap<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put("source", source);
         Map<String, List<String>> groupMapping = new HashMap<>();
@@ -351,7 +354,7 @@ public class UserServiceTest {
         additionalInformation.put("_RESERVED_AM_GROUP_MAPPING_", groupMapping);
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
         User existingUser = mock(User.class);
-        when(userRepository.findByDomainAndUsernameAndSource(domain, username, source)).thenReturn(Maybe.just(existingUser));
+        when(userRepository.findByDomainAndExternalIdAndSource(domain, id, source)).thenReturn(Maybe.just(existingUser));
         when(userRepository.update(any())).thenReturn(Single.just(mock(User.class)));
         Group group = mock(Group.class);
         when(group.getMembers()).thenReturn(null);
