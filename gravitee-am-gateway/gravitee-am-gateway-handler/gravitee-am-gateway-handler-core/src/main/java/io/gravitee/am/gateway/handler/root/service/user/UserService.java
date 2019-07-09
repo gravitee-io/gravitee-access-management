@@ -28,8 +28,6 @@ import io.reactivex.Single;
  */
 public interface UserService {
 
-    Maybe<User> findById(String id);
-
     Maybe<UserToken> verifyToken(String token);
 
     Single<User> register(User user, io.gravitee.am.identityprovider.api.User principal);

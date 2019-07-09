@@ -124,29 +124,32 @@ public class UserServiceImpl implements UserService {
                     userModel.setInternal(true);
                     userModel.setCreatedAt(new Date());
                     userModel.setUpdatedAt(userModel.getCreatedAt());
-                    // user has no password, no need to router idp user
-                    if (userModel.getPassword() == null) {
-                        return userRepository.create(userModel);
-                    } else {
-                        // store user in its identity provider
-                        return userProvider.create(convert(userModel))
-                                .flatMap(idpUser -> {
-                                    // AM 'users' collection is not made for authentication (but only management stuff)
-                                    // clear password
-                                    userModel.setPassword(null);
-                                    // set external id
-                                    userModel.setExternalId(idpUser.getId());
-                                    return userRepository.create(userModel);
-                                });
-                    }
+                    userModel.setEnabled(userModel.getPassword() != null);
+
+                    // store user in its identity provider
+                    return userProvider.create(convert(userModel))
+                            .flatMap(idpUser -> {
+                                // AM 'users' collection is not made for authentication (but only management stuff)
+                                // clear password
+                                userModel.setPassword(null);
+                                // set external id
+                                userModel.setExternalId(idpUser.getId());
+                                return userRepository.create(userModel);
+                            })
+                            .onErrorResumeNext(ex -> {
+                                if (ex instanceof UserAlreadyExistsException) {
+                                    return Single.error(new UniquenessException("User with username [" + user.getUserName()+ "] already exists"));
+                                }
+                                return Single.error(ex);
+                            });
                 })
                 .map(user1 -> convert(user1, baseUrl, true))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof SCIMException || ex instanceof UserProviderNotFoundException) {
                         return Single.error(ex);
                     } else {
-                        LOGGER.error("An error occurs while trying to router a user", ex);
-                        return Single.error(new TechnicalManagementException("An error occurs while trying to router a user", ex));
+                        LOGGER.error("An error occurs while trying to create a user", ex);
+                        return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
                     }
                 });
     }
@@ -170,9 +173,9 @@ public class UserServiceImpl implements UserService {
                     return identityProviderManager.getUserProvider(userToUpdate.getSource())
                             .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(userToUpdate.getSource())))
                             .flatMapSingle(userProvider -> {
-                                // no idp user check if we need to router it
+                                // no idp user check if we need to create it
                                 if (userToUpdate.getExternalId() == null) {
-                                    // if user set a password we can router the idp user
+                                    // if user set a password we can create the idp user
                                     if (userToUpdate.getPassword() != null) {
                                         return userProvider.create(convert(userToUpdate));
                                     } else {

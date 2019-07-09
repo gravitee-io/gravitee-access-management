@@ -36,13 +36,19 @@ public interface UserRepository extends CrudRepository<User, String> {
 
     Single<Page<User>> search(String domain, String query, int limit);
 
-    Single<List<User>> findByDomainAndEmail(String domain, String email);
+    Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict);
 
     Maybe<User> findByUsernameAndDomain(String domain, String username);
 
     Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
 
+    Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source);
+
     Single<List<User>> findByIdIn(List<String> ids);
+
+    default Single<List<User>> findByDomainAndEmail(String domain, String email) {
+        return findByDomainAndEmail(domain, email, true);
+    }
 
 
 }

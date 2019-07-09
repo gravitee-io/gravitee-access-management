@@ -739,6 +739,122 @@
 			]
 		},
 		{
+			"name": "Case insensitive",
+			"item": [
+				{
+					"name": "Configure domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
+								"exec": [
+									"// wait for sync process",
+									"setTimeout(function(){}, 5000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"accountSettings\": {}\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Generate token - case insensitive",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "660c6db8-4bea-464f-aa77-26dbf6af12d8",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has an access_token - with username case insensitive\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('access_token');",
+									"    pm.expect(body).to.have.property('token_type');",
+									"    pm.expect(body.token_type).to.eql('bearer');",
+									"    pm.expect(body).to.have.property('expires_in');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic bXktY2xpZW50Om15LWNsaWVudC1zZWNyZXQ="
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "UsEr",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{gateway_url}}/{{domain}}/oauth/token",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domain}}",
+								"oauth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Delete domain",
 			"event": [
 				{

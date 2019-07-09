@@ -105,11 +105,6 @@ public class UserServiceImpl implements UserService {
     private LoginAttemptService loginAttemptService;
 
     @Override
-    public Maybe<User> findById(String id) {
-        return userRepository.findById(id);
-    }
-
-    @Override
     public Maybe<UserToken> verifyToken(String token) {
         return Maybe.fromCallable(() -> jwtParser.parse(token))
                 .flatMap(jwt -> userRepository.findById(jwt.getSub()).zipWith(clientSource(jwt.getAud()), (user, optionalClient) -> new UserToken(user, optionalClient.orElse(null))));
@@ -170,7 +165,16 @@ public class UserServiceImpl implements UserService {
         // user has completed his account, add it to the idp
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                .flatMapSingle(userProvider -> userProvider.create(convert(user)))
+                 // update the idp user
+                .flatMapSingle(userProvider -> userProvider.update(user.getExternalId(), convert(user))
+                        .onErrorResumeNext(ex -> {
+                            if (ex instanceof UserNotFoundException) {
+                                // idp user not found, create its account
+                                return userProvider.create(convert(user));
+                            }
+                            return Single.error(ex);
+                        })
+                )
                 .flatMap(idpUser -> {
                     // update 'users' collection for management and audit purpose
                     user.setPassword(null);
@@ -233,10 +237,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Completable forgotPassword(String email, Client client, io.gravitee.am.identityprovider.api.User principal) {
-        return userRepository.findByDomainAndEmail(domain.getId(), email)
-                .map(users -> users.stream().filter(user -> user.isInternal()).findFirst())
-                .flatMapMaybe(optionalUser -> optionalUser.isPresent() ? Maybe.just(optionalUser.get()) : Maybe.empty())
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(email)))
+        return userRepository.findByDomainAndEmail(domain.getId(), email, false)
+                .map(users -> users.stream().filter(user -> user.isInternal() && email.toLowerCase().equals(user.getEmail().toLowerCase())).findFirst())
+                .map(optionalUser -> {
+                        if (!optionalUser.isPresent()) {
+                            throw new UserNotFoundException(email);
+                        }
+                        return optionalUser.get();
+                    }
+                )
                 .map(user -> {
                     // if user registration is not completed and force registration option is disabled throw invalid account exception
                     if (user.isInactive() && !forceUserRegistration(domain, client)) {
@@ -257,8 +266,7 @@ public class UserServiceImpl implements UserService {
                     auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal1).type(EventType.FORGOT_PASSWORD_REQUESTED));
                 })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
-                .toSingle().toCompletable();
-
+                .toCompletable();
     }
 
     private void completeForgotPassword(User user, Client client) {

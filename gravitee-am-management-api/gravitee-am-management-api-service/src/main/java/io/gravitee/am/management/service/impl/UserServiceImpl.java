@@ -137,37 +137,58 @@ public class UserServiceImpl implements UserService {
                     // user is flagged as internal user
                     newUser.setInternal(true);
                     if (newUser.isPreRegistration()) {
-                        // in pre registration mode an email will be sent to the user to complete his account
-                        // and user will only be stored as 'readonly' account
                         newUser.setPassword(null);
                         newUser.setRegistrationCompleted(false);
                         newUser.setEnabled(false);
-                        return userService.create(domain, newUser)
-                                .doOnSuccess(user -> new Thread(() -> completeUserRegistration(user)).start());
                     } else {
                         newUser.setRegistrationCompleted(true);
                         newUser.setEnabled(true);
                         newUser.setDomain(domain);
-                        // store user in its identity provider
-                        return userProvider.create(convert(newUser))
-                                .onErrorResumeNext(ex -> {
-                                    if (ex instanceof UserAlreadyExistsException) {
-                                        return userProvider.findByUsername(newUser.getUsername()).toSingle();
-                                    } else {
-                                        return Single.error(ex);
-                                    }
-                                })
-                                .flatMap(idpUser -> {
-                                    // AM 'users' collection is not made for authentication (but only management stuff)
-                                    // clear password
-                                    newUser.setPassword(null);
-                                    // set external id
-                                    newUser.setExternalId(idpUser.getId());
-                                    return userService.create(domain, newUser);
-                                });
+                    }
+
+                    // store user in its identity provider
+                    return userProvider.create(convert(newUser))
+                            // if a user is already in the identity provider but not in the AM users collection,
+                            // it means that the user is coming from a pre-filled AM compatible identity provider (user creation enabled)
+                            // try to create the user with the idp user information
+                            .onErrorResumeNext(ex -> {
+                                if (ex instanceof UserAlreadyExistsException) {
+                                    userProvider.findByUsername(newUser.getUsername())
+                                            .flatMapSingle(idpUser -> userService.findByDomainAndUsernameAndSource(domain, idpUser.getUsername(), newUser.getSource())
+                                                    .isEmpty()
+                                                    .flatMap(isEmpty -> {
+                                                        if (!isEmpty) {
+                                                            return Single.error(ex);
+                                                        } else {
+                                                            // AM 'users' collection is not made for authentication (but only management stuff)
+                                                            // clear password
+                                                            newUser.setPassword(null);
+                                                            // set external id
+                                                            newUser.setExternalId(idpUser.getId());
+                                                            // set username
+                                                            newUser.setUsername(idpUser.getUsername());
+                                                            return userService.create(domain, newUser);
+                                                        }
+                                                    }));
+                                }
+                                return Single.error(ex);
+                            })
+                            .flatMap(idpUser -> {
+                                // AM 'users' collection is not made for authentication (but only management stuff)
+                                // clear password
+                                newUser.setPassword(null);
+                                // set external id
+                                newUser.setExternalId(idpUser.getId());
+                                return userService.create(domain, newUser);
+                            });
+                })
+                .doOnSuccess(user -> {
+                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user));
+                    // in pre registration mode an email will be sent to the user to complete his account
+                    if (newUser.isPreRegistration()) {
+                        new Thread(() -> completeUserRegistration(user)).start();
                     }
                 })
-                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
     }
 

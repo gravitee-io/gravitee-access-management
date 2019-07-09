@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "7167854c-d8fd-4c59-982b-e5f8c8609bbe",
+		"_postman_id": "533f1acd-87af-44ae-86f6-be5128cb56ed",
 		"name": "Gravitee.io - AM - User Management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -190,10 +190,6 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
 							"host": [
@@ -607,6 +603,61 @@
 										}
 									},
 									"response": []
+								},
+								{
+									"name": "Invalid request - username already exists - case insensitive",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"UM - create user - uniqueness\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"A user [jensen.BarBara] already exists.\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.BarBara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"password\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/users",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"users"
+											]
+										}
+									},
+									"response": []
 								}
 							],
 							"_postman_isSubFolder": true
@@ -809,10 +860,6 @@
 												"type": "text"
 											}
 										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{management_url}}/management/domains/{{domain}}/users",
 											"host": [
@@ -1376,10 +1423,6 @@
 												"value": "Bearer {{token}}"
 											}
 										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{management_url}}/management/domains/{{domain}}/groups",
 											"host": [
@@ -1528,10 +1571,6 @@
 												"value": "Bearer {{token}}"
 											}
 										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{management_url}}/management/domains/{{domain}}/groups",
 											"host": [

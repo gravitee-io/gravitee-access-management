@@ -245,7 +245,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<User> findOrCreate(String domain,io.gravitee.am.identityprovider.api.User user) {
         String source = (String) user.getAdditionalInformation().get("source");
-        return userRepository.findByDomainAndUsernameAndSource(domain, user.getUsername(), source)
+        return userRepository.findByDomainAndExternalIdAndSource(domain, user.getId(), source)
+                .switchIfEmpty(Maybe.defer(() -> findByDomainAndUsernameAndSource(domain, user.getUsername(), source)))
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
                 .flatMapSingle(existingUser -> enhanceUserWithGroupRoles(existingUser, user))
                 .flatMap(existingUser -> {

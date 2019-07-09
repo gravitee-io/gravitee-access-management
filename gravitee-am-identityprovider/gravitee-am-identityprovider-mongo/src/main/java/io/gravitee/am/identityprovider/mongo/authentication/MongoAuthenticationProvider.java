@@ -71,23 +71,30 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
     private MongoClient mongoClient;
 
     public Maybe<User> loadUserByUsername(Authentication authentication) {
-        String username = (String)authentication.getPrincipal();
+        String username = ((String) authentication.getPrincipal()).toLowerCase();
         return findUserByUsername(username)
                 .switchIfEmpty(Maybe.error(new UsernameNotFoundException(username)))
                 .map(user -> {
                     String password = user.getString(this.configuration.getPasswordField());
                     String presentedPassword = authentication.getCredentials().toString();
+
+                    if (password == null) {
+                        LOGGER.debug("Authentication failed: password is null");
+                        throw new BadCredentialsException("Invalid account");
+                    }
+
                     if (!passwordEncoder.matches(presentedPassword, password)) {
                         LOGGER.debug("Authentication failed: password does not match stored value");
                         throw new BadCredentialsException("Bad credentials");
                     }
-                    return createUser(username, user);
+                    return createUser(user);
                 });
     }
 
     public Maybe<User> loadUserByUsername(String username) {
-        return findUserByUsername(username)
-                .map(document -> createUser(username, document));
+        final String encodedUsername = username.toLowerCase();
+        return findUserByUsername(encodedUsername)
+                .map(document -> createUser(document));
     }
 
     private Maybe<Document> findUserByUsername(String username) {
@@ -98,7 +105,8 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
         return Observable.fromPublisher(usersCol.find(query).first()).firstElement();
     }
 
-    private User createUser(String username, Document document) {
+    private User createUser(Document document) {
+        String username = document.getString(FIELD_USERNAME);
         DefaultUser user = new DefaultUser(username);
         Map<String, Object> claims = new HashMap<>();
 

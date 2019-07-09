@@ -56,6 +56,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_SOURCE = "source";
     private static final String FIELD_EMAIL = "email";
+    private static final String FIELD_EXTERNAL_ID = "externalId";
 
     private MongoCollection<UserMongo> usersCollection;
 
@@ -65,7 +66,9 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         usersCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
         usersCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_EMAIL, 1)).subscribe(new LoggableIndexSubscriber());
         usersCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_USERNAME, 1)).subscribe(new LoggableIndexSubscriber());
+        usersCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_EXTERNAL_ID, 1)).subscribe(new LoggableIndexSubscriber());
         usersCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1)).subscribe(new LoggableIndexSubscriber());
+        usersCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1)).subscribe(new LoggableIndexSubscriber());
     }
 
     @Override
@@ -101,8 +104,13 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Single<List<User>> findByDomainAndEmail(String domain, String email) {
-        return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_EMAIL, email)))).map(this::convert).collect(ArrayList::new, List::add);
+    public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
+        BasicDBObject emailQuery = new BasicDBObject(FIELD_EMAIL, (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE));
+        Bson mongoQuery = and(
+                eq(FIELD_DOMAIN, domain),
+                emailQuery);
+
+        return Observable.fromPublisher(usersCollection.find(mongoQuery)).map(this::convert).collect(ArrayList::new, List::add);
     }
 
     @Override
@@ -121,6 +129,17 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         return Observable.fromPublisher(
                 usersCollection
                         .find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source)))
+                        .limit(1)
+                        .first())
+                .firstElement()
+                .map(this::convert);
+    }
+
+    @Override
+    public Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source) {
+        return Observable.fromPublisher(
+                usersCollection
+                        .find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_EXTERNAL_ID, externalId), eq(FIELD_SOURCE, source)))
                         .limit(1)
                         .first())
                 .firstElement()
