@@ -148,6 +148,8 @@ public class ClientMongo extends Auditable {
 
     private List<TokenClaimMongo> tokenCustomClaims;
 
+    private boolean template;
+
     public String getId() {
         return id;
     }
@@ -578,6 +580,14 @@ public class ClientMongo extends Auditable {
 
     public void setTokenCustomClaims(List<TokenClaimMongo> tokenCustomClaims) {
         this.tokenCustomClaims = tokenCustomClaims;
+    }
+
+    public boolean isTemplate() {
+        return template;
+    }
+
+    public void setTemplate(boolean template) {
+        this.template = template;
     }
 
     @Override

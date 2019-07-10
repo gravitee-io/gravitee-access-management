@@ -31,6 +31,7 @@ public class ClientRegistrationSettingsMongo {
     private List<String> defaultScopes;
     private boolean isAllowedScopesEnabled;
     private List<String> allowedScopes;
+    private boolean isClientTemplateEnabled;
 
 
     public boolean isAllowLocalhostRedirectUri() {
@@ -95,5 +96,13 @@ public class ClientRegistrationSettingsMongo {
 
     public void setAllowedScopes(List<String> allowedScopes) {
         this.allowedScopes = allowedScopes;
+    }
+
+    public boolean isClientTemplateEnabled() {
+        return isClientTemplateEnabled;
+    }
+
+    public void setClientTemplateEnabled(boolean clientTemplateEnabled) {
+        isClientTemplateEnabled = clientTemplateEnabled;
     }
 }

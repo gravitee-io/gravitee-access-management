@@ -19,7 +19,6 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.service.ClientService;
 import io.reactivex.Single;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
@@ -32,7 +31,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.Mockito.*;
 
@@ -44,16 +43,13 @@ import static org.mockito.Mockito.*;
 public class DynamicClientRegistrationEndpointTest {
 
     @Mock
-    private ClientService clientService;
-
-    @Mock
     private ClientSyncService clientSyncService;
 
     @Mock
     private DynamicClientRegistrationService dcrService;
 
     @InjectMocks
-    private DynamicClientRegistrationEndpoint endpoint = new DynamicClientRegistrationEndpoint(dcrService, clientService, clientSyncService);
+    private DynamicClientRegistrationEndpoint endpoint = new DynamicClientRegistrationEndpoint(dcrService, clientSyncService);
 
     @Mock
     private DynamicClientRegistrationRequest request;
@@ -95,21 +91,11 @@ public class DynamicClientRegistrationEndpointTest {
     }
 
     @Test
-    public void register_invalidRequest() {
-        //Context
-        when(dcrService.validateClientRegistrationRequest(any())).thenReturn(Single.error(new Exception()));
-
-        //Test
-        endpoint.handle(routingContext);
-
-        //Assertions
-        verify(routingContext, times(1)).fail(any());
-    }
-
-    @Test
     public void register_fail() {
         //Context
-        when(dcrService.validateClientRegistrationRequest(any())).thenReturn(Single.just(request));
+        HttpServerRequest serverRequest = Mockito.mock(HttpServerRequest.class);
+        when(routingContext.request()).thenReturn(serverRequest);
+        when(dcrService.create(any(),any())).thenReturn(Single.error(new Exception()));
 
         //Test
         endpoint.handle(routingContext);
@@ -132,12 +118,7 @@ public class DynamicClientRegistrationEndpointTest {
         when(serverResponse.putHeader(anyString(),anyString())).thenReturn(serverResponse);
         when(serverResponse.setStatusCode(201)).thenReturn(serverResponse);
 
-        when(dcrService.create(any())).thenReturn(new Client());
-        when(dcrService.validateClientRegistrationRequest(any())).thenReturn(Single.just(request));
-        when(dcrService.applyDefaultIdentityProvider(any())).thenReturn(Single.just(new Client()));
-        when(dcrService.applyDefaultCertificateProvider(any())).thenReturn(Single.just(new Client()));
-        when(dcrService.applyRegistrationAccessToken(any(),any())).thenReturn(Single.just(new Client()));
-        when(clientService.create(any())).thenReturn(Single.just(new Client()));
+        when(dcrService.create(any(),any())).thenReturn(Single.just(new Client()));
         when(clientSyncService.addDynamicClientRegistred(any())).thenReturn(new Client());
 
         //Test

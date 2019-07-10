@@ -31,10 +31,10 @@ import io.gravitee.am.gateway.handler.oidc.resources.endpoint.*;
 import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientAccessHandler;
 import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientAccessTokenHandler;
 import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientRegistrationHandler;
+import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientRegistrationTemplateHandler;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.common.service.AbstractService;
@@ -51,6 +51,7 @@ import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 public class OIDCProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
@@ -72,9 +73,6 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private ClientSyncService clientSyncService;
-
-    @Autowired
-    private ClientService clientService;
 
     @Autowired
     private JWTService jwtService;
@@ -170,6 +168,14 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
                 .route(HttpMethod.GET, "/.well-known/jwks.json")
                 .handler(openIDProviderJWKSetEndpoint);
 
+        // Dynamic Client Registration templates
+        DynamicClientRegistrationTemplateHandler dynamicClientRegistrationTemplateHandler = new DynamicClientRegistrationTemplateHandler(domain);
+        DynamicClientRegistrationTemplateEndpoint dynamicClientRegistrationTemplateEndpoint = new DynamicClientRegistrationTemplateEndpoint(clientSyncService);
+        oidcRouter
+                .route(HttpMethod.GET, "/register_templates")
+                .handler(dynamicClientRegistrationTemplateHandler)
+                .handler(dynamicClientRegistrationTemplateEndpoint);
+
         // Dynamic Client Registration
         OAuth2AuthHandler dynamicClientRegistrationAuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, Scope.DCR_ADMIN.getKey());
         dynamicClientRegistrationAuthHandler.extractToken(true);
@@ -177,7 +183,7 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
         dynamicClientRegistrationAuthHandler.forceClientToken(true);
 
         DynamicClientRegistrationHandler dynamicClientRegistrationHandler = new DynamicClientRegistrationHandler(domain, dynamicClientRegistrationAuthHandler);
-        DynamicClientRegistrationEndpoint dynamicClientRegistrationEndpoint = new DynamicClientRegistrationEndpoint(dcrService, clientService, clientSyncService);
+        DynamicClientRegistrationEndpoint dynamicClientRegistrationEndpoint = new DynamicClientRegistrationEndpoint(dcrService, clientSyncService);
         oidcRouter
                 .route(HttpMethod.POST, "/register")
                 .consumes(MediaType.APPLICATION_JSON)
@@ -195,7 +201,7 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
 
         DynamicClientAccessHandler dynamicClientAccessHandler = new DynamicClientAccessHandler(domain);
         DynamicClientAccessTokenHandler dynamicClientAccessTokenHandler = new DynamicClientAccessTokenHandler();
-        DynamicClientAccessEndpoint dynamicClientAccessEndpoint = new DynamicClientAccessEndpoint(dcrService, clientService, clientSyncService);
+        DynamicClientAccessEndpoint dynamicClientAccessEndpoint = new DynamicClientAccessEndpoint(dcrService, clientSyncService);
         oidcRouter
                 .route(HttpMethod.GET, "/register/:"+CLIENT_ID)
                 .handler(dynamicClientAccessHandler)

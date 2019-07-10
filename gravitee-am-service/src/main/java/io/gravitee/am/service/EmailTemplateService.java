@@ -27,6 +27,7 @@ import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 public interface EmailTemplateService {
@@ -40,6 +41,8 @@ public interface EmailTemplateService {
     Maybe<Email> findByDomainAndTemplate(String domain, String template);
 
     Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template);
+
+    Single<List<Email>> copyFromClient(String domain, String clientSource, String clientTarget);
 
     Single<Email> create(String domain, NewEmail newEmail, User principal);
 

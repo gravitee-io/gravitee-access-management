@@ -4849,6 +4849,824 @@
 			]
 		},
 		{
+			"name": "Case - Templates",
+			"item": [
+				{
+					"name": "Enable templating on domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "286df3a2-0e06-4b00-9614-3b0fd9ceecb9",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"DCR enabled for domain with templating\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled).to.eql(true);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled).to.eql(false);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.isClientTemplateEnabled).to.be.eql(true);",
+									"});",
+									"",
+									"// wait for sync process",
+									"setTimeout(function(){}, 5000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"oidc\": {\n    \"clientRegistrationSettings\": {\n\t\t\"isClientTemplateEnabled\": true\n    }\n  }\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create client for templating",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var body = JSON.parse(responseBody);",
+									"pm.environment.set('templateId', body.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"clientId\": \"template-client-id\",\n  \"clientSecret\": \"template-client-secret\",\n  \"clientName\": \"template-client-public-name\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Patch client to implicit template",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1c063d6b-7120-4fd1-8aea-b04f7defc4d0",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// wait for sync process",
+									"setTimeout(function(){}, 5000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"redirectUris\": [\"https://gravitee.io/callback\"],\n  \"authorizedGrantTypes\": [\"implicit\"],\n  \"responseTypes\": [\"token\"],\n  \"applicationType\": \"Single Page App\",\n  \"template\": true\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{templateId}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients",
+								"{{templateId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Login Form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1c063d6b-7120-4fd1-8aea-b04f7defc4d0",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"template\":\"LOGIN\",\n\t\"enabled\":true,\n\t\"content\":\"// Custom template login form...\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{templateId}}/forms",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients",
+								"{{templateId}}",
+								"forms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Error Form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1c063d6b-7120-4fd1-8aea-b04f7defc4d0",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"template\":\"ERROR\",\n\t\"enabled\":true,\n\t\"content\":\"// Custom template error form...\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{templateId}}/forms",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients",
+								"{{templateId}}",
+								"forms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Registration Mail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1c063d6b-7120-4fd1-8aea-b04f7defc4d0",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"template\":\"REGISTRATION_CONFIRMATION\",\n\t\"expiresAfter\":86400,\n\t\"enabled\":true,\n\t\"from\":\"a@b.c\",\n\t\"fromName\":\"sender name\",\n\t\"subject\":\"abc\",\n\t\"content\":\"// Custom template email...\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{templateId}}/emails",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients",
+								"{{templateId}}",
+								"emails"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get template endpoint from discovery",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check discovery endpoints\", function () {",
+									"    pm.response.to.be.header('Content-Type', 'application/json');",
+									"    var body = pm.response.json();",
+									"    ",
+									"    pm.expect(body).to.have.property(\"registration_templates_endpoint\");",
+									"    pm.environment.set('registrationTemplatesEndpoint', body.registration_templates_endpoint);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domain}}",
+								"oidc",
+								".well-known",
+								"openid-configuration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get template from discovery",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check discovery endpoints\", function () {",
+									"    pm.response.to.be.header('Content-Type', 'application/json');",
+									"    var body = pm.response.json();",
+									"    pm.environment.set('software_id', body[0].software_id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{registrationTemplatesEndpoint}}",
+							"host": [
+								"{{registrationTemplatesEndpoint}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register client from template",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Has template attributes values\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body.application_type).to.eql('Single Page App');",
+									"    pm.expect(body.response_types).to.eql(['token']);",
+									"    pm.expect(body.grant_types).to.eql(['implicit']);",
+									"",
+									"    //Has overrided metadata",
+									"    pm.expect(body.client_name).to.eql('New client from template');",
+									"    pm.expect(body.redirect_uris).to.eql(['https://client.example.org/callback']);",
+									"    ",
+									"    pm.expect(body).to.have.property(\"client_secret\");",
+									"    ",
+									"    pm.environment.set('newClientForDCRTests', body.id);",
+									"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+									"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"software_id\":\"{{software_id}}\",\n\t\"client_name\": \"New client from template\",\n\t\"redirect_uris\": [\"https://client.example.org/callback\"]\n}"
+						},
+						"url": {
+							"raw": "{{registrationEndpoint}}",
+							"host": [
+								"{{registrationEndpoint}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Login Form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1c063d6b-7120-4fd1-8aea-b04f7defc4d0",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has values from template\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body.content).to.eql('// Custom template login form...');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{newClientForDCRTests}}/forms?template=LOGIN",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients",
+								"{{newClientForDCRTests}}",
+								"forms"
+							],
+							"query": [
+								{
+									"key": "template",
+									"value": "LOGIN"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Error Form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1c063d6b-7120-4fd1-8aea-b04f7defc4d0",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has values from template\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body.content).to.eql('// Custom template error form...');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{newClientForDCRTests}}/forms?template=ERROR",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients",
+								"{{newClientForDCRTests}}",
+								"forms"
+							],
+							"query": [
+								{
+									"key": "template",
+									"value": "ERROR"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Consent Form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1c063d6b-7120-4fd1-8aea-b04f7defc4d0",
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{newClientForDCRTests}}/forms?template=OAUTH2_USER_CONSENT",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients",
+								"{{newClientForDCRTests}}",
+								"forms"
+							],
+							"query": [
+								{
+									"key": "template",
+									"value": "OAUTH2_USER_CONSENT"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Registration Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1c063d6b-7120-4fd1-8aea-b04f7defc4d0",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has values from template\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body.content).to.eql('// Custom template email...');",
+									"    pm.expect(body.from).to.eql('a@b.c');",
+									"    pm.expect(body.fromName).to.eql('sender name');",
+									"    pm.expect(body.subject).to.eql('abc');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{newClientForDCRTests}}/emails?template=REGISTRATION_CONFIRMATION",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients",
+								"{{newClientForDCRTests}}",
+								"emails"
+							],
+							"query": [
+								{
+									"key": "template",
+									"value": "REGISTRATION_CONFIRMATION"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check access with registration token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Get client with response types\", function () {",
+									"    pm.response.to.be.header('Content-Type', 'application/json');",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"redirect_uris\");",
+									"    pm.expect(body).to.have.property(\"grant_types\");",
+									"    pm.expect(body.response_types).to.eql([ 'token']);",
+									"    pm.expect(body.grant_types).to.eql([ 'implicit']);",
+									"    ",
+									"    //The Authorization Server need not include the registration_access_token or registration_client_uri value in this response unless they have been updated.",
+									"    pm.expect(body).to.not.have.property('registration_access_token');",
+									"    pm.expect(body).to.not.have.property('registration_client_uri');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{registrationAccessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{registrationClientUri}}",
+							"host": [
+								"{{registrationClientUri}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{registrationAccessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{registrationClientUri}}",
+							"host": [
+								"{{registrationClientUri}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Case - Signing id_token",
 			"item": [
 				{

@@ -63,6 +63,11 @@ export class ClientRegistrationSettingsComponent implements OnInit {
     this.formChanged = true;
   }
 
+  enableDynamicClientRegistrationTemplate(event) {
+    this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled = event.checked;
+    this.formChanged = true;
+  }
+
   allowLocalhostRedirectUri(event) {
     this.domain.oidc.clientRegistrationSettings.allowLocalhostRedirectUri = event.checked;
     this.formChanged = true;

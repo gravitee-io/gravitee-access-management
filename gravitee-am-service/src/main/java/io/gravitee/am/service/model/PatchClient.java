@@ -79,6 +79,7 @@ public class PatchClient {
     private Optional<Map<String, Integer>> scopeApprovals;
     private Optional<AccountSettings> accountSettings;
     private Optional<List<TokenClaim>> tokenCustomClaims;
+    private Optional<Boolean> template;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -480,6 +481,14 @@ public class PatchClient {
         this.tokenCustomClaims = tokenCustomClaims;
     }
 
+    public Optional<Boolean> getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(Optional<Boolean> template) {
+        this.template = template;
+    }
+
     public Client patch(Client _toPatch, boolean forceNull) {
         // create new object for audit purpose (patch json result)
         Client toPatch = new Client(_toPatch);
@@ -539,6 +548,7 @@ public class PatchClient {
         SetterUtils.safeSet(toPatch::setScopeApprovals, this.getScopeApprovals());
         SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
         SetterUtils.safeSet(toPatch::setTokenCustomClaims, this.getTokenCustomClaims());
+        SetterUtils.safeSet(toPatch::setTemplate, this.getTemplate(), boolean.class);
 
         return toPatch;
     }

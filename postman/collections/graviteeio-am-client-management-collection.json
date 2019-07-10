@@ -813,6 +813,61 @@
 							"response": []
 						},
 						{
+							"name": "Template - client_credentials",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"is server\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('template');",
+											"    pm.expect(body.template).to.eql(true);",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"redirectUris\": [],\n  \"authorizedGrantTypes\": [\"client_credentials\"],\n  \"responseTypes\": [],\n  \"applicationType\": \"server\",\n  \"scopes\": [\"openid\"],\n  \"template\": true\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{client}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"{{domain}}",
+										"clients",
+										"{{client}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Delete client",
 							"event": [
 								{

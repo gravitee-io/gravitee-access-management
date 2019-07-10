@@ -27,13 +27,16 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -48,6 +51,8 @@ public class ClientSyncServiceImpl extends AbstractService implements ClientSync
 
     private final Logger logger = LoggerFactory.getLogger(ClientSyncServiceImpl.class);
     private ConcurrentMap<String, Set<Client>> domainsClients = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, Set<Client>> domainsTemplates = new ConcurrentHashMap<>();
+
 
     @Autowired
     private Domain domain;
@@ -75,6 +80,12 @@ public class ClientSyncServiceImpl extends AbstractService implements ClientSync
         return Observable.fromIterable(domainsClients.get(domain))
                 .filter(client -> client.getClientId().equals(clientId))
                 .firstElement();
+    }
+
+    @Override
+    public Single<List<Client>> findTemplates() {
+        Set<Client> templates = this.domainsTemplates.get(domain.getId());
+        return Single.just(templates==null?Collections.emptyList():new ArrayList<>(templates));
     }
 
     @Override
@@ -145,22 +156,57 @@ public class ClientSyncServiceImpl extends AbstractService implements ClientSync
 
     private void removeClient(String idClient, String domainId) {
         logger.info("Domain {} has received client event, delete client {}", domain.getName(), idClient);
-        domainsClients.get(domainId).removeIf(client -> client.getId().equals(idClient));
+        if(domainsClients.get(domainId) != null) {
+            domainsClients.get(domainId).removeIf(client -> client!=null && client.getId().equals(idClient));
+        }
+        if(domainsTemplates.get(domainId)!=null) {
+            domainsTemplates.get(domainId).removeIf(template -> template!=null && template.getId().equals(idClient));
+        }
     }
 
     private void updateClients(Set<Client> clients) {
         clients.forEach(client -> {
-            Set<Client> existingDomainClients = domainsClients.get(client.getDomain());
-            if (existingDomainClients != null) {
-                Set<Client> updateClients = new HashSet<>(existingDomainClients);
-                if (updateClients.contains(client)) {
-                    updateClients.remove(client);
-                }
-                updateClients.add(client);
-                domainsClients.put(client.getDomain(), updateClients);
-            } else {
-                domainsClients.put(client.getDomain(), Collections.singleton(client));
-            }
+            this.updateClients(client);
+            this.updateTemplates(client);
         });
+    }
+
+    private void updateClients(Client client) {
+        Set<Client> existingDomainClients = domainsClients.get(client.getDomain());
+
+        if (existingDomainClients != null) {
+            Set<Client> updateClients = new HashSet<>(existingDomainClients);
+
+            updateClients.remove(client);
+
+            if(!client.isTemplate()) {
+                updateClients.add(client);
+            }
+            domainsClients.put(client.getDomain(), updateClients);
+        } else {
+            if(!client.isTemplate()) {
+                //Collections.singleton does not support removeIf
+                domainsClients.put(client.getDomain(), new HashSet(Collections.singleton(client)));
+            }
+        }
+    }
+
+    private void updateTemplates(Client template) {
+        Set<Client> existingDomainTemplates = domainsTemplates.get(template.getDomain());
+        if (existingDomainTemplates != null) {
+            Set<Client> updateTemplates = new HashSet<>(existingDomainTemplates);
+
+            updateTemplates.remove(template);
+
+            if(template.isTemplate()) {
+                updateTemplates.add(template);
+            }
+            domainsTemplates.put(template.getDomain(), updateTemplates);
+        } else {
+            if(template.isTemplate()) {
+                //Collections.singleton does not support removeIf
+                domainsTemplates.put(template.getDomain(), new HashSet(Collections.singleton(template)));
+            }
+        }
     }
 }

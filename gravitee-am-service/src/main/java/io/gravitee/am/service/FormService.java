@@ -27,6 +27,7 @@ import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 public interface FormService {
@@ -38,6 +39,8 @@ public interface FormService {
     Maybe<Form> findByDomainAndTemplate(String domain, String template);
 
     Maybe<Form> findByDomainAndClientAndTemplate(String domain, String client, String template);
+
+    Single<List<Form>> copyFromClient(String domain, String clientSource, String clientTarget);
 
     Single<Form> create(String domain, NewForm form, User principal);
 

@@ -169,6 +169,8 @@ public class Client implements Cloneable{
 
     private List<TokenClaim> tokenCustomClaims;
 
+    private boolean template;
+
     public Client() { }
 
     public Client(Client other) {
@@ -229,6 +231,7 @@ public class Client implements Cloneable{
         this.scopeApprovals = other.scopeApprovals;
         this.accountSettings = other.accountSettings;
         this.tokenCustomClaims = other.tokenCustomClaims;
+        this.template = other.template;
     }
 
     public String getId() {
@@ -688,6 +691,14 @@ public class Client implements Cloneable{
 
     public void setTokenCustomClaims(List<TokenClaim> tokenCustomClaims) {
         this.tokenCustomClaims = tokenCustomClaims;
+    }
+
+    public boolean isTemplate() {
+        return template;
+    }
+
+    public void setTemplate(boolean template) {
+        this.template = template;
     }
 
     @Override

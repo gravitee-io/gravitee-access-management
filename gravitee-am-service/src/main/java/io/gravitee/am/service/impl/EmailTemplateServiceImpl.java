@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -36,6 +37,7 @@ import io.gravitee.am.service.model.UpdateEmail;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.EmailTemplateAuditBuilder;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -48,6 +50,7 @@ import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 @Component
@@ -116,6 +119,24 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a email using its domain %s its client %s and template %s", domain, client, template), ex));
                 });
+    }
+
+    @Override
+    public Single<List<Email>> copyFromClient(String domain, String clientSource, String clientTarget) {
+        return findByDomainAndClient(domain, clientSource)
+                .flatMapPublisher(Flowable::fromIterable)
+                .flatMapSingle(source -> {
+                    NewEmail email = new NewEmail();
+                    email.setEnabled(source.isEnabled());
+                    email.setTemplate(Template.parse(source.getTemplate()));
+                    email.setFrom(source.getFrom());
+                    email.setFromName(source.getFromName());
+                    email.setSubject(source.getSubject());
+                    email.setContent(source.getContent());
+                    email.setExpiresAfter(source.getExpiresAfter());
+                    return this.create(domain,clientTarget,email);
+                })
+                .toList();
     }
 
     @Override

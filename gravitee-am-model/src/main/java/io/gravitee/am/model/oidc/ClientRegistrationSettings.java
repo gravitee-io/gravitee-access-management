@@ -63,6 +63,10 @@ public class ClientRegistrationSettings {
      */
     private List<String> allowedScopes;
 
+    /**
+     * Enable client to be used as template for dynamic client registration
+     */
+    private boolean isClientTemplateEnabled;
 
     public boolean isAllowLocalhostRedirectUri() {
         return allowLocalhostRedirectUri;
@@ -131,5 +135,13 @@ public class ClientRegistrationSettings {
 
     public void setAllowedScopes(List<String> allowedScopes) {
         this.allowedScopes = allowedScopes;
+    }
+
+    public boolean isClientTemplateEnabled() {
+        return isClientTemplateEnabled;
+    }
+
+    public void setClientTemplateEnabled(boolean clientTemplateEnabled) {
+        isClientTemplateEnabled = clientTemplateEnabled;
     }
 }

@@ -35,16 +35,18 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
@@ -241,5 +243,72 @@ public class EmailTemplateServiceTest {
 
         verify(emailRepository, times(1)).delete(email.getId());
         verify(domainService, times(1)).reload(eq(email.getDomain()), any());
+    }
+
+    @Test
+    public void copyFromClient() {
+
+        final String sourceUid = "sourceUid";
+        final String targetUid = "targetUid";
+
+        Email mailOne = new Email();
+        mailOne.setId("templateId");
+        mailOne.setEnabled(true);
+        mailOne.setDomain(DOMAIN);
+        mailOne.setClient(sourceUid);
+        mailOne.setTemplate("login");
+        mailOne.setFrom("fromMail");
+        mailOne.setFromName("mailName");
+        mailOne.setSubject("mailSubject");
+        mailOne.setContent("mailContent");
+        mailOne.setExpiresAfter(0);
+
+        Email mailTwo = new Email(mailOne);
+        mailTwo.setTemplate("error");
+        mailTwo.setExpiresAfter(1000);
+
+        when(emailRepository.findByDomainAndClientAndTemplate(DOMAIN,targetUid,"login")).thenReturn(Maybe.empty());
+        when(emailRepository.findByDomainAndClientAndTemplate(DOMAIN,targetUid,"error")).thenReturn(Maybe.empty());
+        when(emailRepository.create(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
+        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(emailRepository.findByDomainAndClient(DOMAIN, sourceUid)).thenReturn(Single.just(Arrays.asList(mailOne, mailTwo)));
+
+        TestObserver<List<Email>> testObserver = emailTemplateService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(emails -> emails!=null && emails.size()==2 && emails.stream().filter(
+                email -> email.getDomain().equals(DOMAIN) &&
+                        email.getClient().equals(targetUid) &&
+                        !email.getId().equals("templateId") &&
+                        Arrays.asList("login","error").contains(email.getTemplate()) &&
+                        email.getFrom().equals("fromMail") &&
+                        email.getFromName().equals("mailName")
+                ).count()==2
+        );
+    }
+
+    @Test
+    public void copyFromClient_duplicateFound() {
+
+        final String sourceUid = "sourceUid";
+        final String targetUid = "targetUid";
+
+        Email mailOne = new Email();
+        mailOne.setId("templateId");
+        mailOne.setEnabled(true);
+        mailOne.setDomain(DOMAIN);
+        mailOne.setClient(sourceUid);
+        mailOne.setTemplate("login");
+        mailOne.setFrom("fromMail");
+        mailOne.setFromName("mailName");
+        mailOne.setSubject("mailSubject");
+        mailOne.setContent("mailContent");
+        mailOne.setExpiresAfter(0);
+
+        when(emailRepository.findByDomainAndClientAndTemplate(DOMAIN,targetUid,"login")).thenReturn(Maybe.just(new Email()));
+        when(emailRepository.findByDomainAndClient(DOMAIN, sourceUid)).thenReturn(Single.just(Arrays.asList(mailOne)));
+
+        TestObserver<List<Email>> testObserver = emailTemplateService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(EmailAlreadyExistsException.class);
     }
 }
