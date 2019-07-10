@@ -412,7 +412,7 @@ const routes: Routes = [
         },
         children: [
           { path: '', redirectTo: 'settings', pathMatch: 'full' },
-          { path: 'settings', component: ClientSettingsComponent },
+          { path: 'settings', component: ClientSettingsComponent, resolve: { domain: DomainResolver } },
           { path: 'idp', component: ClientIdPComponent },
           { path: 'oauth2', component: ClientOAuth2Component, resolve: { domainGrantTypes: ExtensionGrantsResolver, scopes: ScopesResolver } },
           { path: 'forms', component: ClientFormsComponent, resolve: { domain: DomainResolver } },

@@ -261,6 +261,12 @@ public class Domain {
                 this.getOidc().getClientRegistrationSettings().isOpenDynamicClientRegistrationEnabled();
     }
 
+    public boolean isDynamicClientRegistrationTemplateEnabled() {
+        return this.getOidc()!=null &&
+                this.getOidc().getClientRegistrationSettings()!=null &&
+                this.getOidc().getClientRegistrationSettings().isClientTemplateEnabled();
+    }
+
     public boolean isRedirectUriLocalhostAllowed() {
         return this.getOidc()!=null &&
                 this.getOidc().getClientRegistrationSettings()!=null &&

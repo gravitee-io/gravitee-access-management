@@ -70,6 +70,11 @@ public class PatchClientRegistrationSettings {
      */
     private Optional<List<String>> allowedScopes;
 
+    /**
+     * Enable client to be used as template for dynamic client registration
+     */
+    private Optional<Boolean> isClientTemplateEnabled;
+
     public Optional<Boolean> getAllowLocalhostRedirectUri() {
         return allowLocalhostRedirectUri;
     }
@@ -134,6 +139,14 @@ public class PatchClientRegistrationSettings {
         this.allowedScopes = allowedScopes;
     }
 
+    public Optional<Boolean> isClientTemplateEnabled() {
+        return isClientTemplateEnabled;
+    }
+
+    public void setClientTemplateEnabled(Optional<Boolean> clientTemplateEnabled) {
+        this.isClientTemplateEnabled = clientTemplateEnabled;
+    }
+
     public ClientRegistrationSettings patch(ClientRegistrationSettings toPatch) {
         ClientRegistrationSettings result=toPatch!=null?toPatch: ClientRegistrationSettings.defaultSettings();
 
@@ -143,8 +156,9 @@ public class PatchClientRegistrationSettings {
         SetterUtils.safeSet(result::setOpenDynamicClientRegistrationEnabled, this.isOpenDynamicClientRegistrationEnabled(), boolean.class);
         SetterUtils.safeSet(result::setDynamicClientRegistrationEnabled, this.isDynamicClientRegistrationEnabled(), boolean.class);
         SetterUtils.safeSet(result::setDefaultScopes, this.getDefaultScopes());
-        SetterUtils.safeSet(result::setAllowedScopesEnabled, this.isAllowedScopesEnabled, boolean.class);
+        SetterUtils.safeSet(result::setAllowedScopesEnabled, this.isAllowedScopesEnabled(), boolean.class);
         SetterUtils.safeSet(result::setAllowedScopes, this.getAllowedScopes());
+        SetterUtils.safeSet(result::setClientTemplateEnabled, this.isClientTemplateEnabled(), boolean.class);
 
         return result;
     }

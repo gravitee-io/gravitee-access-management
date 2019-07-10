@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Form;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -36,6 +37,7 @@ import io.gravitee.am.service.model.UpdateForm;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.FormTemplateAuditBuilder;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -48,6 +50,7 @@ import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 @Component
@@ -106,6 +109,21 @@ public class FormServiceImpl implements FormService {
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a form using its domain %s its client %s and template %s", domain, client, template), ex));
                 });
+    }
+
+    @Override
+    public Single<List<Form>> copyFromClient(String domain, String clientSource, String clientTarget) {
+        return findByDomainAndClient(domain, clientSource)
+                .flatMapPublisher(Flowable::fromIterable)
+                .flatMapSingle(source -> {
+                    NewForm form = new NewForm();
+                    form.setEnabled(source.isEnabled());
+                    form.setTemplate(Template.parse(source.getTemplate()));
+                    form.setContent(source.getContent());
+                    form.setAssets(source.getAssets());
+                    return this.create(domain,clientTarget,form);
+                })
+                .toList();
     }
 
     @Override

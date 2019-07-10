@@ -35,6 +35,7 @@ export interface Scope {
 export class ClientSettingsComponent implements OnInit {
   @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
   private domainId: string;
+  domain: any;
   client: any;
   formChanged: boolean = false;
   identityProviders: any[] = [];
@@ -50,7 +51,8 @@ export class ClientSettingsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domain = this.route.snapshot.data['domain'];
+    this.domainId = this.domain.id;
     this.client = this.route.snapshot.parent.data['client'];
     this.providerService.findByDomain(this.domainId).subscribe(data => this.identityProviders = data);
     this.certificateService.findByDomain(this.domainId).subscribe(data => this.certificates = data);
@@ -64,6 +66,15 @@ export class ClientSettingsComponent implements OnInit {
   enableAutoApprove(event) {
     this.client.autoApproveScopes = (event.checked) ? ["true"]: [];
     this.formChanged = true;
+  }
+
+  enableTemplate(event) {
+    this.client.template = event.checked;
+    this.formChanged = true;
+  }
+
+  isDomainDcrTemplateDisabled() {
+    return !this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled;
   }
 
   isAutoApprove() {

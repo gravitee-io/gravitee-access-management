@@ -21,7 +21,6 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationResponse;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.service.ClientService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
@@ -44,8 +43,8 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DynamicClientAccessEndpoint.class);
 
-    public DynamicClientAccessEndpoint(DynamicClientRegistrationService dcrService, ClientService clientService, ClientSyncService clientSyncService) {
-        super(dcrService, clientService, clientSyncService);
+    public DynamicClientAccessEndpoint(DynamicClientRegistrationService dcrService, ClientSyncService clientSyncService) {
+        super(dcrService, clientSyncService);
     }
 
     /**
@@ -87,10 +86,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         this.getClient(context)
                 .flatMapSingle(Single::just)
                 .flatMap(client -> this.extractRequest(context)
-                        .flatMap(dcrService::validateClientPatchRequest)
-                        .map(request -> request.patch(client))
-                        .flatMap(updatedClient -> dcrService.applyRegistrationAccessToken(UriBuilderRequest.extractBasePath(context), updatedClient))
-                        .flatMap(clientService::update)
+                        .flatMap(request -> dcrService.patch(client, request, UriBuilderRequest.extractBasePath(context)))
                         .map(clientSyncService::addDynamicClientRegistred)
                 )
                 .subscribe(
@@ -114,10 +110,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         this.getClient(context)
                 .flatMapSingle(Single::just)
                 .flatMap(client -> this.extractRequest(context)
-                        .flatMap(dcrService::validateClientRegistrationRequest)
-                        .map(request -> request.update(client))
-                        .flatMap(updatedClient -> dcrService.applyRegistrationAccessToken(UriBuilderRequest.extractBasePath(context), updatedClient))
-                        .flatMap(clientService::update)
+                        .flatMap(request -> dcrService.update(client, request, UriBuilderRequest.extractBasePath(context)))
                         .map(clientSyncService::addDynamicClientRegistred)
                 )
                 .subscribe(
@@ -139,7 +132,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         LOGGER.debug("Dynamic client registration DELETE endpoint");
 
         this.getClient(context)
-                .flatMapSingle(client -> this.clientService.delete(client.getId()).toSingleDefault(client))
+                .flatMapSingle(dcrService::delete)
                 .map(this.clientSyncService::removeDynamicClientRegistred)
                 .subscribe(
                         client -> context.response().setStatusCode(HttpStatusCode.NO_CONTENT_204).end()
@@ -156,8 +149,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
 
         this.getClient(context)
                 .flatMapSingle(Single::just)
-                .flatMap(client -> dcrService.applyRegistrationAccessToken(UriBuilderRequest.extractBasePath(context), client))
-                .flatMap(clientService::renewClientSecret)
+                .flatMap(toRenew -> dcrService.renewSecret(toRenew, UriBuilderRequest.extractBasePath(context)))
                 .map(clientSyncService::addDynamicClientRegistred)
                 .subscribe(
                         client -> context.response()
@@ -174,7 +166,6 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         String clientId = context.request().getParam("client_id");
 
         return this.clientSyncService.findByClientId(clientId)
-                .map(Client::clone)
                 .switchIfEmpty(Maybe.error(new OAuth2Exception() {
                     @Override
                     public int getHttpStatusCode() {
@@ -185,6 +176,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
                     public String getMessage() {
                         return "client not found";
                     }
-                }));
+                }))
+                .map(Client::clone);
     }
 }

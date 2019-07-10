@@ -57,7 +57,8 @@ export class ClientService {
       'certificate': client.certificate,
       'enhanceScopesWithUserPermissions' : client.enhanceScopesWithUserPermissions,
       'responseTypes' : client.responseTypes,
-      'scopeApprovals' : client.scopeApprovals
+      'scopeApprovals' : client.scopeApprovals,
+      'template' : client.template
     });
   }
 

@@ -22,6 +22,7 @@ import java.util.Set;
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
+ * @deprecated Please use PatchClient instead.
  */
 public class UpdateClient {
 

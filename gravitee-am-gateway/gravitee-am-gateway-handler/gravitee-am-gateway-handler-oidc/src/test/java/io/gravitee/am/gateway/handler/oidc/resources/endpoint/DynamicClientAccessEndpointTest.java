@@ -20,9 +20,7 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.service.ClientService;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
@@ -43,16 +41,13 @@ import static org.mockito.Mockito.when;
 public class DynamicClientAccessEndpointTest extends RxWebTestBase {
 
     @Mock
-    private ClientService clientService;
-
-    @Mock
     private ClientSyncService clientSyncService;
 
     @Mock
     private DynamicClientRegistrationService dcrService;
 
     @InjectMocks
-    DynamicClientAccessEndpoint endpoint = new DynamicClientAccessEndpoint(dcrService,clientService,clientSyncService);
+    DynamicClientAccessEndpoint endpoint = new DynamicClientAccessEndpoint(dcrService, clientSyncService);
 
     @Override
     public void setUp() throws Exception{
@@ -70,15 +65,7 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
         client.setClientId("my-test-client_id");
 
         when(clientSyncService.findByClientId("my-test-client_id")).thenReturn(Maybe.just(client));
-    }
-
-    @Test
-    public void unknownClient() throws Exception{
-        when(clientSyncService.findByClientId("unknown-client_id")).thenReturn(Maybe.empty());
-
-        testRequest(
-                HttpMethod.GET, "/register/unknown-client_id",
-                HttpStatusCode.NOT_FOUND_404, "Not Found");
+        when(clientSyncService.findByClientId("unknown")).thenReturn(Maybe.empty());
     }
 
     @Test
@@ -89,8 +76,15 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
     }
 
     @Test
+    public void read_notFound() throws Exception{
+        testRequest(
+                HttpMethod.GET, "/register/unknown",
+                HttpStatusCode.NOT_FOUND_404, "Not Found");
+    }
+
+    @Test
     public void delete() throws Exception{
-        when(clientService.delete("my-test-client_id")).thenReturn(Completable.complete());
+        when(dcrService.delete(any())).thenReturn(Single.just(new Client()));
         when(clientSyncService.removeDynamicClientRegistred(any())).thenReturn(new Client());
 
         testRequest(
@@ -99,14 +93,27 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
     }
 
     @Test
+    public void delete_notFound() throws Exception{
+        testRequest(
+                HttpMethod.DELETE, "/register/unknown",
+                HttpStatusCode.NOT_FOUND_404, "Not Found");
+    }
+
+    @Test
     public void renewClientSecret() throws Exception{
-        when(dcrService.applyRegistrationAccessToken(any(),any())).thenReturn(Single.just(new Client()));
-        when(clientService.renewClientSecret(any())).thenReturn(Single.just(new Client()));
+        when(dcrService.renewSecret(any(), any())).thenReturn(Single.just(new Client()));
         when(clientSyncService.addDynamicClientRegistred(any())).thenReturn(new Client());
 
         testRequest(
                 HttpMethod.POST, "/register/my-test-client_id/renew_secret",
                 HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void renewClientSecret_notFound() throws Exception{
+        testRequest(
+                HttpMethod.POST, "/register/unknown/renew_secret",
+                HttpStatusCode.NOT_FOUND_404, "Not Found");
     }
 
     @Test

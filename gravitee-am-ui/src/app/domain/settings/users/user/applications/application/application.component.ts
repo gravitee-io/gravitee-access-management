@@ -61,7 +61,6 @@ export class UserApplicationComponent implements OnInit {
   }
 
   revokeConsent(event, consent) {
-    console.log(consent);
     event.preventDefault();
     this.dialogService
       .confirm('Revoke access', 'Are you sure you want to revoke this permission ?')

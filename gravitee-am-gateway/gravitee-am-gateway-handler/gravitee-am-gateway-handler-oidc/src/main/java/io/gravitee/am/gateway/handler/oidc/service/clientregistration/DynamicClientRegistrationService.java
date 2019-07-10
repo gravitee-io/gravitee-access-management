@@ -24,15 +24,13 @@ import io.reactivex.Single;
  */
 public interface DynamicClientRegistrationService {
 
-    Client create(DynamicClientRegistrationRequest request);
+    Single<Client> create(DynamicClientRegistrationRequest request, String basePath);
 
-    Single<Client> applyDefaultIdentityProvider(Client client);
+    Single<Client> patch(Client toPatch, DynamicClientRegistrationRequest request, String basePath);
 
-    Single<Client> applyDefaultCertificateProvider(Client client);
+    Single<Client> update(Client toUpdate, DynamicClientRegistrationRequest request, String basePath);
 
-    Single<Client> applyRegistrationAccessToken(String basePath, Client client);
+    Single<Client> delete(Client toDelete);
 
-    Single<DynamicClientRegistrationRequest> validateClientRegistrationRequest(final DynamicClientRegistrationRequest request);
-
-    Single<DynamicClientRegistrationRequest> validateClientPatchRequest(final DynamicClientRegistrationRequest request);
+    Single<Client> renewSecret(Client toRenew, String basePath);
 }

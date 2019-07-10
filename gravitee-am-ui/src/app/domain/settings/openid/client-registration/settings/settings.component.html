@@ -40,6 +40,14 @@
         </div>
         <div class="domain-client-registration-settings-state" fxLayout="column">
           <mat-slide-toggle
+            (change)="enableDynamicClientRegistrationTemplate($event)"
+            [checked]="domain.oidc.clientRegistrationSettings.isClientTemplateEnabled">
+            Enable/Disable Dynamic Client Registration Templates
+          </mat-slide-toggle>
+          <mat-hint>Enable application owner to use an existing client application as template when registering a new application.</mat-hint>
+        </div>
+        <div class="domain-client-registration-settings-state" fxLayout="column">
+          <mat-slide-toggle
             (change)="allowLocalhostRedirectUri($event)"
             [checked]="domain.oidc.clientRegistrationSettings.allowLocalhostRedirectUri">
             Allow localhost redirect uris.

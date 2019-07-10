@@ -234,6 +234,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setScopeApprovals((Map)clientMongo.getScopeApprovals());
         client.setAccountSettings(convert(clientMongo.getAccountSettings()));
         client.setTokenCustomClaims(getTokenClaims(clientMongo.getTokenCustomClaims()));
+        client.setTemplate(clientMongo.isTemplate());
         return client;
     }
 
@@ -299,6 +300,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setScopeApprovals(client.getScopeApprovals() != null ? new Document((Map)client.getScopeApprovals()) : new Document());
         clientMongo.setAccountSettings(convert(client.getAccountSettings()));
         clientMongo.setTokenCustomClaims(getMongoTokenClaims(client.getTokenCustomClaims()));
+        clientMongo.setTemplate(client.isTemplate());
         return clientMongo;
     }
 

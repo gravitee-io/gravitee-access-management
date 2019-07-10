@@ -29,6 +29,9 @@ import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
@@ -49,7 +52,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -76,6 +78,9 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private CertificateService certificateService;
 
     @Autowired
+    private ClientService clientService;
+
+    @Autowired
     private JWKService jwkService;
 
     @Autowired
@@ -87,12 +92,110 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     @Autowired
     private Domain domain;
 
+    @Autowired
+    private FormService formService;
+
+    @Autowired
+    private EmailTemplateService emailTemplateService;
+
     @Override
-    public Client create(DynamicClientRegistrationRequest request) {
+    public Single<Client> create(DynamicClientRegistrationRequest request, String basePath) {
+        //If Dynamic client registration from template is enabled and request contains a software_id
+        if(domain.isDynamicClientRegistrationTemplateEnabled() && request.getSoftwareId()!=null && request.getSoftwareId().isPresent()) {
+            return this.createClientFromTemplate(request, basePath);
+        }
+        return this.createClientFromRequest(request,basePath);
+    }
+
+    @Override
+    public Single<Client> patch(Client toPatch, DynamicClientRegistrationRequest request, String basePath) {
+        return this.validateClientPatchRequest(request)
+                .map(req -> req.patch(toPatch))
+                .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
+                .flatMap(clientService::update);
+    }
+
+    @Override
+    public Single<Client> update(Client toUpdate, DynamicClientRegistrationRequest request, String basePath) {
+        return this.validateClientRegistrationRequest(request)
+                .map(req -> req.patch(toUpdate))
+                .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
+                .flatMap(clientService::update);
+    }
+
+    @Override
+    public Single<Client> delete(Client toDelete) {
+        return this.clientService.delete(toDelete.getId()).toSingleDefault(toDelete);
+    }
+
+    @Override
+    public Single<Client> renewSecret(Client toRenew, String basePath) {
+        return this.applyRegistrationAccessToken(basePath, toRenew)
+                .flatMap(clientService::renewClientSecret);
+    }
+
+    private Single<Client> createClientFromRequest(DynamicClientRegistrationRequest request, String basePath) {
         Client client = new Client();
         client.setClientId(SecureRandomString.generate());
         client.setDomain(domain.getId());
-        return request.patch(client);
+
+        return this.validateClientRegistrationRequest(request)
+                .map(req -> req.patch(client))
+                .flatMap(this::applyDefaultIdentityProvider)
+                .flatMap(this::applyDefaultCertificateProvider)
+                .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
+                .flatMap(clientService::create);
+    }
+
+    /**
+     * <pre>
+     * Software_id is based on id field and not client_id because:
+     * this field is not intended to be human readable and is usually opaque to the client and authorization server.
+     * the client may switch back from template to real client and then this is better to not expose it's client_id.
+     * @param request
+     * @param basePath
+     * @return
+     * </pre>
+     */
+    private Single<Client> createClientFromTemplate(DynamicClientRegistrationRequest request, String basePath) {
+        return clientService.findById(request.getSoftwareId().get())
+                .switchIfEmpty(Maybe.error(new InvalidClientMetadataException("No template found for software_id "+request.getSoftwareId().get())))
+                .flatMapSingle(this::sanitizeTemplate)
+                .map(request::patch)
+                .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
+                .flatMap(clientService::create)
+                .flatMap(client -> copyForms(request.getSoftwareId().get(),client))
+                .flatMap(client -> copyEmails(request.getSoftwareId().get(),client));
+    }
+
+    private Single<Client> sanitizeTemplate(Client template) {
+        if(!template.isTemplate()) {
+            return Single.error(new InvalidClientMetadataException("Client behind software_id is not a template"));
+        }
+        //Erase potential confidential values.
+        template.setClientId(SecureRandomString.generate());
+        template.setDomain(domain.getId());
+        template.setId(null);
+        template.setClientSecret(null);
+        template.setClientName(null);
+        template.setRedirectUris(null);
+        template.setSectorIdentifierUri(null);
+        template.setJwks(null);
+        template.setJwksUri(null);
+        //Set it as non template
+        template.setTemplate(false);
+
+        return Single.just(template);
+    }
+
+    private Single<Client> copyForms(String sourceId, Client client) {
+        return formService.copyFromClient(domain.getId(), sourceId, client.getId())
+                .flatMap(irrelevant -> Single.just(client));
+    }
+
+    private Single<Client> copyEmails(String sourceId, Client client) {
+        return emailTemplateService.copyFromClient(domain.getId(), sourceId, client.getId())
+                .flatMap(irrelevant -> Single.just(client));
     }
 
     /**
@@ -101,8 +204,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * @param client App to create
      * @return
      */
-    @Override
-    public Single<Client> applyDefaultIdentityProvider(Client client) {
+    private Single<Client> applyDefaultIdentityProvider(Client client) {
         return identityProviderService.findByDomain(client.getDomain())
             .map(identityProviders -> {
                 if(identityProviders!=null && !identityProviders.isEmpty()) {
@@ -118,8 +220,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * @param client App to create
      * @return
      */
-    @Override
-    public Single<Client> applyDefaultCertificateProvider(Client client) {
+    private Single<Client> applyDefaultCertificateProvider(Client client) {
         return certificateService.findByDomain(client.getDomain())
                 .map(certificates -> {
                     if(certificates!=null && !certificates.isEmpty()) {
@@ -129,8 +230,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 });
     }
 
-    @Override
-    public Single<Client> applyRegistrationAccessToken(String basePath, Client client) {
+    private Single<Client> applyRegistrationAccessToken(String basePath, Client client) {
 
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration(basePath);
 
@@ -159,15 +259,14 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      *
      * @param request DynamicClientRegistrationRequest
      */
-    @Override
-    public Single<DynamicClientRegistrationRequest> validateClientRegistrationRequest(final DynamicClientRegistrationRequest request) {
+    private Single<DynamicClientRegistrationRequest> validateClientRegistrationRequest(final DynamicClientRegistrationRequest request) {
         LOGGER.debug("Validating dynamic client registration payload");
         return this.validateClientRegistrationRequest(request,false);
     }
 
-    @Override
-    public Single<DynamicClientRegistrationRequest> validateClientPatchRequest(DynamicClientRegistrationRequest request) {
+    private Single<DynamicClientRegistrationRequest> validateClientPatchRequest(DynamicClientRegistrationRequest request) {
         LOGGER.debug("Validating dynamic client registration payload : patch");
+        //redirect_uri is mandatory in the request, but in case of patch we may ommit it...
         return this.validateClientRegistrationRequest(request,true);
     }
 

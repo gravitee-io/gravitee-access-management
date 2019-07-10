@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.model;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -37,5 +41,20 @@ public enum Template {
 
     public String template() {
         return template;
+    }
+
+    public static Template parse(String toParse) {
+        if(toParse==null || toParse.trim().isEmpty()) {
+            throw new IllegalArgumentException("template must not be null");
+        }
+        List<Template> matchingTemplate = Arrays.stream(Template.values())
+                .filter(template -> template.template().equals(toParse))
+                .collect(Collectors.toList());
+
+        if(matchingTemplate.size()==1) {
+            return matchingTemplate.get(0);
+        }
+
+        throw new IllegalArgumentException("No template is matching");
     }
 }

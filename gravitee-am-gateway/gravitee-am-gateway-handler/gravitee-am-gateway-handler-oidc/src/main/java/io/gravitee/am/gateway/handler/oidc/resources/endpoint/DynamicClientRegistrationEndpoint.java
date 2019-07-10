@@ -18,10 +18,9 @@ package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwk.converter.JWKSetDeserializer;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationResponse;
-import io.gravitee.am.service.ClientService;
+import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
@@ -33,8 +32,6 @@ import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.URISyntaxException;
 
 /**
  * Dynamic Client Registration is a protocol that allows OAuth client applications to register with an OAuth server.
@@ -49,15 +46,13 @@ import java.net.URISyntaxException;
  */
 public class DynamicClientRegistrationEndpoint implements Handler<RoutingContext> {
 
-    protected ClientService clientService;
     protected ClientSyncService clientSyncService;
     protected DynamicClientRegistrationService dcrService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DynamicClientRegistrationEndpoint.class);
 
-    public DynamicClientRegistrationEndpoint(DynamicClientRegistrationService dcrService, ClientService clientService, ClientSyncService clientSyncService) {
+    public DynamicClientRegistrationEndpoint(DynamicClientRegistrationService dcrService, ClientSyncService clientSyncService) {
         this.dcrService = dcrService;
-        this.clientService = clientService;
         this.clientSyncService = clientSyncService;
     }
 
@@ -70,12 +65,7 @@ public class DynamicClientRegistrationEndpoint implements Handler<RoutingContext
         LOGGER.debug("Dynamic client registration CREATE endpoint");
 
         this.extractRequest(context)
-                .flatMap(dcrService::validateClientRegistrationRequest)
-                .map(request -> dcrService.create(request))
-                .flatMap(dcrService::applyDefaultIdentityProvider)
-                .flatMap(dcrService::applyDefaultCertificateProvider)
-                .flatMap(client -> dcrService.applyRegistrationAccessToken(UriBuilderRequest.extractBasePath(context), client))
-                .flatMap(clientService::create)
+                .flatMap(request -> dcrService.create(request, UriBuilderRequest.extractBasePath(context)))
                 .map(clientSyncService::addDynamicClientRegistred)
                 .subscribe(
                         client -> context.response()

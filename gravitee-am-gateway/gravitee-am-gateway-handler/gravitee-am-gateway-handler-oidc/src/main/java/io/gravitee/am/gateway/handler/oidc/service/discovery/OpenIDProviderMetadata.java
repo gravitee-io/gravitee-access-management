@@ -60,6 +60,9 @@ public class OpenIDProviderMetadata {
     @JsonProperty("registration_renew_secret_endpoint")
     private String registrationRenewSecretEndpoint;
 
+    @JsonProperty("registration_templates_endpoint")
+    private String registrationTemplatesEndpoint;
+
     @JsonProperty("scopes_supported")
     private List<String> scopesSupported;
 
@@ -228,6 +231,14 @@ public class OpenIDProviderMetadata {
 
     public void setRegistrationRenewSecretEndpoint(String registrationRenewSecretEndpoint) {
         this.registrationRenewSecretEndpoint = registrationRenewSecretEndpoint;
+    }
+
+    public String getRegistrationTemplatesEndpoint() {
+        return registrationTemplatesEndpoint;
+    }
+
+    public void setRegistrationTemplatesEndpoint(String registrationTemplatesEndpoint) {
+        this.registrationTemplatesEndpoint = registrationTemplatesEndpoint;
     }
 
     public List<String> getScopesSupported() {
