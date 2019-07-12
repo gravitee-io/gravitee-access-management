@@ -193,6 +193,11 @@ user:
     token:
       #expire-after: 86400 # the end of validity of the token in seconds for reset password email (default 86400 = a day)
 
+handlers:
+  request:
+    transaction:
+      header: X-Gravitee-Transaction-Id
+
 # Gateway entry point used in emails
 gateway:
   url: http://localhost:8092

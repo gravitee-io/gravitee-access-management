@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.reactor.impl.DefaultReactor;
 import io.gravitee.am.gateway.reactor.impl.DefaultSecurityDomainHandlerRegistry;
+import io.gravitee.am.gateway.reactor.impl.transaction.TransactionProcessorFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -43,5 +44,10 @@ public class ReactorConfiguration {
     @Bean
     public SecurityDomainRouterFactory securityDomainRouterFactory() {
         return new SecurityDomainRouterFactory();
+    }
+
+    @Bean
+    public TransactionProcessorFactory transactionHandlerFactory() {
+        return new TransactionProcessorFactory();
     }
 }
