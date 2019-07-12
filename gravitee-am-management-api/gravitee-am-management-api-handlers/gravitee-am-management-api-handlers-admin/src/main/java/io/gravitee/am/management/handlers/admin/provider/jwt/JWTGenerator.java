@@ -19,6 +19,8 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +37,8 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public class JWTGenerator implements InitializingBean {
+
+    private final Logger LOGGER = LoggerFactory.getLogger(JWTGenerator.class);
 
     private static final boolean DEFAULT_JWT_COOKIE_SECURE = false;
     private static final String DEFAULT_JWT_COOKIE_PATH = "/";
@@ -94,6 +98,21 @@ public class JWTGenerator implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
+        //Warning if the secret is still the default one
+        if ("s3cR3t4grAv1t3310AMS1g1ingDftK3y".equals(signingKeySecret)) {
+            LOGGER.warn("");
+            LOGGER.warn("##############################################################");
+            LOGGER.warn("#                      SECURITY WARNING                      #");
+            LOGGER.warn("##############################################################");
+            LOGGER.warn("");
+            LOGGER.warn("You still use the default jwt secret.");
+            LOGGER.warn("This known secret can be used to impersonate anyone.");
+            LOGGER.warn("Please change this value, or ask your administrator to do it !");
+            LOGGER.warn("");
+            LOGGER.warn("##############################################################");
+            LOGGER.warn("");
+        }
+
         // init JWT signing key
         key = Keys.hmacShaKeyFor(signingKeySecret.getBytes());
     }
