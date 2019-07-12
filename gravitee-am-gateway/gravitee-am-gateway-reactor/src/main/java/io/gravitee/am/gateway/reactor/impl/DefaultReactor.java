@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.reactor.impl;
 import io.gravitee.am.gateway.core.event.DomainEvent;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
+import io.gravitee.am.gateway.reactor.impl.transaction.TransactionProcessorFactory;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -29,6 +30,7 @@ import io.gravitee.common.service.AbstractService;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.core.http.HttpServerResponse;
+import io.vertx.reactivex.ext.web.Route;
 import io.vertx.reactivex.ext.web.Router;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +56,9 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     private Vertx vertx;
 
     private Router router;
+
+    @Autowired
+    private TransactionProcessorFactory transactionHandlerFactory;
 
     @Override
     public void doStart() throws Exception {
@@ -100,7 +105,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     public Router unMountSubRouter(String contextPath) {
         router.getRoutes().stream()
                 .filter(route -> route.getPath() != null && route.getPath().startsWith(contextPath))
-                .forEach(route -> route.remove());
+                .forEach(Route::remove);
 
         return router;
     }
@@ -108,6 +113,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     @Override
     public void afterPropertiesSet() {
         router = Router.router(vertx);
+        router.route().handler(transactionHandlerFactory.create());
         router.route().last().handler(context -> sendNotFound(context.response()));
     }
 
@@ -115,7 +121,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
         // Send a NOT_FOUND HTTP status code (404)
         serverResponse.setStatusCode(HttpStatusCode.NOT_FOUND_404);
 
-        String message = environment.getProperty("http.errors[404].message", "");
+        String message = environment.getProperty("http.errors[404].message", "No security domain matches the request URI.");
         serverResponse.headers().set(HttpHeaders.CONTENT_LENGTH, Integer.toString(message.length()));
         serverResponse.headers().set(HttpHeaders.CONTENT_TYPE, "text/plain");
         serverResponse.headers().set(HttpHeaders.CONNECTION, HttpHeadersValues.CONNECTION_CLOSE);
