@@ -1,5 +1,52 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/issues/milestone/144?closed=1[AM - 2.8.0 (2019-07-17)]
+
+=== Bug fixes
+
+*_Audits_*
+
+- E11000 duplicate key error  https://github.com/gravitee-io/issues/issues/2368[#2368]
+
+*_Gateway_*
+
+- Management] logback gravitee.am.log.dir_IS_UNDEFINED https://github.com/gravitee-io/issues/issues/2430[#2430]
+
+*_Identityprovider_*
+
+- [Ldap] unable to use complex searchFilter https://github.com/gravitee-io/issues/issues/2428[#2428]
+
+*_Idp_*
+
+- [Role-mapper] invalid grant if group has no member https://github.com/gravitee-io/issues/issues/2073[#2073]
+
+=== Features
+
+*_Dcr_*
+
+- Discovery & default scopes https://github.com/gravitee-io/issues/issues/2326[#2326]
+- Manage templating https://github.com/gravitee-io/issues/issues/2454[#2454]
+
+*_Management_*
+
+- Tokens claims mapper https://github.com/gravitee-io/issues/issues/2409[#2409]
+- Username/Email case-sensitivity https://github.com/gravitee-io/issues/issues/2445[#2445]
+
+=== Improvements
+
+*_Docker_*
+
+- Remove gravitee user for openshift support https://github.com/gravitee-io/issues/issues/2438[#2438]
+
+*_Gateway_*
+
+- Add a X-Transaction-Id when hitting AM Gateway https://github.com/gravitee-io/issues/issues/2450[#2450]
+
+*_Management_*
+
+- Add a warning message if JWT secret is the default one https://github.com/gravitee-io/issues/issues/2451[#2451]
+
+
 == https://github.com/gravitee-io/issues/issues/milestone/148?closed=1[AM - 2.7.1 (2019-06-27)]
 
 === Bug fixes
