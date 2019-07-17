@@ -34,14 +34,13 @@ public class AuthenticationAuditBuilder extends AuditBuilder<AuthenticationAudit
     }
 
     public AuthenticationAuditBuilder principal(Authentication principal) {
-        if (principal.getAdditionalInformation() != null) {
-            if (principal.getAdditionalInformation().containsKey(Claims.ip_address)) {
-                ipAddress((String) principal.getAdditionalInformation().get(Claims.ip_address));
-            }
-            if (principal.getAdditionalInformation().containsKey(Claims.user_agent)) {
-                userAgent((String) principal.getAdditionalInformation().get(Claims.user_agent));
-            }
+        if (principal.getContext().get(Claims.ip_address) != null) {
+            ipAddress((String) principal.getContext().get(Claims.ip_address));
         }
+        if (principal.getContext().get(Claims.user_agent) != null) {
+            userAgent((String) principal.getContext().get(Claims.user_agent));
+        }
+
         setActor(null, EntityType.USER, (String) principal.getPrincipal(), null, null);
         return this;
     }

@@ -98,14 +98,14 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
 
     private Maybe<Token> authenticate(Authentication authentication) {
         // implicit flow was used with response_type=id_token token, access token is already fetched, continue
-        if (authentication.getAdditionalInformation().containsKey(ACCESS_TOKEN_PARAMETER)) {
-            String accessToken = (String) authentication.getAdditionalInformation().get(ACCESS_TOKEN_PARAMETER);
+        if (authentication.getContext().get(ACCESS_TOKEN_PARAMETER) != null) {
+            String accessToken = (String) authentication.getContext().get(ACCESS_TOKEN_PARAMETER);
             return Maybe.just(new Token(accessToken, TokenTypeHint.ACCESS_TOKEN));
         }
 
         // implicit flow was used with response_type=id_token, id token is already fetched, continue
-        if (authentication.getAdditionalInformation().containsKey(ID_TOKEN_PARAMETER)) {
-            String idToken = (String) authentication.getAdditionalInformation().get(ID_TOKEN_PARAMETER);
+        if (authentication.getContext().get(ID_TOKEN_PARAMETER) != null) {
+            String idToken = (String) authentication.getContext().get(ID_TOKEN_PARAMETER);
             return Maybe.just(new Token(idToken, TokenTypeHint.ID_TOKEN));
         }
 
@@ -114,7 +114,7 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
         List<NameValuePair> urlParameters = new ArrayList<>();
         urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_ID, configuration.getClientId()));
         urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_SECRET, configuration.getClientSecret()));
-        urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, (String) authentication.getAdditionalInformation().get(Parameters.REDIRECT_URI)));
+        urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, (String) authentication.getContext().get(Parameters.REDIRECT_URI)));
         urlParameters.add(new BasicNameValuePair(Parameters.CODE, (String) authentication.getCredentials()));
         urlParameters.add(new BasicNameValuePair(Parameters.GRANT_TYPE, "authorization_code"));
         String bodyRequest = URLEncodedUtils.format(urlParameters);
@@ -144,8 +144,8 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
         // if it's an access token but user ask for id token verification, try to decode it and create the end-user
         if (TokenTypeHint.ACCESS_TOKEN.equals(token.getTypeHint())
                 && ((OAuth2GenericIdentityProviderConfiguration) configuration).isUseIdTokenForUserInfo()) {
-            if (authentication.getAdditionalInformation().containsKey(ID_TOKEN_PARAMETER)) {
-                String idToken = (String) authentication.getAdditionalInformation().get(ID_TOKEN_PARAMETER);
+            if (authentication.getContext().get(ID_TOKEN_PARAMETER) != null) {
+                String idToken = (String) authentication.getContext().get(ID_TOKEN_PARAMETER);
                 return retrieveUserFromIdToken(idToken);
             } else {
                 // no suitable value to retrieve user

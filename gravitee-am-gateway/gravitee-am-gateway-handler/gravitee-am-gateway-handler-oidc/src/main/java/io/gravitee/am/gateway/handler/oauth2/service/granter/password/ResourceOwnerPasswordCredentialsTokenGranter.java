@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGrante
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.common.util.MultiValueMap;
@@ -82,7 +83,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
         String username = tokenRequest.getUsername();
         String password = tokenRequest.getPassword();
 
-        return userAuthenticationManager.authenticate(client, new EndUserAuthentication(username, password))
+        return userAuthenticationManager.authenticate(client, new EndUserAuthentication(username, password, new SimpleAuthenticationContext(tokenRequest)))
                 .onErrorResumeNext(ex -> Single.error(new InvalidGrantException(ex.getMessage())))
                 .toMaybe();
     }

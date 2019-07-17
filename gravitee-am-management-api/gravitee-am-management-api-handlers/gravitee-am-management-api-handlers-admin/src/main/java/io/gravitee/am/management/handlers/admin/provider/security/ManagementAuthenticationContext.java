@@ -15,48 +15,44 @@
  */
 package io.gravitee.am.management.handlers.admin.provider.security;
 
-import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.gateway.api.Request;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public final class EndUserAuthentication implements Authentication {
+public class ManagementAuthenticationContext implements AuthenticationContext {
 
-    private final Object principal;
-    private final Object credentials;
-    private final AuthenticationContext context;
+    private final Map<String, Object> attributes = new HashMap<>();
 
-    public EndUserAuthentication(Object principal, Object credentials) {
-        this(principal, credentials, null);
-    }
-
-    public EndUserAuthentication(Object principal, Object credentials, AuthenticationContext context) {
-        this.principal = principal;
-        this.credentials = credentials;
-        this.context = context;
+    @Override
+    public Request request() {
+        throw new IllegalStateException();
     }
 
     @Override
-    public Object getCredentials() {
-        return credentials;
+    public AuthenticationContext set(String name, Object value) {
+        attributes.put(name, value);
+        return this;
     }
 
     @Override
-    public Object getPrincipal() {
-        return principal;
+    public AuthenticationContext remove(String name) {
+        attributes.remove(name);
+        return this;
     }
 
     @Override
-    public AuthenticationContext getContext() {
-        return context;
+    public Object get(String name) {
+        return attributes.get(name);
     }
 
     @Override
-    public String toString() {
-        return principal.toString();
+    public Map<String, Object> attributes() {
+        return this.attributes;
     }
 }

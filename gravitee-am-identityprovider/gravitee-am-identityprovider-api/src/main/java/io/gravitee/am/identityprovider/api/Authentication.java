@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.identityprovider.api;
 
-import java.util.Map;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -27,5 +25,5 @@ public interface Authentication {
 
     Object getPrincipal();
 
-    Map<String, Object> getAdditionalInformation();
+    AuthenticationContext getContext();
 }

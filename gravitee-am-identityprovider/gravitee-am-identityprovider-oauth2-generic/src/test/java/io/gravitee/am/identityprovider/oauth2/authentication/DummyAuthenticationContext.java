@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.admin.provider.security;
+package io.gravitee.am.identityprovider.oauth2.authentication;
 
-import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.gateway.api.Request;
 
 import java.util.Map;
 
@@ -24,39 +24,38 @@ import java.util.Map;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public final class EndUserAuthentication implements Authentication {
+public class DummyAuthenticationContext implements AuthenticationContext {
 
-    private final Object principal;
-    private final Object credentials;
-    private final AuthenticationContext context;
+    private final Map<String, Object> attributes;
 
-    public EndUserAuthentication(Object principal, Object credentials) {
-        this(principal, credentials, null);
-    }
-
-    public EndUserAuthentication(Object principal, Object credentials, AuthenticationContext context) {
-        this.principal = principal;
-        this.credentials = credentials;
-        this.context = context;
+    DummyAuthenticationContext(Map<String, Object> attributes) {
+        this.attributes = attributes;
     }
 
     @Override
-    public Object getCredentials() {
-        return credentials;
+    public Request request() {
+        return null;
     }
 
     @Override
-    public Object getPrincipal() {
-        return principal;
+    public AuthenticationContext set(String name, Object value) {
+        attributes.put(name, value);
+        return this;
     }
 
     @Override
-    public AuthenticationContext getContext() {
-        return context;
+    public AuthenticationContext remove(String name) {
+        attributes.remove(name);
+        return this;
     }
 
     @Override
-    public String toString() {
-        return principal.toString();
+    public Object get(String name) {
+        return attributes.get(name);
+    }
+
+    @Override
+    public Map<String, Object> attributes() {
+        return this.attributes;
     }
 }

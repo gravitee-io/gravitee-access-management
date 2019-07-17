@@ -18,13 +18,15 @@ package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 import io.gravitee.am.gateway.handler.common.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,6 +62,12 @@ public class SocialAuthenticationProviderTest {
     @Mock
     private AuthenticationProvider authenticationProvider;
 
+    @Mock
+    private RoutingContext routingContext;
+
+    @Mock
+    private HttpServerRequest httpServerRequest;
+
     @Test
     public void shouldAuthenticateUser() throws Exception {
         JsonObject credentials = new JsonObject();
@@ -73,9 +81,11 @@ public class SocialAuthenticationProviderTest {
         when(userAuthenticationManager.loadUser(any())).thenReturn(Single.just(new User()));
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
         when(identityProviderManager.get(anyString())).thenReturn(Maybe.just(authenticationProvider));
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.authenticate(credentials, userAsyncResult -> {
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
             latch.countDown();
             Assert.assertNotNull(userAsyncResult);
             Assert.assertNotNull(userAsyncResult.result());

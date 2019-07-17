@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.admin.authentication;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.management.handlers.admin.provider.security.EndUserAuthentication;
+import io.gravitee.am.management.handlers.admin.provider.security.ManagementAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -58,12 +59,10 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        Authentication authentication = new EndUserAuthentication(request.getParameter("username"), null);
-        Map<String, Object> additionalInformation = new HashMap();
-        additionalInformation.put(Claims.ip_address, remoteAddress(request));
-        additionalInformation.put(Claims.user_agent, userAgent(request));
-        additionalInformation.put(Claims.domain, domain.getId());
-        ((EndUserAuthentication) authentication).setAdditionalInformation(additionalInformation);
+        EndUserAuthentication authentication = new EndUserAuthentication(request.getParameter("username"), null, new ManagementAuthenticationContext());
+        authentication.getContext().set(Claims.ip_address, remoteAddress(request));
+        authentication.getContext().set(Claims.user_agent, userAgent(request));
+        authentication.getContext().set(Claims.domain, domain.getId());
 
         // audit event
         auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).domain(domain.getId()).client(CLIENT_ID).throwable(exception));

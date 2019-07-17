@@ -22,20 +22,20 @@ import io.gravitee.am.common.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.common.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
+import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -54,7 +54,7 @@ public class UserAuthProviderImpl implements UserAuthProvider {
     private ClientSyncService clientSyncService;
 
     @Override
-    public void authenticate(JsonObject authInfo, Handler<AsyncResult<User>> handler) {
+    public void authenticate(RoutingContext context, JsonObject authInfo, Handler<AsyncResult<User>> handler) {
         String username = authInfo.getString(USERNAME_PARAMETER);
         String password = authInfo.getString(PASSWORD_PARAMETER);
         String clientId = authInfo.getString(Parameters.CLIENT_ID);
@@ -72,12 +72,12 @@ public class UserAuthProviderImpl implements UserAuthProvider {
             final Client client = parseClientHandler.result();
 
             // end user authentication
-            final Authentication authentication = new EndUserAuthentication(username, password);
-            Map<String, Object> additionalInformation = new HashMap();
-            additionalInformation.put(Claims.ip_address, ipAddress);
-            additionalInformation.put(Claims.user_agent, userAgent);
-            additionalInformation.put(Claims.domain, client.getDomain());
-            ((EndUserAuthentication) authentication).setAdditionalInformation(additionalInformation);
+            SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request()));
+            final Authentication authentication = new EndUserAuthentication(username, password, authenticationContext);
+
+            authenticationContext.set(Claims.ip_address, ipAddress);
+            authenticationContext.set(Claims.user_agent, userAgent);
+            authenticationContext.set(Claims.domain, client.getDomain());
 
             userAuthenticationManager.authenticate(client, authentication)
                     .subscribe(
@@ -85,6 +85,11 @@ public class UserAuthProviderImpl implements UserAuthProvider {
                             error -> handler.handle(Future.failedFuture(error))
                     );
         });
+    }
+
+    @Override
+    public void authenticate(JsonObject authInfo, Handler<AsyncResult<User>> handler) {
+        authenticate(null, authInfo, handler);
     }
 
     private void parseClient(String clientId, Handler<AsyncResult<Client>> authHandler) {

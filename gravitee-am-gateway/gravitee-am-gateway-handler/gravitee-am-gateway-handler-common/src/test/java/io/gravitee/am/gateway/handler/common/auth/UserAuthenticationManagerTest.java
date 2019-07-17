@@ -18,12 +18,12 @@ package io.gravitee.am.gateway.handler.common.auth;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.authentication.AccountDisabledException;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
@@ -41,7 +41,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.Map;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -120,7 +119,7 @@ public class UserAuthenticationManagerTest {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
+            public AuthenticationContext getContext() {
                 return null;
             }
         }).test();
@@ -160,7 +159,7 @@ public class UserAuthenticationManagerTest {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
+            public AuthenticationContext getContext() {
                 return null;
             }
         }).test();
@@ -219,7 +218,7 @@ public class UserAuthenticationManagerTest {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
+            public AuthenticationContext getContext() {
                 return null;
             }
         }).test();
@@ -270,7 +269,7 @@ public class UserAuthenticationManagerTest {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
+            public AuthenticationContext getContext() {
                 return null;
             }
         }).test();
