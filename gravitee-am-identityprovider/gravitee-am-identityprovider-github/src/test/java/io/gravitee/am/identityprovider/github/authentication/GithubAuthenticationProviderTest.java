@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.github.authentication;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.github.authentication.spring.GithubAuthenticationProviderConfiguration;
@@ -33,7 +34,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.util.Collections;
-import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -77,8 +77,8 @@ public class GithubAuthenticationProviderTest {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
-                return Collections.singletonMap("redirect_uri", "http://redirect_uri");
+            public AuthenticationContext getContext() {
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"));
             }
         }).test();
 
@@ -108,8 +108,8 @@ public class GithubAuthenticationProviderTest {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
-                return Collections.singletonMap("redirect_uri", "http://redirect_uri");
+            public AuthenticationContext getContext() {
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"));
             }
         }).test();
         testObserver.awaitTerminalEvent();
@@ -142,8 +142,8 @@ public class GithubAuthenticationProviderTest {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
-                return Collections.singletonMap("redirect_uri", "http://redirect_uri");
+            public AuthenticationContext getContext() {
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"));
             }
         }).test();
         testObserver.awaitTerminalEvent();

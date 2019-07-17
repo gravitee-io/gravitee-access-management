@@ -67,7 +67,7 @@ public class DomainBasedAuthenticationProvider implements AuthenticationProvider
         // Create a end-user authentication for underlying providers associated to the domain
         io.gravitee.am.identityprovider.api.Authentication provAuthentication = new EndUserAuthentication(
                 authentication.getName(),
-                authentication.getCredentials());
+                authentication.getCredentials(), new ManagementAuthenticationContext());
 
         while (iter.hasNext() && user == null) {
             String provider = iter.next();

@@ -16,9 +16,9 @@
 package io.gravitee.am.management.handlers.admin.security.listener;
 
 import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.admin.provider.security.EndUserAuthentication;
+import io.gravitee.am.management.handlers.admin.provider.security.ManagementAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.UserService;
@@ -61,11 +61,14 @@ public class AuthenticationSuccessListener implements ApplicationListener<Authen
     @Override
     public void onApplicationEvent(AuthenticationSuccessEvent event) {
         final User principal = (User) event.getAuthentication().getPrincipal();
-        Map<String, String> details = event.getAuthentication().getDetails() == null ? new HashMap<>() : new HashMap<>((Map) event.getAuthentication().getDetails());
-        details.put(Claims.domain, domain.getId());
 
-        final Authentication authentication = new EndUserAuthentication(((User) event.getAuthentication().getPrincipal()).getUsername(), null);
-        ((EndUserAuthentication) authentication).setAdditionalInformation((Map) details);
+        ManagementAuthenticationContext authenticationContext = new ManagementAuthenticationContext();
+        Map<String, String> details = event.getAuthentication().getDetails() == null ? new HashMap<>() : new HashMap<>((Map) event.getAuthentication().getDetails());
+        details.forEach(authenticationContext::set);
+        authenticationContext.set(Claims.domain, domain.getId());
+
+        final EndUserAuthentication authentication = new EndUserAuthentication(
+                ((User) event.getAuthentication().getPrincipal()).getUsername(), null, authenticationContext);
 
         userService.findByDomainAndUsername(domain.getId(), principal.getUsername())
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))

@@ -15,7 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.provider;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.web.RoutingContext;
 
 /**
  * End users Auth Provider (end-users authentication (username/password))
@@ -24,4 +29,6 @@ import io.vertx.ext.auth.AuthProvider;
  * @author GraviteeSource Team
  */
 public interface UserAuthProvider extends AuthProvider {
+
+    void authenticate(RoutingContext context, JsonObject authInfo, Handler<AsyncResult<User>> resultHandler);
 }

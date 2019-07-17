@@ -17,7 +17,9 @@ package io.gravitee.am.gateway.handler.root.resources.auth.handler.impl;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.service.exception.authentication.AuthenticationException;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.gravitee.am.service.exception.authentication.UsernameNotFoundException;
@@ -55,13 +57,13 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
     private String passwordParam;
     private String returnURLParam;
     private String directLoggedInOKURL;
-    private AuthProvider authProvider;
+    private UserAuthProvider authProvider;
 
     public FormLoginHandlerImpl(AuthProvider authProvider, String usernameParam, String passwordParam, String returnURLParam, String directLoggedInOKURL) {
         super(authProvider, usernameParam, passwordParam, returnURLParam, directLoggedInOKURL);
         this.usernameParam = usernameParam;
         this.passwordParam = passwordParam;
-        this.authProvider = authProvider;
+        this.authProvider = (UserAuthProvider) authProvider;
         this.returnURLParam = returnURLParam;
         this.directLoggedInOKURL = directLoggedInOKURL;
     }
@@ -96,7 +98,7 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
                         .put(Claims.user_agent, userAgent(req))
                         .put(Parameters.CLIENT_ID, clientId);
 
-                authProvider.authenticate(authInfo, res -> {
+                authProvider.authenticate(context, authInfo, res -> {
                     if (res.succeeded()) {
                         User user = res.result();
                         context.setUser(user);

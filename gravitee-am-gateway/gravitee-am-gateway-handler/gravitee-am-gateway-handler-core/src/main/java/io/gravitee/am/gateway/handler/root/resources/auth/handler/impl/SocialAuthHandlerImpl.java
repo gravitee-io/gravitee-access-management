@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.auth.handler.impl;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.impl.AuthHandlerImpl;
+import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
@@ -26,7 +27,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.web.RoutingContext;
 
 import java.net.URISyntaxException;
@@ -49,7 +49,7 @@ public class SocialAuthHandlerImpl extends AuthHandlerImpl {
     private static final String ADDITIONAL_PARAMETERS = "additionalParameters";
     private static final String CLIENT_CONTEXT_KEY = "client";
 
-    public SocialAuthHandlerImpl(AuthProvider authProvider) {
+    public SocialAuthHandlerImpl(SocialAuthenticationProvider authProvider) {
         super(authProvider);
     }
 

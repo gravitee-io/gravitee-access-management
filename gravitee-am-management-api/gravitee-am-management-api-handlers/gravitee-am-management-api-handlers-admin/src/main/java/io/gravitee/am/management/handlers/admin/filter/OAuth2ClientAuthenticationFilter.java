@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
 import io.gravitee.am.management.handlers.admin.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.admin.provider.security.EndUserAuthentication;
+import io.gravitee.am.management.handlers.admin.provider.security.ManagementAuthenticationContext;
 import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,8 +94,9 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
         }
 
         String password = request.getParameter(((OAuth2AuthenticationProvider) authenticationProvider).configuration().getCodeParameter());
-        io.gravitee.am.identityprovider.api.Authentication provAuthentication = new EndUserAuthentication(OAUTH2_IDENTIFIER, password);
-        ((EndUserAuthentication) provAuthentication).setAdditionalInformation(Collections.singletonMap(REDIRECT_URI, buildRedirectUri(request)));
+        EndUserAuthentication provAuthentication = new EndUserAuthentication(OAUTH2_IDENTIFIER, password, new ManagementAuthenticationContext());
+        provAuthentication.getContext().set(REDIRECT_URI, buildRedirectUri(request));
+
         try {
             User user = authenticationProvider.loadUserByUsername(provAuthentication).blockingGet();
             if (user == null) {

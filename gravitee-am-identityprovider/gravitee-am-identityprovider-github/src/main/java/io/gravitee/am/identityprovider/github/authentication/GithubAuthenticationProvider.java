@@ -83,7 +83,7 @@ public class GithubAuthenticationProvider implements OAuth2AuthenticationProvide
         List<NameValuePair> urlParameters = new ArrayList<>();
         urlParameters.add(new BasicNameValuePair(CLIENT_ID, configuration.getClientId()));
         urlParameters.add(new BasicNameValuePair(CLIENT_SECRET, configuration.getClientSecret()));
-        urlParameters.add(new BasicNameValuePair(REDIRECT_URI, (String) authentication.getAdditionalInformation().get(REDIRECT_URI)));
+        urlParameters.add(new BasicNameValuePair(REDIRECT_URI, (String) authentication.getContext().get(REDIRECT_URI)));
         urlParameters.add(new BasicNameValuePair(CODE, (String) authentication.getCredentials()));
         String bodyRequest = URLEncodedUtils.format(urlParameters);
 

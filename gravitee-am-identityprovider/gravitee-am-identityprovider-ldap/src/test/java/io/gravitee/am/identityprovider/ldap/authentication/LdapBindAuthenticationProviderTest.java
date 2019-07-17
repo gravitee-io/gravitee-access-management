@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.ldap.authentication;
 
 import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
@@ -27,8 +28,6 @@ import org.junit.Test;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
-
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -57,7 +56,7 @@ public class LdapBindAuthenticationProviderTest extends LdapAuthenticationProvid
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
+            public AuthenticationContext getContext() {
                 return null;
             }
         }).test();

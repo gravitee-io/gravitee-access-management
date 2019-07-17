@@ -128,7 +128,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         final Router rootRouter = Router.router(vertx);
 
         // social authentication handler
-        final AuthProvider socialAuthProvider = new SocialAuthenticationProvider(identityProviderManager, userAuthenticationManager);
+        final SocialAuthenticationProvider socialAuthProvider = new SocialAuthenticationProvider(identityProviderManager, userAuthenticationManager);
 
         // router user management handler
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);

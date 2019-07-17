@@ -16,8 +16,7 @@
 package io.gravitee.am.gateway.handler.common.auth;
 
 import io.gravitee.am.identityprovider.api.Authentication;
-
-import java.util.Map;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -27,11 +26,16 @@ public final class EndUserAuthentication implements Authentication {
 
     private final Object principal;
     private final Object credentials;
-    private Map<String, Object> additionalInformation;
+    private final AuthenticationContext context;
 
     public EndUserAuthentication(Object principal, Object credentials) {
+        this(principal, credentials, null);
+    }
+
+    public EndUserAuthentication(Object principal, Object credentials, AuthenticationContext context) {
         this.principal = principal;
         this.credentials = credentials;
+        this.context = context;
     }
 
     @Override
@@ -45,12 +49,8 @@ public final class EndUserAuthentication implements Authentication {
     }
 
     @Override
-    public Map<String, Object> getAdditionalInformation() {
-        return additionalInformation;
-    }
-
-    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
-        this.additionalInformation = additionalInformation;
+    public AuthenticationContext getContext() {
+        return context;
     }
 
     @Override

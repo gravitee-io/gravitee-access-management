@@ -19,7 +19,9 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.reactivex.Maybe;
 import io.vertx.core.AsyncResult;
@@ -28,6 +30,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
+import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +61,10 @@ public class SocialAuthenticationProvider implements AuthProvider {
 
     @Override
     public void authenticate(JsonObject authInfo, Handler<AsyncResult<User>> resultHandler) {
+        authenticate(null, authInfo, resultHandler);
+    }
+
+    public void authenticate(RoutingContext context, JsonObject authInfo, Handler<AsyncResult<User>> resultHandler) {
         final String authProvider = authInfo.getString(PROVIDER_PARAMETER);
         final String username = authInfo.getString(USERNAME_PARAMETER);
         final String password = authInfo.getString(PASSWORD_PARAMETER);
@@ -67,8 +74,11 @@ public class SocialAuthenticationProvider implements AuthProvider {
         identityProviderManager
                 .get(authInfo.getString(PROVIDER_PARAMETER))
                 .flatMap(authenticationProvider -> {
-                    EndUserAuthentication endUserAuthentication = new EndUserAuthentication(username, password);
-                    endUserAuthentication.setAdditionalInformation(authInfo.getJsonObject(ADDITIONAL_PARAMETERS).getMap());
+                    SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request()));
+                    EndUserAuthentication endUserAuthentication = new EndUserAuthentication(username, password, authenticationContext);
+
+                    authInfo.getJsonObject(ADDITIONAL_PARAMETERS).getMap()
+                            .forEach((key, value) -> authenticationContext.set(key, value));
                     return authenticationProvider.loadUserByUsername(endUserAuthentication)
                             .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate oauth2 provider, authentication provider has returned empty value")));
                 })

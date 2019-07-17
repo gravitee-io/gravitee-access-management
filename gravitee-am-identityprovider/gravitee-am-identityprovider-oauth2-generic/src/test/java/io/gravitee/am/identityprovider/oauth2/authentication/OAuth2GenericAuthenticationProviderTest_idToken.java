@@ -20,6 +20,7 @@ import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.reactivex.observers.TestObserver;
@@ -31,7 +32,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.text.ParseException;
 import java.util.Collections;
-import java.util.Map;
 
 import static org.mockito.Mockito.when;
 
@@ -66,8 +66,8 @@ public class OAuth2GenericAuthenticationProviderTest_idToken {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
-                return Collections.singletonMap("id_token", "test");
+            public AuthenticationContext getContext() {
+                return new DummyAuthenticationContext(Collections.singletonMap("id_token", "test"));
             }
         }).test();
 
@@ -92,8 +92,8 @@ public class OAuth2GenericAuthenticationProviderTest_idToken {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
-                return Collections.singletonMap("id_token", "test");
+            public AuthenticationContext getContext() {
+                return new DummyAuthenticationContext(Collections.singletonMap("id_token", "test"));
             }
         }).test();
 

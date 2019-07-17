@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.mongo.authentication;
 
 import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
@@ -28,8 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
-
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,7 +55,7 @@ public class MongoAuthenticationProviderTest {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
+            public AuthenticationContext getContext() {
                 return null;
             }
         }).test();
@@ -82,7 +81,7 @@ public class MongoAuthenticationProviderTest {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
+            public AuthenticationContext getContext() {
                 return null;
             }
         }).test();
@@ -108,7 +107,7 @@ public class MongoAuthenticationProviderTest {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
+            public AuthenticationContext getContext() {
                 return null;
             }
         }).test();
@@ -130,7 +129,7 @@ public class MongoAuthenticationProviderTest {
             }
 
             @Override
-            public Map<String, Object> getAdditionalInformation() {
+            public AuthenticationContext getContext() {
                 return null;
             }
         }).test();
