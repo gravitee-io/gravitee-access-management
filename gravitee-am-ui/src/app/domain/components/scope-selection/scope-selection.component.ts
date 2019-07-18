@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {MatSort, MatTableDataSource} from '@angular/material';
+import {MatPaginator, MatSort, MatTableDataSource} from '@angular/material';
 import {SelectionModel} from '@angular/cdk/collections';
 import {ActivatedRoute} from '@angular/router';
 import * as _ from 'lodash';
@@ -42,6 +42,7 @@ export class ScopeSelectionComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['select', 'key', 'name', 'description'];
 
   @ViewChild(MatSort) sort: MatSort;
+  @ViewChild(MatPaginator) paginator: MatPaginator;
 
   constructor(private route: ActivatedRoute) {}
 
@@ -50,6 +51,7 @@ export class ScopeSelectionComponent implements OnInit, AfterViewInit {
       id: scope.id, key: scope.key, name: scope.name, description: scope.description, discovery: scope.discovery
     });
     this.scopes = new MatTableDataSource(datasource);
+    this.scopes.paginator = this.paginator;
     const initialSelectedValues = _.intersectionWith(this.scopes.data, this.initialSelectedScopes, (scope, key) => scope.key === key);
     this.selection = new SelectionModel<Scope>(true, _.compact(initialSelectedValues));
   }

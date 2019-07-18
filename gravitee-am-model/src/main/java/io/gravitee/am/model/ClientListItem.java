@@ -35,6 +35,8 @@ public class ClientListItem {
 
     private boolean enabled;
 
+    private boolean template;
+
     private Date createdAt;
 
     private Date updatedAt;
@@ -85,6 +87,14 @@ public class ClientListItem {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isTemplate() {
+        return template;
+    }
+
+    public void setTemplate(boolean template) {
+        this.template = template;
     }
 
     public Date getCreatedAt() {
