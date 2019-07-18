@@ -47,6 +47,8 @@ export class ClientRegistrationSettingsComponent implements OnInit {
     // If disabled, ensure to disable open dynamic client registration too and disable clients toogle too.
     if (!event.checked) {
       this.domain.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled = event.checked;
+      this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled = event.checked;
+
       this.clientDcrDisabled = !event.checked;
       this.disableToolTip = event.checked;
       this.toolTipMessage = "Disable until settings are saved and feature is enabled.";
@@ -65,6 +67,10 @@ export class ClientRegistrationSettingsComponent implements OnInit {
 
   enableDynamicClientRegistrationTemplate(event) {
     this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled = event.checked;
+    // If enabled, ensure to enable dynamic client registration too.
+    if (event.checked) {
+      this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled = event.checked;
+    }
     this.formChanged = true;
   }
 

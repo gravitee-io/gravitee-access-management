@@ -26,6 +26,7 @@ import {DomainSettingsOpenidClientRegistrationComponent} from "./domain/settings
 import {ClientRegistrationSettingsComponent} from "./domain/settings/openid/client-registration/settings/settings.component";
 import {ClientRegistrationDefaultScopeComponent} from "./domain/settings/openid/client-registration/default-scope/default-scope.component";
 import {ClientRegistrationAllowedScopeComponent} from "./domain/settings/openid/client-registration/allowed-scope/allowed-scope.component";
+import {ClientRegistrationTemplatesComponent} from "./domain/settings/openid/client-registration/templates/templates.component";
 import {DomainSettingsCertificatesComponent} from "./domain/settings/certificates/certificates.component";
 import {DomainSettingsProvidersComponent} from "./domain/settings/providers/providers.component";
 import {DomainSettingsRolesComponent} from "./domain/settings/roles/roles.component";
@@ -390,7 +391,8 @@ const routes: Routes = [
       { path: 'clients',
         component: ClientsComponent,
         resolve: {
-          clients: ClientsResolver
+          clients: ClientsResolver,
+          domain: DomainResolver
         },
         data: {
           menu: {
@@ -742,6 +744,7 @@ const routes: Routes = [
               { path: 'settings', component: ClientRegistrationSettingsComponent, resolve: {domain: DomainResolver} },
               { path: 'default-scope', component: ClientRegistrationDefaultScopeComponent, resolve: {domain: DomainResolver, scopes: ScopesResolver}},
               { path: 'allowed-scope', component: ClientRegistrationAllowedScopeComponent, resolve: {domain: DomainResolver, scopes: ScopesResolver}},
+              { path: 'templates', component: ClientRegistrationTemplatesComponent, resolve: {domain: DomainResolver, clients: ClientsResolver}},
             ]
           }
         ]

@@ -68,6 +68,12 @@ export class ClientService {
     });
   }
 
+  patchTemplate(domainId, id, template): Observable<any> {
+    return this.http.patch<any>(this.clientsURL + domainId + "/clients/" + id, {
+      "template" : template
+    });
+  }
+
   delete(domainId, id): Observable<any> {
     return this.http.delete<any>(this.clientsURL + domainId + "/clients/" + id);
   }

@@ -25,9 +25,15 @@ export class ClientsResolver implements Resolve<any> {
   constructor(private clientService: ClientService, private dashboardService: DashboardService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId = route.parent.paramMap.get('domainId');
+    let domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId');
+
+    // try access domainId from higher levels
+    if (!domainId && route.parent.parent) {
+      domainId = route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : (route.parent.parent.parent && route.parent.parent.parent.paramMap.get('domainId')) ? route.parent.parent.parent.paramMap.get('domainId') : null;
+    }
+
     if (domainId) {
-      return this.clientService.findByDomain(route.parent.paramMap.get('domainId'));
+      return this.clientService.findByDomain(domainId);
     } else {
       return this.dashboardService.findClients(null);
     }

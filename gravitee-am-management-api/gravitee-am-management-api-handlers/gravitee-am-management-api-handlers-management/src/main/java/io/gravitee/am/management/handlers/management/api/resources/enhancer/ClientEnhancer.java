@@ -58,6 +58,7 @@ public class ClientEnhancer {
             }
             clientListItem.setClientName(client.getClientName());
             clientListItem.setEnabled(client.isEnabled());
+            clientListItem.setTemplate(client.isTemplate());
             clientListItem.setCreatedAt(client.getCreatedAt());
             clientListItem.setUpdatedAt(client.getUpdatedAt());
 

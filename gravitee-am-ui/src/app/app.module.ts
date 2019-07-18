@@ -96,6 +96,7 @@ import { DomainSettingsOpenidClientRegistrationComponent } from "./domain/settin
 import { ClientRegistrationSettingsComponent } from "./domain/settings/openid/client-registration/settings/settings.component";
 import { ClientRegistrationDefaultScopeComponent } from "./domain/settings/openid/client-registration/default-scope/default-scope.component";
 import { ClientRegistrationAllowedScopeComponent } from "./domain/settings/openid/client-registration/allowed-scope/allowed-scope.component";
+import { ClientRegistrationTemplatesComponent} from "./domain/settings/openid/client-registration/templates/templates.component";
 import { DomainSettingsRolesComponent } from "./domain/settings/roles/roles.component";
 import { DomainSettingsScopesComponent } from "./domain/settings/scopes/scopes.component";
 import { DomainSettingsCertificatesComponent, CertitificatePublicKeyDialog } from './domain/settings/certificates/certificates.component';
@@ -229,6 +230,7 @@ import { ScopeSelectionComponent} from "./domain/components/scope-selection/scop
     ClientRegistrationSettingsComponent,
     ClientRegistrationDefaultScopeComponent,
     ClientRegistrationAllowedScopeComponent,
+    ClientRegistrationTemplatesComponent,
     DomainSettingsProvidersComponent,
     DomainSettingsScopesComponent,
     DomainSettingsRolesComponent,
