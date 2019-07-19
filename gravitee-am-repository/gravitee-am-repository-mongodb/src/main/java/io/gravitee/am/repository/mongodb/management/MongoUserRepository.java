@@ -89,7 +89,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         Bson searchQuery = new BasicDBObject(FIELD_USERNAME, query);
         // if query contains wildcard, use the regex query
         if (query.contains("*")) {
-            String compactQuery = query.replaceAll(".?\\*+.?", ".*");
+            String compactQuery = query.replaceAll("\\*+", ".*");
             String regex = "^" + compactQuery;
             searchQuery = new BasicDBObject(FIELD_USERNAME, Pattern.compile(regex, Pattern.CASE_INSENSITIVE));
         }
