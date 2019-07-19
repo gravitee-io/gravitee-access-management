@@ -88,7 +88,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         Bson searchQuery = new BasicDBObject(FIELD_CLIENT_ID, query);
         // if query contains wildcard, use the regex query
         if (query.contains("*")) {
-            String compactQuery = query.replaceAll(".?\\*+.?", ".*");
+            String compactQuery = query.replaceAll("\\*+", ".*");
             String regex = "^" + compactQuery;
             searchQuery = new BasicDBObject(FIELD_CLIENT_ID, Pattern.compile(regex, Pattern.CASE_INSENSITIVE));
         }
