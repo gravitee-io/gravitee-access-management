@@ -15,3 +15,23 @@
     padding: 25px 0 20px;
   }
 }
+
+mat-card.client-banner {
+  display: flex;
+  position: absolute;
+  z-index: 10;
+  max-width: 600px;
+  padding: 12px;
+  text-align: center;
+  background: orange;
+  color: white;
+  top: 35px;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+
+  .client-banner-text {
+    margin: 3px 0px 0px 20px;
+  }
+}

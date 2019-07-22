@@ -62,21 +62,6 @@
         <mat-hint>Certificate use to sign tokens.</mat-hint>
       </mat-form-field>
     </div>
-
-    <div class="client-warning-zone" fxLayout="column">
-      <h4>Client template</h4>
-      <div fxFlex>
-        <mat-slide-toggle
-          matTooltip="{{isDomainDcrTemplateDisabled() ? 'Dynamic Client Registration template is disabled on domain' : ''}}"
-          color="warn"
-          [disabled]="isDomainDcrTemplateDisabled()"
-          (change)="enableTemplate($event)"
-          [checked]="client.template">
-        </mat-slide-toggle>
-      </div>
-      <mat-hint style="font-size: 75%;">If enabled, this client will serve as template for dynamic client registration and will no longer be usable for anything else.</mat-hint>
-    </div>
-
     <div fxLayout="row" class="client-settings-form-actions">
       <button mat-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>
     </div>

@@ -1,4 +1,4 @@
-/*!*
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,31 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.scope-container {
-  margin-bottom: 30px;
-  mat-hint {
-    font-size: 75%;
-  }
-}
-.mat-column-select {
-  overflow: initial;
-}
-
-.mat-form-field {
-  font-size: 14px;
-  width: 100%;
-}
-
-table {
-  width: 100%;
-  background: transparent;
-  box-shadow: none;
-}
-
-th.mat-sort-header-sorted {
-  color: black;
-}
-
-.mat-paginator {
-  background: transparent;
-}

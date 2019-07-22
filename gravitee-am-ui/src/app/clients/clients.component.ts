@@ -27,7 +27,8 @@ import { ClientService } from "../services/client.service";
 export class ClientsComponent implements OnInit {
   private clients: any[];
   domainId: string;
-  newClientRouterLink:any[] = ['/dashboard', 'clients', 'new'];
+  domain: any = {};
+  newClientRouterLink: any[] = ['/dashboard', 'clients', 'new'];
 
   constructor(private dialogService: DialogService,
               private snackbarService: SnackbarService, private clientService: ClientService,
@@ -35,14 +36,14 @@ export class ClientsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.domain = this.route.snapshot.data['domain'];
     this.clients = this.route.snapshot.data['clients'];
-    if (this.domainId) {
-      this.newClientRouterLink = ['/domains', this.domainId, 'clients', 'new'];
+    if (this.domain) {
+      this.newClientRouterLink = ['/domains', this.domain.id, 'clients', 'new'];
     }
   }
 
   get isEmpty() {
-    return !this.clients || this.clients.length == 0;
+    return !this.clients || this.clients.length === 0;
   }
 }

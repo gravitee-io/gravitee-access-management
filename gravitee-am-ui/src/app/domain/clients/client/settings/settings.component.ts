@@ -68,11 +68,6 @@ export class ClientSettingsComponent implements OnInit {
     this.formChanged = true;
   }
 
-  enableTemplate(event) {
-    this.client.template = event.checked;
-    this.formChanged = true;
-  }
-
   isDomainDcrTemplateDisabled() {
     return !this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled;
   }

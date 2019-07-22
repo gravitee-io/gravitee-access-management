@@ -16,6 +16,10 @@
 
 -->
 <div class="client-container">
+  <mat-card class="client-banner" *ngIf="client.template">
+    <mat-icon>warning</mat-icon>
+    <p class="client-banner-text">Client is set as a template, thus it can not be used for authentication purpose.</p>
+  </mat-card>
   <a [routerLink]="['..']" class="back-link"><small><< Back to clients</small></a>
   <h1>{{client.clientName}}</h1>
   <nav mat-tab-nav-bar>
