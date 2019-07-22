@@ -1,5 +1,28 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/issues/milestone/151?closed=1[AM - 2.8.1 (2019-07-22)]
+
+=== Bug fixes
+
+*_Am_*
+
+- [ui] minor bug client selection component https://github.com/gravitee-io/issues/issues/2471[#2471]
+
+*_Management-ui_*
+
+- LDAP identity provider form CSS overlapping issue https://github.com/gravitee-io/issues/issues/2477[#2477]
+
+*_Oauth_*
+
+- Typo in error_description https://github.com/gravitee-io/issues/issues/2470[#2470]
+
+=== Features
+
+*_Am_*
+
+- [dcr] Manage templating (UI/UX enhancements) https://github.com/gravitee-io/issues/issues/2454[#2454]
+
+
 == https://github.com/gravitee-io/issues/issues/milestone/144?closed=1[AM - 2.8.0 (2019-07-17)]
 
 === Bug fixes
@@ -10,7 +33,7 @@
 
 *_Gateway_*
 
-- Management] logback gravitee.am.log.dir_IS_UNDEFINED https://github.com/gravitee-io/issues/issues/2430[#2430]
+- [Management] logback gravitee.am.log.dir_IS_UNDEFINED https://github.com/gravitee-io/issues/issues/2430[#2430]
 
 *_Identityprovider_*
 
