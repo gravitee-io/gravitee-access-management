@@ -74,11 +74,13 @@ public class SocialAuthenticationProvider implements AuthProvider {
         identityProviderManager
                 .get(authInfo.getString(PROVIDER_PARAMETER))
                 .flatMap(authenticationProvider -> {
-                    SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request()));
+                    SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(context != null ? new VertxHttpServerRequest(context.request()) : null);
                     EndUserAuthentication endUserAuthentication = new EndUserAuthentication(username, password, authenticationContext);
 
-                    authInfo.getJsonObject(ADDITIONAL_PARAMETERS).getMap()
-                            .forEach((key, value) -> authenticationContext.set(key, value));
+                    if (authInfo.containsKey(ADDITIONAL_PARAMETERS)) {
+                        authInfo.getJsonObject(ADDITIONAL_PARAMETERS).getMap()
+                                .forEach((key, value) -> authenticationContext.set(key, value));
+                    }
                     return authenticationProvider.loadUserByUsername(endUserAuthentication)
                             .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate oauth2 provider, authentication provider has returned empty value")));
                 })
