@@ -19,14 +19,13 @@ import io.gravitee.am.management.handlers.admin.authentication.CustomAuthenticat
 import io.gravitee.am.management.handlers.admin.authentication.CustomSavedRequestAwareAuthenticationSuccessHandler;
 import io.gravitee.am.management.handlers.admin.authentication.LoginUrlAuthenticationEntryPoint;
 import io.gravitee.am.management.handlers.admin.filter.CheckAuthenticationCookieFilter;
-import io.gravitee.am.management.handlers.admin.filter.OAuth2ClientAuthenticationFilter;
+import io.gravitee.am.management.handlers.admin.filter.SocialAuthenticationFilter;
 import io.gravitee.am.management.handlers.admin.handler.CookieClearingLogoutHandler;
 import io.gravitee.am.management.handlers.admin.handler.CustomLogoutSuccessHandler;
 import io.gravitee.am.management.handlers.admin.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.admin.provider.security.DomainBasedAuthenticationProvider;
 import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager;
 import io.gravitee.am.management.handlers.admin.security.impl.IdentityProviderManagerImpl;
-import io.gravitee.am.management.handlers.admin.security.listener.AuthenticationSuccessListener;
 import io.gravitee.am.management.handlers.admin.security.web.XForwardedAwareRedirectStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +43,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.RedirectStrategy;
-import org.springframework.security.web.authentication.*;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -85,11 +86,6 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationSuccessListener authenticationSuccessListener() {
-        return new AuthenticationSuccessListener();
-    }
-
-    @Bean
     public JWTGenerator jwtCookieGenerator() {
         return new JWTGenerator();
     }
@@ -127,13 +123,13 @@ public class SecurityConfiguration {
                 .exceptionHandling()
                     .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
                     .and()
-                .addFilterBefore(clientOAuth2Filter(), AbstractPreAuthenticatedProcessingFilter.class)
+                .addFilterBefore(socialAuthFilter(), AbstractPreAuthenticatedProcessingFilter.class)
                 .addFilterBefore(checkAuthCookieFilter(), AbstractPreAuthenticatedProcessingFilter.class);
         }
 
         @Bean
-        public Filter clientOAuth2Filter() {
-            OAuth2ClientAuthenticationFilter oAuth2ClientAuthenticationFilter = new OAuth2ClientAuthenticationFilter("/login/callback");
+        public Filter socialAuthFilter() {
+            SocialAuthenticationFilter oAuth2ClientAuthenticationFilter = new SocialAuthenticationFilter("/login/callback");
             oAuth2ClientAuthenticationFilter.setApplicationEventPublisher(applicationEventPublisher);
             return oAuth2ClientAuthenticationFilter;
         }

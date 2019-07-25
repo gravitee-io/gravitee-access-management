@@ -136,6 +136,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source) {
+        LOGGER.debug("Find user by domain, externalId and source: {} {}", domain, externalId, source);
+        return userRepository.findByDomainAndExternalIdAndSource(domain, externalId, source)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a user using its externalId: {} for the domain and source {}", externalId, domain, source, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a user using its externalId: %s for the domain %s and source %s", externalId, domain, source), ex));
+                });
+    }
+
+    @Override
     public Single<User> create(String domain, NewUser newUser) {
         LOGGER.debug("Create a new user {} for domain {}", newUser, domain);
 
@@ -192,6 +203,8 @@ public class UserServiceImpl implements UserService {
                     oldUser.setLastName(updateUser.getLastName());
                     oldUser.setEmail(updateUser.getEmail());
                     oldUser.setEnabled(updateUser.isEnabled());
+                    oldUser.setLoggedAt(updateUser.getLoggedAt());
+                    oldUser.setLoginsCount(updateUser.getLoginsCount());
                     oldUser.setUpdatedAt(new Date());
                     oldUser.setAdditionalInformation(updateUser.getAdditionalInformation());
                     return userRepository.update(oldUser);
@@ -246,7 +259,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<User> findOrCreate(String domain,io.gravitee.am.identityprovider.api.User user) {
         String source = (String) user.getAdditionalInformation().get("source");
-        return userRepository.findByDomainAndExternalIdAndSource(domain, user.getId(), source)
+        return findByDomainAndExternalIdAndSource(domain, user.getId(), source)
                 .switchIfEmpty(Maybe.defer(() -> findByDomainAndUsernameAndSource(domain, user.getUsername(), source)))
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
                 .flatMapSingle(existingUser -> enhanceUserWithGroupRoles(existingUser, user))
