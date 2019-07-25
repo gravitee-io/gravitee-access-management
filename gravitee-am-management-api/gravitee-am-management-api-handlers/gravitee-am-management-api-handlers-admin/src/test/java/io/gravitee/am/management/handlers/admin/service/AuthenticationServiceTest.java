@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.admin.listener;
+package io.gravitee.am.management.handlers.admin.service;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.admin.security.listener.AuthenticationSuccessListener;
+import io.gravitee.am.management.handlers.admin.service.impl.AuthenticationServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.UserService;
@@ -32,7 +32,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.core.Authentication;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -40,12 +41,12 @@ import static org.mockito.Mockito.*;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class AuthenticationSuccessListenerTest {
+public class AuthenticationServiceTest {
 
     private static final String domainId = "domain-id";
 
     @InjectMocks
-    private AuthenticationSuccessListener listener = new AuthenticationSuccessListener();
+    private AuthenticationService authenticationService = new AuthenticationServiceImpl();
 
     @Mock
     private AuthenticationSuccessEvent eventMock;
@@ -71,14 +72,15 @@ public class AuthenticationSuccessListenerTest {
     @Test
     public void shouldCreateUser() {
         when(domainMock.getId()).thenReturn(domainId);
-        when(eventMock.getAuthentication()).thenReturn(authenticationMock);
         when(authenticationMock.getPrincipal()).thenReturn(userDetailsMock);
-        when(userServiceMock.findByDomainAndUsername(domainMock.getId(), userDetailsMock.getUsername())).thenReturn(Maybe.empty());
+        when(userServiceMock.findByDomainAndExternalIdAndSource(domainMock.getId(), userDetailsMock.getUsername(), null)).thenReturn(Maybe.empty());
+        when(userServiceMock.findByDomainAndUsernameAndSource(domainMock.getId(), userDetailsMock.getUsername(), null)).thenReturn(Maybe.empty());
         when(userServiceMock.create(anyString(), any(NewUser.class))).thenReturn(Single.just(new io.gravitee.am.model.User()));
 
-        listener.onApplicationEvent(eventMock);
+        authenticationService.onAuthenticationSuccess(authenticationMock);
 
-        verify(userServiceMock, times(1)).findByDomainAndUsername(domainMock.getId(), userDetailsMock.getUsername());
+        verify(userServiceMock, times(1)).findByDomainAndExternalIdAndSource(domainMock.getId(), userDetailsMock.getUsername(), null);
+        verify(userServiceMock, times(1)).findByDomainAndUsernameAndSource(domainMock.getId(), userDetailsMock.getUsername(), null);
         verify(userServiceMock, times(1)).create(any(String.class), any(NewUser.class));
         verify(userServiceMock, never()).update(any(String.class), any(String.class), any(UpdateUser.class));
     }
@@ -87,14 +89,13 @@ public class AuthenticationSuccessListenerTest {
     public void shouldUpdatedUser() {
         when(domainMock.getId()).thenReturn(domainId);
         when(repositoryUserMock.getId()).thenReturn("userId");
-        when(eventMock.getAuthentication()).thenReturn(authenticationMock);
         when(authenticationMock.getPrincipal()).thenReturn(userDetailsMock);
-        when(userServiceMock.findByDomainAndUsername(domainMock.getId(), userDetailsMock.getUsername())).thenReturn(Maybe.just(repositoryUserMock));
+        when(userServiceMock.findByDomainAndExternalIdAndSource(domainMock.getId(), userDetailsMock.getUsername(), null)).thenReturn(Maybe.just(repositoryUserMock));
         when(userServiceMock.update(anyString(), anyString(), any(UpdateUser.class))).thenReturn(Single.just(new io.gravitee.am.model.User()));
 
-        listener.onApplicationEvent(eventMock);
+        authenticationService.onAuthenticationSuccess(authenticationMock);
 
-        verify(userServiceMock, times(1)).findByDomainAndUsername(domainMock.getId(), userDetailsMock.getUsername());
+        verify(userServiceMock, times(1)).findByDomainAndExternalIdAndSource(domainMock.getId(), userDetailsMock.getUsername(), null);
         verify(userServiceMock, times(1)).update(any(String.class), any(String.class), any(UpdateUser.class));
         verify(userServiceMock, never()).create(any(String.class), any(NewUser.class));
     }

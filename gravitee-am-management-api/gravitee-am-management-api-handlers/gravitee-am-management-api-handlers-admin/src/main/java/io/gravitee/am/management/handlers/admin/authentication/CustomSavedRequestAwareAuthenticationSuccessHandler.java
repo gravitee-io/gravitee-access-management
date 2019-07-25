@@ -20,8 +20,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.admin.provider.jwt.JWTGenerator;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.UserService;
+import io.gravitee.am.management.handlers.admin.service.AuthenticationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +35,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.groups.Default;
 import java.io.IOException;
 
 /**
@@ -52,10 +50,7 @@ public class CustomSavedRequestAwareAuthenticationSuccessHandler extends SavedRe
     private JWTGenerator jwtGenerator;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
-    private Domain domain;
+    private AuthenticationService authenticationService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -76,8 +71,11 @@ public class CustomSavedRequestAwareAuthenticationSuccessHandler extends SavedRe
             request.getSession(false).setAttribute(SAVED_REQUEST, savedRequest);
         }
 
+        // finish authentication
+        io.gravitee.am.model.User endUser = authenticationService.onAuthenticationSuccess(authentication);
+
         // store jwt authentication cookie to secure management restricted operations
-        Cookie jwtAuthenticationCookie = createJWTAuthenticationCookie(authentication);
+        Cookie jwtAuthenticationCookie = createJWTAuthenticationCookie(authentication, endUser);
         response.addCookie(jwtAuthenticationCookie);
 
         String targetUrlParameter = getTargetUrlParameter();
@@ -96,8 +94,7 @@ public class CustomSavedRequestAwareAuthenticationSuccessHandler extends SavedRe
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
-    private Cookie createJWTAuthenticationCookie(Authentication authentication) {
-        final io.gravitee.am.model.User endUser = userService.findByDomainAndUsername(domain.getId(), authentication.getName()).blockingGet();
+    private Cookie createJWTAuthenticationCookie(Authentication authentication, io.gravitee.am.model.User endUser) {
         final User principal = (User) authentication.getPrincipal();
         ((DefaultUser) principal).setId(endUser.getId());
         principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
