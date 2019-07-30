@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.granter.password;
 
 import io.gravitee.am.common.oauth2.GrantType;
-import io.gravitee.am.common.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.common.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;

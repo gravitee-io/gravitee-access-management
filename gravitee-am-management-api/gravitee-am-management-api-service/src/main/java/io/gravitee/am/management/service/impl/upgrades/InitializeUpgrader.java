@@ -86,7 +86,6 @@ public class InitializeUpgrader implements Upgrader, Ordered {
                 updateDomain.setDescription(adminDomain.getDescription());
                 updateDomain.setEnabled(adminDomain.isEnabled());
                 updateDomain.setIdentities(adminClient.getIdentities());
-                updateDomain.setOauth2Identities(adminClient.getOauth2Identities());
                 domainService.update(ADMIN_DOMAIN, updateDomain).blockingGet();
                 // remove admin client
                 clientService.delete(adminClient.getId()).blockingGet();

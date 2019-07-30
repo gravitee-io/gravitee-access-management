@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.gateway.handler.common.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
@@ -40,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -52,9 +51,6 @@ public class SocialAuthenticationProviderTest {
 
     @InjectMocks
     private SocialAuthenticationProvider authProvider = new SocialAuthenticationProvider();
-
-    @Mock
-    private IdentityProviderManager identityProviderManager;
 
     @Mock
     private UserAuthenticationManager userAuthenticationManager;
@@ -78,9 +74,13 @@ public class SocialAuthenticationProviderTest {
 
         io.gravitee.am.identityprovider.api.User user  = new io.gravitee.am.identityprovider.api.DefaultUser("username");
 
+        Client client = new Client();
+
         when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
-        when(identityProviderManager.get(anyString())).thenReturn(Maybe.just(authenticationProvider));
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
         when(routingContext.request()).thenReturn(httpServerRequest);
         when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
 
@@ -103,10 +103,16 @@ public class SocialAuthenticationProviderTest {
         credentials.put("password", "my-user-password");
         credentials.put("provider", "idp");
 
-        when(identityProviderManager.get(anyString())).thenReturn(Maybe.just(authenticationProvider));
+        Client client = new Client();
+
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.error(BadCredentialsException::new));
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.authenticate(credentials, userAsyncResult -> {
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
             latch.countDown();
             Assert.assertNotNull(userAsyncResult);
             Assert.assertTrue(userAsyncResult.failed());
@@ -124,10 +130,16 @@ public class SocialAuthenticationProviderTest {
         credentials.put("password", "my-user-password");
         credentials.put("provider", "idp");
 
-        when(identityProviderManager.get(anyString())).thenReturn(Maybe.just(authenticationProvider));
+        Client client = new Client();
+
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.empty());
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.authenticate(credentials, userAsyncResult -> {
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
             latch.countDown();
             Assert.assertNotNull(userAsyncResult);
             Assert.assertTrue(userAsyncResult.failed());

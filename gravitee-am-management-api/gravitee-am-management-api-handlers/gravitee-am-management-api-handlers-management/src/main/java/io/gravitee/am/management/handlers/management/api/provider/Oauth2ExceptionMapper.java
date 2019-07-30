@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.provider;
 
-import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;

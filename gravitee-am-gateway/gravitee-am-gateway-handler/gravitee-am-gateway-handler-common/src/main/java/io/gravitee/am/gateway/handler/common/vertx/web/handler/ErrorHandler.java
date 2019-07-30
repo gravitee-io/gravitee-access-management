@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpHeaders;

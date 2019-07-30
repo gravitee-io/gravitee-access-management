@@ -45,20 +45,21 @@
         </div>
       </div>
     </div>
-    <div class="provider-settings-description" fxFlex>
+    <div class="provider-settings-description" fxFlex="30">
       <h3>Manage identity provider</h3>
       <div class="provider-settings-description-content">
         <p>
           Register your users to interact with the access management server.
         </p>
       </div>
-      <div *ngIf="provider.external" class="oauth2-provider-settings-description">
-        <h5>OAuth 2.0 identity provider</h5>
+      <div *ngIf="provider.external" class="social-provider-settings-description">
+        <h5>Social/Enterprise Identity Provider</h5>
         <small>1. Configure the redirect URI</small>
-        <p class="oauth2-provider-settings-description-contextual-help">Most OAuth 2.0 client must specify authorized redirect URIs. Go to your OAuth 2.0 client settings page and specify the following URL</p>
-        <pre>http(s)://|AM-GATEWAY-HOST|/{{domain.path}}/login/callback</pre>
+        <p class="social-provider-settings-description-contextual-help">The Redirect URI or callback URL or Assertion Consumer Service URL must be known by your Identity Server. Go to your Identity Server app settings page and specify the following URL</p>
+        <pre style="margin-bottom: 0;">http(s)://|AM-GATEWAY-HOST|/{{domain.path}}/login/callback</pre>
+        <pre style="margin-top: 0;">?provider={{provider.id}}</pre>
         <small>2. (Optional) Custom login page</small>
-        <p class="oauth2-provider-settings-description-contextual-help">If you enabled custom login form and want to use the OAuth 2.0 identity provider, update the login form content with the following code</p>
+        <p class="social-provider-settings-description-contextual-help">If you enabled custom login form and want to use the identity provider, update the login form content with the following code</p>
         <pre style="white-space: normal;">
           <![CDATA[
              <a th:href="${authorizeUrls.get('{{provider.id}}')}">

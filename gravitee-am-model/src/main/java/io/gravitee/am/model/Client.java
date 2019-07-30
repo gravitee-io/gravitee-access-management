@@ -25,7 +25,6 @@ import io.gravitee.am.model.oidc.JWKSet;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -133,8 +132,6 @@ public class Client implements Cloneable{
 
     private int idTokenValiditySeconds = DEFAULT_ID_TOKEN_VALIDITY_SECONDS;
 
-    private Map<String, Object> idTokenCustomClaims;
-
     /**
      * Security domain associated to the client
      */
@@ -156,8 +153,6 @@ public class Client implements Cloneable{
     private Date updatedAt;
 
     private Set<String> identities;
-
-    private Set<String> oauth2Identities;
 
     private String certificate;
 
@@ -219,13 +214,11 @@ public class Client implements Cloneable{
         this.accessTokenValiditySeconds = other.accessTokenValiditySeconds;
         this.refreshTokenValiditySeconds = other.refreshTokenValiditySeconds;
         this.idTokenValiditySeconds = other.idTokenValiditySeconds;
-        this.idTokenCustomClaims = other.idTokenCustomClaims;
         this.domain = other.domain;
         this.enabled = other.enabled;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.identities = other.identities;
-        this.oauth2Identities = other.oauth2Identities;
         this.certificate = other.certificate;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
         this.scopeApprovals = other.scopeApprovals;
@@ -629,28 +622,12 @@ public class Client implements Cloneable{
         this.identities = identities;
     }
 
-    public Set<String> getOauth2Identities() {
-        return oauth2Identities;
-    }
-
-    public void setOauth2Identities(Set<String> oauth2Identities) {
-        this.oauth2Identities = oauth2Identities;
-    }
-
     public int getIdTokenValiditySeconds() {
         return idTokenValiditySeconds;
     }
 
     public void setIdTokenValiditySeconds(int idTokenValiditySeconds) {
         this.idTokenValiditySeconds = idTokenValiditySeconds;
-    }
-
-    public Map<String, Object> getIdTokenCustomClaims() {
-        return idTokenCustomClaims;
-    }
-
-    public void setIdTokenCustomClaims(Map<String, Object> idTokenCustomClaims) {
-        this.idTokenCustomClaims = idTokenCustomClaims;
     }
 
     public String getCertificate() {
@@ -728,8 +705,6 @@ public class Client implements Cloneable{
         clone.setScopeApprovals(this.getScopeApprovals()!=null?new HashMap<>(this.getScopeApprovals()):null);
         clone.setAutoApproveScopes(this.getAutoApproveScopes()!=null?new ArrayList<>(this.getAutoApproveScopes()):null);
         clone.setIdentities(this.getIdentities()!=null?new HashSet<>(this.getIdentities()):null);
-        clone.setOauth2Identities(this.getOauth2Identities()!=null?new HashSet<>(this.getOauth2Identities()):null);
-        clone.setIdTokenCustomClaims(this.getIdTokenCustomClaims()!=null?new HashMap<>(this.getIdTokenCustomClaims()):null);
         clone.setJwks(this.getJwks()!=null?this.getJwks().clone():null);
 
         return clone;

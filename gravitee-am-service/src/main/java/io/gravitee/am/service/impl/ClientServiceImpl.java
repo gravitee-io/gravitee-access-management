@@ -16,7 +16,7 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.identityprovider.api.User;
@@ -49,7 +49,7 @@ import io.gravitee.am.service.model.TotalClient;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ClientAuditBuilder;
 import io.gravitee.am.service.utils.GrantTypeUtils;
-import io.gravitee.am.service.utils.UriBuilder;
+import io.gravitee.am.common.web.UriBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;

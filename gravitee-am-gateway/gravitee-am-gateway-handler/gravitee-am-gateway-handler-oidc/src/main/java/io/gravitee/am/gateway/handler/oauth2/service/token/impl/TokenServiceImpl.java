@@ -17,9 +17,9 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.jwt.exception.JWTException;
+import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
-import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
+import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;

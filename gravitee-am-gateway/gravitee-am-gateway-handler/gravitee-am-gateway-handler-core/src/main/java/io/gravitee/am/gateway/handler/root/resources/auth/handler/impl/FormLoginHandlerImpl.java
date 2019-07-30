@@ -17,12 +17,11 @@ package io.gravitee.am.gateway.handler.root.resources.auth.handler.impl;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
-import io.gravitee.am.service.exception.authentication.AuthenticationException;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
-import io.gravitee.am.service.exception.authentication.UsernameNotFoundException;
+import io.gravitee.am.common.exception.authentication.AuthenticationException;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
@@ -38,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

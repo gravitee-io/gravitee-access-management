@@ -28,7 +28,7 @@ export class PlatformService {
     return this.http.get<any>(this.platformURL + 'plugins/identities');
   }
 
-  oauth2Identities(): Observable<any> {
+  socialIdentities(): Observable<any> {
     return this.http.get<any>(this.platformURL + 'plugins/identities?external=true')
   }
 

@@ -41,7 +41,6 @@ public class ClientTest {
         Client from = new Client();
         from.setClientName("original");
         from.setRedirectUris(Stream.of("http://host/callback","http://host/login").collect(Collectors.toList()));
-        from.setIdTokenCustomClaims(customs);
         from.setJwks(new JWKSet());
 
         Client to = from.clone();
@@ -53,7 +52,6 @@ public class ClientTest {
         assertTrue("same redirect uris values",to.getRedirectUris().containsAll(from.getRedirectUris()));
         assertFalse("not same object reference",from.getRedirectUris()==to.getRedirectUris());
         //customs
-        assertTrue("same customs information size",to.getIdTokenCustomClaims()!=null && to.getIdTokenCustomClaims().size()==from.getIdTokenCustomClaims().size());
         //assertTrue("same customs information values",to.getIdTokenCustomClaims().);
         assertFalse("not same object reference",from.getRedirectUris()==to.getRedirectUris());
     }

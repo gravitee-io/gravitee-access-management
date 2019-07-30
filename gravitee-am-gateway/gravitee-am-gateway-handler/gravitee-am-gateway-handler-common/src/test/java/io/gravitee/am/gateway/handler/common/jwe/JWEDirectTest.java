@@ -19,7 +19,7 @@ import com.nimbusds.jose.EncryptionMethod;
 import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.crypto.DirectDecrypter;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
-import io.gravitee.am.common.oauth2.exception.ServerErrorException;
+import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.gateway.handler.common.jwa.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.common.jwe.impl.JWEServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwk.JWKService;

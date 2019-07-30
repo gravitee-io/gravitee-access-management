@@ -53,7 +53,6 @@ export class ClientService {
       'tokenCustomClaims': client.tokenCustomClaims,
       'enabled': client.enabled,
       'identities': client.identities,
-      'oauth2Identities': client.oauth2Identities,
       'certificate': client.certificate,
       'enhanceScopesWithUserPermissions' : client.enhanceScopesWithUserPermissions,
       'responseTypes' : client.responseTypes,

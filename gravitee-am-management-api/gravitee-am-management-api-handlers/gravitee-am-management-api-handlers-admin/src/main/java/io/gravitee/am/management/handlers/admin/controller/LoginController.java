@@ -15,8 +15,7 @@
  */
 package io.gravitee.am.management.handlers.admin.controller;
 
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -44,12 +43,8 @@ import java.util.stream.Collectors;
 public class LoginController {
 
     private static final String LOGIN_VIEW = "login";
-    private static final List<String> socialProviders = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket");
+    private static final List<String> socialProviderTypes = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket");
     private static final String SAVED_REQUEST = "GRAVITEEIO_AM_SAVED_REQUEST";
-    private static final String CLIENT_ID = "client_id";
-    private static final String REDIRECT_URI = "redirect_uri";
-    private static final String RESPONSE_TYPE = "response_type";
-    private static final String SCOPE = "scope";
 
     @Autowired
     private Domain domain;
@@ -61,33 +56,36 @@ public class LoginController {
     public ModelAndView login(HttpServletRequest request) {
         Map<String, Object> params = new HashMap<>();
         params.put("domain", domain);
-        Set<String> clientOAuth2Providers = domain.getOauth2Identities();
-        if (clientOAuth2Providers != null && !clientOAuth2Providers.isEmpty()) {
-            params.put("oauth2Providers", clientOAuth2Providers.stream().map(id -> {
-                IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(id);
+
+        // fetch domain social identity providers
+        List<IdentityProvider> socialProviders = domain.getIdentities()
+                .stream()
+                .map(identity -> identityProviderManager.getIdentityProvider(identity))
+                .filter(IdentityProvider::isExternal)
+                .collect(Collectors.toList());
+
+        // enhance social providers data
+        if (socialProviders != null && !socialProviders.isEmpty()) {
+            Set<IdentityProvider> enhancedSocialProviders = socialProviders.stream().map(identityProvider -> {
                 String identityProviderType = identityProvider.getType();
-                Optional<String> identityProviderSocialType = socialProviders.stream().filter(socialProvider -> identityProviderType.toLowerCase().contains(socialProvider)).findFirst();
+                Optional<String> identityProviderSocialType = socialProviderTypes.stream().filter(socialProviderType-> identityProviderType.toLowerCase().contains(socialProviderType)).findFirst();
                 if (identityProviderSocialType.isPresent()) {
                     identityProvider.setType(identityProviderSocialType.get());
                 }
                 return identityProvider;
-            }).collect(Collectors.toSet()));
+            }).collect(Collectors.toSet());
 
             Map<String, String> authorizeUrls = new HashMap<>();
-            clientOAuth2Providers.forEach(identity -> {
-                OAuth2AuthenticationProvider oAuth2AuthenticationProvider = (OAuth2AuthenticationProvider) identityProviderManager.get(identity);
-                if (oAuth2AuthenticationProvider != null) {
-                    OAuth2IdentityProviderConfiguration configuration = oAuth2AuthenticationProvider.configuration();
-                    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(configuration.getUserAuthorizationUri());
-                    builder.queryParam(CLIENT_ID, configuration.getClientId());
-                    builder.queryParam(REDIRECT_URI, buildRedirectUri(request, identity));
-                    builder.queryParam(RESPONSE_TYPE, "code");
-                    if (configuration.getScopes() != null && !configuration.getScopes().isEmpty()) {
-                        builder.queryParam(SCOPE, String.join(" ", configuration.getScopes()));
-                    }
-                    authorizeUrls.put(identity, builder.build(false).toUriString());
+            socialProviders.forEach(identity -> {
+                String identityId = identity.getId();
+                SocialAuthenticationProvider socialAuthenticationProvider = (SocialAuthenticationProvider) identityProviderManager.get(identityId);
+                if (socialAuthenticationProvider != null) {
+                    authorizeUrls.put(identityId, socialAuthenticationProvider.signInUrl(buildRedirectUri(request, identityId)).getUri());
                 }
             });
+
+            params.put("oauth2Providers", enhancedSocialProviders);
+            params.put("socialProviders", enhancedSocialProviders);
             params.put("authorizeUrls", authorizeUrls);
         }
 

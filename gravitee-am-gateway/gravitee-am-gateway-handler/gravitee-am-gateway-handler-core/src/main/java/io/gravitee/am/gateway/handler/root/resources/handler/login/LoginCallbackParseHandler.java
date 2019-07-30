@@ -15,20 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
+import io.gravitee.am.common.exception.oauth2.BadClientCredentialsException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.common.oauth2.exception.BadClientCredentialsException;
-import io.gravitee.am.common.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.RedirectAuthHandler;
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.service.exception.authentication.InternalAuthenticationServiceException;
-import io.gravitee.am.service.utils.UriBuilder;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +44,6 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginCallbackParseHandler.class);
     private static final String PROVIDER_PARAMETER = "provider";
-    private static final String HASH_VALUE_PARAMETER = "urlHash";
     private static final String CLIENT_CONTEXT_KEY = "client";
     private ClientSyncService clientSyncService;
     private IdentityProviderManager identityProviderManager;
@@ -69,32 +66,18 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
             Client client = clientHandler.result();
             context.put(CLIENT_CONTEXT_KEY, client);
 
-            // fetch oauth2 provider
-            parseOAuth2Provider(context, oauth2ProviderHandler -> {
-                if (oauth2ProviderHandler.failed()) {
-                    context.fail(oauth2ProviderHandler.cause());
+            // fetch social provider
+            parseSocialProvider(context, socialProviderHandler -> {
+                if (socialProviderHandler.failed()) {
+                    context.fail(socialProviderHandler.cause());
                     return;
                 }
 
-                // set oauth2 provider in the execution context
-                context.put(PROVIDER_PARAMETER, oauth2ProviderHandler.result());
+                // set social provider in the execution context
+                AuthenticationProvider authenticationProvider = socialProviderHandler.result();
+                context.put(PROVIDER_PARAMETER, authenticationProvider);
 
-                // nominal case, nothing else to do, continue
-                if (context.request().method() != HttpMethod.POST) {
-                    context.next();
-                    return;
-                }
-
-                // if method is post, the OpenID Connect implicit flow is being used, retrieve access_token and/or id_token
-                final String hashValue = context.request().getParam(HASH_VALUE_PARAMETER);
-                if (hashValue == null) {
-                    context.fail(new InternalAuthenticationServiceException("No URL hash value found"));
-                    return;
-                }
-
-                // decode hash value and put data in the execution context
-                Map<String, String> hashValues = getParams(hashValue.substring(1)); // remove # symbol
-                hashValues.forEach((k, v) -> context.put(k, v));
+                // continue
                 context.next();
             });
         });
@@ -122,20 +105,21 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
         }
     }
 
-    private void parseOAuth2Provider(RoutingContext context, Handler<AsyncResult<OAuth2AuthenticationProvider>> handler) {
+    private void parseSocialProvider(RoutingContext context, Handler<AsyncResult<AuthenticationProvider>> handler) {
         final String providerId = context.request().getParam(PROVIDER_PARAMETER);
 
         if (providerId != null) {
             identityProviderManager.get(providerId)
-                    .map(authenticationProvider -> {
-                        if (!(authenticationProvider instanceof OAuth2AuthenticationProvider)) {
-                            throw new InternalAuthenticationServiceException("OAuth2 Provider " + providerId + "is not social");
-                        }
-                        return (OAuth2AuthenticationProvider) authenticationProvider;
-                    })
                     .subscribe(
                             authenticationProvider -> handler.handle(Future.succeededFuture(authenticationProvider)),
-                            error -> handler.handle(Future.failedFuture(error)));
+                            ex -> {
+                                logger.error("An error occurs while getting identity provider {}", providerId, ex);
+                                handler.handle(Future.failedFuture(ex));
+                            },
+                            () -> {
+                                logger.error("Unknown identity provider {}", providerId);
+                                handler.handle(Future.failedFuture(new BadClientCredentialsException()));
+                            });
         } else {
             handler.handle(Future.failedFuture(new InvalidRequestException("Missing provider parameter")));
         }

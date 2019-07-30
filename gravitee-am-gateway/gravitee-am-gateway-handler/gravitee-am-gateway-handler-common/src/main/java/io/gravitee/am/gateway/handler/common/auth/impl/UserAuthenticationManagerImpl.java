@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.common.auth.impl;
 
+import io.gravitee.am.common.exception.authentication.AccountLockedException;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationService;
@@ -29,10 +33,6 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.exception.authentication.AccountLockedException;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
-import io.gravitee.am.service.exception.authentication.InternalAuthenticationServiceException;
-import io.gravitee.am.service.exception.authentication.UsernameNotFoundException;
 import io.gravitee.common.event.EventManager;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;

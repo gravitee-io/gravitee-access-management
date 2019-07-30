@@ -129,9 +129,9 @@ public class SecurityConfiguration {
 
         @Bean
         public Filter socialAuthFilter() {
-            SocialAuthenticationFilter oAuth2ClientAuthenticationFilter = new SocialAuthenticationFilter("/login/callback");
-            oAuth2ClientAuthenticationFilter.setApplicationEventPublisher(applicationEventPublisher);
-            return oAuth2ClientAuthenticationFilter;
+            SocialAuthenticationFilter socialAuthenticationFilter = new SocialAuthenticationFilter("/login/callback");
+            socialAuthenticationFilter.setApplicationEventPublisher(applicationEventPublisher);
+            return socialAuthenticationFilter;
         }
 
         @Bean

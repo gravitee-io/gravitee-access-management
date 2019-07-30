@@ -31,7 +31,7 @@
 
         <h4>Social</h4>
         <mat-form-field>
-          <mat-select placeholder="Social providers" multiple name="oauth2Identities" [(ngModel)]="domain.oauth2Identities">
+          <mat-select placeholder="Social providers" multiple name="oauth2Identities" [(ngModel)]="domain.socialIdentities">
             <mat-option *ngFor="let identityProvider of oauth2IdentityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
           </mat-select>
         </mat-form-field>

@@ -15,31 +15,35 @@
  */
 package io.gravitee.am.plugins.idp.core;
 
+import io.gravitee.am.certificate.api.CertificateManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.IdentityProvider;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.plugin.core.api.Plugin;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface IdentityProviderPluginManager {
 
-    void register(IdentityProviderDefinition identityProviderPluginDefinition, boolean oauth2Provider);
+    void register(IdentityProviderDefinition identityProviderPluginDefinition);
 
-    Collection<Plugin> getAll();
-
-    Collection<Plugin> getOAuth2Providers();
+    Map<IdentityProvider, Plugin> getAll();
 
     Plugin findById(String identityProviderId);
 
-    AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper);
+    AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper, CertificateManager certificateManager);
 
     UserProvider create(String type, String configuration);
 
     String getSchema(String identityProviderId) throws IOException;
+
+    default AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper) {
+        return create(type, configuration, mappers, roleMapper, null);
+    }
 }

@@ -42,7 +42,7 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
-import io.gravitee.am.service.exception.authentication.AccountInactiveException;
+import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.Completable;

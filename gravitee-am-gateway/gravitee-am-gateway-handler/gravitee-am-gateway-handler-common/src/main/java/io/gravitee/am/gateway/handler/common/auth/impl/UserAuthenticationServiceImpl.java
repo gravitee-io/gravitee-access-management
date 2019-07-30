@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.auth.impl;
 
+import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
@@ -27,7 +28,6 @@ import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.exception.authentication.AccountDisabledException;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;

@@ -183,7 +183,6 @@ public class DomainServiceImpl implements DomainService {
                     domain.setDescription(updateDomain.getDescription());
                     domain.setEnabled(updateDomain.isEnabled());
                     domain.setIdentities(updateDomain.getIdentities());
-                    domain.setOauth2Identities(updateDomain.getOauth2Identities());
                     // master flag is set programmatically (keep old value)
                     domain.setMaster(oldDomain.isMaster());
                     domain.setCreatedAt(oldDomain.getCreatedAt());

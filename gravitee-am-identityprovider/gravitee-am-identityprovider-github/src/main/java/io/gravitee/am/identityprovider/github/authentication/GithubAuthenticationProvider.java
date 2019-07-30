@@ -15,19 +15,23 @@
  */
 package io.gravitee.am.identityprovider.github.authentication;
 
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.common.Request;
+import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
+import io.gravitee.am.identityprovider.github.GithubIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.github.authentication.spring.GithubAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.github.model.GithubUser;
 import io.gravitee.am.identityprovider.github.utils.URLEncodedUtils;
 import io.gravitee.am.model.http.BasicNameValuePair;
 import io.gravitee.am.model.http.NameValuePair;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.vertx.core.json.JsonObject;
@@ -43,12 +47,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import(GithubAuthenticationProviderConfiguration.class)
-public class GithubAuthenticationProvider implements OAuth2AuthenticationProvider {
+public class GithubAuthenticationProvider implements SocialAuthenticationProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GithubAuthenticationProvider.class);
     private static final String CLIENT_ID = "client_id";
@@ -60,7 +66,28 @@ public class GithubAuthenticationProvider implements OAuth2AuthenticationProvide
     private WebClient client;
 
     @Autowired
-    private OAuth2IdentityProviderConfiguration configuration;
+    private GithubIdentityProviderConfiguration configuration;
+
+    @Override
+    public Request signInUrl(String redirectUri) {
+        try {
+            UriBuilder builder = UriBuilder.fromHttpUrl(configuration.getUserAuthorizationUri());
+            builder.addParameter(Parameters.CLIENT_ID, configuration.getClientId());
+            builder.addParameter(Parameters.REDIRECT_URI, redirectUri);
+            builder.addParameter(Parameters.RESPONSE_TYPE, configuration.getResponseType());
+            if (configuration.getScopes() != null && !configuration.getScopes().isEmpty()) {
+                builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, configuration.getScopes()));
+            }
+
+            Request request = new Request();
+            request.setMethod(HttpMethod.GET);
+            request.setUri(builder.build().toString());
+            return request;
+        } catch (Exception e) {
+            LOGGER.error("An error occurs while building GitHub Sign In URL", e);
+            return null;
+        }
+    }
 
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
@@ -71,11 +98,6 @@ public class GithubAuthenticationProvider implements OAuth2AuthenticationProvide
     @Override
     public Maybe<User> loadUserByUsername(String username) {
         return Maybe.empty();
-    }
-
-    @Override
-    public OAuth2IdentityProviderConfiguration configuration() {
-        return configuration;
     }
 
     private Maybe<String> authenticate(Authentication authentication) {

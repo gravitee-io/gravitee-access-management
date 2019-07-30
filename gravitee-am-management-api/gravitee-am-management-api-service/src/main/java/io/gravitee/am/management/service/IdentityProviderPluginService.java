@@ -19,15 +19,16 @@ import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface IdentityProviderPluginService {
 
-    Single<Set<IdentityProviderPlugin>> findAll(Boolean oauth2Provider);
+    Single<List<IdentityProviderPlugin>> findAll(Boolean external);
 
     Maybe<IdentityProviderPlugin> findById(String identityProviderPlugin);
 

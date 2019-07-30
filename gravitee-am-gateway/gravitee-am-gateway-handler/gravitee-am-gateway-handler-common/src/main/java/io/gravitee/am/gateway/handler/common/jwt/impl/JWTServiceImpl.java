@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.jwt.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
+import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;

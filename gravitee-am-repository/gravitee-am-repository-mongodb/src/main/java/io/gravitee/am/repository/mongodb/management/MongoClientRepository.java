@@ -223,7 +223,6 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setAutoApproveScopes(clientMongo.getAutoApproveScopes());
         client.setEnabled(clientMongo.isEnabled());
         client.setIdentities(clientMongo.getIdentities());
-        client.setOauth2Identities(clientMongo.getOauth2Identities());
         client.setDomain(clientMongo.getDomain());
         client.setAuthorizedGrantTypes(clientMongo.getAuthorizedGrantTypes());
         client.setIdTokenValiditySeconds(clientMongo.getIdTokenValiditySeconds());
@@ -290,7 +289,6 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setAutoApproveScopes(client.getAutoApproveScopes());
         clientMongo.setEnabled(client.isEnabled());
         clientMongo.setIdentities(client.getIdentities());
-        clientMongo.setOauth2Identities(client.getOauth2Identities());
         clientMongo.setDomain(client.getDomain());
         clientMongo.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
         clientMongo.setCertificate(client.getCertificate());

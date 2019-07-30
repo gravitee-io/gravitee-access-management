@@ -15,24 +15,26 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.auth.handler.impl;
 
+import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.impl.AuthHandlerImpl;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
-import io.gravitee.am.model.Client;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.AuthProvider;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.Session;
+import io.vertx.ext.web.handler.impl.HttpStatusException;
 
 import java.net.URISyntaxException;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,39 +45,82 @@ public class SocialAuthHandlerImpl extends AuthHandlerImpl {
     private static final String USERNAME_PARAMETER = "username";
     private static final String PASSWORD_PARAMETER = "password";
     private static final String PROVIDER_PARAMETER = "provider";
-    private static final String OAUTH2_IDENTIFIER = "_oauth2_";
-    private static final String ACCESS_TOKEN_PARAMETER = "access_token";
-    private static final String ID_TOKEN_PARAMETER = "id_token";
-    private static final String ADDITIONAL_PARAMETERS = "additionalParameters";
-    private static final String CLIENT_CONTEXT_KEY = "client";
+    private SocialAuthenticationProvider socialAuthenticationProvider;
 
-    public SocialAuthHandlerImpl(SocialAuthenticationProvider authProvider) {
+    public SocialAuthHandlerImpl(AuthProvider authProvider) {
         super(authProvider);
+        socialAuthenticationProvider = (SocialAuthenticationProvider) authProvider;
+    }
+
+    /**
+     * Override default auth handler handle method to propagate the routing context to the authentication provider
+     * @param ctx the routing context
+     */
+    @Override
+    public void handle(RoutingContext ctx) {
+        if (handlePreflight(ctx)) {
+            return;
+        }
+
+        User user = ctx.user();
+        if (user != null) {
+            // proceed to AuthZ
+            authorizeUser(ctx, user);
+            return;
+        }
+        // parse the request in order to extract the credentials object
+        parseCredentials(ctx, res -> {
+            if (res.failed()) {
+                processException(ctx, res.cause());
+                return;
+            }
+            // check if the user has been set
+            User updatedUser = ctx.user();
+
+            if (updatedUser != null) {
+                Session session = ctx.session();
+                if (session != null) {
+                    // the user has upgraded from unauthenticated to authenticated
+                    // session should be upgraded as recommended by owasp
+                    session.regenerateId();
+                }
+                // proceed to AuthZ
+                authorizeUser(ctx, updatedUser);
+                return;
+            }
+
+            // proceed to authN
+            getSocialAuthenticationProvider().authenticate(ctx, res.result(), authN -> {
+                if (authN.succeeded()) {
+                    User authenticated = authN.result();
+                    ctx.setUser(authenticated);
+                    Session session = ctx.session();
+                    if (session != null) {
+                        // the user has upgraded from unauthenticated to authenticated
+                        // session should be upgraded as recommended by owasp
+                        session.regenerateId();
+                    }
+                    // proceed to AuthZ
+                    authorizeUser(ctx, authenticated);
+                } else {
+                    String header = authenticateHeader(ctx);
+                    if (header != null) {
+                        ctx.response()
+                                .putHeader("WWW-Authenticate", header);
+                    }
+                    // to allow further processing if needed
+                    processException(ctx, new HttpStatusException(401, authN.cause()));
+                }
+            });
+        });
     }
 
     protected final void parseAuthorization(RoutingContext context, Handler<AsyncResult<JsonObject>> handler) {
-        final OAuth2AuthenticationProvider authenticationProvider = context.get(PROVIDER_PARAMETER);
-        final Client client = context.get(CLIENT_CONTEXT_KEY);
-        final String providerId = context.request().getParam(PROVIDER_PARAMETER);
-
         try {
-            String password = context.request().getParam(authenticationProvider.configuration().getCodeParameter());
             JsonObject clientCredentials = new JsonObject()
-                    .put(USERNAME_PARAMETER, OAUTH2_IDENTIFIER)
-                    .put(PASSWORD_PARAMETER, password)
-                    .put(PROVIDER_PARAMETER, providerId)
-                    .put(Parameters.CLIENT_ID, client.getId());
-
-            // set additional parameters
-            Map<String, Object> additionalParameters = new HashMap();
-            additionalParameters.put(Parameters.REDIRECT_URI, buildRedirectUri(context.request()));
-            if (context.get(ACCESS_TOKEN_PARAMETER) != null) {
-                additionalParameters.put(ACCESS_TOKEN_PARAMETER, context.get(ACCESS_TOKEN_PARAMETER));
-            }
-            if (context.get(ID_TOKEN_PARAMETER) != null) {
-                additionalParameters.put(ID_TOKEN_PARAMETER, context.get(ID_TOKEN_PARAMETER));
-            }
-            clientCredentials.put(ADDITIONAL_PARAMETERS, additionalParameters);
+                    .put(USERNAME_PARAMETER, "__social__")
+                    .put(PASSWORD_PARAMETER, "__social__")
+                    .put(Parameters.REDIRECT_URI, buildRedirectUri(context.request()));
 
             handler.handle(Future.succeededFuture(clientCredentials));
         } catch (Exception e) {
@@ -87,7 +132,7 @@ public class SocialAuthHandlerImpl extends AuthHandlerImpl {
     protected void processException(RoutingContext ctx, Throwable exception) {
         if (exception != null && exception.getCause() != null) {
             // override default process exception to redirect to the login page
-            if (exception.getCause() instanceof BadCredentialsException) {
+            if (exception.getCause() instanceof AuthenticationException) {
                 ctx.fail(exception.getCause());
                 return;
             }
@@ -95,11 +140,49 @@ public class SocialAuthHandlerImpl extends AuthHandlerImpl {
         super.processException(ctx, exception);
     }
 
-    private String buildRedirectUri(HttpServerRequest request) throws URISyntaxException {
+    private SocialAuthenticationProvider getSocialAuthenticationProvider() {
+        return socialAuthenticationProvider;
+    }
+
+    private boolean handlePreflight(RoutingContext ctx) {
+        final HttpServerRequest request = ctx.request();
+        // See: https://www.w3.org/TR/cors/#cross-origin-request-with-preflight-0
+        // Preflight requests should not be subject to security due to the reason UAs will remove the Authorization header
+        if (request.method() == HttpMethod.OPTIONS) {
+            // check if there is a access control request header
+            final String accessControlRequestHeader = ctx.request().getHeader(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS);
+            if (accessControlRequestHeader != null) {
+                // lookup for the Authorization header
+                for (String ctrlReq : accessControlRequestHeader.split(",")) {
+                    if (ctrlReq.equalsIgnoreCase("Authorization")) {
+                        // this request has auth in access control, so we can allow preflighs without authentication
+                        ctx.next();
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void authorizeUser(RoutingContext ctx, User user) {
+        authorize(user, authZ -> {
+            if (authZ.failed()) {
+                processException(ctx, authZ.cause());
+                return;
+            }
+            // success, allowed to continue
+            ctx.next();
+        });
+    }
+
+    private String buildRedirectUri(io.vertx.core.http.HttpServerRequest request) throws URISyntaxException {
         return UriBuilderRequest.resolveProxyRequest(
                 new io.vertx.reactivex.core.http.HttpServerRequest(request),
                 request.path(),
                 // append provider query param to avoid redirect mismatch exception
                 Collections.singletonMap("provider", request.getParam(PROVIDER_PARAMETER)));
     }
+
 }

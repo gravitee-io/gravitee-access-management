@@ -21,15 +21,14 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
 import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -48,21 +47,16 @@ public class IdentityProviderPluginServiceImpl implements IdentityProviderPlugin
     private IdentityProviderPluginManager identityProviderPluginManager;
 
     @Override
-    public Single<Set<IdentityProviderPlugin>> findAll(Boolean oauth2Provider) {
+    public Single<List<IdentityProviderPlugin>> findAll(Boolean external) {
         LOGGER.debug("List all identity provider plugins");
-        return Single.create(emitter -> {
-            try {
-                Collection<Plugin> plugins = (oauth2Provider != null && oauth2Provider) ? identityProviderPluginManager.getOAuth2Providers() : identityProviderPluginManager.getAll();
-                emitter.onSuccess(plugins
-                        .stream()
-                        .map(this::convert)
-                        .collect(Collectors.toSet()));
-            } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to list all identity provider plugins", ex);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to list all identity provider plugins", ex));
-            }
-        });
-
+        return Observable.fromIterable(identityProviderPluginManager.getAll().entrySet())
+                .filter(entry -> (external != null && external) ? entry.getKey().external() : !entry.getKey().external())
+                .map(entry -> convert(entry.getValue()))
+                .toList()
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to list all identity provider plugins", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to list all identity provider plugins", ex));
+                });
     }
 
     @Override

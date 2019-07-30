@@ -34,10 +34,10 @@
     </mat-card>
   </div>
 
-  <div *ngIf="oauth2Providers">
+  <div *ngIf="socialProviders">
     <h4>Social</h4>
     <div fxLayout="row" fxLayoutWrap class="provider-creation-step1-content">
-      <mat-card *ngFor="let provider of oauth2Providers" fxFlex="30">
+      <mat-card *ngFor="let provider of socialProviders" fxFlex="30">
         <mat-card-header fxLayoutAlign="end end" fxLayout="row">
           <mat-radio-group [(ngModel)]="selectedProviderTypeId" (ngModelChange)="selectProviderType(true)">
             <mat-radio-button [value]="provider.id"></mat-radio-button>

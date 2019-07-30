@@ -23,6 +23,7 @@ import { DomainService } from "../../../../../services/domain.service";
 import { AppConfig } from "../../../../../../config/app.config";
 import { NgForm } from "@angular/forms";
 import { DialogService } from "../../../../../services/dialog.service";
+import * as _ from 'lodash';
 
 @Component({
   selector: 'provider-settings',
@@ -32,6 +33,7 @@ import { DialogService } from "../../../../../services/dialog.service";
 export class ProviderSettingsComponent implements OnInit {
   @ViewChild('providerForm') public form: NgForm;
   private domainId: string;
+  private certificates: any[];
   domain: any = {};
   configurationIsValid: boolean = true;
   configurationPristine: boolean = true;
@@ -51,6 +53,7 @@ export class ProviderSettingsComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.certificates = this.route.snapshot.data['certificates'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.domainId = AppConfig.settings.authentication.domainId;
     }
@@ -65,6 +68,15 @@ export class ProviderSettingsComponent implements OnInit {
       Object.keys(this.providerSchema['properties']).forEach(function(key) {
         self.providerSchema['properties'][key].default = '';
       });
+      // enhance schema information
+      if (this.providerSchema.properties.graviteeCertificate && this.certificates && this.certificates.length > 0) {
+        this.providerSchema.properties.graviteeCertificate.enum = _.flatMap(this.certificates, 'id');
+        this.providerSchema.properties.graviteeCertificate['x-schema-form'] = { "type" : "select" };
+        this.providerSchema.properties.graviteeCertificate['x-schema-form'].titleMap = this.certificates.reduce(function(map, obj) {
+          map[obj.id] = obj.name;
+          return map;
+        }, {});
+      }
     });
   }
 

@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
-import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 
 /**
  * An Authentication Error Response is an OAuth 2.0 Authorization Error Response message returned from the OP's Authorization Endpoint

@@ -17,8 +17,9 @@ import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core'
 import {PlatformService} from "../../../../../../services/platform.service";
 import {ProviderService} from "../../../../../../services/provider.service";
 import {SnackbarService} from "../../../../../../services/snackbar.service";
-import {ActivatedRoute, Router, RouterStateSnapshot} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {AppConfig} from "../../../../../../../config/app.config";
+import * as _ from "lodash";
 
 @Component({
   selector: 'provider-creation-step2',
@@ -32,12 +33,14 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
   providerSchema: any = {};
   private domainId: string;
   private adminContext: boolean;
+  private certificates: any[];
 
   constructor(private platformService: PlatformService, private providerService: ProviderService,
               private snackbarService: SnackbarService, private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.certificates = this.route.snapshot.data['certificates'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.domainId = AppConfig.settings.authentication.domainId;
       this.adminContext = true;
@@ -46,7 +49,18 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.provider) {
-      this.platformService.identitySchema(changes.provider.currentValue.type).subscribe(data => this.providerSchema = data);
+      this.platformService.identitySchema(changes.provider.currentValue.type).subscribe(data => {
+        this.providerSchema = data;
+        // enhance schema information
+        if (this.providerSchema.properties.graviteeCertificate && this.certificates && this.certificates.length > 0) {
+          this.providerSchema.properties.graviteeCertificate.enum = _.flatMap(this.certificates, 'id');
+          this.providerSchema.properties.graviteeCertificate['x-schema-form'] = { "type" : "select" };
+          this.providerSchema.properties.graviteeCertificate['x-schema-form'].titleMap = this.certificates.reduce(function(map, obj) {
+            map[obj.id] = obj.name;
+            return map;
+          }, {});
+        }
+      });
     }
   }
 

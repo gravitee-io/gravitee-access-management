@@ -28,20 +28,20 @@
       </mat-grid-tile>
     </mat-grid-list>
   </div>
-  <div style="margin-top: 20px;" *ngIf="hasOAuth2IdentityProviders()">
+  <div style="margin-top: 20px;" *ngIf="hasSocialIdentityProviders()">
     <h4 >Social providers</h4>
-    <p style="font-size: 75%;">Use Social or OAuth 2.0 providers to authentication your users</p>
+    <p style="font-size: 75%;">Use Social or Enterprise providers to authentication your users</p>
     <mat-grid-list cols="3" rowHeight="4:1">
-      <mat-grid-tile fxLayout="row"  *ngFor="let identityProvider of oauth2IdentityProviders" [ngClass]="{'active': isOAuth2IdentityProviderSelected(identityProvider.id)}">
+      <mat-grid-tile fxLayout="row"  *ngFor="let identityProvider of socialIdentityProviders" [ngClass]="{'active': isIdentityProviderSelected(identityProvider.id)}">
         <span>{{ identityProvider.name }}</span>
-        <mat-slide-toggle (change)="selectOAuth2IdentityProvider($event, identityProvider.id)"
-                          [checked]="isOAuth2IdentityProviderSelected(identityProvider.id)">
+        <mat-slide-toggle (change)="selectIdentityProvider($event, identityProvider.id)"
+                          [checked]="isIdentityProviderSelected(identityProvider.id)">
         </mat-slide-toggle>
       </mat-grid-tile>
     </mat-grid-list>
   </div>
 
-  <app-emptystate *ngIf="!loadIdentities && !hasIdentityProviders() && !hasOAuth2IdentityProviders()"
+  <app-emptystate *ngIf="!loadIdentities && !hasIdentityProviders() && !hasSocialIdentityProviders()"
                   [message]="'No identity provider has been set up'"
                   [subMessage]="'Come back later to start authenticating your users'"
                   [icon]="'people'"></app-emptystate>

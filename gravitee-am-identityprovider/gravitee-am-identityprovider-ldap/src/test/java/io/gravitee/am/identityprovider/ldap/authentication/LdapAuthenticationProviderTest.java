@@ -19,7 +19,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.reactivex.observers.TestObserver;
 import org.junit.Rule;
 import org.junit.Test;

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.response;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
-import io.gravitee.am.service.utils.UriBuilder;
+import io.gravitee.am.common.web.UriBuilder;
 
 import java.net.URISyntaxException;
 

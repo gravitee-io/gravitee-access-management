@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ap
 
 import com.google.common.net.HttpHeaders;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.Client;

@@ -17,10 +17,12 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import com.google.common.net.HttpHeaders;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.common.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.common.exception.authentication.AuthenticationException;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerResponse;
@@ -46,9 +48,10 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         if (routingContext.failed()) {
             Throwable throwable = routingContext.failure();
-            // management exception (resource not found, server error, ...)
-            if (throwable instanceof BadCredentialsException || throwable instanceof InvalidRequestException) {
-                redirectToLoginPage(routingContext);
+            if (throwable instanceof OAuth2Exception
+                    || throwable instanceof AbstractManagementException
+                    || throwable instanceof AuthenticationException) {
+                redirectToLoginPage(routingContext, throwable);
             } else {
                 logger.error(throwable.getMessage(), throwable);
                 if (routingContext.statusCode() != -1) {
@@ -66,12 +69,13 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
         }
     }
 
-    private void redirectToLoginPage(RoutingContext context) {
+    private void redirectToLoginPage(RoutingContext context, Throwable throwable) {
         try {
             Client client = context.get(CLIENT_CONTEXT_KEY);
             Map<String, String> params = new HashMap<>();
             params.put(Parameters.CLIENT_ID, client.getClientId());
             params.put("error", "social_authentication_failed");
+            params.put("error_description", UriBuilder.encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage()));
             String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path().replaceFirst("/callback", ""), params);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {

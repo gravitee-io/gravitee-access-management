@@ -73,7 +73,6 @@ public class PatchClient {
     private Optional<Integer> idTokenValiditySeconds;
     private Optional<Boolean> enabled;
     private Optional<Set<String>> identities;
-    private Optional<Set<String>> oauth2Identities;
     private Optional<String> certificate;
     private Optional<Boolean> enhanceScopesWithUserPermissions;
     private Optional<Map<String, Integer>> scopeApprovals;
@@ -433,14 +432,6 @@ public class PatchClient {
         this.identities = identities;
     }
 
-    public Optional<Set<String>> getOauth2Identities() {
-        return oauth2Identities;
-    }
-
-    public void setOauth2Identities(Optional<Set<String>> oauth2Identities) {
-        this.oauth2Identities = oauth2Identities;
-    }
-
     public Optional<String> getCertificate() {
         return certificate;
     }
@@ -537,7 +528,6 @@ public class PatchClient {
         SetterUtils.safeSet(toPatch::setIdTokenValiditySeconds, this.getIdTokenValiditySeconds(), int.class);
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setIdentities, this.getIdentities());
-        SetterUtils.safeSet(toPatch::setOauth2Identities, this.getOauth2Identities());
         // we should be able to unset the certificate
         if (this.getCertificate() == null && forceNull) {
             toPatch.setCertificate(null);

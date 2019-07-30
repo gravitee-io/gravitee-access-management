@@ -25,7 +25,7 @@ import io.gravitee.am.identityprovider.inline.InlineIdentityProviderMapper;
 import io.gravitee.am.identityprovider.inline.InlineIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.inline.authentication.provisioning.InlineInMemoryUserDetailsManager;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.reactivex.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

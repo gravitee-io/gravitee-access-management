@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login SSO POST@</title>
+</head>
+
+<body onload="document.forms[0].submit()">
+    <noscript>
+        <p>
+            <strong>Note:</strong> Since your browser does not support JavaScript,
+            you must press the Continue button once to proceed.
+        </p>
+    </noscript>
+    <form th:action="${action}" method="post">
+        <input th:each="parameter : ${parameters}" type="hidden" th:name="${parameter.key}" th:value="${parameter.value}" />
+        <noscript>
+            <div>
+                <input type="submit" value="Continue"/>
+            </div>
+        </noscript>
+    </form>
+</body>
+</html>

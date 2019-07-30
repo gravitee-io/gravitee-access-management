@@ -23,15 +23,23 @@ import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ManagementAuthenticationContext implements AuthenticationContext {
 
     private final Map<String, Object> attributes = new HashMap<>();
+    private Request request;
+
+    public ManagementAuthenticationContext() { }
+
+    public ManagementAuthenticationContext(Request request) {
+        this.request = request;
+    }
 
     @Override
     public Request request() {
-        throw new IllegalStateException();
+        return request;
     }
 
     @Override
