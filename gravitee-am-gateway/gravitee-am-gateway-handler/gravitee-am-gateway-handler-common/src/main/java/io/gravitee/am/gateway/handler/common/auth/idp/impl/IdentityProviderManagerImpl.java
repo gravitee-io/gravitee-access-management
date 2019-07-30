@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.auth.idp.impl;
 import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.core.event.IdentityProviderEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateProviderManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
@@ -59,6 +60,9 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     @Autowired
     private EventManager eventManager;
 
+    @Autowired
+    private CertificateProviderManager certificateProviderManager;
+
     private ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
     private ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
     private ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
@@ -85,8 +89,6 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     public void afterPropertiesSet() {
         logger.info("Initializing identity providers for domain {}", domain.getName());
 
-        // identity providers are required for extension grants bean creation
-        // make blocking call to create them first
         try {
             Set<IdentityProvider> identityProviders = identityProviderRepository.findByDomain(domain.getId()).blockingGet();
             identityProviders.forEach(identityProvider -> updateAuthenticationProvider(identityProvider));
@@ -149,15 +151,25 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     private void updateAuthenticationProvider(IdentityProvider identityProvider) {
         logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
-        AuthenticationProvider authenticationProvider =
-                identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
-                        identityProvider.getMappers(), identityProvider.getRoleMapper());
-        UserProvider userProvider =
-                identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
-        providers.put(identityProvider.getId(), authenticationProvider);
-        identities.put(identityProvider.getId(), identityProvider);
-        if (userProvider != null) {
-            userProviders.put(identityProvider.getId(), userProvider);
+        try {
+            AuthenticationProvider authenticationProvider =
+                    identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
+                            identityProvider.getMappers(), identityProvider.getRoleMapper(), certificateProviderManager);
+            if (authenticationProvider != null) {
+                UserProvider userProvider =
+                        identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
+                providers.put(identityProvider.getId(), authenticationProvider);
+                identities.put(identityProvider.getId(), identityProvider);
+                if (userProvider != null) {
+                    userProviders.put(identityProvider.getId(), userProvider);
+                }
+            }
+        } catch (Exception ex) {
+            // failed to load the plugin
+            logger.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), ex);
+            providers.remove(identityProvider.getId());
+            identities.remove(identityProvider.getId());
+            userProviders.remove(identityProvider.getId());
         }
     }
 }

@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
-import io.gravitee.am.common.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.RedirectAuthHandler;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;

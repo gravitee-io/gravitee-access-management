@@ -41,7 +41,6 @@ public class PatchDomain {
     private Optional<Boolean> enabled;
     private Optional<String> path;
     private Optional<Set<String>> identities;
-    private Optional<Set<String>> oauth2Identities;
     @JsonProperty("oidc")
     private Optional<PatchOIDCSettings> oidc;
     private Optional<SCIMSettings> scim;
@@ -87,14 +86,6 @@ public class PatchDomain {
 
     public void setIdentities(Optional<Set<String>> identities) {
         this.identities = identities;
-    }
-
-    public Optional<Set<String>> getOauth2Identities() {
-        return oauth2Identities;
-    }
-
-    public void setOauth2Identities(Optional<Set<String>> oauth2Identities) {
-        this.oauth2Identities = oauth2Identities;
     }
 
     public Optional<PatchOIDCSettings> getOidc() {
@@ -146,7 +137,6 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setPath, this.getPath());
         SetterUtils.safeSet(toPatch::setIdentities, this.getIdentities());
-        SetterUtils.safeSet(toPatch::setOauth2Identities, this.getOauth2Identities());
         SetterUtils.safeSet(toPatch::setScim, this.getScim());
         SetterUtils.safeSet(toPatch::setLoginSettings, this.getLoginSettings());
         SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());

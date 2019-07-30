@@ -22,7 +22,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.github.authentication.spring.GithubAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.github.utils.URLEncodedUtils;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.observers.TestObserver;
 import org.junit.Rule;

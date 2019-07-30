@@ -15,25 +15,30 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
+import io.gravitee.am.model.Client;
 import io.reactivex.Maybe;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,21 +46,19 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SocialAuthenticationProvider implements AuthProvider {
+public class SocialAuthenticationProvider implements UserAuthProvider {
 
     private final Logger logger = LoggerFactory.getLogger(SocialAuthenticationProvider.class);
     private static final String USERNAME_PARAMETER = "username";
     private static final String PASSWORD_PARAMETER = "password";
     private static final String PROVIDER_PARAMETER = "provider";
-    private static final String ADDITIONAL_PARAMETERS = "additionalParameters";
-    private IdentityProviderManager identityProviderManager;
+    private static final String CLIENT_PARAMETER = "client";
     private UserAuthenticationManager userAuthenticationManager;
 
     public SocialAuthenticationProvider() {
     }
 
-    public SocialAuthenticationProvider(IdentityProviderManager identityProviderManager, UserAuthenticationManager userAuthenticationManager) {
-        this.identityProviderManager = identityProviderManager;
+    public SocialAuthenticationProvider(UserAuthenticationManager userAuthenticationManager) {
         this.userAuthenticationManager = userAuthenticationManager;
     }
 
@@ -65,35 +68,35 @@ public class SocialAuthenticationProvider implements AuthProvider {
     }
 
     public void authenticate(RoutingContext context, JsonObject authInfo, Handler<AsyncResult<User>> resultHandler) {
-        final String authProvider = authInfo.getString(PROVIDER_PARAMETER);
+        final Client client = context.get(CLIENT_PARAMETER);
+        final AuthenticationProvider authenticationProvider = context.get(PROVIDER_PARAMETER);
+        final String authProvider = context.request().getParam(PROVIDER_PARAMETER);
         final String username = authInfo.getString(USERNAME_PARAMETER);
         final String password = authInfo.getString(PASSWORD_PARAMETER);
 
-        logger.debug("Authentication attempt using identity provider {}", authProvider);
+        logger.debug("Authentication attempt using social identity provider {}", authProvider);
 
-        identityProviderManager
-                .get(authInfo.getString(PROVIDER_PARAMETER))
-                .flatMap(authenticationProvider -> {
-                    SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(context != null ? new VertxHttpServerRequest(context.request()) : null);
-                    EndUserAuthentication endUserAuthentication = new EndUserAuthentication(username, password, authenticationContext);
+        // create authentication context
+        SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request()));
+        authenticationContext.attributes().putAll(context.data());
+        authenticationContext.set(Parameters.REDIRECT_URI, authInfo.getString(Parameters.REDIRECT_URI));
 
-                    if (authInfo.containsKey(ADDITIONAL_PARAMETERS)) {
-                        authInfo.getJsonObject(ADDITIONAL_PARAMETERS).getMap()
-                                .forEach((key, value) -> authenticationContext.set(key, value));
-                    }
-                    return authenticationProvider.loadUserByUsername(endUserAuthentication)
-                            .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate oauth2 provider, authentication provider has returned empty value")));
-                })
+        // create user authentication
+        EndUserAuthentication endUserAuthentication = new EndUserAuthentication(username, password, authenticationContext);
+
+        // authenticate the user via the social provider
+        authenticationProvider.loadUserByUsername(endUserAuthentication)
+                .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate social provider, authentication provider has returned empty value")))
                 .flatMapSingle(user -> {
                     // set source and client for the current authenticated end-user
                     Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
-                    additionalInformation.put("source", authInfo.getString(PROVIDER_PARAMETER));
-                    additionalInformation.put(Parameters.CLIENT_ID, authInfo.getString(Parameters.CLIENT_ID));
+                    additionalInformation.put("source", authProvider);
+                    additionalInformation.put(Parameters.CLIENT_ID, client.getClientId());
                     ((DefaultUser) user).setAdditionalInformation(additionalInformation);
                     return userAuthenticationManager.connect(user);
                 })
                 .subscribe(user -> resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))), error -> {
-                    logger.error("Unable to authenticate oauth2 provider", error);
+                    logger.error("Unable to authenticate social provider", error);
                     resultHandler.handle(Future.failedFuture(error));
                 });
 

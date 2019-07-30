@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.exception;
 
-import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 
 /**
  * The value of one or more redirect_uris is invalid.

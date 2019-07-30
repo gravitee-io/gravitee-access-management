@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
@@ -24,10 +23,7 @@ import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Collections;
 import java.util.Set;
-
-import static org.junit.Assert.fail;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -108,14 +104,13 @@ public class MongoClientRepositoryTest extends AbstractManagementRepositoryTest 
     public void testCreate() throws TechnicalException {
         Client client = new Client();
         client.setClientId("testClientId");
-        client.setIdTokenCustomClaims(Collections.singletonMap("name", "johndoe"));
 
         TestObserver<Client> testObserver = clientRepository.create(client).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(c -> c.getClientId().equals(client.getClientId()) && c.getIdTokenCustomClaims().containsKey("name"));
+        testObserver.assertValue(c -> c.getClientId().equals(client.getClientId()));
     }
 
     @Test

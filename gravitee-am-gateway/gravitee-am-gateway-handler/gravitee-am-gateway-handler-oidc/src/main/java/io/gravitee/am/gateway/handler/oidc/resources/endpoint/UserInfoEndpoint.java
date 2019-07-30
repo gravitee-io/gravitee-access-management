@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.oauth2.exception.InvalidRequestException;
-import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.common.jwe.JWEService;

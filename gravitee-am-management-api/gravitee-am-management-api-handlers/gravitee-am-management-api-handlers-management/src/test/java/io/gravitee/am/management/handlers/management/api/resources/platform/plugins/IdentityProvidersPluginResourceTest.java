@@ -23,8 +23,7 @@ import io.reactivex.Single;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doReturn;
@@ -41,7 +40,7 @@ public class IdentityProvidersPluginResourceTest extends JerseySpringTest {
         identityProviderPlugin.setId("identityProvider-plugin-id");
         identityProviderPlugin.setName("identityProvider-plugin-name");
 
-        doReturn(Single.just(new HashSet<>(Arrays.asList(identityProviderPlugin)))).when(identityProviderPluginService).findAll(false);
+        doReturn(Single.just(Collections.singletonList(identityProviderPlugin))).when(identityProviderPluginService).findAll(false);
 
         final Response response = target("platform")
                 .path("plugins")

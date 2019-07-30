@@ -75,8 +75,6 @@ public class Domain {
 
     private Set<String> identities;
 
-    private Set<String> oauth2Identities;
-
     private Event lastEvent;
 
     private OIDCSettings oidc;
@@ -103,7 +101,6 @@ public class Domain {
         this.path = other.path;
         this.loginForm = other.loginForm;
         this.identities = other.identities;
-        this.oauth2Identities = other.oauth2Identities;
         this.lastEvent = other.lastEvent;
         this.oidc = other.oidc;
         this.loginSettings = other.loginSettings;
@@ -190,14 +187,6 @@ public class Domain {
 
     public void setIdentities(Set<String> identities) {
         this.identities = identities;
-    }
-
-    public Set<String> getOauth2Identities() {
-        return oauth2Identities;
-    }
-
-    public void setOauth2Identities(Set<String> oauth2Identities) {
-        this.oauth2Identities = oauth2Identities;
     }
 
     public Event getLastEvent() {

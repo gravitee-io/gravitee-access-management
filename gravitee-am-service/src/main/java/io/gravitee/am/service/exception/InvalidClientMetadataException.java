@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.exception;
 
-import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 
 /**
  * The value of one of the Client Metadata fields is invalid and the server has rejected this request.

@@ -16,15 +16,19 @@
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
 import com.nimbusds.jwt.proc.JWTProcessor;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
+import io.gravitee.am.common.oidc.AuthenticationFlow;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.SecureRandomString;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.common.Request;
+import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectAuthenticationProvider;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderMapper;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
@@ -40,29 +44,32 @@ import io.gravitee.am.identityprovider.oauth2.resolver.KeyResolver;
 import io.gravitee.am.identityprovider.oauth2.utils.URLEncodedUtils;
 import io.gravitee.am.model.http.BasicNameValuePair;
 import io.gravitee.am.model.http.NameValuePair;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.util.Assert;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import(OAuth2GenericAuthenticationProviderConfiguration.class)
-public class OAuth2GenericAuthenticationProvider implements OAuth2AuthenticationProvider, InitializingBean {
+public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthenticationProvider, InitializingBean {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2GenericAuthenticationProvider.class);
+    private static final String HASH_VALUE_PARAMETER = "urlHash";
     private static final String ACCESS_TOKEN_PARAMETER = "access_token";
     private static final String ID_TOKEN_PARAMETER = "id_token";
     private static final String AUTHORIZATION_ENDPOINT = "authorization_endpoint";
@@ -73,12 +80,42 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
     private WebClient client;
 
     @Autowired
-    private OAuth2IdentityProviderConfiguration configuration;
-
-    @Autowired
     private OAuth2GenericIdentityProviderMapper mapper;
 
+    @Autowired
+    private OAuth2GenericIdentityProviderConfiguration configuration;
+
     private JWTProcessor jwtProcessor;
+
+    @Override
+    public Request signInUrl(String redirectUri) {
+        try {
+            UriBuilder builder = UriBuilder.fromHttpUrl(configuration.getUserAuthorizationUri());
+            builder.addParameter(Parameters.CLIENT_ID, configuration.getClientId());
+            builder.addParameter(Parameters.REDIRECT_URI, redirectUri);
+            builder.addParameter(Parameters.RESPONSE_TYPE, configuration.getResponseType());
+            if (configuration.getScopes() != null && !configuration.getScopes().isEmpty()) {
+                builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, configuration.getScopes()));
+            }
+            // nonce parameter is required for implicit/hybrid flow
+            if (!io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType())) {
+                builder.addParameter(io.gravitee.am.common.oidc.Parameters.NONCE, SecureRandomString.generate());
+            }
+
+            Request request = new Request();
+            request.setMethod(HttpMethod.GET);
+            request.setUri(builder.build().toString());
+            return request;
+        } catch (Exception e) {
+            LOGGER.error("An error occurs while building OpenID Connect Sign In URL", e);
+            return null;
+        }
+    }
+
+    @Override
+    public AuthenticationFlow authenticationFlow() {
+        return io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType()) ? AuthenticationFlow.AUTHORIZATION_CODE_FLOW : AuthenticationFlow.IMPLICIT_FLOW;
+    }
 
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
@@ -91,22 +128,25 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
         return Maybe.empty();
     }
 
-    @Override
-    public OAuth2IdentityProviderConfiguration configuration() {
-        return configuration;
-    }
-
     private Maybe<Token> authenticate(Authentication authentication) {
-        // implicit flow was used with response_type=id_token token, access token is already fetched, continue
-        if (authentication.getContext().get(ACCESS_TOKEN_PARAMETER) != null) {
-            String accessToken = (String) authentication.getContext().get(ACCESS_TOKEN_PARAMETER);
-            return Maybe.just(new Token(accessToken, TokenTypeHint.ACCESS_TOKEN));
-        }
+        // implicit flow, retrieve the hashValue of the URL (#access_token=....&token_type=...)
+        if (AuthenticationFlow.IMPLICIT_FLOW.equals(authenticationFlow())){
+            final String hashValue = authentication.getContext().request().parameters().getFirst(HASH_VALUE_PARAMETER);
+            Map<String, String> hashValues = getParams(hashValue.substring(1));
 
-        // implicit flow was used with response_type=id_token, id token is already fetched, continue
-        if (authentication.getContext().get(ID_TOKEN_PARAMETER) != null) {
-            String idToken = (String) authentication.getContext().get(ID_TOKEN_PARAMETER);
-            return Maybe.just(new Token(idToken, TokenTypeHint.ID_TOKEN));
+            // implicit flow was used with response_type=id_token token, access token is already fetched, continue
+            if (ResponseType.ID_TOKEN_TOKEN.equals(configuration.getResponseType())) {
+                String accessToken = hashValues.get(ACCESS_TOKEN_PARAMETER);
+                // put the id_token in context for later use
+                authentication.getContext().set(ID_TOKEN_PARAMETER, hashValues.get(ID_TOKEN_PARAMETER));
+                return Maybe.just(new Token(accessToken, TokenTypeHint.ACCESS_TOKEN));
+            }
+
+            // implicit flow was used with response_type=id_token, id token is already fetched, continue
+            if (ResponseType.ID_TOKEN.equals(configuration.getResponseType())) {
+                String idToken = hashValues.get(ID_TOKEN_PARAMETER);
+                return Maybe.just(new Token(idToken, TokenTypeHint.ID_TOKEN));
+            }
         }
 
         // authorization code flow, exchange code for an access token
@@ -142,8 +182,7 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
         }
 
         // if it's an access token but user ask for id token verification, try to decode it and create the end-user
-        if (TokenTypeHint.ACCESS_TOKEN.equals(token.getTypeHint())
-                && ((OAuth2GenericIdentityProviderConfiguration) configuration).isUseIdTokenForUserInfo()) {
+        if (TokenTypeHint.ACCESS_TOKEN.equals(token.getTypeHint()) && configuration.isUseIdTokenForUserInfo()) {
             if (authentication.getContext().get(ID_TOKEN_PARAMETER) != null) {
                 String idToken = (String) authentication.getContext().get(ID_TOKEN_PARAMETER);
                 return retrieveUserFromIdToken(idToken);
@@ -201,7 +240,7 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        OAuth2GenericIdentityProviderConfiguration configuration = (OAuth2GenericIdentityProviderConfiguration) this.configuration;
+        OAuth2GenericIdentityProviderConfiguration configuration = this.configuration;
 
         // check configuration
         // a client secret is required if authorization code flow is used
@@ -220,39 +259,39 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
     private void getOpenIDProviderConfiguration(OAuth2GenericIdentityProviderConfiguration configuration) {
         // fetch OpenID Provider information
         if (configuration.getWellKnownUri() != null && !configuration.getWellKnownUri().isEmpty()) {
-            client.getAbs(configuration.getWellKnownUri())
-                    .rxSend()
-                    .map(httpClientResponse -> {
-                        if (httpClientResponse.statusCode() != 200) {
-                            throw new IllegalArgumentException("Invalid OIDC Well-Known Endpoint " + httpClientResponse.statusMessage());
-                        }
-                        return httpClientResponse.bodyAsJsonObject().getMap();
-                    })
-                    .subscribe(
-                            providerConfiguration -> {
-                                if (providerConfiguration.containsKey(AUTHORIZATION_ENDPOINT)) {
-                                    configuration.setUserAuthorizationUri((String) providerConfiguration.get(AUTHORIZATION_ENDPOINT));
-                                }
-                                if (providerConfiguration.containsKey(TOKEN_ENDPOINT)) {
-                                    configuration.setAccessTokenUri((String) providerConfiguration.get(TOKEN_ENDPOINT));
-                                }
-                                if (providerConfiguration.containsKey(USERINFO_ENDPOINT)) {
-                                    configuration.setUserProfileUri((String) providerConfiguration.get(USERINFO_ENDPOINT));
-                                }
+            try {
+                Map<String, Object> providerConfiguration = client.getAbs(configuration.getWellKnownUri())
+                        .rxSend()
+                        .map(httpClientResponse -> {
+                            if (httpClientResponse.statusCode() != 200) {
+                                throw new IllegalArgumentException("Invalid OIDC Well-Known Endpoint : " + httpClientResponse.statusMessage());
+                            }
+                            return httpClientResponse.bodyAsJsonObject().getMap();
+                        }).blockingGet();
 
-                                // configuration verification
-                                Assert.notNull(configuration.getUserAuthorizationUri(), "OAuth 2.0 Authoriziation endpoint is required");
+                if (providerConfiguration.containsKey(AUTHORIZATION_ENDPOINT)) {
+                    configuration.setUserAuthorizationUri((String) providerConfiguration.get(AUTHORIZATION_ENDPOINT));
+                }
+                if (providerConfiguration.containsKey(TOKEN_ENDPOINT)) {
+                    configuration.setAccessTokenUri((String) providerConfiguration.get(TOKEN_ENDPOINT));
+                }
+                if (providerConfiguration.containsKey(USERINFO_ENDPOINT)) {
+                    configuration.setUserProfileUri((String) providerConfiguration.get(USERINFO_ENDPOINT));
+                }
 
-                                if (configuration.getAccessTokenUri() == null && io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType())) {
-                                    throw new IllegalStateException("OAuth 2.0 token endpoint is required for the Authorization code flow");
-                                }
+                // configuration verification
+                Assert.notNull(configuration.getUserAuthorizationUri(), "OAuth 2.0 Authoriziation endpoint is required");
 
-                                if (configuration.getUserProfileUri() == null && !configuration.isUseIdTokenForUserInfo()) {
-                                    throw new IllegalStateException("OpenID Connect UserInfo Endpoint is required to retrieve user information");
-                                }
-                            },
-                            error -> { throw new IllegalStateException(error.getMessage()); }
-                    );
+                if (configuration.getAccessTokenUri() == null && io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType())) {
+                    throw new IllegalStateException("OAuth 2.0 token endpoint is required for the Authorization code flow");
+                }
+
+                if (configuration.getUserProfileUri() == null && !configuration.isUseIdTokenForUserInfo()) {
+                    throw new IllegalStateException("OpenID Connect UserInfo Endpoint is required to retrieve user information");
+                }
+            } catch (Exception e) {
+                throw new IllegalStateException(e.getMessage());
+            }
         }
     }
 
@@ -291,6 +330,16 @@ public class OAuth2GenericAuthenticationProvider implements OAuth2Authentication
             Assert.notNull(keyProcessor, "A key processor must be set");
             jwtProcessor = keyProcessor.create(signature);
         }
+    }
+
+    private Map<String, String> getParams(String query) {
+        Map<String, String> query_pairs = new LinkedHashMap<>();
+        String[] pairs = query.split("&");
+        for (String pair : pairs) {
+            int idx = pair.indexOf("=");
+            query_pairs.put(pair.substring(0, idx), pair.substring(idx + 1));
+        }
+        return query_pairs;
     }
 
     private class Token {

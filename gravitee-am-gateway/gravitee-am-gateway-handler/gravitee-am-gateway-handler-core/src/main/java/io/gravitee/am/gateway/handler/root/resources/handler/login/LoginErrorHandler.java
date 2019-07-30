@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.exception.authentication.AccountLockedException;
+import io.gravitee.am.common.exception.authentication.AccountLockedException;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;

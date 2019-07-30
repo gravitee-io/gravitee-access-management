@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.common.oauth2;
 
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.jwt.exception.JWTException;
-import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
+import io.gravitee.am.common.exception.jwt.JWTException;
+import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;

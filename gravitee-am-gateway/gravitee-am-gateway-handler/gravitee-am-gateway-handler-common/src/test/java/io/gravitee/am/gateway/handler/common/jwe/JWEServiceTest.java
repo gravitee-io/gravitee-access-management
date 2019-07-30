@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.jwe;
 
-import io.gravitee.am.common.oauth2.exception.ServerErrorException;
+import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.gateway.handler.common.jwe.impl.JWEServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwk.JWKService;
 import io.gravitee.am.model.Client;

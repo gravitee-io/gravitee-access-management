@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.core.event.CertificateEvent;
 import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateProvider;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JJWTBuilder;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JJWTParser;
 import io.gravitee.am.model.Certificate;
@@ -51,7 +52,6 @@ import org.springframework.beans.factory.annotation.Value;
 import java.security.Key;
 import java.security.KeyPair;
 import java.util.*;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -85,6 +85,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private CertificateProviderManager certificateProviderManager;
 
     private ConcurrentMap<String, Map<String, CertificateProvider>> domainsCertificateProviders = new ConcurrentHashMap<>();
 
@@ -160,18 +163,19 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         initNoneAlgorithmCertificateProvider();
 
         logger.info("Initializing certificates for domain {}", domain.getName());
-        certificateRepository.findAll()
-                .subscribe(
-                        certificates -> {
-                            certificates.forEach(certificate -> {
-                                if (certificate.getDomain().equals(domain.getId())) {
-                                    logger.info("Initializing certificate: {} [{}]", certificate.getName(), certificate.getType());
-                                }
-                                updateCertificateProvider(certificate);
-                            });
-                            logger.info("Certificates loaded for domain {}", domain.getName());
-                        },
-                        error -> logger.error("Unable to initialize certificates for domain {}", domain.getName(), error));
+        try {
+            Set<Certificate> certificates = certificateRepository.findAll().blockingGet();
+
+            certificates.forEach(certificate -> {
+                if (certificate.getDomain().equals(domain.getId())) {
+                    logger.info("Initializing certificate: {} [{}]", certificate.getName(), certificate.getType());
+                }
+                updateCertificateProvider(certificate);
+            });
+            logger.info("Certificates loaded for domain {}", domain.getName());
+        } catch (Exception ex) {
+            logger.error("Unable to initialize certificates for domain {}", domain.getName(), ex);
+        }
     }
 
     @Override
@@ -218,6 +222,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     private void removeCertificate(String certificateId, String domainId) {
         logger.info("Domain {} has received certificate event, delete certificate {}", domain.getName(), certificateId);
+        ((CertificateProviderManagerImpl) certificateProviderManager).removeCertificate(certificateId);
         if (domainsCertificateProviders.containsKey(domainId)) {
             domainsCertificateProviders.get(domainId).remove(certificateId);
         }
@@ -226,6 +231,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     private void updateCertificateProvider(Certificate certificate) {
         // create underline provider
         io.gravitee.am.certificate.api.CertificateProvider provider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
+        if (domain.getId().equals(certificate.getDomain())) {
+            ((CertificateProviderManagerImpl) certificateProviderManager).addCertificate(certificate.getId(), provider);
+        }
 
         // create certificate provider
         CertificateProvider certificateProvider = create(provider);

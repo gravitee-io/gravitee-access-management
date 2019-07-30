@@ -21,6 +21,10 @@ package io.gravitee.am.identityprovider.api;
  */
 public interface IdentityProvider {
 
+    default boolean external() {
+        return false;
+    }
+
     Class<? extends IdentityProviderConfiguration> configuration();
 
     Class<? extends AuthenticationProvider> authenticationProvider();

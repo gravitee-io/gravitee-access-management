@@ -234,7 +234,10 @@ const routes: Routes = [
             }
           },
           { path: 'providers/new',
-            component: ProviderCreationComponent
+            component: ProviderCreationComponent,
+            resolve: {
+              certificates: CertificatesResolver
+            }
           },
           { path: 'providers/:providerId',
             component: ProviderComponent,
@@ -243,7 +246,7 @@ const routes: Routes = [
             },
             children: [
               { path: '', redirectTo: 'settings', pathMatch: 'full' },
-              { path: 'settings', component: ProviderSettingsComponent },
+              { path: 'settings', component: ProviderSettingsComponent, resolve: { certificates: CertificatesResolver } },
               { path: 'mappers', component: ProviderMappersComponent },
               { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver} }
             ]
@@ -523,7 +526,10 @@ const routes: Routes = [
             }
           },
           { path: 'providers/new',
-            component: ProviderCreationComponent
+            component: ProviderCreationComponent,
+            resolve: {
+              certificates: CertificatesResolver
+            }
           },
           { path: 'providers/:providerId',
             component: ProviderComponent,
@@ -532,7 +538,7 @@ const routes: Routes = [
             },
             children: [
               { path: '', redirectTo: 'settings', pathMatch: 'full' },
-              { path: 'settings', component: ProviderSettingsComponent },
+              { path: 'settings', component: ProviderSettingsComponent, resolve: { certificates: CertificatesResolver } },
               { path: 'mappers', component: ProviderMappersComponent },
               { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver } }
             ]

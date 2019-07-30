@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
-import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 
 /**
  * The authorization server does not support obtaining an access token using this method.

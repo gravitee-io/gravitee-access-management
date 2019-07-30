@@ -24,7 +24,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.exception.authentication.AccountStatusException;
+import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.HashMap;

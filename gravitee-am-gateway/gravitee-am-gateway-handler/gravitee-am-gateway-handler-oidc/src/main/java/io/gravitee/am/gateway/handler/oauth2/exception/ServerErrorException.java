@@ -20,7 +20,7 @@ package io.gravitee.am.gateway.handler.oauth2.exception;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ServerErrorException extends io.gravitee.am.common.oauth2.exception.ServerErrorException {
+public class ServerErrorException extends io.gravitee.am.common.exception.oauth2.ServerErrorException {
 
     public ServerErrorException() {
         super();

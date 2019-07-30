@@ -29,23 +29,19 @@ export class ClientIdPComponent implements OnInit {
   loadIdentities: boolean = true;
   client: any;
   identityProviders: any[];
-  oauth2IdentityProviders: any[];
+  socialIdentityProviders: any[];
 
-  constructor(private route: ActivatedRoute, private clientService: ClientService, private snackbarService: SnackbarService,
+  constructor(private route: ActivatedRoute,
+              private clientService: ClientService,
+              private snackbarService: SnackbarService,
               private providerService: ProviderService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.client = this.route.snapshot.parent.data['client'];
-    if (!this.client.identities) {
-      this.client.identities = [];
-    }
-    if (!this.client.oauth2Identities) {
-      this.client.oauth2Identities = [];
-    }
     this.providerService.findByDomain(this.domainId).subscribe(data => {
       this.identityProviders = data.filter(idp => !idp.external);
-      this.oauth2IdentityProviders = data.filter(idp => idp.external);
+      this.socialIdentityProviders = data.filter(idp => idp.external);
       this.loadIdentities = false;
     });
   }
@@ -62,24 +58,15 @@ export class ClientIdPComponent implements OnInit {
     this.update();
   }
 
-  selectOAuth2IdentityProvider(event, identityProviderId) {
-    (event.checked) ? this.client.oauth2Identities.push(identityProviderId) :  this.client.oauth2Identities.splice(this.client.oauth2Identities.indexOf(identityProviderId), 1);
-    this.update();
-  }
-
   isIdentityProviderSelected(identityProviderId) {
     return this.client.identities.includes(identityProviderId);
-  }
-
-  isOAuth2IdentityProviderSelected(identityProviderId) {
-    return this.client.oauth2Identities.includes(identityProviderId);
   }
 
   hasIdentityProviders() {
     return this.identityProviders && this.identityProviders.length > 0;
   }
 
-  hasOAuth2IdentityProviders() {
-    return this.oauth2IdentityProviders && this.oauth2IdentityProviders.length > 0;
+  hasSocialIdentityProviders() {
+    return this.socialIdentityProviders && this.socialIdentityProviders.length > 0;
   }
 }

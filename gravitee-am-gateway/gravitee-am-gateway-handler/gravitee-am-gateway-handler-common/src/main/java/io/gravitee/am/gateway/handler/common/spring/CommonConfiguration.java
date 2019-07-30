@@ -25,7 +25,11 @@ import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationService
 import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.gateway.handler.common.authentication.listener.AuthenticationEventListener;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
+import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateProviderManagerImpl;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwe.impl.JWEServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwk.JWKService;
@@ -34,8 +38,6 @@ import io.gravitee.am.gateway.handler.common.jws.JWSService;
 import io.gravitee.am.gateway.handler.common.jws.impl.JWSServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;
 import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
@@ -105,6 +107,11 @@ public class CommonConfiguration {
     @Bean
     public CertificateManager certificateManager() {
         return new CertificateManagerImpl();
+    }
+
+    @Bean
+    public CertificateProviderManager certificateProviderManager() {
+        return new CertificateProviderManagerImpl();
     }
 
     @Bean

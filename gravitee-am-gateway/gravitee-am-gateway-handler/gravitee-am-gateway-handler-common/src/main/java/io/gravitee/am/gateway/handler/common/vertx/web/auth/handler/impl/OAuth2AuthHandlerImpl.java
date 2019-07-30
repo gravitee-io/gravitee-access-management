@@ -16,10 +16,10 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.impl;
 
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.oauth2.exception.InsufficientScopeException;
-import io.gravitee.am.common.oauth2.exception.InvalidRequestException;
-import io.gravitee.am.common.oauth2.exception.InvalidTokenException;
-import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.exception.oauth2.InsufficientScopeException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
@@ -30,8 +30,6 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.impl.HttpStatusException;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
-import java.util.Arrays;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

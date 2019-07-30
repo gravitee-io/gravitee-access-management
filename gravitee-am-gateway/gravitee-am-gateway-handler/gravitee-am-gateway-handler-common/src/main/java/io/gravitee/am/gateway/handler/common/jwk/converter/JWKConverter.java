@@ -22,7 +22,7 @@ import com.nimbusds.jose.jwk.OctetKeyPair;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jose.util.Base64URL;
-import io.gravitee.am.common.oauth2.exception.ServerErrorException;
+import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.KeyType;

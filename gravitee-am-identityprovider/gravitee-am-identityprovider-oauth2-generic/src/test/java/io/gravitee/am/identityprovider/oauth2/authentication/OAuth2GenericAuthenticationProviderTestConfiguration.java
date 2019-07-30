@@ -34,7 +34,7 @@ public class OAuth2GenericAuthenticationProviderTestConfiguration {
     @Bean
     public OAuth2GenericIdentityProviderConfiguration oAuth2GenericIdentityProviderConfiguration() {
         OAuth2GenericIdentityProviderConfiguration configuration = new OAuth2GenericIdentityProviderConfiguration();
-
+        configuration.setResponseType("code");
         configuration.setClientId("test-client-id");
         configuration.setClientSecret("test-client-secret");
         configuration.setAccessTokenUri("http://localhost:19999/oauth/token");

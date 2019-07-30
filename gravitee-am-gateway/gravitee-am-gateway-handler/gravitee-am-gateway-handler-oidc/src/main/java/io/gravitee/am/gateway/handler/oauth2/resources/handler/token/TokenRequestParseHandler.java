@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.token;
 
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.common.oauth2.exception.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;

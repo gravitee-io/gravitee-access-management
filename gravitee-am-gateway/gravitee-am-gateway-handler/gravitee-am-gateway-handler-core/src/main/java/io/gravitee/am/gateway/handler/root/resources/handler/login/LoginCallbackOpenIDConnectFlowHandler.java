@@ -15,8 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
-import io.gravitee.am.common.oauth2.ResponseType;
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
+import io.gravitee.am.common.oidc.AuthenticationFlow;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectAuthenticationProvider;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -44,10 +45,10 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
     @Override
     public void handle(RoutingContext context) {
         final String providerId = context.request().getParam(PROVIDER_PARAMETER);
-        final OAuth2AuthenticationProvider authenticationProvider = context.get(PROVIDER_PARAMETER);
+        final AuthenticationProvider authenticationProvider = context.get(PROVIDER_PARAMETER);
 
-        // response_type == code (nominal use case), continue
-        if (ResponseType.CODE.equals(authenticationProvider.configuration().getResponseType())) {
+        // identity provider type is not OpenID Connect or the implicit flow is not used, continue
+        if (!canHandle(authenticationProvider)) {
             context.next();
             return;
         }
@@ -62,5 +63,10 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
                 context.fail(res.cause());
             }
         });
+    }
+
+    private boolean canHandle(AuthenticationProvider authenticationProvider) {
+        return (authenticationProvider instanceof OpenIDConnectAuthenticationProvider)
+                && (((OpenIDConnectAuthenticationProvider) authenticationProvider).authenticationFlow().equals(AuthenticationFlow.IMPLICIT_FLOW));
     }
 }

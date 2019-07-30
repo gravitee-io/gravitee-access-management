@@ -17,14 +17,14 @@ package io.gravitee.am.identityprovider.github;
 
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProvider;
+import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.github.authentication.GithubAuthenticationProvider;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GithubIdentityProvider implements OAuth2IdentityProvider {
+public class GithubIdentityProvider implements SocialIdentityProvider {
 
     @Override
     public Class<? extends IdentityProviderConfiguration> configuration() {

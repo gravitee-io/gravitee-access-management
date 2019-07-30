@@ -24,7 +24,7 @@ import { PlatformService } from "../../../../../../services/platform.service";
 export class ProviderCreationStep1Component implements OnInit {
   @Input() provider;
   providers: any[];
-  oauth2Providers: any[];
+  socialProviders: any[];
   selectedProviderTypeId : string;
 
   constructor(private platformService: PlatformService) {
@@ -32,7 +32,7 @@ export class ProviderCreationStep1Component implements OnInit {
 
   ngOnInit() {
     this.platformService.identities().subscribe(data => this.providers = data);
-    this.platformService.oauth2Identities().subscribe(data => this.oauth2Providers = data);
+    this.platformService.socialIdentities().subscribe(data => this.socialProviders = data);
   }
 
   selectProviderType(isExternal: boolean) {

@@ -42,15 +42,15 @@
                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary">Log in</button>
                 </form>
 
-                <div th:if="${oauth2Providers}" class="social-login-buttons">
+                <div th:if="${socialProviders}" class="social-login-buttons">
                     <div class="signup-or-separator">
                         <h6 class="text">or Sign in with</h6>
                         <hr>
                     </div>
-                    <a th:href="${authorizeUrls.get(oauth2Provider.getId())}"
-                       th:class="'mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect btn-' + ${oauth2Provider.getType()}"
-                       th:each="oauth2Provider : ${oauth2Providers}">
-                        <i th:class="'fa fa-' + ${oauth2Provider.getType()}"></i> <span th:text="${oauth2Provider.getName()}"></span>
+                    <a th:href="${authorizeUrls.get(socialProvider.getId())}"
+                       th:class="'mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect btn-' + ${socialProvider.getType()}"
+                       th:each="socialProvider : ${socialProviders}">
+                        <i th:class="'fa fa-' + ${socialProvider.getType()}"></i> <span th:text="${socialProvider.getName()}"></span>
                     </a>
                 </div>
             </div>

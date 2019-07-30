@@ -57,7 +57,7 @@ export class DomainService {
   patchIdentityProviders(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
       'identities' : domain.identities,
-      'oauth2Identities': domain.oauth2Identities
+      'oauth2Identities': domain.socialIdentities
     });
   }
 

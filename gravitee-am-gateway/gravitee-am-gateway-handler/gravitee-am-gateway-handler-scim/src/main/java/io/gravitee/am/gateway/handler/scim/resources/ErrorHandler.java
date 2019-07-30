@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.scim.resources;
 
-import io.gravitee.am.common.oauth2.exception.OAuth2Exception;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UnauthorizedException;
 import io.gravitee.am.gateway.handler.scim.model.Error;

@@ -22,9 +22,10 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.utils.URLEncodedUtils;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.observers.TestObserver;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,17 +67,17 @@ public class OAuth2GenericAuthenticationProviderTest {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             @Override
             public Object getCredentials() {
-                return "test-code";
+                return "__social__";
             }
 
             @Override
             public Object getPrincipal() {
-                return "__oauth2__";
+                return "__social__";
             }
 
             @Override
             public AuthenticationContext getContext() {
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"));
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), new DummyRequest());
             }
         }).test();
 
@@ -97,17 +98,17 @@ public class OAuth2GenericAuthenticationProviderTest {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             @Override
             public Object getCredentials() {
-                return "wrongpassword";
+                return "__social__";
             }
 
             @Override
             public Object getPrincipal() {
-                return "bob";
+                return "__social__";
             }
 
             @Override
             public AuthenticationContext getContext() {
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"));
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), new DummyRequest());
             }
         }).test();
         testObserver.awaitTerminalEvent();
@@ -129,17 +130,17 @@ public class OAuth2GenericAuthenticationProviderTest {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             @Override
             public Object getCredentials() {
-                return "bobspassword";
+                return "__social__";
             }
 
             @Override
             public Object getPrincipal() {
-                return "unknownUsername";
+                return "__social__";
             }
 
             @Override
             public AuthenticationContext getContext() {
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"));
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), new DummyRequest());
             }
         }).test();
         testObserver.awaitTerminalEvent();

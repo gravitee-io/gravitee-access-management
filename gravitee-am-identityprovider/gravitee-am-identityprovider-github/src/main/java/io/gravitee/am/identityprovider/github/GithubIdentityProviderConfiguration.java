@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.identityprovider.github;
 
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 
 import java.util.Set;
 
@@ -23,12 +23,13 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GithubIdentityProviderConfiguration implements OAuth2IdentityProviderConfiguration {
+public class GithubIdentityProviderConfiguration implements IdentityProviderConfiguration {
 
     private String USER_AUTHORIZATION_URI = "https://github.com/login/oauth/authorize";
     private String ACCESS_TOKEN_URI = "https://github.com/login/oauth/access_token";
     private String USER_PROFILE_URI = "https://api.github.com/user";
     private String CODE_PARAMETER = "code";
+    private String RESPONSE_TYPE = "code";
     private String clientId;
     private String clientSecret;
     private Set<String> scopes;
@@ -71,6 +72,10 @@ public class GithubIdentityProviderConfiguration implements OAuth2IdentityProvid
 
     public String getCodeParameter() {
         return CODE_PARAMETER;
+    }
+
+    public String getResponseType() {
+        return RESPONSE_TYPE;
     }
 
     public void setUserAuthorizationUri(String userAuthorizationUri) {

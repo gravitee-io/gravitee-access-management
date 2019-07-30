@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.client;
 
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.common.oauth2.exception.InvalidRequestException;
-import io.gravitee.am.common.oauth2.exception.ServerErrorException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.model.Client;
 import io.vertx.core.AsyncResult;

@@ -15,9 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.common.jwt.impl;
 
+import io.gravitee.am.common.exception.jwt.SignatureException;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.jwt.exception.ExpiredJWTException;
-import io.gravitee.am.common.jwt.exception.MalformedJWTException;
+import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
+import io.gravitee.am.common.exception.jwt.MalformedJWTException;
 import io.gravitee.am.gateway.handler.common.jwt.JWTParser;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -51,7 +52,7 @@ public class JJWTParser implements JWTParser {
             throw new MalformedJWTException("Token is malformed", ex);
         } catch (io.jsonwebtoken.security.SignatureException | UnsupportedJwtException ex) {
             logger.debug("Verifying JWT token signature : {} has failed", payload);
-            throw new io.gravitee.am.common.jwt.exception.SignatureException("Token's signature is invalid", ex);
+            throw new SignatureException("Token's signature is invalid", ex);
         } catch (Exception ex) {
             logger.error("An error occurs while parsing JWT token : {}", payload, ex);
             throw ex;

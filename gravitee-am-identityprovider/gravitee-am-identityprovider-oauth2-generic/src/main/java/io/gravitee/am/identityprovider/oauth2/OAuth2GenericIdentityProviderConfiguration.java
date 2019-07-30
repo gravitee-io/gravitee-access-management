@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.identityprovider.oauth2;
 
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.jwt.algo.Signature;
 import io.gravitee.am.identityprovider.oauth2.resolver.KeyResolver;
 
@@ -25,7 +25,7 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class OAuth2GenericIdentityProviderConfiguration implements OAuth2IdentityProviderConfiguration {
+public class OAuth2GenericIdentityProviderConfiguration implements IdentityProviderConfiguration {
 
     private static final String CODE_PARAMETER = "code";
     private String clientId;
@@ -41,7 +41,6 @@ public class OAuth2GenericIdentityProviderConfiguration implements OAuth2Identit
     private KeyResolver publicKeyResolver;
     private String resolverParameter;
 
-    @Override
     public String getClientId() {
         return clientId;
     }
@@ -50,7 +49,6 @@ public class OAuth2GenericIdentityProviderConfiguration implements OAuth2Identit
         this.clientId = clientId;
     }
 
-    @Override
     public String getClientSecret() {
         return clientSecret;
     }
@@ -67,7 +65,6 @@ public class OAuth2GenericIdentityProviderConfiguration implements OAuth2Identit
         this.wellKnownUri = wellKnownUri;
     }
 
-    @Override
     public String getUserAuthorizationUri() {
         return userAuthorizationUri;
     }
@@ -76,7 +73,6 @@ public class OAuth2GenericIdentityProviderConfiguration implements OAuth2Identit
         this.userAuthorizationUri = userAuthorizationUri;
     }
 
-    @Override
     public String getAccessTokenUri() {
         return accessTokenUri;
     }
@@ -85,7 +81,6 @@ public class OAuth2GenericIdentityProviderConfiguration implements OAuth2Identit
         this.accessTokenUri = accessTokenUri;
     }
 
-    @Override
     public String getUserProfileUri() {
         return userProfileUri;
     }
@@ -94,12 +89,10 @@ public class OAuth2GenericIdentityProviderConfiguration implements OAuth2Identit
         this.userProfileUri = userProfileUri;
     }
 
-    @Override
     public String getCodeParameter() {
         return CODE_PARAMETER;
     }
 
-    @Override
     public Set<String> getScopes() {
         return scopes;
     }
@@ -108,7 +101,6 @@ public class OAuth2GenericIdentityProviderConfiguration implements OAuth2Identit
         this.scopes = scopes;
     }
 
-    @Override
     public String getResponseType() {
         return responseType;
     }

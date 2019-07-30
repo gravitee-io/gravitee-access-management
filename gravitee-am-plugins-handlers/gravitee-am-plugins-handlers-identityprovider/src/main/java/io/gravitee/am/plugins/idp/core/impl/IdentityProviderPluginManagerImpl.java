@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.plugins.idp.core.impl;
 
+import io.gravitee.am.certificate.api.CertificateManager;
 import io.gravitee.am.identityprovider.api.*;
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2IdentityProvider;
 import io.gravitee.am.plugins.idp.core.*;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -50,7 +49,6 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
 
     private final Map<String, IdentityProvider> identityProviders = new HashMap<>();
     private final Map<IdentityProvider, Plugin> identityProviderPlugins = new HashMap<>();
-    private final Map<IdentityProvider, Plugin> oauth2IdentityProviderPlugins = new HashMap<>();
 
     @Autowired
     private PluginContextFactory pluginContextFactory;
@@ -72,41 +70,27 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     private Vertx vertx;
 
     @Override
-    public void register(IdentityProviderDefinition identityProviderPluginDefinition, boolean oauth2Provider) {
+    public void register(IdentityProviderDefinition identityProviderPluginDefinition) {
         identityProviders.putIfAbsent(identityProviderPluginDefinition.getPlugin().id(),
                 identityProviderPluginDefinition.getIdentityProvider());
 
         identityProviderPlugins.putIfAbsent(identityProviderPluginDefinition.getIdentityProvider(),
                 identityProviderPluginDefinition.getPlugin());
-
-        if (oauth2Provider) {
-            oauth2IdentityProviderPlugins.putIfAbsent(identityProviderPluginDefinition.getIdentityProvider(),
-                    identityProviderPluginDefinition.getPlugin());
-        }
     }
 
     @Override
-    public Collection<Plugin> getAll() {
-        Set<String> oauth2ProviderIds = getOAuth2Providers().stream().map(plugin -> plugin.id()).collect(Collectors.toSet());
-        return identityProviderPlugins.values().stream().filter(plugin -> !oauth2ProviderIds.contains(plugin.id())).collect(Collectors.toSet());
-    }
-
-    @Override
-    public Collection<Plugin> getOAuth2Providers() {
-        return oauth2IdentityProviderPlugins.values();
+    public Map<IdentityProvider, Plugin> getAll() {
+        return identityProviderPlugins;
     }
 
     @Override
     public Plugin findById(String identityProviderId) {
         IdentityProvider identityProvider = identityProviders.get(identityProviderId);
-        if (identityProvider != null) {
-            return (identityProvider instanceof OAuth2IdentityProvider) ? oauth2IdentityProviderPlugins.get(identityProvider) : identityProviderPlugins.get(identityProvider);
-        }
-        return null;
+        return identityProvider != null ? identityProviderPlugins.get(identityProvider) : null;
     }
 
     @Override
-    public AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper) {
+    public AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper, CertificateManager certificateManager) {
         logger.debug("Looking for an authentication provider for [{}]", type);
         IdentityProvider identityProvider = identityProviders.get(type);
 
@@ -123,7 +107,7 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
             return create0(
                     identityProviderPlugins.get(identityProvider),
                     identityProvider.authenticationProvider(),
-                    identityProviderConfiguration, identityProviderMapper, identityProviderRoleMapper);
+                    identityProviderConfiguration, identityProviderMapper, identityProviderRoleMapper, certificateManager);
         } else {
             logger.error("No identity provider is registered for type {}", type);
             throw new IllegalStateException("No identity provider is registered for type " + type);
@@ -175,7 +159,7 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     }
 
     private <T> T create0(Plugin plugin, Class<T> identityClass, IdentityProviderConfiguration identityProviderConfiguration,
-                          IdentityProviderMapper identityProviderMapper, IdentityProviderRoleMapper identityProviderRoleMapper) {
+                          IdentityProviderMapper identityProviderMapper, IdentityProviderRoleMapper identityProviderRoleMapper, CertificateManager certificateManager) {
         if (identityClass == null) {
             return null;
         }
@@ -215,6 +199,11 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
                     // Add identity provider role mapper bean
                     configurableApplicationContext.addBeanFactoryPostProcessor(
                             new IdentityProviderRoleMapperBeanFactoryPostProcessor(identityProviderRoleMapper != null ? identityProviderRoleMapper : new NoIdentityProviderRoleMapper()));
+
+                    if (certificateManager != null) {
+                        // Add certificate manager bean
+                        configurableApplicationContext.addBeanFactoryPostProcessor(new CertificateManagerBeanFactoryPostProcessor(certificateManager));
+                    }
 
                     return configurableApplicationContext;
                 }

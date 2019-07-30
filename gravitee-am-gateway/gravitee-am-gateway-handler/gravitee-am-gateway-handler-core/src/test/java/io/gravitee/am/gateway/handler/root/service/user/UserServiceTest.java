@@ -25,7 +25,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.exception.authentication.AccountInactiveException;
+import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;

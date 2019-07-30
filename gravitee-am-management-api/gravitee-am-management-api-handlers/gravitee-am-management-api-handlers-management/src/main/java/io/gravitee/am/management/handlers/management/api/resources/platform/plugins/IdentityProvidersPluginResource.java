@@ -50,9 +50,9 @@ public class IdentityProvidersPluginResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List identity provider plugins")
-    public void list(@QueryParam("external") Boolean oauth2Provider,
+    public void list(@QueryParam("external") Boolean external,
                                       @Suspended final AsyncResponse response) {
-        identityProviderPluginService.findAll(oauth2Provider)
+        identityProviderPluginService.findAll(external)
                 .map(identityProviderPlugins -> identityProviderPlugins.stream()
                         .sorted(Comparator.comparing(IdentityProviderPlugin::getName))
                         .collect(Collectors.toList()))

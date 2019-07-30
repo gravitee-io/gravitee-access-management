@@ -17,10 +17,11 @@ package io.gravitee.am.management.handlers.admin.filter;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
+import io.gravitee.am.management.handlers.admin.http.JettyHttpServerRequest;
 import io.gravitee.am.management.handlers.admin.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.admin.provider.security.EndUserAuthentication;
 import io.gravitee.am.management.handlers.admin.provider.security.ManagementAuthenticationContext;
@@ -47,7 +48,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -63,7 +63,6 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
      * Constant to use while setting identity provider used to authenticate a user
      */
     private static final String SOURCE = "source";
-    private static final String OAUTH2_IDENTIFIER = "_oauth2_";
     private static final String PROVIDER_PARAMETER = "provider";
     private static final String SAVED_REQUEST = "GRAVITEEIO_AM_SAVED_REQUEST";
     private static final String errorPage = "/access/error";
@@ -93,16 +92,12 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
         AuthenticationProvider authenticationProvider = identityProviderManager.get(providerId);
 
         if (authenticationProvider == null) {
-            throw new ProviderNotFoundException("OAuth2 Provider " + providerId + " not found");
+            throw new ProviderNotFoundException("Social Provider " + providerId + " not found");
         }
 
-        if (!(authenticationProvider instanceof OAuth2AuthenticationProvider)) {
-            throw new AuthenticationServiceException("OAuth2 Provider " + providerId + "is not social");
-        }
-
-        String password = request.getParameter(((OAuth2AuthenticationProvider) authenticationProvider).configuration().getCodeParameter());
-        EndUserAuthentication provAuthentication = new EndUserAuthentication(OAUTH2_IDENTIFIER, password, new ManagementAuthenticationContext());
-        provAuthentication.getContext().set(REDIRECT_URI, buildRedirectUri(request));
+        AuthenticationContext authenticationContext = new ManagementAuthenticationContext(new JettyHttpServerRequest(request));
+        authenticationContext.set(REDIRECT_URI, buildRedirectUri(request));
+        EndUserAuthentication provAuthentication = new EndUserAuthentication("__social__", "__social__", authenticationContext);
 
         try {
             User user = authenticationProvider.loadUserByUsername(provAuthentication).blockingGet();
