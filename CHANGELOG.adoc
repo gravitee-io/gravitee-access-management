@@ -1,5 +1,26 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/issues/milestone/157?closed=1[AM - 2.8.2 (2019-08-05)]
+
+=== Bug fixes
+
+*_Audits_*
+
+- Duplicate authentication events https://github.com/gravitee-io/issues/issues/2501[#2501]
+
+*_Extension-grant_*
+
+- Username claim is wrong after case-sensitivity feature https://github.com/gravitee-io/issues/issues/2482[#2482]
+
+*_Management_*
+
+- Social identity providers not working for admin domain https://github.com/gravitee-io/issues/issues/2500[#2500]
+
+*_Management-ui_*
+
+- One hour Account Blocked Duration is not displayed https://github.com/gravitee-io/issues/issues/2493[#2493]
+
+
 == https://github.com/gravitee-io/issues/issues/milestone/151?closed=1[AM - 2.8.1 (2019-07-22)]
 
 === Bug fixes
