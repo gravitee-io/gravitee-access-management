@@ -17,6 +17,9 @@ package io.gravitee.am.management.handlers.admin.spring;
 
 import io.gravitee.am.management.handlers.admin.SecurityConfiguration;
 import io.gravitee.am.management.handlers.admin.WebMvcConfiguration;
+import io.gravitee.am.management.handlers.admin.service.AuthenticationService;
+import io.gravitee.am.management.handlers.admin.service.impl.AuthenticationServiceImpl;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -32,4 +35,8 @@ import org.springframework.context.annotation.Import;
 })
 public class AdminConfiguration {
 
+    @Bean
+    public AuthenticationService authenticationService() {
+        return new AuthenticationServiceImpl();
+    }
 }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.authentication.listener;
 
+import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.handler.common.authentication.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.authentication.event.AuthenticationEvent;
 import io.gravitee.am.model.Domain;
@@ -23,15 +24,18 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.event.EventManager;
-import org.springframework.beans.factory.InitializingBean;
+import io.gravitee.common.service.AbstractService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthenticationEventListener implements InitializingBean, EventListener<AuthenticationEvent, AuthenticationDetails> {
+public class AuthenticationEventListener extends AbstractService implements EventListener<AuthenticationEvent, AuthenticationDetails> {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationEventListener.class);
 
     @Autowired
     private EventManager eventManager;
@@ -72,7 +76,18 @@ public class AuthenticationEventListener implements InitializingBean, EventListe
     }
 
     @Override
-    public void afterPropertiesSet() {
-        eventManager.subscribeForEvents(this, AuthenticationEvent.class);
+    protected void doStart() throws Exception {
+        super.doStart();
+
+        logger.info("Register event listener for authentication events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, AuthenticationEvent.class, domain.getId());
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+
+        logger.info("Dispose event listener for authentication events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(this, AuthenticationEvent.class, domain.getId());
     }
 }

@@ -133,7 +133,7 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
   private getHumanizeDuration(value) {
     let humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
-    let humanizeDateValue = humanizeDate[0] === 'a' ? 1 : humanizeDate[0];
+    let humanizeDateValue = (humanizeDate[0] === 'a' || humanizeDate[0] === 'an') ? 1 : humanizeDate[0];
     let humanizeDateUnit = humanizeDate[1].endsWith('s') ? humanizeDate[1] : humanizeDate[1] + 's';
     return new Array(humanizeDateValue, humanizeDateUnit);
   }

@@ -45,6 +45,8 @@ public interface UserService {
 
     Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
 
+    Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source);
+
     Maybe<User> findById(String id);
 
     Single<User> create(String domain, NewUser newUser);

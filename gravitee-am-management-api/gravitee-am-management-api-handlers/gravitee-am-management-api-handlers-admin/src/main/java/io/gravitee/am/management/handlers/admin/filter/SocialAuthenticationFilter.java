@@ -15,13 +15,17 @@
  */
 package io.gravitee.am.management.handlers.admin.filter;
 
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.oauth2.OAuth2AuthenticationProvider;
 import io.gravitee.am.management.handlers.admin.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.admin.provider.security.EndUserAuthentication;
 import io.gravitee.am.management.handlers.admin.provider.security.ManagementAuthenticationContext;
 import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager;
+import io.gravitee.am.management.handlers.admin.service.AuthenticationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,9 +55,9 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
+public class SocialAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
-    private final Logger logger = LoggerFactory.getLogger(OAuth2ClientAuthenticationFilter.class);
+    private final Logger logger = LoggerFactory.getLogger(SocialAuthenticationFilter.class);
 
     /**
      * Constant to use while setting identity provider used to authenticate a user
@@ -73,7 +77,10 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
     @Autowired
     private JWTGenerator jwtGenerator;
 
-    public OAuth2ClientAuthenticationFilter(String defaultFilterProcessesUrl) {
+    @Autowired
+    private AuthenticationService authenticationService;
+
+    public SocialAuthenticationFilter(String defaultFilterProcessesUrl) {
         super(defaultFilterProcessesUrl);
         setAuthenticationManager(new NoopAuthenticationManager());
         setAuthenticationFailureHandler(new SimpleUrlAuthenticationFailureHandler(errorPage));
@@ -128,13 +135,11 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
 
         SecurityContextHolder.getContext().setAuthentication(authResult);
 
-        // Fire event
-        if (this.authenticationEventPublisher != null) {
-            authenticationEventPublisher.publishAuthenticationSuccess(authResult);
-        }
+        // finish authentication
+        io.gravitee.am.model.User endUser = authenticationService.onAuthenticationSuccess(authResult);
 
         // store jwt authentication cookie to secure management restricted operations
-        Cookie jwtAuthenticationCookie = createJWTAuthenticationCookie(authResult);
+        Cookie jwtAuthenticationCookie = createJWTAuthenticationCookie(authResult, endUser);
         response.addCookie(jwtAuthenticationCookie);
 
         // Store the saved HTTP request itself. Used by LoginController (login/callback method)
@@ -158,8 +163,11 @@ public class OAuth2ClientAuthenticationFilter extends AbstractAuthenticationProc
         return super.requiresAuthentication(request, response) && !authenticated() && request.getParameter(PROVIDER_PARAMETER) != null;
     }
 
-    private Cookie createJWTAuthenticationCookie(Authentication authentication) {
+    private Cookie createJWTAuthenticationCookie(Authentication authentication, io.gravitee.am.model.User endUser) {
         final User principal = (User) authentication.getPrincipal();
+        ((DefaultUser) principal).setId(endUser.getId());
+        principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
+        principal.getAdditionalInformation().put(Claims.domain, endUser.getDomain());
         return jwtGenerator.generateCookie(principal);
     }
 

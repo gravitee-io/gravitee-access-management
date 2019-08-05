@@ -43,6 +43,13 @@ public class CheckAuthenticationCookieFilter extends GenericFilterBean {
     @Override
     public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) req;
+
+        // nothing to do for the login callback
+        if (request.getPathInfo() != null && request.getPathInfo().endsWith("/login/callback")) {
+            chain.doFilter(req, resp);
+            return;
+        }
+
         // user is not authenticated, continue
         if (!isUserAuthenticated()) {
             chain.doFilter(req, resp);

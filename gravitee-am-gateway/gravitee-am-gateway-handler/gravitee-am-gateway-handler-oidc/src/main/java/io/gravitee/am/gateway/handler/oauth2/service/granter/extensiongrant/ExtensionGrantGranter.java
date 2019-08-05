@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant;
 
+import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -88,8 +90,13 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                     .map(idpUser -> {
                                         User user = new User();
                                         user.setId(idpUser.getId());
-                                        user.setUsername(idpUser.getUsername());
-                                        user.setAdditionalInformation(idpUser.getAdditionalInformation());
+                                        user.setUsername(endUser.getUsername());
+
+                                        Map<String, Object> extraInformation = new HashMap<>(idpUser.getAdditionalInformation());
+                                        extraInformation.put(Claims.auth_time, user.getLoggedAt());
+                                        extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
+
+                                        user.setAdditionalInformation(extraInformation);
                                         user.setCreatedAt(idpUser.getCreatedAt());
                                         user.setUpdatedAt(idpUser.getUpdatedAt());
                                         user.setRoles(idpUser.getRoles());
