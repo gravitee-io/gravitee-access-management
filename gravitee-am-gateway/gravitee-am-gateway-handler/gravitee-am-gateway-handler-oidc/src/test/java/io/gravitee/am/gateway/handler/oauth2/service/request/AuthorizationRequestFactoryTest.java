@@ -54,7 +54,7 @@ public class AuthorizationRequestFactoryTest {
         when(httpServerRequest.params()).thenReturn(rxMultiMap);
         when(httpServerRequest.params().get(Parameters.CLIENT_ID)).thenReturn("client-id");
         when(httpServerRequest.params().get(Parameters.SCOPE)).thenReturn("scope");
-        when(httpServerRequest.params().getDelegate().entries()).thenReturn(entries);
+        when(httpServerRequest.params().entries()).thenReturn(entries);
 
         AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(httpServerRequest);
 

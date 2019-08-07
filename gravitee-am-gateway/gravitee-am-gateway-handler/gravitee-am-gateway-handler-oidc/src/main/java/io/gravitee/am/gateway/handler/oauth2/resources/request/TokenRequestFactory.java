@@ -58,10 +58,10 @@ public final class TokenRequestFactory {
         tokenRequest.setHeaders(extractHeaders(request));
         tokenRequest.setParameters(extractRequestParameters(request));
         tokenRequest.setSslSession(request.sslSession());
-        tokenRequest.setMethod(HttpMethod.valueOf(request.method().name()));
+        tokenRequest.setMethod(request.method() != null ? HttpMethod.valueOf(request.method().name()) : null);
         tokenRequest.setScheme(request.scheme());
         tokenRequest.setRawMethod(request.rawMethod());
-        tokenRequest.setVersion(HttpVersion.valueOf(request.version().name()));
+        tokenRequest.setVersion(request.version() != null ? HttpVersion.valueOf(request.version().name()) : null);
         tokenRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
         tokenRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);
 
@@ -87,17 +87,20 @@ public final class TokenRequestFactory {
                 io.gravitee.am.common.oidc.Parameters.values.stream()).collect(Collectors.toSet());
 
         MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
-        request.params().getDelegate().entries().stream().filter(entry -> !restrictedParameters.contains(entry.getKey())).forEach(entry -> additionalParameters.add(entry.getKey(), entry.getValue()));
+        request.params().entries().stream().filter(entry -> !restrictedParameters.contains(entry.getKey())).forEach(entry -> additionalParameters.add(entry.getKey(), entry.getValue()));
         return additionalParameters;
     }
 
     private HttpHeaders extractHeaders(HttpServerRequest request) {
         MultiMap vertxHeaders = request.headers();
-        HttpHeaders headers = new HttpHeaders(vertxHeaders.size());
-        for(Map.Entry<String, String> header : vertxHeaders.entries()) {
-            headers.add(header.getKey(), header.getValue());
+        if (vertxHeaders != null) {
+            HttpHeaders headers = new HttpHeaders(vertxHeaders.size());
+            for (Map.Entry<String, String> header : vertxHeaders.entries()) {
+                headers.add(header.getKey(), header.getValue());
+            }
+            return headers;
         }
-        return headers;
+        return null;
     }
 
     private String extractOrigin(HttpServerRequest request) {

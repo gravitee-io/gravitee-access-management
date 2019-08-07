@@ -438,7 +438,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
         when(jwtService.encodeUserinfo(any(),any())).thenReturn(Single.just("signedJwtBearer"));
-        when(jweService.encryptUserinfo("signedJwtBearer",client)).thenReturn(Single.just("encryptedJwtBearer"));
+        when(jweService.encryptUserinfo("signedJwtBearer",client)).thenReturn(Single.just("signedJwtBearer"));
 
         testRequest(
                 HttpMethod.GET,

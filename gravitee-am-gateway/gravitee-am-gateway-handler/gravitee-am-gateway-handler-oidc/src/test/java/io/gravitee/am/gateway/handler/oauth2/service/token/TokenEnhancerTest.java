@@ -74,7 +74,7 @@ public class TokenEnhancerTest {
 
         String idTokenPayload = "payload";
 
-        when(idTokenService.create(any(), any(), any())).thenReturn(Single.just(idTokenPayload));
+        when(idTokenService.create(oAuth2Request, client, null, null)).thenReturn(Single.just(idTokenPayload));
 
         TestObserver<Token> testObserver = tokenEnhancer.enhance(accessToken, oAuth2Request, client, null, null).test();
 
@@ -82,6 +82,6 @@ public class TokenEnhancerTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(accessToken1 -> accessToken1.getAdditionalInformation().containsKey("id_token"));
 
-        verify(idTokenService, times(1)).create(any(), any(), any());
+        verify(idTokenService, times(1)).create(any(), any(), any(), any());
     }
 }

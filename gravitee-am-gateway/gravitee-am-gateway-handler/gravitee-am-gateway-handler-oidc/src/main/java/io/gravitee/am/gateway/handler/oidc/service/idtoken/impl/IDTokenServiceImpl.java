@@ -144,7 +144,7 @@ public class IDTokenServiceImpl implements IDTokenService {
             }
         }
         // set nonce
-        String nonce = oAuth2Request.parameters().getFirst(Parameters.NONCE);
+        String nonce = oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(Parameters.NONCE) : null;
         if (nonce != null && !nonce.isEmpty()) {
             idToken.setNonce(nonce);
         }

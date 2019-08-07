@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -28,14 +29,13 @@ import io.gravitee.am.model.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
+import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -73,6 +73,12 @@ public class TokenServiceTest {
     @Mock
     private OpenIDDiscoveryService openIDDiscoveryService;
 
+    @Mock
+    private ExecutionContextFactory executionContextFactory;
+
+    @Mock
+    private TokenManager tokenManager;
+
     @Test
     public void shouldCreate() {
         OAuth2Request oAuth2Request = new OAuth2Request();
@@ -80,21 +86,19 @@ public class TokenServiceTest {
         Client client = new Client();
         client.setClientId("my-client-id");
 
-        ArgumentCaptor<io.gravitee.am.repository.oauth2.model.AccessToken> accessTokenCaptor = ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.AccessToken.class);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
 
         when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
-        when(accessTokenRepository.create(accessTokenCaptor.capture())).thenReturn(Single.just(new io.gravitee.am.repository.oauth2.model.AccessToken()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
-
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doNothing().when(tokenManager).storeAccessToken(any());
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(accessTokenRepository, times(1)).create(any());
+        verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
-
-        Assert.assertTrue("client should be client_id", client.getClientId().equals(accessTokenCaptor.getValue().getClient()));
     }
 
     @Test

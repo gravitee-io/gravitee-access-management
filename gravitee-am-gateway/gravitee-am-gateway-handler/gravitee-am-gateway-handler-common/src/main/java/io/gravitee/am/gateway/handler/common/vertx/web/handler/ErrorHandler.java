@@ -24,12 +24,13 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
+import io.vertx.ext.web.handler.impl.HttpStatusException;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Common error handler for AM and OAuth 2.0 errors
+ * Common error handler for AM errors
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -53,6 +54,9 @@ public class ErrorHandler implements Handler<RoutingContext> {
             } else if (throwable instanceof PolicyChainException) {
                 PolicyChainException policyChainException = (PolicyChainException) throwable;
                 handleException(routingContext, policyChainException.statusCode(), policyChainException.key() + " : " + policyChainException.getMessage());
+            } else if (throwable instanceof HttpStatusException) {
+                HttpStatusException httpStatusException = (HttpStatusException) throwable;
+                handleException(routingContext, httpStatusException.getStatusCode(), httpStatusException.getPayload());
             } else {
                 logger.error(throwable.getMessage(), throwable);
                 if (routingContext.statusCode() != -1) {

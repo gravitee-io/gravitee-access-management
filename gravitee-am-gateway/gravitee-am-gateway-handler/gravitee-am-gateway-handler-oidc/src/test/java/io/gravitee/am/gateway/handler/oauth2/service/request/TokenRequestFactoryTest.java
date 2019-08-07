@@ -56,7 +56,7 @@ public class TokenRequestFactoryTest {
         when(httpServerRequest.params().get(Parameters.CLIENT_ID)).thenReturn("client-id");
         when(httpServerRequest.params().get(Parameters.SCOPE)).thenReturn("scope");
         when(httpServerRequest.params().get(Parameters.GRANT_TYPE)).thenReturn("grant_type");
-        when(httpServerRequest.params().getDelegate().entries()).thenReturn(entries);
+        when(httpServerRequest.params().entries()).thenReturn(entries);
 
         TokenRequest tokenRequest = tokenRequestFactory.create(httpServerRequest);
 
