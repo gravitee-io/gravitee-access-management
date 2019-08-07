@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.common.util.LinkedMultiValueMap;
-import io.gravitee.common.util.MultiValueMap;
 
 /**
  * See <a href="https://tools.ietf.org/html/rfc6749#section-4.1.3">Access Token Request</a>
@@ -122,8 +121,8 @@ public class TokenRequest extends OAuth2Request {
     }
 
     public OAuth2Request createOAuth2Request() {
-        MultiValueMap<String, String> requestParameters = parameters();
-        MultiValueMap<String, String> safeRequestParameters = new LinkedMultiValueMap(requestParameters);
+        LinkedMultiValueMap<String, String> requestParameters = parameters();
+        LinkedMultiValueMap<String, String> safeRequestParameters = new LinkedMultiValueMap(requestParameters);
 
         // Remove password if present to prevent leaks
         safeRequestParameters.remove(Parameters.PASSWORD);

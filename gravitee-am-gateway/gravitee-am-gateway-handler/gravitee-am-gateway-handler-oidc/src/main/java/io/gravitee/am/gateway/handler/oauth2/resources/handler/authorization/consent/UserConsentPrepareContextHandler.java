@@ -48,7 +48,7 @@ public class UserConsentPrepareContextHandler implements Handler<RoutingContext>
     @Override
     public void handle(RoutingContext routingContext) {
         // user must redirected here after an authorization request
-        AuthorizationRequest authorizationRequest = routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
+        AuthorizationRequest authorizationRequest = AuthorizationRequest.readFromSession(routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST));
         if (authorizationRequest == null) {
             routingContext.response().setStatusCode(400).end("An authorization request is required to handle user approval");
             return;

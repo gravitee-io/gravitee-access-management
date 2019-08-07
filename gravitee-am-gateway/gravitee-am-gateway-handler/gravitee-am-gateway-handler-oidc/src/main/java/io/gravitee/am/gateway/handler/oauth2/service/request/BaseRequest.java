@@ -43,7 +43,7 @@ public abstract class BaseRequest implements Request {
     private String path;
     private String pathInfo;
     private String contextPath;
-    private MultiValueMap<String, String> parameters;
+    private LinkedMultiValueMap<String, String> parameters;
     private HttpHeaders headers;
     private HttpMethod method;
     private String scheme;
@@ -54,6 +54,14 @@ public abstract class BaseRequest implements Request {
     private HttpVersion version;
     private SSLSession sslSession;
     private Response httpResponse;
+    /**
+     * Request origin : scheme/host/port triple.
+     */
+    private String origin;
+    /**
+     * All query parameters that do not belong to the OAuth 2.0/OIDC specifications
+     */
+    private LinkedMultiValueMap<String, String> additionalParameters;
 
     @Override
     public String id() {
@@ -110,11 +118,11 @@ public abstract class BaseRequest implements Request {
     }
 
     @Override
-    public MultiValueMap<String, String> parameters() {
+    public LinkedMultiValueMap<String, String> parameters() {
         return parameters;
     }
 
-    public void setParameters(MultiValueMap<String, String> parameters) {
+    public void setParameters(LinkedMultiValueMap<String, String> parameters) {
         this.parameters = parameters;
     }
 
@@ -199,16 +207,6 @@ public abstract class BaseRequest implements Request {
         this.sslSession = sslSession;
     }
 
-    /**
-     * Request origin : scheme/host/port triple.
-     */
-    private String origin;
-
-    /**
-     * All query parameters that do not belong to the OAuth 2.0/OIDC specifications
-     */
-    private MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
-
     public String getOrigin() {
         return origin;
     }
@@ -217,11 +215,11 @@ public abstract class BaseRequest implements Request {
         this.origin = origin;
     }
 
-    public MultiValueMap<String, String> getAdditionalParameters() {
+    public LinkedMultiValueMap<String, String> getAdditionalParameters() {
         return additionalParameters;
     }
 
-    public void setAdditionalParameters(MultiValueMap<String, String> additionalParameters) {
+    public void setAdditionalParameters(LinkedMultiValueMap<String, String> additionalParameters) {
         this.additionalParameters = additionalParameters;
     }
 

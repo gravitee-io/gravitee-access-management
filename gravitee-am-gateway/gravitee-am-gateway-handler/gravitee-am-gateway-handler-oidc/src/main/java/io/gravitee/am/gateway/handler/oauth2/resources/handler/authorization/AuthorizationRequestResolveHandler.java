@@ -55,7 +55,7 @@ public class AuthorizationRequestResolveHandler implements Handler<RoutingContex
                 return;
             }
             // prepare context for the next handlers
-            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
+            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, AuthorizationRequest.writeToSession(authorizationRequest));
             // continue
             routingContext.next();
         });
@@ -69,7 +69,7 @@ public class AuthorizationRequestResolveHandler implements Handler<RoutingContex
     }
 
     private AuthorizationRequest resolveInitialAuthorizeRequest(RoutingContext routingContext) {
-        AuthorizationRequest authorizationRequest = routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
+        AuthorizationRequest authorizationRequest = AuthorizationRequest.readFromSession(routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST));
         // we have the authorization request in session if we come from the approval user page
         if (authorizationRequest != null) {
             return authorizationRequest;

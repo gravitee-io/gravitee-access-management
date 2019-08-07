@@ -17,7 +17,14 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
 import io.gravitee.am.model.oauth2.ScopeApproval;
+import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpMethod;
+import io.gravitee.common.http.HttpVersion;
+import io.gravitee.common.util.LinkedMultiValueMap;
+import io.vertx.core.json.JsonObject;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -137,5 +144,61 @@ public class AuthorizationRequest extends OAuth2Request {
         oAuth2Request.setState(getState());
 
         return oAuth2Request;
+    }
+
+    public static JsonObject writeToSession(AuthorizationRequest authorizationRequest) {
+        if (authorizationRequest == null) {
+            return null;
+        }
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.put("id", authorizationRequest.id());
+        jsonObject.put("transactionId", authorizationRequest.transactionId());
+        jsonObject.put("timestamp", authorizationRequest.timestamp());
+        jsonObject.put("path", authorizationRequest.path());
+        jsonObject.put("origin", authorizationRequest.getOrigin());
+        jsonObject.put("uri", authorizationRequest.uri());
+        jsonObject.put("scheme", authorizationRequest.scheme());
+        jsonObject.put("contextPath", authorizationRequest.contextPath());
+        jsonObject.put("method", authorizationRequest.method());
+        jsonObject.put("version", authorizationRequest.version());
+        jsonObject.put("headers", authorizationRequest.headers());
+        jsonObject.put("parameters", authorizationRequest.parameters());
+        jsonObject.put("clientId", authorizationRequest.getClientId());
+        jsonObject.put("scopes", authorizationRequest.getScopes() != null ? new ArrayList<>(authorizationRequest.getScopes()) : null);
+        jsonObject.put("responseType", authorizationRequest.getResponseType());
+        jsonObject.put("additionalParameters", authorizationRequest.getAdditionalParameters());
+        jsonObject.put("state", authorizationRequest.getState());
+        jsonObject.put("redirectUri", authorizationRequest.getRedirectUri());
+        jsonObject.put("approved", authorizationRequest.isApproved());
+        jsonObject.put("consents", authorizationRequest.getConsents());
+        return jsonObject;
+    }
+
+    public static AuthorizationRequest readFromSession(JsonObject jsonObject) {
+        if (jsonObject == null) {
+            return null;
+        }
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setId(jsonObject.getString("id"));
+        authorizationRequest.setTransactionId(jsonObject.getString("transactionId"));
+        authorizationRequest.setTimestamp(jsonObject.getLong("timestamp"));
+        authorizationRequest.setPath(jsonObject.getString("path"));
+        authorizationRequest.setOrigin(jsonObject.getString("origin"));
+        authorizationRequest.setUri(jsonObject.getString("uri"));
+        authorizationRequest.setScheme(jsonObject.getString("scheme"));
+        authorizationRequest.setContextPath(jsonObject.getString("contextPath"));
+        authorizationRequest.setMethod(jsonObject.getValue("method") != null ? HttpMethod.valueOf(jsonObject.getString("method")) : null);
+        authorizationRequest.setVersion(jsonObject.getValue("version") != null ? HttpVersion.valueOf(jsonObject.getString("version")) : null);
+        authorizationRequest.setHeaders(jsonObject.getValue("headers") != null ?jsonObject.getJsonObject("headers").mapTo(HttpHeaders.class) : null);
+        authorizationRequest.setParameters(jsonObject.getValue("parameters") != null ? jsonObject.getJsonObject("parameters").mapTo(LinkedMultiValueMap.class) : null);
+        authorizationRequest.setClientId(jsonObject.getString("clientId"));
+        authorizationRequest.setScopes(jsonObject.getValue("scopes") != null ? new HashSet<>(jsonObject.getJsonArray("scopes").getList()) : null);
+        authorizationRequest.setResponseType(jsonObject.getString("responseType"));
+        authorizationRequest.setAdditionalParameters(jsonObject.getValue("additionalParameters") != null ? jsonObject.getJsonObject("additionalParameters").mapTo(LinkedMultiValueMap.class) : null);
+        authorizationRequest.setState(jsonObject.getString("state"));
+        authorizationRequest.setRedirectUri(jsonObject.getString("redirectUri"));
+        authorizationRequest.setApproved(jsonObject.getBoolean("approved"));
+        authorizationRequest.setConsents(jsonObject.getValue("consents") != null ? jsonObject.getJsonArray("consents").getList() : null);
+        return authorizationRequest;
     }
 }

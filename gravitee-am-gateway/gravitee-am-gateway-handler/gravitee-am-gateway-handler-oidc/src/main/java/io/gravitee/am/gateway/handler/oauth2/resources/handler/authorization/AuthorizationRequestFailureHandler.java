@@ -35,7 +35,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.impl.HttpStatusException;
-import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,13 +103,13 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                             return;
                         }
                         // redirect user to the error page with error code and description
-                        doRedirect(routingContext.response(), h.result());
+                        doRedirect(routingContext, h.result());
                     });
                 } else if (throwable instanceof HttpStatusException) {
                     // in case of http status exception, go to the default error page
                     request.setRedirectUri(defaultErrorURL);
                     HttpStatusException httpStatusException = (HttpStatusException) throwable;
-                    doRedirect(routingContext.response(), buildRedirectUri(httpStatusException.getMessage(), httpStatusException.getPayload(), request));
+                    doRedirect(routingContext, buildRedirectUri(httpStatusException.getMessage(), httpStatusException.getPayload(), request));
                 } else {
                     logger.error("An exception has occurred while handling authorization request", throwable);
                     if (routingContext.statusCode() != -1) {
@@ -127,10 +126,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                 }
             } catch (Exception e) {
                 logger.error("Unable to handle authorization error response", e);
-                doRedirect(routingContext.response(), defaultErrorPath);
-            } finally {
-                // clean session
-                cleanSession(routingContext);
+                doRedirect(routingContext, defaultErrorPath);
             }
         }
     }
@@ -227,7 +223,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     }
 
     private AuthorizationRequest resolveInitialAuthorizeRequest(RoutingContext routingContext) {
-        AuthorizationRequest authorizationRequest = routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
+        AuthorizationRequest authorizationRequest = AuthorizationRequest.readFromSession(routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST));
         // we have the authorization request in session if we come from the approval user page
         if (authorizationRequest != null) {
             return authorizationRequest;
@@ -241,13 +237,14 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         return redirectUri.contains(defaultErrorPath);
     }
 
+    private void doRedirect(RoutingContext context, String url) {
+        cleanSession(context);
+        context.response().putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    }
+
     private void cleanSession(RoutingContext context) {
         context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
         context.session().remove(USER_CONSENT_COMPLETED_CONTEXT_KEY);
         context.session().remove(REQUESTED_CONSENT_CONTEXT_KEY);
-    }
-
-    private void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 }

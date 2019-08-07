@@ -88,6 +88,8 @@ public class User {
 
     private boolean enabled = true;
 
+    private boolean inactive;
+
     private boolean internal;
 
     private boolean preRegistration;

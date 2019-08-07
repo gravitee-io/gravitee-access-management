@@ -25,7 +25,6 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpVersion;
 import io.gravitee.common.util.LinkedMultiValueMap;
-import io.gravitee.common.util.MultiValueMap;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import org.slf4j.Logger;
@@ -77,17 +76,17 @@ public final class TokenRequestFactory {
         return tokenRequest;
     }
 
-    private MultiValueMap<String, String> extractRequestParameters(HttpServerRequest request) {
-        MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>(request.params().size());
+    private LinkedMultiValueMap<String, String> extractRequestParameters(HttpServerRequest request) {
+        LinkedMultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>(request.params().size());
         request.params().entries().forEach(entry -> requestParameters.add(entry.getKey(), entry.getValue()));
         return requestParameters;
     }
 
-    private MultiValueMap<String, String> extractAdditionalParameters(HttpServerRequest request) {
+    private LinkedMultiValueMap<String, String> extractAdditionalParameters(HttpServerRequest request) {
         final Set<String> restrictedParameters = Stream.concat(Parameters.values.stream(),
                 io.gravitee.am.common.oidc.Parameters.values.stream()).collect(Collectors.toSet());
 
-        MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
+        LinkedMultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
         request.params().entries().stream().filter(entry -> !restrictedParameters.contains(entry.getKey())).forEach(entry -> additionalParameters.add(entry.getKey(), entry.getValue()));
         return additionalParameters;
     }

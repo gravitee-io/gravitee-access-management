@@ -70,7 +70,7 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         final HttpServerRequest request = routingContext.request();
         final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
         final io.gravitee.am.model.User user = routingContext.user() != null ? ((User) routingContext.user().getDelegate()).getUser() : null;
-        final AuthorizationRequest authorizationRequest = session.get(OAuth2Constants.AUTHORIZATION_REQUEST);
+        final AuthorizationRequest authorizationRequest = AuthorizationRequest.readFromSession(session.get(OAuth2Constants.AUTHORIZATION_REQUEST));
         final Set<String> requestedConsent = authorizationRequest.getScopes();
         // no consent to check, continue
         if (requestedConsent == null || requestedConsent.isEmpty()) {
@@ -97,13 +97,14 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         // go to the user consent page
         if (request.params().contains(Parameters.PROMPT)
                 && request.params().get(Parameters.PROMPT).contains("consent")) {
-            session.put(REQUESTED_CONSENT_CONTEXT_KEY, requestedConsent);
+            session.put(REQUESTED_CONSENT_CONTEXT_KEY, String.join(",", requestedConsent));
             redirectToConsentPage(request);
             return;
         }
         // check if application has enabled skip consent option
         if (skipConsent(requestedConsent, client)) {
             authorizationRequest.setApproved(true);
+            session.put(OAuth2Constants.AUTHORIZATION_REQUEST, AuthorizationRequest.writeToSession(authorizationRequest));
             routingContext.next();
             return;
         }
@@ -117,12 +118,13 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
             // user approved consent, continue
             if (approvedConsent.containsAll(requestedConsent)) {
                 authorizationRequest.setApproved(true);
+                session.put(OAuth2Constants.AUTHORIZATION_REQUEST, AuthorizationRequest.writeToSession(authorizationRequest));
                 routingContext.next();
                 return;
             }
             // else go to the user consent page
             Set<String> requiredConsent = requestedConsent.stream().filter(requestedScope -> !approvedConsent.contains(requestedScope)).collect(Collectors.toSet());
-            session.put(REQUESTED_CONSENT_CONTEXT_KEY, requiredConsent);
+            session.put(REQUESTED_CONSENT_CONTEXT_KEY, String.join(",", requiredConsent));
             redirectToConsentPage(request);
         });
     }
@@ -152,7 +154,7 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         return false;
     }
 
-    public void redirectToConsentPage(HttpServerRequest request) {
+        public void redirectToConsentPage(HttpServerRequest request) {
         try {
             final Map<String, String> requestParameters = request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(request, redirectURL, requestParameters, true);

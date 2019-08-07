@@ -221,7 +221,7 @@ public class IDTokenServiceTest {
         oAuth2Request.setClientId("client-id");
         oAuth2Request.setScopes(Collections.singleton("openid"));
         oAuth2Request.setSubject("subject");
-        MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
+        LinkedMultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
         requestParameters.put("claims", Collections.singletonList("{\"id_token\":{\"name\":{\"essential\":true}}}"));
         oAuth2Request.setParameters(requestParameters);
 
@@ -377,7 +377,7 @@ public class IDTokenServiceTest {
         oAuth2Request.setClientId("client-id");
         oAuth2Request.setScopes(new HashSet<>(Arrays.asList("openid", "email", "address")));
         oAuth2Request.setSubject("subject");
-        MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
+        LinkedMultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
         requestParameters.put("claims", Collections.singletonList("{\"id_token\":{\"name\":{\"essential\":true}}}"));
         oAuth2Request.setParameters(requestParameters);
 

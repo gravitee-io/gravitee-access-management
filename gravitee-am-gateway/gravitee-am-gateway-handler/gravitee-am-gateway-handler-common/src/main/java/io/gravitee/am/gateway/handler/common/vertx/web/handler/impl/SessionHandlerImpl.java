@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -213,7 +212,7 @@ public class SessionHandlerImpl implements SessionHandler {
             if (!session.isDestroyed()) {
                 final int currentStatusCode = context.response().getStatusCode();
                 // Store the session (only and only if there was no error)
-                if (currentStatusCode >= 200 && currentStatusCode < 400 && !oauth2Error(context)) {
+                if (currentStatusCode >= 200 && currentStatusCode < 400) {
 
                     // store the current user into the session
                     if (storeUser) {
@@ -290,10 +289,6 @@ public class SessionHandlerImpl implements SessionHandler {
         context.addCookie(cookie);
         // only store the user if there's a auth provider
         addStoreSessionHandler(context, authProvider != null);
-    }
-
-    private boolean oauth2Error(RoutingContext context) {
-        return context.failed() && context.failure() instanceof OAuth2Exception;
     }
 }
 

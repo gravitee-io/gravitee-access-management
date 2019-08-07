@@ -121,7 +121,7 @@ public class UmaTokenGranterTest {
     );
 
     private TokenRequest tokenRequest;
-    private MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+    private LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
     private ArgumentCaptor<OAuth2Request> oauth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
     private static final String USER_ID = "userId";
     private static final String CLIENT_ID = "clientId";

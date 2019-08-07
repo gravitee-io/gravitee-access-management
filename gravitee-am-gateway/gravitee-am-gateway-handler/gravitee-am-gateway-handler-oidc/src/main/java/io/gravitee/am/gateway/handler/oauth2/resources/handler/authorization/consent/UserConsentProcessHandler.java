@@ -60,8 +60,8 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
         final Session session = routingContext.session();
         final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
         final io.gravitee.am.model.User user = ((User) routingContext.user().getDelegate()).getUser();
-        final Set<String> requestedConsent = session.get(REQUESTED_CONSENT_CONTEXT_KEY);
-        final AuthorizationRequest authorizationRequest = session.get(OAuth2Constants.AUTHORIZATION_REQUEST);
+        final Set<String> requestedConsent = new HashSet<>(Arrays.asList(((String) session.get(REQUESTED_CONSENT_CONTEXT_KEY)).split(",")));
+        final AuthorizationRequest authorizationRequest = AuthorizationRequest.readFromSession(session.get(OAuth2Constants.AUTHORIZATION_REQUEST));
 
         // get user consent
         MultiMap params = routingContext.request().formAttributes();
@@ -98,6 +98,7 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
             authorizationRequest.setApproved(approved);
             authorizationRequest.setScopes(approvedConsent);
             authorizationRequest.setConsents(h.result());
+            session.put(OAuth2Constants.AUTHORIZATION_REQUEST, AuthorizationRequest.writeToSession(authorizationRequest));
             session.put(USER_CONSENT_COMPLETED_CONTEXT_KEY, true);
             routingContext.next();
         });

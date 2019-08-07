@@ -30,6 +30,8 @@ import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -54,7 +56,7 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         final Session session = routingContext.session();
         final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
-        final Set<String> requiredConsent = session.get(REQUESTED_CONSENT_CONTEXT_KEY);
+        final Set<String> requiredConsent = new HashSet<>(Arrays.asList(((String) session.get(REQUESTED_CONSENT_CONTEXT_KEY)).split(",")));
 
         // fetch scope information (name + description)
         fetchConsentInformation(requiredConsent, h -> {

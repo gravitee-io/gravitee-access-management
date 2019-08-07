@@ -79,7 +79,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest  extends RxWebTestBas
         router.route().order(-2).handler(SessionHandler.create(LocalSessionStore.create(vertx)));
         router.route().order(-1).handler(routingContext -> {
             routingContext.put("client", client);
-            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
+            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, AuthorizationRequest.writeToSession(authorizationRequest));
             routingContext.next();
         });
 
@@ -112,7 +112,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest  extends RxWebTestBas
         router.route().order(-1).handler(routingContext -> {
             routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
             routingContext.put("client", client);
-            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
+            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, AuthorizationRequest.writeToSession(authorizationRequest));
             routingContext.next();
         });
         testRequest(
@@ -148,7 +148,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest  extends RxWebTestBas
         router.route().order(-2).handler(SessionHandler.create(LocalSessionStore.create(vertx)));
         router.route().order(-1).handler(routingContext -> {
             routingContext.put("client", client);
-            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
+            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, AuthorizationRequest.writeToSession(authorizationRequest));
             routingContext.next();
         });
 
@@ -180,7 +180,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest  extends RxWebTestBas
         router.route().order(-1).handler(routingContext -> {
             routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
             routingContext.put("client", client);
-            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
+            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, AuthorizationRequest.writeToSession(authorizationRequest));
             routingContext.next();
         });
 
@@ -218,7 +218,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest  extends RxWebTestBas
             routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
             routingContext.put("client", client);
             routingContext.session().put("userConsentCompleted", true);
-            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
+            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, AuthorizationRequest.writeToSession(authorizationRequest));
             routingContext.next();
         });
 
@@ -251,7 +251,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest  extends RxWebTestBas
             routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
             routingContext.put("client", client);
             routingContext.session().put("userConsentCompleted", true);
-            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
+            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, AuthorizationRequest.writeToSession(authorizationRequest));
             routingContext.next();
         });
 
