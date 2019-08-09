@@ -39,6 +39,7 @@ export class GroupService {
   update(domainId, id, group): Observable<any> {
     return this.http.put<any>(this.groupsURL + domainId + "/groups/" + id, {
       'name' : group.name,
+      'description' : group.description,
       'members' : group.members
     });
   }
@@ -49,6 +50,18 @@ export class GroupService {
 
   findMembers(domainId, groupId, page, size): Observable<any> {
     return this.http.get<any>(this.groupsURL + domainId + "/groups/" + groupId + "/members?page=" + page + "&size=" + size);
+  }
+
+  roles(domainId, groupId): Observable<any> {
+    return this.http.get<any>(this.groupsURL + domainId + "/groups/" + groupId + "/roles");
+  }
+
+  revokeRole(domainId, groupId, roleId): Observable<any> {
+    return this.http.delete<any>(this.groupsURL + domainId + "/groups/" + groupId + "/roles/" + roleId);
+  }
+
+  assignRoles(domainId, groupId, roles): Observable<any> {
+    return this.http.post<any>(this.groupsURL + domainId + "/groups/" + groupId + "/roles", roles);
   }
 
 }

@@ -20,11 +20,15 @@
   <h1>New Group</h1>
   <div class="new-group-content">
     <form (ngSubmit)="create()" #groupForm="ngForm" fxLayout="column" fxFlex="70">
-      <div fxLayout="row">
-        <mat-form-field style="margin-right: 20px;">
-          <input matInput type="text" placeholder="Group name" #name="ngModel" name="name" [(ngModel)]="group.name" required>
+      <div fxLayout="column">
+        <mat-form-field>
+          <input matInput type="text" placeholder="Name" #name="ngModel" name="name" [(ngModel)]="group.name" required>
           <mat-hint>The name of the Group.</mat-hint>
           <mat-error *ngIf="name.errors?.required">Enter name</mat-error>
+        </mat-form-field>
+        <mat-form-field>
+          <input matInput type="text" placeholder="Description" #name="ngModel" name="description" [(ngModel)]="group.description">
+          <mat-hint>The description of the Group.</mat-hint>
         </mat-form-field>
       </div>
       <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;">

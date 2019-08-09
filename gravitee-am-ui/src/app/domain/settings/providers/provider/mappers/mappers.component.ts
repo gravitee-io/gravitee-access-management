@@ -64,7 +64,7 @@ export class ProviderMappersComponent implements OnInit {
   }
 
   add() {
-    let dialogRef = this.dialog.open(CreateMapperComponent, { width : '500px'});
+    let dialogRef = this.dialog.open(CreateMapperComponent, { width : '700px'});
     dialogRef.afterClosed().subscribe(mapper => {
       if (mapper) {
         if (!this.attributeExits(mapper.key)) {

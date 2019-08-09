@@ -17,7 +17,15 @@
 -->
 <div class="user-container">
   <a [routerLink]="['..']" class="back-link"><small><< Back to users</small></a>
-  <h1>{{user.username}}</h1>
+  <div class="user-header" fxLayout="row">
+    <div class="user-avatar">
+      <img [src]="avatarUrl" alt="Photo of a {{user.username}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="80"/>
+    </div>
+    <div class="user-information" fxLayout="column">
+      <span class="user-display-name">{{displayName}}</span>
+      <span class="user-username">{{user.username}}</span>
+    </div>
+  </div>
   <nav mat-tab-nav-bar>
     <a mat-tab-link
        *ngFor="let link of navLinks"

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.scim.service.impl;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.*;
@@ -25,7 +26,9 @@ import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.*;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -52,6 +55,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private GroupService groupService;
+
+    @Autowired
+    private RoleService roleService;
 
     @Autowired
     private Domain domain;
@@ -113,7 +119,10 @@ public class UserServiceImpl implements UserService {
                     }
                     return true;
                 })
-                .flatMapMaybe(irrelevant -> identityProviderManager.getUserProvider(source))
+                // check roles
+                .flatMapCompletable(__ -> checkRoles(user.getRoles()))
+                // and create the user
+                .andThen(Maybe.defer(() -> identityProviderManager.getUserProvider(source)))
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(source)))
                 .flatMapSingle(userProvider -> {
                     io.gravitee.am.model.User userModel = convert(user);
@@ -145,12 +154,16 @@ public class UserServiceImpl implements UserService {
                 })
                 .map(user1 -> convert(user1, baseUrl, true))
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof SCIMException || ex instanceof UserProviderNotFoundException) {
-                        return Single.error(ex);
-                    } else {
-                        LOGGER.error("An error occurs while trying to create a user", ex);
-                        return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
+                    if (ex instanceof AbstractNotFoundException) {
+                        return Single.error(new InvalidValueException(ex.getMessage()));
                     }
+
+                    if (ex instanceof SCIMException) {
+                        return Single.error(ex);
+                    }
+
+                    LOGGER.error("An error occurs while trying to create a user", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
                 });
     }
 
@@ -160,59 +173,68 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapSingle(existingUser -> {
-                    io.gravitee.am.model.User userToUpdate = convert(user);
-                    // set immutable attribute
-                    userToUpdate.setId(existingUser.getId());
-                    userToUpdate.setExternalId(existingUser.getExternalId());
-                    userToUpdate.setUsername(existingUser.getUsername());
-                    userToUpdate.setDomain(existingUser.getDomain());
-                    userToUpdate.setSource(existingUser.getSource());
-                    userToUpdate.setCreatedAt(existingUser.getCreatedAt());
-                    userToUpdate.setUpdatedAt(new Date());
+                    // check roles
+                    return checkRoles(user.getRoles())
+                            // and update the user
+                            .andThen(Single.defer(() -> {
+                                io.gravitee.am.model.User userToUpdate = convert(user);
+                                // set immutable attribute
+                                userToUpdate.setId(existingUser.getId());
+                                userToUpdate.setExternalId(existingUser.getExternalId());
+                                userToUpdate.setUsername(existingUser.getUsername());
+                                userToUpdate.setDomain(existingUser.getDomain());
+                                userToUpdate.setSource(existingUser.getSource());
+                                userToUpdate.setCreatedAt(existingUser.getCreatedAt());
+                                userToUpdate.setUpdatedAt(new Date());
 
-                    return identityProviderManager.getUserProvider(userToUpdate.getSource())
-                            .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(userToUpdate.getSource())))
-                            .flatMapSingle(userProvider -> {
-                                // no idp user check if we need to create it
-                                if (userToUpdate.getExternalId() == null) {
-                                    // if user set a password we can create the idp user
-                                    if (userToUpdate.getPassword() != null) {
-                                        return userProvider.create(convert(userToUpdate));
-                                    } else {
-                                        return Single.error(new UserInvalidException("No need to router idp user"));
-                                    }
-                                } else {
-                                    return userProvider.update(userToUpdate.getExternalId(), convert(userToUpdate));
-                                }
-                            })
-                            .flatMap(idpUser -> {
-                                // AM 'users' collection is not made for authentication (but only management stuff)
-                                // clear password
-                                userToUpdate.setPassword(null);
-                                // set external id
-                                userToUpdate.setExternalId(idpUser.getId());
-                                return userRepository.update(userToUpdate);
-                            })
-                            .onErrorResumeNext(ex -> {
-                                if (ex instanceof UserNotFoundException || ex instanceof UserInvalidException) {
-                                    // idp user does not exist, only update AM user
-                                    // clear password
-                                    userToUpdate.setPassword(null);
-                                    return userRepository.update(userToUpdate);
-                                }
-                                return Single.error(ex);
-                            });
+                                return identityProviderManager.getUserProvider(userToUpdate.getSource())
+                                        .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(userToUpdate.getSource())))
+                                        .flatMapSingle(userProvider -> {
+                                            // no idp user check if we need to create it
+                                            if (userToUpdate.getExternalId() == null) {
+                                                // if user set a password we can create the idp user
+                                                if (userToUpdate.getPassword() != null) {
+                                                    return userProvider.create(convert(userToUpdate));
+                                                } else {
+                                                    return Single.error(new UserInvalidException("No need to router idp user"));
+                                                }
+                                            } else {
+                                                return userProvider.update(userToUpdate.getExternalId(), convert(userToUpdate));
+                                            }
+                                        })
+                                        .flatMap(idpUser -> {
+                                            // AM 'users' collection is not made for authentication (but only management stuff)
+                                            // clear password
+                                            userToUpdate.setPassword(null);
+                                            // set external id
+                                            userToUpdate.setExternalId(idpUser.getId());
+                                            return userRepository.update(userToUpdate);
+                                        })
+                                        .onErrorResumeNext(ex -> {
+                                            if (ex instanceof UserNotFoundException || ex instanceof UserInvalidException) {
+                                                // idp user does not exist, only update AM user
+                                                // clear password
+                                                userToUpdate.setPassword(null);
+                                                return userRepository.update(userToUpdate);
+                                            }
+                                            return Single.error(ex);
+                                        });
+                            }));
                 })
                 .map(user1 -> convert(user1, baseUrl, false))
                 // set groups
                 .flatMap(user1 -> setGroups(user1))
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException || ex instanceof SCIMException) {
+                    if (ex instanceof SCIMException || ex instanceof UserNotFoundException) {
                         return Single.error(ex);
-                    } else {
-                        LOGGER.error("An error occurs while trying to update a user", ex);
-                        return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
                     }
+
+                    if (ex instanceof AbstractNotFoundException) {
+                        return Single.error(new InvalidValueException(ex.getMessage()));
+                    }
+
+                    LOGGER.error("An error occurs while trying to update a user", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
                 });
     }
 
@@ -265,6 +287,22 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
+    private Completable checkRoles(List<String> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return Completable.complete();
+        }
+
+        return roleService.findByIdIn(roles)
+                .map(roles1 -> {
+                    if (roles1.size() != roles.size()) {
+                        // find difference between the two list
+                        roles.removeAll(roles1.stream().map(Role::getId).collect(Collectors.toList()));
+                        throw new RoleNotFoundException(String.join(",", roles));
+                    }
+                    return roles1;
+                }).toCompletable();
+    }
+
     private User convert(io.gravitee.am.model.User user, String baseUrl, boolean listing) {
         Map<String, Object> additionalInformation = user.getAdditionalInformation() != null ? user.getAdditionalInformation() : Collections.emptyMap();
 
@@ -309,8 +347,7 @@ public class UserServiceImpl implements UserService {
         scimUser.setPhotos(toScimAttributes(user.getPhotos()));
         scimUser.setAddresses(toScimAddresses(user.getAddresses()));
         scimUser.setEntitlements(user.getEntitlements());
-        // TODO
-        // scimUser.setRoles(user.getRoles());
+        scimUser.setRoles(user.getRoles());
         scimUser.setX509Certificates(toScimCertificates(user.getX509Certificates()));
 
         // Meta
@@ -391,8 +428,7 @@ public class UserServiceImpl implements UserService {
         }
         user.setAddresses(toModelAddresses(scimUser.getAddresses()));
         user.setEntitlements(scimUser.getEntitlements());
-        // TODO
-        // user.setRoles(scimUser.getRoles());
+        user.setRoles(scimUser.getRoles());
         user.setX509Certificates(toModelCertificates(scimUser.getX509Certificates()));
 
         // set additional information

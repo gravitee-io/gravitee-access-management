@@ -17,9 +17,11 @@ package io.gravitee.am.gateway.handler.common.spring;
 
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.audit.impl.AuditReporterManagerImpl;
+import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.impl.IdentityProviderManagerImpl;
+import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationServiceImpl;
 import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.gateway.handler.common.authentication.listener.AuthenticationEventListener;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -88,6 +90,11 @@ public class CommonConfiguration {
     @Bean
     public UserAuthenticationManager userAuthenticationManager() {
         return new UserAuthenticationManagerImpl();
+    }
+
+    @Bean
+    public UserAuthenticationService userAuthenticationService() {
+        return new UserAuthenticationServiceImpl();
     }
 
     @Bean

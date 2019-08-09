@@ -16,23 +16,37 @@
 
 -->
 <h5 matDialogTitle>
-  Add member
+  Add members
 </h5>
 <mat-dialog-content>
-  <form #memberForm="ngForm">
-    <mat-form-field>
-      <input matInput placeholder="Username" [matAutocomplete]="auto" [formControl]="memberCtrl"/>
-      <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectionChanged($event)" [displayWith]="displayFn">
-        <mat-option *ngFor="let user of filteredUsers" [value]="user">
-          <span>{{displayName(user)}}</span> |
-          <small>{{user.username}}</small> |
-          <small style="color:grey;">{{user.source}}</small>
-        </mat-option>
-      </mat-autocomplete>
-    </mat-form-field>
-  </form>
+  <mat-form-field>
+    <mat-chip-list #chipList aria-label="Members selection">
+      <mat-chip
+        *ngFor="let member of selectedMembers"
+        [removable]="true"
+        (removed)="remove(member)">
+        {{member.username}}
+        <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
+      </mat-chip>
+      <input name="member"
+             #memberInput
+             placeholder="Select members to add to this group (search by username)."
+             [formControl]="memberCtrl"
+             [matAutocomplete]="auto"
+             [matChipInputFor]="chipList"
+             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+             [matChipInputAddOnBlur]="addOnBlur">
+    </mat-chip-list>
+    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectionChanged($event)">
+      <mat-option *ngFor="let user of filteredUsers" [value]="user">
+        <span>{{displayName(user)}}</span> |
+        <small>{{user.username}}</small> |
+        <small style="color:grey;">{{user.source}}</small>
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
 </mat-dialog-content>
 <mat-dialog-actions>
-  <button type="button" mat-raised-button (click)="dialogRef.close(selectedUser)" color="primary" [disabled]="!selectedUser">Add</button>
+  <button type="button" mat-raised-button (click)="dialogRef.close(selectedMembers)" color="primary" [disabled]="selectedMembers.length === 0">Add</button>
   <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
 </mat-dialog-actions>

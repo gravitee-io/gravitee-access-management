@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from "@angular/router";
 import { GroupService } from "../../../../../services/group.service";
 import { AppConfig } from "../../../../../../config/app.config";
 import { DialogService } from "../../../../../services/dialog.service";
 import { SnackbarService } from "../../../../../services/snackbar.service";
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material";
+import { MAT_DIALOG_DATA, MatAutocompleteTrigger, MatDialog, MatDialogRef } from "@angular/material";
 import { FormControl } from "@angular/forms";
 import { UserService } from "../../../../../services/user.service";
+import {COMMA, ENTER} from "@angular/cdk/keycodes";
+import * as _ from 'lodash';
 
 @Component({
   selector: 'app-group-members',
@@ -50,7 +52,9 @@ export class GroupMembersComponent implements OnInit {
       this.domainId = AppConfig.settings.authentication.domainId;
     }
     this.group = this.route.snapshot.parent.data['group'];
-    this.loadMembers();
+    let pagedMembers = this.route.snapshot.data['members'];
+    this.page.totalElements = pagedMembers.totalCount;
+    this.members = Object.assign([], pagedMembers.data);
   }
 
   get isEmpty() {
@@ -86,17 +90,67 @@ export class GroupMembersComponent implements OnInit {
   }
 
   add() {
-    let dialogRef = this.dialog.open(AddMemberComponent, { width : '700px', data: { domain: this.domainId }});
-    dialogRef.afterClosed().subscribe(member => {
-      if (member) {
-        if (!this.group.members || !this.group.members.includes(member.id)) {
-          (this.group.members = this.group.members || []).push(member.id);
-          this.update("Member added");
-        } else {
-          this.snackbarService.open(`Error : member ${member.username} already exists`);
-        }
+    let dialogRef = this.dialog.open(AddMemberComponent, { width : '700px', data: { domain: this.domainId, groupMembers: this.group.members }});
+    dialogRef.afterClosed().subscribe(members => {
+      if (members) {
+        let memberIds = _.map(members, 'id');
+        this.group.members = (this.group.members = this.group.members || []).concat(memberIds);
+        this.update("Member(s) added");
       }
     });
+  }
+
+  accountLocked(user) {
+    return !user.accountNonLocked && user.accountLockedUntil > new Date();
+  }
+
+  avatarUrl(user) {
+    if (user.additionalInformation && user.additionalInformation['picture']) {
+      return user.additionalInformation['picture'];
+    }
+    return 'assets/material-letter-icons/' + user.username.charAt(0).toUpperCase() + '.svg';
+  }
+
+  userLink(user) {
+    if (this.domainId == AppConfig.settings.authentication.domainId) {
+      return '/settings/management/users/' + user.id;
+    } else {
+      return '/domains/' + this.domainId + '/settings/users/' + user.id;
+    }
+  }
+
+  displayName(user) {
+    // check display name attribute first
+    if (user.displayName) {
+      return user.displayName;
+    }
+
+    // fall back to standard claim 'name'
+    if (user.additionalInformation && user.additionalInformation['name']) {
+      return user.additionalInformation['name'];
+    }
+
+    // fall back to combination of first name and last name
+    if (user.firstName) {
+      let displayName = user.firstName;
+      if (user.lastName) {
+        displayName += ' ' + user.lastName;
+      } else if (user.additionalInformation && user.additionalInformation['family_name']) {
+        displayName += ' ' + user.additionalInformation['family_name']
+      }
+      return displayName;
+    }
+
+    if (user.additionalInformation && user.additionalInformation['given_name']) {
+      let displayName = user.additionalInformation['given_name'];
+      if (user.additionalInformation && user.additionalInformation['family_name']) {
+        displayName += ' ' + user.additionalInformation['family_name']
+      }
+      return displayName;
+    }
+
+    // default display the username
+    return user.username;
   }
 
   private update(message) {
@@ -113,29 +167,42 @@ export class GroupMembersComponent implements OnInit {
   templateUrl: './add/add-member.component.html',
 })
 export class AddMemberComponent {
+  @ViewChild('memberInput') memberInput: ElementRef<HTMLInputElement>;
+  @ViewChild(MatAutocompleteTrigger) trigger;
   memberCtrl = new FormControl();
   filteredUsers: any[];
-  selectedUser: any;
+  selectedMembers: any[] = [];
+  removable = true;
+  addOnBlur = true;
+  separatorKeysCodes: number[] = [ENTER, COMMA];
+  private groupMembers: string[] = [];
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,
               public dialogRef: MatDialogRef<AddMemberComponent>,
               private userService: UserService) {
+    this.groupMembers = data.groupMembers;
     this.memberCtrl.valueChanges
       .subscribe(searchTerm => {
         if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
           this.userService.search(data.domain, searchTerm + '*', 0, 30).subscribe(response => {
-            this.filteredUsers = response.data;
+            this.filteredUsers = response.data.filter(domainUser => _.map(this.selectedMembers, 'id').indexOf(domainUser.id) === -1 && this.groupMembers.indexOf(domainUser.id) === -1);
           });
         }
       });
   }
 
   onSelectionChanged(event) {
-    this.selectedUser = event.option.value;
+    this.selectedMembers.push(event.option.value);
+    this.memberInput.nativeElement.value = '';
+    this.memberCtrl.setValue(null);
   }
 
-  displayFn(user?: any): string | undefined {
-    return user ? user.username : undefined;
+  remove(member: string): void {
+    const index = this.selectedMembers.indexOf(member);
+
+    if (index >= 0) {
+      this.selectedMembers.splice(index, 1);
+    }
   }
 
   displayName(user) {

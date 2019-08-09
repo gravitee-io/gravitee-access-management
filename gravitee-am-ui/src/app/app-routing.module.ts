@@ -86,6 +86,9 @@ import {UserResolver} from "./resolvers/user.resolver";
 import {UserCreationComponent} from "./domain/settings/users/creation/user-creation.component";
 import {UserProfileComponent} from "./domain/settings/users/user/profile/profile.component";
 import {UserApplicationsComponent} from "./domain/settings/users/user/applications/applications.component";
+import {UserApplicationComponent} from "./domain/settings/users/user/applications/application/application.component";
+import {UserRolesComponent} from "./domain/settings/users/user/roles/roles.component";
+import {UserRolesResolver} from "./resolvers/user-roles.resolver";
 import {ExtensionGrantCreationComponent} from "./domain/settings/extension-grants/creation/extension-grant-creation.component";
 import {ExtensionGrantComponent} from "./domain/settings/extension-grants/extension-grant/extension-grant.component";
 import {ExtensionGrantsResolver} from "./resolvers/extension-grants.resolver";
@@ -100,10 +103,11 @@ import {GroupResolver} from "./resolvers/group.resolver";
 import {GroupComponent} from "./domain/settings/groups/group/group.component";
 import {GroupSettingsComponent} from "./domain/settings/groups/group/settings/settings.component";
 import {GroupMembersComponent} from "./domain/settings/groups/group/members/members.component";
+import {GroupRolesComponent} from "./domain/settings/groups/group/roles/roles.component";
+import {GroupRolesResolver} from "./resolvers/group-roles.resolver";
 import {ScimComponent} from "./domain/settings/scim/scim.component";
 import {EmailResolver} from "./resolvers/email.resolver";
 import {ConsentsResolver} from "./resolvers/consents.resolver";
-import {UserApplicationComponent} from "./domain/settings/users/user/applications/application/application.component";
 import {AuditResolver} from "./resolvers/audit.resolver";
 import {AuditsComponent} from "./domain/settings/audits/audits.component";
 import {AuditsResolver} from "./resolvers/audits.resolver";
@@ -118,6 +122,7 @@ import {TagCreationComponent} from "./settings/management/tags/creation/tag-crea
 import {TagComponent} from "./settings/management/tags/tag/tag.component";
 import {TagResolver} from "./resolvers/tag.resolver";
 import {PoliciesResolver} from "./resolvers/policies.resolver";
+import {GroupMembersResolver} from "./resolvers/group-members.resolver";
 
 const routes: Routes = [
   { path: 'dashboard',
@@ -316,6 +321,7 @@ const routes: Routes = [
               { path: 'profile', component: UserProfileComponent },
               { path: 'applications', component: UserApplicationsComponent, resolve: {consents: ConsentsResolver}},
               { path: 'applications/:clientId', component: UserApplicationComponent, resolve: {consents: ConsentsResolver}},
+              { path: 'roles', component: UserRolesComponent, resolve: { roles : UserRolesResolver}}
             ]
           },
           { path: 'roles', component: DomainSettingsRolesComponent,
@@ -528,7 +534,7 @@ const routes: Routes = [
               { path: '', redirectTo: 'settings', pathMatch: 'full' },
               { path: 'settings', component: ProviderSettingsComponent },
               { path: 'mappers', component: ProviderMappersComponent },
-              { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver, groups: GroupsResolver } }
+              { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver } }
             ]
           },
           { path: 'audits',
@@ -620,6 +626,7 @@ const routes: Routes = [
               { path: 'profile', component: UserProfileComponent },
               { path: 'applications', component: UserApplicationsComponent, resolve: {consents: ConsentsResolver}},
               { path: 'applications/:clientId', component: UserApplicationComponent, resolve: {consents: ConsentsResolver}},
+              { path: 'roles', component: UserRolesComponent, resolve: { roles : UserRolesResolver}}
             ]
           },
           { path: 'groups', component: GroupsComponent,
@@ -645,7 +652,8 @@ const routes: Routes = [
             children: [
               { path: '', redirectTo: 'settings', pathMatch: 'full' },
               { path: 'settings', component: GroupSettingsComponent },
-              { path: 'members', component: GroupMembersComponent }
+              { path: 'members', component: GroupMembersComponent, resolve: { members : GroupMembersResolver}},
+              { path: 'roles', component: GroupRolesComponent, resolve: { roles : GroupRolesResolver}}
             ]
           },
           { path: 'roles', component: DomainSettingsRolesComponent,

@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import javax.validation.constraints.NotNull;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,7 +27,9 @@ public class UpdateGroup {
 
     @NotNull
     private String name;
+    private String description;
     private List<String> members;
+    private List<String> roles;
 
     public String getName() {
         return name;
@@ -34,6 +37,14 @@ public class UpdateGroup {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public List<String> getMembers() {
@@ -44,10 +55,22 @@ public class UpdateGroup {
         this.members = members;
     }
 
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
+    }
+
+    @Override
     public String toString() {
-        return "UpdateGroup{" +
-                "name='" + name + '\'' +
-                ", members='" + members != null ? String.join(",", members) : "[]" + '\'' +
-                '}';
+        return "{\"_class\":\"UpdateGroup\", " +
+                "\"name\":" + (name == null ? "null" : "\"" + name + "\"") + ", " +
+                "\"description\":" + (description == null ? "null" : "\"" + description + "\"") + ", " +
+                "\"members\":" + (members == null ? "null" : Arrays.toString(members.toArray())) + ", " +
+                "\"roles\":" + (roles == null ? "null" : Arrays.toString(roles.toArray())) +
+                "}";
     }
 }

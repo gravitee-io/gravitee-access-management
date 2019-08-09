@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.scim.resources.users;
+package io.gravitee.am.gateway.handler.scim.resources.groups;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
-import io.gravitee.am.gateway.handler.scim.model.EntrepriseUser;
-import io.vertx.core.Handler;
+import io.gravitee.am.gateway.handler.scim.model.Group;
+import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +34,25 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AbstractUserEndpointHandler implements Handler<RoutingContext> {
+public class AbstractGroupEndpoint {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractUserEndpointHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(AbstractGroupEndpoint.class);
+    protected GroupService groupService;
+    protected ObjectMapper objectMapper;
+
+    public AbstractGroupEndpoint(GroupService groupService, ObjectMapper objectMapper) {
+        this.groupService = groupService;
+        this.objectMapper = objectMapper;
+    }
+
+    protected String location(HttpServerRequest request) {
+        try {
+            return UriBuilderRequest.resolveProxyRequest(request, request.path(), null);
+        } catch (URISyntaxException e) {
+            logger.error("An error occurs while decoding SCIM Groups location URI", e);
+            return "";
+        }
+    }
 
     protected void checkSchemas(List<String> schemas) throws Exception {
         if (schemas == null || schemas.isEmpty()) {
@@ -48,18 +64,9 @@ public abstract class AbstractUserEndpointHandler implements Handler<RoutingCont
             if (!schemaSet.add(schema)) {
                 throw new InvalidSyntaxException("Duplicate 'schemas' values are forbidden");
             }
-            if (!EntrepriseUser.SCHEMAS.contains(schema)) {
+            if (!Group.SCHEMAS.contains(schema)) {
                 throw new InvalidSyntaxException("The 'schemas' attribute MUST only contain values defined as 'schema' and schemaExtensions' for the resource's defined User type");
             }
         });
-    }
-
-    protected String location(HttpServerRequest request) {
-        try {
-            return UriBuilderRequest.resolveProxyRequest(request, request.path(), null);
-        } catch (URISyntaxException e) {
-            logger.error("An error occurs while decoding SCIM Users location URI", e);
-            return "";
-        }
     }
 }

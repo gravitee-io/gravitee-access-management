@@ -155,9 +155,11 @@ import { UserClaimComponent } from './domain/settings/users/creation/user-claim.
 import { UserProfileComponent } from './domain/settings/users/user/profile/profile.component';
 import { UserApplicationsComponent } from './domain/settings/users/user/applications/applications.component';
 import { UserApplicationComponent } from './domain/settings/users/user/applications/application/application.component';
+import { AddUserRolesComponent, UserRolesComponent } from './domain/settings/users/user/roles/roles.component';
 import { UserService} from "./services/user.service";
 import { UsersResolver } from "./resolvers/users.resolver";
 import { UserResolver } from "./resolvers/user.resolver";
+import { UserRolesResolver } from "./resolvers/user-roles.resolver";
 import { ExtensionGrantService } from "./services/extension-grant.service";
 import { ExtensionGrantsResolver } from "./resolvers/extension-grants.resolver";
 import { ExtensionGrantResolver } from 'app/resolvers/extension-grant.resolver';
@@ -181,6 +183,9 @@ import { GroupMembersComponent, AddMemberComponent } from "./domain/settings/gro
 import { GroupService } from "./services/group.service";
 import { GroupsResolver } from "./resolvers/groups.resolver";
 import { GroupResolver } from "./resolvers/group.resolver";
+import { GroupMembersResolver } from "./resolvers/group-members.resolver";
+import { AddGroupRolesComponent, GroupRolesComponent} from "./domain/settings/groups/group/roles/roles.component";
+import { GroupRolesResolver} from "./resolvers/group-roles.resolver";
 import { ScimComponent } from "./domain/settings/scim/scim.component";
 import { EmailsComponent } from "./domain/components/emails/emails.component";
 import { EmailComponent, EmailInfoDialog } from "./domain/components/emails/email/email.component";
@@ -213,6 +218,7 @@ import { PolicyFormComponent } from "./domain/settings/policies/policy/form/form
 import { PolicyService } from "./services/policy.service";
 import { PoliciesResolver } from "./resolvers/policies.resolver";
 import { ScopeSelectionComponent} from "./domain/components/scope-selection/scope-selection.component";
+import { RoleSelectionComponent } from "./domain/components/role-selection/role-selection.component";
 
 @NgModule({
   declarations: [
@@ -302,6 +308,8 @@ import { ScopeSelectionComponent} from "./domain/components/scope-selection/scop
     UserProfileComponent,
     UserApplicationsComponent,
     UserApplicationComponent,
+    UserRolesComponent,
+    AddUserRolesComponent,
     ScopeCreationComponent,
     ScopeComponent,
     MaterialFileComponent,
@@ -315,7 +323,9 @@ import { ScopeSelectionComponent} from "./domain/components/scope-selection/scop
     GroupComponent,
     GroupSettingsComponent,
     GroupMembersComponent,
+    GroupRolesComponent,
     AddMemberComponent,
+    AddGroupRolesComponent,
     ScimComponent,
     EmailsComponent,
     EmailComponent,
@@ -334,7 +344,8 @@ import { ScopeSelectionComponent} from "./domain/components/scope-selection/scop
     PolicyFormComponent,
     PoliciesInfoDialog,
     ScopeSelectionComponent,
-    ClaimsInfoDialog
+    ClaimsInfoDialog,
+    RoleSelectionComponent
   ],
   imports: [
     BrowserModule,
@@ -379,6 +390,7 @@ import { ScopeSelectionComponent} from "./domain/components/scope-selection/scop
     RoleResolver,
     UsersResolver,
     UserResolver,
+    UserRolesResolver,
     ExtensionGrantsResolver,
     ExtensionGrantResolver,
     ScopesResolver,
@@ -389,6 +401,8 @@ import { ScopeSelectionComponent} from "./domain/components/scope-selection/scop
     GroupService,
     GroupsResolver,
     GroupResolver,
+    GroupRolesResolver,
+    GroupMembersResolver,
     EmailService,
     EmailResolver,
     ConsentsResolver,
@@ -427,7 +441,9 @@ import { ScopeSelectionComponent} from "./domain/components/scope-selection/scop
     AddMemberComponent,
     EmailInfoDialog,
     PoliciesInfoDialog,
-    ClaimsInfoDialog
+    ClaimsInfoDialog,
+    AddUserRolesComponent,
+    AddGroupRolesComponent,
   ],
   bootstrap: [AppComponent]
 })

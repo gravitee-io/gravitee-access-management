@@ -18,9 +18,9 @@
 <div class="user-applications-container">
     <div class="user-applications-content" fxFlex="70">
       <div fxLayout="row" *ngIf="!isEmpty">
-        <div>You have interacted with <b>{{appConsents.length}}</b> application(s) to access to your account.</div>
+        <div fxFlex>You have interacted with <b>{{appConsents.length}}</b> application(s) to access to your account.</div>
         <div>
-          <button *ngIf="canRevokeAllAccess()" style="margin-left: 20px; height: 40px; color: #f44336;" mat-stroked-button color="warn" (click)="revokeAll($event)">Revoke all</button>
+          <button *ngIf="canRevokeAllAccess()" style="height: 40px;" mat-stroked-button color="warn" (click)="revokeAll($event)">Revoke all</button>
         </div>
       </div>
       <ngx-datatable *ngIf="!isEmpty" class="material"

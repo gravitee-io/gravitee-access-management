@@ -15,13 +15,9 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -32,15 +28,15 @@ import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -51,14 +47,9 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
-    private static final String GROUP_MAPPING_ATTRIBUTE = "_RESERVED_AM_GROUP_MAPPING_";
-    private static final String SOURCE_FIELD = "source";
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private GroupRepository groupRepository;
 
     @Override
     public Single<Set<User>> findByDomain(String domain) {
@@ -191,6 +182,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Single<User> create(User user) {
+        LOGGER.debug("Create a user {}", user);
+        user.setCreatedAt(new Date());
+        user.setUpdatedAt(user.getCreatedAt());
+        return userRepository.create(user)
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to create a user", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
+                });
+    }
+
+    @Override
     public Single<User> update(String domain, String id, UpdateUser updateUser) {
         LOGGER.debug("Update a user {} for domain {}", id, domain);
 
@@ -250,88 +256,5 @@ public class UserServiceImpl implements UserService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete user: %s", userId), ex));
                 });
-    }
-
-
-    /**
-     * Moved from io.gravitee.am.gateway.service.impl.UserServiceImpl to current implementation.
-     */
-    @Override
-    public Single<User> findOrCreate(String domain,io.gravitee.am.identityprovider.api.User user) {
-        String source = (String) user.getAdditionalInformation().get("source");
-        return findByDomainAndExternalIdAndSource(domain, user.getId(), source)
-                .switchIfEmpty(Maybe.defer(() -> findByDomainAndUsernameAndSource(domain, user.getUsername(), source)))
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                .flatMapSingle(existingUser -> enhanceUserWithGroupRoles(existingUser, user))
-                .flatMap(existingUser -> {
-                    LOGGER.debug("Updating user: username[%s]", user.getUsername());
-                    // set external id
-                    existingUser.setExternalId(user.getId());
-                    existingUser.setLoggedAt(new Date());
-                    existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
-                    // set roles
-                    if (existingUser.getRoles() == null) {
-                        existingUser.setRoles(user.getRoles());
-                    } else if (user.getRoles() != null) {
-                        existingUser.getRoles().addAll(user.getRoles());
-                    }
-                    Map<String, Object> additionalInformation = user.getAdditionalInformation();
-                    extractAdditionalInformation(existingUser, additionalInformation);
-                    return userRepository.update(existingUser);
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof UserNotFoundException) {
-                        LOGGER.debug("Creating a new user: username[%s]", user.getUsername());
-                        final User newUser = new User();
-                        // set external id
-                        newUser.setExternalId(user.getId());
-                        newUser.setUsername(user.getUsername());
-                        newUser.setDomain(domain);
-                        newUser.setCreatedAt(new Date());
-                        newUser.setLoggedAt(new Date());
-                        newUser.setLoginsCount(1L);
-                        newUser.setRoles(user.getRoles());
-
-                        Map<String, Object> additionalInformation = user.getAdditionalInformation();
-                        extractAdditionalInformation(newUser, additionalInformation);
-                        return userRepository.create(newUser);
-                    }
-                    return Single.error(ex);
-                });
-
-    }
-
-    private Single<User> enhanceUserWithGroupRoles(User user, io.gravitee.am.identityprovider.api.User idpUser) {
-        if (idpUser.getAdditionalInformation() != null && idpUser.getAdditionalInformation().containsKey(GROUP_MAPPING_ATTRIBUTE)) {
-            Map<String, List<String>> groupMapping = (Map<String, List<String>>) idpUser.getAdditionalInformation().get(GROUP_MAPPING_ATTRIBUTE);
-            // for each group if current user is member of one of these groups add corresponding role to the user
-            return Observable.fromIterable(groupMapping.entrySet())
-                    .flatMapSingle(entry -> groupRepository.findByIdIn(entry.getValue())
-                            .map(groups -> groups
-                                    .stream()
-                                    .filter(group -> group.getMembers() != null && group.getMembers().contains(user.getId()))
-                                    .findFirst())
-                            .map(optionalGroup -> optionalGroup.isPresent() ? Optional.of(entry.getKey()) : Optional.<String>empty()))
-                    .toList()
-                    .map(optionals -> {
-                        List<String> roles = optionals.stream().filter(Optional::isPresent).map(opt -> opt.get()).collect(Collectors.toList());
-                        user.setRoles(roles);
-                        return user;
-                    });
-        } else {
-            return Single.just(user);
-        }
-    }
-
-    private void extractAdditionalInformation(User user, Map<String, Object> additionalInformation) {
-        if (additionalInformation != null) {
-            Map<String, Object> extraInformation = new HashMap<>(additionalInformation);
-            extraInformation.put(Claims.auth_time, user.getLoggedAt());
-            extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
-            user.setSource((String) extraInformation.remove(SOURCE_FIELD));
-            user.setClient((String) extraInformation.remove(Parameters.CLIENT_ID));
-            extraInformation.remove(GROUP_MAPPING_ATTRIBUTE);
-            user.setAdditionalInformation(extraInformation);
-        }
     }
 }

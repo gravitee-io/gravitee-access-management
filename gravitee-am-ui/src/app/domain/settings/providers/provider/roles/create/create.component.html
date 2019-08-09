@@ -16,27 +16,15 @@
 
 -->
 <h5 matDialogTitle>
-  Users and Groups role mapper
+  Role mappings
 </h5>
 <mat-dialog-content>
   <form #userRoleForm="ngForm" fxLayout="column">
-    <div fxLayout="row">
-      <div fxLayout="column" fxFlex style="margin-right: 10px;">
-        <h5 style="color: grey; margin: 5px 0 5px 0;">Users</h5>
-        <mat-form-field fxFlex>
-          <input matInput name="user" placeholder="attributeName=attributeValue" pattern="^(.+)\=(.+)" autofocus ngModel/>
-        </mat-form-field>
-      </div>
-      <div fxLayout="column" fxFlex>
-        <h5 style="color: grey; margin: 5px 0 5px 0;">Groups</h5>
-        <mat-form-field>
-          <mat-select placeholder="Group" name="groups" ngModel multiple #groupSelect>
-              <mat-option *ngFor="let group of data.groups" [value]="group.id">
-                {{group.name}}
-              </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
+    <div fxLayout="column" fxFlex>
+      <h5 style="color: grey; margin: 5px 0 5px 0;">Users</h5>
+      <mat-form-field fxFlex>
+        <input matInput name="user" placeholder="attributeName=attributeValue" pattern="^(.+)\=(.+)" autofocus ngModel/>
+      </mat-form-field>
     </div>
     <h5 style="color: grey; margin:  5px 0 15px 0;">Roles</h5>
     <mat-form-field>

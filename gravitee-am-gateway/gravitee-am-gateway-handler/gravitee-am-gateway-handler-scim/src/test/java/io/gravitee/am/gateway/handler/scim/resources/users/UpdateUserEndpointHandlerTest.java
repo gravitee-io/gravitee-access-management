@@ -18,11 +18,13 @@ package io.gravitee.am.gateway.handler.scim.resources.users;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
+import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
@@ -58,15 +60,11 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
     private ObjectWriter objectWriter;
 
     @InjectMocks
-    private UpdateUserEndpointHandler updateUserEndpointHandler = new UpdateUserEndpointHandler(userService);
+    private UserEndpoint userEndpoint = new UserEndpoint(userService, objectMapper, passwordValidator);
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        // set handler
-        updateUserEndpointHandler.setPasswordValidator(passwordValidator);
-        updateUserEndpointHandler.setObjectMapper(objectMapper);
 
         // object mapper
         when(objectWriter.writeValueAsString(any())).thenReturn("UserObject");
@@ -79,7 +77,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeSCIMUpdateUserEndpoint_invalid_password() throws Exception {
-        router.route("/Users").handler(updateUserEndpointHandler);
+        router.route("/Users").handler(userEndpoint::update);
         when(passwordValidator.validate(anyString())).thenReturn(false);
 
         testRequest(
@@ -101,7 +99,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvokeSCIMUpdateUserEndpoint_valid_password() throws Exception {
-        router.route("/Users").handler(updateUserEndpointHandler);
+        router.route("/Users").handler(userEndpoint::update);
         when(passwordValidator.validate(anyString())).thenReturn(true);
         when(userService.update(any(), any(), any())).thenReturn(Single.just(getUser()));
 
@@ -114,6 +112,29 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
                 },
                 200,
                 "OK", null);
+    }
+
+    @Test
+    public void shouldNotInvokeSCIMUpdateUserEndpoint_invalid_roles() throws Exception {
+        router.route("/Users").handler(userEndpoint::update);
+        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(userService.update(any(), any(), anyString())).thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
+
+        testRequest(
+                HttpMethod.PUT,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    req.write(Json.encode(getUser()));
+                },
+                400,
+                "Bad Request",
+                "{\n" +
+                        "  \"status\" : \"400\",\n" +
+                        "  \"scimType\" : \"invalidValue\",\n" +
+                        "  \"detail\" : \"Role [role-1] can not be found.\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
     }
 
     private User getUser() {

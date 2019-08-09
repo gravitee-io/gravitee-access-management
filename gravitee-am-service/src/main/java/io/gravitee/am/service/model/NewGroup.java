@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import javax.validation.constraints.NotNull;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,6 +27,7 @@ public class NewGroup {
 
     @NotNull
     private String name;
+    private String description;
     private List<String> members;
 
     public String getName() {
@@ -36,6 +38,14 @@ public class NewGroup {
         this.name = name;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public List<String> getMembers() {
         return members;
     }
@@ -44,10 +54,12 @@ public class NewGroup {
         this.members = members;
     }
 
+    @Override
     public String toString() {
-        return "NewGroup{" +
-                "name='" + name + '\'' +
-                ", members='" + members != null ? String.join(",", members) : "[]" + '\'' +
-                '}';
+        return "{\"_class\":\"NewGroup\", " +
+                "\"name\":" + (name == null ? "null" : "\"" + name + "\"") + ", " +
+                "\"description\":" + (description == null ? "null" : "\"" + description + "\"") + ", " +
+                "\"members\":" + (members == null ? "null" : Arrays.toString(members.toArray())) +
+                "}";
     }
 }

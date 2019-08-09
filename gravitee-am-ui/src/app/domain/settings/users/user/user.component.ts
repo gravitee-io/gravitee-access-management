@@ -25,9 +25,12 @@ import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/compo
 export class UserComponent implements OnInit {
   private domainId: string;
   user: any;
+  displayName: string;
+  avatarUrl: string;
   navLinks: any = [
     {'href': 'profile' , 'label': 'Profile'},
-    {'href': 'applications' , 'label': 'Authorized Apps'}
+    {'href': 'applications' , 'label': 'Authorized Apps'},
+    {'href': 'roles' , 'label': 'Roles'},
   ];
 
   constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) {
@@ -36,11 +39,57 @@ export class UserComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.user = this.route.snapshot.data['user'];
+    this.initDisplayName();
+    this.initAvatar();
     this.initBreadcrumb();
   }
 
   initBreadcrumb() {
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/users/'+this.user.id+'$', this.user.username);
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/users/'+this.user.id+'/applications$', 'Authorized Apps');
+  }
+
+  initAvatar() {
+    if (this.user.additionalInformation && this.user.additionalInformation['picture']) {
+      this.avatarUrl = this.user.additionalInformation['picture'];
+      return;
+    }
+    this.avatarUrl = 'assets/material-letter-icons/' + this.user.username.charAt(0).toUpperCase() + '.svg';
+  }
+
+  initDisplayName() {
+    // check display name attribute first
+    if (this.user.displayName) {
+      this.displayName = this.user.displayName;
+      return;
+    }
+
+    // fall back to standard claim 'name'
+    if (this.user.additionalInformation && this.user.additionalInformation['name']) {
+      this.displayName = this.user.additionalInformation['name'];
+      return;
+    }
+
+    // fall back to combination of first name and last name
+    if (this.user.firstName) {
+      this.displayName = this.user.firstName;
+      if (this.user.lastName) {
+        this.displayName += ' ' + this.user.lastName;
+      } else if (this.user.additionalInformation && this.user.additionalInformation['family_name']) {
+        this.displayName += ' ' + this.user.additionalInformation['family_name']
+      }
+      return;
+    }
+
+    if (this.user.additionalInformation && this.user.additionalInformation['given_name']) {
+      this.displayName = this.user.additionalInformation['given_name'];
+      if (this.user.additionalInformation && this.user.additionalInformation['family_name']) {
+        this.displayName += ' ' + this.user.additionalInformation['family_name']
+      }
+      return;
+    }
+
+    // default display the username
+    this.displayName = this.user.username;
   }
 }

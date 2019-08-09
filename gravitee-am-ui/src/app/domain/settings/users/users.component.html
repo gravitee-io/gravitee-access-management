@@ -38,24 +38,29 @@
                    [offset]="page.pageNumber"
                    [limit]="page.size"
                    (page)='setPage($event)'>
-      <ngx-datatable-column>
+      <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'user-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <mat-icon *ngIf="row.enabled && !accountLocked(row)" matTooltip="User enabled" style="color: green;">done</mat-icon>
-          <mat-icon *ngIf="!row.enabled" matTooltip="User disabled" style="color: orange;">priority_high</mat-icon>
-          <mat-icon *ngIf="accountLocked(row)" matTooltip="User locked" style="color: red;">blocked</mat-icon>
+          <div class="user-header" fxLayout="row">
+            <div class="user-avatar"
+                 matBadge="&#8288;"
+                 matBadgeSize="small"
+                 [ngClass]="(row.enabled && !accountLocked(row)) ? 'user-enabled': (!row.enabled ? 'user-disabled' : accountLocked(row) ? 'user-locked' : '')"
+                 [matTooltip]="(row.enabled && !accountLocked(row)) ? 'User enabled': (!row.enabled ? 'User disabled' : accountLocked(row) ? 'User locked' : '')">
+              <img [src]="avatarUrl(row)" alt="Photo of a {{row.username}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="40"/>
+            </div>
+            <div class="user-information" fxLayout="column">
+              <a [routerLink]="[row.id]">{{displayName(row)}}</a>
+              <small>{{row.username}}</small>
+            </div>
+          </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Username" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.username}}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Identity Provider" [flexGrow]="1">
+      <ngx-datatable-column name="Identity Provider" [flexGrow]="2">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{row.source}}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Last login" [flexGrow]="1">
+      <ngx-datatable-column name="Last login" [flexGrow]="2">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span *ngIf="(row.loggedAt)">{{row.loggedAt | humanDate}}</span>
           <span *ngIf="!(row.loggedAt)">Never logged in</span>

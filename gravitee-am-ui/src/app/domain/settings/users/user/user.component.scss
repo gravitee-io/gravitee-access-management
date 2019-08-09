@@ -11,6 +11,28 @@
   h1 {
     font-weight: 400;
   }
+  .user-header {
+    margin: 10px;
+    align-items: center;
+    .user-avatar {
+      width: 80px;
+      height: 80px;
+      margin: 0 24px 0 0;
+      img {
+        border-radius: 50%;
+      }
+    }
+    .user-information {
+      span.user-display-name {
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
+      span.user-username {
+        color: rgba(0,0,0,.54);
+        font-size: 14px;
+      }
+    }
+  }
   .user-content {
     padding: 25px 0 20px;
   }

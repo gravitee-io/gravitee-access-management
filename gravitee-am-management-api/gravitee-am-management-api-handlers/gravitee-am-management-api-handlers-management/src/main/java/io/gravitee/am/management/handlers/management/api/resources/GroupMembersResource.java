@@ -16,11 +16,15 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -30,6 +34,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
+import java.util.Comparator;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,6 +50,9 @@ public class GroupMembersResource {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private IdentityProviderService identityProviderService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -62,6 +70,26 @@ public class GroupMembersResource {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapSingle(irrelevant -> groupService.findMembers(group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE)))
+                .flatMap(pagedMembers -> {
+                    if (pagedMembers.getData() == null) {
+                        return Single.just(pagedMembers);
+                    }
+                    return Observable.fromIterable(pagedMembers.getData())
+                            .flatMapSingle(member -> {
+                                if (member.getSource() != null) {
+                                    return identityProviderService.findById(member.getSource())
+                                            .map(idP -> {
+                                                member.setSource(idP.getName());
+                                                return member;
+                                            })
+                                            .defaultIfEmpty(member)
+                                            .toSingle();
+                                }
+                                return Single.just(member);
+                            })
+                            .toSortedList(Comparator.comparing(User::getUsername))
+                            .map(members -> new Page(members, pagedMembers.getCurrentPage(), pagedMembers.getTotalCount()));
+                })
                 .map(members -> Response.ok(members).build())
                 .subscribe(
                         result -> response.resume(result),

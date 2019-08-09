@@ -86,4 +86,16 @@ export class UserService {
   revokeConsent(domainId, userId, consentId): Observable<any> {
     return this.http.delete<any>(this.usersURL + domainId + "/users/" + userId + "/consents/" + consentId);
   }
+
+  roles(domainId, userId): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + "/users/" + userId + "/roles");
+  }
+
+  revokeRole(domainId, userId, roleId): Observable<any> {
+    return this.http.delete<any>(this.usersURL + domainId + "/users/" + userId + "/roles/" + roleId);
+  }
+
+  assignRoles(domainId, userId, roles): Observable<any> {
+    return this.http.post<any>(this.usersURL + domainId + "/users/" + userId + "/roles", roles);
+  }
 }

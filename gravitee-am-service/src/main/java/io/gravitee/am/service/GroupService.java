@@ -36,17 +36,23 @@ public interface GroupService {
 
     Single<List<Group>> findByDomain(String domain);
 
-    Single<Page<User>> findMembers(String groupId, int page, int size);
+    Single<List<Group>> findByMember(String userId);
 
     Maybe<Group> findByDomainAndName(String domain, String groupName);
 
     Maybe<Group> findById(String id);
+
+    Single<Page<User>> findMembers(String groupId, int page, int size);
 
     Single<Group> create(String domain, NewGroup group, io.gravitee.am.identityprovider.api.User principal);
 
     Single<Group> update(String domain, String id, UpdateGroup group, io.gravitee.am.identityprovider.api.User principal);
 
     Completable delete(String groupId, io.gravitee.am.identityprovider.api.User principal);
+
+    Single<Group> assignRoles(String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
+
+    Single<Group> revokeRoles(String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
 
     default Single<Group> create(String domain, NewGroup group) {
         return create(domain, group, null);
@@ -60,5 +66,12 @@ public interface GroupService {
         return delete(groupId, null);
     }
 
+    default Single<Group> assignRoles(String groupId, List<String> roles) {
+        return assignRoles(groupId, roles, null);
+    }
+
+    default Single<Group> revokeRoles(String groupId, List<String> roles) {
+        return revokeRoles(groupId, roles, null);
+    }
 
 }

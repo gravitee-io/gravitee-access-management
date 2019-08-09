@@ -5,26 +5,33 @@
   ngx-datatable {
     font-size: 14px;
     box-shadow: none;
+    .user-header {
+      margin: 10px;
+      align-items: center;
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        margin: 0 12px 0 0;
+        img {
+          border-radius: 50%;
+        }
+      }
+      .user-information {
+        small {
+          color: rgba(0,0,0,.54);
+        }
+      }
+    }
+  }
+  button, a {
+    top: -11px;
   }
 }
 
 .members-actions {
-  margin-left: -10px;
-
   button, a {
-    top: -9px;
     color: grey;
   }
-}
-
-.add-button {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-}
-
-.add-button-center {
-  text-align: center;
 }
 
 /deep/ .ngx-datatable.material .datatable-footer .datatable-pager {
@@ -32,3 +39,44 @@
     content: none;
   }
 }
+
+:host /deep/ .member-name-cell {
+  padding: 0 !important;
+  a {
+    color: #006CAB;
+    text-decoration: none;
+    &:hover {
+      color: #2196f3;
+    }
+  }
+}
+
+:host /deep/ .mat-badge-small .mat-badge-content {
+  width: 12px;
+  height: 12px;
+  line-height: 12px;
+}
+
+:host /deep/ .mat-badge-small.mat-badge-overlap.mat-badge-after .mat-badge-content {
+  right: 1px;
+}
+
+:host /deep/ .mat-badge-small.mat-badge-above .mat-badge-content {
+  top: -2px;
+}
+
+:host /deep/ .user-enabled .mat-badge-content {
+  color: white;
+  background: limegreen;
+}
+
+:host /deep/ .user-disabled .mat-badge-content {
+  color: white;
+  background: orange;
+}
+
+:host /deep/ .user-locked .mat-badge-content {
+  color: white;
+  background: red;
+}
+

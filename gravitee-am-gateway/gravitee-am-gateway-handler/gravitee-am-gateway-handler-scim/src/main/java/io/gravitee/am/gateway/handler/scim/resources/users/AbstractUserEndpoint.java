@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.scim.resources.groups;
+package io.gravitee.am.gateway.handler.scim.resources.users;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
-import io.gravitee.am.gateway.handler.scim.model.Group;
-import io.vertx.core.Handler;
+import io.gravitee.am.gateway.handler.scim.model.EntrepriseUser;
+import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,17 +35,17 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AbstractGroupEndpointHandler implements Handler<RoutingContext> {
+public class AbstractUserEndpoint {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractGroupEndpointHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(AbstractUserEndpoint.class);
+    protected UserService userService;
+    protected ObjectMapper objectMapper;
+    protected PasswordValidator passwordValidator;
 
-    protected String location(HttpServerRequest request) {
-        try {
-            return UriBuilderRequest.resolveProxyRequest(request, request.path(), null);
-        } catch (URISyntaxException e) {
-            logger.error("An error occurs while decoding SCIM Groups location URI", e);
-            return "";
-        }
+    public AbstractUserEndpoint(UserService userService, ObjectMapper objectMapper, PasswordValidator passwordValidator) {
+        this.userService = userService;
+        this.objectMapper = objectMapper;
+        this.passwordValidator = passwordValidator;
     }
 
     protected void checkSchemas(List<String> schemas) throws Exception {
@@ -57,9 +58,18 @@ public abstract class AbstractGroupEndpointHandler implements Handler<RoutingCon
             if (!schemaSet.add(schema)) {
                 throw new InvalidSyntaxException("Duplicate 'schemas' values are forbidden");
             }
-            if (!Group.SCHEMAS.contains(schema)) {
+            if (!EntrepriseUser.SCHEMAS.contains(schema)) {
                 throw new InvalidSyntaxException("The 'schemas' attribute MUST only contain values defined as 'schema' and schemaExtensions' for the resource's defined User type");
             }
         });
+    }
+
+    protected String location(HttpServerRequest request) {
+        try {
+            return UriBuilderRequest.resolveProxyRequest(request, request.path(), null);
+        } catch (URISyntaxException e) {
+            logger.error("An error occurs while decoding SCIM Users location URI", e);
+            return "";
+        }
     }
 }

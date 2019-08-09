@@ -93,4 +93,45 @@ export class UsersComponent implements OnInit {
   accountLocked(user) {
     return !user.accountNonLocked && user.accountLockedUntil > new Date();
   }
+
+  avatarUrl(user) {
+    if (user.additionalInformation && user.additionalInformation['picture']) {
+      return user.additionalInformation['picture'];
+    }
+    return 'assets/material-letter-icons/' + user.username.charAt(0).toUpperCase() + '.svg';
+  }
+
+  displayName(user) {
+    // check display name attribute first
+    if (user.displayName) {
+      return user.displayName;
+    }
+
+    // fall back to standard claim 'name'
+    if (user.additionalInformation && user.additionalInformation['name']) {
+      return user.additionalInformation['name'];
+    }
+
+    // fall back to combination of first name and last name
+    if (user.firstName) {
+      let displayName = user.firstName;
+      if (user.lastName) {
+        displayName += ' ' + user.lastName;
+      } else if (user.additionalInformation && user.additionalInformation['family_name']) {
+        displayName += ' ' + user.additionalInformation['family_name']
+      }
+      return displayName;
+    }
+
+    if (user.additionalInformation && user.additionalInformation['given_name']) {
+      let displayName = user.additionalInformation['given_name'];
+      if (user.additionalInformation && user.additionalInformation['family_name']) {
+        displayName += ' ' + user.additionalInformation['family_name']
+      }
+      return displayName;
+    }
+
+    // default display the username
+    return user.username;
+  }
 }

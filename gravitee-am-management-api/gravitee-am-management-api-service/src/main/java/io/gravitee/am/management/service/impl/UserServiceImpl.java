@@ -26,6 +26,7 @@ import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -34,6 +35,7 @@ import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
@@ -49,7 +51,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -95,6 +99,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private ClientService clientService;
+
+    @Autowired
+    private RoleService roleService;
 
     @Override
     public Single<Page<User>> search(String domain, String query, int limit) {
@@ -238,7 +245,7 @@ public class UserServiceImpl implements UserService {
                     return userService.update(user);
                 })
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).throwable(throwable)));
     }
 
     @Override
@@ -339,6 +346,38 @@ public class UserServiceImpl implements UserService {
                 .toCompletable();
     }
 
+    @Override
+    public Single<User> assignRoles(String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal) {
+        return assignRoles0(userId, roles, principal, false);
+    }
+
+    @Override
+    public Single<User> revokeRoles(String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal) {
+        return assignRoles0(userId, roles, principal, true);
+    }
+
+    private Single<User> assignRoles0(String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal, boolean revoke) {
+        return findById(userId)
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                .flatMapSingle(oldUser -> {
+                    User userToUpdate = new User(oldUser);
+                    // remove existing roles from the user
+                    if (revoke) {
+                        if (userToUpdate.getRoles() != null) {
+                            userToUpdate.getRoles().removeAll(roles);
+                        }
+                    } else {
+                        userToUpdate.setRoles(roles);
+                    }
+                    // check roles
+                    return checkRoles(roles)
+                            // and update the user
+                            .andThen(Single.defer(() -> userService.update(userToUpdate)))
+                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_ROLES_ASSIGNED).oldValue(oldUser).user(user1)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_ROLES_ASSIGNED).throwable(throwable)));
+                });
+    }
+
     private Maybe<Client> checkClient(String domain, String client) {
         return clientService.findById(client)
                 .switchIfEmpty(Maybe.defer(() -> clientService.findByDomainAndClientId(domain, client)))
@@ -349,6 +388,18 @@ public class UserServiceImpl implements UserService {
                     }
                     return client1;
                 });
+    }
+
+    private Completable checkRoles(List<String> roles) {
+        return roleService.findByIdIn(roles)
+                .map(roles1 -> {
+                    if (roles1.size() != roles.size()) {
+                        // find difference between the two list
+                        roles.removeAll(roles1.stream().map(Role::getId).collect(Collectors.toList()));
+                        throw new RoleNotFoundException(String.join(",", roles));
+                    }
+                    return roles1;
+                }).toCompletable();
     }
 
     private void completeUserRegistration(User user) {
