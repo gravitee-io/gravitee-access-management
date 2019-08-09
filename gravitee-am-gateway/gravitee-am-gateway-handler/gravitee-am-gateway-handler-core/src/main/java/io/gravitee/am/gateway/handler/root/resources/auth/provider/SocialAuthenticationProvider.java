@@ -90,7 +90,7 @@ public class SocialAuthenticationProvider implements AuthProvider {
                     additionalInformation.put("source", authInfo.getString(PROVIDER_PARAMETER));
                     additionalInformation.put(Parameters.CLIENT_ID, authInfo.getString(Parameters.CLIENT_ID));
                     ((DefaultUser) user).setAdditionalInformation(additionalInformation);
-                    return userAuthenticationManager.loadUser(user);
+                    return userAuthenticationManager.connect(user);
                 })
                 .subscribe(user -> resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))), error -> {
                     logger.error("Unable to authenticate oauth2 provider", error);

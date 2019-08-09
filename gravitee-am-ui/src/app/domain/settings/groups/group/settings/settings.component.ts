@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import { ActivatedRoute, Router } from "@angular/router";
 import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { SnackbarService } from "../../../../../services/snackbar.service";
@@ -27,6 +27,7 @@ import { AppConfig } from "../../../../../../config/app.config";
   styleUrls: ['./settings.component.scss']
 })
 export class GroupSettingsComponent implements OnInit {
+  @ViewChild('groupForm') form: any;
   private domainId: string;
   group: any;
 
@@ -53,6 +54,7 @@ export class GroupSettingsComponent implements OnInit {
   update() {
     this.groupService.update(this.domainId, this.group.id, this.group).subscribe(data => {
       this.group = data;
+      this.form.reset(this.group);
       this.initBreadcrumb();
       this.snackbarService.open("Group updated");
     });

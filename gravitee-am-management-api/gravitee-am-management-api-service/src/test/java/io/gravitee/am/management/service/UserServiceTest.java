@@ -18,14 +18,18 @@ package io.gravitee.am.management.service;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,9 +37,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.*;
+
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -58,6 +64,9 @@ public class UserServiceTest {
 
     @Mock
     private io.gravitee.am.service.UserService commonUserService;
+
+    @Mock
+    private RoleService roleService;
 
     @Test
     public void shouldCreateUser_invalid_identity_provider() {
@@ -159,6 +168,104 @@ public class UserServiceTest {
         TestObserver<User> testObserver = userService.update(domain, id, updateUser).test();
         testObserver.assertNotComplete();
         testObserver.assertError(ClientNotFoundException.class);
+    }
+
+    @Test
+    public void shouldAssignRoles() {
+        List<String> rolesIds = Arrays.asList("role-1", "role-2");
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn("user-id");
+
+        Set<Role> roles = new HashSet<>();
+        Role role1 = new Role();
+        role1.setId("role-1");
+        Role role2 = new Role();
+        role2.setId("role-2");
+        roles.add(role1);
+        roles.add(role2);
+
+        when(userService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
+        when(commonUserService.update(any())).thenReturn(Single.just(new User()));
+
+       TestObserver testObserver = userService.assignRoles(user.getId(), rolesIds).test();
+       testObserver.assertComplete();
+       testObserver.assertNoErrors();
+       verify(commonUserService, times(1)).update(any());
+    }
+
+    @Test
+    public void shouldAssignRoles_roleNotFound() {
+        List<String> rolesIds = Arrays.asList("role-1", "role-2");
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn("user-id");
+
+        Set<Role> roles = new HashSet<>();
+        Role role1 = new Role();
+        role1.setId("role-1");
+        Role role2 = new Role();
+        role2.setId("role-2");
+        roles.add(role1);
+        roles.add(role2);
+
+        when(userService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
+
+        TestObserver testObserver = userService.assignRoles(user.getId(), rolesIds).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(RoleNotFoundException.class);
+        verify(commonUserService, never()).update(any());
+    }
+
+    @Test
+    public void shouldRevokeRole() {
+        List<String> rolesIds = Arrays.asList("role-1", "role-2");
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn("user-id");
+
+        Set<Role> roles = new HashSet<>();
+        Role role1 = new Role();
+        role1.setId("role-1");
+        Role role2 = new Role();
+        role2.setId("role-2");
+        roles.add(role1);
+        roles.add(role2);
+
+        when(userService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
+        when(commonUserService.update(any())).thenReturn(Single.just(new User()));
+
+        TestObserver testObserver = userService.revokeRoles(user.getId(), rolesIds).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(commonUserService, times(1)).update(any());
+    }
+
+    @Test
+    public void shouldRevokeRoles_roleNotFound() {
+        List<String> rolesIds = Arrays.asList("role-1", "role-2");
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn("user-id");
+
+        Set<Role> roles = new HashSet<>();
+        Role role1 = new Role();
+        role1.setId("role-1");
+        Role role2 = new Role();
+        role2.setId("role-2");
+        roles.add(role1);
+        roles.add(role2);
+
+        when(userService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
+
+        TestObserver testObserver = userService.revokeRoles(user.getId(), rolesIds).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(RoleNotFoundException.class);
+        verify(commonUserService, never()).update(any());
     }
 
 }

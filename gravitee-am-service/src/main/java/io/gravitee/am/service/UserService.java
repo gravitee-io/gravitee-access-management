@@ -51,29 +51,11 @@ public interface UserService {
 
     Single<User> create(String domain, NewUser newUser);
 
+    Single<User> create(User user);
+
     Single<User> update(String domain, String id, UpdateUser updateUser);
 
     Single<User> update(User user);
 
     Completable delete(String userId);
-
-    /**
-     * ------------------------------------------------------
-     * ------------------------------------------------------
-     * /!\
-     *  Not sure it's the best place for this method
-     *  the module gravitee-am-service should not be aware of the gravitee-am-identityprovider-api module
-     * /!\
-     * ------------------------------------------------------
-     * ------------------------------------------------------
-     *
-     * Moved from io.gravitee.am.gateway.service.UserService to current interface.
-     *
-     * Used after a successful authentication.
-     * Perhaps not the best place to put this method.
-     *
-     * @param user
-     * @return
-     */
-    Single<User> findOrCreate(String domain, io.gravitee.am.identityprovider.api.User user);
 }

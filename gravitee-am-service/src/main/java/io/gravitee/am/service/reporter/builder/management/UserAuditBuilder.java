@@ -30,7 +30,9 @@ public class UserAuditBuilder extends ManagementAuditBuilder<UserAuditBuilder> {
     }
 
     public UserAuditBuilder user(User user) {
-        if (EventType.USER_CREATED.equals(getType()) || EventType.USER_UPDATED.equals(getType())) {
+        if (EventType.USER_CREATED.equals(getType())
+                || EventType.USER_UPDATED.equals(getType())
+                || EventType.USER_ROLES_ASSIGNED.equals(getType())) {
             setNewValue(user);
         }
         domain(user.getDomain());

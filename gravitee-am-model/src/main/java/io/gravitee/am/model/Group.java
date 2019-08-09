@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -27,9 +28,25 @@ public class Group {
     private String id;
     private String domain;
     private String name;
+    private String description;
     private List<String> members;
+    private List<String> roles;
     private Date createdAt;
     private Date updatedAt;
+
+    public Group() {
+    }
+
+    public Group(Group other) {
+        this.id = other.id;
+        this.domain = other.domain;
+        this.name = other.name;
+        this.description = other.description;
+        this.members = other.members != null ? new ArrayList<>(other.members) : null;
+        this.roles = other.roles != null ? new ArrayList<>(other.roles) : null;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+    }
 
     public String getId() {
         return id;
@@ -55,12 +72,28 @@ public class Group {
         this.name = name;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public List<String> getMembers() {
         return members;
     }
 
     public void setMembers(List<String> members) {
         this.members = members;
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 
     public Date getCreatedAt() {

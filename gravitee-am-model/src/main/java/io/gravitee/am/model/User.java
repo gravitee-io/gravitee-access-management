@@ -19,10 +19,7 @@ import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -106,6 +103,50 @@ public class User {
     private Date createdAt;
 
     private Date updatedAt;
+
+    public User() {
+    }
+
+    public User(User other) {
+        this.id = other.id;
+        this.externalId = other.externalId;
+        this.username = other.username;
+        this.password = other.password;
+        this.email = other.email;
+        this.displayName = other.displayName;
+        this.nickName = other.nickName;
+        this.firstName = other.firstName;
+        this.lastName = other.lastName;
+        this.title = other.title;
+        this.type = other.type;
+        this.preferredLanguage = other.preferredLanguage;
+        this.emails = other.emails != null ? new ArrayList<>(other.emails) : null;
+        this.phoneNumbers = other.phoneNumbers != null ? new ArrayList<>(other.phoneNumbers) : null;
+        this.ims = other.ims != null ? new ArrayList<>(other.ims) : null;
+        this.photos = other.photos != null ? new ArrayList<>(other.photos) : null;
+        this.entitlements = other.entitlements != null ? new ArrayList<>(other.entitlements) : null;
+        this.addresses = other.addresses != null ? new ArrayList<>(other.addresses) : null;
+        this.roles = other.roles != null ? new ArrayList<>(other.roles) : null;
+        this.rolesPermissions = other.rolesPermissions;
+        this.x509Certificates = other.x509Certificates != null ? new ArrayList<>(other.x509Certificates) : null;
+        this.accountNonExpired = other.accountNonExpired;
+        this.accountNonLocked = other.accountNonLocked;
+        this.accountLockedAt = other.accountLockedAt;
+        this.accountLockedUntil = other.accountLockedUntil;
+        this.credentialsNonExpired = other.credentialsNonExpired;
+        this.enabled = other.enabled;
+        this.internal = other.internal;
+        this.preRegistration = other.preRegistration;
+        this.registrationCompleted = other.registrationCompleted;
+        this.domain = other.domain;
+        this.source = other.source;
+        this.client = other.client;
+        this.loginsCount = other.loginsCount;
+        this.additionalInformation = other.additionalInformation != null ? new HashMap<>(other.additionalInformation) : null;
+        this.loggedAt = other.loggedAt;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+    }
 
     public String getId() {
         return id;

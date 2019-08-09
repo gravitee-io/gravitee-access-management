@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "533f1acd-87af-44ae-86f6-be5128cb56ed",
+		"_postman_id": "0753b192-d61f-48a2-8858-636b1cc2b149",
 		"name": "Gravitee.io - AM - User Management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -210,6 +210,570 @@
 		{
 			"name": "User Management",
 			"item": [
+				{
+					"name": "Roles",
+					"item": [
+						{
+							"name": "Create",
+							"item": [
+								{
+									"name": "Invalid request - malformed json",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"wrong\" : \n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/roles",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"roles"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - name required",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"UM - create role - name field required\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"[name: ne peut pas être nul]\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"description\": \"role description\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/roles",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"roles"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create role",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"UM - create role\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    let domain = pm.environment.get(\"domain\");",
+													"    ",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.name).to.eql('role name');",
+													"    pm.expect(jsonData.description).to.eql('role description');",
+													"    pm.environment.set('roleUM', jsonData.id);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"role name\",\n\t\"description\": \"role description\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/roles",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"roles"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create role 2",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"UM - create role\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    let domain = pm.environment.get(\"domain\");",
+													"    ",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.name).to.eql('role 2 name');",
+													"    pm.expect(jsonData.description).to.eql('role 2 description');",
+													"    pm.environment.set('role2UM', jsonData.id);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"role 2 name\",\n\t\"description\": \"role 2 description\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/roles",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"roles"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - name already exists",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"UM - create role - uniqueness\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"A role [role name] already exists.\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"role name\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/roles",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"roles"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Update",
+							"item": [
+								{
+									"name": "Invalid request - role not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"",
+													"pm.test(\"UM - update role - unknown role\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.eql(\"Role [wrong-id] can not be found.\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"role name 2\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/roles/wrong-id",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"roles",
+												"wrong-id"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - malformed json",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/roles/{{roleUM}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"roles",
+												"{{roleUM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update role",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"UM - update role\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.description).to.eql('new description');",
+													"    pm.expect(jsonData.permissions).to.eql(['read']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"role name\",\n\t\"description\": \"new description\",\n\t\"permissions\": [\"read\"]\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/roles/{{roleUM}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"roles",
+												"{{roleUM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update role 2",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"UM - update role\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.description).to.eql('new description 2');",
+													"    pm.expect(jsonData.permissions).to.eql(['write']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"role 2 name\",\n\t\"description\": \"new description 2\",\n\t\"permissions\": [\"write\"]\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/roles/{{role2UM}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"roles",
+												"{{role2UM}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "List",
+							"item": [
+								{
+									"name": "List roles",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ace28d5f-a975-4430-ba47-29184cf01460",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"UM - list roles\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.length).to.eql(2);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/roles",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"roles"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						}
+					],
+					"_postman_isSubFolder": true
+				},
 				{
 					"name": "Users",
 					"item": [
@@ -877,6 +1441,122 @@
 								}
 							],
 							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Assign roles",
+							"item": [
+								{
+									"name": "Assign roles to user - role not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "[\"wrong-role-id\"]\n"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/users/{{userUM}}/roles",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"users",
+												"{{userUM}}",
+												"roles"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Assign roles to user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"UM - assign roles to user\", function () {",
+													"    let role = pm.environment.get(\"roleUM\");",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.roles).to.eql([role]);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "[ \"{{roleUM}}\"]"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/users/{{userUM}}/roles",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"users",
+												"{{userUM}}",
+												"roles"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
 						}
 					],
 					"_postman_isSubFolder": true
@@ -1050,6 +1730,63 @@
 									"response": []
 								},
 								{
+									"name": "Create group 2",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"UM - create group 2\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.name).to.eql('My Group 2');",
+													"    pm.environment.set('group2UM', jsonData.id);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"name\": \"My Group 2\"\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/groups",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"groups"
+											]
+										}
+									},
+									"response": []
+								},
+								{
 									"name": "Invalid request - name already exists",
 									"event": [
 										{
@@ -1196,7 +1933,7 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{userUM}}",
+											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}",
 											"host": [
 												"{{management_url}}"
 											],
@@ -1205,7 +1942,7 @@
 												"domains",
 												"{{domain}}",
 												"groups",
-												"{{userUM}}"
+												"{{groupUM}}"
 											]
 										}
 									},
@@ -1225,7 +1962,7 @@
 													"",
 													"pm.test(\"UM - update group\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.name).to.eql('My Group 2');",
+													"    pm.expect(jsonData.name).to.eql('My New Group');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1249,7 +1986,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"name\": \"My Group 2\"\n}"
+											"raw": "{\n\t\"name\": \"My New Group\"\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}",
@@ -1311,7 +2048,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"name\": \"My Group 2\",\n\t\"members\": [\"wrong-member-id\"]\n}"
+											"raw": "{\n\t\"name\": \"My New Group\",\n\t\"members\": [\"wrong-member-id\"]\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}",
@@ -1367,7 +2104,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"name\": \"My Group 2\",\n\t\"members\": [\"{{userUM}}\"]\n}"
+											"raw": "{\n\t\"name\": \"My New Group\",\n\t\"members\": [\"{{userUM}}\"]\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}",
@@ -1380,6 +2117,122 @@
 												"{{domain}}",
 												"groups",
 												"{{groupUM}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Assign roles",
+							"item": [
+								{
+									"name": "Assign roles to group - role not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "[\"wrong-role-id\"]\n"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}/roles",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"groups",
+												"{{groupUM}}",
+												"roles"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Assign roles to group",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"UM - assign roles to group\", function () {",
+													"    let role = pm.environment.get(\"role2UM\");",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.roles).to.eql([role]);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "[ \"{{role2UM}}\"]"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}/roles",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"groups",
+												"{{groupUM}}",
+												"roles"
 											]
 										}
 									},
@@ -1406,8 +2259,8 @@
 													"pm.test(\"UM - list groups\", function () {",
 													"    var jsonData = pm.response.json();",
 													"    pm.expect(jsonData.currentPage).to.eql(0);",
-													"    pm.expect(jsonData.totalCount).to.eql(1);",
-													"    pm.expect(jsonData.data.length).to.eql(1);",
+													"    pm.expect(jsonData.totalCount).to.eql(2);",
+													"    pm.expect(jsonData.data.length).to.eql(2);",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1524,7 +2377,7 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}",
+											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{group2UM}}",
 											"host": [
 												"{{management_url}}"
 											],
@@ -1533,7 +2386,7 @@
 												"domains",
 												"{{domain}}",
 												"groups",
-												"{{groupUM}}"
+												"{{group2UM}}"
 											]
 										}
 									},
@@ -1554,8 +2407,8 @@
 													"pm.test(\"UM - list groups - after delete\", function () {",
 													"    var jsonData = pm.response.json();",
 													"    pm.expect(jsonData.currentPage).to.eql(0);",
-													"    pm.expect(jsonData.totalCount).to.eql(0);",
-													"    pm.expect(jsonData.data.length).to.eql(0);",
+													"    pm.expect(jsonData.totalCount).to.eql(1);",
+													"    pm.expect(jsonData.data.length).to.eql(1);",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1715,7 +2568,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"authorizedGrantTypes\": [\"password\"],\n  \"scopes\" : [\"openid\"],\n  \"identities\" : [\"{{identityProvider}}\"]\n}"
+									"raw": "{\n  \"authorizedGrantTypes\": [\"password\"],\n  \"scopes\" : [\"openid\"],\n  \"identities\" : [\"{{identityProvider}}\"],\n  \"enhanceScopesWithUserPermissions\": true\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{clientUM}}",
@@ -1890,8 +2743,10 @@
 											"});",
 											"",
 											"pm.test(\"UM - authenticate - success\", function () {",
-											"     var body = pm.response.json();",
+											"    var body = pm.response.json();",
 											"    pm.expect(body).to.have.property('access_token');",
+											"    pm.expect(body).to.have.property('scope');",
+											"    pm.expect(body.scope).to.eql('read openid write');",
 											"});"
 										],
 										"type": "text/javascript"

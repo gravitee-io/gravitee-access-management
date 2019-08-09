@@ -121,7 +121,9 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
         group.setId(groupMongo.getId());
         group.setDomain(groupMongo.getDomain());
         group.setName(groupMongo.getName());
+        group.setDescription(groupMongo.getDescription());
         group.setMembers(groupMongo.getMembers());
+        group.setRoles(groupMongo.getRoles());
         group.setCreatedAt(groupMongo.getCreatedAt());
         group.setUpdatedAt(groupMongo.getUpdatedAt());
         return group;
@@ -135,7 +137,9 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
         groupMongo.setId(group.getId());
         groupMongo.setDomain(group.getDomain());
         groupMongo.setName(group.getName());
+        groupMongo.setDescription(group.getDescription());
         groupMongo.setMembers(group.getMembers());
+        groupMongo.setRoles(group.getRoles());
         groupMongo.setCreatedAt(group.getCreatedAt());
         groupMongo.setUpdatedAt(group.getUpdatedAt());
         return groupMongo;

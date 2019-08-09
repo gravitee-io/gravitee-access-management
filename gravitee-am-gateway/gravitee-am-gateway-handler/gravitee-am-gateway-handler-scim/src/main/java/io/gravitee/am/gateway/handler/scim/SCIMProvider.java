@@ -21,8 +21,10 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHa
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.resources.configuration.ServiceProviderConfigurationEndpointHandler;
-import io.gravitee.am.gateway.handler.scim.resources.groups.*;
-import io.gravitee.am.gateway.handler.scim.resources.users.*;
+import io.gravitee.am.gateway.handler.scim.resources.groups.GroupEndpoint;
+import io.gravitee.am.gateway.handler.scim.resources.groups.GroupsEndpoint;
+import io.gravitee.am.gateway.handler.scim.resources.users.UserEndpoint;
+import io.gravitee.am.gateway.handler.scim.resources.users.UsersEndpoint;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.ServiceProviderConfigService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
@@ -33,13 +35,11 @@ import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Configurable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Configurable
 public class SCIMProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
 
     @Autowired
@@ -95,40 +95,24 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
             scimRouter.route().handler(OAuth2AuthHandler.create(oAuth2AuthProvider, "scim"));
 
             // Users resource
-            ListUserEndpointHandler listUserEndpointHandler = ListUserEndpointHandler.create(userService);
-            listUserEndpointHandler.setObjectMapper(objectMapper);
-            GetUserEndpointHandler getUserEndpointHandler = GetUserEndpointHandler.create(userService);
-            getUserEndpointHandler.setObjectMapper(objectMapper);
-            CreateUserEndpointHandler createUserEndpointHandler = CreateUserEndpointHandler.create(userService);
-            createUserEndpointHandler.setObjectMapper(objectMapper);
-            createUserEndpointHandler.setPasswordValidator(passwordValidator);
-            UpdateUserEndpointHandler updateUserEndpointHandler = UpdateUserEndpointHandler.create(userService);
-            updateUserEndpointHandler.setObjectMapper(objectMapper);
-            updateUserEndpointHandler.setPasswordValidator(passwordValidator);
-            DeleteUserEndpointHandler deleteUserEndpointHandler = DeleteUserEndpointHandler.create(userService);
+            UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper, passwordValidator);
+            UserEndpoint userEndpoint = new UserEndpoint(userService, objectMapper, passwordValidator);
 
-            scimRouter.get("/Users").handler(listUserEndpointHandler);
-            scimRouter.get("/Users/:id").handler(getUserEndpointHandler);
-            scimRouter.post("/Users").handler(createUserEndpointHandler);
-            scimRouter.put("/Users/:id").handler(updateUserEndpointHandler);
-            scimRouter.delete("/Users/:id").handler(deleteUserEndpointHandler);
+            scimRouter.get("/Users").handler(usersEndpoint::list);
+            scimRouter.get("/Users/:id").handler(userEndpoint::get);
+            scimRouter.post("/Users").handler(usersEndpoint::create);
+            scimRouter.put("/Users/:id").handler(userEndpoint::update);
+            scimRouter.delete("/Users/:id").handler(userEndpoint::delete);
 
             // Groups resource
-            ListGroupEndpointHandler listGroupEndpointHandler = ListGroupEndpointHandler.create(groupService);
-            listGroupEndpointHandler.setObjectMapper(objectMapper);
-            GetGroupEndpointHandler getGroupEndpointHandler = GetGroupEndpointHandler.create(groupService);
-            getGroupEndpointHandler.setObjectMapper(objectMapper);
-            CreateGroupEndpointHandler createGroupEndpointHandler = CreateGroupEndpointHandler.create(groupService);
-            createGroupEndpointHandler.setObjectMapper(objectMapper);
-            UpdateGroupEndpointHandler updateGroupEndpointHandler = UpdateGroupEndpointHandler.create(groupService);
-            updateGroupEndpointHandler.setObjectMapper(objectMapper);
-            DeleteGroupEndpointHandler deleteGroupEndpointHandler = DeleteGroupEndpointHandler.create(groupService);
+            GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper);
+            GroupEndpoint groupEndpoint = new GroupEndpoint(groupService, objectMapper);
 
-            scimRouter.get("/Groups").handler(listGroupEndpointHandler);
-            scimRouter.get("/Groups/:id").handler(getGroupEndpointHandler);
-            scimRouter.post("/Groups").handler(createGroupEndpointHandler);
-            scimRouter.put("/Groups/:id").handler(updateGroupEndpointHandler);
-            scimRouter.delete("/Groups/:id").handler(deleteGroupEndpointHandler);
+            scimRouter.get("/Groups").handler(groupsEndpoint::list);
+            scimRouter.get("/Groups/:id").handler(groupEndpoint::get);
+            scimRouter.post("/Groups").handler(groupsEndpoint::create);
+            scimRouter.put("/Groups/:id").handler(groupEndpoint::update);
+            scimRouter.delete("/Groups/:id").handler(groupEndpoint::delete);
 
             // error handler
             scimRouter.route().failureHandler(new ErrorHandler());

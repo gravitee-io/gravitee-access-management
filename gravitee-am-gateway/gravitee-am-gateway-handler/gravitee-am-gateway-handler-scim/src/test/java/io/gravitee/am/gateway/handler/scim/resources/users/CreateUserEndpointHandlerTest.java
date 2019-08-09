@@ -18,11 +18,13 @@ package io.gravitee.am.gateway.handler.scim.resources.users;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
+import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
@@ -58,15 +60,11 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     private ObjectWriter objectWriter;
 
     @InjectMocks
-    private CreateUserEndpointHandler createUserEndpointHandler = new CreateUserEndpointHandler(userService);
+    private UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper, passwordValidator);
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        // set handler
-        createUserEndpointHandler.setPasswordValidator(passwordValidator);
-        createUserEndpointHandler.setObjectMapper(objectMapper);
 
         // object mapper
         when(objectWriter.writeValueAsString(any())).thenReturn("UserObject");
@@ -79,7 +77,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeSCIMCreateUserEndpoint_invalid_password() throws Exception {
-        router.route("/Users").handler(createUserEndpointHandler);
+        router.route("/Users").handler(usersEndpoint::create);
         when(passwordValidator.validate(anyString())).thenReturn(false);
 
         testRequest(
@@ -101,7 +99,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvokeSCIMCreateUserEndpoint_valid_password() throws Exception {
-        router.route("/Users").handler(createUserEndpointHandler);
+        router.route("/Users").handler(usersEndpoint::create);
         when(passwordValidator.validate(anyString())).thenReturn(true);
         when(userService.create(any(), any())).thenReturn(Single.just(getUser()));
 
@@ -121,9 +119,9 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
         User user = getUser();
         user.setSource("unknown-idp");
 
-        router.route("/Users").handler(createUserEndpointHandler);
+        router.route("/Users").handler(usersEndpoint::create);
         when(passwordValidator.validate(anyString())).thenReturn(true);
-        when(userService.create(any(), any())).thenReturn(Single.error(new UserProviderNotFoundException(user.getSource())));
+        when(userService.create(any(), any())).thenReturn(Single.error(new InvalidValueException("User provider [unknown-idp] can not be found.")));
 
         testRequest(
                 HttpMethod.POST,
@@ -132,11 +130,35 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
                     req.setChunked(true);
                     req.write(Json.encode(user));
                 },
-                404,
-                "Not Found",
+                400,
+                "Bad Request",
                 "{\n" +
-                        "  \"status\" : \"404\",\n" +
+                        "  \"status\" : \"400\",\n" +
+                        "  \"scimType\" : \"invalidValue\",\n" +
                         "  \"detail\" : \"User provider [unknown-idp] can not be found.\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
+    }
+
+    @Test
+    public void shouldNotInvokeSCIMCreateUserEndpoint_invalid_roles() throws Exception {
+        router.route("/Users").handler(usersEndpoint::create);
+        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(userService.create(any(), any())).thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
+
+        testRequest(
+                HttpMethod.POST,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    req.write(Json.encode(getUser()));
+                },
+                400,
+                "Bad Request",
+                "{\n" +
+                        "  \"status\" : \"400\",\n" +
+                        "  \"scimType\" : \"invalidValue\",\n" +
+                        "  \"detail\" : \"Role [role-1] can not be found.\",\n" +
                         "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
                         "}");
     }

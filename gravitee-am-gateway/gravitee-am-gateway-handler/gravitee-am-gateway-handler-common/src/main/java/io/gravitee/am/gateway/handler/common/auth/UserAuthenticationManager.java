@@ -32,5 +32,9 @@ public interface UserAuthenticationManager {
 
     Maybe<User> loadUserByUsername(String subject);
 
-    Single<User> loadUser(io.gravitee.am.identityprovider.api.User user);
+    Single<User> connect(io.gravitee.am.identityprovider.api.User user, boolean afterAuthentication);
+
+    default Single<User> connect(io.gravitee.am.identityprovider.api.User user) {
+        return connect(user, true);
+    }
 }

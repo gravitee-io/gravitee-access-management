@@ -32,9 +32,13 @@ public class GroupMongo extends Auditable {
 
     private String name;
 
+    private String description;
+
     private String domain;
 
     private List<String> members;
+
+    private List<String> roles;
 
     public String getId() {
         return id;
@@ -52,6 +56,14 @@ public class GroupMongo extends Auditable {
         this.name = name;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public String getDomain() {
         return domain;
     }
@@ -66,6 +78,14 @@ public class GroupMongo extends Auditable {
 
     public void setMembers(List<String> members) {
         this.members = members;
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 
     @Override

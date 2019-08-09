@@ -26,10 +26,12 @@ import { AppConfig } from "../../../../../config/app.config";
 export class GroupComponent implements OnInit {
   private domainId: string;
   group: any;
-  navLinks: any = [{'href': 'settings' , 'label': 'Settings'},
-    {'href': 'members' , 'label': 'Members'}];
-
-
+  navLinks: any = [
+    {'href': 'settings' , 'label': 'Settings'},
+    {'href': 'members' , 'label': 'Members'},
+    {'href': 'roles' , 'label': 'Roles'},
+  ];
+  
   constructor(private route: ActivatedRoute,
               private router: Router,
               private breadcrumbService: BreadcrumbService) { }

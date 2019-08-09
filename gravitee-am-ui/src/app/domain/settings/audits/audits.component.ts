@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from "@angular/router";
 import { AppConfig } from "../../../../config/app.config";
 import { AuditService } from "../../../services/audit.service";
 import * as moment from 'moment';
 import { PlatformService } from "../../../services/platform.service";
 import { UserService } from "../../../services/user.service";
-import {FormControl} from "@angular/forms";
+import { FormControl } from "@angular/forms";
 
 @Component({
   selector: 'app-audits',
@@ -77,21 +77,13 @@ export class AuditsComponent implements OnInit {
     this.platformService.auditEventTypes().subscribe(data => this.eventTypes = data);
   }
 
-
-  loadAudits() {
-    this.auditService.findByDomain(this.domainId, this.page.pageNumber, this.page.size).subscribe(pagedAudits => {
-      this.page.totalElements = pagedAudits.totalCount;
-      this.audits = pagedAudits.data;
-    });
-  }
-
   get isEmpty() {
     return !this.audits || this.audits.length == 0 && !this.displayReset;
   }
 
   setPage(pageInfo){
     this.page.pageNumber = pageInfo.offset;
-    this.loadAudits();
+    this.searchAudits();
   }
 
   isUnknownActor(row) {
@@ -153,6 +145,7 @@ export class AuditsComponent implements OnInit {
 
   search(event) {
     event.preventDefault();
+    this.page.pageNumber = 0;
     this.searchAudits();
   }
 
@@ -171,6 +164,7 @@ export class AuditsComponent implements OnInit {
   }
 
   resetForm() {
+    this.page.pageNumber = 0;
     this.eventType = null;
     this.eventStatus = null;
     this.startDate = null;
@@ -178,19 +172,14 @@ export class AuditsComponent implements OnInit {
     this.displayReset = false;
     this.selectedUser = null;
     this.userCtrl.reset();
-    this.loadAudits();
+    this.searchAudits();
   }
 
   refresh() {
-    if (this.displayReset) {
-      this.searchAudits();
-    } else {
-      this.loadAudits();
-    }
+    this.searchAudits();
   }
 
   searchAudits() {
-    this.page.pageNumber = 0;
     let from = this.startDateChanged ? moment(this.startDate).valueOf() : null;
     let to = this.endDateChanged ? moment(this.endDate).valueOf() : null;
     this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, this.selectedUser, from, to).subscribe(pagedAudits => {

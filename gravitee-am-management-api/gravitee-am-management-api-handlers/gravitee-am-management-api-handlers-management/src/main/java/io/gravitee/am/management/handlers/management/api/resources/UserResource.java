@@ -231,9 +231,14 @@ public class UserResource extends AbstractResource {
 
     }
 
-    @Path("{consents}")
+    @Path("consents")
     public UserConsentsResource getUserConsentsResource() {
         return resourceContext.getResource(UserConsentsResource.class);
+    }
+
+    @Path("roles")
+    public UserRolesResource getUserRolesResource() {
+        return resourceContext.getResource(UserRolesResource.class);
     }
 
     private Maybe<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {

@@ -78,7 +78,7 @@ public class SocialAuthenticationProviderTest {
 
         io.gravitee.am.identityprovider.api.User user  = new io.gravitee.am.identityprovider.api.DefaultUser("username");
 
-        when(userAuthenticationManager.loadUser(any())).thenReturn(Single.just(new User()));
+        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
         when(identityProviderManager.get(anyString())).thenReturn(Maybe.just(authenticationProvider));
         when(routingContext.request()).thenReturn(httpServerRequest);
@@ -92,7 +92,7 @@ public class SocialAuthenticationProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
-        verify(userAuthenticationManager, times(1)).loadUser(any());
+        verify(userAuthenticationManager, times(1)).connect(any());
     }
 
 
@@ -114,7 +114,7 @@ public class SocialAuthenticationProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
-        verify(userAuthenticationManager, never()).loadUser(any());
+        verify(userAuthenticationManager, never()).connect(any());
     }
 
     @Test
@@ -135,7 +135,7 @@ public class SocialAuthenticationProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
-        verify(userAuthenticationManager, never()).loadUser(any());
+        verify(userAuthenticationManager, never()).connect(any());
     }
 
 

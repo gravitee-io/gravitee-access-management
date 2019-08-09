@@ -23,6 +23,8 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
+import java.util.List;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -48,6 +50,10 @@ public interface UserService {
     Completable sendRegistrationConfirmation(String userId, io.gravitee.am.identityprovider.api.User principal);
 
     Completable unlock(String userId, io.gravitee.am.identityprovider.api.User principal);
+
+    Single<User> assignRoles(String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
+
+    Single<User> revokeRoles(String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
 
     default Single<User> create(String domain, NewUser newUser) {
         return create(domain, newUser, null);
@@ -76,4 +82,13 @@ public interface UserService {
     default Completable unlock(String userId) {
         return unlock(userId, null);
     }
+
+    default Single<User> assignRoles(String userId, List<String> roles) {
+        return assignRoles(userId, roles, null);
+    }
+
+    default Single<User> revokeRoles(String userId, List<String> roles) {
+        return revokeRoles(userId, roles, null);
+    }
+
 }

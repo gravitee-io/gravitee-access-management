@@ -15,8 +15,13 @@
     limitations under the License.
 
 -->
-<div class="members-container" *ngIf="!isEmpty">
-  <ngx-datatable class="material"
+<div class="members-container">
+  <div fxLayout="row" fxLayoutAlign="center">
+    <div fxFlex>This group has <b>{{members.length}}</b> members(s).</div>
+    <button style="height: 40px;" color="accent" mat-stroked-button (click)="add()">+ Add members</button>
+  </div>
+  <mat-divider *ngIf="isEmpty" style="margin-bottom: 20px;"></mat-divider>
+  <ngx-datatable *ngIf="!isEmpty" class="material"
                  [columnMode]="'flex'"
                  [headerHeight]="40"
                  [footerHeight]="40"
@@ -27,15 +32,38 @@
                  [offset]="page.pageNumber"
                  [limit]="page.size"
                  (page)='setPage($event)'>
-    <ngx-datatable-column name="Username" [flexGrow]="1">
+    <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'member-name-cell'">
       <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.username}}
+        <div class="user-header" fxLayout="row">
+          <div class="user-avatar"
+               matBadge="&#8288;"
+               matBadgeSize="small"
+               [ngClass]="(row.enabled && !accountLocked(row)) ? 'user-enabled': (!row.enabled ? 'user-disabled' : accountLocked(row) ? 'user-locked' : '')"
+               [matTooltip]="(row.enabled && !accountLocked(row)) ? 'User enabled': (!row.enabled ? 'User disabled' : accountLocked(row) ? 'User locked' : '')">
+            <img [src]="avatarUrl(row)" alt="Photo of a {{row.username}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="40"/>
+          </div>
+          <div class="user-information" fxLayout="column">
+            <a [routerLink]="userLink(row)">{{displayName(row)}}</a>
+            <small>{{row.username}}</small>
+          </div>
+        </div>
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="Identity Provider" [flexGrow]="2">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        {{row.source}}
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="Last login" [flexGrow]="2">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <span *ngIf="(row.loggedAt)">{{row.loggedAt | humanDate}}</span>
+        <span *ngIf="!(row.loggedAt)">Never logged in</span>
       </ng-template>
     </ngx-datatable-column>
     <ngx-datatable-column name="Actions" [flexGrow]="1">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <div fxLayout="row" class="members-actions">
-          <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
+          <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Remove member">highlight_off</mat-icon></button>
         </div>
       </ng-template>
     </ngx-datatable-column>
@@ -44,11 +72,5 @@
 
 <app-emptystate *ngIf="isEmpty"
                 [message]="'Members will appear here'"
-                [subMessage]="'Start adding a member'"
+                [subMessage]="'No data to display.'"
                 [icon]="'people'"></app-emptystate>
-
-<div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
-  <a mat-fab color="accent" (click)="add()">
-    <mat-icon>add</mat-icon>
-  </a>
-</div>

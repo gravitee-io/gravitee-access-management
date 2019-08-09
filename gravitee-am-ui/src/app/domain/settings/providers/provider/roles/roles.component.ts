@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, Inject, ViewChild} from '@angular/core';
+import { Component, OnInit, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ProviderService } from "../../../../../services/provider.service";
 import { DialogService } from "../../../../../services/dialog.service";
-import {AppConfig} from "../../../../../../config/app.config";
-import { MatSelect } from "@angular/material";
-import {GroupService} from "../../../../../services/group.service";
-import {NgForm} from "@angular/forms";
-import {filter} from "rxjs/operators";
+import { AppConfig } from "../../../../../../config/app.config";
+import { NgForm } from "@angular/forms";
 
 @Component({
   selector: 'app-roles',
@@ -34,11 +31,14 @@ export class ProviderRolesComponent implements OnInit {
   private domainId: string;
   private provider: any;
   roles: any;
-  groups: any;
   providerRoleMapper: any = {};
 
-  constructor(private snackbarService: SnackbarService, private providerService: ProviderService,
-              private dialogService: DialogService, private dialog: MatDialog, private route: ActivatedRoute, private router: Router) {
+  constructor(private snackbarService: SnackbarService,
+              private providerService: ProviderService,
+              private dialogService: DialogService,
+              private dialog: MatDialog,
+              private route: ActivatedRoute,
+              private router: Router) {
   }
 
   ngOnInit() {
@@ -48,14 +48,13 @@ export class ProviderRolesComponent implements OnInit {
     }
     this.provider = this.route.snapshot.parent.data['provider'];
     this.roles = this.route.snapshot.data['roles'];
-    this.groups = this.route.snapshot.data['groups'].data;
     if (this.provider.roleMapper) {
       this.providerRoleMapper = this.provider.roleMapper;
     }
   }
 
   add() {
-    let dialogRef = this.dialog.open(CreateRoleMapperComponent, { data: { domain: this.domainId, roles: this.roles, groups: this.groups }, width : '700px'});
+    let dialogRef = this.dialog.open(CreateRoleMapperComponent, { data: { domain: this.domainId, roles: this.roles }, width : '700px'});
 
     dialogRef.afterClosed().subscribe(mapper => {
       if (mapper) {
@@ -67,14 +66,9 @@ export class ProviderRolesComponent implements OnInit {
             if (mapper.user) {
               this.providerRoleMapper[role] = [mapper.user];
             }
-            if (mapper.groups && mapper.groups.length > 0) {
-              mapper.groups.forEach(group => {
-                (this.providerRoleMapper[role] = this.providerRoleMapper[role] || []).push('group=' + group);
-              });
-            }
             roleMapped = true;
           } else {
-            // check user/group uniqueness
+            // check uniqueness
             let users = this.providerRoleMapper[role];
             // user
             if (mapper.user) {
@@ -85,19 +79,6 @@ export class ProviderRolesComponent implements OnInit {
               } else {
                 errorMessages.push(`'${mapper.user}' has already the '${this.getRole(role)}' role`);
               }
-            }
-            // group
-            if (mapper.groups && mapper.groups.length > 0) {
-              mapper.groups.forEach(group => {
-                let groupValue = 'group=' + group;
-                if (users.indexOf(groupValue) === -1) {
-                  users.push(groupValue);
-                  this.providerRoleMapper[role] = users;
-                  roleMapped = true;
-                } else {
-                  errorMessages.push(`'${this.getGroup(group)}' has already the '${this.getRole(role)}' role`);
-                }
-              });
             }
           }
         });
@@ -152,16 +133,9 @@ export class ProviderRolesComponent implements OnInit {
     return !this.providerRoleMapper || this.providerRoles.length == 0;
   }
 
-  getGroup(id): string {
-    return this.groups.filter((group) => group.id === id).map(group => group.name);
-  }
-
   displayMapping(mapping: string): string {
     let mapperKey = mapping.split('=')[0];
     let mapperValue = mapping.split(mapperKey + '=')[1];
-    if (mapperKey === 'group') {
-      mapperValue = this.getGroup(mapperValue);
-    }
     return mapperKey + '=' + mapperValue;
   }
 
@@ -171,40 +145,15 @@ export class ProviderRolesComponent implements OnInit {
   selector: 'create-role-mapper',
   templateUrl: './create/create.component.html',
 })
-export class CreateRoleMapperComponent implements OnInit {
-  @ViewChild('groupSelect') selectElem: MatSelect;
+export class CreateRoleMapperComponent {
   @ViewChild('userRoleForm') form: NgForm;
-  private page = 0;
-  private size = 25;
-  private RELOAD_TOP_SCROLL_POSITION = 25;
-  groups: any[];
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,
-              public dialogRef: MatDialogRef<CreateRoleMapperComponent>,
-              private groupService: GroupService) {
-    this.groups = data.groups;
-  }
-
-  ngOnInit() {
-    this.selectElem.openedChange.pipe(filter(isOpen => isOpen)).subscribe(() => this.registerPanelScrollEvent());
+              public dialogRef: MatDialogRef<CreateRoleMapperComponent>) {
   }
 
   get formInvalid() {
     let formValue = this.form.value;
-    return !formValue.user && (formValue.groups === undefined || formValue.groups.length == 0);
-  }
-
-  registerPanelScrollEvent() {
-    const panel = this.selectElem.panel.nativeElement;
-    panel.addEventListener('scroll', event => this.loadGroupsOnScroll(event));
-  }
-
-  loadGroupsOnScroll(event) {
-    if (event.target.scrollTop > this.RELOAD_TOP_SCROLL_POSITION) {
-      this.groupService.findByDomain(this.data.domain, ++this.page, this.size).subscribe(response => {
-        this.groups = response.data;
-        this.RELOAD_TOP_SCROLL_POSITION += this.groups.length * this.page;
-      });
-    }
+    return !formValue.user;
   }
 }
