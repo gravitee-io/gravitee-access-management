@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentMap;
  * Override default event manager to enable concurrent access
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class EventManagerImpl implements EventManager {
@@ -127,7 +128,7 @@ public class EventManagerImpl implements EventManager {
         @Override
         public int compareTo(ComparableEventType<T> o) {
             if (domain != null) {
-                return (wrappedClass.getCanonicalName() + domain).compareTo(o.wrappedClass.getCanonicalName() + domain);
+                return (wrappedClass.getCanonicalName() + domain).compareTo(o.wrappedClass.getCanonicalName() + o.domain);
             }
 
             return wrappedClass.getCanonicalName().compareTo(o.wrappedClass.getCanonicalName());
