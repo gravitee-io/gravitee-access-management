@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/issues/milestone/160?closed=1[AM - 2.8.3 (2019-08-15)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [Sync] all domains handle events for other domains https://github.com/gravitee-io/issues/issues/2532[#2532]
+
+
 == https://github.com/gravitee-io/issues/issues/milestone/157?closed=1[AM - 2.8.2 (2019-08-05)]
 
 === Bug fixes
