@@ -16,7 +16,10 @@
 package io.gravitee.am.gateway.event;
 
 import com.google.common.collect.Lists;
+import io.gravitee.am.gateway.core.event.DomainEvent;
 import io.gravitee.am.gateway.core.event.EventManager;
+import io.gravitee.am.gateway.handler.common.authentication.AuthenticationDetails;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -48,7 +51,17 @@ public class EventManagerImpl implements EventManager {
     public void publishEvent(Event event) {
         LOGGER.debug("Publish event {} - {}", event.type(), event.content());
 
-        String domain = event.content() != null && event.content() instanceof Payload ? (((Payload) event.content()).getDomain()) : null;
+        String domain = null;
+        if (event.content() != null) {
+            Object content = event.content();
+            if (content instanceof Payload) {
+                domain = ((Payload)content).getDomain();
+            } else if (content instanceof Domain) {
+                domain = ((Domain)content).getId();
+            } else if (content instanceof AuthenticationDetails && ((AuthenticationDetails)content).getDomain() != null) {
+                domain = ((AuthenticationDetails)content).getDomain().getId();
+            }
+        }
         List<EventListenerWrapper> listeners = getEventListeners(event.type().getClass(), domain);
         List<EventListenerWrapper> safeConcurrentListeners = Lists.newArrayList(listeners.iterator());
 
@@ -75,7 +88,13 @@ public class EventManagerImpl implements EventManager {
     }
 
     private <T extends Enum> List<EventListenerWrapper> getEventListeners(Class<T> eventType, String domain) {
-        List<EventListenerWrapper> listeners = this.listenersMap.get(new ComparableEventType(eventType, domain));
+        List<EventListenerWrapper> listeners;
+
+        if (eventType.equals(DomainEvent.class)) {
+            listeners = this.listenersMap.get(new ComparableEventType(eventType, null));
+        } else {
+            listeners = this.listenersMap.get(new ComparableEventType(eventType, domain));
+        }
 
         if (listeners == null) {
             listeners = new ArrayList<>();
