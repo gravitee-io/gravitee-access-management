@@ -73,6 +73,11 @@ public final class AuthorizationRequestFactory {
         authorizationRequest.setScopes(scope != null ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
         authorizationRequest.setState(request.params().get(Parameters.STATE));
         authorizationRequest.setAdditionalParameters(extractAdditionalParameters(request));
+
+        // set OIDC information
+        String prompt = request.params().get(io.gravitee.am.common.oidc.Parameters.PROMPT);
+        authorizationRequest.setPrompts(prompt != null ? new HashSet<>(Arrays.asList(prompt.split("\\s+"))) : null);
+
         return authorizationRequest;
     }
 

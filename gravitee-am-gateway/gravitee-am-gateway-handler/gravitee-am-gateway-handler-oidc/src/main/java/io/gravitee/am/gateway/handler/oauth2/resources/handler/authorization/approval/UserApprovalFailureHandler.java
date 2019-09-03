@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval;
 
 import com.google.common.net.HttpHeaders;
-import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.Client;
@@ -34,7 +34,6 @@ import java.util.Map;
 /**
  * If End-User Consent step failed, we need to clear out the session and redirect the user to the login page with a proper error message.
  *
- *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
@@ -42,27 +41,28 @@ public class UserApprovalFailureHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserApprovalFailureHandler.class);
     private static final String CLIENT_CONTEXT_KEY = "client";
-    private String path;
     private Domain domain;
 
-    public UserApprovalFailureHandler(Domain domain, String path) {
+    public UserApprovalFailureHandler(Domain domain) {
         this.domain = domain;
-        this.path = path;
     }
 
     @Override
     public void handle(RoutingContext context) {
         if (context.failed()) {
+            Throwable throwable = context.failure();
+            // oauth 2.0 exception at this step are "business" errors, continue
+            if (throwable instanceof OAuth2Exception) {
+                context.next();
+                return;
+            }
+
             // logout the user
             // but keep the session intact with the original OAuth 2.0 authorization request in order to replay the whole login process
             context.clearUser();
 
             // handle exception
-            Throwable throwable = context.failure();
-            if (throwable instanceof OAuth2Exception) {
-                OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
-                handleException(context, oAuth2Exception.getOAuth2ErrorCode(), oAuth2Exception.getMessage());
-            } else if (throwable instanceof PolicyChainException) {
+             if (throwable instanceof PolicyChainException) {
                 PolicyChainException policyChainException = (PolicyChainException) throwable;
                 handleException(context, policyChainException.key(), policyChainException.getMessage());
             } else {
@@ -90,8 +90,8 @@ public class UserApprovalFailureHandler implements Handler<RoutingContext> {
                 params.put("error_description", errorDescription);
             }
 
-            // build redirect uri
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), "/" + domain.getPath() + path, params);
+            // go back to login page
+            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), "/" + domain.getPath() + "/login", params);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
             logger.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);

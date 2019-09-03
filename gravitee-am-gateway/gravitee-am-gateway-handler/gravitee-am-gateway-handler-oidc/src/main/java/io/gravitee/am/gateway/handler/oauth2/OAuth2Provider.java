@@ -173,9 +173,11 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         Handler<RoutingContext> authorizationRequestParseClientHandler = new AuthorizationRequestParseClientHandler(clientSyncService);
         Handler<RoutingContext> authorizationRequestParseParametersHandler = new AuthorizationRequestParseParametersHandler(domain);
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpoint(flow, domain);
+        Handler<RoutingContext> authorizeFailureEndpoint = new AuthorizationFailureEndpoint(domain);
         Handler<RoutingContext> userApprovalRequestParseHandler = new UserApprovalRequestParseHandler(clientSyncService);
         Handler<RoutingContext> userApprovalSubmissionEndpointHandler = new UserApprovalSubmissionEndpoint(approvalService, domain);
         Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpoint(scopeService, thymeleafTemplateEngine);
+        Handler<RoutingContext> userApprovalFailureHandler = new UserApprovalFailureHandler(domain);
 
         // Token endpoint
         Handler<RoutingContext> tokenEndpoint = new TokenEndpoint(tokenGranter);
@@ -203,13 +205,15 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(authorizationRequestParseClientHandler)
                 .handler(authorizationRequestParseParametersHandler)
                 .handler(userAuthHandler)
-                .handler(authorizeEndpoint);
+                .handler(authorizeEndpoint)
+                .failureHandler(authorizeFailureEndpoint);
         oauth2Router.route(HttpMethod.POST, "/authorize")
                 .handler(userAuthHandler)
                 .handler(userApprovalRequestParseHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
                 .handler(userApprovalSubmissionEndpointHandler)
-                .failureHandler(new UserApprovalFailureHandler(domain, "/login"));
+                .failureHandler(userApprovalFailureHandler)
+                .failureHandler(authorizeFailureEndpoint);
         oauth2Router.route(HttpMethod.POST, "/token")
                 .handler(tokenRequestParseHandler)
                 .handler(clientAuthHandler)
@@ -227,7 +231,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(userApprovalRequestParseHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
                 .handler(userApprovalEndpoint)
-                .failureHandler(new UserApprovalFailureHandler(domain, "/login"));
+                .failureHandler(userApprovalFailureHandler);
         oauth2Router.route(HttpMethod.GET, "/error")
                 .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService));
 
@@ -264,7 +268,6 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     }
 
     private void errorHandler(Router router) {
-        router.route("/authorize").failureHandler(new AuthorizationFailureEndpoint(domain));
         router.route().failureHandler(new ExceptionHandler());
     }
 

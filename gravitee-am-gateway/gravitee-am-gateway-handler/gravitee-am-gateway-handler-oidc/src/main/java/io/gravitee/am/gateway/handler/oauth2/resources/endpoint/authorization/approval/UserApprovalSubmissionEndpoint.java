@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.approval;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.service.approval.ApprovalService;
@@ -73,6 +74,12 @@ public class UserApprovalSubmissionEndpoint implements Handler<RoutingContext> {
 
         // retrieve authorization request
         AuthorizationRequest authorizationRequest = context.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
+
+        // clean prompt values to avoid infinite loop when the authorization flow will be called again
+        if (authorizationRequest.getPrompts() != null) {
+            authorizationRequest.getPrompts().clear();
+            authorizationRequest.parameters().remove(Parameters.PROMPT);
+        }
 
         HttpServerRequest req = context.request();
         if (!req.isExpectMultipart()) {

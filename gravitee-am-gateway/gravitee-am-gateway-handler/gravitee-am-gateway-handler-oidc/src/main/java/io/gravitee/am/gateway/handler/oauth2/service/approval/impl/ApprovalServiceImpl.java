@@ -61,6 +61,14 @@ public class ApprovalServiceImpl implements ApprovalService {
 
     @Override
     public Single<AuthorizationRequest> checkApproval(AuthorizationRequest authorizationRequest, Client client, User user) {
+        if (authorizationRequest.getPrompts() != null && authorizationRequest.getPrompts().contains("consent")) {
+            // Set denied scopes for the user consent page
+            authorizationRequest.setDeniedScopes(authorizationRequest.getScopes());
+
+            // Send an access denied exception to force consent approval page
+            return Single.error(new AccessDeniedException("User denied access"));
+        }
+
         // check client auto approval option
         return checkAutoApproval(authorizationRequest, client)
                 .flatMap(authorizationRequest1 ->  {

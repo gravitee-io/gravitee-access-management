@@ -60,6 +60,8 @@ public class AuthorizationRequest extends OAuth2Request {
      */
     private Set<String> deniedScopes;
 
+    private Set<String> prompts;
+
     public String getState() {
         return state;
     }
@@ -98,6 +100,14 @@ public class AuthorizationRequest extends OAuth2Request {
 
     public void setDeniedScopes(Set<String> deniedScopes) {
         this.deniedScopes = deniedScopes;
+    }
+
+    public Set<String> getPrompts() {
+        return prompts;
+    }
+
+    public void setPrompts(Set<String> prompts) {
+        this.prompts = prompts;
     }
 
     public OAuth2Request createOAuth2Request() {
