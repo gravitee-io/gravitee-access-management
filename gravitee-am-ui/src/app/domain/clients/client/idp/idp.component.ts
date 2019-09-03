@@ -54,12 +54,15 @@ export class ClientIdPComponent implements OnInit {
   }
 
   selectIdentityProvider(event, identityProviderId) {
+    if (this.client.identities === undefined) {
+      this.client.identities = [];
+    }
     (event.checked) ? this.client.identities.push(identityProviderId) :  this.client.identities.splice(this.client.identities.indexOf(identityProviderId), 1);
     this.update();
   }
 
   isIdentityProviderSelected(identityProviderId) {
-    return this.client.identities.includes(identityProviderId);
+    return this.client.identities !== undefined && this.client.identities.includes(identityProviderId);
   }
 
   hasIdentityProviders() {

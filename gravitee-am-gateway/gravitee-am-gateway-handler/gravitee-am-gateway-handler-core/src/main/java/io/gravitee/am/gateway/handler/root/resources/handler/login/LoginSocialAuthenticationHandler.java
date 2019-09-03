@@ -109,12 +109,16 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
     }
 
     private void getIdentityProviders(Set<String> identities, Handler<AsyncResult<List<IdentityProvider>>> resultHandler) {
-        Observable.fromIterable(identities)
-                .flatMapMaybe(identity -> identityProviderManager.getIdentityProvider(identity))
-                .toList()
-                .subscribe(
-                        identityProviders -> resultHandler.handle(Future.succeededFuture(identityProviders)),
-                        error -> resultHandler.handle(Future.failedFuture(error)));
+        if (identities == null) {
+            resultHandler.handle(Future.succeededFuture(Collections.emptyList()));
+        } else {
+            Observable.fromIterable(identities)
+                    .flatMapMaybe(identity -> identityProviderManager.getIdentityProvider(identity))
+                    .toList()
+                    .subscribe(
+                            identityProviders -> resultHandler.handle(Future.succeededFuture(identityProviders)),
+                            error -> resultHandler.handle(Future.failedFuture(error)));
+        }
     }
 
     private void enhanceSocialIdentityProviders(List<IdentityProvider> identityProviders, HttpServerRequest request, Handler<AsyncResult<List<SocialProviderData>>> resultHandler) {
