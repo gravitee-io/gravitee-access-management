@@ -149,6 +149,26 @@ public class ApprovalServiceTest {
     }
 
     @Test
+    public void shouldNotApproveRequest_promptConsent_userDenial() {
+        final String clientId = "client_id";
+        final String userId = "user_id";
+        final String autoApproveScope = "read";
+        Client client = new Client();
+        client.setClientId(clientId);
+        client.setAutoApproveScopes(null);
+
+        User user = new User();
+        user.setId(userId);
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setClientId(clientId);
+        authorizationRequest.setScopes(Collections.singleton(autoApproveScope));
+        authorizationRequest.setPrompts(Collections.singleton("consent"));
+
+        approvalService.checkApproval(authorizationRequest, client, user).test().assertError(AccessDeniedException.class);
+    }
+
+    @Test
     public void shouldNotApproveRequest_noClientAutoApproval_userDenial() {
         final String clientId = "client_id";
         final String userId = "user_id";

@@ -15,9 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
-import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
 import io.gravitee.am.gateway.handler.oauth2.service.pkce.PKCEUtils;
@@ -25,7 +26,6 @@ import io.gravitee.am.gateway.handler.oidc.exception.ClaimsRequestSyntaxExceptio
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequestResolver;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
