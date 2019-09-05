@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
-import { ClientService } from "../../../../services/client.service";
-import { SnackbarService } from "../../../../services/snackbar.service";
-import { ProviderService } from "../../../../services/provider.service";
-import { ActivatedRoute, Router } from "@angular/router";
-import { CertificateService } from "../../../../services/certificate.service";
-import { DialogService } from "../../../../services/dialog.service";
+import {Component, EventEmitter, OnInit, Output, ViewChild,} from '@angular/core';
+import {ClientService} from "../../../../services/client.service";
+import {SnackbarService} from "../../../../services/snackbar.service";
+import {ProviderService} from "../../../../services/provider.service";
+import {ActivatedRoute, Router} from "@angular/router";
+import {CertificateService} from "../../../../services/certificate.service";
+import {DialogService} from "../../../../services/dialog.service";
+import * as _ from 'lodash';
+import {NgForm} from "@angular/forms";
 
 export interface Scope {
   id: string;
@@ -33,13 +35,14 @@ export interface Scope {
   styleUrls: ['./settings.component.scss']
 })
 export class ClientSettingsComponent implements OnInit {
-  @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
   private domainId: string;
   domain: any;
   client: any;
   formChanged: boolean = false;
   identityProviders: any[] = [];
   certificates: any[] = [];
+  editing = {};
+  clientMetadata: any[] = [];
 
   constructor(private clientService: ClientService,
               private snackbarService: SnackbarService,
@@ -56,6 +59,7 @@ export class ClientSettingsComponent implements OnInit {
     this.client = this.route.snapshot.parent.data['client'];
     this.providerService.findByDomain(this.domainId).subscribe(data => this.identityProviders = data);
     this.certificateService.findByDomain(this.domainId).subscribe(data => this.certificates = data);
+    this.initMetadata();
   }
 
   enableClient(event) {
@@ -68,15 +72,32 @@ export class ClientSettingsComponent implements OnInit {
     this.formChanged = true;
   }
 
-  isDomainDcrTemplateDisabled() {
-    return !this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled;
-  }
-
   isAutoApprove() {
     return this.client.autoApproveScopes && this.client.autoApproveScopes.indexOf('true') > -1;
   }
 
+  initMetadata() {
+    if (this.client.metadata) {
+      _.forEach(this.client.metadata, (k, v) => {
+        let metadata = {};
+        metadata['id'] = Math.random().toString(36).substring(7);
+        metadata['name'] = k;
+        metadata['value'] = v;
+        this.clientMetadata.push(metadata);
+      });
+    }
+  }
+
   update() {
+    // set metadata
+    if (!this.metadataIsEmpty()) {
+      this.client.metadata = {};
+      let that = this;
+      _.each(this.clientMetadata, function(item) {
+        that.client.metadata[item.name] = item.value;
+      });
+    }
+
     this.clientService.update(this.domainId, this.client.id, this.client).subscribe(data => {
       this.client = data;
       this.formChanged = false;
@@ -114,5 +135,69 @@ export class ClientSettingsComponent implements OnInit {
           });
         }
       });
+  }
+
+  addMetadata(metadata) {
+    if (metadata) {
+      if (!this.metadataExits(metadata.name)) {
+        metadata.id = Math.random().toString(36).substring(7);
+        this.clientMetadata.push(metadata);
+        this.clientMetadata = [...this.clientMetadata];
+        this.formChanged = true;
+      } else {
+        this.snackbarService.open(`Error : metadata "${metadata.name}" already exists`);
+      }
+    }
+  }
+
+  updateMetadata(event, cell, rowIndex) {
+    let metadata = event.target.value;
+    if (metadata) {
+      if (cell === 'name' && this.metadataExits(metadata)) {
+        this.snackbarService.open(`Error : metadata "${metadata}" already exists`);
+        return;
+      }
+      this.editing[rowIndex + '-' + cell] = false;
+      let index = _.findIndex(this.clientMetadata, {id: rowIndex});
+      this.clientMetadata[index][cell] = metadata;
+      this.clientMetadata = [...this.clientMetadata];
+      this.formChanged = true;
+    }
+  }
+
+  deleteMetadata(key, event) {
+    event.preventDefault();
+    _.remove(this.clientMetadata, function(el) {
+      return el.id === key;
+    });
+    this.clientMetadata = [...this.clientMetadata];
+    this.formChanged = true;
+  }
+
+  metadataExits(attribute): boolean {
+    return _.find(this.clientMetadata, function(el) { return  el.name === attribute; })
+  }
+
+  metadataIsEmpty() {
+    return !this.clientMetadata || Object.keys(this.clientMetadata).length === 0;
+  }
+
+}
+
+@Component({
+  selector: 'app-create-client-metadata',
+  templateUrl: './metadata/client-metadata.component.html'
+})
+export class ClientMetadataComponent {
+  metadata: any = {};
+  @Output() addMetadataChange = new EventEmitter();
+  @ViewChild('clientMetadataForm') form: NgForm;
+
+  constructor() {}
+
+  addMetadata() {
+    this.addMetadataChange.emit(this.metadata);
+    this.metadata = {};
+    this.form.reset(this.metadata);
   }
 }

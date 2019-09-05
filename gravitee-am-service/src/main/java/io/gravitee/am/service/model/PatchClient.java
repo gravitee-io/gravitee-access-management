@@ -79,6 +79,7 @@ public class PatchClient {
     private Optional<AccountSettings> accountSettings;
     private Optional<List<TokenClaim>> tokenCustomClaims;
     private Optional<Boolean> template;
+    private Optional<Map<String, Object>> metadata;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -480,6 +481,14 @@ public class PatchClient {
         this.template = template;
     }
 
+    public Optional<Map<String, Object>> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Optional<Map<String, Object>> metadata) {
+        this.metadata = metadata;
+    }
+
     public Client patch(Client _toPatch, boolean forceNull) {
         // create new object for audit purpose (patch json result)
         Client toPatch = new Client(_toPatch);
@@ -539,6 +548,7 @@ public class PatchClient {
         SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
         SetterUtils.safeSet(toPatch::setTokenCustomClaims, this.getTokenCustomClaims());
         SetterUtils.safeSet(toPatch::setTemplate, this.getTemplate(), boolean.class);
+        SetterUtils.safeSet(toPatch::setMetadata, this.getMetadata());
 
         return toPatch;
     }

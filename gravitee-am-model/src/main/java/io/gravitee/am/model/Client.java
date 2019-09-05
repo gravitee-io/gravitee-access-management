@@ -166,17 +166,19 @@ public class Client implements Cloneable{
 
     private boolean template;
 
+    private Map<String, Object> metadata;
+
     public Client() { }
 
     public Client(Client other) {
         this.id = other.id;
         this.clientId = other.clientId;
         this.clientSecret = other.clientSecret;
-        this.redirectUris = other.redirectUris;
-        this.authorizedGrantTypes = other.authorizedGrantTypes;
-        this.responseTypes = other.responseTypes;
+        this.redirectUris = other.redirectUris != null ? new ArrayList<>(other.redirectUris) : null;
+        this.authorizedGrantTypes = other.authorizedGrantTypes != null ? new ArrayList<>(other.authorizedGrantTypes) : null;
+        this.responseTypes = other.responseTypes != null ? new ArrayList<>(other.responseTypes) : null;
         this.applicationType = other.applicationType;
-        this.contacts = other.contacts;
+        this.contacts = other.contacts != null ? new ArrayList<>(other.contacts) : null;
         this.clientName = other.clientName;
         this.logoUri = other.logoUri;
         this.clientUri = other.clientUri;
@@ -201,8 +203,8 @@ public class Client implements Cloneable{
         this.requireAuthTime = other.requireAuthTime;
         this.defaultACRvalues = other.defaultACRvalues;
         this.initiateLoginUri = other.initiateLoginUri;
-        this.requestUris = other.requestUris;
-        this.scopes = other.scopes;
+        this.requestUris = other.requestUris != null ? new ArrayList<>(other.requestUris) : null;
+        this.scopes = other.scopes != null ? new ArrayList<>(other.scopes) : null;
         this.softwareId = other.softwareId;
         this.softwareVersion = other.softwareVersion;
         this.softwareStatement = other.softwareStatement;
@@ -210,7 +212,7 @@ public class Client implements Cloneable{
         this.registrationClientUri = other.registrationClientUri;
         this.clientIdIssuedAt = other.clientIdIssuedAt;
         this.clientSecretExpiresAt = other.clientSecretExpiresAt;
-        this.autoApproveScopes = other.autoApproveScopes;
+        this.autoApproveScopes = other.autoApproveScopes != null ? new ArrayList<>(other.autoApproveScopes) : null;
         this.accessTokenValiditySeconds = other.accessTokenValiditySeconds;
         this.refreshTokenValiditySeconds = other.refreshTokenValiditySeconds;
         this.idTokenValiditySeconds = other.idTokenValiditySeconds;
@@ -218,13 +220,14 @@ public class Client implements Cloneable{
         this.enabled = other.enabled;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
-        this.identities = other.identities;
+        this.identities = other.identities != null ? new HashSet<>(other.identities) : null;
         this.certificate = other.certificate;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
-        this.scopeApprovals = other.scopeApprovals;
+        this.scopeApprovals = other.scopeApprovals != null ? new HashMap<>(other.scopeApprovals) : null;
         this.accountSettings = other.accountSettings;
-        this.tokenCustomClaims = other.tokenCustomClaims;
+        this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims) : null;
         this.template = other.template;
+        this.metadata = other.metadata != null ? new HashMap<>(other.metadata) : null;
     }
 
     public String getId() {
@@ -676,6 +679,14 @@ public class Client implements Cloneable{
 
     public void setTemplate(boolean template) {
         this.template = template;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
     }
 
     @Override

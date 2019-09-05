@@ -63,7 +63,7 @@ import { DomainCreationComponent } from './settings/domains/creation/domain-crea
 import { ProviderCreationComponent } from './domain/settings/providers/creation/provider-creation.component';
 import { ClientComponent } from './domain/clients/client/client.component';
 import { ClientCreationComponent } from './clients/creation/client-creation.component';
-import { ClientSettingsComponent } from './domain/clients/client/settings/settings.component';
+import { ClientMetadataComponent, ClientSettingsComponent } from './domain/clients/client/settings/settings.component';
 import { ClientIdPComponent } from './domain/clients/client/idp/idp.component';
 import {
   ClaimsInfoDialog,
@@ -264,6 +264,7 @@ import { RoleSelectionComponent } from "./domain/components/role-selection/role-
     ClientFormsComponent,
     ClientFormComponent,
     ClientAccountSettingsComponent,
+    ClientMetadataComponent,
     ProviderCreationStep1Component,
     ProviderCreationStep2Component,
     ProviderComponent,
@@ -444,6 +445,7 @@ import { RoleSelectionComponent } from "./domain/components/role-selection/role-
     ClaimsInfoDialog,
     AddUserRolesComponent,
     AddGroupRolesComponent,
+    ClientMetadataComponent
   ],
   bootstrap: [AppComponent]
 })

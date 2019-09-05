@@ -3,6 +3,9 @@ form {
   background: #fafafa;
   border-radius: 2px;
   border: 1px solid rgb(226, 229, 231);
+  .mat-form-field {
+    padding: 10px 0px 10px 0px;
+  }
   .client-settings-form-actions {
     margin-top: 20px;
   }
@@ -45,10 +48,6 @@ form {
   }
 }
 
-.mat-form-field {
-  padding: 10px 0px 10px 0px;
-}
-
 mat-icon.delete-chip {
   cursor: pointer;
   vertical-align: middle;
@@ -65,5 +64,28 @@ mat-icon.delete-chip {
   margin-top: 20px;
   h4 {
     margin: 5px 0;
+  }
+}
+
+.client-metadata {
+  span {
+    font-size: 75%;
+    color: rgba(0, 0, 0, 0.54);
+  }
+  a {
+    cursor: pointer;
+    font-size: 75%;
+    color: #2196f3;
+  }
+  ngx-datatable {
+    background: transparent;
+    box-shadow: none;
+    button, a {
+      top: -7px;
+      color: grey;
+    }
+    .mat-form-field {
+      padding: 0px;
+    }
   }
 }

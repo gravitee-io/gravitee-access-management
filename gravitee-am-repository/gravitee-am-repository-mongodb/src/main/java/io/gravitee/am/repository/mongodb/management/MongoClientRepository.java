@@ -234,6 +234,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setAccountSettings(convert(clientMongo.getAccountSettings()));
         client.setTokenCustomClaims(getTokenClaims(clientMongo.getTokenCustomClaims()));
         client.setTemplate(clientMongo.isTemplate());
+        client.setMetadata(clientMongo.getMetadata());
         return client;
     }
 
@@ -299,6 +300,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setAccountSettings(convert(client.getAccountSettings()));
         clientMongo.setTokenCustomClaims(getMongoTokenClaims(client.getTokenCustomClaims()));
         clientMongo.setTemplate(client.isTemplate());
+        clientMongo.setMetadata(client.getMetadata() != null ? new Document((Map)client.getMetadata()) : new Document());
         return clientMongo;
     }
 
