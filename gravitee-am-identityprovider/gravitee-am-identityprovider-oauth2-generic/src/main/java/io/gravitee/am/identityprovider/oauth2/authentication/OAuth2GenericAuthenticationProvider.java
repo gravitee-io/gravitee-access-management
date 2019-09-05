@@ -31,6 +31,7 @@ import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectAuthenticationProvider;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderMapper;
+import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.jwt.algo.Signature;
 import io.gravitee.am.identityprovider.oauth2.jwt.jwks.hmac.MACJWKSourceResolver;
@@ -48,6 +49,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
+import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
@@ -58,6 +60,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.util.Assert;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -81,6 +84,9 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
 
     @Autowired
     private OAuth2GenericIdentityProviderMapper mapper;
+
+    @Autowired
+    private OAuth2GenericIdentityProviderRoleMapper roleMapper;
 
     @Autowired
     private OAuth2GenericIdentityProviderConfiguration configuration;
@@ -214,27 +220,23 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
                 .map(jwtClaimsSet -> createUser(jwtClaimsSet.getClaims()));
     }
 
-    private User createUser(Map<String, Object> jsonNode) {
-        String username = (String) jsonNode.getOrDefault(StandardClaims.PREFERRED_USERNAME, jsonNode.get(StandardClaims.SUB));
+    private User createUser(Map<String, Object> attributes) {
+        String username = (String) attributes.getOrDefault(StandardClaims.PREFERRED_USERNAME, attributes.get(StandardClaims.SUB));
         User user = new DefaultUser(username);
-        ((DefaultUser) user).setId((String) jsonNode.get(StandardClaims.SUB));
+        ((DefaultUser) user).setId((String) attributes.get(StandardClaims.SUB));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
-        additionalInformation.put(StandardClaims.SUB, jsonNode.get(StandardClaims.SUB));
+        additionalInformation.put(StandardClaims.SUB, attributes.get(StandardClaims.SUB));
         additionalInformation.put(StandardClaims.PREFERRED_USERNAME, username);
-        if (this.mapper != null && this.mapper.getMappers() != null && !this.mapper.getMappers().isEmpty()) {
-            this.mapper.getMappers().forEach((k, v) -> {
-                if (jsonNode.containsValue(v)) {
-                    additionalInformation.put(k, jsonNode.get(v));
-                }
-            });
-        } else {
-            // set default standard claims
-            StandardClaims.claims().stream()
-                    .filter(claimName -> jsonNode.containsKey(claimName))
-                    .forEach(claimName -> additionalInformation.put(claimName, jsonNode.get(claimName)));
+        // apply user mapping
+        additionalInformation.putAll(applyUserMapping(attributes));
+        // update username if user mapping has been changed
+        if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {
+            ((DefaultUser) user).setUsername((String) additionalInformation.get(StandardClaims.PREFERRED_USERNAME));
         }
         ((DefaultUser) user).setAdditionalInformation(additionalInformation);
+        // set user roles
+        ((DefaultUser) user).setRoles(applyRoleMapping(attributes));
         return user;
     }
 
@@ -340,6 +342,58 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
             query_pairs.put(pair.substring(0, idx), pair.substring(idx + 1));
         }
         return query_pairs;
+    }
+
+    private Map<String, Object> applyUserMapping(Map<String, Object> attributes) {
+        if (!mappingEnabled()) {
+            // set default standard claims
+            return StandardClaims.claims().stream()
+                    .filter(claimName -> attributes.containsKey(claimName))
+                    .collect(Collectors.toMap(claimName -> claimName, claimName -> attributes.get(claimName)));
+        }
+
+        Map<String, Object> claims = new HashMap<>();
+        this.mapper.getMappers().forEach((k, v) -> {
+            if (attributes.containsKey(v)) {
+                claims.put(k, attributes.get(v));
+            }
+        });
+        return claims;
+    }
+
+    private List<String> applyRoleMapping(Map<String, Object> attributes) {
+        if (!roleMappingEnabled()) {
+            return Collections.emptyList();
+        }
+
+        Set<String> roles = new HashSet<>();
+        roleMapper.getRoles().forEach((role, users) -> {
+            Arrays.asList(users).forEach(u -> {
+                // role mapping have the following syntax userAttribute=userValue
+                String[] roleMapping = u.split("=",2);
+                String userAttribute = roleMapping[0];
+                String userValue = roleMapping[1];
+                if (attributes.containsKey(userAttribute)) {
+                    Object attribute = attributes.get(userAttribute);
+                    // attribute is a list
+                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
+                        roles.add(role);
+                    } else if (userValue.equals(attributes.get(userAttribute))) {
+                        roles.add(role);
+                    }
+                }
+            });
+        });
+
+        return new ArrayList<>(roles);
+    }
+
+    private boolean mappingEnabled() {
+        return this.mapper != null && this.mapper.getMappers() != null && !this.mapper.getMappers().isEmpty();
+    }
+
+    private boolean roleMappingEnabled() {
+        return this.roleMapper != null && this.roleMapper.getRoles() != null && !this.roleMapper.getRoles().isEmpty();
     }
 
     private class Token {

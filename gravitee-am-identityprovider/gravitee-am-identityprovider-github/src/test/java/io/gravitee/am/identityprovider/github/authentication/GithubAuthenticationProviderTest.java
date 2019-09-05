@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.github.GithubIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.github.authentication.spring.GithubAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.github.utils.URLEncodedUtils;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
@@ -33,7 +34,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -48,6 +52,9 @@ public class GithubAuthenticationProviderTest {
 
     @Autowired
     private AuthenticationProvider authenticationProvider;
+
+    @Autowired
+    private GithubIdentityProviderRoleMapper roleMapper;
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19998));
@@ -149,5 +156,48 @@ public class GithubAuthenticationProviderTest {
         testObserver.awaitTerminalEvent();
 
         testObserver.assertError(BadCredentialsException.class);
+    }
+
+    @Test
+    public void shouldLoadUserByUsername_roleMapping() {
+        // configure role mapping
+        Map<String, String[]> roles = new HashMap<>();
+        roles.put("admin", new String[] { "preferred_username=bob"});
+        roleMapper.setRoles(roles);
+
+        stubFor(any(urlPathEqualTo("/oauth/token"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLEncodedUtils.CONTENT_TYPE))
+                .withRequestBody(matching(".*"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody("access_token=test_token&token_type=bearer")));
+
+        stubFor(any(urlPathEqualTo("/profile"))
+                .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token test_token"))
+                .willReturn(okJson("{ \"login\": \"bob\", \"preferred_username\": \"bob\"}")));
+
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return "test-code";
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "__oauth2__";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"));
+            }
+        }).test();
+
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "bob".equals(u.getUsername()));
+        testObserver.assertValue(u -> u.getRoles().contains("admin"));
     }
 }
