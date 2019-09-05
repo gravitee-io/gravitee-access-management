@@ -18,23 +18,24 @@ package io.gravitee.am.identityprovider.github.authentication;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.identityprovider.github.GithubIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.github.GithubIdentityProviderMapper;
+import io.gravitee.am.identityprovider.github.GithubIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.github.authentication.spring.GithubAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.github.model.GithubUser;
 import io.gravitee.am.identityprovider.github.utils.URLEncodedUtils;
 import io.gravitee.am.model.http.BasicNameValuePair;
 import io.gravitee.am.model.http.NameValuePair;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
-import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
@@ -42,10 +43,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -67,6 +65,12 @@ public class GithubAuthenticationProvider implements SocialAuthenticationProvide
 
     @Autowired
     private GithubIdentityProviderConfiguration configuration;
+
+    @Autowired
+    private GithubIdentityProviderMapper mapper;
+
+    @Autowired
+    private GithubIdentityProviderRoleMapper roleMapper;
 
     @Override
     public Request signInUrl(String redirectUri) {
@@ -134,67 +138,127 @@ public class GithubAuthenticationProvider implements SocialAuthenticationProvide
                         throw new BadCredentialsException(httpClientResponse.statusMessage());
                     }
 
-                    return createUser(httpClientResponse.bodyAsJsonObject());
+                    return createUser(httpClientResponse.bodyAsJsonObject().getMap());
                 });
     }
 
-    private User createUser(JsonObject jsonObject) {
-        User user = new DefaultUser(jsonObject.getString(GithubUser.LOGIN));
-        ((DefaultUser) user).setId(String.valueOf(jsonObject.getValue(GithubUser.ID)));
+    private User createUser(Map<String, Object> attributes) {
+        User user = new DefaultUser(String.valueOf(attributes.get(GithubUser.LOGIN)));
+        ((DefaultUser) user).setId(String.valueOf(attributes.get(GithubUser.ID)));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
-
         // Standard claims
-        additionalInformation.put(StandardClaims.SUB, jsonObject.getValue(GithubUser.ID));
-        additionalInformation.put(StandardClaims.NAME, jsonObject.getValue(GithubUser.NAME));
-        additionalInformation.put(StandardClaims.PREFERRED_USERNAME, jsonObject.getValue(GithubUser.LOGIN));
+        additionalInformation.put(StandardClaims.SUB, attributes.get(GithubUser.ID));
+        additionalInformation.put(StandardClaims.NAME, attributes.get(GithubUser.NAME));
+        additionalInformation.put(StandardClaims.PREFERRED_USERNAME, attributes.get(GithubUser.LOGIN));
+        // apply user mapping
+        additionalInformation.putAll(applyUserMapping(attributes));
+        // update username if user mapping has been changed
+        if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {
+            ((DefaultUser) user).setUsername((String) additionalInformation.get(StandardClaims.PREFERRED_USERNAME));
+        }
+        ((DefaultUser) user).setAdditionalInformation(additionalInformation);
+        // set user roles
+        ((DefaultUser) user).setRoles(applyRoleMapping(attributes));
+        return user;
+    }
 
-        // try to get the first name and last name
-        try {
-            String[] fullName = jsonObject.getString(GithubUser.NAME).split("\\s+");
-            if (fullName.length > 0) {
-                additionalInformation.put(StandardClaims.GIVEN_NAME, fullName[0]);
-            }
-            if (fullName.length > 1) {
-                additionalInformation.put(StandardClaims.FAMILY_NAME, fullName[1]);
-            }
-        } catch (Exception e) {
-            LOGGER.debug("Unable to resolve Github user full name : {}", jsonObject.getValue(GithubUser.NAME), e);
+    private Map<String, Object> applyUserMapping(Map<String, Object> attributes) {
+        if (!mappingEnabled()) {
+            return defaultClaims(attributes);
         }
 
-        additionalInformation.put(StandardClaims.PROFILE, jsonObject.getValue(GithubUser.HTML_URL));
-        additionalInformation.put(StandardClaims.PICTURE, jsonObject.getValue(GithubUser.AVATAR_URL));
-        additionalInformation.put(StandardClaims.WEBSITE, jsonObject.getValue(GithubUser.BLOG));
-        additionalInformation.put(StandardClaims.EMAIL, jsonObject.getValue(GithubUser.EMAIL));
-        additionalInformation.put(StandardClaims.ZONEINFO, jsonObject.getValue(GithubUser.LOCATION));
-        additionalInformation.put(StandardClaims.UPDATED_AT, jsonObject.getValue(GithubUser.UPDATED_AT));
+        Map<String, Object> claims = new HashMap<>();
+        this.mapper.getMappers().forEach((k, v) -> {
+            if (attributes.containsKey(v)) {
+                claims.put(k, attributes.get(v));
+            }
+        });
+        return claims;
+    }
+
+    private List<String> applyRoleMapping(Map<String, Object> attributes) {
+        if (!roleMappingEnabled()) {
+            return Collections.emptyList();
+        }
+
+        Set<String> roles = new HashSet<>();
+        roleMapper.getRoles().forEach((role, users) -> {
+            Arrays.asList(users).forEach(u -> {
+                // role mapping have the following syntax userAttribute=userValue
+                String[] roleMapping = u.split("=",2);
+                String userAttribute = roleMapping[0];
+                String userValue = roleMapping[1];
+                if (attributes.containsKey(userAttribute)) {
+                    Object attribute = attributes.get(userAttribute);
+                    // attribute is a list
+                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
+                        roles.add(role);
+                    } else if (userValue.equals(attributes.get(userAttribute))) {
+                        roles.add(role);
+                    }
+                }
+            });
+        });
+
+        return new ArrayList<>(roles);
+    }
+
+    private Map<String, Object> defaultClaims(Map<String, Object> attributes) {
+        Map<String, Object> claims = new HashMap<>();
+        try {
+            String[] fullName = String.valueOf(attributes.get(GithubUser.NAME)).split("\\s+");
+            if (fullName.length > 0) {
+                claims.put(StandardClaims.GIVEN_NAME, fullName[0]);
+            }
+            if (fullName.length > 1) {
+                claims.put(StandardClaims.FAMILY_NAME, fullName[1]);
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Unable to resolve Github user full name : {}", attributes.get(GithubUser.NAME), e);
+        }
+
+        claims.put(StandardClaims.PROFILE, attributes.get(GithubUser.HTML_URL));
+        claims.put(StandardClaims.PICTURE, attributes.get(GithubUser.AVATAR_URL));
+        claims.put(StandardClaims.WEBSITE, attributes.get(GithubUser.BLOG));
+        claims.put(StandardClaims.EMAIL, attributes.get(GithubUser.EMAIL));
+        claims.put(StandardClaims.ZONEINFO, attributes.get(GithubUser.LOCATION));
+        claims.put(StandardClaims.UPDATED_AT, attributes.get(GithubUser.UPDATED_AT));
 
         // custom GitHub claims
-        additionalInformation.put(GithubUser.AVATAR_URL, jsonObject.getValue(GithubUser.AVATAR_URL));
-        additionalInformation.put(GithubUser.GRAVATAR_ID, jsonObject.getValue(GithubUser.GRAVATAR_ID));
-        additionalInformation.put(GithubUser.URL, jsonObject.getValue(GithubUser.URL));
-        additionalInformation.put(GithubUser.HTML_URL, jsonObject.getValue(GithubUser.HTML_URL));
-        additionalInformation.put(GithubUser.FOLLOWERS_URL, jsonObject.getValue(GithubUser.FOLLOWERS_URL));
-        additionalInformation.put(GithubUser.FOLLOWING_URL, jsonObject.getValue(GithubUser.FOLLOWING_URL));
-        additionalInformation.put(GithubUser.GISTS_URL, jsonObject.getValue(GithubUser.GISTS_URL));
-        additionalInformation.put(GithubUser.STARRED_URL, jsonObject.getValue(GithubUser.STARRED_URL));
-        additionalInformation.put(GithubUser.SUBSCRIPTIONS_URL, jsonObject.getValue(GithubUser.SUBSCRIPTIONS_URL));
-        additionalInformation.put(GithubUser.ORGANIZATIONS_URL, jsonObject.getValue(GithubUser.ORGANIZATIONS_URL));
-        additionalInformation.put(GithubUser.REPOS_URL, jsonObject.getValue(GithubUser.REPOS_URL));
-        additionalInformation.put(GithubUser.EVENTS_URL, jsonObject.getValue(GithubUser.EVENTS_URL));
-        additionalInformation.put(GithubUser.RECEIVED_EVENTS_URL, jsonObject.getValue(GithubUser.RECEIVED_EVENTS_URL));
-        additionalInformation.put(GithubUser.SITE_ADMIN, jsonObject.getBoolean(GithubUser.SITE_ADMIN));
-        additionalInformation.put(GithubUser.NAME, jsonObject.getValue(GithubUser.NAME));
-        additionalInformation.put(GithubUser.COMPANY, jsonObject.getValue(GithubUser.COMPANY));
-        additionalInformation.put(GithubUser.LOCATION, jsonObject.getValue(GithubUser.LOCATION));
-        additionalInformation.put(GithubUser.PUBLIC_REPOS, jsonObject.getValue(GithubUser.PUBLIC_REPOS));
-        additionalInformation.put(GithubUser.PUBLIC_GISTS, jsonObject.getValue(GithubUser.PUBLIC_GISTS));
-        additionalInformation.put(GithubUser.FOLLOWERS, jsonObject.getValue(GithubUser.FOLLOWERS));
-        additionalInformation.put(GithubUser.FOLLOWING, jsonObject.getValue(GithubUser.FOLLOWING));
-        additionalInformation.put(GithubUser.BIO, jsonObject.getValue(GithubUser.BIO));
-        additionalInformation.put(GithubUser.BLOG, jsonObject.getValue(GithubUser.BLOG));
-        additionalInformation.put(GithubUser.CREATED_AT, jsonObject.getValue(GithubUser.CREATED_AT));
-        ((DefaultUser) user).setAdditionalInformation(additionalInformation);
-        return user;
+        claims.put(GithubUser.AVATAR_URL, attributes.get(GithubUser.AVATAR_URL));
+        claims.put(GithubUser.GRAVATAR_ID, attributes.get(GithubUser.GRAVATAR_ID));
+        claims.put(GithubUser.URL, attributes.get(GithubUser.URL));
+        claims.put(GithubUser.HTML_URL, attributes.get(GithubUser.HTML_URL));
+        claims.put(GithubUser.FOLLOWERS_URL, attributes.get(GithubUser.FOLLOWERS_URL));
+        claims.put(GithubUser.FOLLOWING_URL, attributes.get(GithubUser.FOLLOWING_URL));
+        claims.put(GithubUser.GISTS_URL, attributes.get(GithubUser.GISTS_URL));
+        claims.put(GithubUser.STARRED_URL, attributes.get(GithubUser.STARRED_URL));
+        claims.put(GithubUser.SUBSCRIPTIONS_URL, attributes.get(GithubUser.SUBSCRIPTIONS_URL));
+        claims.put(GithubUser.ORGANIZATIONS_URL, attributes.get(GithubUser.ORGANIZATIONS_URL));
+        claims.put(GithubUser.REPOS_URL, attributes.get(GithubUser.REPOS_URL));
+        claims.put(GithubUser.EVENTS_URL, attributes.get(GithubUser.EVENTS_URL));
+        claims.put(GithubUser.RECEIVED_EVENTS_URL, attributes.get(GithubUser.RECEIVED_EVENTS_URL));
+        claims.put(GithubUser.SITE_ADMIN, attributes.get(GithubUser.SITE_ADMIN));
+        claims.put(GithubUser.NAME, attributes.get(GithubUser.NAME));
+        claims.put(GithubUser.COMPANY, attributes.get(GithubUser.COMPANY));
+        claims.put(GithubUser.LOCATION, attributes.get(GithubUser.LOCATION));
+        claims.put(GithubUser.PUBLIC_REPOS, attributes.get(GithubUser.PUBLIC_REPOS));
+        claims.put(GithubUser.PUBLIC_GISTS, attributes.get(GithubUser.PUBLIC_GISTS));
+        claims.put(GithubUser.FOLLOWERS, attributes.get(GithubUser.FOLLOWERS));
+        claims.put(GithubUser.FOLLOWING, attributes.get(GithubUser.FOLLOWING));
+        claims.put(GithubUser.BIO, attributes.get(GithubUser.BIO));
+        claims.put(GithubUser.BLOG, attributes.get(GithubUser.BLOG));
+        claims.put(GithubUser.CREATED_AT, attributes.get(GithubUser.CREATED_AT));
+
+        return claims;
+    }
+
+    private boolean mappingEnabled() {
+        return this.mapper != null && this.mapper.getMappers() != null && !this.mapper.getMappers().isEmpty();
+    }
+
+    private boolean roleMappingEnabled() {
+        return this.roleMapper != null && this.roleMapper.getRoles() != null && !this.roleMapper.getRoles().isEmpty();
     }
 }

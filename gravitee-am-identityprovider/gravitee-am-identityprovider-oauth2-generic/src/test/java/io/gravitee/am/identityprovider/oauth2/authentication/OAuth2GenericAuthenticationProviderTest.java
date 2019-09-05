@@ -16,16 +16,16 @@
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.utils.URLEncodedUtils;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.observers.TestObserver;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,6 +35,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -49,6 +51,9 @@ public class OAuth2GenericAuthenticationProviderTest {
 
     @Autowired
     private AuthenticationProvider authenticationProvider;
+
+    @Autowired
+    private OAuth2GenericIdentityProviderRoleMapper roleMapper;
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19999));
@@ -146,6 +151,47 @@ public class OAuth2GenericAuthenticationProviderTest {
         testObserver.awaitTerminalEvent();
 
         testObserver.assertError(BadCredentialsException.class);
+    }
+
+    @Test
+    public void shouldLoadUserByUsername_roleMapping() {
+        // configure role mapping
+        Map<String, String[]> roles = new HashMap<>();
+        roles.put("admin", new String[] { "preferred_username=bob"});
+        roleMapper.setRoles(roles);
+
+        stubFor(any(urlPathEqualTo("/oauth/token"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLEncodedUtils.CONTENT_TYPE))
+                .withRequestBody(matching(".*"))
+                .willReturn(okJson("{\"access_token\" : \"test_token\" }")));
+
+        stubFor(any(urlPathEqualTo("/profile"))
+                .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer test_token"))
+                .willReturn(okJson("{ \"sub\": \"bob\", \"preferred_username\": \"bob\" }")));
+
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return "__social__";
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "__social__";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), new DummyRequest());
+            }
+        }).test();
+
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "bob".equals(u.getUsername()));
+        testObserver.assertValue(u -> u.getRoles().contains("admin"));
     }
 
 }
