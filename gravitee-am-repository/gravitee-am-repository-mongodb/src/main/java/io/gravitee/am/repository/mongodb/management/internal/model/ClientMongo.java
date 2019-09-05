@@ -148,6 +148,8 @@ public class ClientMongo extends Auditable {
 
     private boolean template;
 
+    private Document metadata;
+
     public String getId() {
         return id;
     }
@@ -578,6 +580,14 @@ public class ClientMongo extends Auditable {
 
     public void setTemplate(boolean template) {
         this.template = template;
+    }
+
+    public Document getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Document metadata) {
+        this.metadata = metadata;
     }
 
     @Override

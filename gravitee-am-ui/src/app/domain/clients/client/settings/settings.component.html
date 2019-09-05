@@ -43,8 +43,9 @@
       <mat-hint>The client human readable name.</mat-hint>
     </mat-form-field>
 
+    <h5>User consent</h5>
+    <mat-divider></mat-divider>
     <div class="client-oauth-zone" fxLayout="column">
-      <h4>User consent</h4>
       <mat-slide-toggle
         (change)="enableAutoApprove($event)"
         [checked]="isAutoApprove()">
@@ -52,8 +53,9 @@
       <mat-hint style="font-size: 75%;">Allow to skip user approval. Generally used for internal trusted service applications.</mat-hint>
     </div>
 
+    <h5>Security</h5>
+    <mat-divider></mat-divider>
     <div class="client-oauth-zone" fxLayout="column">
-      <h4>Certificate</h4>
       <mat-form-field>
         <mat-select placeholder="Certificate" name="certificate" [(ngModel)]="client.certificate">
           <mat-option><em>None</em></mat-option>
@@ -62,6 +64,56 @@
         <mat-hint>Certificate use to sign tokens.</mat-hint>
       </mat-form-field>
     </div>
+
+    <h5 style="margin-bottom: 0px;">Metadata</h5>
+    <mat-hint style="font-size: 75%; margin-bottom: 10px;">Custom information about the client.</mat-hint>
+    <mat-divider></mat-divider>
+    <div class="client-oauth-zone client-metadata" fxLayout="column">
+      <app-create-client-metadata (addMetadataChange)="addMetadata($event)"></app-create-client-metadata>
+      <p><small *ngIf="!metadataIsEmpty()"><i>Double click to edit and press enter to save changes</i></small></p>
+      <ngx-datatable #claimsTable *ngIf="!metadataIsEmpty()"
+                     [columnMode]="'flex'"
+                     class="material"
+                     [headerHeight]="40"
+                     [footerHeight]="40"
+                     [rowHeight]="55"
+                     [rows]='clientMetadata'>
+        <ngx-datatable-column name="Metadata name" [flexGrow]="1">
+          <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <span (dblclick)="editing[row.id + '-name'] = true" *ngIf="!editing[row.id + '-name']">
+                  {{row.name}}
+                </span>
+            <mat-form-field *ngIf="editing[row.id + '-name']" class="datatable-input">
+              <input matInput type="text" required autofocus placeholder="Metadata name"
+                     (keyup.enter)="updateMetadata($event, 'name', row.id)"
+                     (blur)="editing[row.id + '-name'] = false"
+                     [value]="row.name" />
+            </mat-form-field>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Metadata value" [flexGrow]="2">
+          <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <pre style="margin: 0px; white-space: normal; font-size: 12px;" (dblclick)="editing[row.id + '-value'] = true" *ngIf="!editing[row.id + '-value']">
+                  {{row.value}}
+                </pre>
+            <mat-form-field *ngIf="editing[row.id + '-value']" class="datatable-input">
+              <input matInput type="text" required autofocus placeholder="Claim value"
+                     (keyup.enter)="updateMetadata($event, 'value', row.id)"
+                     (blur)="editing[row.id + '-value'] = false"
+                     [value]="row.value" />
+            </mat-form-field>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Actions" [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div fxLayout="row" class="provider-claims-actions">
+              <button mat-icon-button (click)="deleteMetadata(row.id, $event)"><mat-icon>close</mat-icon></button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+    </div>
+
     <div fxLayout="row" class="client-settings-form-actions">
       <button mat-raised-button [disabled]="(!clientForm.valid || clientForm.pristine) && !formChanged" type="submit">SAVE</button>
     </div>

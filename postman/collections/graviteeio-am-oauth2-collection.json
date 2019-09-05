@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "d6320ec7-d908-4f9e-82e4-a2416163a06b",
+		"_postman_id": "31d34e59-af40-4fe5-9a44-8147d51e86cc",
 		"name": "Gravitee.io - AM - Oauth2",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -659,10 +659,6 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
 							"host": [
@@ -2064,10 +2060,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/&scope=unknown-scope",
 											"host": [
@@ -2133,10 +2125,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -2269,10 +2257,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -2318,10 +2302,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -2403,10 +2383,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -2468,10 +2444,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -2608,10 +2580,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -2660,10 +2628,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -2787,10 +2751,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -2837,10 +2797,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -3026,10 +2982,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -3091,10 +3043,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -3231,10 +3179,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -3290,10 +3234,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -3425,10 +3365,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -3482,10 +3418,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -3555,10 +3487,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -3605,10 +3533,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -3744,10 +3668,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -3809,10 +3729,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -3947,10 +3863,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -4064,10 +3976,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -4149,10 +4057,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -4214,10 +4118,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -4352,10 +4252,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -4476,10 +4372,6 @@
 												"disabled": true
 											}
 										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -4561,10 +4453,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
 											"host": [
@@ -4630,10 +4518,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -4769,10 +4653,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -4890,10 +4770,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -4975,10 +4851,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
 											"host": [
@@ -5044,10 +4916,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -5183,10 +5051,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -5240,10 +5104,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=9876-5678-1234",
 											"host": [
@@ -5309,10 +5169,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -5444,10 +5300,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -5494,10 +5346,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -5579,10 +5427,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/&state=1234-5678-9876&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256",
 											"host": [
@@ -5656,10 +5500,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -5795,10 +5635,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -5913,10 +5749,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -5998,10 +5830,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/&state=1234-5678-9876&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=plain",
 											"host": [
@@ -6075,10 +5903,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -6214,10 +6038,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -6332,10 +6152,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -6417,10 +6233,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/&state=1234-5678-9876&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256",
 											"host": [
@@ -6494,10 +6306,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -6633,10 +6441,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -6755,10 +6559,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -6840,10 +6640,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/&state=1234-5678-9876&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=plain",
 											"host": [
@@ -6917,10 +6713,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -7056,10 +6848,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -7178,10 +6966,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -7263,10 +7047,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/&state=1234-5678-9876&code_challenge=qjrzSW9gMiUgpUvqgEPE4_-8swvyCtfOVvg55o5S_es&code_challenge_method=S256",
 											"host": [
@@ -7340,10 +7120,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -7479,10 +7255,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -7604,10 +7376,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -7689,10 +7457,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000/&state=1234-5678-9876&code_challenge=qjrzSW9gMiUgpUvqgEPE4_-8swvyCtfOVvg55o5S_es&code_challenge_method=plain",
 											"host": [
@@ -7766,10 +7530,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -7905,10 +7665,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -8030,10 +7786,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -8121,10 +7873,6 @@
 												"value": "Basic dW5rbm93bi1jbGllbnQ6dW5rbm93bi1zZWNyZXQ="
 											}
 										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=unknown_response_type",
 											"host": [
@@ -8191,10 +7939,6 @@
 												"value": "Basic dW5rbm93bi1jbGllbnQ6dW5rbm93bi1zZWNyZXQ="
 											}
 										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=unknown_response_type&response_type=unknown_response_type",
 											"host": [
@@ -8259,10 +8003,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code",
 											"host": [
@@ -8323,10 +8063,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=unknownclient",
 											"host": [
@@ -8391,10 +8127,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client",
 											"host": [
@@ -8455,10 +8187,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000",
 											"host": [
@@ -8525,10 +8253,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://my_bad_host:4000",
 											"host": [
@@ -8596,10 +8320,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://my_bad_host:4000&state=xxx-yyy-zzz",
 											"host": [
@@ -8880,10 +8600,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=token",
 											"host": [
@@ -8948,10 +8664,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=token&client_id=my-client2&redirect_uri=http://localhost:4000/&scope=unknown-scope",
 											"host": [
@@ -9017,10 +8729,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -9154,10 +8862,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -9203,10 +8907,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -9288,10 +8988,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=token&client_id=my-client2&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -9353,10 +9049,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -9491,10 +9183,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -9541,10 +9229,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -9626,10 +9310,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=token&client_id=my-client2&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
 											"host": [
@@ -9695,10 +9375,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -9834,10 +9510,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -9884,10 +9556,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -9969,10 +9637,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=token&client_id=my-client2&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -10034,10 +9698,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -10192,10 +9852,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -10296,10 +9952,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{authorizationEndpoint}}?response_type=token&client_id=my-client2&redirect_uri=http://localhost:4000/",
 											"host": [
@@ -10361,10 +10013,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -10490,10 +10138,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [
@@ -10540,10 +10184,6 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
 										"url": {
 											"raw": "{{logoutEndpoint}}",
 											"host": [
@@ -11455,7 +11095,7 @@
 											"    tests['Contains an aud claim'] = jwt.aud === 'my-client';",
 											"    tests['Contains an exp claim'] = jwt.exp !== undefined;",
 											"    tests['Contains an iat claim'] = jwt.iat !== undefined;",
-											"    tests['Contains an custom claim'] = jwt['custom-claim'] === 'user';",
+											"    tests['Contains a custom claim'] = jwt['custom-claim'] === 'user';",
 											"});",
 											"",
 											"function parseJwt (token) {",
@@ -11595,7 +11235,147 @@
 											"    tests['Contains an aud claim'] = jwt.aud === 'my-client';",
 											"    tests['Contains an exp claim'] = jwt.exp !== undefined;",
 											"    tests['Contains an iat claim'] = jwt.iat !== undefined;",
-											"    tests['Contains an custom claim'] = jwt['custom-claim'] === 'user';",
+											"    tests['Contains a custom claim'] = jwt['custom-claim'] === 'user';",
+											"});",
+											"",
+											"function parseJwt (token) {",
+											"    var base64Url = token.split('.')[1];",
+											"    var base64 = base64Url.replace('-', '+').replace('_', '/');",
+											"    return JSON.parse(atob(base64));",
+											"}",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Basic bXktY2xpZW50Om15LWNsaWVudC1zZWNyZXQ="
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "user",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "openid",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{tokenEndpoint}}",
+									"host": [
+										"{{tokenEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Configure client 1 - client metadata",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 5000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"metadata\": {\n  \t\"test\": \"client-test-metadata\"\n  },\n  \"tokenCustomClaims\" : [\n  \t{\n  \t\t\"tokenType\": \"ID_TOKEN\",\n  \t\t\"claimName\": \"custom-claim\",\n  \t\t\"claimValue\": \"{#context.attributes['client'].metadata['test']}\"\n  \t}\n  ]\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{client1}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"{{domain}}",
+										"clients",
+										"{{client1}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Generate token - client 1",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "660c6db8-4bea-464f-aa77-26dbf6af12d8",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has an access_token\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('access_token');",
+											"    pm.expect(body).to.have.property('token_type');",
+											"    pm.expect(body.token_type).to.eql('bearer');",
+											"    pm.expect(body).to.have.property('expires_in');",
+											"    pm.expect(body).to.have.property('refresh_token');",
+											"    pm.expect(body).to.have.property('scope');",
+											"    pm.expect(body.scope).to.eql('openid');",
+											"    ",
+											"    pm.environment.set('access_token', body.access_token);",
+											"    ",
+											"    let jwt = parseJwt(body.id_token);",
+											"    let origin = pm.environment.get(\"gateway_url\");",
+											"    let domain = pm.environment.get(\"domain\");",
+											"    ",
+											"    tests['Contains an iss claim'] = jwt.iss === origin + '/' + domain + '/oidc';",
+											"    tests['Contains a sub claim'] = jwt.sub !== undefined;",
+											"    tests['Contains an aud claim'] = jwt.aud === 'my-client';",
+											"    tests['Contains an exp claim'] = jwt.exp !== undefined;",
+											"    tests['Contains an iat claim'] = jwt.iat !== undefined;",
+											"    tests['Contains a custom claim - client metadata'] = jwt['custom-claim'] === 'client-test-metadata';",
 											"});",
 											"",
 											"function parseJwt (token) {",

@@ -17,6 +17,9 @@ package io.gravitee.am.gateway.handler.context.provider;
 
 import io.gravitee.am.model.Client;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -27,6 +30,7 @@ public class ClientProperties {
     private String domain;
     private String clientId;
     private String clientName;
+    private Map<String, Object> metadata;
 
     public ClientProperties() {
     }
@@ -36,6 +40,7 @@ public class ClientProperties {
         this.domain = client.getDomain();
         this.clientId = client.getClientId();
         this.clientName = client.getClientName();
+        this.metadata = client.getMetadata() == null ? new HashMap<>() : new HashMap<>(client.getMetadata());
     }
 
     public String getId() {
@@ -68,5 +73,13 @@ public class ClientProperties {
 
     public void setClientName(String clientName) {
         this.clientName = clientName;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
     }
 }
