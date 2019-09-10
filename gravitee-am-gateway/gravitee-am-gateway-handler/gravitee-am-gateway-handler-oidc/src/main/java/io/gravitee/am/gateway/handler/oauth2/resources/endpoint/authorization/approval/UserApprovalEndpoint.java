@@ -36,6 +36,7 @@ import java.util.Set;
 public class UserApprovalEndpoint implements Handler<RoutingContext>  {
 
     private static final String CLIENT_CONTEXT_KEY = "client";
+    private static final String AUTHORIZATION_REQUEST_CONTEXT_KEY = "authorizationRequest";
     private ThymeleafTemplateEngine engine;
     private ScopeService scopeService;
 
@@ -49,7 +50,7 @@ public class UserApprovalEndpoint implements Handler<RoutingContext>  {
         // retrieve client
         Client client = routingContext.get(CLIENT_CONTEXT_KEY);
         // retrieve authorization request
-        AuthorizationRequest authorizationRequest = routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
+        AuthorizationRequest authorizationRequest = routingContext.get(AUTHORIZATION_REQUEST_CONTEXT_KEY);
 
         // fetch scope information (name + description) from the authorization request
         scopeService.getAll()

@@ -34,6 +34,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -97,7 +98,7 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
                         eq(FIELD_CLIENT_ID, scopeApproval.getClientId()),
                         eq(FIELD_USER_ID, scopeApproval.getUserId()),
                         eq(FIELD_SCOPE, scopeApproval.getScope()))
-                , scopeApprovalMongo)).flatMap(updateResult -> Single.just(scopeApproval));
+                , scopeApprovalMongo)).flatMap(updateResult -> _findById(scopeApprovalMongo.getId()));
     }
 
     @Override
@@ -108,13 +109,15 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
                         eq(FIELD_USER_ID, scopeApproval.getUserId()),
                         eq(FIELD_SCOPE, scopeApproval.getScope()))).first())
                 .firstElement()
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (isEmpty) {
+                .map(Optional::of)
+                .defaultIfEmpty(Optional.empty())
+                .flatMapSingle(optionalApproval -> {
+                    if (!optionalApproval.isPresent()) {
                         scopeApproval.setCreatedAt(new Date());
                         scopeApproval.setUpdatedAt(scopeApproval.getCreatedAt());
                         return create(scopeApproval);
                     } else {
+                        scopeApproval.setId(optionalApproval.get().getId());
                         scopeApproval.setUpdatedAt(new Date());
                         return update(scopeApproval);
                     }

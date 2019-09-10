@@ -38,7 +38,7 @@ public abstract class AbstractAuthorizationEndpoint {
             return authorizationRequest;
         }
 
-        // the initial request failed for some reasons, we have the required request parameters to re-router the authorize request
+        // the initial request failed for some reasons, we have the required request parameters to re-create the authorize request
         return createAuthorizationRequest(routingContext);
     }
 
