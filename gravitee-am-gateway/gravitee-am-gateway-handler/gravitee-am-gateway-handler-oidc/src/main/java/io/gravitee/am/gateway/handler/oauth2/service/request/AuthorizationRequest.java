@@ -16,7 +16,9 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
+import io.gravitee.am.model.oauth2.ScopeApproval;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -60,7 +62,15 @@ public class AuthorizationRequest extends OAuth2Request {
      */
     private Set<String> deniedScopes;
 
+    /**
+     * OpenID Connect Prompt values
+     */
     private Set<String> prompts;
+
+    /**
+     * User consents if any
+     */
+    private List<ScopeApproval> consents;
 
     public String getState() {
         return state;
@@ -108,6 +118,14 @@ public class AuthorizationRequest extends OAuth2Request {
 
     public void setPrompts(Set<String> prompts) {
         this.prompts = prompts;
+    }
+
+    public List<ScopeApproval> getConsents() {
+        return consents;
+    }
+
+    public void setConsents(List<ScopeApproval> consents) {
+        this.consents = consents;
     }
 
     public OAuth2Request createOAuth2Request() {

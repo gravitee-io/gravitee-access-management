@@ -32,6 +32,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.Au
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationFailureEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.approval.UserApprovalEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.approval.UserApprovalSubmissionEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval.UserApprovalProcessHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection.IntrospectionEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpoint;
@@ -175,8 +176,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpoint(flow, domain);
         Handler<RoutingContext> authorizeFailureEndpoint = new AuthorizationFailureEndpoint(domain);
         Handler<RoutingContext> userApprovalRequestParseHandler = new UserApprovalRequestParseHandler(clientSyncService);
-        Handler<RoutingContext> userApprovalSubmissionEndpointHandler = new UserApprovalSubmissionEndpoint(approvalService, domain);
+        Handler<RoutingContext> userApprovalProcessHandler = new UserApprovalProcessHandler(approvalService, domain);
         Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpoint(scopeService, thymeleafTemplateEngine);
+        Handler<RoutingContext> userApprovalSubmissionEndpoint = new UserApprovalSubmissionEndpoint(domain);
         Handler<RoutingContext> userApprovalFailureHandler = new UserApprovalFailureHandler(domain);
 
         // Token endpoint
@@ -210,8 +212,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         oauth2Router.route(HttpMethod.POST, "/authorize")
                 .handler(userAuthHandler)
                 .handler(userApprovalRequestParseHandler)
+                .handler(userApprovalProcessHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
-                .handler(userApprovalSubmissionEndpointHandler)
+                .handler(userApprovalSubmissionEndpoint)
                 .failureHandler(userApprovalFailureHandler)
                 .failureHandler(authorizeFailureEndpoint);
         oauth2Router.route(HttpMethod.POST, "/token")

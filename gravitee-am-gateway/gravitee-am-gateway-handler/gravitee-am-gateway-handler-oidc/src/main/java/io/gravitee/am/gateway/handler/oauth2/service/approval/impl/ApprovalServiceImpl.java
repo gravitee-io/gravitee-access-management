@@ -118,6 +118,7 @@ public class ApprovalServiceImpl implements ApprovalService {
                         approved = true;
                     }
                     authorizationRequest.setApproved(approved);
+                    authorizationRequest.setConsents(savedApprovals);
                     return Single.just(authorizationRequest);
                 })
                 .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.USER_CONSENT_CONSENTED).approvals(approvals)))
