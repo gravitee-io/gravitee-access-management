@@ -68,7 +68,10 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
 
     @Override
     public Maybe<User> findByUsername(String username) {
-        String rawQuery = this.configuration.getFindUserByUsernameQuery().replaceAll("\\?", username);
+        // lowercase username since case-sensitivity feature
+        final String encodedUsername = username.toLowerCase();
+
+        String rawQuery = this.configuration.getFindUserByUsernameQuery().replaceAll("\\?", encodedUsername);
         String jsonQuery = convertToJsonString(rawQuery);
         BsonDocument query = BsonDocument.parse(jsonQuery);
         return Observable.fromPublisher(usersCollection.find(query).first()).firstElement().map(this::convert);
