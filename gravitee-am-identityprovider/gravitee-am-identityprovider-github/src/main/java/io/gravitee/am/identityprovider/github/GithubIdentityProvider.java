@@ -17,6 +17,8 @@ package io.gravitee.am.identityprovider.github;
 
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.github.authentication.GithubAuthenticationProvider;
 
@@ -34,5 +36,15 @@ public class GithubIdentityProvider implements SocialIdentityProvider {
     @Override
     public Class<? extends AuthenticationProvider> authenticationProvider() {
         return GithubAuthenticationProvider.class;
+    }
+
+    @Override
+    public Class<? extends IdentityProviderMapper> mapper() {
+        return GithubIdentityProviderMapper.class;
+    }
+
+    @Override
+    public Class<? extends IdentityProviderRoleMapper> roleMapper() {
+        return GithubIdentityProviderRoleMapper.class;
     }
 }
