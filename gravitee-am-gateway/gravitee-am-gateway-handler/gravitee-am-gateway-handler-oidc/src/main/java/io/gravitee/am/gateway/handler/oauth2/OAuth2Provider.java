@@ -32,7 +32,6 @@ import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.Au
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationFailureEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.approval.UserApprovalEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.approval.UserApprovalSubmissionEndpoint;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval.UserApprovalProcessHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection.IntrospectionEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpoint;
@@ -41,6 +40,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.Aut
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseParametersHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequiredParametersHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval.UserApprovalFailureHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval.UserApprovalProcessHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval.UserApprovalRequestParseHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.token.TokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.approval.ApprovalService;
@@ -132,6 +132,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     @Autowired
     private TokenManager tokenManager;
 
+    @Autowired
+    private CorsHandler corsHandler;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -218,6 +221,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .failureHandler(userApprovalFailureHandler)
                 .failureHandler(authorizeFailureEndpoint);
         oauth2Router.route(HttpMethod.POST, "/token")
+                .handler(corsHandler)
                 .handler(tokenRequestParseHandler)
                 .handler(clientAuthHandler)
                 .handler(tokenEndpoint);
@@ -227,6 +231,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(introspectionEndpoint);
         oauth2Router.route(HttpMethod.POST, "/revoke")
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
+                .handler(corsHandler)
                 .handler(clientAuthHandler)
                 .handler(revocationTokenEndpoint);
         oauth2Router.route(HttpMethod.GET, "/confirm_access")
