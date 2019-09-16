@@ -37,17 +37,9 @@
                     </div>
 
                     <div th:if="${param.error}" class="login-error-info">
-                        <span th:if="${error.errorCode == 'invalid_account'}">
-                            <span th:text="${error.errorCode}" class="error"></span>
-                            <small class="error_description">Wrong user or password</small>
-                        </span>
-                        <span th:if="${error.errorCode == 'account_locked'}">
-                            <span th:text="${error.errorCode}" class="error"></span>
-                            <small class="error_description">User account is locked</small>
-                        </span>
-                        <span th:if="${error.errorCode == null}">
+                        <span>
                             <span class="error">login_failed</span>
-                            <small class="error_description" th:if="${error.errorDescription}" th:text="${error.errorDescription}"></small>
+                             <small class="error_description">Wrong user or password</small>
                         </span>
                     </div>
 

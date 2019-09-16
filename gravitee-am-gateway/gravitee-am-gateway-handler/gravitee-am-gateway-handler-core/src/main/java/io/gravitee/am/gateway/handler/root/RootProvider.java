@@ -170,7 +170,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.get("/login")
                 .handler(new LoginRequestParseHandler())
                 .handler(clientRequestParseHandler)
-                .handler(new LoginErrorHandler(loginAttemptService))
+                .handler(new LoginErrorHandler())
                 .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, identityProviderManager));
         rootRouter.post("/login")
                 .handler(FormLoginHandler.create(userAuthProvider));
