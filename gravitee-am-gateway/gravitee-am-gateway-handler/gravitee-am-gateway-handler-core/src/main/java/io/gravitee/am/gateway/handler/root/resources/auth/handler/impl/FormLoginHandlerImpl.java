@@ -18,9 +18,6 @@ package io.gravitee.am.gateway.handler.root.resources.auth.handler.impl;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.service.exception.authentication.AuthenticationException;
-import io.gravitee.am.service.exception.authentication.BadCredentialsException;
-import io.gravitee.am.service.exception.authentication.UsernameNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
@@ -36,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -125,7 +121,7 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
                             req.response().end(DEFAULT_DIRECT_LOGGED_IN_OK_PAGE);
                         }
                     } else {
-                        handleException(context, res.cause());
+                        handleException(context);
                     }
                 });
             }
@@ -136,7 +132,7 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 
-    private void handleException(RoutingContext context, Throwable throwable) {
+    private void handleException(RoutingContext context) {
         final HttpServerRequest req = context.request();
         final HttpServerResponse resp = context.response();
         final MultiMap requestParameters = req.params();
@@ -146,18 +142,6 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
             Map<String, String> parameters = new LinkedHashMap<>();
             parameters.put(Parameters.CLIENT_ID, requestParameters.get(Parameters.CLIENT_ID));
             parameters.put("error", "login_failed");
-            if (throwable != null && throwable instanceof AuthenticationException) {
-                AuthenticationException authenticationException = (AuthenticationException) throwable;
-                // we don't want to expose potential security leaks
-                if (!(throwable instanceof BadCredentialsException) && !(throwable instanceof UsernameNotFoundException)) {
-                    parameters.put("error_code", authenticationException.getErrorCode());
-                } else {
-                    parameters.put("error_code", "invalid_account");
-                }
-                if (authenticationException.getDetails() != null) {
-                    parameters.putAll(authenticationException.getDetails());
-                }
-            }
             String uri = UriBuilderRequest.resolveProxyRequest(
                     new io.vertx.reactivex.core.http.HttpServerRequest(req),
                     req.uri(),

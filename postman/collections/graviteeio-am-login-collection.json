@@ -503,7 +503,7 @@
 									"",
 									"    var location = postman.getResponseHeader(\"Location\");",
 									"    pm.environment.set('redirection', location);",
-									"    tests['Redirect to login page'] = location.includes('/login?client_id=my-client&error=login_failed&error_code=invalid_account');",
+									"    tests['Redirect to login page'] = location.includes('/login?client_id=my-client&error=login_failed');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -633,7 +633,7 @@
 									"",
 									"    var location = postman.getResponseHeader(\"Location\");",
 									"    pm.environment.set('redirection', location);",
-									"    tests['Redirect to login page'] = location.includes('/login?client_id=my-client&error=login_failed&error_code=account_locked');",
+									"    tests['Redirect to login page'] = location.includes('/login?client_id=my-client&error=login_failed');",
 									"});"
 								],
 								"type": "text/javascript"
