@@ -15,31 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.handler;
 
-import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.oidc.Scope;
 /*import io.gravitee.am.gateway.handler.oauth2.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidTokenException;
 import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbiddenException;
 import io.gravitee.am.gateway.handler.vertx.handler.oidc.handler.DynamicClientAccessHandler;*/
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Domain;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.RoutingContext;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Date;
-
-import static org.mockito.Mockito.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

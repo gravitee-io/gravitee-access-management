@@ -17,8 +17,8 @@ package io.gravitee.am.management.handlers.management.api.resources.dashboard;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.resources.enhancer.ClientEnhancer;
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.ClientListItem;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.management.handlers.management.api.model.ClientListItem;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.ClientService;
@@ -65,9 +65,9 @@ public class DashboardClientsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List last updated clients")
+    @ApiOperation(value = "List last updated applications")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List last updated clients",
+            @ApiResponse(code = 200, message = "List last updated applications",
                     response = ClientListItem.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void listClients(@QueryParam("page") @DefaultValue("0") int page,

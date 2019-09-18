@@ -130,6 +130,11 @@ public class DomainResource extends AbstractResource {
         return resourceContext.getResource(ClientsResource.class);
     }
 
+    @Path("applications")
+    public ApplicationsResource getApplicationsResource() {
+        return resourceContext.getResource(ApplicationsResource.class);
+    }
+
     @Path("identities")
     public IdentityProvidersResource getIdentityProvidersResource() {
         return resourceContext.getResource(IdentityProvidersResource.class);

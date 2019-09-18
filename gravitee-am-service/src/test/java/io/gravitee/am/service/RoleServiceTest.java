@@ -57,9 +57,6 @@ public class RoleServiceTest {
     private DomainService domainService;
 
     @Mock
-    private ClientService clientService;
-
-    @Mock
     private RoleRepository roleRepository;
 
     @Mock

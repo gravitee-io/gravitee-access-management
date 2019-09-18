@@ -17,7 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.IdentityProviderManager;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;

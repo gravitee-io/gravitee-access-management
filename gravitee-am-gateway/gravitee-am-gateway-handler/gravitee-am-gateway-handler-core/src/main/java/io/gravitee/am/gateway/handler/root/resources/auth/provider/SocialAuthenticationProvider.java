@@ -20,12 +20,11 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -33,12 +32,9 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.reactivex.core.http.HttpServerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URISyntaxException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 

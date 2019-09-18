@@ -19,7 +19,7 @@ import com.google.common.net.HttpHeaders;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.web.UriBuilder;

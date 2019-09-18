@@ -16,10 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.model.ClientEntity;
+import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeEntity;
-import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
@@ -56,7 +56,7 @@ public class UserConsentsResource extends AbstractResource {
     private ScopeApprovalService scopeApprovalService;
 
     @Autowired
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @Autowired
     private ScopeService scopeService;
@@ -125,10 +125,10 @@ public class UserConsentsResource extends AbstractResource {
         return resourceContext.getResource(UserConsentResource.class);
     }
 
-    private Single<ClientEntity> getClient(String domain, String clientId) {
-        return clientService.findByDomainAndClientId(domain, clientId)
-                .map(client -> new ClientEntity(client))
-                .defaultIfEmpty(new ClientEntity("unknown-id", clientId, "unknown-client-name"))
+    private Single<ApplicationEntity> getClient(String domain, String clientId) {
+        return applicationService.findByDomainAndClientId(domain, clientId)
+                .map(application -> new ApplicationEntity(application))
+                .defaultIfEmpty(new ApplicationEntity("unknown-id", clientId, "unknown-client-name"))
                 .toSingle()
                 .cache();
     }

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -28,7 +28,6 @@ import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

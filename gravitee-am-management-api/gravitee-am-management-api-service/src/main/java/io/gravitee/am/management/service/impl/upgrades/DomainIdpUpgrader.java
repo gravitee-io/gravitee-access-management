@@ -37,7 +37,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class DomainIdpUpgrader implements Upgrader, Ordered {
 
-    private static final Logger logger = LoggerFactory.getLogger(OpenIDScopeUpgrader.class);
+    private static final Logger logger = LoggerFactory.getLogger(DomainIdpUpgrader.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
 
     @Autowired

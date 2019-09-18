@@ -20,7 +20,7 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbiddenException;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 

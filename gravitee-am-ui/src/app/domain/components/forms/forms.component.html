@@ -24,20 +24,23 @@
                  [rows]='forms'
                  [sorts]="[{prop: 'enabled', dir: 'desc'}]"
                  [rowClass]="getRowClass">
-    <ngx-datatable-column name="Name" [flexGrow]="1">
+    <ngx-datatable-column name="Templates" [flexGrow]="4" [cellClass]="'form-name-cell'">
       <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.name}}
+        <div class="form-header" fxLayout="row">
+          <div class="form-icon">
+            <mat-icon>{{row.icon}}</mat-icon>
+          </div>
+          <div class="form-information" fxLayout="column">
+            <h3>{{row.name}}</h3>
+            <small>{{row.description}}</small>
+          </div>
+        </div>
       </ng-template>
     </ngx-datatable-column>
-    <ngx-datatable-column name="Description" [flexGrow]="2">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.description}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="Actions" [flexGrow]="1">
+    <ngx-datatable-column name="" [flexGrow]="1">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <div fxLayout="row" class="forms-actions">
-          <mat-icon *ngIf="!row.enabled" matTooltip="Domain settings {{clientId ? 'or client type ' : ''}} do not allow '{{row.name}}' template customisation">block</mat-icon>
+          <mat-icon *ngIf="!row.enabled" matTooltip="Domain settings {{appId ? 'or application type ' : ''}} does not allow '{{row.name}}' template customisation">block</mat-icon>
           <a *ngIf="row.enabled" mat-icon-button [routerLink]="['form']" [queryParams]="{template: row.template}"><mat-icon matTooltip="Edit template">edit</mat-icon></a>
         </div>
       </ng-template>

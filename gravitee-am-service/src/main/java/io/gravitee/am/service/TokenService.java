@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Application;
 import io.gravitee.am.service.model.TotalToken;
 import io.reactivex.Completable;
 import io.reactivex.Single;
@@ -26,6 +27,8 @@ import io.reactivex.Single;
 public interface TokenService {
 
     Single<TotalToken> findTotalTokensByDomain(String domain);
+
+    Single<TotalToken> findTotalTokensByApplication(Application application);
 
     Single<TotalToken> findTotalTokens();
 

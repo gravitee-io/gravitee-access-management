@@ -201,21 +201,18 @@ export class UserProfileComponent implements OnInit {
     this.formChanged = true;
   }
 
-  onClientSelectionChanged(event) {
+  onAppSelectionChanged(event) {
     this.user.client = event.id;
     this.formChanged = true;
   }
 
-  onClientDeleted(event) {
+  onAppDeleted(event) {
     this.user.client = null;
     this.formChanged = true;
   }
 
   displayClientName() {
-    if (this.user.clientEntity != null) {
-      return (this.user.clientEntity.clientName) ? this.user.clientEntity.clientName : this.user.clientEntity.clientId;
-    }
-    return this.user.client;
+    return this.user.applicationEntity != null ? this.user.applicationEntity.name : this.user.client;
   }
 
   accountLocked(user) {

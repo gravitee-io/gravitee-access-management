@@ -22,7 +22,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;

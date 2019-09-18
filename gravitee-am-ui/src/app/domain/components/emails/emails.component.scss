@@ -8,12 +8,37 @@
       font-style: italic !important;
     }
   }
+  /deep/ .ngx-datatable.material .datatable-footer {
+    display: none;
+  }
+
+  /deep/ .email-template-name-cell {
+    padding: 0 !important;
+  }
 }
 
 .emails-content {
   ngx-datatable {
     font-size: 14px;
     box-shadow: none;
+
+    .email-template-header {
+      margin: 5px;
+      align-items: center;
+      .email-template-icon {
+        margin: 0 12px 0 0;
+      }
+      .email-template-information {
+        h3 {
+          font-size: 14px;
+          font-weight: normal;
+          margin: 0;
+        }
+        small {
+          color: rgba(0,0,0,.54);
+        }
+      }
+    }
   }
 }
 

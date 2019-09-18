@@ -15,12 +15,13 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Deprecated
 public class TopClient {
 
     private Client client;

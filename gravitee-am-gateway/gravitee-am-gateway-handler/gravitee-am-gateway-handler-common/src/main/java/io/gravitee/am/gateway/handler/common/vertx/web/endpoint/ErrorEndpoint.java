@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.endpoint;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.common.http.HttpHeaders;

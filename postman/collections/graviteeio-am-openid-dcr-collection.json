@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "893de66c-bd20-4515-8bb4-437a32c77111",
+		"_postman_id": "27a8c7ad-3dce-4dee-8459-a58a98e591fd",
 		"name": "Gravitee.io - AM - Openid DCR",
 		"description": "Test openid connect dynamc client registration specifications: https://openid.net/specs/openid-connect-registration-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -5085,7 +5085,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"redirectUris\": [\"https://gravitee.io/callback\"],\n  \"authorizedGrantTypes\": [\"implicit\"],\n  \"responseTypes\": [\"token\"],\n  \"applicationType\": \"Single Page App\",\n  \"template\": true\n}"
+							"raw": "{\n  \"redirectUris\": [\"https://gravitee.io/callback\"],\n  \"authorizedGrantTypes\": [\"implicit\"],\n  \"responseTypes\": [\"token\"],\n  \"applicationType\": \"web\",\n  \"template\": true\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{templateId}}",
@@ -5349,7 +5349,7 @@
 									"",
 									"pm.test(\"Has template attributes values\", function () {",
 									"    var body = pm.response.json();",
-									"    pm.expect(body.application_type).to.eql('Single Page App');",
+									"    pm.expect(body.application_type).to.eql('web');",
 									"    pm.expect(body.response_types).to.eql(['token']);",
 									"    pm.expect(body.grant_types).to.eql(['implicit']);",
 									"",

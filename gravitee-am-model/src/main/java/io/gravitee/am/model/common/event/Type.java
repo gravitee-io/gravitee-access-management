@@ -23,6 +23,7 @@ public enum Type {
 
     DOMAIN,
     CLIENT,
+    APPLICATION,
     IDENTITY_PROVIDER,
     CERTIFICATE,
     EXTENSION_GRANT,

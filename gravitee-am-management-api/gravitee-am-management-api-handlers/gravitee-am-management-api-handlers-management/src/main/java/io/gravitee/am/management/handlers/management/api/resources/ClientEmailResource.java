@@ -40,6 +40,7 @@ import javax.ws.rs.core.Response;
  * @author GraviteeSource Team
  */
 @Api(tags = {"email"})
+@Deprecated
 public class ClientEmailResource extends AbstractResource {
 
     @Autowired

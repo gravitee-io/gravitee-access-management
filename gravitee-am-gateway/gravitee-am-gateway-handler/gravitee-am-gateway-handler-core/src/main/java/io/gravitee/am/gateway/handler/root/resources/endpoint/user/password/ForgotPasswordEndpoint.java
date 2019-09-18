@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.form.FormManager;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;

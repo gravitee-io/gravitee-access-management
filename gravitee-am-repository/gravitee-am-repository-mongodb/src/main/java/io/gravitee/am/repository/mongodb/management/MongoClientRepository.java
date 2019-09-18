@@ -15,39 +15,29 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
-import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.jose.*;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ClientRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ClientMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
 import io.reactivex.Completable;
-import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -57,119 +47,25 @@ import static com.mongodb.client.model.Filters.*;
 @Component
 public class MongoClientRepository extends AbstractManagementMongoRepository implements ClientRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
-    private static final String FIELD_CLIENT_ID = "clientId";
-    private static final String FIELD_IDENTITIES = "identities";
-    private static final String FIELD_OAUTH2_IDENTITIES = "oauth2Identities";
-    private static final String FIELD_CERTIFICATE = "certificate";
-    private static final String FIELD_GRANT_TYPES= "authorizedGrantTypes";
-    private MongoCollection<ClientMongo> clientsCollection;
-
-    @PostConstruct
-    public void init() {
-        clientsCollection = mongoOperations.getCollection("clients", ClientMongo.class);
-        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1)).subscribe(new LoggableIndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1)).subscribe(new LoggableIndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_IDENTITIES, 1)).subscribe(new LoggableIndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_CERTIFICATE, 1)).subscribe(new LoggableIndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_GRANT_TYPES, 1)).subscribe(new LoggableIndexSubscriber());
-    }
-
-    @Override
-    public Single<Set<Client>> findByDomain(String domain) {
-        return Observable.fromPublisher(clientsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
-    }
-
-    @Override
-    public Single<Set<Client>> search(String domain, String query) {
-        // currently search on client_id field
-        Bson searchQuery = new BasicDBObject(FIELD_CLIENT_ID, query);
-        // if query contains wildcard, use the regex query
-        if (query.contains("*")) {
-            String compactQuery = query.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            searchQuery = new BasicDBObject(FIELD_CLIENT_ID, Pattern.compile(regex, Pattern.CASE_INSENSITIVE));
-        }
-
-        Bson mongoQuery = and(
-                eq(FIELD_DOMAIN, domain),
-                searchQuery);
-
-        return Observable.fromPublisher(clientsCollection.find(mongoQuery)).map(this::convert).collect(HashSet::new, Set::add);
-    }
-
-    @Override
-    public Single<Page<Client>> findByDomain(String domain, int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(clientsCollection.count(eq(FIELD_DOMAIN, domain))).first(0l);
-        Single<Set<Client>> clientsOperation = Observable.fromPublisher(clientsCollection.find(eq(FIELD_DOMAIN, domain)).skip(size * (page - 1)).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
-        return Single.zip(countOperation, clientsOperation, (count, clients) -> new Page<>(clients, page, count));
-    }
-
-    @Override
-    public Maybe<Client> findByClientIdAndDomain(String clientId, String domain) {
-        return Observable.fromPublisher(clientsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId))).first()).firstElement().map(this::convert);
-    }
-
-    @Override
-    public Single<Set<Client>> findByIdentityProvider(String identityProvider) {
-        return Observable.fromPublisher(clientsCollection.find(or(eq(FIELD_IDENTITIES, identityProvider), eq(FIELD_OAUTH2_IDENTITIES, identityProvider)))).map(this::convert).collect(HashSet::new, Set::add);
-    }
-
-    @Override
-    public Single<Set<Client>> findByCertificate(String certificate) {
-        return Observable.fromPublisher(clientsCollection.find(eq(FIELD_CERTIFICATE, certificate))).map(this::convert).collect(HashSet::new, Set::add);
-    }
-
-    @Override
-    public Single<Set<Client>> findByDomainAndExtensionGrant(String domain, String tokenGranter) {
-        return Observable.fromPublisher(clientsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPES, tokenGranter)))).map(this::convert).collect(HashSet::new, Set::add);
-    }
+    public static final String COLLECTION_NAME = "clients";
 
     @Override
     public Single<Set<Client>> findAll() {
+        MongoCollection<ClientMongo> clientsCollection =  mongoOperations.getCollection(COLLECTION_NAME, ClientMongo.class);
         return Observable.fromPublisher(clientsCollection.find()).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Single<Page<Client>> findAll(int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(clientsCollection.count()).first(0l);
-        Single<Set<Client>> clientsOperation = Observable.fromPublisher(clientsCollection.find().skip(size * (page - 1)).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
-        return Single.zip(countOperation, clientsOperation, (count, clients) -> new Page<>(clients, page, count));
+    public Single<Boolean> collectionExists() {
+        return Observable.fromPublisher(mongoOperations.listCollectionNames())
+                .filter(collectionName -> collectionName.equalsIgnoreCase(COLLECTION_NAME))
+                .isEmpty()
+                .map(isEmpty -> !isEmpty);
     }
 
     @Override
-    public Maybe<Client> findById(String client) {
-        return Observable.fromPublisher(clientsCollection.find(eq(FIELD_ID, client)).first()).firstElement().map(this::convert);
-    }
-
-    @Override
-    public Single<Client> create(Client item) {
-        ClientMongo client = convert(item);
-        client.setId(client.getId() == null ? RandomString.generate() : client.getId());
-        return Single.fromPublisher(clientsCollection.insertOne(client)).flatMap(success -> findById(client.getId()).toSingle());
-    }
-
-    @Override
-    public Single<Client> update(Client item) {
-        ClientMongo client = convert(item);
-        return Single.fromPublisher(clientsCollection.replaceOne(eq(FIELD_ID, client.getId()), client)).flatMap(success -> findById(client.getId()).toSingle());
-    }
-
-    @Override
-    public Completable delete(String id) {
-        return Completable.fromPublisher(clientsCollection.deleteOne(eq(FIELD_ID, id)));
-    }
-
-    @Override
-    public Single<Long> countByDomain(String domain) {
-        return Observable.fromPublisher(clientsCollection.count(eq(FIELD_DOMAIN, domain))).first(0l);
-    }
-
-    @Override
-    public Single<Long> count() {
-        return Observable.fromPublisher(clientsCollection.count()).first(0l);
+    public Completable deleteCollection() {
+        return Completable.fromPublisher(mongoOperations.getCollection(COLLECTION_NAME).drop());
     }
 
     private Client convert(ClientMongo clientMongo) {

@@ -120,6 +120,9 @@ public abstract class JerseySpringTest {
     @Autowired
     protected GroupService groupService;
 
+    @Autowired
+    protected ApplicationService applicationService;
+
     @Configuration
     @ComponentScan("io.gravitee.am.management.handlers.management.api.resources.enhancer")
     static class ContextConfiguration {
@@ -246,6 +249,11 @@ public abstract class JerseySpringTest {
         @Bean
         public GroupService groupService() {
             return mock(GroupService.class);
+        }
+
+        @Bean
+        public ApplicationService applicationService() {
+            return mock(ApplicationService.class);
         }
     }
 

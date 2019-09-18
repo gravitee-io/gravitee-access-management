@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.email;
 
 import io.gravitee.am.common.email.Email;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 
 /**

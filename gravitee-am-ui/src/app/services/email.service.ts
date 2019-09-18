@@ -24,16 +24,16 @@ export class EmailService {
 
   constructor(private http: HttpClient) { }
 
-  get(domainId, clientId, emailTemplate): Observable<any> {
-    return this.http.get<any>(this.emailsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/emails?template=" + emailTemplate);
+  get(domainId, appId, emailTemplate): Observable<any> {
+    return this.http.get<any>(this.emailsUrl + domainId + (appId ? "/applications/" + appId : "") + "/emails?template=" + emailTemplate);
   }
 
-  create(domainId, clientId, email): Observable<any> {
-    return this.http.post<any>(this.emailsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/emails", email);
+  create(domainId, appId, email): Observable<any> {
+    return this.http.post<any>(this.emailsUrl + domainId + (appId ? "/applications/" + appId : "") + "/emails", email);
   }
 
-  update(domainId, clientId, id, email): Observable<any> {
-    return this.http.put<any>(this.emailsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/emails/" + id, {
+  update(domainId, appId, id, email): Observable<any> {
+    return this.http.put<any>(this.emailsUrl + domainId + (appId ? "/applications/" + appId : "") + "/emails/" + id, {
       'enabled' : email.enabled,
       'from': email.from,
       'fromName': email.fromName,
@@ -43,8 +43,8 @@ export class EmailService {
     });
   }
 
-  delete(domainId, clientId, id): Observable<any> {
-    return this.http.delete<any>(this.emailsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/emails/" + id);
+  delete(domainId, appId, id): Observable<any> {
+    return this.http.delete<any>(this.emailsUrl + domainId + (appId ? "/applications/" + appId : "") + "/emails/" + id);
   }
 
 }

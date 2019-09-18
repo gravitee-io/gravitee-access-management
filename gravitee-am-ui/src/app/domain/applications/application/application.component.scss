@@ -1,0 +1,59 @@
+.application-container {
+  padding: 20px 70px 20px 50px;
+  a.back-link {
+    color: #006CAB;
+    text-decoration: none;
+    &:hover {
+      color: #2196f3;
+      text-decoration: underline;
+    }
+  }
+  h1 {
+    font-weight: 400;
+  }
+  .app-header {
+    margin: 10px;
+    align-items: center;
+    .app-logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 24px 0 0;
+      img {
+        border-radius: 25%;
+      }
+    }
+    .app-information {
+      span.app-name {
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
+      span.app-type {
+        color: rgba(0,0,0,.54);
+        font-size: 14px;
+      }
+    }
+  }
+  .application-content {
+    padding: 25px 0 20px;
+  }
+}
+
+mat-card.application-banner {
+  display: flex;
+  position: absolute;
+  z-index: 10;
+  max-width: 600px;
+  padding: 12px;
+  text-align: center;
+  background: orange;
+  color: white;
+  top: 35px;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+
+  .application-banner-text {
+    margin: 3px 0px 0px 20px;
+  }
+}

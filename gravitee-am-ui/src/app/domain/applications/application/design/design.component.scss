@@ -1,0 +1,17 @@
+:host {
+  mat-sidenav {
+    overflow: scroll;
+  }
+  mat-sidenav-content {
+    width: 100%;
+  }
+  /deep/ .settings-sidenav {
+    margin: 0 !important;
+  }
+  /deep/ .mat-list-base {
+    padding-top: 0;
+  }
+  .application-design-main-content {
+    min-height: calc(100vh - 380px);
+  }
+}

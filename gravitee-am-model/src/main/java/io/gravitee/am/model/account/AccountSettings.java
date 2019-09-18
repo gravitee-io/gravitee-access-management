@@ -68,6 +68,22 @@ public class AccountSettings {
      */
     private String redirectUriAfterResetPassword;
 
+    public AccountSettings() {
+    }
+
+    public AccountSettings(AccountSettings other) {
+        this.inherited = other.inherited;
+        this.loginAttemptsDetectionEnabled = other.loginAttemptsDetectionEnabled;
+        this.maxLoginAttempts = other.maxLoginAttempts;
+        this.loginAttemptsResetTime = other.loginAttemptsResetTime;
+        this.accountBlockedDuration = other.accountBlockedDuration;
+        this.completeRegistrationWhenResetPassword = other.completeRegistrationWhenResetPassword;
+        this.autoLoginAfterRegistration = other.autoLoginAfterRegistration;
+        this.redirectUriAfterRegistration = other.redirectUriAfterRegistration;
+        this.autoLoginAfterResetPassword = other.autoLoginAfterResetPassword;
+        this.redirectUriAfterResetPassword = other.redirectUriAfterResetPassword;
+    }
+
     public boolean isInherited() {
         return inherited;
     }

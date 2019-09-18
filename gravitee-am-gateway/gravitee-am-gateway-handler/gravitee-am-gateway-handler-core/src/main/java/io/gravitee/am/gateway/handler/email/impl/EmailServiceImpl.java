@@ -19,7 +19,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.gateway.handler.email.EmailService;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.AuditService;

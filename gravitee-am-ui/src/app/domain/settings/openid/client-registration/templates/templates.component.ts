@@ -20,7 +20,7 @@ import {ActivatedRoute} from "@angular/router";
 import {SnackbarService} from "../../../../../services/snackbar.service";
 import {MatPaginator, MatSort, MatTableDataSource} from "@angular/material";
 import * as _ from 'lodash';
-import {ClientService} from "../../../../../services/client.service";
+import {ApplicationService} from "../../../../../services/application.service";
 
 export interface Client {
   id: string;
@@ -41,14 +41,16 @@ export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewIn
   templateIsEnabled: boolean;
   emptyStateMessage: string;
 
-  clients: MatTableDataSource<Client>;
-  displayedColumns: string[] = ['clientId', 'clientName', 'template'];
+  apps: MatTableDataSource<Client>;
+  displayedColumns: string[] = ['name', 'clientId', 'template'];
 
   @ViewChild(MatSort) sort: MatSort;
   @ViewChild(MatPaginator) paginator: MatPaginator;
 
-  constructor(private domainService: DomainService, private clientService: ClientService,
-              private route: ActivatedRoute, private snackbarService: SnackbarService) {
+  constructor(private domainService: DomainService,
+              private applicationService: ApplicationService,
+              private route: ActivatedRoute,
+              private snackbarService: SnackbarService) {
   }
 
   ngOnInit() {
@@ -57,10 +59,10 @@ export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewIn
     this.templateIsEnabled = this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled;
     this.initEmptyStateMessage();
 
-    const datasource = _.map(this.route.snapshot.data['clients'],  client => <Client>{
-      id: client.id, clientId: client.clientId, name: client.clientName, template: client.template
+    const datasource = _.map(this.route.snapshot.data['apps'].data,  app => <Client>{
+      id: app.id, clientId: app.settings.oauth.clientId, name: app.name, template: app.template
     });
-    this.clients = new MatTableDataSource(datasource);
+    this.apps = new MatTableDataSource(datasource);
   }
 
   ngAfterViewInit() {
@@ -78,23 +80,23 @@ export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewIn
 
   /** Apply pagination on table */
   applyPagination() {
-    this.clients.paginator = this.paginator;
+    this.apps.paginator = this.paginator;
   }
 
   /** Apply sort on table */
   applySort() {
-    this.clients.sort = this.sort;
+    this.apps.sort = this.sort;
   }
 
   /** Apply filter on table */
   applyFilter(filterValue: string) {
-    this.clients.filter = filterValue.trim().toLowerCase();
+    this.apps.filter = filterValue.trim().toLowerCase();
   }
 
   applyChange(client, event) {
     client.template = event.checked;
-    this.clientService.patchTemplate(this.domain.id, client.id, event.checked).subscribe(data => {
-      this.snackbarService.open("Client updated");
+    this.applicationService.patch(this.domain.id, client.id, { 'template' : event.checked}).subscribe(data => {
+      this.snackbarService.open("Application updated");
     });
     this.applySort();
   }

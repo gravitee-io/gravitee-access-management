@@ -44,6 +44,7 @@ import java.net.URI;
  * @author GraviteeSource Team
  */
 @Api(tags = {"form"})
+@Deprecated
 public class ClientFormsResource extends AbstractResource {
 
     @Autowired

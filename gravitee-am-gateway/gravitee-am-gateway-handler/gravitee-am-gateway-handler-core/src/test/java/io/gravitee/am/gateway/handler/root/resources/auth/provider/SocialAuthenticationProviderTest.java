@@ -19,7 +19,7 @@ import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.gateway.handler.common.auth.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
 import io.reactivex.Single;

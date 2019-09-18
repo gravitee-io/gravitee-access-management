@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.reactivex.observers.TestObserver;

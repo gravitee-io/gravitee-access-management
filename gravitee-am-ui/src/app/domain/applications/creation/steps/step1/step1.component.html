@@ -1,0 +1,39 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="column" class="application-creation-step1-container">
+  <p class="application-creation-description">
+    Set up your application that represents the connection between your <b>Software</b> and the <b>Authorization Server</b><br/> for Authentication and Account Management.
+  </p>
+
+  <div fxLayout="row" fxLayoutWrap class="application-creation-step1-content">
+    <mat-card *ngFor="let applicationType of applicationTypes" fxFlex="30" (click)="selectApplicationType(applicationType.type)" [ngClass]="applicationType.type === application.type ? 'selected' : ''">
+      <mat-card-content>
+        <div>
+          <i [ngClass]="applicationType.type === application.type ? 'selected' : ''" class="material-icons">{{applicationType.icon}}</i>
+        </div>
+        <h3>{{applicationType.name}}</h3>
+        <p>
+          {{applicationType.description}}
+        </p>
+        <small>
+          {{applicationType.subDescription}}
+        </small>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

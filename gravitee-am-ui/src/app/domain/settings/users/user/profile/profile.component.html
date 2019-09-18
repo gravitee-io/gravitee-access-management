@@ -45,7 +45,7 @@
           </mat-form-field>
         </div>
         <div *ngIf="editMode()">
-          <app-select-clients [selectedClient]="user.clientEntity" (onSelectClient)="onClientSelectionChanged($event)" (onRemoveClient)="onClientDeleted($event)"></app-select-clients>
+          <app-select-applications [selectedApp]="user.applicationEntity" (onSelectApp)="onAppSelectionChanged($event)" (onRemoveApp)="onAppDeleted($event)"></app-select-applications>
         </div>
         <div fxLayout="column" class="additional-information" *ngIf="!isEmptyObject(user.additionalInformation) || editMode()">
           <h4>Additional information</h4>
@@ -149,7 +149,7 @@
           </mat-list-item>
           <mat-list-item>
             <mat-icon mat-list-icon>dock</mat-icon>
-            <h4 matLine>Last client</h4>
+            <h4 matLine>Last application</h4>
             <p matLine>{{displayClientName()}}</p>
           </mat-list-item>
           <mat-list-item>

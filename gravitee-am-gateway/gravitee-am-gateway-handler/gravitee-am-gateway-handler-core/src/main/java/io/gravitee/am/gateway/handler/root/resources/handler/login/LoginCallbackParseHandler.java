@@ -23,7 +23,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;

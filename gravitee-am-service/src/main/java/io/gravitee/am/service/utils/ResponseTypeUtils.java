@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.utils;
 
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 
 import java.util.*;
 import java.util.stream.Collectors;

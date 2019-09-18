@@ -1,0 +1,85 @@
+.domain-applications-container {
+  padding: 20px 70px 20px 50px;
+  h1 {
+    font-weight: 400;
+  }
+  .domain-applications-content {
+    ngx-datatable {
+      font-size: 14px;
+      box-shadow: none;
+      .app-header {
+        margin: 5px;
+        align-items: center;
+        .app-logo {
+          width: 40px;
+          height: 40px;
+          margin: 0 12px 0 0;
+          img {
+            border-radius: 25%;
+          }
+        }
+        .app-information {
+          small {
+            color: rgba(0,0,0,.54);
+          }
+        }
+      }
+    }
+  }
+}
+
+.add-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
+
+.add-button-center {
+  text-align: center;
+}
+
+:host /deep/ .ngx-datatable.material .datatable-footer .datatable-pager {
+  ul li:not(:last-child):after {
+    content: none;
+  }
+}
+
+:host /deep/ .app-name-cell {
+  padding: 0 !important;
+  a {
+    color: #006CAB;
+    text-decoration: none;
+    &:hover {
+      color: #2196f3;
+    }
+  }
+}
+
+:host /deep/ .mat-badge-small .mat-badge-content {
+  width: 12px;
+  height: 12px;
+  line-height: 12px;
+}
+
+:host /deep/ .mat-badge-small.mat-badge-overlap.mat-badge-after .mat-badge-content {
+  right: 1px;
+}
+
+:host /deep/ .mat-badge-small.mat-badge-above .mat-badge-content {
+  top: -2px;
+}
+
+:host /deep/ .app-enabled .mat-badge-content {
+  color: white;
+  background: limegreen;
+}
+
+:host /deep/ .app-is-template .mat-badge-content {
+  color: white;
+  background: orange;
+}
+
+:host /deep/ .app-disabled .mat-badge-content {
+  color: white;
+  background: red;
+}

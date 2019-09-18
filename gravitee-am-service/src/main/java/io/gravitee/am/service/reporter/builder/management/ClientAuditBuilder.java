@@ -17,7 +17,7 @@ package io.gravitee.am.service.reporter.builder.management;
 
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

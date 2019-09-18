@@ -16,7 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;

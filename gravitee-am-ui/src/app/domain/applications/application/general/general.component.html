@@ -1,0 +1,145 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="application-settings-container">
+  <div class="application-settings-content">
+    <div fxFlex="70">
+      <form (ngSubmit)="update()" fxLayout="column" #applicationForm="ngForm">
+        <div class="gs-form-section general-section">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Name</mat-label>
+            <input matInput type="text" placeholder="Enter the application name" name="name" [(ngModel)]="application.name" required>
+            <mat-hint>The application's name</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Domain</mat-label>
+            <input matInput type="text" name="domain" [value]="application.domain" disabled>
+            <mat-hint>The application's domain</mat-hint>
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="application.domain" (cbOnSuccess)="valueCopied('Domain copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Client ID</mat-label>
+            <input matInput type="text" name="clientId" [value]="application.settings.oauth.clientId" disabled>
+            <mat-hint>The application's client ID (OAuth 2.0)</mat-hint>
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="application.settings?.oauth?.clientId" (cbOnSuccess)="valueCopied('Client ID copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Client Secret</mat-label>
+            <input matInput type="password" name="clientSecret" [value]="application.settings.oauth.clientSecret" disabled>
+            <mat-hint>The application's client secret (OAuth 2.0)</mat-hint>
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="application.settings?.oauth?.clientSecret" (cbOnSuccess)="valueCopied('Client Secret copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Description</mat-label>
+            <textarea matInput type="text" placeholder="Enter the application description" name="description" [(ngModel)]="application.description"></textarea>
+            <mat-hint>The application's description</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Type</mat-label>
+            <mat-select placeholder="Change the application type" name="type" [(ngModel)]="application.type">
+              <mat-option *ngFor="let applicationType of applicationTypes" [value]="applicationType.type">{{ applicationType.name }}</mat-option>
+            </mat-select>
+            <mat-hint>The application's type</mat-hint>
+          </mat-form-field>
+        </div>
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>Redirect URIs</h5>
+            <small>List of allowed URLs where the user will be redirected after successfully login to your application.
+              It prevents some vulnerabilities like being redirected to unsafe websites.</small>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="column">
+            <div fxLayout="row" fxLayoutGap="10px">
+              <div fxFlex="90">
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <input matInput type="text" placeholder="Enter a redirect URI" name="redirectUri" [value]="redirectUri || ''" (input)='redirectUri = $event.target.value'>
+                </mat-form-field>
+              </div>
+              <div>
+                <button mat-stroked-button style="margin-top: 7px;" (click)="addRedirectUris($event)" [disabled]="!redirectUri">+ ADD</button>
+              </div>
+            </div>
+            <ngx-datatable class="material"
+                           [columnMode]="'flex'"
+                           [headerHeight]="40"
+                           [footerHeight]="40"
+                           [rowHeight]="50"
+                           [messages]="{emptyMessage:'There is no redirect URIs'}"
+                           [rows]="redirectUris">
+              <ngx-datatable-column name="Redirect URIs" [flexGrow]="2">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{row.value}}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="" [flexGrow]="1">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <div fxLayout="row">
+                    <button mat-icon-button (click)="deleteRedirectUris(row.value, $event)"><mat-icon>close</mat-icon></button>
+                  </div>
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+        </div>
+
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>Consent</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableAutoApprove($event)"
+              [checked]="this.applicationAdvancedSettings.skipConsent">
+              Skip user approval
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%;">Generally used for internal trusted service applications.</mat-hint>
+          </div>
+        </div>
+
+        <div fxLayout="row">
+          <button mat-raised-button [disabled]="(!applicationForm.valid || applicationForm.pristine) && !formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+      <div class="application-settings-delete-zone" fxLayout="column">
+        <mat-list>
+          <mat-list-item>
+            <h3 matLine>Renew secret</h3>
+            <p matLine>All applications using this OAuth 2.0 client secret will need to be updated to be able to request for tokens and access protected resources.</p>
+            <button mat-stroked-button color="warn" (click)="renewClientSecret($event)">RENEW</button>
+          </mat-list-item>
+          <mat-divider></mat-divider>
+          <mat-list-item>
+            <h3 matLine>Delete application</h3>
+            <p matLine>Application will be deleted, it will no longer be use for authentication and request for tokens.</p>
+            <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+          </mat-list-item>
+        </mat-list>
+      </div>
+    </div>
+    <div class="application-settings-description" fxFlex>
+      <h3>Manage application</h3>
+      <div class="application-settings-description-content">
+        <p>
+          Configure your application's settings to interact with the authorization server to request for access tokens and gain access to protected resources.
+        </p>
+        <small>The authorization server relies on OAuth 2.0/OpenID Connect protocols. Check out those configurations for more advanced features.</small>
+      </div>
+    </div>
+  </div>
+</div>

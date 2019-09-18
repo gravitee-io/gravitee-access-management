@@ -27,7 +27,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.response.ImplicitResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.AbstractFlow;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Single;
 

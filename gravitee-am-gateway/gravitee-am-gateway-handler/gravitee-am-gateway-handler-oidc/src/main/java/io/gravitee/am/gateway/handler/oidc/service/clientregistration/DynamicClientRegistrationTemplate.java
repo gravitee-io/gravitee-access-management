@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 
 import java.util.Collections;
 import java.util.List;

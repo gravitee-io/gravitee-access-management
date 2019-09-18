@@ -36,7 +36,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;

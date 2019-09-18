@@ -21,9 +21,9 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHan
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;

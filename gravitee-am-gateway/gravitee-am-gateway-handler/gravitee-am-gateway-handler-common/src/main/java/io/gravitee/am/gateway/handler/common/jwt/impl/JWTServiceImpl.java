@@ -21,7 +21,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

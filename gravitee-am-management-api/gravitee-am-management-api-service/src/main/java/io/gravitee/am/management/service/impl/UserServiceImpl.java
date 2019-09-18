@@ -25,14 +25,14 @@ import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.UserService;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.*;
@@ -94,7 +94,7 @@ public class UserServiceImpl implements UserService {
     private LoginAttemptService loginAttemptService;
 
     @Autowired
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @Autowired
     private RoleService roleService;
@@ -390,15 +390,15 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
-    private Maybe<Client> checkClient(String domain, String client) {
-        return clientService.findById(client)
-                .switchIfEmpty(Maybe.defer(() -> clientService.findByDomainAndClientId(domain, client)))
+    private Maybe<Application> checkClient(String domain, String client) {
+        return applicationService.findById(client)
+                .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(domain, client)))
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
-                .map(client1 -> {
-                    if (!domain.equals(client1.getDomain())) {
+                .map(app1 -> {
+                    if (!domain.equals(app1.getDomain())) {
                         throw new ClientNotFoundException(client);
                     }
-                    return client1;
+                    return app1;
                 });
     }
 

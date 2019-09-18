@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.jwt;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.reactivex.observers.TestObserver;
 import org.junit.Before;

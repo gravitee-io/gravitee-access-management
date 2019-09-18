@@ -40,7 +40,7 @@ import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.gateway.handler.common.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwk.JWKService;
 import io.gravitee.am.gateway.handler.common.jwk.converter.JWKConverter;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.OCTKey;

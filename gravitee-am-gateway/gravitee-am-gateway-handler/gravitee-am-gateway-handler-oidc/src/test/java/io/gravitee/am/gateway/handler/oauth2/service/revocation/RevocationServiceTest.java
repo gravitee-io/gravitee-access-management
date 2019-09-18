@@ -22,7 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.RefreshToken;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.observers.TestObserver;

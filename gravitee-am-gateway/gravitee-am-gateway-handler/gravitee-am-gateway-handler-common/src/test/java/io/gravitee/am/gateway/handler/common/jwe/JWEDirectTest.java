@@ -23,7 +23,7 @@ import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.gateway.handler.common.jwa.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.common.jwe.impl.JWEServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwk.JWKService;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.OCTKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.reactivex.Maybe;

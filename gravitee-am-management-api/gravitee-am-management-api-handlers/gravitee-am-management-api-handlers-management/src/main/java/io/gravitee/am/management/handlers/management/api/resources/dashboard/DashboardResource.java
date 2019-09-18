@@ -32,11 +32,16 @@ public class DashboardResource {
     @Context
     private ResourceContext resourceContext;
 
+    @Deprecated
     @Path("clients")
     public DashboardClientsResource getDashboardClientsResource() {
         return resourceContext.getResource(DashboardClientsResource.class);
     }
 
+    @Path("applications")
+    public DashboardApplicationsResource getDashboardApplicationsResource() {
+        return resourceContext.getResource(DashboardApplicationsResource.class);
+    }
 
     @Path("tokens")
     public DashboardTokensResource getDashboardTokensResource() {

@@ -24,8 +24,8 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.exception.*;
@@ -60,7 +60,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     private ExtensionGrantRepository extensionGrantRepository;
 
     @Autowired
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @Autowired
     private EventService eventService;
@@ -186,14 +186,14 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
         return extensionGrantRepository.findById(extensionGrantId)
                 .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrantId)))
                 // check for clients using this extension grant
-                .flatMapSingle(extensionGrant -> clientService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType() + "~" + extensionGrant.getId())
-                        .flatMap(clients -> {
-                            if (clients.size() > 0) {
-                                throw new ExtensionGrantWithClientsException();
+                .flatMapSingle(extensionGrant -> applicationService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType() + "~" + extensionGrant.getId())
+                        .flatMap(applications -> {
+                            if (applications.size() > 0) {
+                                throw new ExtensionGrantWithApplicationsException();
                             }
                             // backward compatibility, check for old clients configuration
                             return Single.zip(
-                                    clientService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType()),
+                                    applicationService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType()),
                                     findByDomain(domain),
                                     (clients1, extensionGrants) -> {
                                         if (clients1.size() == 0) {
@@ -202,7 +202,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                                         // if clients use this grant_type, check it is the oldest one
                                         Date minDate = Collections.min(extensionGrants.stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));
                                         if (extensionGrant.getCreatedAt().equals(minDate)) {
-                                            throw new ExtensionGrantWithClientsException();
+                                            throw new ExtensionGrantWithApplicationsException();
                                         } else {
                                             return extensionGrant;
                                         }

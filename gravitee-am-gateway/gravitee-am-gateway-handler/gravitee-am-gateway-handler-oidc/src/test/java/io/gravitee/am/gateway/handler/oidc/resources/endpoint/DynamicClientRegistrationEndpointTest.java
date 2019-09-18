@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;

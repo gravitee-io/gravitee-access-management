@@ -22,7 +22,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;

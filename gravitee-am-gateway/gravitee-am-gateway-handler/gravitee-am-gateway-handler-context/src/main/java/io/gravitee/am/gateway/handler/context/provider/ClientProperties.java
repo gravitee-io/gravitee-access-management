@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.context.provider;
 
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 
 import java.util.HashMap;
 import java.util.Map;

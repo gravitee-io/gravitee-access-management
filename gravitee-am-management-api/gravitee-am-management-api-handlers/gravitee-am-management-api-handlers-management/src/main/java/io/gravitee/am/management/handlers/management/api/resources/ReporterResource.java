@@ -17,13 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AuditReporterManager;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
-import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.model.UpdateReporter;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;

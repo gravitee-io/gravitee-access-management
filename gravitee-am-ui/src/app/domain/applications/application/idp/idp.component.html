@@ -1,0 +1,97 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="application-idp-content" fxLayout="column" fxFlex="70">
+  <div class="application-idp-content-providers">
+    <div *ngIf="hasIdentityProviders()">
+      <ngx-datatable class="material"
+                     [columnMode]="'flex'"
+                     [headerHeight]="40"
+                     [footerHeight]="40"
+                     [rowHeight]="50"
+                     [rows]='identityProviders'>
+        <ngx-datatable-column name="Identity Providers" [flexGrow]="4">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{row.name}}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="" [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+             <span style="display: flex; align-items: center;">
+              <mat-icon>{{getIdentityProviderTypeIcon(row.type)}}</mat-icon>
+              <small style="margin-left: 5px;">{{displayType(row.type)}}</small>
+            </span>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="" [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <mat-slide-toggle (change)="selectIdentityProvider($event, row.id)"
+                              [checked]="isIdentityProviderSelected(row.id)">
+            </mat-slide-toggle>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+    </div>
+    <div style="margin-top: 20px;" *ngIf="hasSocialIdentityProviders()">
+      <ngx-datatable class="material"
+                     [columnMode]="'flex'"
+                     [headerHeight]="40"
+                     [footerHeight]="40"
+                     [rowHeight]="50"
+                     [rows]='socialIdentityProviders'>
+        <ngx-datatable-column name="Social / Enterprise providers" [flexGrow]="4">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{row.name}}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="" [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <span style="display: flex; align-items: center;">
+              <mat-icon>{{getIdentityProviderTypeIcon(row.type)}}</mat-icon>
+              <small style="margin-left: 5px;">{{displayType(row.type)}}</small>
+            </span>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="" [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <mat-slide-toggle (change)="selectIdentityProvider($event, row.id)"
+                              [checked]="isIdentityProviderSelected(row.id)">
+            </mat-slide-toggle>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+    </div>
+
+    <app-emptystate *ngIf="!loadIdentities && !hasIdentityProviders() && !hasSocialIdentityProviders()"
+                    [message]="'No identity provider has been set up'"
+                    [subMessage]="'Come back later to start authenticating your users'"
+                    [icon]="'people'"></app-emptystate>
+  </div>
+
+  <div *ngIf="!loadIdentities && hasIdentityProviders() || hasSocialIdentityProviders()" fxLayout="row" style="margin-top: 20px;">
+    <button mat-raised-button type="button" [disabled]="!formChanged" (click)="update()">SAVE</button>
+  </div>
+
+</div>
+<div class="application-idp-description" fxFlex>
+  <h3>Application's identity providers</h3>
+  <div class="application-idp-description-content">
+    <p>
+      Identity sources for authenticating and retrieving information about your users.
+    </p>
+  </div>
+</div>

@@ -23,7 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;

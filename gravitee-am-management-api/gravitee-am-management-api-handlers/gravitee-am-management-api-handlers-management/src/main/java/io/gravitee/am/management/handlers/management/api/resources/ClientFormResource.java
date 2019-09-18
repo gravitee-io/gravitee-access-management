@@ -40,6 +40,7 @@ import javax.ws.rs.core.Response;
  * @author GraviteeSource Team
  */
 @Api(tags = {"form"})
+@Deprecated
 public class ClientFormResource extends AbstractResource {
 
     @Autowired

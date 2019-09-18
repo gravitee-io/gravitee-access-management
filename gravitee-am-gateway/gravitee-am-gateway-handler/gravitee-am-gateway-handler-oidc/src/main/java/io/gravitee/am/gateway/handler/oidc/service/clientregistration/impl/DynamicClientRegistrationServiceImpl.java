@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.utils.SecureRandomString;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.jwa.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.common.jwk.JWKService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
@@ -26,18 +27,13 @@ import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicCli
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.EmailTemplateService;
-import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
-import io.gravitee.am.common.web.UriBuilder;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -51,12 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -130,8 +121,10 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     @Override
     public Single<Client> renewSecret(Client toRenew, String basePath) {
-        return this.applyRegistrationAccessToken(basePath, toRenew)
-                .flatMap(clientService::renewClientSecret);
+        return clientService.renewClientSecret(domain.getId(), toRenew.getId())
+                // after each modification we must update the registration token
+                .flatMap(client -> applyRegistrationAccessToken(basePath, client))
+                .flatMap(clientService::update);
     }
 
     private Single<Client> createClientFromRequest(DynamicClientRegistrationRequest request, String basePath) {

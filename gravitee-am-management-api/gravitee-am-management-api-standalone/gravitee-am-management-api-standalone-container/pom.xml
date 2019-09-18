@@ -50,6 +50,11 @@
             <artifactId>gravitee-node-api</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-alert</artifactId>
+        </dependency>
+
         <!-- Gravitee.io Access Management -->
         <dependency>
             <groupId>io.gravitee.am.management</groupId>

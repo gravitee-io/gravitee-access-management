@@ -39,9 +39,6 @@ import {DomainSettingsEmailComponent} from "./domain/settings/emails/email/email
 import {DomainSettingsExtensionGrantsComponent} from "./domain/settings/extension-grants/extension-grants.component";
 import {DomainSettingsAccountComponent} from "./domain/settings/account/account.component";
 import {DomainSettingsPoliciesComponent} from "./domain/settings/policies/policies.component";
-import {ClientsComponent} from "./clients/clients.component";
-import {ClientComponent} from "./domain/clients/client/client.component";
-import {ClientCreationComponent} from "./clients/creation/client-creation.component";
 import {DomainCreationComponent} from "./settings/domains/creation/domain-creation.component";
 import {ProviderCreationComponent} from "./domain/settings/providers/creation/provider-creation.component";
 import {ProviderComponent} from "./domain/settings/providers/provider/provider.component";
@@ -49,21 +46,11 @@ import {LogoutCallbackComponent} from "./logout/callback/callback.component";
 import {LogoutComponent} from "./logout/logout.component";
 import {DomainsResolver} from "./resolvers/domains.resolver";
 import {DomainResolver} from "./resolvers/domain.resolver";
-import {ClientsResolver} from "./resolvers/clients.resolver";
-import {ClientResolver} from "./resolvers/client.resolver";
 import {ProvidersResolver} from "./resolvers/providers.resolver";
 import {ProviderResolver} from "./resolvers/provider.resolver";
 import {ProviderRolesComponent} from "./domain/settings/providers/provider/roles/roles.component";
 import {ProviderSettingsComponent} from "./domain/settings/providers/provider/settings/settings.component";
 import {ProviderMappersComponent} from "./domain/settings/providers/provider/mappers/mappers.component";
-import {ClientSettingsComponent} from "./domain/clients/client/settings/settings.component";
-import {ClientIdPComponent} from "./domain/clients/client/idp/idp.component";
-import {ClientOAuth2Component} from "./domain/clients/client/oauth2/oauth2.component";
-import {ClientEmailsComponent} from "./domain/clients/client/emails/emails.component";
-import {ClientEmailComponent} from "./domain/clients/client/emails/email/email.component";
-import {ClientFormsComponent} from "./domain/clients/client/forms/forms.component";
-import {ClientFormComponent} from "./domain/clients/client/forms/form/form.component";
-import {ClientAccountSettingsComponent} from "./domain/clients/client/account/account.component";
 import {CertificatesResolver} from "./resolvers/certificates.resolver";
 import {CertificateCreationComponent} from "./domain/settings/certificates/creation/certificate-creation.component";
 import {CertificateComponent} from "./domain/settings/certificates/certificate/certificate.component";
@@ -123,6 +110,23 @@ import {TagComponent} from "./settings/management/tags/tag/tag.component";
 import {TagResolver} from "./resolvers/tag.resolver";
 import {PoliciesResolver} from "./resolvers/policies.resolver";
 import {GroupMembersResolver} from "./resolvers/group-members.resolver";
+import {ApplicationsComponent} from "./domain/applications/applications.component";
+import {ApplicationsResolver} from "./resolvers/applications.resolver";
+import {ApplicationCreationComponent} from "./domain/applications/creation/application-creation.component";
+import {ApplicationComponent} from "./domain/applications/application/application.component";
+import {ApplicationResolver} from "./resolvers/application.resolver";
+import {ApplicationGeneralComponent} from "./domain/applications/application/general/general.component";
+import {ApplicationIdPComponent} from "./domain/applications/application/idp/idp.component";
+import {ApplicationDesignComponent} from "./domain/applications/application/design/design.component";
+import {ApplicationFormsComponent} from "./domain/applications/application/design/forms/forms.component";
+import {ApplicationFormComponent} from "./domain/applications/application/design/forms/form/form.component";
+import {ApplicationEmailsComponent} from "./domain/applications/application/design/emails/emails.component";
+import {ApplicationEmailComponent} from "./domain/applications/application/design/emails/email/email.component";
+import {ApplicationAdvancedComponent} from "./domain/applications/application/advanced/advanced.component";
+import {ApplicationAccountSettingsComponent} from "./domain/applications/application/advanced/account/account.component";
+import {ApplicationOAuth2Component} from "./domain/applications/application/advanced/oauth2/oauth2.component";
+import {ApplicationCertificatesComponent} from "./domain/applications/application/advanced/certificates/certificates.component";
+import {ApplicationMetadataComponent} from "./domain/applications/application/advanced/metadata/metadata.component";
 
 const routes: Routes = [
   { path: 'dashboard',
@@ -135,28 +139,28 @@ const routes: Routes = [
       }
     }
   },
-  { path: 'dashboard/clients',
-    component: ClientsComponent,
+  { path: 'dashboard/applications',
+    component: ApplicationsComponent,
     resolve: {
-      clients: ClientsResolver
+      applications: ApplicationsResolver
     },
     data: {
       menu: {
-        label: 'Clients',
-        icon: 'list',
+        label: 'Applications',
+        icon: 'apps',
         firstLevel: true
       }
     },
   },
-  { path: 'dashboard/clients/new',
-    component: ClientCreationComponent,
+  { path: 'dashboard/applications/new',
+    component: ApplicationCreationComponent,
     resolve: {
       domains: DomainsResolver
     },
     data: {
       menu: {
         displayFirstLevel: true,
-        activeParentPath: 'dashboard/clients'
+        activeParentPath: 'dashboard/applications'
       }
     }
   },
@@ -393,44 +397,110 @@ const routes: Routes = [
         data: {
           menu: {
             label: 'Dashboard',
-            icon: 'blur_on',
+            icon: 'dashboard',
           }
         }
       },
-      { path: 'clients',
-        component: ClientsComponent,
+      { path: 'applications',
+        component: ApplicationsComponent,
         resolve: {
-          clients: ClientsResolver,
+          applications: ApplicationsResolver,
           domain: DomainResolver
         },
         data: {
           menu: {
-            label: 'Clients',
-            icon: 'list',
+            label: 'Applications',
+            icon: 'apps',
           }
         }
       },
-      { path: 'clients/new',
-        component: ClientCreationComponent,
+      { path: 'applications/new',
+        component: ApplicationCreationComponent,
         resolve: {
           domains: DomainsResolver
         }
       },
-      { path: 'clients/:clientId',
-        component: ClientComponent,
+      { path: 'applications/:appId',
+        component: ApplicationComponent,
         resolve: {
-          client: ClientResolver
+          application: ApplicationResolver
         },
         children: [
-          { path: '', redirectTo: 'settings', pathMatch: 'full' },
-          { path: 'settings', component: ClientSettingsComponent, resolve: { domain: DomainResolver } },
-          { path: 'idp', component: ClientIdPComponent },
-          { path: 'oauth2', component: ClientOAuth2Component, resolve: { domainGrantTypes: ExtensionGrantsResolver, scopes: ScopesResolver } },
-          { path: 'forms', component: ClientFormsComponent, resolve: { domain: DomainResolver } },
-          { path: 'forms/form', component: ClientFormComponent, resolve: { form: FormResolver } },
-          { path: 'emails', component: ClientEmailsComponent, resolve: { domain: DomainResolver } },
-          { path: 'emails/email', component: ClientEmailComponent, resolve: { email: EmailResolver} },
-          { path: 'account', component: ClientAccountSettingsComponent },
+          { path: '', redirectTo: 'general', pathMatch: 'full' },
+          { path: 'general', component: ApplicationGeneralComponent, resolve: { domain: DomainResolver } },
+          { path: 'idp', component: ApplicationIdPComponent },
+          { path: 'design',
+            component: ApplicationDesignComponent,
+            children: [
+              { path: '', redirectTo: 'forms', pathMatch: 'full' },
+              { path: 'forms',
+                component: ApplicationFormsComponent,
+                resolve: { domain: DomainResolver },
+                data: {
+                  menu: {
+                    label: 'Forms',
+                    section: 'Design'
+                  }
+                }
+              },
+              { path: 'forms/form', component: ApplicationFormComponent, resolve: { form: FormResolver } },
+              { path: 'emails',
+                component: ApplicationEmailsComponent,
+                resolve: { domain: DomainResolver },
+                data: {
+                  menu: {
+                    label: 'Emails',
+                    section: 'Design'
+                  }
+                }
+              },
+              { path: 'emails/email', component: ApplicationEmailComponent, resolve: { email: EmailResolver} }
+            ]
+          },
+          { path: 'settings',
+            component: ApplicationAdvancedComponent,
+            children: [
+              { path: '', redirectTo: 'metadata', pathMatch: 'full' },
+              { path: 'metadata',
+                component: ApplicationMetadataComponent,
+                data: {
+                  menu: {
+                    label: 'Application metadata',
+                    section: 'Settings'
+                  }
+                }
+              },
+              { path: 'oauth2',
+                component: ApplicationOAuth2Component,
+                resolve: { domainGrantTypes: ExtensionGrantsResolver, scopes: ScopesResolver },
+                data: {
+                  menu: {
+                    label: 'OAuth 2.0 / OIDC',
+                    section: 'Settings'
+                  }
+                }
+              },
+              { path: 'account',
+                component: ApplicationAccountSettingsComponent,
+                data: {
+                  menu: {
+                    label: 'User Accounts',
+                    section: 'Security'
+                  }
+                }
+              },
+              { path: 'certificates',
+                component: ApplicationCertificatesComponent,
+                resolve : { certificates: CertificatesResolver },
+                data: {
+                  menu: {
+                    label: 'Certificates',
+                    section: 'Security'
+                  }
+                }
+              }
+            ]
+          }
         ]
       },
       { path: 'settings', component: DomainSettingsComponent,
@@ -758,7 +828,7 @@ const routes: Routes = [
               { path: 'settings', component: ClientRegistrationSettingsComponent, resolve: {domain: DomainResolver} },
               { path: 'default-scope', component: ClientRegistrationDefaultScopeComponent, resolve: {domain: DomainResolver, scopes: ScopesResolver}},
               { path: 'allowed-scope', component: ClientRegistrationAllowedScopeComponent, resolve: {domain: DomainResolver, scopes: ScopesResolver}},
-              { path: 'templates', component: ClientRegistrationTemplatesComponent, resolve: {domain: DomainResolver, clients: ClientsResolver}},
+              { path: 'templates', component: ClientRegistrationTemplatesComponent, resolve: {domain: DomainResolver, apps: ApplicationsResolver}},
             ]
           }
         ]

@@ -27,7 +27,7 @@ import io.gravitee.am.gateway.handler.common.authentication.AuthenticationDetail
 import io.gravitee.am.gateway.handler.common.authentication.event.AuthenticationEvent;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
