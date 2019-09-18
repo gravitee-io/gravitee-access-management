@@ -1,5 +1,38 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/issues/milestone/152?closed=1[AM - 2.9.0 (2019-09-18)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Client initialized with empty identity providers  https://github.com/gravitee-io/issues/issues/2568[#2568]
+- Generate token - password credentials - CORS issue https://github.com/gravitee-io/issues/issues/2535[#2535]
+
+=== Features
+
+*_Gateway_*
+
+- [Consent] be able to force consent page https://github.com/gravitee-io/issues/issues/2416[#2416]
+- [Extension-point] retrieve user consent technical id from the POST_CONSENT step https://github.com/gravitee-io/issues/issues/2582[#2582]
+- Store contextual information about the current authentication transaction https://github.com/gravitee-io/issues/issues/1933[#1933]
+
+*_Identity-provider_*
+
+- Role mapping for "external" providers https://github.com/gravitee-io/issues/issues/2505[#2505]
+
+*_Management_*
+
+- Add metadata to a client https://github.com/gravitee-io/issues/issues/2342[#2342]
+- Role management https://github.com/gravitee-io/issues/issues/2464[#2464]
+
+=== Improvements
+
+*_Docker_*
+
+- Manage protocol within nginx https://github.com/gravitee-io/issues/issues/2560[#2560]
+
+
 == https://github.com/gravitee-io/issues/issues/milestone/162?closed=1[AM - 2.8.4 (2019-09-18)]
 
 === Bug fixes
