@@ -1,5 +1,24 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/issues/milestone/162?closed=1[AM - 2.8.4 (2019-09-18)]
+
+=== Bug fixes
+
+*_Event_*
+
+- Some events are not published on the good domain https://github.com/gravitee-io/issues/issues/2561[#2561]
+
+*_Management_*
+
+- Cannot reset password or finalize user registration if user has no external id https://github.com/gravitee-io/issues/issues/2602[#2602]
+
+=== Improvements
+
+*_Gateway_*
+
+- Remove technical error messages to avoid potential fraudulent access attempt https://github.com/gravitee-io/issues/issues/2614[#2614]
+
+
 == https://github.com/gravitee-io/issues/issues/milestone/160?closed=1[AM - 2.8.3 (2019-08-15)]
 
 === Bug fixes
