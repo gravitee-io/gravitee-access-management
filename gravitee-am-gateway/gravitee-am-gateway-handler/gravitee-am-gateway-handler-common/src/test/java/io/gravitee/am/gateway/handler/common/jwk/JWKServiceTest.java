@@ -20,7 +20,7 @@ import com.nimbusds.jose.JWEAlgorithm;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwk.impl.JWKServiceImpl;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.OCTKey;

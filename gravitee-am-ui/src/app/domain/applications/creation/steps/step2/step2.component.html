@@ -1,0 +1,60 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="column" class="provider-creation-step2-container">
+  <p class="application-creation-description">
+    Configure your application.
+  </p>
+  <div class="provider-creation-step2-content">
+    <form class="provider-creation-step2-form" fxLayout="column">
+      <div fxLayout="row">
+        <div fxLayout="column" fxFlex="70">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Domain</mat-label>
+            <mat-select placeholder="Domain" [(ngModel)]="application.domain" name="domain" required [disabled]="domainId">
+              <mat-option *ngFor="let domain of domains" [value]="domain.id">{{ domain.name }}</mat-option>
+            </mat-select>
+            <mat-hint>Application's security domain.</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Name</mat-label>
+            <input matInput type="text" placeholder="Enter the application name" name="name" [(ngModel)]="application.name" required>
+            <mat-hint>The application's name</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Description</mat-label>
+            <textarea matInput type="text" placeholder="Enter the application description" name="description" [(ngModel)]="application.description"></textarea>
+            <mat-hint>The application's description</mat-hint>
+          </mat-form-field>
+        </div>
+        <div fxFlex fxLayout="column" fxLayoutAlign="center center">
+          <mat-hint style="font-size: 75%;">Application's type: {{application.type}}</mat-hint>
+          <img [src]="logoUrl(application)" alt="Logo of the application" (error)="appLogo.src = 'assets/default-app-type.png'" #appLogo width="180" style="border-radius: 25px;"/>
+        </div>
+      </div>
+      <div *ngIf="displayRedirectUri()" style="margin-top: 20px; max-width: 70%;">
+        <mat-divider style="padding: 5px;"></mat-divider>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Redirect URI</mat-label>
+          <input matInput type="url" placeholder="Enter a redirect URI" name="redirectURI" [(ngModel)]="application.redirectUri" #redirectURI="ngModel" required>
+          <mat-hint>Allowed URL where the user will be redirected after successfully login to your application.</mat-hint>
+          <mat-error *ngIf="redirectURI.errors?.url">Enter first name</mat-error>
+        </mat-form-field>
+      </div>
+    </form>
+  </div>
+</div>

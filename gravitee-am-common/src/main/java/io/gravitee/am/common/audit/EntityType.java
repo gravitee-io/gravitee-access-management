@@ -23,6 +23,7 @@ package io.gravitee.am.common.audit;
  */
 public interface EntityType {
     String CLIENT = "CLIENT";
+    String APPLICATION = "APPLICATION";
     String DOMAIN = "DOMAIN";
     String CERTIFICATE = "CERTIFICATE";
     String EXTENSION_GRANT = "EXTENSTION_GRANT";

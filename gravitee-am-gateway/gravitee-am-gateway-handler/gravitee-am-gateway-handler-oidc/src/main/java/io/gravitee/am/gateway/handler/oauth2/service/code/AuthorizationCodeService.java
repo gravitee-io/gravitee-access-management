@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.code;
 
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.reactivex.Maybe;

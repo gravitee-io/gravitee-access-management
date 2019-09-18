@@ -1,0 +1,246 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="oauth2-container" fxLayout="column">
+  <div fxLayout="row">
+    <div class="oauth2-content" fxLayout="column" fxFlex="70">
+      <form #clientOAuth2Form="ngForm" (keydown.enter)="false" (ngSubmit)="update()" fxLayout="column">
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>Grant flows</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="row wrap">
+            <div *ngFor="let grantType of grantTypes" class="oauth2-grant-type" >
+              <mat-checkbox name="grantTypes"
+                            value="{{grantType.value}}"
+                            [checked]="grantType.checked"
+                            (change)="selectGrantType($event)">
+                <span style="font-size: 14px;">{{grantType.name | titlecase}}</span>
+              </mat-checkbox>
+            </div>
+            <div *ngFor="let extensionGrant of customGrantTypes" class="oauth2-grant-type" [matTooltip]="customGrantTypeIsDisabled(extensionGrant) ? 'Only one '+ extensionGrant.grantType + ' is allowed' : null">
+              <mat-checkbox name="customGrantTypes"
+                            value="{{extensionGrant.value}}"
+                            [checked]="extensionGrant.checked"
+                            (change)="selectCustomGrantType($event)" [disabled]="customGrantTypeIsDisabled(extensionGrant)">
+                <span style="font-size: 14px;">{{extensionGrant.name | titlecase}}</span>
+              </mat-checkbox>
+            </div>
+          </div>
+        </div>
+
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>Scopes</h5>
+            <small>You can add default scopes to the tokens to control application's access to protected resources/APIs.</small>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="column">
+            <div fxLayout="row" style="align-items: baseline;">
+              <div fxLayout="column" style="margin-bottom: 20px;">
+                <mat-slide-toggle
+                  (change)="enhanceScopesWithUserPermissions($event)"
+                  [checked]="isScopesEnhanceWithUserPermissions()">
+                  Enhance scopes
+                </mat-slide-toggle>
+                <mat-hint style="font-size: 75%;">Enhance client scopes with user permissions</mat-hint>
+              </div>
+            </div>
+            <div fxLayout="column">
+              <application-scope [scopes]="scopes" (addScopeChange)="addScope($event)"></application-scope>
+              <ngx-datatable class="material"
+                             [columnMode]="'flex'"
+                             [headerHeight]="40"
+                             [footerHeight]="40"
+                             [rowHeight]="55"
+                             [messages]="{emptyMessage:'There is no scopes'}"
+                             [rows]='selectedScopes'>
+                <ngx-datatable-column name="Scopes" [flexGrow]="2">
+                  <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                    <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
+                    <span>{{ row.key }}</span> | <small>{{row.name}}</small>
+                  </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column name="" [flexGrow]="2">
+                  <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                    <div>
+                      <span *ngIf="!(scopeApprovalExists(row.key))" style="color: grey; font-size: 85%; font-style: italic;">No time set</span>
+                      <span *ngIf="(scopeApprovalExists(row.key))">{{ getScopeApproval(row.key) }}</span>
+                    </div>
+                    <div>
+                      <small style="color: grey;">
+                        ( default value :
+                        <span *ngIf="!row.expiresIn" style="font-style: italic;">No time set</span>
+                        <span *ngIf="row.expiresIn">{{ getScopeExpiry(row.expiresIn) }}</span>
+                        )
+                      </small>
+                    </div>
+                  </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column name="" [flexGrow]="1">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    <div fxLayout="row" class="application-scope-actions">
+                      <button mat-icon-button (click)="removeScope(row.key, $event)"><mat-icon>clear</mat-icon></button>
+                    </div>
+                  </ng-template>
+                </ngx-datatable-column>
+              </ngx-datatable>
+            </div>
+          </div>
+        </div>
+
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>Tokens</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <div fxLayout="column">
+            <div fxLayout="row" fxLayoutGap="10px">
+              <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+                <mat-icon matPrefix>timer</mat-icon>
+                <input matInput type="number" placeholder="Access token validity" name="accessTokenValidity" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.accessTokenValiditySeconds" />
+                <mat-hint>Expiration of the Access tokens (seconds).</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+                <mat-icon matPrefix>timer</mat-icon>
+                <input matInput type="number" placeholder="Refresh token validity" name="refreshTokenValidity" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.refreshTokenValiditySeconds" />
+                <mat-hint>Expiration of the Refresh tokens (seconds).</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+                <mat-icon matPrefix>timer</mat-icon>
+                <input matInput type="number" placeholder="ID token validity" name="idTokenValidity" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.idTokenValiditySeconds" />
+                <mat-hint>Expiration of the ID tokens (seconds).</mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <div fxLayout="row" style="align-items: center;">
+              <h5 style="margin: 0;">Custom claims</h5>
+              <button mat-icon-button (click)="openDialog($event)"><mat-icon>info_outline</mat-icon></button>
+            </div>
+            <small>You can add custom claims to the tokens (ID Token and Access Token) by picking attributes from the execution context.</small>
+            <mat-divider></mat-divider>
+          </div>
+          <div class="token-custom-claims">
+            <app-create-claim (addClaimChange)="addClaim($event)"></app-create-claim>
+            <p *ngIf="!claimsIsEmpty()"><small><i>Double click to edit and press enter to save changes</i></small></p>
+            <ngx-datatable class="material"
+                           [columnMode]="'flex'"
+                           [headerHeight]="40"
+                           [footerHeight]="40"
+                           [rowHeight]="55"
+                           [messages]="{emptyMessage:'There is no custom claims'}"
+                           [rows]='applicationOauthSettings.tokenCustomClaims'
+                           [groupRowsBy]="'tokenType'"
+                           [groupExpansionDefault]="true">
+              <!-- Group Header Template -->
+              <ngx-datatable-group-header [rowHeight]="50">
+                <ng-template let-group="group" let-expanded="expanded" ngx-datatable-group-header-template>
+                  <div style="padding:5px;">
+                    <a
+                      href="javascript:void(0);" style="color: grey; text-decoration: none; font-size: 14px;"
+                      [class.datatable-icon-right]="!expanded"
+                      [class.datatable-icon-down]="expanded"
+                      title="Expand/Collapse Group"
+                      (click)="toggleExpandGroup(group)">
+                      {{ group.value[0].tokenType | uppercase }}
+                    </a>
+                  </div>
+                </ng-template>
+              </ngx-datatable-group-header>
+
+              <ngx-datatable-column name="Claims" [flexGrow]="2">
+                <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <span (dblclick)="editing[row.id + '-claimName'] = true" *ngIf="!editing[row.id + '-claimName']">
+                  {{row.claimName}}
+                </span>
+                  <mat-form-field *ngIf="editing[row.id + '-claimName']" class="datatable-input">
+                    <input matInput type="text" required autofocus placeholder="Claim name"
+                           (keyup.enter)="updateClaim(row.tokenType, $event, 'claimName', row.id)"
+                           (blur)="editing[row.id + '-claimName'] = false"
+                           [value]="row.claimName" />
+                  </mat-form-field>
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="" [flexGrow]="4">
+                <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <pre style="margin: 0px; white-space: normal; font-size: 12px;" (dblclick)="editing[row.id + '-claimValue'] = true" *ngIf="!editing[row.id + '-claimValue']">
+                  {{row.claimValue}}
+                </pre>
+                  <mat-form-field *ngIf="editing[row.id + '-claimValue']" class="datatable-input">
+                    <input matInput type="text" required autofocus placeholder="Claim value"
+                           (keyup.enter)="updateClaim(row.tokenType, $event, 'claimValue', row.id)"
+                           (blur)="editing[row.id + '-claimValue'] = false"
+                           [value]="row.claimValue" />
+                  </mat-form-field>
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="" [flexGrow]="1">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <div fxLayout="row" class="provider-claims-actions">
+                    <button mat-icon-button (click)="deleteClaim(row.tokenType, row.claimName, $event)"><mat-icon>close</mat-icon></button>
+                  </div>
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+        </div>
+
+        <div fxLayout="row" style="margin-bottom: 20px;">
+          <button mat-raised-button [disabled]="!formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="oauth2-description" fxFlex>
+      <h3>OAuth 2.0 / OpenID Connect</h3>
+      <div class="oauth2-description-content">
+        <h4>Grant types</h4>
+        <p>
+          To authenticate an user, the application must first decide which oauth2 flow must be used. Oauth2 flows are enabled on the client through the grant_type.
+          You should select the grant_type according to your application type.
+        </p>
+        <small>
+          <b><i>authorization_code</i></b> for server side applications (web) or native applications (then combined with PKCE).<br>
+          <b><i>implicit</i></b> must be used for Single Page Applications.<br>
+          <b><i>password</i></b> should only be used for trusted applications <i>(means application and authorization server are managed within the same organization.)</i><br>
+          <b><i>client_credentials</i></b> should be used for server to server communications.<br><br>
+          <b>It is not recommended to mix client and user authentication within the same application.</b> <i>(Aka client_credentials and authorization_code, implicit or password)</i><br>
+        </small>
+
+        <h4>ID Token</h4>
+        <p>
+          The ID Token is a JSON Web Token (JWT) that contains claims (user profile information) about the End-User.
+        </p>
+        <p>
+          You must provide the OAuth 2 scope <span class="code">openid</span> in order to get the <span class="code">id_token</span> which contains the following default claims :
+        </p>
+        <small>
+          <b><i>iss:</i></b> Issuer Identifier for the Issuer of the response.<br>
+          <b><i>sub:</i></b> Subject Identifier.<br>
+          <b><i>aud:</i></b> Audience(s) that this ID Token is intended for.<br>
+          <b><i>exp:</i></b> Expiration time on or after which the ID Token MUST NOT be accepted for processing.<br>
+          <b><i>iat:</i></b> Time at which the JWT was issued.<br>
+        </small>
+      </div>
+    </div>
+  </div>
+</div>

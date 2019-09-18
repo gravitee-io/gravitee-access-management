@@ -22,13 +22,13 @@ import {ActivatedRoute} from "@angular/router";
   styleUrls: ['./emails.component.scss']
 })
 export class EmailsComponent implements OnInit {
-  clientId: string;
+  appId: string;
   @Input() emails: any[];
 
   constructor(private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.clientId = this.route.snapshot.parent.params['clientId'];
+    this.appId = this.route.snapshot.parent.parent.params['appId'];
   }
 
   isEmpty() {

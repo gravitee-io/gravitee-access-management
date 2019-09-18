@@ -17,8 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.a
 
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
-import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;

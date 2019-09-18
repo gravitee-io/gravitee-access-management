@@ -22,16 +22,12 @@ import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.Dynam
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.OIDCSettings;
-import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.EmailTemplateService;
-import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.reactivex.Completable;
@@ -124,8 +120,8 @@ public class DynamicClientRegistrationServiceTest {
         });
         when(clientService.update(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
         when(clientService.delete(any())).thenReturn(Completable.complete());
-        when(clientService.renewClientSecret(any())).thenAnswer(i -> {
-            Client toRenew = i.getArgument(0);
+        when(clientService.renewClientSecret(any(), any())).thenAnswer(i -> {
+            Client toRenew = new Client();
             toRenew.setClientSecret("secretRenewed");
             return Single.just(toRenew);
         });
@@ -724,14 +720,17 @@ public class DynamicClientRegistrationServiceTest {
     @Test
     public void renewSecret() {
         Client toRenew = new Client();
+        toRenew.setId("id");
+        toRenew.setDomain("domain_id");
         toRenew.setClientId("client_id");
         toRenew.setClientSecret("oldSecret");
 
         TestObserver<Client> testObserver = dcrService.renewSecret(toRenew, BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(client -> client.getClientSecret().equals("secretRenewed") && client.getRegistrationClientUri()!=null);
-        verify(clientService, times(1)).renewClientSecret(any());
+        testObserver.assertValue(client -> client.getClientSecret().equals("secretRenewed"));
+        verify(clientService, times(1)).renewClientSecret(anyString(), anyString());
+        verify(clientService, times(1)).update(any());
     }
 
     @Test

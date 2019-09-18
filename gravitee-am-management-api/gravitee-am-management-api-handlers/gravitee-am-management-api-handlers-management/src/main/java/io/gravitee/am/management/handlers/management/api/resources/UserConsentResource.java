@@ -16,9 +16,9 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.model.ClientEntity;
+import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
-import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -31,7 +31,10 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.ws.rs.*;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
@@ -49,7 +52,7 @@ public class UserConsentResource extends AbstractResource {
     private ScopeApprovalService scopeApprovalService;
 
     @Autowired
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -98,10 +101,10 @@ public class UserConsentResource extends AbstractResource {
     }
 
 
-    private Single<ClientEntity> getClient(String domain, String clientId) {
-        return clientService.findByDomainAndClientId(domain, clientId)
-                .map(client -> new ClientEntity(client))
-                .defaultIfEmpty(new ClientEntity("unknown-id", clientId, "unknown-client-name"))
+    private Single<ApplicationEntity> getClient(String domain, String clientId) {
+        return applicationService.findByDomainAndClientId(domain, clientId)
+                .map(application -> new ApplicationEntity(application))
+                .defaultIfEmpty(new ApplicationEntity("unknown-id", clientId, "unknown-client-name"))
                 .toSingle();
     }
 }

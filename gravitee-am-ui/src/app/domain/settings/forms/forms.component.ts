@@ -38,42 +38,49 @@ export class DomainSettingsFormsComponent {
         'name': 'Login',
         'description': 'Login page to authenticate users',
         'template': 'LOGIN',
+        'icon': 'account_box',
         'enabled': true
       },
       {
         'name': 'Registration',
         'description': 'Registration page to create an account',
         'template': 'REGISTRATION',
+        'icon': 'person_add',
         'enabled': this.allowRegister()
       },
       {
         'name': 'Registration confirmation',
         'description': 'Register page to confirm user account',
         'template': 'REGISTRATION_CONFIRMATION',
+        'icon': 'how_to_reg',
         'enabled': true
       },
       {
         'name': 'Forgot password',
         'description': 'Forgot password to recover account',
         'template': 'FORGOT_PASSWORD',
+        'icon': 'lock',
         'enabled': this.allowResetPassword()
       },
       {
         'name': 'Reset password',
         'description': 'Reset password page to make a new password',
         'template': 'RESET_PASSWORD',
+        'icon': 'lock_open',
         'enabled': this.allowResetPassword()
       },
       {
         'name': 'User consent',
         'description': 'User consent to acknowledge and accept data access',
         'template': 'OAUTH2_USER_CONSENT',
+        'icon': 'playlist_add_check',
         'enabled': true
       },
       {
         'name': 'Error',
         'description': 'Error page to display a message describing the problem',
         'template': 'ERROR',
+        'icon': 'error_outline',
         'enabled': true
       }
     ]

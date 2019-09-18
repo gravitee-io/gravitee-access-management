@@ -28,7 +28,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolve
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.User;
 import io.reactivex.Maybe;

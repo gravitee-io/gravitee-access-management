@@ -16,9 +16,12 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.service.model.*;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.model.NewClient;
+import io.gravitee.am.service.model.PatchClient;
+import io.gravitee.am.service.model.TopClient;
+import io.gravitee.am.service.model.TotalClient;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -26,6 +29,9 @@ import io.reactivex.Single;
 import java.util.Set;
 
 /**
+ * NOTE : this service must only be used in an OpenID Connect context
+ * Use the {@link io.gravitee.am.service.ApplicationService} for management purpose
+ *
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -37,62 +43,59 @@ public interface ClientService {
 
     Single<Page<Client>> findAll(int page, int size);
 
+    @Deprecated
     Single<Set<Client>> search(String domain, String query);
 
     Single<Set<Client>> findByDomain(String domain);
 
     Single<Page<Client>> findByDomain(String domain, int page, int size);
 
-    Single<Set<Client>> findByDomainAndExtensionGrant(String domain, String tokenGranter);
-
-    Single<Set<Client>> findByCertificate(String certificate);
-
-    Single<Set<Client>> findByIdentityProvider(String identityProvider);
-
+    @Deprecated
     Single<Set<TopClient>> findTopClients();
 
+    @Deprecated
     Single<Set<TopClient>> findTopClientsByDomain(String domain);
 
+    @Deprecated
     Single<TotalClient> findTotalClients();
 
+    @Deprecated
     Single<TotalClient> findTotalClientsByDomain(String domain);
 
     Maybe<Client> findByDomainAndClientId(String domain, String clientId);
 
     Maybe<Client> findById(String id);
 
+    @Deprecated
     Single<Client> create(String domain, NewClient newClient, User principal);
 
     Single<Client> create(Client client);
 
+    @Deprecated
     Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull, User principal);
 
     Single<Client> renewClientSecret(String domain, String id, User principal);
-
-    Single<Client> renewClientSecret(Client client, User principal);
 
     Completable delete(String clientId, User principal);
 
     Single<Client> update(Client client);
 
+    @Deprecated
     default Single<Client> create(String domain, NewClient newClient) {
         return create(domain, newClient, null);
     }
 
+    @Deprecated
     default Single<Client> patch(String domain, String id, PatchClient patchClient) {
         return patch(domain, id, patchClient, false, null);
     }
-
+    @Deprecated
     default Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull) {
         return patch(domain, id, patchClient, forceNull, null);
     }
 
     default Single<Client> renewClientSecret(String domain, String id) {
         return renewClientSecret(domain, id, null);
-    }
-
-    default Single<Client> renewClientSecret(Client client) {
-        return renewClientSecret(client, null);
     }
 
     default Completable delete(String clientId) {

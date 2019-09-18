@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.user.UserManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;

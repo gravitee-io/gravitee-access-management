@@ -46,6 +46,11 @@
             <artifactId>gravitee-plugin-core</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-alert</artifactId>
+        </dependency>
+
         <!-- Gravitee.io Access Management -->
         <dependency>
             <groupId>io.gravitee.am.gateway</groupId>

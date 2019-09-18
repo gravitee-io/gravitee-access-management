@@ -333,7 +333,7 @@
 								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
 								"exec": [
 									"// wait for sync process",
-									"setTimeout(function(){}, 10000);"
+									"setTimeout(function(){}, 1010000000);"
 								],
 								"type": "text/javascript"
 							}

@@ -30,9 +30,9 @@ public class Client implements User {
 
     private final String clientId;
 
-    private final io.gravitee.am.model.Client client;
+    private final io.gravitee.am.model.oidc.Client client;
 
-    public Client(io.gravitee.am.model.Client  client) {
+    public Client(io.gravitee.am.model.oidc.Client client) {
         this.clientId = client.getClientId();
         this.client = client;
     }
@@ -41,7 +41,7 @@ public class Client implements User {
         return clientId;
     }
 
-    public io.gravitee.am.model.Client getClient() {
+    public io.gravitee.am.model.oidc.Client getClient() {
         return client;
     }
 

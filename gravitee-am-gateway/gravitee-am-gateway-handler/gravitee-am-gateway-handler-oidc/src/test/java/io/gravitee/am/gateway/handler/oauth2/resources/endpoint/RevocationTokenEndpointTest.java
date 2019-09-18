@@ -75,7 +75,7 @@ public class RevocationTokenEndpointTest extends RxWebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new Client(new io.gravitee.am.model.Client())));
+                routingContext.setUser(new User(new Client(new io.gravitee.am.model.oidc.Client())));
                 routingContext.next();
             }
         });
@@ -91,7 +91,7 @@ public class RevocationTokenEndpointTest extends RxWebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new Client(new io.gravitee.am.model.Client())));
+                routingContext.setUser(new User(new Client(new io.gravitee.am.model.oidc.Client())));
                 routingContext.next();
             }
         });
@@ -109,7 +109,7 @@ public class RevocationTokenEndpointTest extends RxWebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new Client(new io.gravitee.am.model.Client())));
+                routingContext.setUser(new User(new Client(new io.gravitee.am.model.oidc.Client())));
                 routingContext.next();
             }
         });
@@ -128,7 +128,7 @@ public class RevocationTokenEndpointTest extends RxWebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new Client(new io.gravitee.am.model.Client())));
+                routingContext.setUser(new User(new Client(new io.gravitee.am.model.oidc.Client())));
                 routingContext.next();
             }
         });

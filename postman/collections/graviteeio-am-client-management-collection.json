@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "73100933-53f5-45a2-9daa-1ca3bc04a523",
+		"_postman_id": "335628e4-63df-40bf-8c6c-b8ddfba115d6",
 		"name": "Gravitee.io - AM - Client Management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -190,10 +190,6 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
 							"host": [
@@ -209,7 +205,8 @@
 					},
 					"response": []
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "Client Management",
@@ -235,8 +232,8 @@
 											"",
 											"    pm.expect(body).to.have.property('authorizedGrantTypes');",
 											"    pm.expect(body).to.have.property('responseTypes');",
-											"    pm.expect(body.authorizedGrantTypes).to.eql([]);",
-											"    pm.expect(body.responseTypes).to.eql([]);",
+											"    pm.expect(body.authorizedGrantTypes).to.eql(['authorization_code']);",
+											"    pm.expect(body.responseTypes).to.eql(['code']);",
 											"});",
 											""
 										],
@@ -490,6 +487,7 @@
 							"response": []
 						}
 					],
+					"protocolProfileBehavior": {},
 					"_postman_isSubFolder": true
 				},
 				{
@@ -516,8 +514,8 @@
 											"    pm.expect(body).to.have.property('responseTypes');",
 											"    pm.expect(body).to.have.property('applicationType');",
 											"",
-											"    pm.expect(body.authorizedGrantTypes).to.eql([]);",
-											"    pm.expect(body.responseTypes).to.eql([]);",
+											"    pm.expect(body.authorizedGrantTypes).to.eql(['authorization_code']);",
+											"    pm.expect(body.responseTypes).to.eql(['code']);",
 											"    pm.expect(body.applicationType).to.eql('web');",
 											"    ",
 											"    pm.expect(body.clientName).to.eql('Unknown Client');",
@@ -917,9 +915,11 @@
 							"response": []
 						}
 					],
+					"protocolProfileBehavior": {},
 					"_postman_isSubFolder": true
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "Delete domain",
@@ -967,5 +967,6 @@
 			},
 			"response": []
 		}
-	]
+	],
+	"protocolProfileBehavior": {}
 }

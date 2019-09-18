@@ -22,7 +22,7 @@
         <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter">
       </mat-form-field>
 
-      <table mat-table [dataSource]="clients" matSort matSortActive="template" matSortDirection="desc" class="mat-elevation-z8">
+      <table mat-table [dataSource]="apps" matSort matSortActive="template" matSortDirection="desc" class="mat-elevation-z8">
         <!-- ID Column -->
         <ng-container matColumnDef="id">
           <th mat-header-cell *matHeaderCellDef mat-sort-header> Id </th>
@@ -30,15 +30,15 @@
         </ng-container>
 
         <!-- Client ID Column -->
-        <ng-container matColumnDef="clientId">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Client Id </th>
-          <td mat-cell *matCellDef="let client"> {{client.clientId}} </td>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Application name </th>
+          <td mat-cell *matCellDef="let client"> {{client.name}} </td>
         </ng-container>
 
         <!-- Name Column -->
-        <ng-container matColumnDef="clientName">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Client Name </th>
-          <td mat-cell *matCellDef="let client"> {{client.name}} </td>
+        <ng-container matColumnDef="clientId">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> OAuth 2.0 Client ID </th>
+          <td mat-cell *matCellDef="let client"> {{client.clientId}} </td>
         </ng-container>
 
         <!-- Description Column -->
@@ -59,10 +59,10 @@
     </div>
 
     <div class="domain-client-registration-templates-description" fxFlex>
-      <h3>Client templates</h3>
+      <h3>Application templates</h3>
       <div class="domain-client-registration-templates-description-content">
         <p>
-          This section is used to define some clients as a template when registering new app through the dynamic client registration endpoint.
+          This section is used to define some applications as a template when registering new app through the dynamic client registration endpoint.
           And thus, they will no longer be able to be used for authentication purpose.
         </p>
         <small><i>Each template id are exposed as <b>software_id</b> under the registration_templates_endpoint defined into the openid discovery.</i></small>

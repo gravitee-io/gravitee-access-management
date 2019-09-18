@@ -1,0 +1,98 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="application-metadata-container">
+  <div class="application-metadata-content">
+    <div fxFlex="70" class="application-metadata-content">
+      <form #metadataForm (keydown.enter)="false" (ngSubmit)="patch()">
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>Metadata</h5>
+            <small>You can add custom information to your application and retrieve them via the <em>client.metadata</em> execution context value.</small>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="row" fxLayoutGap="10px" style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px;">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <input matInput name="Name" placeholder="Metadata name" [(ngModel)]="metadata.name"/>
+              <mat-hint>The metadata's name.</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <input matInput name="metadataValue" placeholder="Metadata value" [(ngModel)]="metadata.value"/>
+              <mat-hint>The metadata's value.</mat-hint>
+            </mat-form-field>
+            <div>
+              <button style="margin-top: 7px;" mat-stroked-button (click)="addMetadata($event)" [disabled]="!metadata.name || !metadata.value">+ ADD</button>
+            </div>
+          </div>
+
+          <small *ngIf="!metadataIsEmpty()" style="display: block; margin-top: 10px;"><i>Double click to edit and press enter to save changes</i></small>
+          <ngx-datatable class="material"
+                         [columnMode]="'flex'"
+                         [headerHeight]="40"
+                         [footerHeight]="40"
+                         [rowHeight]="55"
+                         [messages]="{emptyMessage:'There is no metadata'}"
+                         [rows]='appMetadata'>
+            <ngx-datatable-column name="Metadata" [flexGrow]="2">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                  <span (dblclick)="editing[row.id + '-name'] = true" *ngIf="!editing[row.id + '-name']">
+                    {{row.name}}
+                  </span>
+                <mat-form-field *ngIf="editing[row.id + '-name']" class="datatable-input">
+                  <input matInput type="text" required autofocus placeholder="Metadata name"
+                         (keyup.enter)="updateMetadata($event, 'name', row.id)"
+                         (blur)="editing[row.id + '-name'] = false"
+                         [value]="row.name" />
+                </mat-form-field>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="" [flexGrow]="4">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                  <pre style="margin: 0px; white-space: normal; font-size: 12px;" (dblclick)="editing[row.id + '-value'] = true" *ngIf="!editing[row.id + '-value']">
+                    {{row.value}}
+                  </pre>
+                <mat-form-field *ngIf="editing[row.id + '-value']" class="datatable-input">
+                  <input matInput type="text" required autofocus placeholder="Claim value"
+                         (keyup.enter)="updateMetadata($event, 'value', row.id)"
+                         (blur)="editing[row.id + '-value'] = false"
+                         [value]="row.value" />
+                </mat-form-field>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="" [flexGrow]="1">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div fxLayout="row" class="provider-claims-actions">
+                  <button mat-icon-button (click)="deleteMetadata(row.id, $event)"><mat-icon>close</mat-icon></button>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+        </div>
+
+        <div fxLayout="row" style="margin-top: 20px;">
+          <button mat-raised-button type="submit" [disabled]="!formChanged">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="application-metadata-description" fxFlex>
+      <h3>Application Metadata</h3>
+      <div class="application-metadata-description-content">
+        <p>Custom information about the application.</p>
+      </div>
+    </div>
+  </div>
+</div>

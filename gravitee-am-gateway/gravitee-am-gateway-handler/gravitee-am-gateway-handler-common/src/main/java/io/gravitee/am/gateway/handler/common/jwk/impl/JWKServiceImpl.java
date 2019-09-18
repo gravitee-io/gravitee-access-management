@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.jwk.impl;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwk.JWKService;
 import io.gravitee.am.gateway.handler.common.jwk.converter.JWKSetDeserializer;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;

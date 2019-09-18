@@ -18,14 +18,12 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import io.gravitee.am.common.oidc.ApplicationType;
 import io.gravitee.am.gateway.handler.common.jwk.converter.JWKSetDeserializer;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -466,7 +464,7 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setTokenEndpointAuthMethod, this.getTokenEndpointAuthMethod());
         SetterUtils.safeSet(client::setTokenEndpointAuthSigningAlg, this.getTokenEndpointAuthSigningAlg());
         SetterUtils.safeSet(client::setDefaultMaxAge, this.getDefaultMaxAge());
-        SetterUtils.safeSet(client::setRequireAuthTime, this.getRequireAuthTime());
+        SetterUtils.safeSet(client::setRequireAuthTime, this.getRequireAuthTime(), boolean.class);
         SetterUtils.safeSet(client::setDefaultACRvalues, this.getDefaultACRvalues());
         SetterUtils.safeSet(client::setInitiateLoginUri, this.getInitiateLoginUri());
         SetterUtils.safeSet(client::setRequestUris, this.getRequestUris());

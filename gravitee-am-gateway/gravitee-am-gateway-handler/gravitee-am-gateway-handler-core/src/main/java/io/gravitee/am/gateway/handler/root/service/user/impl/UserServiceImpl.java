@@ -33,7 +33,7 @@ import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordRespons
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;

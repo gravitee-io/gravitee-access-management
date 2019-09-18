@@ -17,7 +17,6 @@ package io.gravitee.am.common.audit;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.TreeSet;
 
 /**
@@ -69,6 +68,16 @@ public interface EventType {
     String CLIENT_UPDATED = "CLIENT_UPDATED";
     String CLIENT_DELETED = "CLIENT_DELETED";
     String CLIENT_SECRET_RENEWED = "CLIENT_SECRET_RENEWED";
+
+    /**
+     * ----------
+     * Application audit log actions
+     * ----------
+     */
+    String APPLICATION_CREATED = "APPLICATION_CREATED";
+    String APPLICATION_UPDATED = "APPLICATION_UPDATED";
+    String APPLICATION_DELETED = "APPLICATION_DELETED";
+    String APPLICATION_CLIENT_SECRET_RENEWED = "APPLICATION_CLIENT_SECRET_RENEWED";
 
     /**
      * ----------

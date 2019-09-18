@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -41,7 +42,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -69,7 +69,7 @@ public class ScopeServiceImpl implements ScopeService {
     private RoleService roleService;
 
     @Autowired
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @Autowired
     private EventService eventService;
@@ -281,18 +281,25 @@ public class ScopeServiceImpl implements ScopeService {
                                             return roleService.update(scope.getDomain(), role.getId(), updatedRole);
                                         }).toList())
                                 .andThen(
-                                        // 2_ Remove scopes from client
-                                        clientService.findByDomain(scope.getDomain())
-                                                .flatMapObservable(clients -> Observable.fromIterable(clients.stream()
-                                                        .filter(client -> client.getScopes() != null && client.getScopes().contains(scope.getKey()))
+                                        // 2_ Remove scopes from application
+                                        applicationService.findByDomain(scope.getDomain())
+                                                .flatMapObservable(applications -> Observable.fromIterable(applications.stream()
+                                                        .filter(application -> {
+                                                            if (application.getSettings() == null) {
+                                                                return false;
+                                                            }
+                                                            if (application.getSettings().getOauth() == null) {
+                                                                return false;
+                                                            }
+                                                            ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
+                                                            return oAuthSettings.getScopes() != null && oAuthSettings.getScopes().contains(scope.getKey());
+                                                        })
                                                         .collect(Collectors.toList())))
-                                                .flatMapSingle(client -> {
-                                                    // Remove scope from client
-                                                    client.getScopes().remove(scope.getKey());
-                                                    // Then patch
-                                                    PatchClient patchClient = new PatchClient();
-                                                    patchClient.setScopes(Optional.of(client.getScopes()));
-                                                    return clientService.patch(scope.getDomain(), client.getId(), patchClient);
+                                                .flatMapSingle(application -> {
+                                                    // Remove scope from application
+                                                    application.getSettings().getOauth().getScopes().remove(scope.getKey());
+                                                    // Then update
+                                                    return applicationService.update(application);
                                                 }).toList()).toCompletable()
                                 // 3_ Remove scopes from scope_approvals
                                 .andThen(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey()))

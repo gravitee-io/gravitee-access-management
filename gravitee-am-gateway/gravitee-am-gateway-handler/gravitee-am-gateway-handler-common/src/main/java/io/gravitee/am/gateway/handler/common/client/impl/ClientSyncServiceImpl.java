@@ -15,13 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.common.client.impl;
 
-import io.gravitee.am.gateway.core.event.ClientEvent;
+import io.gravitee.am.gateway.core.event.ApplicationEvent;
 import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.repository.management.api.ClientRepository;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.ClientService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -33,11 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -47,18 +43,17 @@ import java.util.concurrent.ConcurrentMap;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public class ClientSyncServiceImpl extends AbstractService implements ClientSyncService, InitializingBean, EventListener<ClientEvent, Payload> {
+public class ClientSyncServiceImpl extends AbstractService implements ClientSyncService, InitializingBean, EventListener<ApplicationEvent, Payload> {
 
     private final Logger logger = LoggerFactory.getLogger(ClientSyncServiceImpl.class);
     private ConcurrentMap<String, Set<Client>> domainsClients = new ConcurrentHashMap<>();
     private ConcurrentMap<String, Set<Client>> domainsTemplates = new ConcurrentHashMap<>();
 
-
     @Autowired
     private Domain domain;
 
     @Autowired
-    private ClientRepository clientRepository;
+    private ClientService clientService;
 
     @Autowired
     private EventManager eventManager;
@@ -102,34 +97,34 @@ public class ClientSyncServiceImpl extends AbstractService implements ClientSync
 
     @Override
     public void afterPropertiesSet() {
-        logger.info("Initializing clients for domain {}", domain.getName());
-        clientRepository.findAll()
+        logger.info("Initializing applications for domain {}", domain.getName());
+        clientService.findAll()
                 .subscribe(
                         clients -> {
                             updateClients(clients);
-                            logger.info("Clients loaded for domain {}", domain.getName());
+                            logger.info("Applications loaded for domain {}", domain.getName());
                         },
-                        error -> logger.error("Unable to initialize clients for domain {}", domain.getName(), error));
+                        error -> logger.error("Unable to initialize applications for domain {}", domain.getName(), error));
     }
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
 
-        logger.info("Register event listener for client events for domain {}", domain.getName());
-        eventManager.subscribeForEvents(this, ClientEvent.class, domain.getId());
+        logger.info("Register event listener for application events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, ApplicationEvent.class, domain.getId());
     }
 
     @Override
     protected void doStop() throws Exception {
         super.doStop();
 
-        logger.info("Dispose event listener for client events for domain {}", domain.getName());
-        eventManager.unsubscribeForEvents(this, ClientEvent.class, domain.getId());
+        logger.info("Dispose event listener for application events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(this, ApplicationEvent.class, domain.getId());
     }
 
     @Override
-    public void onEvent(Event<ClientEvent, Payload> event) {
+    public void onEvent(Event<ApplicationEvent, Payload> event) {
         switch (event.type()) {
             case DEPLOY:
             case UPDATE:
@@ -141,21 +136,21 @@ public class ClientSyncServiceImpl extends AbstractService implements ClientSync
         }
     }
 
-    private void updateClient(String clientId, ClientEvent clientEvent) {
-        final String eventType = clientEvent.toString().toLowerCase();
-        logger.info("Domain {} has received {} client event for {}", domain.getName(), eventType, clientId);
-        clientRepository.findById(clientId)
+    private void updateClient(String appId, ApplicationEvent applicationEvent) {
+        final String eventType = applicationEvent.toString().toLowerCase();
+        logger.info("Domain {} has received {} application event for {}", domain.getName(), eventType, appId);
+        clientService.findById(appId)
                 .subscribe(
                         client -> {
                             updateClients(Collections.singleton(client));
-                            logger.info("Client {} {}d for domain {}", clientId, eventType, domain.getName());
+                            logger.info("Application {} {}d for domain {}", appId, eventType, domain.getName());
                         },
                         error -> logger.error("Unable to {} client for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No client found with id {}", clientId));
+                        () -> logger.error("No application found with id {}", appId));
     }
 
     private void removeClient(String idClient, String domainId) {
-        logger.info("Domain {} has received client event, delete client {}", domain.getName(), idClient);
+        logger.info("Domain {} has received application event, delete application {}", domain.getName(), idClient);
         if(domainsClients.get(domainId) != null) {
             domainsClients.get(domainId).removeIf(client -> client!=null && client.getId().equals(idClient));
         }

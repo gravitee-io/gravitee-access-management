@@ -45,6 +45,7 @@ import java.net.URI;
  * @author GraviteeSource Team
  */
 @Api(tags = {"email"})
+@Deprecated
 public class ClientEmailsResource extends AbstractResource {
 
     @Autowired

@@ -24,16 +24,16 @@ export class DashboardService {
 
   constructor(private http: HttpClient) { }
 
-  findClients(domainId: any): Observable<any> {
-    return this.http.get<any>(this.dashboardURL + "clients" + ((domainId) ? "?domainId="+domainId : ""));
+  findApplications(domainId: any): Observable<any> {
+    return this.http.get<any>(this.dashboardURL + "applications" + ((domainId) ? "?domainId="+domainId : ""));
   }
 
-  findTopClients(domainId: any): Observable<any> {
-    return this.http.get<any>(this.dashboardURL + "clients/top" + ((domainId) ? "?domainId="+domainId : ""));
+  findTopApplications(domainId: any): Observable<any> {
+    return this.http.get<any>(this.dashboardURL + "applications/top" + ((domainId) ? "?domainId="+domainId : ""));
   }
 
-  findTotalClients(domainId: any): Observable<any> {
-    return this.http.get<any>(this.dashboardURL + "clients/total" + ((domainId) ? "?domainId="+domainId : ""));
+  findTotalApplications(domainId: any): Observable<any> {
+    return this.http.get<any>(this.dashboardURL + "applications/total" + ((domainId) ? "?domainId="+domainId : ""));
   }
 
   findTotalTokens(domainId: any): Observable<any> {

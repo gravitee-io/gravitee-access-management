@@ -34,7 +34,7 @@ export interface DialogData {
 })
 export class FormComponent implements OnInit, AfterViewInit {
   private domainId: string;
-  private clientId: string;
+  private appId: string;
   private defaultFormContent: string = `// Custom form...`;
   template: string;
   rawTemplate: string;
@@ -57,8 +57,8 @@ export class FormComponent implements OnInit, AfterViewInit {
               public dialog: MatDialog) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.clientId = this.route.snapshot.parent.params['clientId'];
+    this.domainId = (this.route.snapshot.parent.parent.params['domainId']) ? this.route.snapshot.parent.parent.params['domainId'] : this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.appId = this.route.snapshot.parent.parent.params['appId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.domainId = AppConfig.settings.authentication.domainId;
       this.rawTemplate = 'LOGIN';
@@ -124,7 +124,7 @@ export class FormComponent implements OnInit, AfterViewInit {
 
   create() {
     this.form['content'] = this.formContent;
-    this.formService.create(this.domainId, this.clientId, this.form).subscribe(data => {
+    this.formService.create(this.domainId, this.appId, this.form).subscribe(data => {
       this.snackbarService.open("Form created");
       this.formFound = true;
       this.form = data;
@@ -134,7 +134,7 @@ export class FormComponent implements OnInit, AfterViewInit {
 
   update() {
     this.form['content'] = this.formContent;
-    this.formService.update(this.domainId, this.clientId, this.form.id, this.form).subscribe(data => {
+    this.formService.update(this.domainId, this.appId, this.form.id, this.form).subscribe(data => {
       this.snackbarService.open("Form updated");
       this.formFound = true;
       this.form = data;
@@ -148,7 +148,7 @@ export class FormComponent implements OnInit, AfterViewInit {
       .confirm('Delete form', 'Are you sure you want to delete this form ?')
       .subscribe(res => {
         if (res) {
-          this.formService.delete(this.domainId, this.clientId, this.form.id).subscribe(response => {
+          this.formService.delete(this.domainId, this.appId, this.form.id).subscribe(response => {
             this.snackbarService.open("Form deleted");
             this.form = {};
             this.form.template = this.route.snapshot.queryParams['template'];

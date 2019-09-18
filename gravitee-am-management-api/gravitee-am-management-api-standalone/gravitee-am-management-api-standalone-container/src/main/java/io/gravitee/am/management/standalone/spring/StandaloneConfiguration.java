@@ -30,6 +30,7 @@ import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
+import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,7 +55,9 @@ import org.springframework.context.annotation.Import;
         ExtensionGrantConfiguration.class,
         ReporterConfiguration.class,
         PolicyConfiguration.class,
-        CoreConfiguration.class})
+        CoreConfiguration.class,
+        AlertPluginConfiguration.class
+})
 public class StandaloneConfiguration {
 
     @Bean

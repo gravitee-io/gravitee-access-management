@@ -23,7 +23,7 @@ import io.gravitee.am.model.oauth2.ScopeApproval;
  */
 public class ScopeApprovalEntity extends ScopeApproval {
 
-    private ClientEntity clientEntity;
+    private ApplicationEntity clientEntity;
 
     private ScopeEntity scopeEntity;
 
@@ -41,11 +41,11 @@ public class ScopeApprovalEntity extends ScopeApproval {
         setUpdatedAt(scopeApproval.getUpdatedAt());
     }
 
-    public ClientEntity getClientEntity() {
+    public ApplicationEntity getClientEntity() {
         return clientEntity;
     }
 
-    public void setClientEntity(ClientEntity clientEntity) {
+    public void setClientEntity(ApplicationEntity clientEntity) {
         this.clientEntity = clientEntity;
     }
 

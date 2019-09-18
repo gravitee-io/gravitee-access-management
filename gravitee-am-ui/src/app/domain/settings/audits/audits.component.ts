@@ -116,13 +116,17 @@ export class AuditsComponent implements OnInit {
     } else {
       routerLink.push('/domains');
       routerLink.push(row.target.domain);
-      if (row.target.type !== 'CLIENT') {
+      if (row.target.type !== 'CLIENT' && row.target.type !== 'APPLICATION') {
         routerLink.push('settings');
       }
     }
     if (row.target.type !== 'DOMAIN') {
       if (row.target.type !== 'IDENTITY_PROVIDER') {
-        routerLink.push(row.target.type.toLowerCase() + 's');
+        if (row.target.type === 'CLIENT') {
+          routerLink.push('applications');
+        } else {
+          routerLink.push(row.target.type.toLowerCase() + 's');
+        }
       } else {
         routerLink.push('providers');
       }

@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.enhancer;
 
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.ClientListItem;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.management.handlers.management.api.model.ClientListItem;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.TopClientListItem;
+import io.gravitee.am.management.handlers.management.api.model.TopClientListItem;
 import io.gravitee.am.service.model.TopClient;
 import org.springframework.stereotype.Component;
 

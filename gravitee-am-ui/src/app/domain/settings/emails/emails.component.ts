@@ -38,12 +38,14 @@ export class DomainSettingsEmailsComponent {
         'name': 'Registration confirmation',
         'description': 'Registration email to confirm user account',
         'template': 'REGISTRATION_CONFIRMATION',
+        'icon' : 'how_to_reg',
         'enabled': true
       },
       {
         'name': 'Reset password',
         'description': 'Reset password email to ask for a new one',
         'template': 'RESET_PASSWORD',
+        'icon': 'lock_open',
         'enabled': this.allowResetPassword()
       }
     ]

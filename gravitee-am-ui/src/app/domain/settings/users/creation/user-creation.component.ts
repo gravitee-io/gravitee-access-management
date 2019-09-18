@@ -21,8 +21,6 @@ import {AppConfig} from "../../../../../config/app.config";
 import {animate, style, transition, trigger} from "@angular/animations";
 import {UserClaimComponent} from "./user-claim.component";
 import * as _ from 'lodash';
-import {FormControl} from "@angular/forms";
-import {ClientService} from "../../../../services/client.service";
 import {ProviderService} from "../../../../services/provider.service";
 
 @Component({
@@ -47,9 +45,6 @@ export class UserCreationComponent implements OnInit {
   useEmailAsUsername: boolean = false;
   user: any = {};
   userClaims: any = {};
-  clientCtrl = new FormControl();
-  filteredClients: any[];
-  selectedClient: any;
   userProviders: any[];
   @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
 
@@ -58,7 +53,6 @@ export class UserCreationComponent implements OnInit {
               private route: ActivatedRoute,
               private snackbarService: SnackbarService,
               private factoryResolver: ComponentFactoryResolver,
-              private clientService: ClientService,
               private providerService: ProviderService) {
   }
 
@@ -72,13 +66,6 @@ export class UserCreationComponent implements OnInit {
     this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
       this.userProviders = response;
     });
-
-    this.clientCtrl.valueChanges
-      .subscribe(searchTerm => {
-        this.clientService.findByDomain(this.domainId).subscribe(response => {
-          this.filteredClients = response.filter(client => client.clientId.toLowerCase().indexOf(searchTerm.toLowerCase()) === 0);;
-        });
-      });
   }
 
   create() {
@@ -138,11 +125,11 @@ export class UserCreationComponent implements OnInit {
     });
   }
 
-  onClientSelectionChanged(event) {
+  onAppSelectionChanged(event) {
     this.user.client = event.id;
   }
 
-  onClientDeleted(event) {
+  onAppDeleted(event) {
     this.user.client = null;
   }
 }

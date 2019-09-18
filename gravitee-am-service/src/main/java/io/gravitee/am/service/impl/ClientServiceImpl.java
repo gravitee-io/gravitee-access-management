@@ -15,41 +15,36 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.application.ApplicationAdvancedSettings;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.common.event.Action;
-import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.common.event.Type;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.ClientRepository;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.am.service.model.PatchClient;
 import io.gravitee.am.service.model.TopClient;
 import io.gravitee.am.service.model.TotalClient;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.management.ClientAuditBuilder;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,54 +60,30 @@ public class ClientServiceImpl implements ClientService {
     private final Logger LOGGER = LoggerFactory.getLogger(ClientServiceImpl.class);
 
     @Autowired
+    private ApplicationService applicationService;
+
+    @Autowired
     private ClientRepository clientRepository;
-
-    @Autowired
-    private IdentityProviderService identityProviderService;
-
-    @Autowired
-    private AccessTokenRepository accessTokenRepository;
-
-    @Autowired
-    private DomainService domainService;
-
-    @Autowired
-    private EventService eventService;
-
-    @Autowired
-    private ScopeService scopeService;
-
-    @Autowired
-    private EmailTemplateService emailTemplateService;
-
-    @Autowired
-    private FormService formService;
-
-    @Autowired
-    private AuditService auditService;
 
     @Override
     public Maybe<Client> findById(String id) {
         LOGGER.debug("Find client by ID: {}", id);
-        return clientRepository.findById(id)
-                .map(client -> {
+        return applicationService.findById(id)
+                .map(application -> {
+                    Client client = convert(application);
                     // Send an empty array in case of no grant types
                     if (client.getAuthorizedGrantTypes() == null) {
                         client.setAuthorizedGrantTypes(Collections.emptyList());
                     }
                     return client;
-                })
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a client using its ID: {}", id, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a client using its ID: %s", id), ex));
                 });
     }
 
     @Override
     public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
         LOGGER.debug("Find client by domain: {} and client id: {}", domain, clientId);
-        return clientRepository.findByClientIdAndDomain(clientId, domain)
+        return applicationService.findByDomainAndClientId(domain, clientId)
+                .map(this::convert)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find client by domain: {} and client id: {}", domain, clientId, ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -123,70 +94,49 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Single<Set<Client>> findByDomain(String domain) {
         LOGGER.debug("Find clients by domain", domain);
-        return clientRepository.findByDomain(domain)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find clients by domain: {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find clients by domain: %s", domain), ex));
-                });
+        return applicationService.findByDomain(domain)
+                .map(pagedApplications -> pagedApplications
+                        .stream()
+                        .map(this::convert)
+                        .collect(Collectors.toSet()));
     }
 
     @Override
     public Single<Set<Client>> search(String domain, String query) {
         LOGGER.debug("Search clients for domain {} and with query {}", domain, query);
-        return clientRepository.search(domain, query)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find clients for domain {} and query {}", domain, query, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find clients for domain %s and query %s", domain, query), ex));
-                });
+        return applicationService.search(domain, query, 0, Integer.MAX_VALUE)
+                .map(pagedApplications -> pagedApplications.getData()
+                        .stream()
+                        .map(this::convert)
+                        .collect(Collectors.toSet()));
     }
 
     @Override
     public Single<Page<Client>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("Find clients by domain", domain);
-        return clientRepository.findByDomain(domain, page, size)
+        return applicationService.findByDomain(domain, page, size)
+                .map(pagedApplications -> {
+                    List<Client> clients = pagedApplications.getData()
+                            .stream()
+                            .map(this::convert)
+                            .collect(Collectors.toList());
+                    return new Page<>(clients, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount());
+                })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find clients by domain: {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find clients by domain: %s", domain), ex));
-                });
-    }
-
-    @Override
-    public Single<Set<Client>> findByIdentityProvider(String identityProvider) {
-        LOGGER.debug("Find clients by identity provider : {}", identityProvider);
-        return clientRepository.findByIdentityProvider(identityProvider)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find clients by identity provider", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find clients by identity provider", ex));
-                });
-    }
-
-    @Override
-    public Single<Set<Client>> findByCertificate(String certificate) {
-        LOGGER.debug("Find clients by certificate : {}", certificate);
-        return clientRepository.findByCertificate(certificate)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find clients by certificate", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find clients by certificate", ex));
-                });
-    }
-
-    @Override
-    public Single<Set<Client>> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
-        LOGGER.debug("Find clients by domain {} and extension grant : {}", domain, extensionGrant);
-        return clientRepository.findByDomainAndExtensionGrant(domain, extensionGrant)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find clients by extension grant", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find clients by extension grant", ex));
                 });
     }
 
     @Override
     public Single<Set<Client>> findAll() {
         LOGGER.debug("Find clients");
-        return clientRepository.findAll()
+        return applicationService.findAll()
+                .map(pagedApplications -> pagedApplications
+                        .stream()
+                        .map(this::convert)
+                        .collect(Collectors.toSet()))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find clients", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find clients", ex));
@@ -196,7 +146,14 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Single<Page<Client>> findAll(int page, int size) {
         LOGGER.debug("Find clients");
-        return clientRepository.findAll(page, size)
+        return applicationService.findAll(page, size)
+                .map(pagedApplications -> {
+                    List<Client> clients = pagedApplications.getData()
+                            .stream()
+                            .map(this::convert)
+                            .collect(Collectors.toList());
+                    return new Page<>(clients, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount());
+                })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find clients", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find clients", ex));
@@ -206,17 +163,18 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Single<Set<TopClient>> findTopClients() {
         LOGGER.debug("Find top clients");
-        return clientRepository.findAll()
-                .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .flatMapSingle(client -> accessTokenRepository.countByClientId(client.getClientId())
-                        .map(oAuth2AccessTokens -> {
-                            TopClient topClient = new TopClient();
-                            topClient.setClient(client);
-                            topClient.setAccessTokens(oAuth2AccessTokens);
-                            return topClient;
-                        }))
-                .toList()
-                .map(topClients -> topClients.stream().filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet()))
+        return applicationService.findTopApplications()
+                .map(topApplications -> {
+                    return topApplications
+                            .stream()
+                            .map(topApplication -> {
+                                TopClient topClient = new TopClient();
+                                topClient.setClient(convert(topApplication.getApplication()));
+                                topClient.setAccessTokens(topApplication.getAccessTokens());
+                                return topClient;
+                            })
+                            .collect(Collectors.toSet());
+                })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find top clients", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find top clients", ex));
@@ -226,17 +184,18 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Single<Set<TopClient>> findTopClientsByDomain(String domain) {
         LOGGER.debug("Find top clients by domain: {}", domain);
-        return clientRepository.findByDomain(domain)
-                .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .flatMapSingle(client -> accessTokenRepository.countByClientId(client.getClientId())
-                        .map(oAuth2AccessTokens -> {
-                            TopClient topClient = new TopClient();
-                            topClient.setClient(client);
-                            topClient.setAccessTokens(oAuth2AccessTokens);
-                            return topClient;
-                        }))
-                .toList()
-                .map(topClients -> topClients.stream().filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet()))
+        return applicationService.findTopApplicationsByDomain(domain)
+                .map(topApplications -> {
+                    return topApplications
+                            .stream()
+                            .map(topApplication -> {
+                                TopClient topClient = new TopClient();
+                                topClient.setClient(convert(topApplication.getApplication()));
+                                topClient.setAccessTokens(topApplication.getAccessTokens());
+                                return topClient;
+                            })
+                            .collect(Collectors.toSet());
+                })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find top clients by domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find top clients by domain", ex));
@@ -246,7 +205,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Single<TotalClient> findTotalClientsByDomain(String domain) {
         LOGGER.debug("Find total clients by domain: {}", domain);
-        return clientRepository.countByDomain(domain)
+        return applicationService.countByDomain(domain)
                 .map(totalClients -> {
                     TotalClient totalClient = new TotalClient();
                     totalClient.setTotalClients(totalClients);
@@ -262,7 +221,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Single<TotalClient> findTotalClients() {
         LOGGER.debug("Find total client");
-        return clientRepository.count()
+        return applicationService.count()
                 .map(totalClients -> {
                     TotalClient totalClient = new TotalClient();
                     totalClient.setTotalClients(totalClients);
@@ -277,27 +236,15 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Single<Client> create(String domain, NewClient newClient, User principal) {
         LOGGER.debug("Create a new client {} for domain {}", newClient, domain);
-        return clientRepository.findByClientIdAndDomain(newClient.getClientId(), domain)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (!isEmpty) {
-                        return Single.error(new ClientAlreadyExistsException(newClient.getClientId(), domain));
-                    }
-
-                    Client client = new Client();
-                    client.setClientId(newClient.getClientId());
-                    client.setClientSecret(newClient.getClientSecret());
-                    client.setClientName(newClient.getClientName());
-                    client.setDomain(domain);
-                    //AM UI first step client creation does not provide field to specify redirect_uris, so better no use code grant by default.
-                    client.setAuthorizedGrantTypes(Arrays.asList());
-                    client.setResponseTypes(Arrays.asList());
-                    return Single.just(client);
-                })
-                .flatMap(client -> this.create(client))
-                .onErrorResumeNext(this::handleError)
-                .doOnSuccess(client -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_CREATED).client(client)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_CREATED).throwable(throwable)));
+        Client client = new Client();
+        client.setDomain(domain);
+        client.setClientId(newClient.getClientId());
+        client.setClientSecret(newClient.getClientSecret());
+        client.setClientName(newClient.getClientName());
+        //AM UI first step client creation does not provide field to specify redirect_uris, so better no use code grant by default.
+        client.setAuthorizedGrantTypes(Arrays.asList());
+        client.setResponseTypes(Arrays.asList());
+        return create(client);
     }
 
     @Override
@@ -330,221 +277,225 @@ public class ClientServiceImpl implements ClientService {
         client.setCreatedAt(new Date());
         client.setUpdatedAt(client.getCreatedAt());
 
-        return this.validateClientMetadata(client)
-                .flatMap(clientRepository::create)
-                // create event for sync process
-                .flatMap(justCreatedClient -> {
-                    Event event = new Event(Type.CLIENT, new Payload(justCreatedClient.getId(), justCreatedClient.getDomain(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(justCreatedClient));
-                })
-                .onErrorResumeNext(this::handleError);
-        }
+        return applicationService.create(convert(client))
+                .map(this::convert);
+    }
 
     @Override
     public Single<Client> update(Client client) {
-        LOGGER.debug("Update client_id {} for domain {}", client.getClientId(), client.getDomain());
+        LOGGER.debug("Update client {} for domain {}", client.getClientId(), client.getDomain());
 
         if(client.getDomain()==null || client.getDomain().trim().isEmpty()) {
             return Single.error(new InvalidClientMetadataException("No domain set on client"));
         }
 
-        return clientRepository.findById(client.getId())
-                .switchIfEmpty(Maybe.error(new ClientNotFoundException(client.getId())))
-                .flatMapSingle(found -> Single.just(client))
-                .flatMap(this::validateClientMetadata)
-                .flatMap(this::updateClientAndReloadDomain)
-                .onErrorResumeNext(this::handleError);
+        return applicationService.update(convert(client))
+                .map(this::convert);
     }
 
     @Override
     public Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull, User principal) {
         LOGGER.debug("Patch a client {} for domain {}", id, domain);
-        return clientRepository.findById(id)
+        return findById(id)
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(id)))
-                .flatMapSingle(client -> {
-                    //Refresh with existing identity providers.
-                    Optional<Set<String>> identities = patchClient.getIdentities();
-                    if (identities == null || !identities.isPresent()) {
-                        return Single.just(client);
-                    } else {
-                        return Observable.fromIterable(identities.get())
-                                .flatMapMaybe(identityProviderId -> identityProviderService.findById(identityProviderId))
-                                .toList()
-                                .flatMap(idp -> Single.just(client));
-                    }
-                })
-                .flatMap(toPatch -> Single.just(patchClient.patch(toPatch, forceNull))
-                        .flatMap(this::validateClientMetadata)
-                        .flatMap(this::updateClientAndReloadDomain)
-                        .doOnSuccess(client -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_UPDATED).oldValue(toPatch).client(client)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_UPDATED).throwable(throwable))))
-                .onErrorResumeNext(this::handleError);
+                .flatMapSingle(toPatch -> this.update(patchClient.patch(toPatch, forceNull)));
     }
 
     @Override
     public Completable delete(String clientId, User principal) {
         LOGGER.debug("Delete client {}", clientId);
-        return clientRepository.findById(clientId)
-                .switchIfEmpty(Maybe.error(new ClientNotFoundException(clientId)))
-                .flatMapCompletable(client -> {
-                    // create event for sync process
-                    Event event = new Event(Type.CLIENT, new Payload(client.getId(), client.getDomain(), Action.DELETE));
-                    return clientRepository.delete(clientId)
-                            .andThen(eventService.create(event).toCompletable())
-                            // delete email templates
-                            .andThen(emailTemplateService.findByDomainAndClient(client.getDomain(), client.getId())
-                                    .flatMapCompletable(emails -> {
-                                        List<Completable> deleteEmailsCompletable = emails.stream().map(e -> emailTemplateService.delete(e.getId())).collect(Collectors.toList());
-                                        return Completable.concat(deleteEmailsCompletable);
-                                    })
-                            )
-                            // delete form templates
-                            .andThen(formService.findByDomainAndClient(client.getDomain(), client.getId())
-                                    .flatMapCompletable(forms -> {
-                                        List<Completable> deleteFormsCompletable = forms.stream().map(f -> formService.delete(f.getId())).collect(Collectors.toList());
-                                        return Completable.concat(deleteFormsCompletable);
-                                    })
-                            )
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_DELETED).client(client)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_DELETED).throwable(throwable)));
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Completable.error(ex);
-                    }
-
-                    LOGGER.error("An error occurs while trying to delete client: {}", clientId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete client: %s", clientId), ex));
-                });
+        return applicationService.delete(clientId, principal);
     }
 
     @Override
     public Single<Client> renewClientSecret(String domain, String id, User principal) {
         LOGGER.debug("Renew client secret for client {} in domain {}", id, domain);
-        return clientRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ClientNotFoundException(id)))
-                .flatMapSingle(client -> this.renewClientSecret(client, principal))
-                .onErrorResumeNext(this::handleError);
+        return applicationService.renewClientSecret(domain, id, principal)
+                .map(this::convert);
     }
 
-    @Override
-    public Single<Client> renewClientSecret(Client client, User principal) {
-        LOGGER.debug("Renew client secret for client {} in domain {}", client.getId(), client.getDomain());
+    private Client convert(Application application) {
+        Client client = new Client();
+        client.setId(application.getId());
+        client.setDomain(application.getDomain());
+        client.setEnabled(application.isEnabled());
+        client.setTemplate(application.isTemplate());
+        client.setCertificate(application.getCertificate());
+        client.setIdentities(application.getIdentities());
+        client.setMetadata(application.getMetadata());
+        client.setCreatedAt(application.getCreatedAt());
+        client.setUpdatedAt(application.getUpdatedAt());
 
-        // update client secret
-        client.setClientSecret(SecureRandomString.generate());
-        // update client and reload domain
-        return updateClientAndReloadDomain(client)
-                .onErrorResumeNext(this::handleError)
-                .doOnSuccess(updatedClient -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_SECRET_RENEWED).client(updatedClient)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ClientAuditBuilder.class).principal(principal).type(EventType.CLIENT_SECRET_RENEWED).throwable(throwable)));
-    }
+        if (application.getSettings() != null) {
+            ApplicationSettings applicationSettings = application.getSettings();
+            client.setAccountSettings(applicationSettings.getAccount());
 
-    /**
-     * <pre>
-     * This function will return an error if :
-     * We try to enable Dynamic Client Registration on client side while it is not enabled on domain.
-     * The redirect_uris do not respect domain conditions (localhost, scheme and wildcard)
-     * </pre>
-     * @param client client to check
-     * @return a client only if every conditions are respected.
-     */
-    private Single<Client> validateClientMetadata(Client client) {
-        return GrantTypeUtils.validateGrantTypes(client)
-                .flatMap(this::validateRedirectUris)
-                .flatMap(this::validateScopes);
-    }
+            if (applicationSettings.getOauth() != null) {
+                ApplicationOAuthSettings oAuthSettings = applicationSettings.getOauth();
+                client.setClientId(oAuthSettings.getClientId());
+                client.setClientSecret(oAuthSettings.getClientSecret());
+                client.setRedirectUris(oAuthSettings.getRedirectUris());
+                client.setAuthorizedGrantTypes(oAuthSettings.getGrantTypes());
+                client.setResponseTypes(oAuthSettings.getResponseTypes());
+                client.setApplicationType(oAuthSettings.getApplicationType());
+                client.setContacts(oAuthSettings.getContacts());
+                client.setClientName(oAuthSettings.getClientName());
+                client.setLogoUri(oAuthSettings.getLogoUri());
+                client.setClientUri(oAuthSettings.getClientUri());
+                client.setPolicyUri(oAuthSettings.getPolicyUri());
+                client.setTosUri(oAuthSettings.getTosUri());
+                client.setJwksUri(oAuthSettings.getJwksUri());
+                client.setJwks(oAuthSettings.getJwks());
+                client.setSectorIdentifierUri(oAuthSettings.getSectorIdentifierUri());
+                client.setSubjectType(oAuthSettings.getSubjectType());
+                client.setIdTokenSignedResponseAlg(oAuthSettings.getIdTokenSignedResponseAlg());
+                client.setIdTokenEncryptedResponseAlg(oAuthSettings.getIdTokenEncryptedResponseAlg());
+                client.setIdTokenEncryptedResponseEnc(oAuthSettings.getIdTokenEncryptedResponseEnc());
+                client.setUserinfoSignedResponseAlg(oAuthSettings.getUserinfoSignedResponseAlg());
+                client.setUserinfoEncryptedResponseAlg(oAuthSettings.getUserinfoEncryptedResponseAlg());
+                client.setUserinfoEncryptedResponseEnc(oAuthSettings.getUserinfoEncryptedResponseEnc());
+                client.setRequestObjectSigningAlg(oAuthSettings.getRequestObjectSigningAlg());
+                client.setRequestObjectEncryptionAlg(oAuthSettings.getRequestObjectEncryptionAlg());
+                client.setRequestObjectEncryptionEnc(oAuthSettings.getRequestObjectEncryptionEnc());
+                client.setTokenEndpointAuthMethod(oAuthSettings.getTokenEndpointAuthMethod());
+                client.setTokenEndpointAuthSigningAlg(oAuthSettings.getTokenEndpointAuthSigningAlg());
+                client.setDefaultMaxAge(oAuthSettings.getDefaultMaxAge());
+                client.setRequireAuthTime(oAuthSettings.getRequireAuthTime());
+                client.setDefaultACRvalues(oAuthSettings.getDefaultACRvalues());
+                client.setInitiateLoginUri(oAuthSettings.getInitiateLoginUri());
+                client.setRequestUris(oAuthSettings.getRequestUris());
+                client.setScopes(oAuthSettings.getScopes());
+                client.setSoftwareId(oAuthSettings.getSoftwareId());
+                client.setSoftwareVersion(oAuthSettings.getSoftwareVersion());
+                client.setSoftwareStatement(oAuthSettings.getSoftwareStatement());
+                client.setRegistrationAccessToken(oAuthSettings.getRegistrationAccessToken());
+                client.setRegistrationClientUri(oAuthSettings.getRegistrationClientUri());
+                client.setClientIdIssuedAt(oAuthSettings.getClientIdIssuedAt());
+                client.setClientSecretExpiresAt(oAuthSettings.getClientSecretExpiresAt());
+                client.setAccessTokenValiditySeconds(oAuthSettings.getAccessTokenValiditySeconds());
+                client.setRefreshTokenValiditySeconds(oAuthSettings.getRefreshTokenValiditySeconds());
+                client.setIdTokenValiditySeconds(oAuthSettings.getIdTokenValiditySeconds());
+                client.setEnhanceScopesWithUserPermissions(oAuthSettings.isEnhanceScopesWithUserPermissions());
+                client.setScopeApprovals(oAuthSettings.getScopeApprovals());
+                client.setTokenCustomClaims(oAuthSettings.getTokenCustomClaims());
+            }
 
-    private Single<Client> validateRedirectUris(Client client) {
-        return domainService.findById(client.getDomain())
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(client.getDomain())))
-                .flatMapSingle(domain -> {
-
-                    //check redirect_uri
-                    if(GrantTypeUtils.isRedirectUriRequired(client.getAuthorizedGrantTypes()) && CollectionUtils.isEmpty(client.getRedirectUris())) {
-                        return Single.error(new InvalidRedirectUriException());
-                    }
-
-                    //check redirect_uri content
-                    if (client.getRedirectUris() != null) {
-                        for (String redirectUri : client.getRedirectUris()) {
-
-                            try {
-                                URI uri = UriBuilder.fromURIString(redirectUri).build();
-
-                                if(uri.getScheme()==null) {
-                                    return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + " is malformed"));
-                                }
-
-                                if (!domain.isRedirectUriLocalhostAllowed() && UriBuilder.isHttp(uri.getScheme()) && UriBuilder.isLocalhost(uri.getHost())) {
-                                    return Single.error(new InvalidRedirectUriException("localhost is forbidden"));
-                                }
-                                //check http scheme
-                                if (!domain.isRedirectUriUnsecuredHttpSchemeAllowed() && uri.getScheme().equalsIgnoreCase("http")) {
-                                    return Single.error(new InvalidRedirectUriException("Unsecured http scheme is forbidden"));
-                                }
-                                //check wildcard
-                                if (!domain.isRedirectUriWildcardAllowed() && uri.getPath().contains("*")) {
-                                    return Single.error(new InvalidRedirectUriException("Wildcard are forbidden"));
-                                }
-                                // check fragment
-                                if (uri.getFragment() != null) {
-                                    return Single.error(new InvalidRedirectUriException("redirect_uri with fragment is forbidden"));
-                                }
-                            }
-                            catch (IllegalArgumentException | URISyntaxException ex) {
-                                return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + " is malformed"));
-                            }
-                        }
-                    }
-                    return Single.just(client);
-                });
-    }
-
-    private Single<Client> validateScopes(Client client) {
-        // check scopes and scope approvals
-        return scopeService.validateScope(client.getDomain(), client.getScopes())
-                .map(isValid -> {
-                    // scopes are valid, let's check scope approvals
-                    if (isValid && client.getScopeApprovals() != null) {
-                        Map<String, Integer> scopeApprovals = client.getScopeApprovals()
-                                .entrySet()
-                                .stream()
-                                .filter(entry -> client.getScopes() != null && client.getScopes().contains(entry.getKey()))
-                                .collect(Collectors.toMap(
-                                        entry -> entry.getKey(),
-                                        entry -> entry.getValue()));
-                        client.setScopeApprovals(scopeApprovals);
-                    }
-                    return isValid;
-                })
-                .flatMap(isValid -> {
-                    if (!isValid) {
-                        //last boolean come from scopes validation...
-                        return Single.error(new InvalidClientMetadataException("non valid scopes"));
-                    }
-
-                    return Single.just(client);
-                });
-    }
-
-    private Single<Client> updateClientAndReloadDomain(Client client) {
-        client.setUpdatedAt(new Date());
-        return clientRepository.update(client)
-                .flatMap(updatedClient -> {
-                    // create event for sync process
-                    Event event = new Event(Type.CLIENT, new Payload(updatedClient.getId(), client.getDomain(), Action.UPDATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(updatedClient));
-                });
-    }
-
-    private Single<Client> handleError(Throwable ex) {
-        if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
-            return Single.error(ex);
+            if (applicationSettings.getAdvanced() != null) {
+                ApplicationAdvancedSettings advancedSettings = applicationSettings.getAdvanced();
+                client.setAutoApproveScopes(advancedSettings.isSkipConsent() ? Collections.singletonList("true") : null);
+            }
         }
 
-        LOGGER.error("An error occurs while trying to create or update a client", ex);
-        return Single.error(new TechnicalManagementException("An error occurs while trying to create or update a client", ex));
+        return client;
+    }
+
+    private Application convert(Client client) {
+        Application application = new Application();
+        application.setId(client.getId());
+        application.setDomain(client.getDomain());
+        application.setEnabled(client.isEnabled());
+        application.setTemplate(client.isTemplate());
+        application.setCertificate(client.getCertificate());
+        application.setIdentities(client.getIdentities());
+        application.setMetadata(client.getMetadata());
+        application.setCreatedAt(client.getCreatedAt());
+        application.setUpdatedAt(client.getUpdatedAt());
+        // set application name
+        application.setName(client.getClientName() != null ? client.getClientName() : client.getClientId());
+        // set application type
+        application.setType(getType(client));
+        // set application settings
+        application.setSettings(getSettings(client));
+        return application;
+    }
+
+    private ApplicationType getType(Client client) {
+        GrantTypeUtils.completeGrantTypeCorrespondance(client);
+
+        // if client has no grant => SERVICE
+        // if client has only client_credentials grant_type => SERVICE
+        // if client has only implicit => BROWSER
+        // else if client type is native => NATIVE
+        // else => WEB
+        if (client.getAuthorizedGrantTypes() == null || client.getAuthorizedGrantTypes().isEmpty()) {
+            return ApplicationType.SERVICE;
+        }
+        if (client.getAuthorizedGrantTypes().size() == 1) {
+            if (client.getAuthorizedGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)) {
+                return ApplicationType.SERVICE;
+            }
+            if (client.getAuthorizedGrantTypes().contains(GrantType.IMPLICIT)) {
+                return ApplicationType.BROWSER;
+            }
+        }
+        if (client.getApplicationType() == null || client.getApplicationType().equals(io.gravitee.am.common.oidc.ApplicationType.WEB)) {
+            return ApplicationType.WEB;
+        }
+        if (client.getApplicationType() != null && client.getApplicationType().equals(io.gravitee.am.common.oidc.ApplicationType.NATIVE)) {
+            return ApplicationType.NATIVE;
+        }
+        return ApplicationType.SERVICE;
+    }
+
+    private ApplicationSettings getSettings(Client client) {
+        // OAuth 2.0/OIDC settings
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setClientId(client.getClientId());
+        oAuthSettings.setClientSecret(client.getClientSecret());
+        oAuthSettings.setRedirectUris(client.getRedirectUris());
+        oAuthSettings.setGrantTypes(client.getAuthorizedGrantTypes());
+        oAuthSettings.setResponseTypes(client.getResponseTypes());
+        oAuthSettings.setApplicationType(client.getApplicationType());
+        oAuthSettings.setContacts(client.getContacts());
+        oAuthSettings.setClientName(client.getClientName());
+        oAuthSettings.setPolicyUri(client.getPolicyUri());
+        oAuthSettings.setClientUri(client.getClientUri());
+        oAuthSettings.setPolicyUri(client.getPolicyUri());
+        oAuthSettings.setTosUri(client.getTosUri());
+        oAuthSettings.setJwksUri(client.getJwksUri());
+        oAuthSettings.setJwks(client.getJwks());
+        oAuthSettings.setSectorIdentifierUri(client.getSectorIdentifierUri());
+        oAuthSettings.setSubjectType(client.getSubjectType());
+        oAuthSettings.setIdTokenSignedResponseAlg(client.getIdTokenSignedResponseAlg());
+        oAuthSettings.setIdTokenEncryptedResponseAlg(client.getIdTokenEncryptedResponseAlg());
+        oAuthSettings.setIdTokenEncryptedResponseEnc(client.getIdTokenEncryptedResponseEnc());
+        oAuthSettings.setUserinfoSignedResponseAlg(client.getUserinfoSignedResponseAlg());
+        oAuthSettings.setUserinfoEncryptedResponseAlg(client.getUserinfoEncryptedResponseAlg());
+        oAuthSettings.setUserinfoEncryptedResponseEnc(client.getUserinfoEncryptedResponseEnc());
+        oAuthSettings.setRequestObjectSigningAlg(client.getRequestObjectSigningAlg());
+        oAuthSettings.setRequestObjectEncryptionAlg(client.getRequestObjectEncryptionAlg());
+        oAuthSettings.setRequestObjectEncryptionEnc(client.getRequestObjectEncryptionEnc());
+        oAuthSettings.setTokenEndpointAuthMethod(client.getTokenEndpointAuthMethod());
+        oAuthSettings.setTokenEndpointAuthSigningAlg(client.getTokenEndpointAuthSigningAlg());
+        oAuthSettings.setDefaultMaxAge(client.getDefaultMaxAge());
+        oAuthSettings.setRequireAuthTime(client.getRequireAuthTime());
+        oAuthSettings.setDefaultACRvalues(client.getDefaultACRvalues());
+        oAuthSettings.setInitiateLoginUri(client.getInitiateLoginUri());
+        oAuthSettings.setRequestUris(client.getRequestUris());
+        oAuthSettings.setScopes(client.getScopes());
+        oAuthSettings.setSoftwareId(client.getSoftwareId());
+        oAuthSettings.setSoftwareVersion(client.getSoftwareVersion());
+        oAuthSettings.setSoftwareStatement(client.getSoftwareStatement());
+        oAuthSettings.setRegistrationAccessToken(client.getRegistrationAccessToken());
+        oAuthSettings.setRegistrationClientUri(client.getRegistrationClientUri());
+        oAuthSettings.setClientIdIssuedAt(client.getClientIdIssuedAt());
+        oAuthSettings.setClientSecretExpiresAt(client.getClientSecretExpiresAt());
+        oAuthSettings.setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());
+        oAuthSettings.setRefreshTokenValiditySeconds(client.getRefreshTokenValiditySeconds());
+        oAuthSettings.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
+        oAuthSettings.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
+        oAuthSettings.setScopeApprovals(client.getScopeApprovals());
+        oAuthSettings.setTokenCustomClaims(client.getTokenCustomClaims());
+
+        // advanced settings
+        ApplicationAdvancedSettings advancedSettings = new ApplicationAdvancedSettings();
+        advancedSettings.setSkipConsent(client.getAutoApproveScopes() != null && client.getAutoApproveScopes().contains("true"));
+
+        ApplicationSettings applicationSettings = new ApplicationSettings();
+        applicationSettings.setOauth(oAuthSettings);
+        applicationSettings.setAccount(client.getAccountSettings());
+        applicationSettings.setAdvanced(advancedSettings);
+
+        return applicationSettings;
     }
 }

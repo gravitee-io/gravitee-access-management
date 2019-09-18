@@ -19,7 +19,7 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequ
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
 import io.gravitee.am.gateway.handler.form.FormManager;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;

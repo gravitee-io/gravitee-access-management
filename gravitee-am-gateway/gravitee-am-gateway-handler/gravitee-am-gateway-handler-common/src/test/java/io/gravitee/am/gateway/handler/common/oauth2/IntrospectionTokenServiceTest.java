@@ -21,7 +21,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.Maybe;

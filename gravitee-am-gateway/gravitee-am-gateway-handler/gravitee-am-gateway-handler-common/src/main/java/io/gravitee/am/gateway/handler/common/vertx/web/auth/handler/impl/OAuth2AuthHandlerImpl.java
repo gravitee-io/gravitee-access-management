@@ -23,7 +23,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;

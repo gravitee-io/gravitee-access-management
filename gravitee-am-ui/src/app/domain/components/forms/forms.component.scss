@@ -8,6 +8,13 @@
       font-style: italic !important;
     }
   }
+  /deep/ .ngx-datatable.material .datatable-footer {
+    display: none;
+  }
+
+  /deep/ .form-name-cell {
+    padding: 0 !important;
+  }
 }
 
 .forms-content {
@@ -17,6 +24,24 @@
 
     .row-disabled {
       background: #f1f1f1;
+    }
+
+    .form-header {
+      margin: 5px;
+      align-items: center;
+      .form-icon {
+        margin: 0 12px 0 0;
+      }
+      .form-information {
+        h3 {
+          font-size: 14px;
+          font-weight: normal;
+          margin: 0;
+        }
+        small {
+          color: rgba(0,0,0,.54);
+        }
+      }
     }
   }
 }

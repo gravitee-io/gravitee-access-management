@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import org.junit.Before;
 import org.junit.Test;
 

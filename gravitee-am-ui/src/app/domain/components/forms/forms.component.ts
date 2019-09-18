@@ -23,12 +23,12 @@ import { ActivatedRoute } from "@angular/router";
 })
 export class FormsComponent implements OnInit {
   @Input() forms: any[];
-  clientId: string;
+  appId: string;
 
   constructor(private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.clientId = this.route.snapshot.parent.params['clientId'];
+    this.appId = this.route.snapshot.parent.parent.params['appId'];
   }
 
   isEmpty() {

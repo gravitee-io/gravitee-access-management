@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -27,6 +27,7 @@ import java.util.*;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@Deprecated
 public class PatchClient {
 
     private Optional<List<String>> redirectUris;

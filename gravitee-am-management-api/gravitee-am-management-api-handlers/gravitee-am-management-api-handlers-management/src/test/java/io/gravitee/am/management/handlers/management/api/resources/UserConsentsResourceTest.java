@@ -16,7 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oauth2.Scope;
@@ -49,7 +49,7 @@ public class UserConsentsResourceTest extends JerseySpringTest {
         final User mockUser = new User();
         mockUser.setId("user-id-1");
 
-        final Client mockClient = new Client();
+        final Application mockClient = new Application();
         mockClient.setId("client-id-1");
 
         final Scope mockScope = new Scope();
@@ -63,7 +63,7 @@ public class UserConsentsResourceTest extends JerseySpringTest {
 
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockClient)).when(clientService).findByDomainAndClientId(domainId, scopeApproval.getClientId());
+        doReturn(Maybe.just(mockClient)).when(applicationService).findByDomainAndClientId(domainId, scopeApproval.getClientId());
         doReturn(Maybe.just(mockScope)).when(scopeService).findByDomainAndKey(domainId, scopeApproval.getScope());
         doReturn(Single.just(Collections.singleton(scopeApproval))).when(scopeApprovalService).findByDomainAndUser(domainId, mockUser.getId());
 

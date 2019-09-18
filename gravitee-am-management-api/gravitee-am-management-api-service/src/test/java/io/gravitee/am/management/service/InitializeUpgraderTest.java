@@ -16,7 +16,7 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.management.service.impl.upgrades.InitializeUpgrader;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.ClientService;

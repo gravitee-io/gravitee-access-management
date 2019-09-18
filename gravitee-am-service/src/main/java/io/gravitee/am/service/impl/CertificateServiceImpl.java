@@ -34,7 +34,7 @@ import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
-import io.gravitee.am.service.exception.CertificateWithClientsException;
+import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
@@ -83,7 +83,7 @@ public class CertificateServiceImpl implements CertificateService {
     private CertificateRepository certificateRepository;
 
     @Autowired
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @Autowired
     private EventService eventService;
@@ -340,10 +340,10 @@ public class CertificateServiceImpl implements CertificateService {
         LOGGER.debug("Delete certificate {}", certificateId);
         return certificateRepository.findById(certificateId)
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificateId)))
-                .flatMapSingle(certificate -> clientService.findByCertificate(certificateId)
-                        .flatMap(clients -> {
-                            if (clients.size() > 0) {
-                                throw new CertificateWithClientsException();
+                .flatMapSingle(certificate -> applicationService.findByCertificate(certificateId)
+                        .flatMap(applications -> {
+                            if (applications.size() > 0) {
+                                throw new CertificateWithApplicationsException();
                             }
                             return Single.just(certificate);
                         })

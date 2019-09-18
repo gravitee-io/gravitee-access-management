@@ -31,6 +31,7 @@ import io.gravitee.am.plugins.protocol.spring.ProtocolConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
 import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
+import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -54,7 +55,8 @@ import org.springframework.context.annotation.Import;
         ExtensionGrantConfiguration.class,
         ReporterConfiguration.class,
         ProtocolConfiguration.class,
-        PolicyConfiguration.class
+        PolicyConfiguration.class,
+        AlertPluginConfiguration.class
 })
 public class StandaloneConfiguration {
 

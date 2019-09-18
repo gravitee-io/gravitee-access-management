@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
@@ -54,23 +56,33 @@ public class TokenServiceTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     private final static String DOMAIN = "domain1";
 
     @Test
     public void shouldFindTotalTokensByDomain() {
-        Client client1 = new Client();
-        client1.setId("client1");
-        client1.setClientId(client1.getId());
-        Client client2 = new Client();
-        client2.setId("client2");
-        client2.setClientId(client2.getId());
-        Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
+        Application app1 = new Application();
+        app1.setId("app1");
+        ApplicationSettings app1Settings = new ApplicationSettings();
+        ApplicationOAuthSettings app1oAuthSettings = new ApplicationOAuthSettings();
+        app1oAuthSettings.setClientId(app1.getId());
+        app1Settings.setOauth(app1oAuthSettings);
+        app1.setSettings(app1Settings);
 
-        when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(clients));
-        when(accessTokenRepository.countByClientId("client1")).thenReturn(Single.just(2l));
-        when(accessTokenRepository.countByClientId("client2")).thenReturn(Single.just(1l));
+        Application app2 = new Application();
+        app2.setId("app2");
+        ApplicationSettings app2Settings = new ApplicationSettings();
+        ApplicationOAuthSettings app2oAuthSettings = new ApplicationOAuthSettings();
+        app2oAuthSettings.setClientId(app2.getId());
+        app2Settings.setOauth(app2oAuthSettings);
+        app2.setSettings(app2Settings);
+
+        Set<Application> applications = new HashSet<>(Arrays.asList(app1, app2));
+
+        when(applicationService.findByDomain(DOMAIN)).thenReturn(Single.just(applications));
+        when(accessTokenRepository.countByClientId("app1")).thenReturn(Single.just(2l));
+        when(accessTokenRepository.countByClientId("app2")).thenReturn(Single.just(1l));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokensByDomain(DOMAIN).test();
         testObserver.awaitTerminalEvent();
@@ -82,7 +94,7 @@ public class TokenServiceTest {
 
     @Test
     public void shouldFindTotalTokensByDomain_technicalException() {
-        when(clientService.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationService.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokensByDomain(DOMAIN).test();
 
@@ -92,13 +104,24 @@ public class TokenServiceTest {
 
     @Test
     public void shouldFindTotalTokensByDomain2_technicalException() {
-        Client client1 = new Client();
-        client1.setClientId("client1");
-        Client client2 = new Client();
-        client2.setClientId("client2");
-        Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
-        when(clientService.findByDomain(DOMAIN)).thenReturn(Single.just(clients));
-        when(accessTokenRepository.countByClientId("client1")).thenReturn(Single.error(TechnicalException::new));
+        Application app1 = new Application();
+        app1.setId("app1");
+        ApplicationSettings app1Settings = new ApplicationSettings();
+        ApplicationOAuthSettings app1oAuthSettings = new ApplicationOAuthSettings();
+        app1oAuthSettings.setClientId(app1.getId());
+        app1Settings.setOauth(app1oAuthSettings);
+        app1.setSettings(app1Settings);
+
+        Application app2 = new Application();
+        app2.setId("app2");
+        ApplicationSettings app2Settings = new ApplicationSettings();
+        ApplicationOAuthSettings app2oAuthSettings = new ApplicationOAuthSettings();
+        app2oAuthSettings.setClientId(app2.getId());
+        app2Settings.setOauth(app2oAuthSettings);
+        app2.setSettings(app2Settings);
+
+        Set<Application> applications = new HashSet<>(Arrays.asList(app1, app2));
+        when(applicationService.findByDomain(DOMAIN)).thenReturn(Single.just(applications));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokensByDomain(DOMAIN).test();
         testObserver.assertError(TechnicalManagementException.class);
@@ -107,17 +130,27 @@ public class TokenServiceTest {
 
     @Test
     public void shouldFindTotalTokens() {
-        Client client1 = new Client();
-        client1.setId("client1");
-        client1.setClientId(client1.getId());
-        Client client2 = new Client();
-        client2.setId("client2");
-        client2.setClientId(client2.getId());
-        Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
+        Application app1 = new Application();
+        app1.setId("app1");
+        ApplicationSettings app1Settings = new ApplicationSettings();
+        ApplicationOAuthSettings app1oAuthSettings = new ApplicationOAuthSettings();
+        app1oAuthSettings.setClientId(app1.getId());
+        app1Settings.setOauth(app1oAuthSettings);
+        app1.setSettings(app1Settings);
 
-        when(clientService.findAll()).thenReturn(Single.just(clients));
-        when(accessTokenRepository.countByClientId("client1")).thenReturn(Single.just(2l));
-        when(accessTokenRepository.countByClientId("client2")).thenReturn(Single.just(1l));
+        Application app2 = new Application();
+        app2.setId("app2");
+        ApplicationSettings app2Settings = new ApplicationSettings();
+        ApplicationOAuthSettings app2oAuthSettings = new ApplicationOAuthSettings();
+        app2oAuthSettings.setClientId(app2.getId());
+        app2Settings.setOauth(app2oAuthSettings);
+        app2.setSettings(app2Settings);
+
+        Set<Application> applications = new HashSet<>(Arrays.asList(app1, app2));
+
+        when(applicationService.findAll()).thenReturn(Single.just(applications));
+        when(accessTokenRepository.countByClientId("app1")).thenReturn(Single.just(2l));
+        when(accessTokenRepository.countByClientId("app2")).thenReturn(Single.just(1l));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokens().test();
         testObserver.awaitTerminalEvent();
@@ -129,7 +162,7 @@ public class TokenServiceTest {
 
     @Test
     public void shouldFindTotalTokens_technicalException() {
-        when(clientService.findAll()).thenReturn(Single.error(TechnicalException::new));
+        when(applicationService.findAll()).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokens().test();
 
@@ -139,13 +172,24 @@ public class TokenServiceTest {
 
     @Test
     public void shouldFindTotalTokens2_technicalException() {
-        Client client1 = new Client();
-        client1.setClientId("client1");
-        Client client2 = new Client();
-        client2.setClientId("client2");
-        Set<Client> clients = new HashSet<>(Arrays.asList(client1, client2));
-        when(clientService.findAll()).thenReturn(Single.just(clients));
-        when(accessTokenRepository.countByClientId("client1")).thenReturn(Single.error(TechnicalException::new));
+        Application app1 = new Application();
+        app1.setId("app1");
+        ApplicationSettings app1Settings = new ApplicationSettings();
+        ApplicationOAuthSettings app1oAuthSettings = new ApplicationOAuthSettings();
+        app1oAuthSettings.setClientId(app1.getId());
+        app1Settings.setOauth(app1oAuthSettings);
+        app1.setSettings(app1Settings);
+
+        Application app2 = new Application();
+        app2.setId("app2");
+        ApplicationSettings app2Settings = new ApplicationSettings();
+        ApplicationOAuthSettings app2oAuthSettings = new ApplicationOAuthSettings();
+        app2oAuthSettings.setClientId(app2.getId());
+        app2Settings.setOauth(app2oAuthSettings);
+        app2.setSettings(app2Settings);
+
+        Set<Application> applications = new HashSet<>(Arrays.asList(app1, app2));
+        when(applicationService.findAll()).thenReturn(Single.just(applications));
 
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokens().test();
         testObserver.assertError(TechnicalManagementException.class);

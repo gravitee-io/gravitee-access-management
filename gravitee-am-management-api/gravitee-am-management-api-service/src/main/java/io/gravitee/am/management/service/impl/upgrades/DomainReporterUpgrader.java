@@ -36,7 +36,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class DomainReporterUpgrader implements Upgrader, Ordered {
 
-    private static final Logger logger = LoggerFactory.getLogger(OpenIDScopeUpgrader.class);
+    private static final Logger logger = LoggerFactory.getLogger(DomainReporterUpgrader.class);
 
     @Autowired
     private DomainService domainService;

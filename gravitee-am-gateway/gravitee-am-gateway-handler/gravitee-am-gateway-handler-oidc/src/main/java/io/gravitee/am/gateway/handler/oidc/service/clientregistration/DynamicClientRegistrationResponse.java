@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.JWKSet;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.converter.JWKConverter;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 
 import java.util.Date;
 import java.util.List;

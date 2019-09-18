@@ -24,23 +24,23 @@ export class FormService {
 
   constructor(private http: HttpClient) { }
 
-  get(domainId, clientId, formTemplate): Observable<any> {
-    return this.http.get<any>(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms?template=" + formTemplate);
+  get(domainId, appId, formTemplate): Observable<any> {
+    return this.http.get<any>(this.formsUrl + domainId + (appId ? "/applications/" + appId : "") + "/forms?template=" + formTemplate);
   }
 
-  create(domainId, clientId, form): Observable<any> {
-    return this.http.post<any>(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms", form);
+  create(domainId, appId, form): Observable<any> {
+    return this.http.post<any>(this.formsUrl + domainId + (appId ? "/applications/" + appId : "") + "/forms", form);
   }
 
-  update(domainId, clientId, id, form): Observable<any> {
-    return this.http.put<any>(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms/" + id, {
+  update(domainId, appId, id, form): Observable<any> {
+    return this.http.put<any>(this.formsUrl + domainId + (appId ? "/applications/" + appId : "") + "/forms/" + id, {
       'enabled' : form.enabled,
       'content' : form.content
     });
   }
 
-  delete(domainId, clientId, id): Observable<any> {
-    return this.http.delete<any>(this.formsUrl + domainId + (clientId ? "/clients/" + clientId : "") + "/forms/" + id);
+  delete(domainId, appId, id): Observable<any> {
+    return this.http.delete<any>(this.formsUrl + domainId + (appId ? "/applications/" + appId : "") + "/forms/" + id);
   }
 
 }

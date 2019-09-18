@@ -24,7 +24,7 @@ import com.github.fge.jsonpatch.diff.JsonDiff;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;

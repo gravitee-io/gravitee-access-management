@@ -20,12 +20,12 @@
   <div class="dashboard-content" fxLayout="row">
     <section fxFlex="70">
       <div fxLayout="row" fxLayoutGap="30px" class="main-widgets">
-        <widget-total-clients></widget-total-clients>
+        <widget-total-applications></widget-total-applications>
         <widget-total-tokens></widget-total-tokens>
       </div>
       <div fxLayout="row">
-        <widget-clients></widget-clients>
-        <widget-top-clients></widget-top-clients>
+        <widget-applications></widget-applications>
+        <widget-top-applications></widget-top-applications>
       </div>
     </section>
     <div class="dashboard-description" fxFlex>
@@ -38,10 +38,10 @@
       <div class="dashboard-description-actions">
         <mat-list>
           <h3 matSubheader>Shortcuts</h3>
-          <a mat-button [routerLink]="['/dashboard', 'clients', 'new']">
+          <a mat-button [routerLink]="['/dashboard', 'applications', 'new']">
             <mat-list-item>
               <mat-icon mat-list-icon>playlist_add</mat-icon>
-              <h4 matLine>Create client</h4>
+              <h4 matLine>Create application</h4>
             </mat-list-item>
           </a>
           <a mat-button [routerLink]="['/settings', 'domains', 'new']">

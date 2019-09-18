@@ -15,14 +15,14 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
-import io.gravitee.am.service.exception.IdentityProviderWithClientsException;
+import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.IdentityProviderServiceImpl;
 import io.gravitee.am.service.model.NewIdentityProvider;
@@ -62,7 +62,7 @@ public class IdentityProviderServiceTest {
     private EventService eventService;
 
     @Mock
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @Mock
     private AuditService auditService;
@@ -187,18 +187,18 @@ public class IdentityProviderServiceTest {
         testObserver.assertError(IdentityProviderNotFoundException.class);
         testObserver.assertNotComplete();
 
-        verify(clientService, never()).findByIdentityProvider(anyString());
+        verify(applicationService, never()).findByIdentityProvider(anyString());
         verify(identityProviderRepository, never()).delete(anyString());
     }
 
     @Test
     public void shouldDelete_identitiesWithClients() {
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(new IdentityProvider()));
-        when(clientService.findByIdentityProvider("my-identity-provider")).thenReturn(Single.just(Collections.singleton(new Client())));
+        when(applicationService.findByIdentityProvider("my-identity-provider")).thenReturn(Single.just(Collections.singleton(new Application())));
 
         TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
 
-        testObserver.assertError(IdentityProviderWithClientsException.class);
+        testObserver.assertError(IdentityProviderWithApplicationsException.class);
         testObserver.assertNotComplete();
 
         verify(identityProviderRepository, never()).delete(anyString());
@@ -220,7 +220,7 @@ public class IdentityProviderServiceTest {
         IdentityProvider existingIdentityProvider = Mockito.mock(IdentityProvider.class);
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(existingIdentityProvider));
         when(identityProviderRepository.delete("my-identity-provider")).thenReturn(Completable.complete());
-        when(clientService.findByIdentityProvider("my-identity-provider")).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByIdentityProvider("my-identity-provider")).thenReturn(Single.just(Collections.emptySet()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();

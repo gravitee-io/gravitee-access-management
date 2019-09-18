@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "ca17db97-e4f7-400d-9710-27b10390f7f3",
+		"_postman_id": "01c85a44-e749-4735-9771-618c8d75effd",
 		"name": "Gravitee.io - AM - Policies",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -311,7 +311,8 @@
 					},
 					"response": []
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "Pre Consent",
@@ -1090,7 +1091,8 @@
 					},
 					"response": []
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "Delete domain",
@@ -1138,5 +1140,6 @@
 			},
 			"response": []
 		}
-	]
+	],
+	"protocolProfileBehavior": {}
 }

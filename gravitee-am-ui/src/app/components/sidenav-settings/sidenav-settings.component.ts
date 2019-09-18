@@ -24,6 +24,7 @@ import { Router } from "@angular/router";
 export class SidenavSettingsComponent {
   @Input('filterLvl1') filterLvl1: string;
   @Input('filterLvl2') filterLvl2: string;
+  @Input('filterLvl3') filterLvl3: string;
   paths: any = {};
 
   constructor(private router: Router) { }
@@ -31,14 +32,24 @@ export class SidenavSettingsComponent {
   ngOnInit() {
     this.router.config.filter(r => r.path ===  this.filterLvl1).forEach(r => {
       r.children.filter(r => r.path === this.filterLvl2).forEach(r => {
-        r.children.filter(r => r.data).forEach(r => {
-          if (this.paths[r.data.menu.section]) {
-            this.paths[r.data.menu.section].push(r)
-          } else {
-            this.paths[r.data.menu.section] = [r];
-          }
-        });
+        if (this.filterLvl3) {
+          r.children.filter(r => r.path === this.filterLvl3).forEach(r => {
+            this.setPaths(r);
+          });
+        } else {
+          this.setPaths(r);
+        }
       });
+    });
+  }
+
+  private setPaths(currentRoute) {
+    currentRoute.children.filter(r => r.data).forEach(r => {
+      if (this.paths[r.data.menu.section]) {
+        this.paths[r.data.menu.section].push(r)
+      } else {
+        this.paths[r.data.menu.section] = [r];
+      }
     });
   }
 }

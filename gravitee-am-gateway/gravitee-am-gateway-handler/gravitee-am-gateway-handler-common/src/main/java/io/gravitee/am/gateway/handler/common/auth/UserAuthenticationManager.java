@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.auth;
 
 import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
 import io.reactivex.Single;

@@ -24,13 +24,13 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
-import io.gravitee.am.service.exception.IdentityProviderWithClientsException;
+import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
@@ -65,7 +65,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     private IdentityProviderRepository identityProviderRepository;
 
     @Autowired
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @Autowired
     private EventService eventService;
@@ -173,10 +173,10 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
         return identityProviderRepository.findById(identityProviderId)
                 .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identityProviderId)))
-                .flatMapSingle(identityProvider -> clientService.findByIdentityProvider(identityProviderId)
-                        .flatMap(clients -> {
-                            if (clients.size() > 0) {
-                                throw new IdentityProviderWithClientsException();
+                .flatMapSingle(identityProvider -> applicationService.findByIdentityProvider(identityProviderId)
+                        .flatMap(applications -> {
+                            if (applications.size() > 0) {
+                                throw new IdentityProviderWithApplicationsException();
                             }
                             return Single.just(identityProvider);
                         }))

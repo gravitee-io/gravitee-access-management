@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.OCTKey;
 import io.gravitee.am.model.jose.OKPKey;

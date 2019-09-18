@@ -33,7 +33,7 @@ export interface DialogData {
 })
 export class EmailComponent implements OnInit, AfterViewInit {
   private domainId: string;
-  private clientId: string;
+  private appId: string;
   private defaultEmailContent: string = `// Custom email...`;
   template: string;
   rawTemplate: string;
@@ -56,8 +56,8 @@ export class EmailComponent implements OnInit, AfterViewInit {
               public dialog: MatDialog) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.clientId = this.route.snapshot.parent.params['clientId'];
+    this.domainId = (this.route.snapshot.parent.parent.params['domainId']) ? this.route.snapshot.parent.parent.params['domainId'] : this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.appId = this.route.snapshot.parent.parent.params['appId'];
     this.rawTemplate = this.route.snapshot.queryParams['template'];
     this.email = this.route.snapshot.data['email']
 
@@ -113,7 +113,7 @@ export class EmailComponent implements OnInit, AfterViewInit {
 
   create() {
     this.email['content'] = this.emailContent;
-    this.emailService.create(this.domainId, this.clientId, this.email).subscribe(data => {
+    this.emailService.create(this.domainId, this.appId, this.email).subscribe(data => {
       this.snackbarService.open("Email created");
       this.emailFound = true;
       this.email = data;
@@ -124,7 +124,7 @@ export class EmailComponent implements OnInit, AfterViewInit {
 
   update() {
     this.email['content'] = this.emailContent;
-    this.emailService.update(this.domainId, this.clientId, this.email.id, this.email).subscribe(data => {
+    this.emailService.update(this.domainId, this.appId, this.email.id, this.email).subscribe(data => {
       this.snackbarService.open("Email updated");
       this.emailFound = true;
       this.email = data;
@@ -139,7 +139,7 @@ export class EmailComponent implements OnInit, AfterViewInit {
       .confirm('Delete email', 'Are you sure you want to delete this email ?')
       .subscribe(res => {
         if (res) {
-          this.emailService.delete(this.domainId, this.clientId, this.email.id).subscribe(response => {
+          this.emailService.delete(this.domainId, this.appId, this.email.id).subscribe(response => {
             this.snackbarService.open("Email deleted");
             this.email = {};
             this.email.template = this.route.snapshot.queryParams['template'];

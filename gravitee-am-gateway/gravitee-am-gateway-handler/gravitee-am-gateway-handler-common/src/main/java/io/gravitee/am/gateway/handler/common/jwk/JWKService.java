@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.jwk;
 
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.reactivex.Maybe;

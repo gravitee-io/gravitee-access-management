@@ -17,11 +17,11 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
@@ -62,7 +62,7 @@ public class UserServiceTest {
     private AuditService auditService;
 
     @Mock
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @Mock
     private io.gravitee.am.service.UserService commonUserService;
@@ -98,8 +98,8 @@ public class UserServiceTest {
         UserProvider userProvider = mock(UserProvider.class);
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        when(clientService.findById(newUser.getClient())).thenReturn(Maybe.empty());
-        when(clientService.findByDomainAndClientId(domain, newUser.getClient())).thenReturn(Maybe.empty());
+        when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.empty());
+        when(applicationService.findByDomainAndClientId(domain, newUser.getClient())).thenReturn(Maybe.empty());
 
         TestObserver<User> testObserver = userService.create(domain, newUser).test();
         testObserver.assertNotComplete();
@@ -116,11 +116,11 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
 
-        Client client = mock(Client.class);
-        when(client.getDomain()).thenReturn("other-domain");
+        Application application = mock(Application.class);
+        when(application.getDomain()).thenReturn("other-domain");
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        when(clientService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
+        when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(application));
 
         TestObserver<User> testObserver = userService.create(domain, newUser).test();
         testObserver.assertNotComplete();
@@ -142,8 +142,8 @@ public class UserServiceTest {
 
         when(commonUserService.findById(id)).thenReturn(Maybe.just(user));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        when(clientService.findById(updateUser.getClient())).thenReturn(Maybe.empty());
-        when(clientService.findByDomainAndClientId(domain, updateUser.getClient())).thenReturn(Maybe.empty());
+        when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.empty());
+        when(applicationService.findByDomainAndClientId(domain, updateUser.getClient())).thenReturn(Maybe.empty());
 
         TestObserver<User> testObserver = userService.update(domain, id, updateUser).test();
         testObserver.assertNotComplete();
@@ -163,12 +163,12 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
 
-        Client client = mock(Client.class);
-        when(client.getDomain()).thenReturn("other-domain");
+        Application application = mock(Application.class);
+        when(application.getDomain()).thenReturn("other-domain");
 
         when(commonUserService.findById(id)).thenReturn(Maybe.just(user));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        when(clientService.findById(updateUser.getClient())).thenReturn(Maybe.just(client));
+        when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.just(application));
 
         TestObserver<User> testObserver = userService.update(domain, id, updateUser).test();
         testObserver.assertNotComplete();

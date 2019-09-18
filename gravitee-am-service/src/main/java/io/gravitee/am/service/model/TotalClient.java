@@ -19,9 +19,16 @@ package io.gravitee.am.service.model;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Deprecated
 public class TotalClient {
 
     private long totalClients;
+
+    public TotalClient() { }
+
+    public TotalClient(long totalClients) {
+        this.totalClients = totalClients;
+    }
 
     public long getTotalClients() {
         return totalClients;

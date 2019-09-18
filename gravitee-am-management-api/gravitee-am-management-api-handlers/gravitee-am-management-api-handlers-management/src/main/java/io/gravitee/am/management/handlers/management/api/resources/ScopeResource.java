@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeService;

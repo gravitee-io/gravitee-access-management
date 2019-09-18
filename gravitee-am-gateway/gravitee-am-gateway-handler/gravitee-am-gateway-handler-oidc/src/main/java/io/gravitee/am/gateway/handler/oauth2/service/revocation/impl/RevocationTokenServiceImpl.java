@@ -21,7 +21,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenR
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import org.slf4j.Logger;

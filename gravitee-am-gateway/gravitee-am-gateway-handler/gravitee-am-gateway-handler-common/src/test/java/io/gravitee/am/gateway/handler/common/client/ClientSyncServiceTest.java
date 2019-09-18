@@ -15,16 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.common.client;
 
-import io.gravitee.am.gateway.core.event.ClientEvent;
+import io.gravitee.am.gateway.core.event.ApplicationEvent;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.repository.management.api.ClientRepository;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.ClientService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.event.EventManager;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -59,7 +58,7 @@ public class ClientSyncServiceTest {
     private Domain domain;
 
     @Mock
-    private ClientRepository clientRepository;
+    private ClientService clientService;
 
     @BeforeClass
     public static void initializeClients() {
@@ -110,7 +109,7 @@ public class ClientSyncServiceTest {
     @Before
     public void setUp() throws Exception {
         when(domain.getId()).thenReturn("domainA");
-        when(clientRepository.findAll()).thenReturn(Single.just(clientSet));
+        when(clientService.findAll()).thenReturn(Single.just(clientSet));
         ((InitializingBean)this.clientSyncService).afterPropertiesSet();
     }
 
@@ -192,17 +191,17 @@ public class ClientSyncServiceTest {
         client.setId("ad");
         client.setDomain("domainA");
         client.setClientId("domainAClientD");
-        when(clientRepository.findById("ad")).thenReturn(Maybe.just(client));
+        when(clientService.findById("ad")).thenReturn(Maybe.just(client));
 
-        ((EventListener<ClientEvent, Payload>)clientSyncService).onEvent(new Event<ClientEvent, Payload>() {
+        ((EventListener<ApplicationEvent, Payload>)clientSyncService).onEvent(new Event<ApplicationEvent, Payload>() {
             @Override
             public Payload content() {
                 return new Payload("ad","domainA", Action.CREATE);
             }
 
             @Override
-            public ClientEvent type() {
-                return ClientEvent.DEPLOY;
+            public ApplicationEvent type() {
+                return ApplicationEvent.DEPLOY;
             }
         });
 
@@ -218,17 +217,17 @@ public class ClientSyncServiceTest {
         client.setDomain("domainA");
         client.setClientId("domainAClientA");
         client.setClientName("updatedClient");
-        when(clientRepository.findById("aa")).thenReturn(Maybe.just(client));
+        when(clientService.findById("aa")).thenReturn(Maybe.just(client));
 
-        ((EventListener<ClientEvent, Payload>)clientSyncService).onEvent(new Event<ClientEvent, Payload>() {
+        ((EventListener<ApplicationEvent, Payload>)clientSyncService).onEvent(new Event<ApplicationEvent, Payload>() {
             @Override
             public Payload content() {
                 return new Payload("aa","domainA", Action.UPDATE);
             }
 
             @Override
-            public ClientEvent type() {
-                return ClientEvent.UPDATE;
+            public ApplicationEvent type() {
+                return ApplicationEvent.UPDATE;
             }
         });
 
@@ -244,17 +243,17 @@ public class ClientSyncServiceTest {
         existingClient.setDomain("domainA");
         existingClient.setClientId("domainAClientA");
         existingClient.setTemplate(true);
-        when(clientRepository.findById("aa")).thenReturn(Maybe.just(existingClient));
+        when(clientService.findById("aa")).thenReturn(Maybe.just(existingClient));
 
-        ((EventListener<ClientEvent, Payload>)clientSyncService).onEvent(new Event<ClientEvent, Payload>() {
+        ((EventListener<ApplicationEvent, Payload>)clientSyncService).onEvent(new Event<ApplicationEvent, Payload>() {
             @Override
             public Payload content() {
                 return new Payload("aa","domainA", Action.UPDATE);
             }
 
             @Override
-            public ClientEvent type() {
-                return ClientEvent.UPDATE;
+            public ApplicationEvent type() {
+                return ApplicationEvent.UPDATE;
             }
         });
 
@@ -270,15 +269,15 @@ public class ClientSyncServiceTest {
 
     @Test
     public void onEvent_delete() {
-        ((EventListener<ClientEvent, Payload>)clientSyncService).onEvent(new Event<ClientEvent, Payload>() {
+        ((EventListener<ApplicationEvent, Payload>)clientSyncService).onEvent(new Event<ApplicationEvent, Payload>() {
             @Override
             public Payload content() {
                 return new Payload("aa","domainA", Action.DELETE);
             }
 
             @Override
-            public ClientEvent type() {
-                return ClientEvent.UNDEPLOY;
+            public ApplicationEvent type() {
+                return ApplicationEvent.UNDEPLOY;
             }
         });
 
@@ -288,15 +287,15 @@ public class ClientSyncServiceTest {
 
     @Test
     public void onEvent_delete_template() {
-        ((EventListener<ClientEvent, Payload>)clientSyncService).onEvent(new Event<ClientEvent, Payload>() {
+        ((EventListener<ApplicationEvent, Payload>)clientSyncService).onEvent(new Event<ApplicationEvent, Payload>() {
             @Override
             public Payload content() {
                 return new Payload("ac","domainA", Action.DELETE);
             }
 
             @Override
-            public ClientEvent type() {
-                return ClientEvent.UNDEPLOY;
+            public ApplicationEvent type() {
+                return ApplicationEvent.UNDEPLOY;
             }
         });
 

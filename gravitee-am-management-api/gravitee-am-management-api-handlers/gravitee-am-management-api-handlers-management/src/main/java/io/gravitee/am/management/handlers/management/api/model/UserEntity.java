@@ -24,7 +24,7 @@ import io.gravitee.am.model.User;
  */
 public class UserEntity extends User {
 
-    private ClientEntity clientEntity;
+    private ApplicationEntity applicationEntity;
 
     public UserEntity(User user) {
         setId(user.getId());
@@ -58,11 +58,11 @@ public class UserEntity extends User {
         setUpdatedAt(user.getUpdatedAt());
     }
 
-    public ClientEntity getClientEntity() {
-        return clientEntity;
+    public ApplicationEntity getApplicationEntity() {
+        return applicationEntity;
     }
 
-    public void setClientEntity(ClientEntity clientEntity) {
-        this.clientEntity = clientEntity;
+    public void setApplicationEntity(ApplicationEntity applicationEntity) {
+        this.applicationEntity = applicationEntity;
     }
 }

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.root.service.user;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;

@@ -26,10 +26,10 @@ export class EmailResolver implements Resolve<any> {
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     let emailTemplate = route.queryParams['template'];
-    let domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
-    let clientId = route.parent.paramMap.get('clientId');
+    let domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
+    let appId = route.parent.parent.paramMap.get('appId');
 
-    return this.emailService.get(domainId, clientId, emailTemplate)
+    return this.emailService.get(domainId, appId, emailTemplate)
       .pipe(
         catchError(__ => {
           return of({});

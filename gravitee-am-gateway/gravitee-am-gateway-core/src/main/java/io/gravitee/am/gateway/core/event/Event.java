@@ -27,8 +27,8 @@ public abstract class Event {
             case DOMAIN:
                 event1 =  DomainEvent.actionOf(event.getPayload().getAction());
                 break;
-            case CLIENT:
-                event1 =  ClientEvent.actionOf(event.getPayload().getAction());
+            case APPLICATION:
+                event1 =  ApplicationEvent.actionOf(event.getPayload().getAction());
                 break;
             case CERTIFICATE:
                 event1 =  CertificateEvent.actionOf(event.getPayload().getAction());

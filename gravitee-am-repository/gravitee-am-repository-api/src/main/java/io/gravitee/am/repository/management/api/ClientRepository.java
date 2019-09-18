@@ -15,39 +15,25 @@
  */
 package io.gravitee.am.repository.management.api;
 
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.common.Page;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Maybe;
+import io.gravitee.am.model.oidc.Client;
+import io.reactivex.Completable;
 import io.reactivex.Single;
 
 import java.util.Set;
 
 /**
+ * NOTE: only use for the ClientsToApplications Upgrader
+ * Use the {@link io.gravitee.am.repository.management.api.ApplicationRepository} for the application management
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ClientRepository extends CrudRepository<Client, String> {
-
-    Single<Set<Client>> findByDomain(String domain);
-
-    Single<Set<Client>> search(String domain, String query);
-
-    Single<Page<Client>> findByDomain(String domain, int page, int size);
-
-    Maybe<Client> findByClientIdAndDomain(String clientId, String domain);
-
-    Single<Set<Client>> findByIdentityProvider(String identityProvider);
-
-    Single<Set<Client>> findByCertificate(String certificate);
-
-    Single<Set<Client>> findByDomainAndExtensionGrant(String domain, String tokenGranter);
+public interface ClientRepository {
 
     Single<Set<Client>> findAll();
 
-    Single<Page<Client>> findAll(int page, int size);
+    Single<Boolean> collectionExists();
 
-    Single<Long> countByDomain(String domain);
+    Completable deleteCollection();
 
-    Single<Long> count();
 }

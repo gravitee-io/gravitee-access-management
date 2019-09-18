@@ -63,7 +63,7 @@ public class DomainServiceImpl implements DomainService {
     private DomainRepository domainRepository;
 
     @Autowired
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @Autowired
     private CertificateService certificateService;
@@ -302,11 +302,11 @@ public class DomainServiceImpl implements DomainService {
                     return Single.just(domain);
                 })
                 .flatMapCompletable(domain -> {
-                    // delete clients
-                    return clientService.findByDomain(domainId)
-                            .flatMapCompletable(clients -> {
-                                List<Completable> deleteClientsCompletable = clients.stream().map(c -> clientService.delete(c.getId())).collect(Collectors.toList());
-                                return Completable.concat(deleteClientsCompletable);
+                    // delete applications
+                    return applicationService.findByDomain(domainId)
+                            .flatMapCompletable(applications -> {
+                                List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> applicationService.delete(a.getId())).collect(Collectors.toList());
+                                return Completable.concat(deleteApplicationsCompletable);
                             })
                             // delete certificates
                             .andThen(certificateService.findByDomain(domainId)

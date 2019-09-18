@@ -16,9 +16,9 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.model.ClientListItem;
 import io.gravitee.am.management.handlers.management.api.resources.enhancer.ClientEnhancer;
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.ClientListItem;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 @Api(tags = {"client"})
+@Deprecated
 public class ClientsResource extends AbstractResource {
 
     @Context
@@ -75,7 +76,7 @@ public class ClientsResource extends AbstractResource {
                      @Suspended final AsyncResponse response) {
         domainService.findById(_domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(_domain)))
-                .flatMapSingle(domain -> getDomains(_domain, query)
+                .flatMapSingle(domain -> getClients(_domain, query)
                         .map(clients -> {
                             List<ClientListItem> sortedClients = clients.stream()
                                     .map(clientEnhancer.enhanceClient(Collections.singletonMap(_domain, domain)))
@@ -122,7 +123,7 @@ public class ClientsResource extends AbstractResource {
         return resourceContext.getResource(ClientResource.class);
     }
 
-    private Single<Set<Client>> getDomains(String domainId, String query) {
+    private Single<Set<Client>> getClients(String domainId, String query) {
         if (query != null) {
             return clientService.search(domainId, query);
         } else {

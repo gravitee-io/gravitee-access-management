@@ -33,7 +33,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenUtils;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.gateway.api.ExecutionContext;

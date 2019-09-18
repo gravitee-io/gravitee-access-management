@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.vertx.core.json.JsonObject;
 import org.junit.Assert;

@@ -15,11 +15,9 @@
  */
 package io.gravitee.am.management.repository.proxy;
 
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.reactivex.Completable;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.stereotype.Component;
 
@@ -33,77 +31,17 @@ import java.util.Set;
 public class ClientRepositoryProxy extends AbstractProxy<ClientRepository> implements ClientRepository {
 
     @Override
-    public Single<Set<Client>> findByDomain(String domain) {
-        return target.findByDomain(domain);
-    }
-
-    @Override
-    public Single<Set<Client>> search(String domain, String query) {
-        return target.search(domain, query);
-    }
-
-    @Override
-    public Single<Page<Client>> findByDomain(String domain, int page, int size) {
-        return target.findByDomain(domain, page, size);
-    }
-
-    @Override
-    public Maybe<Client> findByClientIdAndDomain(String clientId, String domain) {
-        return target.findByClientIdAndDomain(clientId, domain);
-    }
-
-    @Override
-    public Single<Set<Client>> findByIdentityProvider(String identityProvider) {
-        return target.findByIdentityProvider(identityProvider);
-    }
-
-    @Override
-    public Single<Set<Client>> findByCertificate(String certificate) {
-        return target.findByCertificate(certificate);
-    }
-
-    @Override
-    public Single<Set<Client>> findByDomainAndExtensionGrant(String domain, String tokenGranter) {
-        return target.findByDomainAndExtensionGrant(domain, tokenGranter);
-    }
-
-    @Override
     public Single<Set<Client>> findAll() {
         return target.findAll();
     }
 
     @Override
-    public Single<Page<Client>> findAll(int page, int size) {
-        return target.findAll(page, size);
+    public Single<Boolean> collectionExists() {
+        return target.collectionExists();
     }
 
     @Override
-    public Maybe<Client> findById(String id) {
-        return target.findById(id);
-    }
-
-    @Override
-    public Single<Client> create(Client client) {
-        return target.create(client);
-    }
-
-    @Override
-    public Single<Client> update(Client client) {
-        return target.update(client);
-    }
-
-    @Override
-    public Completable delete(String id) {
-        return target.delete(id);
-    }
-
-    @Override
-    public Single<Long> countByDomain(String domain) {
-        return target.countByDomain(domain);
-    }
-
-    @Override
-    public Single<Long> count() {
-        return target.count();
+    public Completable deleteCollection() {
+        return target.deleteCollection();
     }
 }

@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.service.user.model;
 
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 
 /**

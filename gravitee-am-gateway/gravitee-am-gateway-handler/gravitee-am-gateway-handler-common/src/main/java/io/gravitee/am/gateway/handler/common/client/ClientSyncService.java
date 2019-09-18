@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.client;
 
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.service.Service;
 import io.reactivex.Maybe;
 import io.reactivex.Single;

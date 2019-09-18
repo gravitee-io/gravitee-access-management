@@ -15,13 +15,13 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.model.ClientEntity;
+import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity;
 import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.User;
-import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
@@ -65,7 +65,7 @@ public class UserResource extends AbstractResource {
     private IdentityProviderService identityProviderService;
 
     @Autowired
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @Autowired
     private PasswordValidator passwordValidator;
@@ -255,10 +255,10 @@ public class UserResource extends AbstractResource {
 
     private Maybe<UserEntity> enhanceClient(UserEntity userEntity) {
         if (userEntity.getClient() != null) {
-            return clientService.findById(userEntity.getClient())
-                    .switchIfEmpty(clientService.findByDomainAndClientId(userEntity.getDomain(), userEntity.getClient()))
-                    .map(client -> {
-                        userEntity.setClientEntity(new ClientEntity(client));
+            return applicationService.findById(userEntity.getClient())
+                    .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(userEntity.getDomain(), userEntity.getClient())))
+                    .map(application -> {
+                        userEntity.setApplicationEntity(new ApplicationEntity(application));
                         return userEntity;
                     })
                     .defaultIfEmpty(userEntity);

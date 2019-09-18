@@ -17,8 +17,8 @@ package io.gravitee.am.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.certificate.core.CertificateSchema;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -56,7 +56,7 @@ public class CertificateServiceTest {
     private CertificateRepository certificateRepository;
 
     @Mock
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @Mock
     private EventService eventService;
@@ -131,7 +131,7 @@ public class CertificateServiceTest {
         when(certificate.getDomain()).thenReturn(DOMAIN);
 
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
-        when(clientService.findByCertificate("my-certificate")).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByCertificate("my-certificate")).thenReturn(Single.just(Collections.emptySet()));
         when(certificateRepository.delete("my-certificate")).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -142,7 +142,7 @@ public class CertificateServiceTest {
         testObserver.assertNoErrors();
 
         verify(certificateRepository, times(1)).findById("my-certificate");
-        verify(clientService, times(1)).findByCertificate("my-certificate");
+        verify(applicationService, times(1)).findByCertificate("my-certificate");
         verify(certificateRepository, times(1)).delete("my-certificate");
         verify(eventService, times(1)).create(any());
     }
@@ -157,7 +157,7 @@ public class CertificateServiceTest {
         testObserver.assertNotComplete();
 
         verify(certificateRepository, times(1)).findById("my-certificate");
-        verify(clientService, never()).findByCertificate("my-certificate");
+        verify(applicationService, never()).findByCertificate("my-certificate");
         verify(certificateRepository, never()).delete("my-certificate");
     }
 
@@ -171,14 +171,14 @@ public class CertificateServiceTest {
         testObserver.assertNotComplete();
 
         verify(certificateRepository, times(1)).findById("my-certificate");
-        verify(clientService, never()).findByCertificate("my-certificate");
+        verify(applicationService, never()).findByCertificate("my-certificate");
         verify(certificateRepository, never()).delete("my-certificate");
     }
 
     @Test
     public void shouldDelete_certificateWithClients() {
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(new Certificate()));
-        when(clientService.findByCertificate("my-certificate")).thenReturn(Single.just(Collections.singleton(new Client())));
+        when(applicationService.findByCertificate("my-certificate")).thenReturn(Single.just(Collections.singleton(new Application())));
 
         TestObserver testObserver = certificateService.delete("my-certificate").test();
 
@@ -186,7 +186,7 @@ public class CertificateServiceTest {
         testObserver.assertNotComplete();
 
         verify(certificateRepository, times(1)).findById("my-certificate");
-        verify(clientService, times(1)).findByCertificate("my-certificate");
+        verify(applicationService, times(1)).findByCertificate("my-certificate");
         verify(certificateRepository, never()).delete("my-certificate");
     }
 

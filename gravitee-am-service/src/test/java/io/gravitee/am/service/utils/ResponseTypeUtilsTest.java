@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.utils;
 
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

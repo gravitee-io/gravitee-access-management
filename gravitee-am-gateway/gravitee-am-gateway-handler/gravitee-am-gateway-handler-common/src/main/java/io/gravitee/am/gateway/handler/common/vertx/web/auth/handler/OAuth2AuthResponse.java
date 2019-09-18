@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.handler;
 
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.model.Client;
+import io.gravitee.am.model.oidc.Client;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

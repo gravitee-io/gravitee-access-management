@@ -57,7 +57,7 @@ public class TokenEndpoint implements Handler<RoutingContext> {
             throw new InvalidClientException();
         }
 
-        final io.gravitee.am.model.Client client = ((Client) authenticatedUser.getDelegate()).getClient();
+        final io.gravitee.am.model.oidc.Client client = ((Client) authenticatedUser.getDelegate()).getClient();
 
         // Check that authenticated user is matching the client_id
         // client_id is not required in the token request since the client can be authenticated via a Basic Authentication
