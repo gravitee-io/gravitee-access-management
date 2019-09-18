@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.auth;
 
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.gateway.handler.common.authentication.event.AuthenticationEvent;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -43,8 +44,7 @@ import java.util.LinkedHashSet;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -125,6 +125,7 @@ public class UserAuthenticationManagerTest {
         observer.assertNoErrors();
         observer.assertComplete();
         observer.assertValue(user -> user.getUsername().equals("username"));
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.SUCCESS), any());
     }
 
     @Test
@@ -164,6 +165,7 @@ public class UserAuthenticationManagerTest {
 
         verifyZeroInteractions(userAuthenticationService);
         observer.assertError(BadCredentialsException.class);
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }
 
     @Test
@@ -222,6 +224,7 @@ public class UserAuthenticationManagerTest {
         observer.assertNoErrors();
         observer.assertComplete();
         observer.assertValue(user -> user.getUsername().equals("username"));
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.SUCCESS), any());
     }
 
     @Test
@@ -266,5 +269,6 @@ public class UserAuthenticationManagerTest {
         }).test();
 
         observer.assertError(AccountDisabledException.class);
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }
 }

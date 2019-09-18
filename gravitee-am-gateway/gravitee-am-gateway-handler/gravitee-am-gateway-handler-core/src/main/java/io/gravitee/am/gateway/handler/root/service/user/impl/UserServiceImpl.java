@@ -165,16 +165,19 @@ public class UserServiceImpl implements UserService {
         // user has completed his account, add it to the idp
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                 // update the idp user
-                .flatMapSingle(userProvider -> userProvider.update(user.getExternalId(), convert(user))
-                        .onErrorResumeNext(ex -> {
-                            if (ex instanceof UserNotFoundException) {
-                                // idp user not found, create its account
-                                return userProvider.create(convert(user));
-                            }
-                            return Single.error(ex);
-                        })
-                )
+                // update the idp user
+                .flatMapSingle(userProvider -> {
+                    return userProvider.findByUsername(user.getUsername())
+                            .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                            .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user)))
+                            .onErrorResumeNext(ex -> {
+                                if (ex instanceof UserNotFoundException) {
+                                    // idp user not found, create its account
+                                    return userProvider.create(convert(user));
+                                }
+                                return Single.error(ex);
+                            });
+                })
                 .flatMap(idpUser -> {
                     // update 'users' collection for management and audit purpose
                     user.setPassword(null);
@@ -201,15 +204,22 @@ public class UserServiceImpl implements UserService {
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                 // update the idp user
-                .flatMapSingle(userProvider ->
-                        userProvider.update(user.getExternalId(), convert(user))
-                                .onErrorResumeNext(ex -> {
-                                    if (ex instanceof UserNotFoundException) {
-                                        // idp user not found, create its account
-                                        return userProvider.create(convert(user));
-                                    }
-                                    return Single.error(ex);
-                                }))
+                .flatMapSingle(userProvider -> {
+                    return userProvider.findByUsername(user.getUsername())
+                            .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                            .flatMapSingle(idpUser -> {
+                                // set password
+                                ((DefaultUser) idpUser).setCredentials(user.getPassword());
+                                return userProvider.update(idpUser.getId(), idpUser);
+                            })
+                            .onErrorResumeNext(ex -> {
+                                if (ex instanceof UserNotFoundException) {
+                                    // idp user not found, create its account
+                                    return userProvider.create(convert(user));
+                                }
+                                return Single.error(ex);
+                            });
+                })
                 // update the user in the AM repository
                 .flatMap(idpUser -> {
                     // update 'users' collection for management and audit purpose

@@ -30,7 +30,6 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ClientService;
@@ -75,9 +74,6 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private io.gravitee.am.service.UserService userService;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
@@ -217,8 +213,10 @@ public class UserServiceImpl implements UserService {
                             }
                             return Single.just(userProvider);
                         })
-                        // update the user
-                        .flatMap(userProvider ->  userProvider.update(user.getExternalId(), convert(user.getUsername(), updateUser)))
+                        // update the idp user
+                        .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
+                                .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                                .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user.getUsername(), updateUser))))
                         .flatMap(idpUser ->  {
                             // set external id
                             updateUser.setExternalId(idpUser.getId());
@@ -254,12 +252,14 @@ public class UserServiceImpl implements UserService {
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> identityProviderManager.getUserProvider(user.getSource())
                         .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                        .flatMapCompletable(userProvider -> userProvider.delete(user.getExternalId()))
-                        .andThen(userRepository.delete(userId))
+                        .flatMapCompletable(userProvider -> userProvider.findByUsername(user.getUsername())
+                                .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                                .flatMapCompletable(idpUser -> userProvider.delete(idpUser.getId())))
+                        .andThen(userService.delete(userId))
                         .onErrorResumeNext(ex -> {
                             if (ex instanceof UserNotFoundException) {
                                 // idp user does not exist, only remove AM user
-                                return userRepository.delete(userId);
+                                return userService.delete(userId);
                             }
                             return Completable.error(ex);
                         })
@@ -275,21 +275,33 @@ public class UserServiceImpl implements UserService {
                 .flatMapSingle(user -> identityProviderManager.getUserProvider(user.getSource())
                         .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                         .flatMapSingle(userProvider -> {
-                            user.setPassword(password);
-                            return userProvider.update(user.getExternalId(), convert(user))
+                            // update idp user
+                            return userProvider.findByUsername(user.getUsername())
+                                    .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                                    .flatMapSingle(idpUser -> {
+                                        // set password
+                                        ((DefaultUser) idpUser).setCredentials(password);
+                                        return userProvider.update(idpUser.getId(), idpUser);
+                                    })
                                     .onErrorResumeNext(ex -> {
                                         if (ex instanceof UserNotFoundException) {
                                             // idp user not found, create its account
+                                            user.setPassword(password);
                                             return userProvider.create(convert(user));
                                         }
                                         return Single.error(ex);
                                     });
                         })
                         .flatMap(idpUser -> {
+                            // update 'users' collection for management and audit purpose
+                            // if user was in pre-registration mode, end the registration process
                             if (user.isPreRegistration()) {
                                 user.setRegistrationCompleted(true);
                             }
-                            return userRepository.update(user);
+                            user.setPassword(null);
+                            user.setExternalId(idpUser.getId());
+                            user.setUpdatedAt(new Date());
+                            return userService.update(user);
                         })
                         .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)))

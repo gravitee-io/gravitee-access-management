@@ -22,12 +22,14 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -64,6 +66,9 @@ public class UserServiceTest {
 
     @Mock
     private io.gravitee.am.service.UserService commonUserService;
+
+    @Mock
+    private LoginAttemptService loginAttemptService;
 
     @Mock
     private RoleService roleService;
@@ -168,6 +173,61 @@ public class UserServiceTest {
         TestObserver<User> testObserver = userService.update(domain, id, updateUser).test();
         testObserver.assertNotComplete();
         testObserver.assertError(ClientNotFoundException.class);
+    }
+
+    @Test
+    public void shouldResetPassword_externalIdEmpty() {
+        final String domain = "domain";
+        final String password = "password";
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn("user-id");
+        when(user.getUsername()).thenReturn("username");
+        when(user.getSource()).thenReturn("default-idp");
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(idpUser.getId()).thenReturn("idp-id");
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
+        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+
+        when(commonUserService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+
+        TestObserver testObserver = userService.resetPassword(domain, user.getId(), password).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldResetPassword_idpUserNotFound() {
+        final String domain = "domain";
+        final String password = "password";
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn("user-id");
+        when(user.getUsername()).thenReturn("username");
+        when(user.getSource()).thenReturn("default-idp");
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(idpUser.getId()).thenReturn("idp-id");
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.empty());
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        when(commonUserService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+
+        TestObserver testObserver = userService.resetPassword(domain, user.getId(), password).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userProvider, times(1)).create(any());
     }
 
     @Test

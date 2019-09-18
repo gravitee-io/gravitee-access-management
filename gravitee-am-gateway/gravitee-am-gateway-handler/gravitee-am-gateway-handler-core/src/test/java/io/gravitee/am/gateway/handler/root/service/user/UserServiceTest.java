@@ -40,8 +40,7 @@ import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -85,19 +84,19 @@ public class UserServiceTest {
         Client client = mock(Client.class);
 
         User user = mock(User.class);
-        when(user.getExternalId()).thenReturn("external-id");
         when(user.getUsername()).thenReturn("username");
         when(user.isInactive()).thenReturn(true);
         when(user.getSource()).thenReturn("default-idp");
 
-        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(idpUser.getId()).thenReturn("idp-id");
 
         AccountSettings accountSettings = mock(AccountSettings.class);
         when(accountSettings.isCompleteRegistrationWhenResetPassword()).thenReturn(true);
 
         UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
-
 
         when(domain.getAccountSettings()).thenReturn(accountSettings);
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
@@ -114,14 +113,15 @@ public class UserServiceTest {
         Client client = mock(Client.class);
 
         User user = mock(User.class);
-        when(user.getExternalId()).thenReturn("external-id");
         when(user.getUsername()).thenReturn("username");
         when(user.isInactive()).thenReturn(false);
         when(user.getSource()).thenReturn("default-idp");
 
-        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(idpUser.getId()).thenReturn("idp-id");
 
         UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
 
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
@@ -131,6 +131,57 @@ public class UserServiceTest {
         TestObserver testObserver = userService.resetPassword(user, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldResetPassword_externalIdEmpty() {
+        Client client = mock(Client.class);
+
+        User user = mock(User.class);
+        when(user.getUsername()).thenReturn("username");
+        when(user.isInactive()).thenReturn(false);
+        when(user.getSource()).thenReturn("default-idp");
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(idpUser.getId()).thenReturn("idp-id");
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
+        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(userRepository.update(any())).thenReturn(Single.just(user));
+        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+
+        TestObserver testObserver = userService.resetPassword(user, client).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldResetPassword_idpUserNotFound() {
+        Client client = mock(Client.class);
+
+        User user = mock(User.class);
+        when(user.getUsername()).thenReturn("username");
+        when(user.isInactive()).thenReturn(false);
+        when(user.getSource()).thenReturn("default-idp");
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(idpUser.getId()).thenReturn("idp-id");
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.empty());
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(userRepository.update(any())).thenReturn(Single.just(user));
+        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+
+        TestObserver testObserver = userService.resetPassword(user, client).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userProvider, times(1)).create(any());
     }
 
     @Test

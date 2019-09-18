@@ -59,14 +59,13 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
                             redirectToPage(context, requestParams);
                         },
                         error -> {
-                            if (error instanceof UserNotFoundException) {
-                                requestParams.put("warning", "user_not_found");
-                                redirectToPage(context, requestParams);
-                            } else if (error instanceof AccountStatusException) {
-                                requestParams.put("warning", ((AccountStatusException) error).getErrorCode());
+                            // we don't want to expose potential security leaks such as guessing existing users
+                            // the actual error continue to be stored in the audit logs
+                            if (error instanceof UserNotFoundException || error instanceof AccountStatusException) {
+                                requestParams.put("success", "forgot_password_completed");
                                 redirectToPage(context, requestParams);
                             } else {
-                                requestParams.put("error", error.getMessage());
+                                requestParams.put("error", "forgot_password_failed");
                                 redirectToPage(context, requestParams, error);
                             }
                         });
