@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.auth.handler;
 
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.impl.RedirectAuthHandlerImpl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.UserService;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.reactivex.ext.web.handler.AuthHandler;
 
@@ -30,12 +31,12 @@ public interface RedirectAuthHandler {
 
     String DEFAULT_RETURN_URL_PARAM = "return_url";
 
-    static AuthHandler create(AuthProvider authProvider, Domain domain) {
-        return AuthHandler.newInstance(new RedirectAuthHandlerImpl(authProvider,  '/' + domain.getPath() + "/login", DEFAULT_RETURN_URL_PARAM));
+
+    static AuthHandler create(AuthProvider authProvider, Domain domain, UserService userService) {
+        return AuthHandler.newInstance(new RedirectAuthHandlerImpl(authProvider, '/' + domain.getPath() + "/login", DEFAULT_RETURN_URL_PARAM, userService));
     }
 
-    static AuthHandler create(AuthProvider authProvider, String loginRedirectURL) {
-        return AuthHandler.newInstance(new RedirectAuthHandlerImpl(authProvider, loginRedirectURL, DEFAULT_RETURN_URL_PARAM));
+    static AuthHandler create(AuthProvider authProvider, String loginRedirectURL, UserService userService) {
+        return AuthHandler.newInstance(new RedirectAuthHandlerImpl(authProvider, loginRedirectURL, DEFAULT_RETURN_URL_PARAM, userService));
     }
-
 }

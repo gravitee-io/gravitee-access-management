@@ -53,6 +53,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
@@ -135,6 +136,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     @Autowired
     private CorsHandler corsHandler;
 
+    @Autowired
+    private UserService userService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -168,7 +172,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .append(ClientBasicAuthHandler.create(clientAuthProvider));
 
         // user auth handler
-        final AuthHandler userAuthHandler = RedirectAuthHandler.create(userAuthProvider, domain);
+        final AuthHandler userAuthHandler = RedirectAuthHandler.create(userAuthProvider, domain, userService);
 
         // Bind OAuth2 endpoints
 

@@ -15,20 +15,24 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.impl;
 
+import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.service.UserService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.impl.HttpStatusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -46,11 +50,46 @@ public class RedirectAuthHandlerImpl extends io.vertx.ext.web.handler.impl.Redir
 
     private String loginRedirectURL;
     private String returnURLParam;
+    private UserService userService;
 
-    public RedirectAuthHandlerImpl(AuthProvider authProvider, String loginRedirectURL, String returnURLParam) {
+    public RedirectAuthHandlerImpl(AuthProvider authProvider, String loginRedirectURL, String returnURLParam, UserService userService) {
         super(authProvider, loginRedirectURL, returnURLParam);
         this.loginRedirectURL = loginRedirectURL;
         this.returnURLParam = returnURLParam;
+        this.userService = userService;
+    }
+
+    @Override
+    public void authorize(User user, Handler<AsyncResult<Void>> handler) {
+        io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser();
+        userService.findById(endUser.getId())
+                .subscribe(currentUser -> {
+                    if (!currentUser.isEnabled()) {
+                        handler.handle(Future.failedFuture(new AccountDisabledException(currentUser.getUsername())));
+                    } else {
+                        super.authorize(user, handler);
+                    }
+                });
+    }
+
+    @Override
+    protected void processException(RoutingContext ctx, Throwable exception) {
+        if(exception instanceof AccountDisabledException) {
+            if(ctx.session() != null) {
+                ctx.session().destroy();
+                HttpServerRequest request = ctx.request();
+                try {
+                    String uri = UriBuilderRequest.resolveProxyRequest(
+                            new io.vertx.reactivex.core.http.HttpServerRequest(request),
+                            request.path(), request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                            exception = new HttpStatusException(302, uri);
+                } catch(URISyntaxException e) {
+                    ctx.fail(500);
+                    return;
+                }
+            }
+        }
+        super.processException(ctx, exception);
     }
 
     @Override
