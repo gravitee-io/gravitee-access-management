@@ -37,6 +37,7 @@ public class UserApprovalRequestParseHandler implements Handler<RoutingContext> 
     private static final String CLIENT_CONTEXT_KEY = "client";
     private static final String USER_CONTEXT_KEY = "user";
     private static final String AUTHORIZATION_REQUEST_CONTEXT_KEY = "authorizationRequest";
+    private static final String ID_TOKEN_SESSION_CONTEXT_KEY = "id_token";
     private static final String ID_TOKEN_CONTEXT_KEY = "idToken";
     private ClientSyncService clientSyncService;
 
@@ -93,7 +94,7 @@ public class UserApprovalRequestParseHandler implements Handler<RoutingContext> 
         context.put(AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
 
         // add id_token if exists
-        String idToken = context.session().get(ID_TOKEN_CONTEXT_KEY);
+        String idToken = context.session().get(ID_TOKEN_SESSION_CONTEXT_KEY);
         if (idToken != null) {
             context.put(ID_TOKEN_CONTEXT_KEY, idToken);
         }
