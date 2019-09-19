@@ -82,10 +82,10 @@ public class RedirectAuthHandlerImpl extends io.vertx.ext.web.handler.impl.Redir
                     String uri = UriBuilderRequest.resolveProxyRequest(
                             new io.vertx.reactivex.core.http.HttpServerRequest(request),
                             request.path(), request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-                            exception = new HttpStatusException(302, uri);
+                            exception = new HttpStatusException(302, uri, exception);
                 } catch(URISyntaxException e) {
-                    ctx.fail(500);
-                    return;
+                    exception = new HttpStatusException(302, loginRedirectURL, e.initCause(exception));
+                    logger.warn("Failed to decode login redirect url", exception);
                 }
             }
         }
