@@ -17,6 +17,7 @@ import { Injectable } from '@angular/core';
 import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { CertificateService } from "../services/certificate.service";
+import { AppConfig } from "../../config/app.config";
 
 @Injectable()
 export class CertificatesResolver implements Resolve<any> {
@@ -24,11 +25,14 @@ export class CertificatesResolver implements Resolve<any> {
   constructor(private certificateService: CertificateService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId')
+    let domainId = AppConfig.settings.authentication.domainId;
+    if (!state.url.startsWith('/settings')) {
+      domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
 
-    // try access domainId from higher levels
-    if (!domainId && route.parent.parent.parent) {
-      domainId = route.parent.parent.parent.paramMap.get('domainId');
+      // try access domainId from higher levels
+      if (!domainId && route.parent.parent.parent) {
+        domainId = route.parent.parent.parent.paramMap.get('domainId');
+      }
     }
     return this.certificateService.findByDomain(domainId);
   }
