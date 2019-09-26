@@ -220,6 +220,8 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(userApprovalSubmissionEndpoint)
                 .failureHandler(userApprovalFailureHandler)
                 .failureHandler(authorizeFailureEndpoint);
+        oauth2Router.route(HttpMethod.OPTIONS, "/token")
+                .handler(corsHandler);
         oauth2Router.route(HttpMethod.POST, "/token")
                 .handler(corsHandler)
                 .handler(tokenRequestParseHandler)
@@ -229,6 +231,8 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(clientAuthHandler)
                 .handler(introspectionEndpoint);
+        oauth2Router.route(HttpMethod.OPTIONS, "/revoke")
+                .handler(corsHandler);
         oauth2Router.route(HttpMethod.POST, "/revoke")
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(corsHandler)
