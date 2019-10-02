@@ -18,12 +18,14 @@ package io.gravitee.am.identityprovider.ldap.authentication;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.reactivex.observers.TestObserver;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.ldaptive.pool.ConnectionPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.zapodot.junit.ldap.EmbeddedLdapRule;
@@ -42,6 +44,12 @@ public abstract class LdapAuthenticationProviderTest {
     @Autowired
     protected AuthenticationProvider authenticationProvider;
 
+    @Autowired
+    private ConnectionPool bindConnectionPool;
+
+    @Autowired
+    private ConnectionPool searchConnectionPool;
+
     @Rule
     public EmbeddedLdapRule embeddedLdapRule = EmbeddedLdapRuleBuilder
             .newInstance()
@@ -50,6 +58,18 @@ public abstract class LdapAuthenticationProviderTest {
             .usingDomainDsn("dc=example,dc=org")
             .importingLdifs("test-server.ldif")
             .build();
+
+    @Before
+    public void init() {
+        bindConnectionPool.initialize();
+        searchConnectionPool.initialize();
+    }
+
+    @After
+    public void close() {
+        bindConnectionPool.close();
+        searchConnectionPool.close();
+    }
 
     @Test
     public void shouldLoadUserByUsername_authentication_badCredentials() throws Exception {
