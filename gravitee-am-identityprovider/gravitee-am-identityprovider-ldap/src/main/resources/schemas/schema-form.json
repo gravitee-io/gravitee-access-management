@@ -64,6 +64,20 @@
       "title": "Response timeout",
       "description": "Duration of time in milliseconds to wait for responses. (default 5000 ms)"
     },
+    "minPoolSize" : {
+      "type" : "integer",
+      "default": 5,
+      "minimum": 0,
+      "title": "Min pool size",
+      "description": "Minimum pool of connections to be initialized"
+    },
+    "maxPoolSize" : {
+      "type" : "integer",
+      "default": 15,
+      "minimum": 0,
+      "title": "Max pool size",
+      "description": "Maximum pool of connections can grow to"
+    },
     "passwordAlgorithm" : {
       "type" : "string",
       "title": "Password encoder algorithm",

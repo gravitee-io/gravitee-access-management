@@ -47,6 +47,10 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     private Long responseTimeout = 5000l;
 
+    private Integer minPoolSize = 5;
+
+    private Integer maxPoolSize = 15;
+
     private String passwordEncoding;
 
     private boolean hashEncodedByThirdParty;
@@ -137,6 +141,22 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     public void setResponseTimeout(Long responseTimeout) {
         this.responseTimeout = responseTimeout;
+    }
+
+    public Integer getMinPoolSize() {
+        return minPoolSize;
+    }
+
+    public void setMinPoolSize(Integer minPoolSize) {
+        this.minPoolSize = minPoolSize;
+    }
+
+    public Integer getMaxPoolSize() {
+        return maxPoolSize;
+    }
+
+    public void setMaxPoolSize(Integer maxPoolSize) {
+        this.maxPoolSize = maxPoolSize;
     }
 
     public String getPasswordAlgorithm() {

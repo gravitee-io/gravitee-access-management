@@ -19,9 +19,10 @@ import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.ldap.authentication.encoding.BinaryToTextEncoder;
 import io.gravitee.am.identityprovider.ldap.authentication.encoding.PasswordEncoder;
 import org.ldaptive.*;
-import org.ldaptive.auth.AbstractCompareAuthenticationHandler;
 import org.ldaptive.auth.AuthenticationCriteria;
 import org.ldaptive.auth.AuthenticationHandlerResponse;
+import org.ldaptive.auth.PooledCompareAuthenticationHandler;
+import org.ldaptive.pool.PooledConnectionFactory;
 
 import java.util.Arrays;
 
@@ -29,20 +30,19 @@ import java.util.Arrays;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CompareAuthenticationHandler extends AbstractCompareAuthenticationHandler implements ConnectionFactoryManager {
+public class CompareAuthenticationHandler extends PooledCompareAuthenticationHandler {
 
-    private ConnectionFactory factory;
     private PasswordEncoder passwordEncoder;
     private BinaryToTextEncoder binaryToTextEncoder;
     private LdapIdentityProviderConfiguration configuration;
 
     public CompareAuthenticationHandler() {}
 
-    public CompareAuthenticationHandler(final ConnectionFactory cf) {
-        setConnectionFactory(cf);
+    public CompareAuthenticationHandler(final PooledConnectionFactory cf) {
+        super(cf);
     }
 
-    public CompareAuthenticationHandler(ConnectionFactory connectionFactory, PasswordEncoder passwordEncoder, BinaryToTextEncoder binaryToTextEncoder, LdapIdentityProviderConfiguration configuration) {
+    public CompareAuthenticationHandler(PooledConnectionFactory connectionFactory, PasswordEncoder passwordEncoder, BinaryToTextEncoder binaryToTextEncoder, LdapIdentityProviderConfiguration configuration) {
         this(connectionFactory);
         this.passwordEncoder = passwordEncoder;
         this.binaryToTextEncoder = binaryToTextEncoder;
@@ -75,24 +75,6 @@ public class CompareAuthenticationHandler extends AbstractCompareAuthenticationH
                         compareResponse.getMessageId());
     }
 
-
-    @Override
-    public ConnectionFactory getConnectionFactory() {
-        return factory;
-    }
-
-    @Override
-    public void setConnectionFactory(ConnectionFactory cf) {
-        factory = cf;
-    }
-
-    @Override
-    protected Connection getConnection() throws LdapException {
-        final Connection conn = factory.getConnection();
-        conn.open();
-        return conn;
-    }
-
     @Override
     public String toString() {
         return
@@ -100,7 +82,7 @@ public class CompareAuthenticationHandler extends AbstractCompareAuthenticationH
                         "[%s@%d::factory=%s, passwordAttribute=%s, passwordScheme=%s, controls=%s]",
                         getClass().getName(),
                         hashCode(),
-                        factory,
+                        getConnectionFactory(),
                         getPasswordAttribute(),
                         passwordEncoder.getPasswordSchemeLabel(),
                         Arrays.toString(getAuthenticationControls()));

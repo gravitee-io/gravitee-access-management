@@ -27,12 +27,13 @@ import io.gravitee.am.identityprovider.ldap.authentication.spring.LdapAuthentica
 import io.gravitee.am.service.exception.authentication.BadCredentialsException;
 import io.gravitee.am.service.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.service.exception.authentication.UsernameNotFoundException;
+import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
 import org.ldaptive.*;
 import org.ldaptive.auth.AuthenticationRequest;
 import org.ldaptive.auth.AuthenticationResponse;
 import org.ldaptive.auth.Authenticator;
-import org.ldaptive.auth.SearchDnResolver;
+import org.ldaptive.pool.ConnectionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -41,7 +42,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 @Import(LdapAuthenticationProviderConfiguration.class)
-public class LdapAuthenticationProvider implements AuthenticationProvider, InitializingBean {
+public class LdapAuthenticationProvider extends AbstractService<AuthenticationProvider> implements AuthenticationProvider, InitializingBean {
 
     private final Logger LOGGER = LoggerFactory.getLogger(LdapAuthenticationProvider.class);
 
@@ -70,11 +70,13 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
     private Authenticator authenticator;
 
     @Autowired
-    private ConnectionFactory connectionFactory;
+    private ConnectionFactory searchConnectionFactory;
 
     @Autowired
-    @Qualifier("groupSearchExecutor")
-    private SearchExecutor groupSearchExecutor;
+    private ConnectionPool bindConnectionPool;
+
+    @Autowired
+    private ConnectionPool searchConnectionPool;
 
     @Autowired
     @Qualifier("userSearchExecutor")
@@ -98,76 +100,74 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
     }
 
     @Override
+    protected void doStart() throws Exception {
+        super.doStart();
+
+        LOGGER.info("Init LDAP {} connection pools", configuration.getContextSourceUrl());
+        if (bindConnectionPool != null) {
+            bindConnectionPool.initialize();
+        }
+        if (searchConnectionPool != null) {
+            searchConnectionPool.initialize();
+        }
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+
+        LOGGER.info("Close LDAP {} connection pools", configuration.getContextSourceUrl());
+        if (bindConnectionPool != null) {
+            bindConnectionPool.close();
+        }
+        if (searchConnectionPool != null) {
+            searchConnectionPool.close();
+        }
+    }
+
+    @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
-        Maybe<User> userSource = Maybe.create(emitter -> {
+        return Maybe.fromCallable(() -> {
             try {
                 String username = (String) authentication.getPrincipal();
                 String password = (String) authentication.getCredentials();
-                // authenticate user
-                // unable *={0} authentication filter (ldaptive use *={user})
-                ((SearchDnResolver) authenticator.getDnResolver()).setUserFilterParameters(Collections.singleton(username).toArray());
-                AuthenticationResponse response = authenticator.authenticate(
-                        new AuthenticationRequest(username, new Credential(password), ReturnAttributes.ALL_USER.value()));
+                // authenticate user and and fetch groups if exist
+                AuthenticationResponse response = authenticator.authenticate(new AuthenticationRequest(username, new Credential(password), ReturnAttributes.ALL_USER.value()));
                 if (response.getResult()) { // authentication succeeded
                     LdapEntry userEntry = response.getLdapEntry();
-                    // fetch user groups
-                    fetchUserGroups(userEntry);
-                    // return user
-                    emitter.onSuccess(createUser(userEntry));
+                    return userEntry;
                 } else { // authentication failed
                     LOGGER.debug("Failed to authenticate user", response.getMessage());
-                    emitter.onError(new BadCredentialsException(response.getMessage()));
+                    throw new BadCredentialsException(response.getMessage());
                 }
             } catch (LdapException e) {
                 LOGGER.error("An error occurs during LDAP authentication", e);
-                emitter.onError(new InternalAuthenticationServiceException(e.getMessage(), e));
+                throw new InternalAuthenticationServiceException(e.getMessage(), e);
             }
-        });
-
-        return userSource;
+        })
+        .map(this::createUser);
     }
 
     @Override
     public Maybe<User> loadUserByUsername(String username) {
-        Maybe<User> userSource = Maybe.create(emitter -> {
+        return Maybe.fromCallable(() -> {
             try {
                 // find user
-                userSearchExecutor.getSearchFilter().setParameter(0, username);
-                SearchResult userSearchResult = userSearchExecutor.search(connectionFactory).getResult();
+                SearchFilter searchFilter = createSearchFilter(userSearchExecutor, username);
+                SearchResult userSearchResult = userSearchExecutor.search(searchConnectionFactory, searchFilter).getResult();
                 LdapEntry userEntry = userSearchResult.getEntry();
                 if (userEntry != null) {
-                    // fetch user groups
-                    fetchUserGroups(userEntry);
-                    // return user
-                    emitter.onSuccess(createUser(userEntry));
+                    return userEntry;
                 } else { // failed to find user
-                    emitter.onError(new UsernameNotFoundException(username));
+                    throw new UsernameNotFoundException(username);
                 }
             } catch (LdapException e) {
                 LOGGER.error("An error occurs while searching for a LDAP user", e);
-                emitter.onError(new InternalAuthenticationServiceException(e.getMessage(), e));
+                throw new InternalAuthenticationServiceException(e.getMessage(), e);
             }
-        });
+        })
+        .map(this::createUser);
 
-        return userSource;
-    }
-
-    private void fetchUserGroups(LdapEntry userEntry) {
-        try {
-            groupSearchExecutor.getSearchFilter().setParameter(0, userEntry.getDn());
-            SearchResult searchResult = groupSearchExecutor.search(connectionFactory).getResult();
-            Collection<LdapEntry> groupEntries = searchResult.getEntries();
-            String[] groups = groupEntries.stream()
-                    .map(groupEntry -> groupEntry.getAttributes()
-                            .stream()
-                            .map(ldapAttribute -> ldapAttribute.getStringValue())
-                            .collect(Collectors.toList()))
-                    .flatMap(List::stream)
-                    .toArray(size -> new String[size]);
-            userEntry.addAttribute(new LdapAttribute(MEMBEROF_ATTRIBUTE, groups));
-        } catch (Exception e) {
-            LOGGER.warn("No group found for user {}", userEntry.getDn(), e);
-        }
     }
 
     private User createUser(LdapEntry ldapEntry) {
@@ -239,5 +239,22 @@ public class LdapAuthenticationProvider implements AuthenticationProvider, Initi
             });
         }
         return new ArrayList<>(roles);
+    }
+
+    /**
+     * Constructs a new search filter using {@link SearchExecutor} as a template and
+     * the username as a parameter.
+     *
+     * @param executor the executor
+     * @param username the username
+     * @return  Search filter with parameters applied.
+     */
+    private SearchFilter createSearchFilter(final SearchExecutor executor, final String username) {
+        final SearchFilter filter = new SearchFilter();
+        filter.setFilter(executor.getSearchFilter().getFilter());
+        filter.setParameter(0, username);
+
+        LOGGER.debug("Constructed LDAP search filter [{}]", filter.format());
+        return filter;
     }
 }
