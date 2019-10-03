@@ -78,7 +78,7 @@ export class ClientSettingsComponent implements OnInit {
 
   initMetadata() {
     if (this.client.metadata) {
-      _.forEach(this.client.metadata, (k, v) => {
+      _.forEach(this.client.metadata, (v, k) => {
         let metadata = {};
         metadata['id'] = Math.random().toString(36).substring(7);
         metadata['name'] = k;
