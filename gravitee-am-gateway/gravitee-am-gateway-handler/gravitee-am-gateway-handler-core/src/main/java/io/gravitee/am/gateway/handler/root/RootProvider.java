@@ -174,6 +174,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .failureHandler(loginCallbackFailureHandler);
         rootRouter.post("/login/callback")
                 .handler(loginCallbackParseHandler)
+                .handler(loginCallbackOpenIDConnectFlowHandler)
                 .handler(socialAuthHandler)
                 .handler(loginCallbackEndpoint)
                 .failureHandler(loginCallbackFailureHandler);
