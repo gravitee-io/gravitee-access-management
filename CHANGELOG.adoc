@@ -1,6 +1,24 @@
 # Change Log
 
-== https://github.com/gravitee-io/issues/issues/milestone/152?closed=1[AM - 2.9.0 (2019-09-18)]
+== https://github.com/gravitee-io/issues/milestone/166?closed=1[AM - 2.9.1 (2019-10-03)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Manage preflight requests for token and revoke endpoints https://github.com/gravitee-io/issues/issues/2679[#2679]
+- [Oidc] ID Token is not propagated anymore https://github.com/gravitee-io/issues/issues/2633[#2633]
+
+*_Management_*
+
+- Global admin "Domain [null] can not be found." https://github.com/gravitee-io/issues/issues/2677[#2677]
+
+*_Management-ui_*
+
+- Error updating client with metadata https://github.com/gravitee-io/issues/issues/2685[#2685]
+
+
+== https://github.com/gravitee-io/issues/milestone/152?closed=1[AM - 2.9.0 (2019-09-18)]
 
 === Bug fixes
 
@@ -33,7 +51,7 @@
 - Manage protocol within nginx https://github.com/gravitee-io/issues/issues/2560[#2560]
 
 
-== https://github.com/gravitee-io/issues/issues/milestone/162?closed=1[AM - 2.8.4 (2019-09-18)]
+== https://github.com/gravitee-io/issues/milestone/162?closed=1[AM - 2.8.4 (2019-09-18)]
 
 === Bug fixes
 
@@ -52,7 +70,7 @@
 - Remove technical error messages to avoid potential fraudulent access attempt https://github.com/gravitee-io/issues/issues/2614[#2614]
 
 
-== https://github.com/gravitee-io/issues/issues/milestone/160?closed=1[AM - 2.8.3 (2019-08-15)]
+== https://github.com/gravitee-io/issues/milestone/160?closed=1[AM - 2.8.3 (2019-08-15)]
 
 === Bug fixes
 
@@ -61,7 +79,7 @@
 - [Sync] all domains handle events for other domains https://github.com/gravitee-io/issues/issues/2532[#2532]
 
 
-== https://github.com/gravitee-io/issues/issues/milestone/157?closed=1[AM - 2.8.2 (2019-08-05)]
+== https://github.com/gravitee-io/issues/milestone/157?closed=1[AM - 2.8.2 (2019-08-05)]
 
 === Bug fixes
 
@@ -82,7 +100,7 @@
 - One hour Account Blocked Duration is not displayed https://github.com/gravitee-io/issues/issues/2493[#2493]
 
 
-== https://github.com/gravitee-io/issues/issues/milestone/151?closed=1[AM - 2.8.1 (2019-07-22)]
+== https://github.com/gravitee-io/issues/milestone/151?closed=1[AM - 2.8.1 (2019-07-22)]
 
 === Bug fixes
 
@@ -105,7 +123,7 @@
 - [dcr] Manage templating (UI/UX enhancements) https://github.com/gravitee-io/issues/issues/2454[#2454]
 
 
-== https://github.com/gravitee-io/issues/issues/milestone/144?closed=1[AM - 2.8.0 (2019-07-17)]
+== https://github.com/gravitee-io/issues/milestone/144?closed=1[AM - 2.8.0 (2019-07-17)]
 
 === Bug fixes
 
@@ -152,7 +170,7 @@
 - Add a warning message if JWT secret is the default one https://github.com/gravitee-io/issues/issues/2451[#2451]
 
 
-== https://github.com/gravitee-io/issues/issues/milestone/148?closed=1[AM - 2.7.1 (2019-06-27)]
+== https://github.com/gravitee-io/issues/milestone/148?closed=1[AM - 2.7.1 (2019-06-27)]
 
 === Bug fixes
 
@@ -162,7 +180,7 @@
 - Multiple Vertx instances https://github.com/gravitee-io/issues/issues/2410[#2410]
 
 
-== https://github.com/gravitee-io/issues/issues/milestone/134?closed=1[AM - 2.7.0 (2019-06-15)]
+== https://github.com/gravitee-io/issues/milestone/134?closed=1[AM - 2.7.0 (2019-06-15)]
 
 === Bug fixes
 
@@ -202,7 +220,7 @@
 - UI enhancements https://github.com/gravitee-io/issues/issues/2357[#2357]
 
 
-== https://github.com/gravitee-io/issues/issues/milestone/129?closed=1[AM - 2.6.0 (2019-05-24)]
+== https://github.com/gravitee-io/issues/milestone/129?closed=1[AM - 2.6.0 (2019-05-24)]
 
 === Bug fixes
 
@@ -239,7 +257,7 @@
 - [dcr] Manage id_token encryption https://github.com/gravitee-io/issues/issues/2174[#2174]
 
 
-== https://github.com/gravitee-io/issues/issues/milestone/122?closed=1[AM - 2.5.0 (2019-04-24)]
+== https://github.com/gravitee-io/issues/milestone/122?closed=1[AM - 2.5.0 (2019-04-24)]
 
 === Bug fixes
 
@@ -280,7 +298,7 @@
 - [dcr] One time Token https://github.com/gravitee-io/issues/issues/2133[#2133]
 
 
-== https://github.com/gravitee-io/issues/issues/milestone/111?closed=1[AM - 2.4.0 (2019-03-20)]
+== https://github.com/gravitee-io/issues/milestone/111?closed=1[AM - 2.4.0 (2019-03-20)]
 
 === Bug fixes
 
@@ -310,7 +328,7 @@
 - Add the prometheus configuration https://github.com/gravitee-io/issues/issues/2036[#2036]
 
 
-== https://github.com/gravitee-io/issues/issues/milestone/110?closed=1[AM - 2.3.0 (2019-02-25)]
+== https://github.com/gravitee-io/issues/milestone/110?closed=1[AM - 2.3.0 (2019-02-25)]
 
 === Bug fixes
 
@@ -366,7 +384,7 @@
 - [jwt] Check that the user identified by sub is existing https://github.com/gravitee-io/issues/issues/1900[#1900]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/25?closed=1[2.2.0 (2019-01-24)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/25?closed=1[2.2.0 (2019-01-24)]
 
 === Bug fixes
 
@@ -400,7 +418,7 @@
 - Set default "sub" claim for LDAP Provider if custom mapping is enable https://github.com/gravitee-io/graviteeio-access-management/issues/479[#479]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/26?closed=1[2.1.1 (2018-12-05)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/26?closed=1[2.1.1 (2018-12-05)]
 
 === Bug fixes
 
@@ -419,7 +437,7 @@
 - Do not reload the entire domain context for "inner" changes https://github.com/gravitee-io/graviteeio-access-management/issues/465[#465]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/23?closed=1[2.1.0 (2018-11-28)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/23?closed=1[2.1.0 (2018-11-28)]
 
 === Bug fixes
 
@@ -542,7 +560,7 @@
 - [mongodb] TLS support https://github.com/gravitee-io/graviteeio-access-management/issues/443[#443]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/24?closed=1[2.0.5 (2018-10-25)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/24?closed=1[2.0.5 (2018-10-25)]
 
 === Bug fixes
 
@@ -551,7 +569,7 @@
 - Unable to create extension grants with identity provider https://github.com/gravitee-io/graviteeio-access-management/issues/405[#405]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/22?closed=1[2.0.4 (2018-07-27)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/22?closed=1[2.0.4 (2018-07-27)]
 
 === Bug fixes
 
@@ -568,7 +586,7 @@
 - [ldap] set connection and response timeout https://github.com/gravitee-io/graviteeio-access-management/issues/291[#291]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/21?closed=1[2.0.3 (2018-07-25)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/21?closed=1[2.0.3 (2018-07-25)]
 
 === Bug fixes
 
@@ -582,7 +600,7 @@
 - Cookies clearing not working during logout process https://github.com/gravitee-io/graviteeio-access-management/issues/283[#283]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/20?closed=1[2.0.2 (2018-07-24)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/20?closed=1[2.0.2 (2018-07-24)]
 
 === Bug fixes
 
@@ -596,7 +614,7 @@
 - Unable enhance scopes option https://github.com/gravitee-io/graviteeio-access-management/issues/277[#277]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/19?closed=1[2.0.1 (2018-07-23)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/19?closed=1[2.0.1 (2018-07-23)]
 
 === Bug fixes
 
@@ -617,7 +635,7 @@
 - Rename session cookie name to avoid potential security leaks https://github.com/gravitee-io/graviteeio-access-management/issues/271[#271]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/14?closed=1[2.0.0 (2018-07-13)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/14?closed=1[2.0.0 (2018-07-13)]
 
 === Features
 
@@ -630,7 +648,7 @@
 - Externalize rest api https://github.com/gravitee-io/graviteeio-access-management/issues/204[#204]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/18?closed=1[1.6.4 (2018-06-25)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/18?closed=1[1.6.4 (2018-06-25)]
 
 === Bug fixes
 
@@ -639,7 +657,7 @@
 - Do not fetch all access and refresh token information for "count" analytics https://github.com/gravitee-io/graviteeio-access-management/issues/249[#249]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/17?closed=1[1.6.3 (2018-06-18)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/17?closed=1[1.6.3 (2018-06-18)]
 
 === Bug fixes
 
@@ -663,7 +681,7 @@
 - Enable SSL/HTTPS at gateway level https://github.com/gravitee-io/graviteeio-access-management/issues/247[#247]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/16?closed=1[1.6.2 (2018-02-16)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/16?closed=1[1.6.2 (2018-02-16)]
 
 === Bug fixes
 
@@ -672,7 +690,7 @@
 - Enhance scopes are missing https://github.com/gravitee-io/graviteeio-access-management/issues/229[#229]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/15?closed=1[1.6.1 (2018-02-14)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/15?closed=1[1.6.1 (2018-02-14)]
 
 === Bug fixes
 
@@ -687,7 +705,7 @@
 - Update InitializeUpgrader to be consistent with the new scopes management system https://github.com/gravitee-io/graviteeio-access-management/issues/227[#227]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/13?closed=1[1.6.0 (2018-02-14)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/13?closed=1[1.6.0 (2018-02-14)]
 
 === Bug fixes
 
@@ -726,7 +744,7 @@
 - Add stepper for providers/certificates/extension grants creation components https://github.com/gravitee-io/graviteeio-access-management/issues/220[#220]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/11?closed=1[1.5.3 (2018-01-12)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/11?closed=1[1.5.3 (2018-01-12)]
 
 === Bug fixes
 
@@ -741,7 +759,7 @@
 - Extension grants allow to save user in database https://github.com/gravitee-io/graviteeio-access-management/issues/184[#184]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/12?closed=1[1.5.2 (2017-12-20)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/12?closed=1[1.5.2 (2017-12-20)]
 
 === Improvements
 
@@ -750,7 +768,7 @@
 - Allow to configure nginx port https://github.com/gravitee-io/graviteeio-access-management/issues/179[#179]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/10?closed=1[1.5.1 (2017-11-14)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/10?closed=1[1.5.1 (2017-11-14)]
 
 === Bug fixes
 
@@ -763,7 +781,7 @@
 - Fix token generation since extension grants feature https://github.com/gravitee-io/graviteeio-access-management/issues/175[#175]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/8?closed=1[1.5.0 (2017-11-13)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/8?closed=1[1.5.0 (2017-11-13)]
 
 === Features
 
@@ -772,7 +790,7 @@
 - Add possibility to generate access token per request https://github.com/gravitee-io/graviteeio-access-management/issues/169[#169]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/9?closed=1[1.4.2 (2017-10-09)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/9?closed=1[1.4.2 (2017-10-09)]
 
 === Bug fixes
 
@@ -781,7 +799,7 @@
 - Set default user for refresh token grant type https://github.com/gravitee-io/graviteeio-access-management/issues/167[#167]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/6?closed=1[1.4.0 (2017-09-05)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/6?closed=1[1.4.0 (2017-09-05)]
 
 === Bug fixes
 
@@ -820,7 +838,7 @@
 - Upgrade dependencies https://github.com/gravitee-io/graviteeio-access-management/issues/126[#126]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/7?closed=1[1.3.1 (2017-08-17)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/7?closed=1[1.3.1 (2017-08-17)]
 
 === Bug fixes
 
@@ -849,7 +867,7 @@
 - New design for administration screens https://github.com/gravitee-io/graviteeio-access-management/issues/141[#141]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/4?closed=1[1.3.0 (2017-07-12)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/4?closed=1[1.3.0 (2017-07-12)]
 
 === Features
 
@@ -858,7 +876,7 @@
 - Role management https://github.com/gravitee-io/graviteeio-access-management/issues/116[#116]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/5?closed=1[1.2.1 (2017-06-22)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/5?closed=1[1.2.1 (2017-06-22)]
 
 === Bug fixes
 
@@ -874,7 +892,7 @@
 - Refresh token is null at second call https://github.com/gravitee-io/graviteeio-access-management/issues/107[#107]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/3?closed=1[1.2.0 (2017-06-19)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/3?closed=1[1.2.0 (2017-06-19)]
 
 === Bug fixes
 
@@ -913,7 +931,7 @@
 - Remove default openid scope registered with the client https://github.com/gravitee-io/graviteeio-access-management/issues/92[#92]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/2?closed=1[1.1.0 (2017-05-29)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/2?closed=1[1.1.0 (2017-05-29)]
 
 === Bug fixes
 
@@ -928,7 +946,7 @@
 -  add mongodb repository configuration https://github.com/gravitee-io/graviteeio-access-management/issues/73[#73]
 
 
-== https://github.com/gravitee-io/graviteeio-access-management/issues/milestone/1?closed=1[1.0.0 (2017-05-15)]
+== https://github.com/gravitee-io/graviteeio-access-management/milestone/1?closed=1[1.0.0 (2017-05-15)]
 
 === Bug fixes
 
