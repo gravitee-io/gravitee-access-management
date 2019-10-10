@@ -40,7 +40,6 @@ export class ExtensionGrantService {
     return this.http.put<any>(this.extensionGrantsUrl + domainId + "/extensionGrants/" + id, {
       'name' : tokenGranter.name,
       'configuration' : tokenGranter.configuration,
-      'grantType': tokenGranter.grantType,
       'identityProvider': tokenGranter.identityProvider,
       'createUser': tokenGranter.createUser,
       'userExists': tokenGranter.userExists

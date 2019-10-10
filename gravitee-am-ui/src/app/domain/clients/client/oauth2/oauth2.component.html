@@ -48,15 +48,15 @@
                           name="grantTypes"
                           value="{{grantType.value}}"
                           [checked]="grantType.checked"
-                          (change)="selectedGrantType($event)">
+                          (change)="selectGrantType($event)">
               {{grantType.name}}
             </mat-checkbox>
-            <mat-checkbox *ngFor="let extensionGrant of customGrantTypes"
+            <mat-checkbox class="type-selection" *ngFor="let extensionGrant of customGrantTypes"
                           name="customGrantTypes"
                           value="{{extensionGrant.value}}"
                           [checked]="extensionGrant.checked"
-                          (change)="selectedCustomGrantType($event)">
-              <span style="text-transform: uppercase;">{{extensionGrant.name}}</span>
+                          (change)="selectCustomGrantType($event)" [disabled]="customGrantTypeIsDisabled(extensionGrant)">
+              <span style="text-transform: uppercase;" [matTooltip]="customGrantTypeIsDisabled(extensionGrant) ? 'Only one '+ extensionGrant.grantType + ' is allowed' : null">{{extensionGrant.name}}</span>
             </mat-checkbox>
           </section>
           <section class="type-section">
@@ -66,7 +66,7 @@
                           name="responseTypes"
                           value="{{responseType.value}}"
                           [checked]="responseType.checked"
-                          (change)="selectedResponseType($event)">
+                          (change)="selectResponseType($event)">
               {{responseType.value | uppercase}}
             </mat-checkbox>
           </section>

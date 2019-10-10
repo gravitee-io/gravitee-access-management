@@ -30,5 +30,5 @@ public interface ExtensionGrantRepository extends CrudRepository<ExtensionGrant,
 
     Single<Set<ExtensionGrant>> findByDomain(String domain);
 
-    Maybe<ExtensionGrant> findByDomainAndGrantType(String domain, String grantType);
+    Maybe<ExtensionGrant> findByDomainAndName(String domain, String name);
 }

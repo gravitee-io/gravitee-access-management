@@ -33,6 +33,7 @@ import static io.gravitee.am.common.oidc.ResponseType.*;
  */
 public class GrantTypeUtils {
 
+    private static final String EXTENSION_GRANT_SEPARATOR = "~";
     private static final Set<String> SUPPORTED_GRANT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             AUTHORIZATION_CODE, IMPLICIT, REFRESH_TOKEN, CLIENT_CREDENTIALS, PASSWORD, JWT_BEARER//, DEVIDE_CODE, SAML2_BEARER
     )));
@@ -57,7 +58,10 @@ public class GrantTypeUtils {
             return Single.just(client);
         }
 
-        if(!isSupportedGrantType(client.getAuthorizedGrantTypes())) {
+        // Each security domain can have multiple extension grant with the same grant_type
+        // we must split the client authorized grant types to get the real grant_type value
+        List<String> formattedClientGrantTypes = client.getAuthorizedGrantTypes().stream().map(str -> str.split(EXTENSION_GRANT_SEPARATOR)[0]).collect(Collectors.toList());
+        if(!isSupportedGrantType(formattedClientGrantTypes)) {
             return Single.error(new InvalidClientMetadataException("Missing or invalid grant type."));
         }
 
@@ -70,7 +74,7 @@ public class GrantTypeUtils {
             //Hybrid is not managed yet and AM does not support refresh token for client_credentials for now...
             List<String> allowedRefreshTokenGrant = Arrays.asList(AUTHORIZATION_CODE, PASSWORD, JWT_BEARER);//, CLIENT_CREDENTIALS, HYBRID);
             //return true if there is no element in common
-            if(Collections.disjoint(client.getAuthorizedGrantTypes(), allowedRefreshTokenGrant)) {
+            if(Collections.disjoint(formattedClientGrantTypes, allowedRefreshTokenGrant)) {
                 return Single.error(new InvalidClientMetadataException(
                         REFRESH_TOKEN+" grant type must be associated with one of "+String.join(", ",allowedRefreshTokenGrant)
                 ));

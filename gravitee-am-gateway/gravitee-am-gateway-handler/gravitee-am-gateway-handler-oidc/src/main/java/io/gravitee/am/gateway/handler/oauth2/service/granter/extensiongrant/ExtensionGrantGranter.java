@@ -21,6 +21,7 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
@@ -32,9 +33,12 @@ import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
+import io.reactivex.Single;
 import io.reactivex.functions.Function;
 
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,10 +50,12 @@ import java.util.Map;
  */
 public class ExtensionGrantGranter extends AbstractTokenGranter {
 
+    private static final String EXTENSION_GRANT_SEPARATOR = "~";
     private final ExtensionGrantProvider extensionGrantProvider;
     private final ExtensionGrant extensionGrant;
     private final UserAuthenticationManager userAuthenticationManager;
     private final IdentityProviderManager identityProviderManager;
+    private Date minDate;
 
     public ExtensionGrantGranter(ExtensionGrantProvider extensionGrantProvider,
                                  ExtensionGrant extensionGrant,
@@ -65,6 +71,20 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         this.extensionGrant = extensionGrant;
         this.userAuthenticationManager = userAuthenticationManager;
         this.identityProviderManager = identityProviderManager;
+    }
+
+    @Override
+    public boolean handle(String grantType, Client client) {
+        return super.handle(grantType, client) && canHandle(client);
+    }
+
+    @Override
+    protected Single<TokenRequest> parseRequest(TokenRequest tokenRequest, Client client) {
+        // Is client allowed to use such grant type ?
+        if (!canHandle(client)) {
+            throw new UnauthorizedClientException("Unauthorized grant type: " + extensionGrant.getGrantType());
+        }
+        return Single.just(tokenRequest);
     }
 
     @Override
@@ -118,6 +138,10 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                 });
     }
 
+    public void setMinDate(Date minDate) {
+        this.minDate = minDate;
+    }
+
     private io.gravitee.am.repository.oauth2.model.request.TokenRequest convert(TokenRequest _tokenRequest) {
         io.gravitee.am.repository.oauth2.model.request.TokenRequest tokenRequest = new io.gravitee.am.repository.oauth2.model.request.TokenRequest();
         tokenRequest.setClientId(_tokenRequest.getClientId());
@@ -126,5 +150,12 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         tokenRequest.setRequestParameters(_tokenRequest.parameters().toSingleValueMap());
 
         return tokenRequest;
+    }
+
+    private boolean canHandle(Client client) {
+        final List<String> authorizedGrantTypes = client.getAuthorizedGrantTypes();
+        return authorizedGrantTypes != null && !authorizedGrantTypes.isEmpty()
+                && ( authorizedGrantTypes.contains(extensionGrant.getGrantType() + EXTENSION_GRANT_SEPARATOR + extensionGrant.getId())
+                    || authorizedGrantTypes.contains(extensionGrant.getGrantType()) && extensionGrant.getCreatedAt().equals(minDate));
     }
 }
