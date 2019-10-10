@@ -29,8 +29,8 @@
         <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="extensionGrant.name" required>
       </mat-form-field>
       <mat-form-field>
-        <input matInput type="text" placeholder="Grant type" name="grantType" [(ngModel)]="extensionGrant.grantType" [pattern]="rfc3986_absolute_URI" required>
-        <mat-hint align="end">Must be a unique absolute URI.. OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type" parameter of the token endpoint.</mat-hint>
+        <input matInput type="text" placeholder="Grant type" name="grantType" [(ngModel)]="extensionGrant.grantType" [pattern]="rfc3986_absolute_URI" required disabled>
+        <mat-hint align="end">OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type" parameter of the token endpoint.</mat-hint>
       </mat-form-field>
 
       <h4 style="margin: 10px 0 10px 0;">User creation</h4>

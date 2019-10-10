@@ -51,7 +51,7 @@ public class AbstractTokenGranter implements TokenGranter {
     }
 
     @Override
-    public boolean handle(String grantType) {
+    public boolean handle(String grantType, Client client) {
         return this.grantType.equals(grantType);
     }
 

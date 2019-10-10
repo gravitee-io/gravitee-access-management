@@ -36,7 +36,7 @@ public class ExtensionGrantAlreadyExistsException extends AbstractManagementExce
 
     @Override
     public String getMessage() {
-        return "A extension grant with grantType : " + grantType + " already exists";
+        return "A extension grant with name : " + grantType + " already exists";
     }
 }
 

@@ -41,8 +41,8 @@ public class ExtensionGrantRepositoryProxy extends AbstractProxy<ExtensionGrantR
     }
 
     @Override
-    public Maybe<ExtensionGrant> findByDomainAndGrantType(String domain, String grantType) {
-        return target.findByDomainAndGrantType(domain, grantType);
+    public Maybe<ExtensionGrant> findByDomainAndName(String domain, String name) {
+        return target.findByDomainAndName(domain, name);
     }
 
     @Override
