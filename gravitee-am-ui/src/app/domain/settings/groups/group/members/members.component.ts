@@ -180,7 +180,7 @@ export class AddMemberComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,
               public dialogRef: MatDialogRef<AddMemberComponent>,
               private userService: UserService) {
-    this.groupMembers = data.groupMembers;
+    this.groupMembers = data.groupMembers || [];
     this.memberCtrl.valueChanges
       .subscribe(searchTerm => {
         if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
