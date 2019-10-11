@@ -2,28 +2,32 @@
 #                              CUSTOM FUNCTION
 # -----------------------------------------------------------------------------
 define prepare
+	echo "preparing working $(1) directory version $(2) \n"
 	mkdir -p .working/$(1)
-	cp gravitee-am-$(1)/gravitee-am-$(1)-standalone/gravitee-am-$(1)-standalone-distribution/gravitee-am-$(1)-standalone-distribution-zip/target/gravitee-am-$(1)-standalone-$(GIO_AM_VERSION).zip .working/$(1)
+	cp gravitee-am-$(1)/gravitee-am-$(1)-standalone/gravitee-am-$(1)-standalone-distribution/gravitee-am-$(1)-standalone-distribution-zip/target/gravitee-am-$(1)-standalone-$(2).zip .working/$(1)
 	cp docker/$(1)/Dockerfile-dev .working/$(1)/Dockerfile
-	unzip -uj .working/$(1)/gravitee-am-$(1)-standalone-$(GIO_AM_VERSION).zip '*/plugins/*' -d .working/$(1)/plugins
-	unzip -uj .working/$(1)/gravitee-am-$(1)-standalone-$(GIO_AM_VERSION).zip '*/config/*' -d .working/$(1)/config
+	unzip -uj .working/$(1)/gravitee-am-$(1)-standalone-$(2).zip '*/plugins/*' -d .working/$(1)/plugins
+	unzip -uj .working/$(1)/gravitee-am-$(1)-standalone-$(2).zip '*/config/*' -d .working/$(1)/config
 	sed -i.bkp 's/<appender-ref ref=\"async-file\" \/>/<appender-ref ref=\"async-console\" \/>/' .working/$(1)/config/logback.xml
 	sed -i.bkp 's/<appender-ref ref=\"FILE\" \/>/<appender-ref ref=\"STDOUT\" \/>/' .working/$(1)/config/logback.xml
+	echo "$(1) working directory preparation is done.\n"
 endef
 
 define addDefaultIssuer
+	echo "adding default issuer $(2) to $(1) version $(3) \n"
 	echo "" >> .working/$(1)/config/gravitee.yml
 	echo "" >> .working/$(1)/config/gravitee.yml
 	echo "#Openid settings, override default issuer" >> .working/$(1)/config/gravitee.yml
 	echo "oidc:" >> .working/$(1)/config/gravitee.yml
 	echo "  iss:$(2)" >> .working/$(1)/config/gravitee.yml
-	unzip .working/$(1)/gravitee-am-$(1)-standalone-$(GIO_AM_VERSION).zip -d .working/$(1)
-	cp .working/$(1)/config/gravitee.yml .working/$(1)/gravitee-am-$(1)-standalone-$(GIO_AM_VERSION)/config/gravitee.yml
-	cd .working/$(1) && zip -u gravitee-am-$(1)-standalone-$(GIO_AM_VERSION).zip ./gravitee-am-$(1)-standalone-$(GIO_AM_VERSION)/config/gravitee.yml
-	rm -rf .working/$(1)/gravitee-am-$(1)-standalone-$(GIO_AM_VERSION)
+	unzip .working/$(1)/gravitee-am-$(1)-standalone-$(3).zip -d .working/$(1)
+	cp .working/$(1)/config/gravitee.yml .working/$(1)/gravitee-am-$(1)-standalone-$(3)/config/gravitee.yml
+	cd .working/$(1) && zip -u gravitee-am-$(1)-standalone-$(3).zip ./gravitee-am-$(1)-standalone-$(3)/config/gravitee.yml
+	rm -rf .working/$(1)/gravitee-am-$(1)-standalone-$(3)
 endef
 
 define addNetworkToCompose
+	echo "adding network $(1) to docker compose file"
 	echo "" >> $(1)
 	echo "" >> $(1)
 	echo "networks:" >> $(1)
@@ -51,14 +55,14 @@ define generateCertificate
         -keystore server3072.jks \
         -storepass letmein
 	&& keytool -genkeypair \
-         -alias my4096key \
-         -keyalg RSA \
-         -keysize 4096 \
-         -sigalg SHA512withRSA \
-         -dname "CN=Web Server,OU=Unit,O=Organization,L=City,S=State,C=US" \
-         -keypass changeme \
-         -keystore server4096.jks \
-         -storepass letmein
+        -alias my4096key \
+        -keyalg RSA \
+        -keysize 4096 \
+        -sigalg SHA512withRSA \
+        -dname "CN=Web Server,OU=Unit,O=Organization,L=City,S=State,C=US" \
+        -keypass changeme \
+        -keystore server4096.jks \
+        -storepass letmein
 endef
 
 define clone
@@ -93,8 +97,16 @@ help: ## Print this message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(makefile) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 gravitee: ## Stop and delete containers if exists, then install and run new ones
+ifneq ($(wildcard .working/compose),)
+	@echo "Stoping gravitee and cleaning containers and images"
 	@make stop
 	@make prune
+else
+	@echo "No previous gravitee .working/compose dir, no docker content to delete..."
+	@echo "Deleting working dir"
+	rm -rf .working
+endif
+	@make version
 	@make install
 	@make run
 
@@ -110,18 +122,19 @@ clean: # remove .working directory
 version: # Get version and save it into a file
 	@mkdir -p .working
 	@rm -f .working/.version
-	@echo "$(shell mvn -o org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version 2> /dev/null | grep -v '\[')" > .working/.version
+	@echo "$(shell mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version 2> /dev/null | grep '^[0-9]\+\.[0-9]\+\.[0-9]\+.*')" > .working/.version
 
 install: clean ## Compile, test, package then Set up working folder, you can skip test by doing : make OPTIONS=-DskipTests install
 ifeq ($(GIO_AM_VERSION),)
+	@echo "Current build version is : $(GIO_AM_VERSION)"
 	@echo "no version found, retrieving current maven version"
 	@make version
 	@make install
 else
 	@echo "Current build version is : $(GIO_AM_VERSION)"
 	@mvn clean install -pl '!gravitee-am-ui' $(OPTIONS)
-	@$(foreach project,gateway management-api, $(call prepare,$(project));)
-	@$(call addDefaultIssuer,gateway, "http://gateway:8092/dcr/oidc");
+	@$(foreach project,gateway management-api, $(call prepare,$(project),$(GIO_AM_VERSION)))
+	@$(call addDefaultIssuer,gateway, "http://gateway:8092/dcr/oidc",$(GIO_AM_VERSION))
 endif
 
 build: # Build docker images (require install to be run before)
@@ -138,16 +151,26 @@ network: # Create and add an external network to gravitee access management dock
 	@$(call addNetworkToCompose, ".working/compose/docker-compose.yml",${GIO_AM_NETWORK});
 	@docker network inspect $(GIO_AM_NETWORK) &>/dev/null || docker network create --driver bridge $(GIO_AM_NETWORK)
 
-run: build env network start ## Create .env and network then start gravitee access management
+run: build env network ## Create .env and network then start gravitee access management
+	@cd .working/compose; docker-compose up -d gateway management
+	@echo "To start and stop, use \"make stop; make start\" command"
 
 start: ## Start gravitee Access Management containers
-	@cd .working/compose; docker-compose up -d gateway management
+ifneq ($(wildcard .working/compose),)
+	@cd .working/compose; docker-compose start mongodb gateway management
+else
+	@echo "Please use \"make run\" for the first time."
+endif
 
 stop: ## Stop gravitee Access Management running containers
+ifneq ($(wildcard .working/compose),)
 	@cd .working/compose; docker-compose stop || true
+endif
 
 status: ## See Access Management containers status
+ifneq ($(wildcard .working/compose),)
 	@cd .working/compose; docker-compose ps
+endif
 
 connectMongo: ## Connect to mongo repository on gravitee-am database
 	@docker exec -ti gio_am_mongodb mongo gravitee-am
@@ -190,12 +213,16 @@ deleteData: # remove mongodb data
 	@rm -rf .working/compose/data/am-mongodb
 
 deleteContainer: # delete image
+ifneq ($(wildcard .working/compose),)
 	@$(shell docker-compose -f .working/compose/docker-compose.yml down &>/dev/null || true)
 	@$(shell docker-compose -f .working/oidctest/docker/docker-compose.yml down &>/dev/null || true)
+endif
 
 deleteImage: # delete image
+ifneq ($(GIO_AM_VERSION),)
 	@docker rmi -f $(GIO_AM_GATEWAY_IMAGE):$(GIO_AM_VERSION) || true
 	@docker rmi -f $(GIO_AM_MANAGEMENT_API_IMAGE):$(GIO_AM_VERSION) || true
+endif
 
 deleteNetwork: # delete network
 	@$(shell docker network rm $(GIO_AM_NETWORK) &>/dev/null || true)
