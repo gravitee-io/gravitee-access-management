@@ -35,6 +35,7 @@
     <properties>
         <json-schema-generator-maven-plugin.version>1.3.0</json-schema-generator-maven-plugin.version>
         <json-schema-generator-maven-plugin.outputDirectory>${project.build.directory}/schemas</json-schema-generator-maven-plugin.outputDirectory>
+        <ldaptive.version>1.2.4</ldaptive.version>
     </properties>
 
     <dependencies>
@@ -57,7 +58,13 @@
         <dependency>
             <groupId>org.ldaptive</groupId>
             <artifactId>ldaptive</artifactId>
-            <version>1.2.3</version>
+            <version>${ldaptive.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.ldaptive</groupId>
+            <artifactId>ldaptive-unboundid</artifactId>
+            <version>${ldaptive.version}</version>
         </dependency>
 
         <!-- Unit tests -->

@@ -17,14 +17,13 @@ package io.gravitee.am.identityprovider.ldap.authentication.spring;
 
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.ldap.authentication.CompareAuthenticationHandler;
+import io.gravitee.am.identityprovider.ldap.authentication.GroupSearchEntryHandler;
 import io.gravitee.am.identityprovider.ldap.authentication.encoding.*;
 import org.ldaptive.*;
-import org.ldaptive.auth.AbstractAuthenticationHandler;
-import org.ldaptive.auth.Authenticator;
-import org.ldaptive.auth.BindAuthenticationHandler;
-import org.ldaptive.auth.SearchDnResolver;
-import org.ldaptive.auth.ext.PasswordPolicyAuthenticationResponseHandler;
-import org.ldaptive.control.PasswordPolicyControl;
+import org.ldaptive.auth.*;
+import org.ldaptive.handler.SearchEntryHandler;
+import org.ldaptive.pool.*;
+import org.ldaptive.provider.unboundid.UnboundIDProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,9 +44,66 @@ public class LdapAuthenticationProviderConfiguration {
     @Autowired
     private LdapIdentityProviderConfiguration configuration;
 
+    /**
+     * Bind OPERATIONS configuration
+     * We must split the connections for search and bind operations because bind operation change the connection context to the last user authenticated
+     * If the user has no role to search in the LDAP/AD directory the authentication will failed for the next users
+     */
+
     @Bean
-    public ConnectionFactory connectionFactory() {
-        return new DefaultConnectionFactory(connectionConfig());
+    public ConnectionPool bindConnectionPool() {
+        PoolConfig poolConfig = new PoolConfig();
+        poolConfig.setMinPoolSize(configuration.getMinPoolSize());
+        poolConfig.setMaxPoolSize(configuration.getMaxPoolSize());
+        poolConfig.setValidatePeriodically(true);
+        BlockingConnectionPool connectionPool = new BlockingConnectionPool(poolConfig, (DefaultConnectionFactory) bindConnectionFactory());
+        connectionPool.setValidator(new SearchValidator());
+        return connectionPool;
+    }
+
+    @Bean
+    public PooledConnectionFactory bindPooledConnectionFactory() {
+        return new PooledConnectionFactory(bindConnectionPool());
+    }
+
+    @Bean
+    public ConnectionFactory bindConnectionFactory() {
+        UnboundIDProvider unboundIDProvider = new UnboundIDProvider();
+        DefaultConnectionFactory connectionFactory = new DefaultConnectionFactory();
+        connectionFactory.setConnectionConfig(connectionConfig());
+        connectionFactory.setProvider(unboundIDProvider);
+        return connectionFactory;
+    }
+
+    /**
+     * Search OPERATIONS configuration
+     * We must split the connections for search and bind operations because bind operation change the connection context to the last user authenticated
+     * If the user has no role to search in the LDAP/AD directory the authentication will failed for the next users
+     */
+
+    @Bean
+    public ConnectionPool searchConnectionPool() {
+        PoolConfig poolConfig = new PoolConfig();
+        poolConfig.setMinPoolSize(configuration.getMinPoolSize());
+        poolConfig.setMaxPoolSize(configuration.getMaxPoolSize());
+        poolConfig.setValidatePeriodically(true);
+        BlockingConnectionPool connectionPool = new BlockingConnectionPool(poolConfig, (DefaultConnectionFactory) searchConnectionFactory());
+        connectionPool.setValidator(new SearchValidator());
+        return connectionPool;
+    }
+
+    @Bean
+    public PooledConnectionFactory searchPooledConnectionFactory() {
+        return new PooledConnectionFactory(searchConnectionPool());
+    }
+
+    @Bean
+    public ConnectionFactory searchConnectionFactory() {
+        UnboundIDProvider unboundIDProvider = new UnboundIDProvider();
+        DefaultConnectionFactory connectionFactory = new DefaultConnectionFactory();
+        connectionFactory.setConnectionConfig(connectionConfig());
+        connectionFactory.setProvider(unboundIDProvider);
+        return connectionFactory;
     }
 
     @Bean
@@ -71,38 +127,34 @@ public class LdapAuthenticationProviderConfiguration {
             searchExecutor.setBaseDn(userSearchBase + LDAP_SEPARATOR + searchExecutor.getBaseDn());
         }
         searchExecutor.setSearchFilter(new SearchFilter(configuration.getUserSearchFilter()));
-        return searchExecutor;
-    }
-
-    @Bean("groupSearchExecutor")
-    public SearchExecutor groupSearchExecutor() {
-        SearchExecutor searchExecutor = new SearchExecutor();
-        searchExecutor.setBaseDn(configuration.getContextSourceBase());
-        String groupSearchBase = configuration.getGroupSearchBase();
-        if (groupSearchBase != null && !groupSearchBase.isEmpty()) {
-            searchExecutor.setBaseDn(groupSearchBase + LDAP_SEPARATOR + searchExecutor.getBaseDn());
-        }
-        searchExecutor.setSearchFilter(new SearchFilter(configuration.getGroupSearchFilter()));
-        searchExecutor.setReturnAttributes(new String[] { configuration.getGroupRoleAttribute() });
-        searchExecutor.setSearchScope(SearchScope.SUBTREE);
+        searchExecutor.setSearchEntryHandlers(groupSearchEntryHandler());
         return searchExecutor;
     }
 
     @Bean
     public Authenticator authenticator() {
-        SearchDnResolver dnResolver = new SearchDnResolver(connectionFactory());
+        PooledSearchDnResolver dnResolver = new PooledSearchDnResolver(searchPooledConnectionFactory());
+        String userSearchBase = configuration.getUserSearchBase();
         dnResolver.setBaseDn(configuration.getContextSourceBase());
-        dnResolver.setUserFilter(configuration.getUserSearchFilter());
+        if (userSearchBase != null && !userSearchBase.isEmpty()) {
+            dnResolver.setBaseDn(userSearchBase + LDAP_SEPARATOR + dnResolver.getBaseDn());
+        }
+        // unable *={0} authentication filter (ldaptive use *={user})
+        dnResolver.setUserFilter(configuration.getUserSearchFilter().replaceAll("\\{0\\}", "{user}"));
         dnResolver.setSubtreeSearch(true);
+        dnResolver.setAllowMultipleDns(false);
 
         AbstractAuthenticationHandler authHandler =
                 (configuration.getPasswordAlgorithm() == null)
-                        ? new BindAuthenticationHandler(connectionFactory())
-                        : new CompareAuthenticationHandler(connectionFactory(), passwordEncoder(configuration.getPasswordAlgorithm()), binaryToTextEncoder(), configuration);
+                        ? new PooledBindAuthenticationHandler(bindPooledConnectionFactory())
+                        : new CompareAuthenticationHandler(searchPooledConnectionFactory(), passwordEncoder(configuration.getPasswordAlgorithm()), binaryToTextEncoder(), configuration);
 
-        authHandler.setAuthenticationControls(new PasswordPolicyControl());
+
+        PooledSearchEntryResolver pooledSearchEntryResolver = new PooledSearchEntryResolver(searchPooledConnectionFactory());
+        pooledSearchEntryResolver.setSearchEntryHandlers(groupSearchEntryHandler());
+
         Authenticator auth = new Authenticator(dnResolver, authHandler);
-        auth.setAuthenticationResponseHandlers(new PasswordPolicyAuthenticationResponseHandler());
+        auth.setEntryResolver(pooledSearchEntryResolver);
         return auth;
     }
 
@@ -117,6 +169,21 @@ public class LdapAuthenticationProviderConfiguration {
             }
         }
         return new NoneEncoder();
+    }
+
+    private SearchEntryHandler groupSearchEntryHandler() {
+        GroupSearchEntryHandler groupSearchEntryHandler = new GroupSearchEntryHandler();
+        String groupSearchBase = configuration.getGroupSearchBase();
+        if (groupSearchBase != null && !groupSearchBase.isEmpty()) {
+            groupSearchEntryHandler.setBaseDn(groupSearchBase + LDAP_SEPARATOR + configuration.getContextSourceBase());
+        } else {
+            groupSearchEntryHandler.setBaseDn(configuration.getContextSourceBase());
+        }
+        groupSearchEntryHandler.setSearchFilter(configuration.getGroupSearchFilter());
+        groupSearchEntryHandler.setReturnAttributes(new String[] { configuration.getGroupRoleAttribute() });
+        groupSearchEntryHandler.setSearchScope(SearchScope.SUBTREE);
+
+        return groupSearchEntryHandler;
     }
 
     private PasswordEncoder passwordEncoder(String passwordAlgorithm) {
