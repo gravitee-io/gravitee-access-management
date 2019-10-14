@@ -32,7 +32,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.Comparator;
 
@@ -44,6 +46,9 @@ public class GroupMembersResource {
 
     private static final int MAX_MEMBERS_SIZE_PER_PAGE = 30;
     private static final String MAX_MEMBERS_SIZE_PER_PAGE_STRING = "30";
+
+    @Context
+    private ResourceContext resourceContext;
 
     @Autowired
     private GroupService groupService;
@@ -94,6 +99,10 @@ public class GroupMembersResource {
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
+    }
 
+    @Path("{member}")
+    public GroupMemberResource groupMemberResource() {
+        return resourceContext.getResource(GroupMemberResource.class);
     }
 }
