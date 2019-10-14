@@ -17,7 +17,6 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.model.UpdateDomain;
@@ -46,8 +45,6 @@ public interface DomainService {
     Single<Domain> update(String domainId, UpdateDomain domain, User principal);
 
     Single<Domain> update(String domainId, Domain domain);
-
-    Single<Domain> reload(String domainId, Event event);
 
     Single<Domain> patch(String domainId, PatchDomain domain, User principal);
 

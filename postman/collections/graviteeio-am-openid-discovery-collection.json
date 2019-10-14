@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "5b17e63c-fa8c-474e-9d80-a702ec068d5f",
+		"_postman_id": "db598bf2-10b4-4cdc-943b-200dc99d0c17",
 		"name": "Gravitee.io - AM - Openid Discovery",
 		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -187,7 +187,7 @@
 								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
 								"exec": [
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 10000);"
 								],
 								"type": "text/javascript"
 							}
@@ -223,7 +223,8 @@
 					},
 					"response": []
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "Discovery",
@@ -286,7 +287,7 @@
 									"    pm.expect(body).to.have.property(\"require_request_uri_registration\");",
 									"    ",
 									"    pm.expect(body.code_challenge_methods_supported).to.eql([ 'plain','S256' ]);",
-									"    pm.expect(body.scopes_supported).to.eql([ 'address','email','offline_access','openid','phone','profile']);",
+									"    pm.expect(body.scopes_supported).to.eql([ 'address','email','groups','offline_access','openid','phone','profile','roles']);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -296,10 +297,6 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
 							"host": [
@@ -345,10 +342,6 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{jwksUriEndpoint}}",
 							"host": [
@@ -358,7 +351,8 @@
 					},
 					"response": []
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "Delete domain",
@@ -406,5 +400,6 @@
 			},
 			"response": []
 		}
-	]
+	],
+	"protocolProfileBehavior": {}
 }

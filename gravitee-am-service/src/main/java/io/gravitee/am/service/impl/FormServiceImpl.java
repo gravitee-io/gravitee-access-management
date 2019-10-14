@@ -26,7 +26,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.FormAlreadyExistsException;
@@ -62,7 +62,7 @@ public class FormServiceImpl implements FormService {
     private FormRepository formRepository;
 
     @Autowired
-    private DomainService domainService;
+    private EventService eventService;
 
     @Autowired
     private AuditService auditService;
@@ -169,9 +169,9 @@ public class FormServiceImpl implements FormService {
                     return formRepository.create(form);
                 })
                 .flatMap(page -> {
-                    // Reload domain to take care about page creation
+                    // create event for sync process
                     Event event = new Event(Type.FORM, new Payload(page.getId(), page.getDomain(), Action.CREATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(page));
+                    return eventService.create(event).flatMap(__ -> Single.just(page));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -197,9 +197,9 @@ public class FormServiceImpl implements FormService {
 
                     return formRepository.update(formToUpdate)
                             .flatMap(page -> {
-                                // Reload domain to take care about form update
+                                // create event for sync process
                                 Event event = new Event(Type.FORM, new Payload(page.getId(), page.getDomain(), Action.UPDATE));
-                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(page));
+                                return eventService.create(event).flatMap(__ -> Single.just(page));
                             })
                             .doOnSuccess(form -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_UPDATED).oldValue(oldForm).form(form)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_UPDATED).throwable(throwable)));
@@ -221,10 +221,10 @@ public class FormServiceImpl implements FormService {
         return formRepository.findById(formId)
                 .switchIfEmpty(Maybe.error(new FormNotFoundException(formId)))
                 .flatMapCompletable(page -> {
-                    // Reload domain to take care about delete form
+                    // create event for sync process
                     Event event = new Event(Type.FORM, new Payload(page.getId(), page.getDomain(), Action.DELETE));
                     return formRepository.delete(formId)
-                            .andThen(domainService.reload(page.getDomain(), event))
+                            .andThen(eventService.create(event))
                             .toCompletable()
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_DELETED).form(page)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_DELETED).throwable(throwable)));

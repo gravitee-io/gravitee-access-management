@@ -101,6 +101,9 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private EventService eventService;
+
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("Find domain by ID: {}", id);
@@ -152,12 +155,16 @@ public class DomainServiceImpl implements DomainService {
                         domain.setOidc(OIDCSettings.defaultSettings());
                         domain.setCreatedAt(new Date());
                         domain.setUpdatedAt(domain.getCreatedAt());
-                        domain.setLastEvent(new Event(Type.DOMAIN, new Payload(id, id, Action.CREATE)));
                         return domainRepository.create(domain);
                     }
                 })
                 .flatMap(this::createSystemScopes)
                 .flatMap(this::createDefaultCertificate)
+                // create event for sync process
+                .flatMap(domain -> {
+                    Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), domain.getId(), Action.CREATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(domain));
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -187,7 +194,6 @@ public class DomainServiceImpl implements DomainService {
                     domain.setMaster(oldDomain.isMaster());
                     domain.setCreatedAt(oldDomain.getCreatedAt());
                     domain.setUpdatedAt(new Date());
-                    domain.setLastEvent(new Event(Type.DOMAIN, new Payload(domainId, domainId, Action.UPDATE)));
                     //As it is not managed by UpdateDomain, we keep old value
                     domain.setOidc(oldDomain.getOidc());
                     domain.setScim(updateDomain.getScim());
@@ -195,6 +201,11 @@ public class DomainServiceImpl implements DomainService {
                     domain.setAccountSettings(updateDomain.getAccountSettings());
 
                     return domainRepository.update(domain)
+                            // create event for sync process
+                            .flatMap(domain1 -> {
+                                Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), domain1.getId(), Action.UPDATE));
+                                return eventService.create(event).flatMap(__ -> Single.just(domain1));
+                            })
                             .doOnSuccess(domain1 -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).throwable(throwable)));
                 })
@@ -217,6 +228,11 @@ public class DomainServiceImpl implements DomainService {
                         domain.setUpdatedAt(new Date());
                         return domainRepository.update(domain);
                 })
+                // create event for sync process
+                .flatMap(domain1 -> {
+                    Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), domain1.getId(), Action.UPDATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(domain1));
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -234,8 +250,12 @@ public class DomainServiceImpl implements DomainService {
                 .flatMapSingle(oldDomain -> {
                     Domain toPatch = patchDomain.patch(oldDomain);
                     toPatch.setUpdatedAt(new Date());
-                    toPatch.setLastEvent(new Event(Type.DOMAIN, new Payload(domainId, domainId, Action.UPDATE)));
                     return domainRepository.update(toPatch)
+                            // create event for sync process
+                            .flatMap(domain1 -> {
+                                Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), domain1.getId(), Action.UPDATE));
+                                return eventService.create(event).flatMap(__ -> Single.just(domain1));
+                            })
                             .doOnSuccess(domain1 -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).throwable(throwable)));
 
@@ -247,26 +267,6 @@ public class DomainServiceImpl implements DomainService {
 
                     LOGGER.error("An error occurs while trying to patch a domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to patch a domain", ex));
-                });
-    }
-
-    @Override
-    public Single<Domain> reload(String domainId, Event event) {
-        LOGGER.debug("Reload a domain: {}", domainId);
-        return domainRepository.findById(domainId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapSingle(oldDomain -> {
-                    oldDomain.setUpdatedAt(new Date());
-                    oldDomain.setLastEvent(event);
-                    return domainRepository.update(oldDomain);
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-
-                    LOGGER.error("An error occurs while trying to reload a domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to reload a domain", ex));
                 });
     }
 
@@ -386,6 +386,7 @@ public class DomainServiceImpl implements DomainService {
                                     })
                             )
                             .andThen(domainRepository.delete(domainId))
+                            .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, domainId, Action.DELETE)))))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).domain(domain)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).throwable(throwable)));
                 })

@@ -26,8 +26,8 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.EmailRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.EmailAlreadyExistsException;
 import io.gravitee.am.service.exception.EmailNotFoundException;
@@ -62,7 +62,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     private EmailRepository emailRepository;
 
     @Autowired
-    private DomainService domainService;
+    private EventService eventService;
 
     @Autowired
     private AuditService auditService;
@@ -169,10 +169,10 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
         return emailRepository.findById(emailId)
                 .switchIfEmpty(Maybe.error(new EmailNotFoundException(emailId)))
                 .flatMapCompletable(page -> {
-                    // Reload domain to take care about delete email
+                    // create event for sync process
                     Event event = new Event(Type.EMAIL, new Payload(page.getId(), page.getDomain(), Action.DELETE));
                     return emailRepository.delete(emailId)
-                            .andThen(domainService.reload(page.getDomain(), event))
+                            .andThen(eventService.create(event))
                             .toCompletable()
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_DELETED).email(page)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_DELETED).throwable(throwable)));
@@ -211,9 +211,9 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                     return emailRepository.create(email);
                 })
                 .flatMap(email -> {
-                    // Reload domain to take care about email creation
+                    // create event for sync process
                     Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getDomain(), Action.CREATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(email));
+                    return eventService.create(event).flatMap(__ -> Single.just(email));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -242,9 +242,9 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
 
                     return emailRepository.update(emailToUpdate)
                             .flatMap(email -> {
-                                // Reload domain to take care about email update
+                                // create event for sync process
                                 Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getDomain(), Action.UPDATE));
-                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(email));
+                                return eventService.create(event).flatMap(__ -> Single.just(email));
                             })
                             .doOnSuccess(email -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_UPDATED).oldValue(oldEmail).email(email)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_UPDATED).throwable(throwable)));

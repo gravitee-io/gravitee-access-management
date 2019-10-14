@@ -15,19 +15,12 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Email;
-import io.gravitee.am.model.Form;
-import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ClientRepository;
-import io.gravitee.am.service.exception.ClientAlreadyExistsException;
-import io.gravitee.am.service.exception.ClientNotFoundException;
-import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.gravitee.am.service.exception.InvalidRedirectUriException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.ClientServiceImpl;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.am.service.model.PatchClient;
@@ -45,16 +38,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -88,6 +75,9 @@ public class ClientServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private EventService eventService;
 
     private final static String DOMAIN = "domain1";
 
@@ -362,7 +352,7 @@ public class ClientServiceTest {
         when(clientRepository.findByClientIdAndDomain("my-client", DOMAIN)).thenReturn(Maybe.empty());
         when(clientRepository.create(any(Client.class))).thenReturn(Single.just(createClient));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
 
         TestObserver testObserver = clientService.create(DOMAIN, newClient).test();
@@ -449,7 +439,7 @@ public class ClientServiceTest {
     @Test
     public void create_generateUuidAsClientId() {
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
         when(clientRepository.create(any(Client.class))).thenReturn(Single.just(new Client()));
 
@@ -481,7 +471,7 @@ public class ClientServiceTest {
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(new IdentityProvider()));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
 
         TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
@@ -601,7 +591,7 @@ public class ClientServiceTest {
         when(clientRepository.findById(any())).thenReturn(Maybe.just(new Client()));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
         when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(any(),any())).thenReturn(Single.just(true));
 
         Client toUpdate = new Client();
@@ -622,7 +612,7 @@ public class ClientServiceTest {
         when(clientRepository.findById(any())).thenReturn(Maybe.just(new Client()));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
         when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(any(),any())).thenReturn(Single.just(true));
 
         Client toUpdate = new Client();
@@ -654,7 +644,7 @@ public class ClientServiceTest {
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(new IdentityProvider()));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
 
         TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
@@ -680,7 +670,7 @@ public class ClientServiceTest {
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(client));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
 
         TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
@@ -705,7 +695,7 @@ public class ClientServiceTest {
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(client));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
 
         TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
@@ -725,7 +715,7 @@ public class ClientServiceTest {
         when(existingClient.getDomain()).thenReturn("my-domain");
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(existingClient));
         when(clientRepository.delete("my-client")).thenReturn(Completable.complete());
-        when(domainService.reload(eq("my-domain"), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         Form form = new Form();
         form.setId("form-id");
         when(formService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.singletonList(form)));
@@ -754,7 +744,7 @@ public class ClientServiceTest {
         when(existingClient.getId()).thenReturn("my-client");
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(existingClient));
         when(clientRepository.delete("my-client")).thenReturn(Completable.complete());
-        when(domainService.reload(eq("my-domain"), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(formService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.emptyList()));
         when(emailTemplateService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.emptyList()));
 
@@ -924,7 +914,7 @@ public class ClientServiceTest {
         client.setScopes(Collections.emptyList());
         when(patchClient.patch(any(), anyBoolean())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
         when(scopeService.validateScope(DOMAIN,Collections.emptyList())).thenReturn(Single.just(true));
@@ -944,7 +934,7 @@ public class ClientServiceTest {
         Client client = new Client();
         client.setDomain(DOMAIN);
 
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(clientRepository.findById("my-client")).thenReturn(Maybe.just(client));
         when(clientRepository.update(any(Client.class))).thenReturn(Single.just(new Client()));
 

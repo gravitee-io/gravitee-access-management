@@ -26,7 +26,7 @@ import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewExtensionGrant;
@@ -65,7 +65,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     private ClientService clientService;
 
     @Autowired
-    private DomainService domainService;
+    private EventService eventService;
 
     @Autowired
     private AuditService auditService;
@@ -118,9 +118,9 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
 
                         return extensionGrantRepository.create(extensionGrant)
                                 .flatMap(extensionGrant1 -> {
-                                    // Reload domain to take care about extension grant create
+                                    // create event for sync process
                                     Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant1.getId(), extensionGrant1.getDomain(), Action.CREATE));
-                                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(extensionGrant1));
+                                    return eventService.create(event).flatMap(__ -> Single.just(extensionGrant1));
                                 });
 
                     }
@@ -165,9 +165,9 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
 
                     return extensionGrantRepository.update(extensionGrantToUpdate)
                             .flatMap(extensionGrant -> {
-                                // Reload domain to take care about extension grant update
+                                // create event for sync process
                                 Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant.getId(), extensionGrant.getDomain(), Action.UPDATE));
-                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(extensionGrant));
+                                return eventService.create(event).flatMap(__ -> Single.just(extensionGrant));
                             })
                             .doOnSuccess(extensionGrant -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_UPDATED).oldValue(oldExtensionGrant).extensionGrant(extensionGrant)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_UPDATED).throwable(throwable)));
@@ -195,10 +195,10 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                             return Single.just(extensionGrant);
                         }))
                 .flatMapCompletable(extensionGrant -> {
-                    // Reload domain to take care about extension grant create
+                    // create event for sync process
                     Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrantId, domain, Action.DELETE));
                     return extensionGrantRepository.delete(extensionGrantId)
-                            .andThen(domainService.reload(domain, event))
+                            .andThen(eventService.create(event))
                             .toCompletable()
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_DELETED).extensionGrant(extensionGrant)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_DELETED).throwable(throwable)));

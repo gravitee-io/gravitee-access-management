@@ -25,7 +25,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
@@ -63,7 +63,7 @@ public class ReporterServiceImpl implements ReporterService {
     private ReporterRepository reporterRepository;
 
     @Autowired
-    private DomainService domainService;
+    private EventService eventService;
 
     @Autowired
     private AuditService auditService;
@@ -135,9 +135,9 @@ public class ReporterServiceImpl implements ReporterService {
 
         return reporterRepository.create(reporter)
                 .flatMap(reporter1 -> {
-                    // Reload domain to take care about reporter creation
+                    // create event for sync process
                     Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), reporter1.getDomain(), Action.CREATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(reporter1));
+                    return eventService.create(event).flatMap(__ -> Single.just(reporter1));
                 })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to create a reporter", ex);
@@ -162,11 +162,11 @@ public class ReporterServiceImpl implements ReporterService {
 
                     return reporterRepository.update(reporterToUpdate)
                             .flatMap(reporter1 -> {
-                                // Reload domain to take care about reporter update
+                                // create event for sync process
                                 // except for admin domain
                                 if (!ADMIN_DOMAIN.equals(domain)) {
                                     Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), reporter1.getDomain(), Action.UPDATE));
-                                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(reporter1));
+                                    return eventService.create(event).flatMap(__ -> Single.just(reporter1));
                                 } else {
                                     return Single.just(reporter1);
                                 }
@@ -189,10 +189,10 @@ public class ReporterServiceImpl implements ReporterService {
         return reporterRepository.findById(reporterId)
                 .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
                 .flatMapCompletable(reporter -> {
-                    // Reload domain to take care about delete reporter
+                    // create event for sync process
                     Event event = new Event(Type.REPORTER, new Payload(reporterId, reporter.getDomain(), Action.DELETE));
                     return reporterRepository.delete(reporterId)
-                            .andThen(domainService.reload(reporter.getDomain(), event))
+                            .andThen(eventService.create(event))
                             .toCompletable()
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_DELETED).reporter(reporter)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_DELETED).throwable(throwable)));

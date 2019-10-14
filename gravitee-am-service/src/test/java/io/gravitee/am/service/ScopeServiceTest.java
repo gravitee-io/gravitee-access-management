@@ -16,38 +16,25 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.ScopeServiceImpl;
-import io.gravitee.am.service.model.NewScope;
-import io.gravitee.am.service.model.PatchClient;
-import io.gravitee.am.service.model.PatchScope;
-import io.gravitee.am.service.model.UpdateRole;
-import io.gravitee.am.service.model.UpdateScope;
-import io.gravitee.am.service.model.UpdateSystemScope;
+import io.gravitee.am.service.model.*;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
@@ -78,7 +65,7 @@ public class ScopeServiceTest {
     private ScopeApprovalRepository scopeApprovalRepository;
 
     @Mock
-    private DomainService domainService;
+    private EventService eventService;
 
     @Mock
     private AuditService auditService;
@@ -143,7 +130,7 @@ public class ScopeServiceTest {
         when(newScope.getKey()).thenReturn("my-scope");
         when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.empty());
         when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.create(DOMAIN, newScope).test();
         testObserver.awaitTerminalEvent();
@@ -153,7 +140,7 @@ public class ScopeServiceTest {
 
         verify(scopeRepository, times(1)).findByDomainAndKey(anyString(), anyString());
         verify(scopeRepository, times(1)).create(any(Scope.class));
-        verify(domainService, times(1)).reload(any(), any());
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -162,7 +149,7 @@ public class ScopeServiceTest {
         when(newScope.getKey()).thenReturn("MY-SCOPE");
         when(scopeRepository.findByDomainAndKey(DOMAIN, "MY-SCOPE")).thenReturn(Maybe.empty());
         when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.create(DOMAIN, newScope).test();
         testObserver.awaitTerminalEvent();
@@ -177,7 +164,7 @@ public class ScopeServiceTest {
                 return scope.getKey().equals("MY-SCOPE");
             }
         }));
-        verify(domainService, times(1)).reload(any(), any());
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -186,7 +173,7 @@ public class ScopeServiceTest {
         when(newScope.getKey()).thenReturn("MY scope");
         when(scopeRepository.findByDomainAndKey(DOMAIN, "MY_scope")).thenReturn(Maybe.empty());
         when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.create(DOMAIN, newScope).test();
         testObserver.awaitTerminalEvent();
@@ -201,7 +188,7 @@ public class ScopeServiceTest {
                 return scope.getKey().equals("MY_scope");
             }
         }));
-        verify(domainService, times(1)).reload(any(), any());
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -253,7 +240,7 @@ public class ScopeServiceTest {
 
         when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toPatch));
         when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.patch(DOMAIN,scopeId, patch).test();
 
@@ -285,7 +272,7 @@ public class ScopeServiceTest {
 
         when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toPatch));
         when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.patch(DOMAIN,scopeId, patch).test();
 
@@ -330,7 +317,7 @@ public class ScopeServiceTest {
 
         when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toUpdate));
         when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.update(DOMAIN,scopeId, updateScope).test();
 
@@ -361,7 +348,7 @@ public class ScopeServiceTest {
 
         when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toUpdate));
         when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.update(DOMAIN,scopeId, updateScope).test();
 
@@ -393,7 +380,7 @@ public class ScopeServiceTest {
 
         when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toUpdate));
         when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.update(DOMAIN,scopeId, updateScope).test();
 
@@ -438,7 +425,7 @@ public class ScopeServiceTest {
 
         when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toUpdate));
         when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.update(DOMAIN,scopeId, updateScope).test();
 
@@ -517,7 +504,7 @@ public class ScopeServiceTest {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(scope));
         when(scopeRepository.delete("my-scope")).thenReturn(Completable.complete());
         when(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.delete("my-scope", false).test();
         testObserver.awaitTerminalEvent();
@@ -528,7 +515,7 @@ public class ScopeServiceTest {
         verify(roleService, times(1)).findByDomain(DOMAIN);
         verify(clientService, times(1)).findByDomain(DOMAIN);
         verify(scopeRepository, times(1)).delete("my-scope");
-        verify(domainService, times(1)).reload(any(), any());
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -552,7 +539,7 @@ public class ScopeServiceTest {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(scope));
         when(scopeRepository.delete("my-scope")).thenReturn(Completable.complete());
         when(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.delete("my-scope", false).test();
         testObserver.awaitTerminalEvent();
@@ -565,7 +552,7 @@ public class ScopeServiceTest {
         verify(roleService, times(1)).update(anyString(), anyString(), any(UpdateRole.class));
         verify(clientService, times(1)).patch(anyString(), anyString(), any(PatchClient.class));
         verify(scopeRepository, times(1)).delete("my-scope");
-        verify(domainService, times(1)).reload(any(), any());
+        verify(eventService, times(1)).create(any());
     }
 
     @Test

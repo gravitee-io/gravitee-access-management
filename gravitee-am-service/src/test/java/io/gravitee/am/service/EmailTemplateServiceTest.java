@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.EmailRepository;
 import io.gravitee.am.service.exception.EmailAlreadyExistsException;
@@ -41,7 +41,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -56,7 +55,7 @@ public class EmailTemplateServiceTest {
     private EmailTemplateService emailTemplateService = new EmailTemplateServiceImpl();
 
     @Mock
-    private DomainService domainService;
+    private EventService eventService;
 
     @Mock
     private EmailRepository emailRepository;
@@ -114,7 +113,7 @@ public class EmailTemplateServiceTest {
         when(emailRepository.findByDomainAndTemplate(anyString(), anyString())).thenReturn(Maybe.empty());
         when(emailTemplateService.findByDomainAndTemplate(anyString(), anyString())).thenReturn(Maybe.empty());
         when(emailRepository.create(any(Email.class))).thenReturn(Single.just(new Email()));
-        when(domainService.reload(anyString(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = emailTemplateService.create(DOMAIN, newEmail).test();
         testObserver.awaitTerminalEvent();
@@ -161,7 +160,7 @@ public class EmailTemplateServiceTest {
         UpdateEmail updateEmail = Mockito.mock(UpdateEmail.class);
         when(emailRepository.findById("my-email")).thenReturn(Maybe.just(new Email()));
         when(emailRepository.update(any(Email.class))).thenReturn(Single.just(new Email()));
-        when(domainService.reload(anyString(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = emailTemplateService.update(DOMAIN,"my-email", updateEmail).test();
         testObserver.awaitTerminalEvent();
@@ -171,7 +170,7 @@ public class EmailTemplateServiceTest {
 
         verify(emailRepository, times(1)).findById("my-email");
         verify(emailRepository, times(1)).update(any(Email.class));
-        verify(domainService, times(1)).reload(anyString(), any());
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -233,7 +232,7 @@ public class EmailTemplateServiceTest {
 
         when(emailRepository.findById(email.getId())).thenReturn(Maybe.just(email));
         when(emailRepository.delete(email.getId())).thenReturn(Completable.complete());
-        when(domainService.reload(eq(email.getDomain()), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = emailTemplateService.delete(email.getId()).test();
         testObserver.awaitTerminalEvent();
@@ -242,7 +241,7 @@ public class EmailTemplateServiceTest {
         testObserver.assertNoErrors();
 
         verify(emailRepository, times(1)).delete(email.getId());
-        verify(domainService, times(1)).reload(eq(email.getDomain()), any());
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -270,7 +269,7 @@ public class EmailTemplateServiceTest {
         when(emailRepository.findByDomainAndClientAndTemplate(DOMAIN,targetUid,"login")).thenReturn(Maybe.empty());
         when(emailRepository.findByDomainAndClientAndTemplate(DOMAIN,targetUid,"error")).thenReturn(Maybe.empty());
         when(emailRepository.create(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(emailRepository.findByDomainAndClient(DOMAIN, sourceUid)).thenReturn(Single.just(Arrays.asList(mailOne, mailTwo)));
 
         TestObserver<List<Email>> testObserver = emailTemplateService.copyFromClient(DOMAIN, sourceUid, targetUid).test();

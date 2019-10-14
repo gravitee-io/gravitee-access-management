@@ -25,7 +25,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.PolicyRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PolicyService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.PolicyNotFoundException;
@@ -62,7 +62,7 @@ public class PolicyServiceImpl implements PolicyService {
     private AuditService auditService;
 
     @Autowired
-    private DomainService domainService;
+    private EventService eventService;
 
     @Override
     public Single<List<Policy>> findAll() {
@@ -112,9 +112,9 @@ public class PolicyServiceImpl implements PolicyService {
 
         return policyRepository.create(policy)
                 .flatMap(policy1 -> {
-                    // Reload domain to take care about policy creation
+                    // create event for sync process
                     Event event = new Event(Type.POLICY, new Payload(policy1.getId(), policy1.getDomain(), Action.CREATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(policy1));
+                    return eventService.create(event).flatMap(__ -> Single.just(policy1));
                 })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to create an identity provider", ex);
@@ -140,9 +140,9 @@ public class PolicyServiceImpl implements PolicyService {
 
                     return policyRepository.update(policyToUpdate)
                             .flatMap(policy1 -> {
-                                // Reload domain to take care about policy update
+                                // create event for sync process
                                 Event event = new Event(Type.POLICY, new Payload(policy1.getId(), policy1.getDomain(), Action.UPDATE));
-                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(policy1));
+                                return eventService.create(event).flatMap(__ -> Single.just(policy1));
                             })
                             .doOnSuccess(policy1 -> auditService.report(AuditBuilder.builder(PolicyAuditBuilder.class).principal(principal).type(EventType.POLICY_UPDATED).oldValue(oldPolicy).policy(policy1)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(PolicyAuditBuilder.class).principal(principal).type(EventType.POLICY_UPDATED).throwable(throwable)));
@@ -165,9 +165,9 @@ public class PolicyServiceImpl implements PolicyService {
         return Single.concat(singleList)
                 .toList()
                 .flatMap(policies1 -> {
-                    // Reload domain to take care about policies update
+                    // create event for sync process
                     Event event = new Event(Type.POLICY, new Payload(null, domain, Action.BULK_UPDATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(policies1));
+                    return eventService.create(event).flatMap(__ -> Single.just(policies1));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -184,10 +184,10 @@ public class PolicyServiceImpl implements PolicyService {
         return policyRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new PolicyNotFoundException(id)))
                 .flatMapCompletable(policy -> {
-                    // Reload domain to take care about delete policy
+                    // create event for sync process
                     Event event = new Event(Type.POLICY, new Payload(id, policy.getDomain(), Action.DELETE));
                     return policyRepository.delete(id)
-                            .andThen(domainService.reload(policy.getDomain(), event))
+                            .andThen(eventService.create(event))
                             .toCompletable()
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(PolicyAuditBuilder.class).principal(principal).type(EventType.POLICY_DELETED).policy(policy)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(PolicyAuditBuilder.class).principal(principal).type(EventType.POLICY_DELETED).throwable(throwable)));

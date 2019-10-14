@@ -86,7 +86,7 @@ public class CertificateServiceImpl implements CertificateService {
     private ClientService clientService;
 
     @Autowired
-    private DomainService domainService;
+    private EventService eventService;
 
     @Autowired
     private AuditService auditService;
@@ -198,10 +198,10 @@ public class CertificateServiceImpl implements CertificateService {
 
         return certificateSingle
                 .flatMap(certificate -> certificateRepository.create(certificate))
+                // create event for sync process
                 .flatMap(certificate -> {
-                    // Reload domain to take care about certificate create
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), certificate.getDomain(), Action.CREATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(certificate));
+                    return eventService.create(event).flatMap(__ -> Single.just(certificate));
                 })
                 .doOnError(ex -> {
                     LOGGER.error("An error occurs while trying to create a certificate", ex);
@@ -303,10 +303,10 @@ public class CertificateServiceImpl implements CertificateService {
 
                     return certificateSingle
                             .flatMap(certificate -> certificateRepository.update(certificate))
+                            // create event for sync process
                             .flatMap(certificate1 -> {
-                                // Reload domain to take care about certificate update
                                 Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), certificate1.getDomain(), Action.UPDATE));
-                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(certificate1));
+                                return eventService.create(event).flatMap(__ -> Single.just(certificate1));
                             })
                             .onErrorResumeNext(ex -> {
                                 LOGGER.error("An error occurs while trying to update a certificate", ex);
@@ -323,10 +323,11 @@ public class CertificateServiceImpl implements CertificateService {
         certificate.setUpdatedAt(new Date());
 
         return certificateRepository.update(certificate)
+                // create event for sync process
                 .flatMap(certificate1 -> {
                     // Reload domain to take care about certificate update
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), certificate1.getDomain(), Action.UPDATE));
-                    return domainService.reload(certificate1.getDomain(), event).flatMap(domain1 -> Single.just(certificate1));
+                    return eventService.create(event).flatMap(__ -> Single.just(certificate1));
                 })
                 .doOnError(ex -> {
                     LOGGER.error("An error occurs while trying to update a certificate", ex);
@@ -348,10 +349,10 @@ public class CertificateServiceImpl implements CertificateService {
                         })
                 )
                 .flatMapCompletable(certificate -> {
-                    // Reload domain to take care about delete certificate
+                    // create event for sync process
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), certificate.getDomain(), Action.DELETE));
                     return certificateRepository.delete(certificateId)
-                            .andThen(domainService.reload(certificate.getDomain(), event))
+                            .andThen(eventService.create(event))
                             .toCompletable()
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).certificate(certificate)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).throwable(throwable)));

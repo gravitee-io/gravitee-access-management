@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.certificate.core.CertificateSchema;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
@@ -59,7 +59,7 @@ public class CertificateServiceTest {
     private ClientService clientService;
 
     @Mock
-    private DomainService domainService;
+    private EventService eventService;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -133,7 +133,7 @@ public class CertificateServiceTest {
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
         when(clientService.findByCertificate("my-certificate")).thenReturn(Single.just(Collections.emptySet()));
         when(certificateRepository.delete("my-certificate")).thenReturn(Completable.complete());
-        when(domainService.reload(anyString(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = certificateService.delete("my-certificate").test();
         testObserver.awaitTerminalEvent();
@@ -144,7 +144,7 @@ public class CertificateServiceTest {
         verify(certificateRepository, times(1)).findById("my-certificate");
         verify(clientService, times(1)).findByCertificate("my-certificate");
         verify(certificateRepository, times(1)).delete("my-certificate");
-        verify(domainService, times(1)).reload(anyString(), any());
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
