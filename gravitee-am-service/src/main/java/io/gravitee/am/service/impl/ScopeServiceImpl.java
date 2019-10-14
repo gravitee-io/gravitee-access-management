@@ -72,7 +72,7 @@ public class ScopeServiceImpl implements ScopeService {
     private ClientService clientService;
 
     @Autowired
-    private DomainService domainService;
+    private EventService eventService;
 
     @Autowired
     private AuditService auditService;
@@ -113,9 +113,9 @@ public class ScopeServiceImpl implements ScopeService {
                     return scopeRepository.create(scope);
                 })
                 .flatMap(scope -> {
-                    // Reload domain to take care about scope creation
+                    // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope.getId(), scope.getDomain(), Action.CREATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(scope));
+                    return eventService.create(event).flatMap(__ -> Single.just(scope));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -154,9 +154,9 @@ public class ScopeServiceImpl implements ScopeService {
                     return scopeRepository.create(scope);
                 })
                 .flatMap(scope -> {
-                    // Reload domain to take care about scope creation
+                    // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope.getId(), scope.getDomain(), Action.CREATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(scope));
+                    return eventService.create(event).flatMap(__ -> Single.just(scope));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -215,9 +215,9 @@ public class ScopeServiceImpl implements ScopeService {
         toUpdate.setUpdatedAt(new Date());
         return scopeRepository.update(toUpdate)
                 .flatMap(scope1 -> {
-                    // Reload domain to take care about scope update
+                    // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope1.getId(), scope1.getDomain(), Action.UPDATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(scope1));
+                    return eventService.create(event).flatMap(__ -> Single.just(scope1));
                 })
                 .doOnSuccess(scope1 -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).oldValue(oldValue).scope(scope1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).throwable(throwable)));
@@ -239,9 +239,9 @@ public class ScopeServiceImpl implements ScopeService {
                     return scopeRepository.update(scope);
                 })
                 .flatMap(scope -> {
-                    // Reload domain to take care about scope update
+                    // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope.getId(), scope.getDomain(), Action.UPDATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(scope));
+                    return eventService.create(event).flatMap(__ -> Single.just(scope));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -298,11 +298,10 @@ public class ScopeServiceImpl implements ScopeService {
                                 .andThen(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey()))
                                 // 4_ Delete scope
                                 .andThen(scopeRepository.delete(scopeId))
-                                // 5_ reload domain
+                                // 5_ create event for sync process
                                 .andThen(
                                         Completable.fromSingle(
-                                                domainService.reload(scope.getDomain(),
-                                                        new Event(Type.SCOPE, new Payload(scope.getId(), scope.getDomain(), Action.DELETE))))
+                                                eventService.create(new Event(Type.SCOPE, new Payload(scope.getId(), scope.getDomain(), Action.DELETE))))
                                 )
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).scope(scope)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).throwable(throwable)))

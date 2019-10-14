@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "84ad4c35-c898-4975-b32e-9fcda726b1d6",
+		"_postman_id": "b3e99880-3d1d-48c1-b7d7-d65b896a8f4b",
 		"name": "Gravitee.io - AM - Scope Management",
 		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -129,7 +129,10 @@
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
-									"});"
+									"});",
+									"",
+									"// wait for sync process",
+									"setTimeout(function(){}, 10000);"
 								],
 								"type": "text/javascript"
 							}
@@ -165,7 +168,8 @@
 					},
 					"response": []
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "Invalid Case",
@@ -440,7 +444,8 @@
 					},
 					"response": []
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "Nominal Case",
@@ -483,10 +488,6 @@
 								"value": "Bearer {{token}}"
 							}
 						],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/{{domain}}/scopes",
 							"host": [
@@ -596,10 +597,6 @@
 								"value": "Bearer {{token}}"
 							}
 						],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/{{domain}}/scopes/{{adminScopeId}}",
 							"host": [
@@ -779,7 +776,8 @@
 					},
 					"response": []
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "System scope",
@@ -894,7 +892,8 @@
 					},
 					"response": []
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "Scope Discovery",
@@ -1152,10 +1151,6 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
 						"url": {
 							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
 							"host": [
@@ -1171,7 +1166,8 @@
 					},
 					"response": []
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "Delete domain",
@@ -1219,5 +1215,6 @@
 			},
 			"response": []
 		}
-	]
+	],
+	"protocolProfileBehavior": {}
 }

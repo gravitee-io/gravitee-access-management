@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
@@ -58,7 +59,7 @@ public class IdentityProviderServiceTest {
     private IdentityProviderRepository identityProviderRepository;
 
     @Mock
-    private DomainService domainService;
+    private EventService eventService;
 
     @Mock
     private ClientService clientService;
@@ -124,7 +125,7 @@ public class IdentityProviderServiceTest {
     public void shouldCreate() {
         NewIdentityProvider newIdentityProvider = Mockito.mock(NewIdentityProvider.class);
         when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(new IdentityProvider()));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = identityProviderService.create(DOMAIN, newIdentityProvider).test();
         testObserver.awaitTerminalEvent();
@@ -133,7 +134,7 @@ public class IdentityProviderServiceTest {
         testObserver.assertNoErrors();
 
         verify(identityProviderRepository, times(1)).create(any(IdentityProvider.class));
-        verify(domainService, times(1)).reload(eq(DOMAIN), any());
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -153,7 +154,7 @@ public class IdentityProviderServiceTest {
         UpdateIdentityProvider updateIdentityProvider = Mockito.mock(UpdateIdentityProvider.class);
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(new IdentityProvider()));
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(new IdentityProvider()));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider).test();
         testObserver.awaitTerminalEvent();
@@ -162,7 +163,7 @@ public class IdentityProviderServiceTest {
         testObserver.assertNoErrors();
 
         verify(identityProviderRepository, times(1)).update(any(IdentityProvider.class));
-        verify(domainService, times(1)).reload(eq(DOMAIN), any());
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -220,7 +221,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(existingIdentityProvider));
         when(identityProviderRepository.delete("my-identity-provider")).thenReturn(Completable.complete());
         when(clientService.findByIdentityProvider("my-identity-provider")).thenReturn(Single.just(Collections.emptySet()));
-        when(domainService.reload(anyString(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
         testObserver.awaitTerminalEvent();
@@ -229,6 +230,6 @@ public class IdentityProviderServiceTest {
         testObserver.assertNoErrors();
 
         verify(identityProviderRepository, times(1)).delete("my-identity-provider");
-        verify(domainService, times(1)).reload(anyString(), any());
+        verify(eventService, times(1)).create(any());
     }
 }

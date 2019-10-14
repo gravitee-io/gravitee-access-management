@@ -26,7 +26,7 @@ import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
@@ -68,7 +68,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     private ClientService clientService;
 
     @Autowired
-    private DomainService domainService;
+    private EventService eventService;
 
     @Autowired
     private AuditService auditService;
@@ -122,9 +122,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
         return identityProviderRepository.create(identityProvider)
                 .flatMap(identityProvider1 -> {
-                    // Reload domain to take care about identity provider creation
+                    // create event for sync process
                     Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getDomain(), Action.CREATE));
-                    return domainService.reload(domain, event).flatMap(domain1 -> Single.just(identityProvider1));
+                    return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                 })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to create an identity provider", ex);
@@ -150,9 +150,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
                     return identityProviderRepository.update(identityToUpdate)
                             .flatMap(identityProvider1 -> {
-                                // Reload domain to take care about identity provider update
+                                // create event for sync process
                                 Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getDomain(), Action.UPDATE));
-                                return domainService.reload(domain, event).flatMap(domain1 -> Single.just(identityProvider1));
+                                return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                             })
                             .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(oldIdentity).identityProvider(identityProvider1)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).throwable(throwable)));
@@ -181,10 +181,10 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                             return Single.just(identityProvider);
                         }))
                 .flatMapCompletable(identityProvider -> {
-                    // Reload domain to take care about delete identity provider
+                    // create event for sync process
                     Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProviderId, domain, Action.DELETE));
                     return identityProviderRepository.delete(identityProviderId)
-                            .andThen(domainService.reload(domain, event))
+                            .andThen(eventService.create(event))
                             .toCompletable()
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).identityProvider(identityProvider)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).throwable(throwable)));

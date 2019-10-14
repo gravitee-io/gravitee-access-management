@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "49aa98ae-4f9e-4504-a505-45fbd913d84e",
+		"_postman_id": "31d34e59-af40-4fe5-9a44-8147d51e86cc",
 		"name": "Gravitee.io - AM - Oauth2",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -583,7 +583,7 @@
 								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
 								"exec": [
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 10000);"
 								],
 								"type": "text/javascript"
 							}

@@ -128,7 +128,7 @@
 								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
 								"exec": [
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 10000);"
 								],
 								"type": "text/javascript"
 							}
@@ -353,7 +353,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}

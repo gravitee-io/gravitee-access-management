@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.common.Page;
@@ -28,20 +29,8 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.EmailTemplateService;
-import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.ClientAlreadyExistsException;
-import io.gravitee.am.service.exception.ClientNotFoundException;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.gravitee.am.service.exception.InvalidRedirectUriException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.*;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.am.service.model.PatchClient;
 import io.gravitee.am.service.model.TopClient;
@@ -49,7 +38,6 @@ import io.gravitee.am.service.model.TotalClient;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ClientAuditBuilder;
 import io.gravitee.am.service.utils.GrantTypeUtils;
-import io.gravitee.am.common.web.UriBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -62,13 +50,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -93,6 +75,9 @@ public class ClientServiceImpl implements ClientService {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private EventService eventService;
 
     @Autowired
     private ScopeService scopeService;
@@ -347,10 +332,10 @@ public class ClientServiceImpl implements ClientService {
 
         return this.validateClientMetadata(client)
                 .flatMap(clientRepository::create)
+                // create event for sync process
                 .flatMap(justCreatedClient -> {
-                    // Reload domain to take care about client creation
                     Event event = new Event(Type.CLIENT, new Payload(justCreatedClient.getId(), justCreatedClient.getDomain(), Action.CREATE));
-                    return domainService.reload(client.getDomain(), event).flatMap(domain1 -> Single.just(justCreatedClient));
+                    return eventService.create(event).flatMap(__ -> Single.just(justCreatedClient));
                 })
                 .onErrorResumeNext(this::handleError);
         }
@@ -402,10 +387,10 @@ public class ClientServiceImpl implements ClientService {
         return clientRepository.findById(clientId)
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(clientId)))
                 .flatMapCompletable(client -> {
-                    // Reload domain to take care about delete client
+                    // create event for sync process
                     Event event = new Event(Type.CLIENT, new Payload(client.getId(), client.getDomain(), Action.DELETE));
                     return clientRepository.delete(clientId)
-                            .andThen(domainService.reload(client.getDomain(), event).toCompletable())
+                            .andThen(eventService.create(event).toCompletable())
                             // delete email templates
                             .andThen(emailTemplateService.findByDomainAndClient(client.getDomain(), client.getId())
                                     .flatMapCompletable(emails -> {
@@ -544,9 +529,9 @@ public class ClientServiceImpl implements ClientService {
         client.setUpdatedAt(new Date());
         return clientRepository.update(client)
                 .flatMap(updatedClient -> {
-                    // Reload domain to take care about client update
+                    // create event for sync process
                     Event event = new Event(Type.CLIENT, new Payload(updatedClient.getId(), client.getDomain(), Action.UPDATE));
-                    return domainService.reload(client.getDomain(), event).flatMap(domain1 -> Single.just(updatedClient));
+                    return eventService.create(event).flatMap(__ -> Single.just(updatedClient));
                 });
     }
 

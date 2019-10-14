@@ -15,11 +15,13 @@
  */
 package io.gravitee.am.gateway.services.sync;
 
-import io.gravitee.am.gateway.core.event.DomainEvent;
+import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.DomainRepository;
+import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,114 +31,149 @@ import org.springframework.core.env.Environment;
 
 import java.text.Collator;
 import java.util.*;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
+
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class SyncManager implements InitializingBean {
 
     private final Logger logger = LoggerFactory.getLogger(SyncManager.class);
-
-    static final String SHARDING_TAGS_SYSTEM_PROPERTY = "tags";
+    private static final String SHARDING_TAGS_SYSTEM_PROPERTY = "tags";
     private static final String SHARDING_TAGS_SEPARATOR = ",";
-
-    @Autowired
-    private DomainRepository domainRepository;
 
     @Autowired
     private EventManager eventManager;
 
     @Autowired
+    private SecurityDomainManager securityDomainManager;
+
+    @Autowired
     private Environment environment;
 
-    private final Map<String, Domain> deployedDomains = new HashMap<>();
+    @Autowired
+    private DomainRepository domainRepository;
+
+    @Autowired
+    private EventRepository eventRepository;
 
     private Optional<List<String>> shardingTags;
 
-    public void afterPropertiesSet() {
+    private long lastRefreshAt = -1;
+
+    private long lastDelay = 0;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
         this.initShardingTags();
     }
 
     public void refresh() {
         logger.debug("Refreshing sync state...");
+        long nextLastRefreshAt = System.currentTimeMillis();
 
-        // Registered domains
+        try {
+            if (lastRefreshAt == -1) {
+                logger.debug("Initial synchronization");
+                deployDomains();
+            } else {
+                // search for events and compute them
+                logger.debug("Events synchronization");
+                List<Event> events = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).blockingGet();
+
+                if (events != null && !events.isEmpty()) {
+                    // Extract only the latest events by type and id
+                    Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
+                            .stream()
+                            .collect(
+                                    toMap(
+                                            event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
+                                            event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
+                    computeEvents(sortedEvents.values());
+                }
+
+            }
+            lastRefreshAt = nextLastRefreshAt;
+            lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
+        } catch (Exception ex) {
+            logger.error("An error occurs while synchronizing the security domains", ex);
+        }
+    }
+
+    private void deployDomains() {
         Set<Domain> domains = domainRepository.findAll()
-                // remove master domains
+                // remove master domains and disabled domains
                 .map(registeredDomains -> {
                     if (registeredDomains != null) {
                         return registeredDomains
                                 .stream()
-                                .filter(domain -> !domain.isMaster())
+                                .filter(domain -> !domain.isMaster() && domain.isEnabled())
                                 .collect(Collectors.toSet());
                     }
                     return Collections.<Domain>emptySet();
                 })
                 .blockingGet();
 
-        // Look for deleted domains
-        if (deployedDomains.size() > domains.size()) {
-            Set<String> domainIds = domains.stream().map(domain -> domain.getId()).collect(Collectors.toSet());
-            Set<String> deployedDomainIds = new HashSet<>(deployedDomains.keySet());
-            deployedDomainIds.forEach(domainId -> {
-                if (!domainIds.contains(domainId)) {
-                    Domain deployedDomain = deployedDomains.get(domainId);
-                    if (deployedDomain != null) {
-                        deployedDomains.remove(domainId);
-                        eventManager.publishEvent(DomainEvent.UNDEPLOY, deployedDomain);
-                    }
-                }
-            });
-        }
-
-        // Look for disabled domains
         domains.stream()
-                .filter(domain -> !domain.isEnabled())
                 .forEach(domain -> {
-                    Domain deployedDomain = deployedDomains.get(domain.getId());
-                    if (deployedDomain != null) {
-                        deployedDomains.remove(domain.getId());
-                        eventManager.publishEvent(DomainEvent.UNDEPLOY, deployedDomain);
-                    }
-                });
-
-        // Deploy domains
-        domains.stream()
-                .filter(Domain::isEnabled)
-                .forEach(domain -> {
-                    Domain deployedDomain = deployedDomains.get(domain.getId());
-
                     // Does the security domain have a matching sharding tags ?
                     if (hasMatchingTags(domain)) {
+                        securityDomainManager.deploy(domain);
+                    }
+                });
+    }
 
-                        // Security domain is not yet deployed, so let's do it !
+    private void computeEvents(Collection<Event> events) {
+        events.forEach(event -> {
+            logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
+            // security domain events (domain has been created, updated or deleted)
+            if (Type.DOMAIN.equals(event.getType())) {
+                synchronizeDomain(event);
+            } else {
+                // other events (inner domain events such as client events, template events and so one ...)
+                // just propagate the event
+                eventManager.publishEvent(io.gravitee.am.gateway.core.event.Event.valueOf(event), event.getPayload());
+            }
+        });
+    }
+
+    private void synchronizeDomain(Event event) {
+        final String domainId = event.getPayload().getId();
+        final Action action = event.getPayload().getAction();
+        switch (action) {
+            case CREATE:
+            case UPDATE:
+                Domain domain = domainRepository.findById(domainId).blockingGet();
+                if (domain != null) {
+                    // Get deployed domain
+                    Domain deployedDomain = securityDomainManager.get(domain.getId());
+                    // Does the security domain have a matching sharding tags ?
+                    if (hasMatchingTags(domain)) {
+                        // domain is not yet deployed, so let's do it !
                         if (deployedDomain == null) {
-                            eventManager.publishEvent(DomainEvent.DEPLOY, domain);
-                            deployedDomains.put(domain.getId(), domain);
-                        } else {
-                            // Check last update date
-                            if (domain.getUpdatedAt().after(deployedDomain.getUpdatedAt())) {
-                                // get event type and publish corresponding event
-                                Event lastEvent = domain.getLastEvent();
-                                Enum eventType = io.gravitee.am.gateway.core.event.Event.valueOf(lastEvent);
-                                Object content = Type.DOMAIN.equals(lastEvent.getType()) ? domain : lastEvent.getPayload();
-                                eventManager.publishEvent(eventType, content);
-
-                                // update local domains map
-                                deployedDomains.put(domain.getId(), domain);
-                            }
+                            securityDomainManager.deploy(domain);
+                        } else if (deployedDomain.getUpdatedAt().before(domain.getUpdatedAt())) {
+                            securityDomainManager.update(domain);
                         }
                     } else {
                         // Check that the security domain was not previously deployed with other tags
                         // In that case, we must undeploy it
                         if (deployedDomain != null) {
-                            deployedDomains.remove(domain.getId());
-                            eventManager.publishEvent(DomainEvent.UNDEPLOY, deployedDomain);
+                            securityDomainManager.undeploy(domainId);
                         }
                     }
-                });
+                }
+                break;
+            case DELETE:
+                securityDomainManager.undeploy(domainId);
+                break;
+        }
     }
 
     private void initShardingTags() {

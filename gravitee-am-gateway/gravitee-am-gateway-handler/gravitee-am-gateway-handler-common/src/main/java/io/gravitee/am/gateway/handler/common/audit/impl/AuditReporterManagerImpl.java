@@ -33,6 +33,7 @@ import io.vertx.reactivex.core.RxHelper;
 import io.vertx.reactivex.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
@@ -43,7 +44,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuditReporterManagerImpl extends AbstractService implements AuditReporterManager, EventListener<ReporterEvent, Payload> {
+public class AuditReporterManagerImpl extends AbstractService implements AuditReporterManager, EventListener<ReporterEvent, Payload>, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(AuditReporterManagerImpl.class);
     private String deploymentId;
@@ -66,28 +67,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
     private ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporters = new ConcurrentHashMap<>();
 
     @Override
-    public void onEvent(Event<ReporterEvent, Payload> event) {
-        if (domain.getId().equals(event.content().getDomain())) {
-            switch (event.type()) {
-                case DEPLOY:
-                    deployReporter(event.content().getId(), event.type());
-                case UPDATE:
-                    updateReporter(event.content().getId(), event.type());
-                    break;
-                case UNDEPLOY:
-                    removeReporter(event.content().getId());
-                    break;
-            }
-        }
-    }
-
-    @Override
-    protected void doStart() throws Exception {
-        super.doStart();
-
-        logger.info("Register event listener for reporter events for domain {}", domain.getName());
-        eventManager.subscribeForEvents(this, ReporterEvent.class, domain.getId());
-
+    public void afterPropertiesSet() throws Exception {
         logger.info("Initializing reporters for domain {}", domain.getName());
         logger.info("\t Starting reporter verticle for domain {}", domain.getName());
 
@@ -107,7 +87,31 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
             // Could not deploy
             logger.error("Reporter service can not be started", err);
         });
+    }
 
+    @Override
+    public void onEvent(Event<ReporterEvent, Payload> event) {
+        if (domain.getId().equals(event.content().getDomain())) {
+            switch (event.type()) {
+                case DEPLOY:
+                    deployReporter(event.content().getId(), event.type());
+                    break;
+                case UPDATE:
+                    updateReporter(event.content().getId(), event.type());
+                    break;
+                case UNDEPLOY:
+                    removeReporter(event.content().getId());
+                    break;
+            }
+        }
+    }
+
+    @Override
+    protected void doStart() throws Exception {
+        super.doStart();
+
+        logger.info("Register event listener for reporter events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, ReporterEvent.class, domain.getId());
     }
 
     @Override
@@ -150,7 +154,11 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
         reporterRepository.findById(reporterId)
                 .subscribe(
                         reporter -> {
-                            startReporterProvider(reporter);
+                            if (reporters.containsKey(reporterId)) {
+                                updateReporterProvider(reporter);
+                            } else {
+                                startReporterProvider(reporter);
+                            }
                             logger.info("Reporter {} {}d for domain {}", reporterId, eventType, domain.getName());
                         },
                         error -> logger.error("Unable to {} reporter for domain {}", eventType, domain.getName(), error),

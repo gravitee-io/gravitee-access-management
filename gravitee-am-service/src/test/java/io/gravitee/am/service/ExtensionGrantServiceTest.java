@@ -15,9 +15,8 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Client;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.service.exception.ExtensionGrantAlreadyExistsException;
@@ -54,7 +53,7 @@ public class ExtensionGrantServiceTest {
     private ExtensionGrantService extensionGrantService = new ExtensionGrantServiceImpl();
 
     @Mock
-    private DomainService domainService;
+    private EventService eventService;
 
     @Mock
     private ClientService clientService;
@@ -125,7 +124,7 @@ public class ExtensionGrantServiceTest {
         when(newExtensionGrant.getName()).thenReturn("my-extension-grant");
         when(extensionGrantRepository.findByDomainAndName(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenReturn(Single.just(new ExtensionGrant()));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = extensionGrantService.create(DOMAIN, newExtensionGrant).test();
         testObserver.awaitTerminalEvent();
@@ -190,7 +189,7 @@ public class ExtensionGrantServiceTest {
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(new ExtensionGrant()));
         when(extensionGrantRepository.findByDomainAndName(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.update(any(ExtensionGrant.class))).thenReturn(Single.just(new ExtensionGrant()));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = extensionGrantService.update(DOMAIN, "my-extension-grant", updateExtensionGrant).test();
         testObserver.awaitTerminalEvent();
@@ -334,7 +333,7 @@ public class ExtensionGrantServiceTest {
         when(extensionGrantRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(existingExtensionGrant)));
         when(clientService.findByDomainAndExtensionGrant(DOMAIN, "my-extension-grant~my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
         when(clientService.findByDomainAndExtensionGrant(DOMAIN, "my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = extensionGrantService.delete(DOMAIN, "my-extension-grant").test();
         testObserver.awaitTerminalEvent();

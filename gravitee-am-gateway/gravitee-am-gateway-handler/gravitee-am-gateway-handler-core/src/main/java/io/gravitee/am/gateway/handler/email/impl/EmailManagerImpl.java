@@ -167,8 +167,10 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
     private void removeEmail(String emailId) {
         logger.info("Domain {} has received email event, delete email {}", domain.getName(), emailId);
         Email deletedEmail = emails.remove(emailId);
-        emailTemplates.remove(getTemplateName(deletedEmail));
-        ((DomainBasedEmailTemplateLoader) templateLoader).removeTemplate(getTemplateName(deletedEmail) + TEMPLATE_SUFFIX);
+        if (deletedEmail != null) {
+            emailTemplates.remove(getTemplateName(deletedEmail));
+            ((DomainBasedEmailTemplateLoader) templateLoader).removeTemplate(getTemplateName(deletedEmail) + TEMPLATE_SUFFIX);
+        }
     }
 
     private void updateEmails(List<Email> emails) {

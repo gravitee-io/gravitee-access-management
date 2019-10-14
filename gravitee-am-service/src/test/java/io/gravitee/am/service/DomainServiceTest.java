@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.*;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
@@ -24,7 +25,10 @@ import io.gravitee.am.service.exception.DomainDeleteMasterException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.DomainServiceImpl;
-import io.gravitee.am.service.model.*;
+import io.gravitee.am.service.model.NewDomain;
+import io.gravitee.am.service.model.NewSystemScope;
+import io.gravitee.am.service.model.PatchDomain;
+import io.gravitee.am.service.model.UpdateDomain;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -145,6 +149,9 @@ public class DomainServiceTest {
     @Mock
     private PolicyService policyService;
 
+    @Mock
+    private EventService eventService;
+
     @Test
     public void shouldFindById() {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(new Domain()));
@@ -229,6 +236,7 @@ public class DomainServiceTest {
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
         when(certificateService.create(eq(domain.getId()))).thenReturn(Single.just(new Certificate()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.create(newDomain).test();
         testObserver.awaitTerminalEvent();
@@ -240,6 +248,7 @@ public class DomainServiceTest {
         verify(domainRepository, times(1)).create(any(Domain.class));
         verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(anyString(), any(NewSystemScope.class));
         verify(certificateService).create(eq(domain.getId()));
+        verify(eventService).create(any());
     }
 
     @Test
@@ -293,6 +302,7 @@ public class DomainServiceTest {
         UpdateDomain updateDomain = Mockito.mock(UpdateDomain.class);
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(new Domain()));
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.update("my-domain", updateDomain).test();
         testObserver.awaitTerminalEvent();
@@ -302,6 +312,7 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -362,6 +373,7 @@ public class DomainServiceTest {
         when(patchDomain.patch(any())).thenReturn(new Domain());
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(new Domain()));
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
         testObserver.awaitTerminalEvent();
@@ -371,6 +383,7 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -437,6 +450,7 @@ public class DomainServiceTest {
         when(policy.getId()).thenReturn(POLICY_ID);
         when(policyService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(policy)));
         when(policyService.delete(anyString())).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -456,6 +470,7 @@ public class DomainServiceTest {
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
         verify(reporterService, times(1)).delete(REPORTER_ID);
         verify(policyService, times(1)).delete(POLICY_ID);
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -474,6 +489,7 @@ public class DomainServiceTest {
         when(emailTemplateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(policyService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -492,6 +508,7 @@ public class DomainServiceTest {
         verify(emailTemplateService, never()).delete(anyString());
         verify(reporterService, never()).delete(anyString());
         verify(policyService, never()).delete(anyString());
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -604,44 +621,6 @@ public class DomainServiceTest {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = domainService.setMasterDomain(DOMAIN_ID, true).test();
-
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
-
-        verify(domainRepository, never()).update(any(Domain.class));
-    }
-
-    @Test
-    public void shouldReload() {
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
-        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(new Domain()));
-
-        TestObserver testObserver = domainService.reload(DOMAIN_ID, any()).test();
-        testObserver.awaitTerminalEvent();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(domainRepository, times(1)).update(any(Domain.class));
-    }
-
-    @Test
-    public void shouldReload_domainNotFound() {
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.empty());
-
-        TestObserver testObserver = domainService.reload(DOMAIN_ID, any()).test();
-
-        testObserver.assertError(DomainNotFoundException.class);
-        testObserver.assertNotComplete();
-
-        verify(domainRepository, never()).update(any(Domain.class));
-    }
-
-    @Test
-    public void shouldReload_technicalException() {
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.error(TechnicalException::new));
-
-        TestObserver testObserver = domainService.reload(DOMAIN_ID, any()).test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();

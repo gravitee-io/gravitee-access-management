@@ -122,7 +122,9 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
     private void removeForm(String formId) {
         logger.info("Domain {} has received form event, delete form {}", domain.getName(), formId);
         Form deletedForm = forms.remove(formId);
-        ((DomainBasedTemplateResolver) templateResolver).removeForm(getTemplateName(deletedForm));
+        if (deletedForm != null) {
+            ((DomainBasedTemplateResolver) templateResolver).removeForm(getTemplateName(deletedForm));
+        }
     }
 
     private void updateForms(List<Form> forms) {

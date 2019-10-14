@@ -37,10 +37,15 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>io.gravitee.am.gateway</groupId>
             <artifactId>gravitee-am-gateway-core</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.gateway</groupId>
+            <artifactId>gravitee-am-gateway-reactor</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>

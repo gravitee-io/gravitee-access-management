@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Form;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.service.exception.FormAlreadyExistsException;
 import io.gravitee.am.service.impl.FormServiceImpl;
@@ -32,7 +32,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -48,7 +49,7 @@ public class FormServiceTest {
     private FormRepository formRepository;
 
     @Mock
-    private DomainService domainService;
+    private EventService eventService;
 
     @Mock
     private AuditService auditService;
@@ -77,7 +78,7 @@ public class FormServiceTest {
         when(formRepository.findByDomainAndClientAndTemplate(DOMAIN,targetUid,"error")).thenReturn(Maybe.empty());
         when(formRepository.create(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
         when(formRepository.findByDomainAndClient(DOMAIN, sourceUid)).thenReturn(Single.just(Arrays.asList(formOne, formTwo)));
-        when(domainService.reload(any(), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<List<Form>> testObserver = formService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
         testObserver.assertComplete().assertNoErrors();

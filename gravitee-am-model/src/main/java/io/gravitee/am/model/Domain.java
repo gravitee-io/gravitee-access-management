@@ -16,7 +16,6 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
@@ -75,8 +74,6 @@ public class Domain {
 
     private Set<String> identities;
 
-    private Event lastEvent;
-
     private OIDCSettings oidc;
 
     private LoginSettings loginSettings;
@@ -101,7 +98,6 @@ public class Domain {
         this.path = other.path;
         this.loginForm = other.loginForm;
         this.identities = other.identities;
-        this.lastEvent = other.lastEvent;
         this.oidc = other.oidc;
         this.loginSettings = other.loginSettings;
         this.scim = other.scim;
@@ -187,14 +183,6 @@ public class Domain {
 
     public void setIdentities(Set<String> identities) {
         this.identities = identities;
-    }
-
-    public Event getLastEvent() {
-        return lastEvent;
-    }
-
-    public void setLastEvent(Event lastEvent) {
-        this.lastEvent = lastEvent;
     }
 
     public OIDCSettings getOidc() {

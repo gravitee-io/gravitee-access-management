@@ -45,8 +45,6 @@ public class DomainMongo extends Auditable {
 
     private Set<String> identities;
 
-    private Document lastEvent;
-
     private OIDCSettingsMongo oidc;
 
     private SCIMSettingsMongo scim;
@@ -119,14 +117,6 @@ public class DomainMongo extends Auditable {
 
     public void setIdentities(Set<String> identities) {
         this.identities = identities;
-    }
-
-    public Document getLastEvent() {
-        return lastEvent;
-    }
-
-    public void setLastEvent(Document lastEvent) {
-        this.lastEvent = lastEvent;
     }
 
     public OIDCSettingsMongo getOidc() {
