@@ -87,7 +87,7 @@ public class GroupResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Group successfully updated", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public void updateUser(
+    public void updateGroup(
             @PathParam("domain") String domain,
             @PathParam("group") String group,
             @ApiParam(name = "group", required = true) @Valid @NotNull UpdateGroup updateGroup,
