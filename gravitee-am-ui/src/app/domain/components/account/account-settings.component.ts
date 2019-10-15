@@ -53,7 +53,6 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    this.accountSettings = this.accountSettings || { 'inherited' : this.inheritMode };
     this.initDateValues();
   }
 
