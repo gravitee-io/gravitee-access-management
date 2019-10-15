@@ -51,6 +51,8 @@ public interface UserService {
 
     Single<User> create(String domain, NewUser newUser);
 
+    Single<User> create(User user);
+
     Single<User> update(String domain, String id, UpdateUser updateUser);
 
     Single<User> update(User user);

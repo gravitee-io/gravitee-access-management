@@ -36,7 +36,7 @@ export class ClientAccountSettingsComponent {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.client = this.route.snapshot.parent.data['client'];
-    this.accountSettings = Object.assign({}, this.client.accountSettings);
+    this.accountSettings = this.client.accountSettings || { 'inherited' : true };
   }
 
   updateAccountSettings(accountSettings) {

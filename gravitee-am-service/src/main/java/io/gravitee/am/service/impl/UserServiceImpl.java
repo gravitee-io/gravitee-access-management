@@ -191,6 +191,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Single<User> create(User user) {
+        LOGGER.debug("Create a user {}", user);
+        user.setCreatedAt(new Date());
+        user.setUpdatedAt(user.getCreatedAt());
+        return userRepository.create(user)
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to create a user", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
+                });
+    }
+
+    @Override
     public Single<User> update(String domain, String id, UpdateUser updateUser) {
         LOGGER.debug("Update a user {} for domain {}", id, domain);
 
