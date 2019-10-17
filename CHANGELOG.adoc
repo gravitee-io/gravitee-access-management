@@ -1,5 +1,23 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/180?closed=1[AM - 2.8.6 (2019-10-17)]
+
+=== Bug fixes
+
+*_Management_*
+
+- Cannot unlock user if he has never been authenticated https://github.com/gravitee-io/issues/issues/2736[#2736]
+
+
+== https://github.com/gravitee-io/issues/milestone/178?closed=1[AM - 2.8.5 (2019-10-12)]
+
+=== Improvements
+
+*_Gateway_*
+
+- [Identity Provider] use pooled connections for LDAP identity provider https://github.com/gravitee-io/issues/issues/2691[#2691]
+
+
 == https://github.com/gravitee-io/issues/milestone/166?closed=1[AM - 2.9.1 (2019-10-03)]
 
 === Bug fixes
