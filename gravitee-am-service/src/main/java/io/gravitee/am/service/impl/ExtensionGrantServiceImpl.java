@@ -154,7 +154,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                 .flatMap(oldExtensionGrant -> {
                     ExtensionGrant extensionGrantToUpdate = new ExtensionGrant(oldExtensionGrant);
                     extensionGrantToUpdate.setName(updateExtensionGrant.getName());
-                    extensionGrantToUpdate.setGrantType(updateExtensionGrant.getGrantType());
+                    extensionGrantToUpdate.setGrantType(updateExtensionGrant.getGrantType() != null ? updateExtensionGrant.getGrantType() : oldExtensionGrant.getGrantType());
                     extensionGrantToUpdate.setIdentityProvider(updateExtensionGrant.getIdentityProvider());
                     extensionGrantToUpdate.setCreateUser(updateExtensionGrant.isCreateUser());
                     extensionGrantToUpdate.setUserExists(updateExtensionGrant.isUserExists());

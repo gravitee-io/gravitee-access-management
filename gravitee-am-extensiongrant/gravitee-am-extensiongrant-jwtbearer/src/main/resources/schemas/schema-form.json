@@ -12,7 +12,8 @@
     "publicKey" : {
       "title": "Public key",
       "description": "SSH public key (ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*) (.*)) used to verify assertion payload integrity.",
-      "type" : "string"
+      "type" : "string",
+      "pattern": "ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*)( .*)?"
     },
     "claimsMapper" : {
       "title": "Claims mapper",
