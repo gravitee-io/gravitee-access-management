@@ -50,7 +50,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTBearerExtensionGrantProvider.class);
     private static final String ASSERTION_QUERY_PARAM = "assertion";
-    private static final Pattern SSH_PUB_KEY = Pattern.compile("ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*) (.*)");
+    private static final Pattern SSH_PUB_KEY = Pattern.compile("ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*)( .*)?");
     private JwtParser jwtParser;
 
     @Autowired
