@@ -19,16 +19,14 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.oauth2.ScopeApproval;
+import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.ScopeApprovalMongo;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.subscribers.DefaultSubscriber;
 import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -49,8 +47,8 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository implements ScopeApprovalRepository {
 
-    private static final Logger logger = LoggerFactory.getLogger(MongoScopeApprovalRepository.class);
     private static final String FIELD_ID = "_id";
+    private static final String FIELD_TRANSACTION_ID = "transactionId";
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_USER_ID = "userId";
     private static final String FIELD_CLIENT_ID = "clientId";
@@ -61,10 +59,11 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     @PostConstruct
     public void init() {
         scopeApprovalsCollection = mongoOperations.getCollection("scope_approvals", ScopeApprovalMongo.class);
-        scopeApprovalsCollection.createIndex(new Document(FIELD_EXPIRES_AT, 1),  new IndexOptions().expireAfter(0l, TimeUnit.SECONDS)).subscribe(new IndexSubscriber());
-        scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1)).subscribe(new IndexSubscriber());
-        scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1)).subscribe(new IndexSubscriber());
-        scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1)).subscribe(new IndexSubscriber());
+        scopeApprovalsCollection.createIndex(new Document(FIELD_EXPIRES_AT, 1),  new IndexOptions().expireAfter(0l, TimeUnit.SECONDS)).subscribe(new LoggableIndexSubscriber());
+        scopeApprovalsCollection.createIndex(new Document(FIELD_TRANSACTION_ID, 1)).subscribe(new LoggableIndexSubscriber());
+        scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1)).subscribe(new LoggableIndexSubscriber());
+        scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1)).subscribe(new LoggableIndexSubscriber());
+        scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1)).subscribe(new LoggableIndexSubscriber());
     }
 
     @Override
@@ -158,6 +157,7 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
 
         ScopeApproval scopeApproval = new ScopeApproval();
         scopeApproval.setId(scopeApprovalMongo.getId());
+        scopeApproval.setTransactionId(scopeApprovalMongo.getTransactionId());
         scopeApproval.setClientId(scopeApprovalMongo.getClientId());
         scopeApproval.setUserId(scopeApprovalMongo.getUserId());
         scopeApproval.setScope(scopeApprovalMongo.getScope());
@@ -177,6 +177,7 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
 
         ScopeApprovalMongo scopeApprovalMongo = new ScopeApprovalMongo();
         scopeApprovalMongo.setId(scopeApproval.getId());
+        scopeApprovalMongo.setTransactionId(scopeApproval.getTransactionId());
         scopeApprovalMongo.setClientId(scopeApproval.getClientId());
         scopeApprovalMongo.setUserId(scopeApproval.getUserId());
         scopeApprovalMongo.setScope(scopeApproval.getScope());
@@ -187,22 +188,5 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
         scopeApprovalMongo.setUpdatedAt(scopeApproval.getUpdatedAt());
 
         return scopeApprovalMongo;
-    }
-
-    private class IndexSubscriber extends DefaultSubscriber<String> {
-        @Override
-        public void onNext(String value) {
-            logger.debug("Created an index named : " + value);
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            logger.error("Error occurs during indexing", throwable);
-        }
-
-        @Override
-        public void onComplete() {
-            logger.debug("Index creation complete");
-        }
     }
 }

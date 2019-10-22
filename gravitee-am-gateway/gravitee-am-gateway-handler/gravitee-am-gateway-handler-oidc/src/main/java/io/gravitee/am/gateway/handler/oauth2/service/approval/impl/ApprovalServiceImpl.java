@@ -96,12 +96,12 @@ public class ApprovalServiceImpl implements ApprovalService {
             Date expiry = computeExpiry(client, requestedScope);
             if ("true".equals(value) || value.startsWith("approve")) {
                 approvedScopes.add(requestedScope);
-                approvals.add(new ScopeApproval(user.getId(), authorizationRequest.getClientId(),
-                        requestedScope, ScopeApproval.ApprovalStatus.APPROVED, expiry, domain.getId()));
+                approvals.add(new ScopeApproval(authorizationRequest.transactionId(), user.getId(), authorizationRequest.getClientId(), domain.getId(),
+                        requestedScope, ScopeApproval.ApprovalStatus.APPROVED, expiry));
             }
             else {
-                approvals.add(new ScopeApproval(user.getId(), authorizationRequest.getClientId(),
-                        requestedScope, ScopeApproval.ApprovalStatus.DENIED, expiry, domain.getId()));
+                approvals.add(new ScopeApproval(authorizationRequest.transactionId(), user.getId(), authorizationRequest.getClientId(), domain.getId(),
+                        requestedScope, ScopeApproval.ApprovalStatus.DENIED, expiry));
             }
         }
 

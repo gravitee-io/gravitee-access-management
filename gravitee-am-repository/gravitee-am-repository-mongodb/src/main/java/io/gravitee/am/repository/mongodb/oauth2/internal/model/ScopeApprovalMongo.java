@@ -29,6 +29,8 @@ public class ScopeApprovalMongo extends Auditable {
     @BsonId
     private String id;
 
+    private String transactionId;
+
     private String userId;
 
     private String clientId;
@@ -50,6 +52,14 @@ public class ScopeApprovalMongo extends Auditable {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
     }
 
     public String getUserId() {

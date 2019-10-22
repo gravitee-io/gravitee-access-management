@@ -56,6 +56,7 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
     public Single<AuthorizationCode> create(AuthorizationRequest authorizationRequest, User user) {
         AuthorizationCode authorizationCode = new AuthorizationCode();
         authorizationCode.setId(RandomString.generate());
+        authorizationCode.setTransactionId(authorizationRequest.transactionId());
         authorizationCode.setCode(SecureRandomString.generate());
         authorizationCode.setClientId(authorizationRequest.getClientId());
         authorizationCode.setSubject(user.getId());

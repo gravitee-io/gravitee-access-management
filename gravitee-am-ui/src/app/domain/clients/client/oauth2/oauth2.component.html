@@ -195,7 +195,7 @@
                   </mat-form-field>
                 </ng-template>
               </ngx-datatable-column>
-              <ngx-datatable-column name="Claim value" [flexGrow]="2">
+              <ngx-datatable-column name="Claim value" [flexGrow]="4">
                 <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
                 <pre style="margin: 0px; white-space: normal; font-size: 12px;" (dblclick)="editing[row.id + '-claimValue'] = true" *ngIf="!editing[row.id + '-claimValue']">
                   {{row.claimValue}}

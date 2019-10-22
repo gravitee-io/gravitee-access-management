@@ -44,6 +44,7 @@ import static com.mongodb.client.model.Filters.eq;
 public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoRepository implements AuthorizationCodeRepository {
 
     private static final String FIELD_ID = "_id";
+    private static final String FIELD_TRANSACTION_ID = "transactionId";
     private static final String FIELD_CODE = "code";
     private static final String FIELD_RESET_TIME = "expire_at";
     private MongoCollection<AuthorizationCodeMongo> authorizationCodeCollection;
@@ -52,6 +53,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
     public void init() {
         authorizationCodeCollection = mongoOperations.getCollection("authorization_codes", AuthorizationCodeMongo.class);
         authorizationCodeCollection.createIndex(new Document(FIELD_CODE, 1)).subscribe(new LoggableIndexSubscriber());
+        authorizationCodeCollection.createIndex(new Document(FIELD_TRANSACTION_ID, 1)).subscribe(new LoggableIndexSubscriber());
         authorizationCodeCollection.createIndex(new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS)).subscribe(new LoggableIndexSubscriber());
     }
 
@@ -90,6 +92,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
         AuthorizationCode authorizationCode = new AuthorizationCode();
         authorizationCode.setId(authorizationCodeMongo.getId());
+        authorizationCode.setTransactionId(authorizationCodeMongo.getTransactionId());
         authorizationCode.setCode(authorizationCodeMongo.getCode());
         authorizationCode.setClientId(authorizationCodeMongo.getClientId());
         authorizationCode.setCreatedAt(authorizationCodeMongo.getCreatedAt());
@@ -112,6 +115,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
         AuthorizationCodeMongo authorizationCodeMongo = new AuthorizationCodeMongo();
         authorizationCodeMongo.setId(authorizationCode.getId());
+        authorizationCodeMongo.setTransactionId(authorizationCode.getTransactionId());
         authorizationCodeMongo.setCode(authorizationCode.getCode());
         authorizationCodeMongo.setClientId(authorizationCode.getClientId());
         authorizationCodeMongo.setCreatedAt(authorizationCode.getCreatedAt());

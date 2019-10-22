@@ -299,24 +299,16 @@ export class ClientOAuth2Component implements OnInit {
 
   addClaim(claim) {
     if (claim) {
-      if (!this.claimExits(claim.tokenType, claim.claimName)) {
-        claim.id = Math.random().toString(36).substring(7);
-        this.client.tokenCustomClaims.push(claim);
-        this.client.tokenCustomClaims = [...this.client.tokenCustomClaims];
-        this.formChanged = true;
-      } else {
-        this.snackbarService.open(`Error : claim ${claim.claimName} already exists`);
-      }
+      claim.id = Math.random().toString(36).substring(7);
+      this.client.tokenCustomClaims.push(claim);
+      this.client.tokenCustomClaims = [...this.client.tokenCustomClaims];
+      this.formChanged = true;
     }
   }
 
   updateClaim(tokenType, event, cell, rowIndex) {
     let claim = event.target.value;
     if (claim) {
-      if (cell === 'claimName' && this.claimExits(tokenType, claim)) {
-        this.snackbarService.open(`Error : claim ${claim} already exists`);
-        return;
-      }
       this.editing[rowIndex + '-' + cell] = false;
       let index = _.findIndex(this.client.tokenCustomClaims, {id: rowIndex});
       this.client.tokenCustomClaims[index][cell] = claim;

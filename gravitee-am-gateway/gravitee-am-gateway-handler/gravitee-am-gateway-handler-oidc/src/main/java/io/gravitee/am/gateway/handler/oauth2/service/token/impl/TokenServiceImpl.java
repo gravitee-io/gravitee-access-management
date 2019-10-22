@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
+import io.gravitee.am.common.exception.jwt.JWTException;
+import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
-import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
@@ -125,7 +125,7 @@ public class TokenServiceImpl implements TokenService {
                     // create JWT access token
                     JWT accessToken = createAccessTokenJWT(oAuth2Request, client, endUser, executionContext);
                     // create JWT refresh token
-                    JWT refreshToken = oAuth2Request.isSupportRefreshToken() ? createRefreshTokenJWT(oAuth2Request, client, endUser, executionContext) : null;
+                    JWT refreshToken = oAuth2Request.isSupportRefreshToken() ? createRefreshTokenJWT(oAuth2Request, client, endUser, accessToken) : null;
                     // encode and sign JWT tokens
                     // and create token response (+ enhance information)
                     return Single.zip(
@@ -255,11 +255,7 @@ public class TokenServiceImpl implements TokenService {
         token.setCreatedAt(new Date(jwt.getIat() * 1000l));
         token.setExpireAt(new Date(jwt.getExp() * 1000l));
         token.setExpiresIn(token.getExpireAt() != null ? Long.valueOf((token.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L) : 0);
-
-        // set add additional information (currently only claims parameter)
-        if (jwt.getClaimsRequestParameter() != null) {
-            token.setAdditionalInformation(Collections.singletonMap(Claims.claims, jwt.getClaimsRequestParameter()));
-        }
+        token.setAdditionalInformation(jwt);
         return token;
     }
 
@@ -281,10 +277,15 @@ public class TokenServiceImpl implements TokenService {
         return jwt;
     }
 
-    private JWT createRefreshTokenJWT(OAuth2Request request, Client client, User user, ExecutionContext executionContext) {
+    private JWT createRefreshTokenJWT(OAuth2Request request, Client client, User user, JWT accessToken) {
         JWT jwt = createJWT(request, client, user);
         // set exp claim
         jwt.setExp(Instant.ofEpochSecond(jwt.getIat()).plusSeconds(client.getRefreshTokenValiditySeconds()).getEpochSecond());
+        // set custom claims from the current access token
+        Map<String, Object> customClaims = new HashMap<>(accessToken);
+        Claims.claims().forEach(claim ->  customClaims.remove(claim));
+        jwt.putAll(customClaims);
+
         return jwt;
     }
 
@@ -332,6 +333,12 @@ public class TokenServiceImpl implements TokenService {
         executionContext.setAttribute("client", new ClientProperties(client));
         if (user != null) {
             executionContext.setAttribute("user", new UserProperties(user));
+        }
+        // put authorization request in context
+        if (request.getResponseType() != null && !request.getResponseType().isEmpty()) {
+            executionContext.setAttribute("authorizationRequest", request);
+        } else {
+            executionContext.setAttribute("tokenRequest", request);
         }
         return executionContext;
     }
