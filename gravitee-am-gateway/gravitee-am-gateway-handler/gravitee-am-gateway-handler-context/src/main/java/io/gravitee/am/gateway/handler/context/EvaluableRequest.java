@@ -35,6 +35,10 @@ public class EvaluableRequest {
         return request.id();
     }
 
+    public String getTransactionId() {
+        return request.transactionId();
+    }
+
     public HttpHeaders getHeaders() {
         return request.headers();
     }

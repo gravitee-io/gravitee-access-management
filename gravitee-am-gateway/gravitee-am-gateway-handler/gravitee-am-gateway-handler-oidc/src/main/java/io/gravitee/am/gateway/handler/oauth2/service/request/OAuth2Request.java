@@ -88,6 +88,16 @@ public class OAuth2Request extends BaseRequest {
     private boolean supportRefreshToken;
 
     /**
+     * Decoded refresh token used for the oauth 2.0 request (refresh grant flow)
+     */
+    private Map<String, Object> refreshToken;
+
+    /**
+     * Decoded authorization code used for the oauth 2.0 request (authorization code flow step 2)
+     */
+    private Map<String, Object> authorizationCode;
+
+    /**
      * OAuth 2.0 contextual data
      */
     private Map<String, Object> context = new HashMap<>();
@@ -158,6 +168,22 @@ public class OAuth2Request extends BaseRequest {
 
     public void setContext(Map<String, Object> context) {
         this.context = context;
+    }
+
+    public Map<String, Object> getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(Map<String, Object> refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public Map<String, Object> getAuthorizationCode() {
+        return authorizationCode;
+    }
+
+    public void setAuthorizationCode(Map<String, Object> authorizationCode) {
+        this.authorizationCode = authorizationCode;
     }
 
     public boolean shouldGenerateIDToken() {

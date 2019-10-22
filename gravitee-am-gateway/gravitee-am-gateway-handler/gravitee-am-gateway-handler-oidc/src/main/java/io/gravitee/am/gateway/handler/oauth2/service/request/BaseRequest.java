@@ -31,7 +31,7 @@ import javax.net.ssl.SSLSession;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Titouan COMPIEHNE (titouan.compiegne at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public abstract class BaseRequest implements Request {
@@ -221,6 +221,77 @@ public abstract class BaseRequest implements Request {
 
     public void setAdditionalParameters(MultiValueMap<String, String> additionalParameters) {
         this.additionalParameters = additionalParameters;
+    }
+
+    /**
+     * ---------------------------------------------
+     * ---------------------------------------------
+     * The following getters are mainly used for evaluable context (EL)
+     * ---------------------------------------------
+     * ---------------------------------------------
+     */
+    public String getId() {
+        return id;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public String getPathInfo() {
+        return pathInfo;
+    }
+
+    public String getContextPath() {
+        return contextPath;
+    }
+
+    public MultiValueMap<String, String> getParameters() {
+        return parameters;
+    }
+
+    public HttpHeaders getHeaders() {
+        return headers;
+    }
+
+    public HttpMethod getMethod() {
+        return method;
+    }
+
+    public String getScheme() {
+        return scheme;
+    }
+
+    public String getRawMethod() {
+        return rawMethod;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public String getRemoteAddress() {
+        return remoteAddress;
+    }
+
+    public String getLocalAddress() {
+        return localAddress;
+    }
+
+    public HttpVersion getVersion() {
+        return version;
+    }
+
+    public SSLSession getSslSession() {
+        return sslSession;
     }
 
     /**

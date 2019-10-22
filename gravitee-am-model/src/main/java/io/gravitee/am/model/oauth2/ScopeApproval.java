@@ -31,6 +31,8 @@ public class ScopeApproval {
 
     private String id;
 
+    private String transactionId;
+
     private String userId;
 
     private String clientId;
@@ -49,7 +51,8 @@ public class ScopeApproval {
 
     public ScopeApproval() {}
 
-    public ScopeApproval(String userId, String clientId, String scope, ApprovalStatus status, Date expiresAt, String domain) {
+    public ScopeApproval(String transactionId, String userId, String clientId, String domain, String scope, ApprovalStatus status, Date expiresAt) {
+        this.transactionId = transactionId;
         this.userId = userId;
         this.clientId = clientId;
         this.domain = domain;
@@ -64,6 +67,14 @@ public class ScopeApproval {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
     }
 
     public String getUserId() {

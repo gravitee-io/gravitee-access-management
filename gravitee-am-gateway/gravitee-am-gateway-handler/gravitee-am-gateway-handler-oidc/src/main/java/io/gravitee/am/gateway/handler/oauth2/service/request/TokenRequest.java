@@ -86,6 +86,8 @@ public class TokenRequest extends OAuth2Request {
         oAuth2Request.setGrantType(getGrantType());
         oAuth2Request.setSubject(getSubject());
         oAuth2Request.setAdditionalParameters(getAdditionalParameters());
+        oAuth2Request.setRefreshToken(getRefreshToken());
+        oAuth2Request.setAuthorizationCode(getAuthorizationCode());
 
         return oAuth2Request;
     }

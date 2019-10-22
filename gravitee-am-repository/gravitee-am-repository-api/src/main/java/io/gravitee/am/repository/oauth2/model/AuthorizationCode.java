@@ -32,6 +32,11 @@ public class AuthorizationCode {
     private String id;
 
     /**
+     * Transaction ID
+     */
+    private String transactionId;
+
+    /**
      * Authorization code value
      */
     private String code;
@@ -77,6 +82,22 @@ public class AuthorizationCode {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public String getRedirectUri() {
+        return redirectUri;
+    }
+
+    public void setRedirectUri(String redirectUri) {
+        this.redirectUri = redirectUri;
     }
 
     public String getCode() {

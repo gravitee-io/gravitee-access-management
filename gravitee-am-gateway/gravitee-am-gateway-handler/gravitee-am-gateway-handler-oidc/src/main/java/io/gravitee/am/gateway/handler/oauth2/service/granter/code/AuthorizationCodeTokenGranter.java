@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter.code;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
@@ -35,6 +35,9 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Implementation of the Authorization Code Grant Flow
@@ -86,6 +89,11 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                             if (authorizationCode.getRequestParameters() != null) {
                                 authorizationCode.getRequestParameters().forEach((key, value) -> tokenRequest1.parameters().putIfAbsent(key, value));
                             }
+                            // set decoded authorization code to the current request
+                            Map<String, Object> decodedAuthorizationCode = new HashMap<>();
+                            decodedAuthorizationCode.put("code", authorizationCode.getCode());
+                            decodedAuthorizationCode.put("transactionId", authorizationCode.getTransactionId());
+                            tokenRequest1.setAuthorizationCode(decodedAuthorizationCode);
                             return tokenRequest1;
                         }).toSingle());
     }

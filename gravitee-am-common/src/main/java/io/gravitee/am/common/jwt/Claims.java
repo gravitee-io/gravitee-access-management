@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.common.jwt;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * JWT Registered Claim Names
  *
@@ -79,4 +82,15 @@ public interface Claims {
      * The "user_agent" (User Agent) claim identifies the user agent used for the JWT.
      */
     String user_agent = "user_agent";
+
+    /**
+     * The oauth 2.0 "scopes"
+     */
+    String scope = "scope";
+
+    static List<String> claims() {
+        return Arrays.asList(iss, sub, aud, exp, nbf, iat,
+                jti, domain, claims, ip_address, user_agent, scope);
+    }
+
 }

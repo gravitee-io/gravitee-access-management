@@ -39,6 +39,8 @@
       {#request} : Current HTTP Request with parameters, headers, path, ...
       {#context.attributes['client']} : OAuth 2.0 Client with clientId and clientName
       {#context.attributes['user']} : Authenticated User (if available) with username, firstName, lastName, email, roles and claims
+      {#context.attributes['authorizationRequest']} : OAuth 2.0 Authorization Request (if available)
+      {#context.attributes['tokenRequest']} : OAuth 2.0 Token Request (if available)
       ]]>
     </pre>
   </mat-dialog-content>
