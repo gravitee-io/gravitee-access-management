@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.github.authentication;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -23,7 +24,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.github.GithubIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.github.authentication.spring.GithubAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.github.utils.URLEncodedUtils;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.observers.TestObserver;
 import org.junit.Rule;
@@ -75,17 +75,19 @@ public class GithubAuthenticationProviderTest {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             @Override
             public Object getCredentials() {
-                return "test-code";
+                return "__social__";
             }
 
             @Override
             public Object getPrincipal() {
-                return "__oauth2__";
+                return "__social__";
             }
 
             @Override
             public AuthenticationContext getContext() {
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"));
+                DummyRequest dummyRequest = new DummyRequest();
+                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
             }
         }).test();
 
@@ -106,17 +108,19 @@ public class GithubAuthenticationProviderTest {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             @Override
             public Object getCredentials() {
-                return "wrongpassword";
+                return "__social__";
             }
 
             @Override
             public Object getPrincipal() {
-                return "bob";
+                return "__social__";
             }
 
             @Override
             public AuthenticationContext getContext() {
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"));
+                DummyRequest dummyRequest = new DummyRequest();
+                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("wrong-code")));
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
             }
         }).test();
         testObserver.awaitTerminalEvent();
@@ -140,17 +144,19 @@ public class GithubAuthenticationProviderTest {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             @Override
             public Object getCredentials() {
-                return "bobspassword";
+                return "__social__";
             }
 
             @Override
             public Object getPrincipal() {
-                return "unknownUsername";
+                return "__social__";
             }
 
             @Override
             public AuthenticationContext getContext() {
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"));
+                DummyRequest dummyRequest = new DummyRequest();
+                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
             }
         }).test();
         testObserver.awaitTerminalEvent();
@@ -179,17 +185,19 @@ public class GithubAuthenticationProviderTest {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             @Override
             public Object getCredentials() {
-                return "test-code";
+                return "__social__";
             }
 
             @Override
             public Object getPrincipal() {
-                return "__oauth2__";
+                return "__social__";
             }
 
             @Override
             public AuthenticationContext getContext() {
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"));
+                DummyRequest dummyRequest = new DummyRequest();
+                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
             }
         }).test();
 
