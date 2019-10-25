@@ -20,6 +20,7 @@ import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.AuthenticationFlow;
+import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.SecureRandomString;
@@ -49,7 +50,6 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
-import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
@@ -61,6 +61,7 @@ import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -347,7 +348,7 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
     private Map<String, Object> applyUserMapping(Map<String, Object> attributes) {
         if (!mappingEnabled()) {
             // set default standard claims
-            return StandardClaims.claims().stream()
+            return Stream.concat(StandardClaims.claims().stream(), CustomClaims.claims().stream())
                     .filter(claimName -> attributes.containsKey(claimName))
                     .collect(Collectors.toMap(claimName -> claimName, claimName -> attributes.get(claimName)));
         }

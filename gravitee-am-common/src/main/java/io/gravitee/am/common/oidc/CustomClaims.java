@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.common.oidc;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Custom OpenID Connect Claims registered by Gravitee.io AM
  *
@@ -30,4 +33,8 @@ public interface CustomClaims {
      * End-User's roles.
      */
     String ROLES = "roles";
+
+    static List<String> claims() {
+        return Arrays.asList(GROUPS, ROLES);
+    }
 }
