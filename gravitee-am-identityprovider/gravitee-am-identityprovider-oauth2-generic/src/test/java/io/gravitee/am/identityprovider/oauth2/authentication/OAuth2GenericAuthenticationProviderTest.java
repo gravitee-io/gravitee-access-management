@@ -34,6 +34,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,7 +83,9 @@ public class OAuth2GenericAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), new DummyRequest());
+                DummyRequest dummyRequest = new DummyRequest();
+                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
             }
         }).test();
 
@@ -113,7 +116,9 @@ public class OAuth2GenericAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), new DummyRequest());
+                DummyRequest dummyRequest = new DummyRequest();
+                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("wrong-code")));
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
             }
         }).test();
         testObserver.awaitTerminalEvent();
@@ -145,7 +150,9 @@ public class OAuth2GenericAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), new DummyRequest());
+                DummyRequest dummyRequest = new DummyRequest();
+                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
             }
         }).test();
         testObserver.awaitTerminalEvent();
@@ -182,7 +189,9 @@ public class OAuth2GenericAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), new DummyRequest());
+                DummyRequest dummyRequest = new DummyRequest();
+                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
+                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
             }
         }).test();
 
