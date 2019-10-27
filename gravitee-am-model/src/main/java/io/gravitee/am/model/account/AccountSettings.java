@@ -48,6 +48,26 @@ public class AccountSettings {
      */
     private boolean completeRegistrationWhenResetPassword;
 
+    /**
+     * Auto login user after registration process
+     */
+    private boolean autoLoginAfterRegistration;
+
+    /**
+     * The redirect URI after registration process
+     */
+    private String redirectUriAfterRegistration;
+
+    /**
+     * Auto login user after reset password process
+     */
+    private boolean autoLoginAfterResetPassword;
+
+    /**
+     * The redirect URI after reset password process
+     */
+    private String redirectUriAfterResetPassword;
+
     public boolean isInherited() {
         return inherited;
     }
@@ -94,5 +114,37 @@ public class AccountSettings {
 
     public void setCompleteRegistrationWhenResetPassword(boolean completeRegistrationWhenResetPassword) {
         this.completeRegistrationWhenResetPassword = completeRegistrationWhenResetPassword;
+    }
+
+    public boolean isAutoLoginAfterRegistration() {
+        return autoLoginAfterRegistration;
+    }
+
+    public void setAutoLoginAfterRegistration(boolean autoLoginAfterRegistration) {
+        this.autoLoginAfterRegistration = autoLoginAfterRegistration;
+    }
+
+    public String getRedirectUriAfterRegistration() {
+        return redirectUriAfterRegistration;
+    }
+
+    public void setRedirectUriAfterRegistration(String redirectUriAfterRegistration) {
+        this.redirectUriAfterRegistration = redirectUriAfterRegistration;
+    }
+
+    public boolean isAutoLoginAfterResetPassword() {
+        return autoLoginAfterResetPassword;
+    }
+
+    public void setAutoLoginAfterResetPassword(boolean autoLoginAfterResetPassword) {
+        this.autoLoginAfterResetPassword = autoLoginAfterResetPassword;
+    }
+
+    public String getRedirectUriAfterResetPassword() {
+        return redirectUriAfterResetPassword;
+    }
+
+    public void setRedirectUriAfterResetPassword(String redirectUriAfterResetPassword) {
+        this.redirectUriAfterResetPassword = redirectUriAfterResetPassword;
     }
 }

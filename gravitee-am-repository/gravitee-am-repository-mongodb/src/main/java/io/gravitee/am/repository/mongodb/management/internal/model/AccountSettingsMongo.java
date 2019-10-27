@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.account.AccountSettings;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -27,6 +29,10 @@ public class AccountSettingsMongo {
     private Integer loginAttemptsResetTime;
     private Integer accountBlockedDuration;
     private boolean completeRegistrationWhenResetPassword;
+    private boolean autoLoginAfterRegistration;
+    private String redirectUriAfterRegistration;
+    private boolean autoLoginAfterResetPassword;
+    private String redirectUriAfterResetPassword;
 
     public boolean isInherited() {
         return inherited;
@@ -74,5 +80,70 @@ public class AccountSettingsMongo {
 
     public void setCompleteRegistrationWhenResetPassword(boolean completeRegistrationWhenResetPassword) {
         this.completeRegistrationWhenResetPassword = completeRegistrationWhenResetPassword;
+    }
+
+    public boolean isAutoLoginAfterRegistration() {
+        return autoLoginAfterRegistration;
+    }
+
+    public void setAutoLoginAfterRegistration(boolean autoLoginAfterRegistration) {
+        this.autoLoginAfterRegistration = autoLoginAfterRegistration;
+    }
+
+    public String getRedirectUriAfterRegistration() {
+        return redirectUriAfterRegistration;
+    }
+
+    public void setRedirectUriAfterRegistration(String redirectUriAfterRegistration) {
+        this.redirectUriAfterRegistration = redirectUriAfterRegistration;
+    }
+
+    public boolean isAutoLoginAfterResetPassword() {
+        return autoLoginAfterResetPassword;
+    }
+
+    public void setAutoLoginAfterResetPassword(boolean autoLoginAfterResetPassword) {
+        this.autoLoginAfterResetPassword = autoLoginAfterResetPassword;
+    }
+
+    public String getRedirectUriAfterResetPassword() {
+        return redirectUriAfterResetPassword;
+    }
+
+    public void setRedirectUriAfterResetPassword(String redirectUriAfterResetPassword) {
+        this.redirectUriAfterResetPassword = redirectUriAfterResetPassword;
+    }
+
+    public AccountSettings convert() {
+        AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setInherited(isInherited());
+        accountSettings.setLoginAttemptsDetectionEnabled(isLoginAttemptsDetectionEnabled());
+        accountSettings.setMaxLoginAttempts(getMaxLoginAttempts());
+        accountSettings.setLoginAttemptsResetTime(getLoginAttemptsResetTime());
+        accountSettings.setAccountBlockedDuration(getAccountBlockedDuration());
+        accountSettings.setCompleteRegistrationWhenResetPassword(isCompleteRegistrationWhenResetPassword());
+        accountSettings.setAutoLoginAfterRegistration(isAutoLoginAfterRegistration());
+        accountSettings.setRedirectUriAfterRegistration(getRedirectUriAfterRegistration());
+        accountSettings.setAutoLoginAfterResetPassword(isAutoLoginAfterResetPassword());
+        accountSettings.setRedirectUriAfterResetPassword(getRedirectUriAfterResetPassword());
+        return accountSettings;
+    }
+
+    public static AccountSettingsMongo convert(AccountSettings accountSettings) {
+        if (accountSettings == null) {
+            return null;
+        }
+        AccountSettingsMongo accountSettingsMongo = new AccountSettingsMongo();
+        accountSettingsMongo.setInherited(accountSettings.isInherited());
+        accountSettingsMongo.setLoginAttemptsDetectionEnabled(accountSettings.isLoginAttemptsDetectionEnabled());
+        accountSettingsMongo.setMaxLoginAttempts(accountSettings.getMaxLoginAttempts());
+        accountSettingsMongo.setLoginAttemptsResetTime(accountSettings.getLoginAttemptsResetTime());
+        accountSettingsMongo.setAccountBlockedDuration(accountSettings.getAccountBlockedDuration());
+        accountSettingsMongo.setCompleteRegistrationWhenResetPassword(accountSettings.isCompleteRegistrationWhenResetPassword());
+        accountSettingsMongo.setAutoLoginAfterRegistration(accountSettings.isAutoLoginAfterRegistration());
+        accountSettingsMongo.setRedirectUriAfterRegistration(accountSettings.getRedirectUriAfterRegistration());
+        accountSettingsMongo.setAutoLoginAfterResetPassword(accountSettings.isAutoLoginAfterResetPassword());
+        accountSettingsMongo.setRedirectUriAfterResetPassword(accountSettings.getRedirectUriAfterResetPassword());
+        return accountSettingsMongo;
     }
 }

@@ -443,33 +443,11 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     }
 
     private AccountSettings convert(AccountSettingsMongo accountSettingsMongo) {
-        if (accountSettingsMongo == null) {
-            return null;
-        }
-
-        AccountSettings accountSettings = new AccountSettings();
-        accountSettings.setInherited(accountSettingsMongo.isInherited());
-        accountSettings.setLoginAttemptsDetectionEnabled(accountSettingsMongo.isLoginAttemptsDetectionEnabled());
-        accountSettings.setMaxLoginAttempts(accountSettingsMongo.getMaxLoginAttempts());
-        accountSettings.setLoginAttemptsResetTime(accountSettingsMongo.getLoginAttemptsResetTime());
-        accountSettings.setAccountBlockedDuration(accountSettingsMongo.getAccountBlockedDuration());
-        accountSettings.setCompleteRegistrationWhenResetPassword(accountSettingsMongo.isCompleteRegistrationWhenResetPassword());
-        return accountSettings;
+        return accountSettingsMongo != null ? accountSettingsMongo.convert() : null;
     }
 
     private AccountSettingsMongo convert(AccountSettings accountSettings) {
-        if (accountSettings == null) {
-            return null;
-        }
-
-        AccountSettingsMongo accountSettingsMongo = new AccountSettingsMongo();
-        accountSettingsMongo.setInherited(accountSettings.isInherited());
-        accountSettingsMongo.setLoginAttemptsDetectionEnabled(accountSettings.isLoginAttemptsDetectionEnabled());
-        accountSettingsMongo.setMaxLoginAttempts(accountSettings.getMaxLoginAttempts());
-        accountSettingsMongo.setLoginAttemptsResetTime(accountSettings.getLoginAttemptsResetTime());
-        accountSettingsMongo.setAccountBlockedDuration(accountSettings.getAccountBlockedDuration());
-        accountSettingsMongo.setCompleteRegistrationWhenResetPassword(accountSettings.isCompleteRegistrationWhenResetPassword());
-        return accountSettingsMongo;
+        return AccountSettingsMongo.convert(accountSettings);
     }
 
     private List<TokenClaim> getTokenClaims(List<TokenClaimMongo> mongoTokenClaims) {

@@ -93,6 +93,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
+        LOGGER.debug("Find users by domain : {} and email: {}", domain, email);
+        return userRepository.findByDomainAndEmail(domain, email, strict)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find users by domain : {} and email : {} ", domain, email, ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s and email %s", domain, email), ex));
+                });
+    }
+
+    @Override
     public Maybe<User> findById(String id) {
         LOGGER.debug("Find user by id : {}", id);
         return userRepository.findById(id)

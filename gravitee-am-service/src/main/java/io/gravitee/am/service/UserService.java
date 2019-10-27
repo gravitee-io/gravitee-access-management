@@ -41,6 +41,8 @@ public interface UserService {
 
     Single<List<User>> findByIdIn(List<String> ids);
 
+    Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict);
+
     Maybe<User> findByDomainAndUsername(String domain, String username);
 
     Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
@@ -58,4 +60,8 @@ public interface UserService {
     Single<User> update(User user);
 
     Completable delete(String userId);
+
+    default Single<List<User>> findByDomainAndEmail(String domain, String email) {
+        return findByDomainAndEmail(domain, email, true);
+    }
 }

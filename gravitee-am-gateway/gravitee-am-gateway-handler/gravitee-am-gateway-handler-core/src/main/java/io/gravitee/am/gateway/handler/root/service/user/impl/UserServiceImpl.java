@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.service.user.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
+import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
@@ -27,6 +28,8 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTBuilder;
 import io.gravitee.am.gateway.handler.common.jwt.JWTParser;
 import io.gravitee.am.gateway.handler.email.EmailManager;
 import io.gravitee.am.gateway.handler.email.EmailService;
+import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
+import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -35,14 +38,12 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
-import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.Completable;
@@ -75,7 +76,7 @@ public class UserServiceImpl implements UserService {
     private Integer expireAfter;
 
     @Autowired
-    private UserRepository userRepository;
+    private io.gravitee.am.gateway.handler.common.user.UserService userService;
 
     @Autowired
     private JWTParser jwtParser;
@@ -107,16 +108,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public Maybe<UserToken> verifyToken(String token) {
         return Maybe.fromCallable(() -> jwtParser.parse(token))
-                .flatMap(jwt -> userRepository.findById(jwt.getSub()).zipWith(clientSource(jwt.getAud()), (user, optionalClient) -> new UserToken(user, optionalClient.orElse(null))));
+                .flatMap(jwt -> userService.findById(jwt.getSub()).zipWith(clientSource(jwt.getAud()), (user, optionalClient) -> new UserToken(user, optionalClient.orElse(null))));
     }
 
     @Override
-    public Single<User> register(User user, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal) {
         // set user idp source
         final String source = user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource();
 
         // check user uniqueness
-        return userRepository.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source)
+        return userService.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source)
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {
@@ -143,10 +144,16 @@ public class UserServiceImpl implements UserService {
                             // set date information
                             user.setCreatedAt(new Date());
                             user.setUpdatedAt(user.getCreatedAt());
-                            return userRepository.create(user);
+                            return userService.create(user);
                         })
-                        .doOnSuccess(user1 -> {
+                        .flatMap(userService::enhance)
+                        .map(user1 -> {
+                            AccountSettings accountSettings = getAccountSettings(domain, client);
+                            return new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false);
+                        })
+                        .doOnSuccess(registrationResponse -> {
                             // reload principal
+                            final User user1 = registrationResponse.getUser();
                             io.gravitee.am.identityprovider.api.User principal1 = new DefaultUser(user1.getUsername());
                             ((DefaultUser) principal1).setId(user1.getId());
                             ((DefaultUser) principal1).setAdditionalInformation(principal.getAdditionalInformation());
@@ -161,7 +168,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Completable confirmRegistration(User user, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<RegistrationResponse> confirmRegistration(Client client, User user, io.gravitee.am.identityprovider.api.User principal) {
         // user has completed his account, add it to the idp
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
@@ -185,19 +192,23 @@ public class UserServiceImpl implements UserService {
                     user.setEnabled(true);
                     user.setExternalId(idpUser.getId());
                     user.setUpdatedAt(new Date());
-                    return userRepository.update(user);
+                    return userService.update(user);
                 })
-                .toCompletable()
-                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.REGISTRATION_CONFIRMATION)))
+                .flatMap(userService::enhance)
+                .map(user1 -> {
+                    AccountSettings accountSettings = getAccountSettings(domain, client);
+                    return new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false);
+                })
+                .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.REGISTRATION_CONFIRMATION)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.REGISTRATION_CONFIRMATION).throwable(throwable)));
 
     }
 
     @Override
-    public Completable resetPassword(User user, Client client, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<ResetPasswordResponse> resetPassword(Client client, User user, io.gravitee.am.identityprovider.api.User principal) {
         // if user registration is not completed and force registration option is disabled throw invalid account exception
         if (user.isInactive() && !forceUserRegistration(domain, client)) {
-            return Completable.error(new AccountInactiveException("User needs to complete the activation process"));
+            return Single.error(new AccountInactiveException("User needs to complete the activation process"));
         }
 
         // only idp manage password, find user idp and update its password
@@ -230,24 +241,29 @@ public class UserServiceImpl implements UserService {
                     user.setPassword(null);
                     user.setExternalId(idpUser.getId());
                     user.setUpdatedAt(new Date());
-                    return userRepository.update(user);
+                    return userService.update(user);
                 })
                 // reset login attempts in case of reset password action
-                .flatMapCompletable(user1 -> {
+                .flatMap(user1 -> {
                     LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
                             .domain(user1.getDomain())
                             .client(user1.getClient())
                             .username(user1.getUsername())
                             .build();
-                    return loginAttemptService.reset(criteria);
+                    return loginAttemptService.reset(criteria).andThen(Single.just(user1));
                 })
-                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET)))
+                .flatMap(userService::enhance)
+                .map(user1 -> {
+                    AccountSettings accountSettings = getAccountSettings(domain, client);
+                    return new ResetPasswordResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterResetPassword() : null, accountSettings != null ? accountSettings.isAutoLoginAfterResetPassword() : false);
+                })
+                .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)));
     }
 
     @Override
     public Completable forgotPassword(String email, Client client, io.gravitee.am.identityprovider.api.User principal) {
-        return userRepository.findByDomainAndEmail(domain.getId(), email, false)
+        return userService.findByDomainAndEmail(domain.getId(), email, false)
                 .map(users -> users.stream().filter(user -> user.isInternal() && email.toLowerCase().equals(user.getEmail().toLowerCase())).findFirst())
                 .map(optionalUser -> {
                         if (!optionalUser.isPresent()) {

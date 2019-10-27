@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.service.user;
 
+import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
 import io.gravitee.am.identityprovider.api.UserProvider;
@@ -22,10 +23,8 @@ import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -59,7 +58,7 @@ public class UserServiceTest {
     private IdentityProviderManager identityProviderManager;
 
     @Mock
-    private UserRepository userRepository;
+    private io.gravitee.am.gateway.handler.common.user.UserService commonUserService;
 
     @Mock
     private LoginAttemptService loginAttemptService;
@@ -74,7 +73,7 @@ public class UserServiceTest {
 
         when(user.isInactive()).thenReturn(true);
 
-        TestObserver testObserver = userService.resetPassword(user, client).test();
+        TestObserver testObserver = userService.resetPassword(client, user).test();
         testObserver.assertNotComplete();
         testObserver.assertError(AccountInactiveException.class);
     }
@@ -100,10 +99,11 @@ public class UserServiceTest {
 
         when(domain.getAccountSettings()).thenReturn(accountSettings);
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-        when(userRepository.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.enhance(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.resetPassword(user, client).test();
+        TestObserver testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
     }
@@ -125,10 +125,11 @@ public class UserServiceTest {
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
 
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-        when(userRepository.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.enhance(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.resetPassword(user, client).test();
+        TestObserver testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
     }
@@ -150,10 +151,11 @@ public class UserServiceTest {
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
 
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-        when(userRepository.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.enhance(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.resetPassword(user, client).test();
+        TestObserver testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
     }
@@ -175,10 +177,11 @@ public class UserServiceTest {
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
 
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-        when(userRepository.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.enhance(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.resetPassword(user, client).test();
+        TestObserver testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(userProvider, times(1)).create(any());
@@ -195,7 +198,7 @@ public class UserServiceTest {
         when(user.isInternal()).thenReturn(true);
         when(user.isInactive()).thenReturn(true);
 
-        when(userRepository.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
@@ -217,7 +220,7 @@ public class UserServiceTest {
         when(domain.getId()).thenReturn("domain-id");
         when(domain.getAccountSettings()).thenReturn(accountSettings);
 
-        when(userRepository.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
@@ -235,7 +238,7 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(userRepository.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.service.user;
 
+import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
+import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.User;
@@ -30,28 +32,28 @@ public interface UserService {
 
     Maybe<UserToken> verifyToken(String token);
 
-    Single<User> register(User user, io.gravitee.am.identityprovider.api.User principal);
+    Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable confirmRegistration(User user, io.gravitee.am.identityprovider.api.User principal);
+    Single<RegistrationResponse> confirmRegistration(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable resetPassword(User user, Client client, io.gravitee.am.identityprovider.api.User principal);
+    Single<ResetPasswordResponse> resetPassword(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 
     Completable forgotPassword(String email, Client client, io.gravitee.am.identityprovider.api.User principal);
 
-    default Single<User> register(User user) {
-        return register(user, null);
+    default Single<RegistrationResponse> register(Client client, User user) {
+        return register(client, user, null);
     }
 
-    default Completable resetPassword(User user, Client client) {
-        return resetPassword(user, client, null);
+    default Single<ResetPasswordResponse> resetPassword(Client client, User user) {
+        return resetPassword(client, user, null);
     }
 
     default Completable forgotPassword(String email, Client client) {
         return forgotPassword(email, client, null);
     }
 
-    default Completable confirmRegistration(User user) {
-        return confirmRegistration(user, null);
+    default Single<RegistrationResponse> confirmRegistration(Client client, User user) {
+        return confirmRegistration(client, user, null);
     }
 
 }
