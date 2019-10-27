@@ -16,14 +16,23 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
 import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
+import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.common.http.HttpHeaders;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,10 +43,10 @@ import java.util.Map;
  */
 public class RegisterSubmissionEndpoint extends UserRequestHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(RegisterSubmissionEndpoint.class);
     private static final String ERROR_PARAM = "error";
     private static final String SUCCESS_PARAM = "success";
     private static final String WARNING_PARAM = "warning";
-    private static final String CLIENT_ID_PARAM = "client_id";
     private UserService userService;
     private Domain domain;
 
@@ -48,29 +57,59 @@ public class RegisterSubmissionEndpoint extends UserRequestHandler {
 
     @Override
     public void handle(RoutingContext context) {
+        // retrieve the client in context
+        Client client = context.get("client");
+
+        // create the user
         MultiMap params = context.request().formAttributes();
+        User user = convert(params);
 
-        Map<String, String> queryParams = new HashMap<>();
-        if (context.request().getParam(CLIENT_ID_PARAM) != null) {
-            queryParams.put(CLIENT_ID_PARAM, context.request().getParam(CLIENT_ID_PARAM));
-        }
+        // register the user
+        register(client, user, getAuthenticatedUser(context), h -> {
+            // prepare response
+            Map<String, String> queryParams = new HashMap<>();
+            // add client_id parameter for future use
+            if (client != null) {
+                queryParams.put(Parameters.CLIENT_ID, client.getClientId());
+            }
 
-        userService.register(convert(params), getAuthenticatedUser(context))
+            // if failure, return to the register page with an error
+            if (h.failed()) {
+                if (h.cause() instanceof UserAlreadyExistsException) {
+                    queryParams.put(WARNING_PARAM, "user_already_exists");
+                } else {
+                    LOGGER.error("An error occurs while ending user registration", h.cause());
+                    queryParams.put(ERROR_PARAM, "registration_failed");
+                }
+                redirectToPage(context, queryParams, h.cause());
+                return;
+            }
+
+            // handle response
+            RegistrationResponse registrationResponse = h.result();
+            // if auto login option is enabled add the user to the session
+            if (registrationResponse.isAutoLogin()) {
+                context.setUser(io.vertx.reactivex.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(registrationResponse.getUser())));
+            }
+            // no redirect uri has been set, redirect to the default page
+            if (registrationResponse.getRedirectUri() == null || registrationResponse.getRedirectUri().isEmpty()) {
+                queryParams.put(SUCCESS_PARAM, "registration_succeed");
+                redirectToPage(context, queryParams);
+                return;
+            }
+            // else, redirect to the custom redirect_uri
+            context.response()
+                    .putHeader(HttpHeaders.LOCATION, registrationResponse.getRedirectUri())
+                    .setStatusCode(302)
+                    .end();
+        });
+    }
+
+    private void register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, Handler<AsyncResult<RegistrationResponse>> handler) {
+        userService.register(client, user, principal)
                 .subscribe(
-                        user -> {
-                            queryParams.put(SUCCESS_PARAM, "registration_succeed");
-                            redirectToPage(context, queryParams);
-                        },
-                        error -> {
-                            if (error instanceof UserAlreadyExistsException) {
-                                queryParams.put(WARNING_PARAM, "user_already_exists");
-                                redirectToPage(context, queryParams);
-                            } else {
-                                queryParams.put(ERROR_PARAM, "registration_failed");
-                                redirectToPage(context, queryParams, error);
-                            }
-                        });
-
+                        response -> handler.handle(Future.succeededFuture(response)),
+                        error -> handler.handle(Future.failedFuture(error)));
     }
 
     @Override

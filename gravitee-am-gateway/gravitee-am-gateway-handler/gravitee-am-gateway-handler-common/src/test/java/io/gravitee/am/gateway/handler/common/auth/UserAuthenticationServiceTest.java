@@ -17,13 +17,11 @@ package io.gravitee.am.gateway.handler.common.auth;
 
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationServiceImpl;
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
-import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.UserService;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -33,7 +31,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -52,12 +53,6 @@ public class UserAuthenticationServiceTest {
     private UserService userService;
 
     @Mock
-    private GroupService groupService;
-
-    @Mock
-    private RoleService roleService;
-
-    @Mock
     private Domain domain;
 
     @Test
@@ -74,14 +69,13 @@ public class UserAuthenticationServiceTest {
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
 
         User createdUser = mock(User.class);
-        when(createdUser.getId()).thenReturn(id);
         when(createdUser.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn(domainId);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.empty());
         when(userService.findByDomainAndUsernameAndSource(domainId, username, source)).thenReturn(Maybe.empty());
         when(userService.create(any())).thenReturn(Single.just(createdUser));
-        when(groupService.findByMember(createdUser.getId())).thenReturn(Single.just(Collections.emptyList()));
+        when(userService.enhance(createdUser)).thenReturn(Single.just(createdUser));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitTerminalEvent();
@@ -104,13 +98,12 @@ public class UserAuthenticationServiceTest {
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
 
         User updatedUser = mock(User.class);
-        when(updatedUser.getId()).thenReturn(id);
         when(updatedUser.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn(domainId);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(mock(User.class)));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
-        when(groupService.findByMember(updatedUser.getId())).thenReturn(Single.just(Collections.emptyList()));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitTerminalEvent();
@@ -168,7 +161,6 @@ public class UserAuthenticationServiceTest {
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
 
         User createdUser = mock(User.class);
-        when(createdUser.getId()).thenReturn(id);
         when(createdUser.isEnabled()).thenReturn(true);
         when(createdUser.getRoles()).thenReturn(Arrays.asList("idp-role", "idp2-role"));
 
@@ -176,8 +168,7 @@ public class UserAuthenticationServiceTest {
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.empty());
         when(userService.findByDomainAndUsernameAndSource(domainId, username, source)).thenReturn(Maybe.empty());
         when(userService.create(any())).thenReturn(Single.just(createdUser));
-        when(groupService.findByMember(createdUser.getId())).thenReturn(Single.just(Collections.emptyList()));
-        when(roleService.findByIdIn(any())).thenReturn(Single.just(roles));
+        when(userService.enhance(createdUser)).thenReturn(Single.just(createdUser));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitTerminalEvent();
@@ -209,15 +200,13 @@ public class UserAuthenticationServiceTest {
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
 
         User updatedUser = mock(User.class);
-        when(updatedUser.getId()).thenReturn(id);
         when(updatedUser.isEnabled()).thenReturn(true);
         when(updatedUser.getRoles()).thenReturn(Arrays.asList("idp-role", "idp2-role"));
 
         when(domain.getId()).thenReturn(domainId);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(mock(User.class)));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
-        when(groupService.findByMember(updatedUser.getId())).thenReturn(Single.just(Collections.emptyList()));
-        when(roleService.findByIdIn(any())).thenReturn(Single.just(roles));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitTerminalEvent();
@@ -235,7 +224,6 @@ public class UserAuthenticationServiceTest {
         String id = "id";
 
         Group group = mock(Group.class);
-        when(group.getRoles()).thenReturn(Arrays.asList("group-role", "group-role"));
 
         Role role1= new Role();
         role1.setId("idp-role");
@@ -251,15 +239,13 @@ public class UserAuthenticationServiceTest {
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
 
         User updatedUser = mock(User.class);
-        when(updatedUser.getId()).thenReturn(id);
         when(updatedUser.isEnabled()).thenReturn(true);
         when(updatedUser.getRoles()).thenReturn(Arrays.asList("group-role", "group2-role"));
 
         when(domain.getId()).thenReturn(domainId);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(mock(User.class)));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
-        when(groupService.findByMember(updatedUser.getId())).thenReturn(Single.just(Collections.singletonList(group)));
-        when(roleService.findByIdIn(any())).thenReturn(Single.just(roles));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
         TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
         testObserver.awaitTerminalEvent();
@@ -267,6 +253,5 @@ public class UserAuthenticationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(user1 -> user1.getRoles().size() == 2);
-        verify(roleService, times(1)).findByIdIn(any());
     }
 }

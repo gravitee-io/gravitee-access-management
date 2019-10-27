@@ -23,7 +23,7 @@ import * as moment from "moment";
 })
 export class AccountSettingsComponent implements OnInit, OnChanges {
   @Output() onSavedAccountSettings = new EventEmitter<any>();
-  @Input() accountSettings: any = {};
+  @Input() accountSettings: any;
   @Input() inheritMode: boolean = false;
   @ViewChild('accountForm') form: any;
   formChanged: boolean = false;
@@ -49,7 +49,6 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
     this.onSavedAccountSettings.emit(accountSettings);
     this.formChanged = false;
-    this.form.reset(this.accountSettings);
   }
 
   ngOnInit(): void {
@@ -95,6 +94,24 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
   isCompleteRegistrationEnabled() {
     return this.accountSettings && this.accountSettings.completeRegistrationWhenResetPassword;
+  }
+
+  enableAutoLoginAfterRegistration(event) {
+    this.accountSettings.autoLoginAfterRegistration = event.checked;
+    this.formChanged = true;
+  }
+
+  isAutoLoginAfterRegistrationEnabled() {
+    return this.accountSettings && this.accountSettings.autoLoginAfterRegistration;
+  }
+
+  enableAutoLoginAfterResetPassword(event) {
+    this.accountSettings.autoLoginAfterResetPassword = event.checked;
+    this.formChanged = true;
+  }
+
+  isAutoLoginAfterResetPasswordEnabled() {
+    return this.accountSettings && this.accountSettings.autoLoginAfterResetPassword;
   }
 
   formIsValid() {

@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
-import com.google.common.net.HttpHeaders;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
@@ -60,7 +60,7 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
         if (user != null) {
             User authenticatedUser = new DefaultUser(user.getUsername());
             ((DefaultUser) authenticatedUser).setId(user.getId());
-            Map<String, Object> additionalInformation = new HashMap<>(user.getAdditionalInformation());
+            Map<String, Object> additionalInformation = user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) : new HashMap<>();
             // add ip address and user agent
             additionalInformation.put(Claims.ip_address, remoteAddress(routingContext.request()));
             additionalInformation.put(Claims.user_agent, userAgent(routingContext.request()));

@@ -21,12 +21,10 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
-import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -35,8 +33,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -54,12 +53,6 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     private UserService userService;
 
     @Autowired
-    private GroupService groupService;
-
-    @Autowired
-    private RoleService roleService;
-
-    @Autowired
     private IdentityProviderManager identityProviderManager;
 
     @Override
@@ -69,7 +62,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 // check account status
                 .flatMap(user -> checkAccountStatus(user)
                         // and enhance user information
-                        .andThen(Single.defer(() -> enhance(user))));
+                        .andThen(Single.defer(() -> userService.enhance(user))));
     }
 
     @Override
@@ -88,10 +81,10 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                             additionalInformation.put(Parameters.CLIENT_ID, user.getClient());
                             ((DefaultUser) idpUser).setAdditionalInformation(additionalInformation);
                             return update(user, idpUser, false)
-                                    .flatMap(this::enhance).toMaybe();
+                                    .flatMap(userService::enhance).toMaybe();
                         })
                         // no user has been found in the identity provider, just enhance user information
-                        .switchIfEmpty(Maybe.defer(() -> this.enhance(user).toMaybe())));
+                        .switchIfEmpty(Maybe.defer(() -> userService.enhance(user).toMaybe())));
     }
 
     private Single<User> saveOrUpdate(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
@@ -118,41 +111,6 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             return Completable.error(new AccountDisabledException("Account is disabled for user " + user.getUsername()));
         }
         return Completable.complete();
-    }
-
-    /**
-     * Fetch additional data such as groups/roles to enhance user profile information
-     * @param user Authenticated user
-     * @return Enhanced user
-     */
-    private Single<User> enhance(User user) {
-        // fetch user groups
-        return groupService.findByMember(user.getId())
-                .flatMap(groups -> {
-                    Set<String> roles = new HashSet<>();
-                    // get groups roles
-                    if (!groups.isEmpty()) {
-                        roles.addAll(groups
-                                .stream()
-                                .filter(group ->  group.getRoles() != null && !group.getRoles().isEmpty())
-                                .flatMap(group -> group.getRoles().stream())
-                                .collect(Collectors.toSet()));
-                    }
-                    // get user roles
-                    if (user.getRoles() != null && !user.getRoles().isEmpty()) {
-                        roles.addAll(user.getRoles());
-                    }
-                    // fetch roles information and enhance user data
-                    if (!roles.isEmpty()) {
-                        return roleService.findByIdIn(new ArrayList<>(roles))
-                                .map(roles1 -> {
-                                    user.setRolesPermissions(roles1);
-                                    return user;
-                                });
-
-                    }
-                    return Single.just(user);
-                });
     }
 
     /**

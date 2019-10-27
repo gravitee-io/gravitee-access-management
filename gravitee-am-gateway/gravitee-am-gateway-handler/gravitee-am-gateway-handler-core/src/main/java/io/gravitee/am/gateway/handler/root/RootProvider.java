@@ -197,6 +197,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                     .handler(new RegisterEndpoint(thymeleafTemplateEngine));
             rootRouter.route(HttpMethod.POST, "/register")
                     .handler(new RegisterSubmissionRequestParseHandler())
+                    .handler(clientRequestParseHandlerOptional)
                     .handler(passwordPolicyRequestParseHandler)
                     .handler(new RegisterSubmissionEndpoint(userService, domain));
         }
@@ -264,6 +265,10 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(sessionHandler);
 
         // Registration confirmation endpoint
+        router
+                .post("/register")
+                .handler(cookieHandler)
+                .handler(sessionHandler);
         router
                 .route("/confirmRegistration")
                 .handler(cookieHandler)

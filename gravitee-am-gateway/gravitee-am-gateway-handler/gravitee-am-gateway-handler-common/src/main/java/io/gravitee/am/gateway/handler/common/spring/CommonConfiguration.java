@@ -43,6 +43,8 @@ import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServi
 import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
 import io.gravitee.am.gateway.handler.common.policy.impl.PolicyManagerImpl;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
+import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.impl.OAuth2AuthProviderImpl;
@@ -172,5 +174,10 @@ public class CommonConfiguration {
     @Bean
     public IntrospectionTokenService introspectiontokenservice() {
         return new IntrospectionTokenServiceImpl();
+    }
+
+    @Bean
+    public UserService userService() {
+        return new UserServiceImpl();
     }
 }

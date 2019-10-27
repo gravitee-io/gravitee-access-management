@@ -45,10 +45,4 @@ public interface UserRepository extends CrudRepository<User, String> {
     Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source);
 
     Single<List<User>> findByIdIn(List<String> ids);
-
-    default Single<List<User>> findByDomainAndEmail(String domain, String email) {
-        return findByDomainAndEmail(domain, email, true);
-    }
-
-
 }
