@@ -46,7 +46,13 @@ export class ExtensionGrantComponent implements OnInit {
     this.identityProviders = this.route.snapshot.data['identityProviders'];
     this.extensionGrantConfiguration = JSON.parse(this.extensionGrant.configuration);
     this.updateTokenGranterConfiguration = this.extensionGrantConfiguration;
-    this.platformService.extensionGrantSchema(this.extensionGrant.type).subscribe(data => this.extensionGrantSchema = data);
+    this.platformService.extensionGrantSchema(this.extensionGrant.type).subscribe(data => {
+      this.extensionGrantSchema = data;
+      // set the grant_type value
+      if (!this.extensionGrant.grantType && this.extensionGrantSchema.properties.grantType) {
+        this.extensionGrant.grantType = this.extensionGrantSchema.properties.grantType.default;
+      }
+    });
     this.initBreadcrumb();
   }
 

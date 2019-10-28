@@ -41,10 +41,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -96,15 +94,15 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     public Single<ExtensionGrant> create(String domain, NewExtensionGrant newExtensionGrant, User principal) {
         LOGGER.debug("Create a new extension grant {} for domain {}", newExtensionGrant, domain);
 
-        return extensionGrantRepository.findByDomainAndGrantType(domain, newExtensionGrant.getGrantType())
+        return extensionGrantRepository.findByDomainAndName(domain, newExtensionGrant.getName())
                 .isEmpty()
                 .flatMap(empty -> {
                     if (!empty) {
-                        throw new ExtensionGrantAlreadyExistsException(newExtensionGrant.getGrantType());
+                        throw new ExtensionGrantAlreadyExistsException(newExtensionGrant.getName());
                     } else {
-                        String certificateId = RandomString.generate();
+                        String extensionGrantId = RandomString.generate();
                         ExtensionGrant extensionGrant = new ExtensionGrant();
-                        extensionGrant.setId(certificateId);
+                        extensionGrant.setId(extensionGrantId);
                         extensionGrant.setDomain(domain);
                         extensionGrant.setName(newExtensionGrant.getName());
                         extensionGrant.setGrantType(newExtensionGrant.getGrantType());
@@ -143,13 +141,13 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
 
         return extensionGrantRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(id)))
-                .flatMapSingle(tokenGranter -> extensionGrantRepository.findByDomainAndGrantType(domain, updateExtensionGrant.getGrantType())
+                .flatMapSingle(tokenGranter -> extensionGrantRepository.findByDomainAndName(domain, updateExtensionGrant.getName())
                         .map(extensionGrant -> Optional.of(extensionGrant))
                         .defaultIfEmpty(Optional.empty())
                         .toSingle()
                         .flatMap(existingTokenGranter -> {
                            if (existingTokenGranter.isPresent() && !existingTokenGranter.get().getId().equals(id)) {
-                               throw new ExtensionGrantAlreadyExistsException("Extension grant with the same grant type already exists");
+                               throw new ExtensionGrantAlreadyExistsException("Extension grant with the same name already exists");
                            }
                            return Single.just(tokenGranter);
                        }))
@@ -187,12 +185,28 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
         LOGGER.debug("Delete extension grant {}", extensionGrantId);
         return extensionGrantRepository.findById(extensionGrantId)
                 .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrantId)))
-                .flatMapSingle(extensionGrant -> clientService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType())
+                // check for clients using this extension grant
+                .flatMapSingle(extensionGrant -> clientService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType() + "~" + extensionGrant.getId())
                         .flatMap(clients -> {
                             if (clients.size() > 0) {
                                 throw new ExtensionGrantWithClientsException();
                             }
-                            return Single.just(extensionGrant);
+                            // backward compatibility, check for old clients configuration
+                            return Single.zip(
+                                    clientService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType()),
+                                    findByDomain(domain),
+                                    (clients1, extensionGrants) -> {
+                                        if (clients1.size() == 0) {
+                                            return extensionGrant;
+                                        }
+                                        // if clients use this grant_type, check it is the oldest one
+                                        Date minDate = Collections.min(extensionGrants.stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));
+                                        if (extensionGrant.getCreatedAt().equals(minDate)) {
+                                            throw new ExtensionGrantWithClientsException();
+                                        } else {
+                                            return extensionGrant;
+                                        }
+                                    });
                         }))
                 .flatMapCompletable(extensionGrant -> {
                     // Reload domain to take care about extension grant create

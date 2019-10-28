@@ -10661,6 +10661,196 @@
 									"response": []
 								},
 								{
+									"name": "Configure jwt bearer client - new format",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 5000);"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "3be06475-0f36-4071-a361-d2ad90bcbcc4",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"authorizedGrantTypes\": [\"urn:ietf:params:oauth:grant-type:jwt-bearer~{{jwtBearerExtensionGrant}}\"],\n  \"scopes\": [\"openid\"],\n  \"certificate\": \"{{certificateJks}}\",\n  \"identities\": [\"{{idp.inmemory}}\"]\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{clientJwtBearer}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"clients",
+												"{{clientJwtBearer}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "JWT Bearer extension grant - Valid User - new format",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "f4cec8d7-bd2c-44cc-8423-ae8cc21cc068",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Extension grant - jwt bearer grant - success\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('access_token');",
+													"    pm.expect(body).to.not.have.property('refresh_token');",
+													"    var claims = jwt_decode(body.id_token);",
+													"    pm.expect(claims).to.have.property('email');",
+													"});",
+													"",
+													"function jwt_decode(jwt) {",
+													"    var parts = jwt.split('.'); // header, payload, signature",
+													"    return JSON.parse(atob(parts[1]));",
+													"}"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "f8395e2f-4a01-4837-baf6-0230541542ac",
+												"exec": [
+													"pm.environment.set('assertionToken', 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZW5zZW4uYmFyYmFyYSIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjp0cnVlLCJtYWlsIjoiamVuc2VuLmJhcmJhcmFAbWFpbC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.oUvmrRITBVrrWBRQAIKSkDbpwwombEbDp24PXrx9s111o3M2dTQ7bcrIkXWhgiWGdoIYVhZEaYV3bTXmv2fHH80DLAOstq-ibkiKmPkoPWn7ea1VpLixcVCft_YSO_mtf4YMxdY-WFFB896z0Y_5M5S2iMvx4HKj7OCxKZqF1jkxeNCSMqI1KbMketk7SZxFlycgTXJBx5ysQ-z9VfGck3Vnf_pGV_RYPMgOMp0zqvPBPIbtOj1viFQ3lSNBss98OInnsecsaCQcFJGshVG-MNLGWDwljsz5-Rozckveg9g5orWTS86jjEqrNTQmA0alvLEnXnmJVaGJyTrW_2Qwng');",
+													"",
+													"// Private key",
+													"/*",
+													"-----BEGIN PRIVATE KEY-----",
+													"MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDI6xahwspOwhzS",
+													"Hrga3SFif04FITcAhyygXoeS+GwUSx6HaMCMkULTQVMgQoU/7VAUf32uoiVgLDo1",
+													"FI6vWvBGbp1Zbf7MRVpqK98PvhTK4PN5py2OAmpd3i3z5SgGZCP1oxJE/uF+mMUk",
+													"vtQOJ+RL32pU8oaAwzPuBLKX/jA5OZPouq6Y5e7abrgValYyGCI8aZK5SfukZTMq",
+													"14mDc84Y2t4IvwS/GqSUiRsTp7r6aj5F+lwD0vyUBo3eH5v5J1R+t7F8T/B2Jl+o",
+													"JQTPLFxBwcN/2AGC5aqrn7BDoGUG2NZtb6WTolZsBUYjgL7MdYEQHMz/N4WoPCXC",
+													"EbUQU5rZAgMBAAECggEBAL+ZOEbgPA7pG5TgyI6Nq8WDQ0KvDwWI4my4WK82CdM8",
+													"Y4ubwGsMJ17QH9ZWuT1iMIirn44GgH/7DTMLPJpKrXFtEM50j5P62yL+XURk7u0d",
+													"ofG0FEQlV4vWUZoRQJ7/pi8b6FM1gJI6W14UQKKTNimIj50cflmSTRZBEpLRSul1",
+													"pTlsPypRgtj9clUgPBt1iKehoJmUu9S9nYAJFJo9wn97QKd6erkkqhJfEmXPWoXQ",
+													"X5O2BJTTappN7SxLoP2Dhdss4zbvwZJD10Q5dDj3KH4vWjR4W3LuoH64ug74H2lh",
+													"oFTT/xrWDCFFfWpjfkAXWzCh83DNI7z3c54sQXU2YGUCgYEA+qCRwmvwyf4+8wW0",
+													"0AdsuQ0TDwZEf8LayPUchiILGKGCX5I9Qtfwm2XCsfOVtbX6FiEGPVIYT5i3S4le",
+													"GMl7uO35/LsYPWX6MVGLeMnAQxkorxVM6iqZQu8fF1pcvxfVgvxpmPEko+veLTBq",
+													"XPJ7HLiTkuuq+5P0YYZxW5iJ25MCgYEAzTm4BVHhzRKM1Hb+Cs2C4OhqTV7fNAkv",
+													"melZt70jRGCd7ZXslNFUc3uju7JnaJVBqdNThOUevnk8n6EV0sMvP+483vNNSMqW",
+													"u7KgR36DMNVMYHqr/f8YY9TLxHvSQoI53jPQFQ2X+GzrJZUtq6u1hX4UpySIlZbP",
+													"GCMIh5GWK2MCgYABowLQrjvIVey7UZI4uZOwMbGqK3RPEUq0fUVOavJ/mq5rSV01",
+													"Dov3t9ZpqxmTMjkL4/NSezLFck3gJGmE5+vy7Trwt5gU7pGPuOScSVUEGyn02sLB",
+													"1L1jfoRJdsGcTd+LF3LpGMoQd/3fda18Jek/6sSr9PYM5o52BJbA7mIYGQKBgCo3",
+													"131wrMztJf+HQxeh02zFIykrfStNQHefI4/C3wBwB80abILo1UC0jKhOOSuwmMOA",
+													"78uE/uAcPLZyAvVKpeu27NrInnt9Aak3Q/WxNvfSyVWHpt4nnjLbUdfnyQdZluH5",
+													"MrNCCqNWdMFUgQKx3jPKDiGcSGTNk2jZvCV3c7cVAoGBALoOfXLssZW7Kp5CcY/q",
+													"60JP8QHm889KykmBvda5MZySENt42i5Bp6a8rNTR6TmJkKGiY780I16+JDhPoQHd",
+													"+pJeVNzWPoTAdg5ftvMoYr95wOqsraUtd+4wQcpjMKC4+FxAuSChhqfBrOktoigf",
+													"TaAE0xuL1DO9Fqp1nNZY0q1m",
+													"-----END PRIVATE KEY-----",
+													"*/",
+													"",
+													"// Public key",
+													"/*",
+													"-----BEGIN PUBLIC KEY-----",
+													"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyOsWocLKTsIc0h64Gt0h",
+													"Yn9OBSE3AIcsoF6HkvhsFEseh2jAjJFC00FTIEKFP+1QFH99rqIlYCw6NRSOr1rw",
+													"Rm6dWW3+zEVaaivfD74UyuDzeactjgJqXd4t8+UoBmQj9aMSRP7hfpjFJL7UDifk",
+													"S99qVPKGgMMz7gSyl/4wOTmT6LqumOXu2m64FWpWMhgiPGmSuUn7pGUzKteJg3PO",
+													"GNreCL8EvxqklIkbE6e6+mo+RfpcA9L8lAaN3h+b+SdUfrexfE/wdiZfqCUEzyxc",
+													"QcHDf9gBguWqq5+wQ6BlBtjWbW+lk6JWbAVGI4C+zHWBEBzM/zeFqDwlwhG1EFOa",
+													"2QIDAQAB",
+													"-----END PUBLIC KEY-----",
+													"*/",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/x-www-form-urlencoded"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Basic Y2xpZW50LWp3dC1iZWFyZXI6Y2xpZW50LWp3dC1iZWFyZXItc2VjcmV0"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+													"type": "text"
+												},
+												{
+													"key": "assertion",
+													"value": "{{assertionToken}}",
+													"type": "text"
+												},
+												{
+													"key": "scope",
+													"value": "openid",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{tokenEndpoint}}",
+											"host": [
+												"{{tokenEndpoint}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
 									"name": "Configure jwt bearer client - Add Refresh Token",
 									"event": [
 										{
@@ -10713,6 +10903,186 @@
 								},
 								{
 									"name": "JWT Bearer extension grant - Valid User - With Refresh Token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "f4cec8d7-bd2c-44cc-8423-ae8cc21cc068",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Extension grant - jwt bearer grant - success\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('access_token');",
+													"    pm.expect(body).to.have.property('refresh_token');",
+													"    var claims = jwt_decode(body.id_token);",
+													"    pm.expect(claims).to.have.property('email');",
+													"});",
+													"",
+													"function jwt_decode(jwt) {",
+													"    var parts = jwt.split('.'); // header, payload, signature",
+													"    return JSON.parse(atob(parts[1]));",
+													"}"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "f8395e2f-4a01-4837-baf6-0230541542ac",
+												"exec": [
+													"pm.environment.set('assertionToken', 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZW5zZW4uYmFyYmFyYSIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjp0cnVlLCJtYWlsIjoiamVuc2VuLmJhcmJhcmFAbWFpbC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.oUvmrRITBVrrWBRQAIKSkDbpwwombEbDp24PXrx9s111o3M2dTQ7bcrIkXWhgiWGdoIYVhZEaYV3bTXmv2fHH80DLAOstq-ibkiKmPkoPWn7ea1VpLixcVCft_YSO_mtf4YMxdY-WFFB896z0Y_5M5S2iMvx4HKj7OCxKZqF1jkxeNCSMqI1KbMketk7SZxFlycgTXJBx5ysQ-z9VfGck3Vnf_pGV_RYPMgOMp0zqvPBPIbtOj1viFQ3lSNBss98OInnsecsaCQcFJGshVG-MNLGWDwljsz5-Rozckveg9g5orWTS86jjEqrNTQmA0alvLEnXnmJVaGJyTrW_2Qwng');",
+													"",
+													"// Private key",
+													"/*",
+													"-----BEGIN PRIVATE KEY-----",
+													"MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDI6xahwspOwhzS",
+													"Hrga3SFif04FITcAhyygXoeS+GwUSx6HaMCMkULTQVMgQoU/7VAUf32uoiVgLDo1",
+													"FI6vWvBGbp1Zbf7MRVpqK98PvhTK4PN5py2OAmpd3i3z5SgGZCP1oxJE/uF+mMUk",
+													"vtQOJ+RL32pU8oaAwzPuBLKX/jA5OZPouq6Y5e7abrgValYyGCI8aZK5SfukZTMq",
+													"14mDc84Y2t4IvwS/GqSUiRsTp7r6aj5F+lwD0vyUBo3eH5v5J1R+t7F8T/B2Jl+o",
+													"JQTPLFxBwcN/2AGC5aqrn7BDoGUG2NZtb6WTolZsBUYjgL7MdYEQHMz/N4WoPCXC",
+													"EbUQU5rZAgMBAAECggEBAL+ZOEbgPA7pG5TgyI6Nq8WDQ0KvDwWI4my4WK82CdM8",
+													"Y4ubwGsMJ17QH9ZWuT1iMIirn44GgH/7DTMLPJpKrXFtEM50j5P62yL+XURk7u0d",
+													"ofG0FEQlV4vWUZoRQJ7/pi8b6FM1gJI6W14UQKKTNimIj50cflmSTRZBEpLRSul1",
+													"pTlsPypRgtj9clUgPBt1iKehoJmUu9S9nYAJFJo9wn97QKd6erkkqhJfEmXPWoXQ",
+													"X5O2BJTTappN7SxLoP2Dhdss4zbvwZJD10Q5dDj3KH4vWjR4W3LuoH64ug74H2lh",
+													"oFTT/xrWDCFFfWpjfkAXWzCh83DNI7z3c54sQXU2YGUCgYEA+qCRwmvwyf4+8wW0",
+													"0AdsuQ0TDwZEf8LayPUchiILGKGCX5I9Qtfwm2XCsfOVtbX6FiEGPVIYT5i3S4le",
+													"GMl7uO35/LsYPWX6MVGLeMnAQxkorxVM6iqZQu8fF1pcvxfVgvxpmPEko+veLTBq",
+													"XPJ7HLiTkuuq+5P0YYZxW5iJ25MCgYEAzTm4BVHhzRKM1Hb+Cs2C4OhqTV7fNAkv",
+													"melZt70jRGCd7ZXslNFUc3uju7JnaJVBqdNThOUevnk8n6EV0sMvP+483vNNSMqW",
+													"u7KgR36DMNVMYHqr/f8YY9TLxHvSQoI53jPQFQ2X+GzrJZUtq6u1hX4UpySIlZbP",
+													"GCMIh5GWK2MCgYABowLQrjvIVey7UZI4uZOwMbGqK3RPEUq0fUVOavJ/mq5rSV01",
+													"Dov3t9ZpqxmTMjkL4/NSezLFck3gJGmE5+vy7Trwt5gU7pGPuOScSVUEGyn02sLB",
+													"1L1jfoRJdsGcTd+LF3LpGMoQd/3fda18Jek/6sSr9PYM5o52BJbA7mIYGQKBgCo3",
+													"131wrMztJf+HQxeh02zFIykrfStNQHefI4/C3wBwB80abILo1UC0jKhOOSuwmMOA",
+													"78uE/uAcPLZyAvVKpeu27NrInnt9Aak3Q/WxNvfSyVWHpt4nnjLbUdfnyQdZluH5",
+													"MrNCCqNWdMFUgQKx3jPKDiGcSGTNk2jZvCV3c7cVAoGBALoOfXLssZW7Kp5CcY/q",
+													"60JP8QHm889KykmBvda5MZySENt42i5Bp6a8rNTR6TmJkKGiY780I16+JDhPoQHd",
+													"+pJeVNzWPoTAdg5ftvMoYr95wOqsraUtd+4wQcpjMKC4+FxAuSChhqfBrOktoigf",
+													"TaAE0xuL1DO9Fqp1nNZY0q1m",
+													"-----END PRIVATE KEY-----",
+													"*/",
+													"",
+													"// Public key",
+													"/*",
+													"-----BEGIN PUBLIC KEY-----",
+													"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyOsWocLKTsIc0h64Gt0h",
+													"Yn9OBSE3AIcsoF6HkvhsFEseh2jAjJFC00FTIEKFP+1QFH99rqIlYCw6NRSOr1rw",
+													"Rm6dWW3+zEVaaivfD74UyuDzeactjgJqXd4t8+UoBmQj9aMSRP7hfpjFJL7UDifk",
+													"S99qVPKGgMMz7gSyl/4wOTmT6LqumOXu2m64FWpWMhgiPGmSuUn7pGUzKteJg3PO",
+													"GNreCL8EvxqklIkbE6e6+mo+RfpcA9L8lAaN3h+b+SdUfrexfE/wdiZfqCUEzyxc",
+													"QcHDf9gBguWqq5+wQ6BlBtjWbW+lk6JWbAVGI4C+zHWBEBzM/zeFqDwlwhG1EFOa",
+													"2QIDAQAB",
+													"-----END PUBLIC KEY-----",
+													"*/",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/x-www-form-urlencoded"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Basic Y2xpZW50LWp3dC1iZWFyZXI6Y2xpZW50LWp3dC1iZWFyZXItc2VjcmV0"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+													"type": "text"
+												},
+												{
+													"key": "assertion",
+													"value": "{{assertionToken}}",
+													"type": "text"
+												},
+												{
+													"key": "scope",
+													"value": "openid",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{tokenEndpoint}}",
+											"host": [
+												"{{tokenEndpoint}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Configure jwt bearer client - Add Refresh Token - new format",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 5000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"authorizedGrantTypes\": [\"refresh_token\", \"urn:ietf:params:oauth:grant-type:jwt-bearer~{{jwtBearerExtensionGrant}}\"],\n  \"scopes\": [\"openid\"]\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{clientJwtBearer}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"clients",
+												"{{clientJwtBearer}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "JWT Bearer extension grant - Valid User - With Refresh Token - new format",
 									"event": [
 										{
 											"listen": "test",

@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.LoginAttempt;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.repository.management.api.LoginAttemptRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
@@ -32,6 +33,7 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,9 +101,6 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                     return Completable.complete();
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof UserNotFoundException) {
-                        return Completable.complete();
-                    }
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
@@ -158,6 +157,21 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                     user.setAccountLockedAt(new Date());
                     user.setAccountLockedUntil(new Date(System.currentTimeMillis() + (accountSettings.getAccountBlockedDuration() * 1000)));
                     return userService.update(user);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof UserNotFoundException) {
+                        final User newUser = new User();
+                        newUser.setUsername(criteria.username());
+                        newUser.setDomain(criteria.domain());
+                        newUser.setClient(criteria.client());
+                        newUser.setSource(criteria.identityProvider());
+                        newUser.setLoginsCount(0l);
+                        newUser.setAccountNonLocked(false);
+                        newUser.setAccountLockedAt(new Date());
+                        newUser.setAccountLockedUntil(new Date(System.currentTimeMillis() + (accountSettings.getAccountBlockedDuration() * 1000)));
+                        return userService.create(newUser);
+                    }
+                    return Single.error(ex);
                 })
                 .doOnSuccess(user -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_LOCKED).domain(criteria.domain()).client(criteria.client()).principal(null).user(user)))
                 .toCompletable();

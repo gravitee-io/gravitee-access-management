@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolve
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.model.Client;
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
@@ -60,9 +61,10 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return Observable
                 .fromIterable(tokenGranters.values())
-                .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType()))
-                .switchIfEmpty(Observable.error(new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
-                .flatMapSingle(tokenGranter -> tokenGranter.grant(tokenRequest, client)).singleOrError();
+                .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType(), client))
+                .firstElement()
+                .switchIfEmpty(Maybe.error(new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
+                .flatMapSingle(tokenGranter -> tokenGranter.grant(tokenRequest, client));
     }
 
 
@@ -77,7 +79,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     }
 
     @Override
-    public boolean handle(String grantType) {
+    public boolean handle(String grantType, Client client) {
         return true;
     }
 

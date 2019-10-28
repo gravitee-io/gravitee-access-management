@@ -112,6 +112,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
         logger.info("Dispose event listener for identity provider events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, IdentityProviderEvent.class, domain.getId());
+        clearProviders();
     }
 
     @Override
@@ -144,18 +145,22 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     private void removeIdentityProvider(String identityProviderId) {
         logger.info("Domain {} has received identity provider event, delete identity provider {}", domain.getName(), identityProviderId);
-        providers.remove(identityProviderId);
-        identities.remove(identityProviderId);
-        userProviders.remove(identityProviderId);
+        clearProvider(identityProviderId);
     }
 
     private void updateAuthenticationProvider(IdentityProvider identityProvider) {
         logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
         try {
+            // stop existing provider, if any
+            clearProvider(identityProvider.getId());
+            // create and start the new provider
             AuthenticationProvider authenticationProvider =
                     identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
                             identityProvider.getMappers(), identityProvider.getRoleMapper(), certificateProviderManager);
             if (authenticationProvider != null) {
+                // start the authentication provider
+                authenticationProvider.start();
+                // init the user provider
                 UserProvider userProvider =
                         identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
                 providers.put(identityProvider.getId(), authenticationProvider);
@@ -167,9 +172,25 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         } catch (Exception ex) {
             // failed to load the plugin
             logger.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), ex);
-            providers.remove(identityProvider.getId());
-            identities.remove(identityProvider.getId());
-            userProviders.remove(identityProvider.getId());
+            clearProvider(identityProvider.getId());
         }
+    }
+
+    private void clearProviders() {
+        providers.keySet().forEach(this::clearProvider);
+    }
+
+    private void clearProvider(String identityProviderId) {
+        AuthenticationProvider authenticationProvider = providers.remove(identityProviderId);
+        if (authenticationProvider != null) {
+            // stop the authentication provider
+            try {
+                authenticationProvider.stop();
+            } catch (Exception e) {
+                logger.error("An error occurs while stopping the identity provider : {}", identityProviderId, e);
+            }
+        }
+        identities.remove(identityProviderId);
+        userProviders.remove(identityProviderId);
     }
 }

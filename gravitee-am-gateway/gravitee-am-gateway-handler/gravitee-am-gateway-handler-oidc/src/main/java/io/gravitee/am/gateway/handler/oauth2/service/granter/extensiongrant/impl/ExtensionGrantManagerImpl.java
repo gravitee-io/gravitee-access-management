@@ -40,6 +40,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collections;
+import java.util.Date;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -48,6 +54,9 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     private static final Logger logger = LoggerFactory.getLogger(ExtensionGrantManagerImpl.class);
     private TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
+    private ConcurrentMap<String, ExtensionGrant> extensionGrants = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, ExtensionGrantGranter> extensionGrantGranters = new ConcurrentHashMap<>();
+    private Date minDate;
 
     @Autowired
     private Domain domain;
@@ -79,7 +88,11 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         extensionGrantRepository.findByDomain(domain.getId())
                 .subscribe(
                         extensionGrants -> {
-                            extensionGrants.forEach(extensionGrant -> updateExtensionGrantProvider(extensionGrant));
+                            if (extensionGrants != null && !extensionGrants.isEmpty()) {
+                                // backward compatibility, get the oldest extension grant to set the good one for the old clients
+                                minDate = Collections.min(extensionGrants.stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));
+                                extensionGrants.forEach(extensionGrant -> updateExtensionGrantProvider(extensionGrant));
+                            }
                             logger.info("Extension grants loaded for domain {}", domain.getName());
                         },
                         error -> logger.error("Unable to initialize extension grants for domain {}", domain.getName(), error));
@@ -117,6 +130,10 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         extensionGrantRepository.findById(extensionGrantId)
                 .subscribe(
                         extensionGrant -> {
+                            // backward compatibility, get the oldest extension grant to set the good one for the old clients
+                            if (extensionGrants.isEmpty()) {
+                                minDate = extensionGrant.getCreatedAt();
+                            }
                             updateExtensionGrantProvider(extensionGrant);
                             logger.info("Extension grant {} {}d for domain {}", extensionGrantId, eventType, domain.getName());
                         },
@@ -127,21 +144,35 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     private void removeExtensionGrant(String extensionGrantId) {
         logger.info("Domain {} has received extension grant event, delete extension grant {}", domain.getName(), extensionGrantId);
         ((CompositeTokenGranter) tokenGranter).removeTokenGranter(extensionGrantId);
+        extensionGrants.remove(extensionGrantId);
+        extensionGrantGranters.remove(extensionGrantId);
+        // backward compatibility, update remaining granters for the min date
+        minDate = Collections.min(extensionGrants.values().stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));
+        extensionGrantGranters.values().forEach(extensionGrantGranter -> extensionGrantGranter.setMinDate(minDate));
     }
 
     private void updateExtensionGrantProvider(ExtensionGrant extensionGrant) {
-        AuthenticationProvider authenticationProvider = null;
-        if (extensionGrant.getIdentityProvider() != null) {
-            logger.info("\tLooking for extension grant identity provider: {}", extensionGrant.getIdentityProvider());
-            authenticationProvider = identityProviderManager.get(extensionGrant.getIdentityProvider()).blockingGet();
-            if (authenticationProvider != null) {
-                logger.info("\tExtension grant identity provider: {}, loaded", extensionGrant.getIdentityProvider());
+        try {
+            AuthenticationProvider authenticationProvider = null;
+            if (extensionGrant.getIdentityProvider() != null) {
+                logger.info("\tLooking for extension grant identity provider: {}", extensionGrant.getIdentityProvider());
+                authenticationProvider = identityProviderManager.get(extensionGrant.getIdentityProvider()).blockingGet();
+                if (authenticationProvider != null) {
+                    logger.info("\tExtension grant identity provider: {}, loaded", extensionGrant.getIdentityProvider());
+                }
             }
+            ExtensionGrantProvider extensionGrantProvider = extensionGrantPluginManager.create(extensionGrant.getType(), extensionGrant.getConfiguration(), authenticationProvider);
+            ExtensionGrantGranter extensionGrantGranter = new ExtensionGrantGranter(extensionGrantProvider, extensionGrant,
+                    userAuthenticationManager, tokenService, tokenRequestResolver, identityProviderManager);
+            // backward compatibility, set min date to the extension grant granter to choose the good one for the old clients
+            extensionGrantGranter.setMinDate(minDate);
+            ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), extensionGrantGranter);
+            extensionGrants.put(extensionGrant.getId(), extensionGrant);
+            extensionGrantGranters.put(extensionGrant.getId(), extensionGrantGranter);
+        } catch (Exception ex) {
+            // failed to load the plugin
+            logger.error("An error occurs while initializing the extension grant : {}", extensionGrant.getName(), ex);
+            removeExtensionGrant(extensionGrant.getId());
         }
-
-        ExtensionGrantProvider extensionGrantProvider = extensionGrantPluginManager.create(extensionGrant.getType(), extensionGrant.getConfiguration(), authenticationProvider);
-        ExtensionGrantGranter extensionGrantGranter = new ExtensionGrantGranter(extensionGrantProvider, extensionGrant,
-                userAuthenticationManager, tokenService, tokenRequestResolver, identityProviderManager);
-        ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), extensionGrantGranter);
     }
 }

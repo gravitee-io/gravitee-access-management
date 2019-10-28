@@ -44,14 +44,14 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
 
     private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
-    private static final String FIELD_GRANT_TYPE = "grantType";
+    private static final String FIELD_NAME = "name";
     private MongoCollection<ExtensionGrantMongo> extensionGrantsCollection;
 
     @PostConstruct
     public void init() {
         extensionGrantsCollection = mongoOperations.getCollection("extension_grants", ExtensionGrantMongo.class);
         extensionGrantsCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
-        extensionGrantsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPE, 1)).subscribe(new LoggableIndexSubscriber());
+        extensionGrantsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1)).subscribe(new LoggableIndexSubscriber());
     }
 
     @Override
@@ -60,8 +60,8 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
     }
 
     @Override
-    public Maybe<ExtensionGrant> findByDomainAndGrantType(String domain, String grantType) {
-        return Observable.fromPublisher(extensionGrantsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPE, grantType))).first()).firstElement().map(this::convert);
+    public Maybe<ExtensionGrant> findByDomainAndName(String domain, String name) {
+        return Observable.fromPublisher(extensionGrantsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_NAME, name))).first()).firstElement().map(this::convert);
     }
 
     @Override

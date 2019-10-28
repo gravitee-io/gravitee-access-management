@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import io.gravitee.common.component.Lifecycle;
+import io.gravitee.common.service.Service;
 import io.reactivex.Maybe;
 
 /**
@@ -22,10 +24,21 @@ import io.reactivex.Maybe;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuthenticationProvider {
+public interface AuthenticationProvider extends Service<AuthenticationProvider> {
 
     Maybe<User> loadUserByUsername(Authentication authentication);
 
     Maybe<User> loadUserByUsername(String username);
 
+    default Lifecycle.State lifecycleState() {
+        return Lifecycle.State.INITIALIZED;
+    }
+
+    default AuthenticationProvider start() throws Exception {
+        return this;
+    }
+
+    default AuthenticationProvider stop() throws Exception {
+        return this;
+    }
 }

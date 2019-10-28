@@ -102,9 +102,13 @@ export class ClientOAuth2Component implements OnInit {
   }
 
   initCustomGrantTypes() {
+    let oldestExtensionGrant = _.minBy(this.customGrantTypes, 'createdAt');
     this.customGrantTypes.forEach(customGrantType => {
-      customGrantType.value = customGrantType.grantType;
-      customGrantType.checked = _.some(this.client.authorizedGrantTypes, authorizedGrantType => authorizedGrantType.toLowerCase() === customGrantType.value.toLowerCase());
+      customGrantType.value = customGrantType.grantType + '~' + customGrantType.id;
+      customGrantType.checked = _.some(this.client.authorizedGrantTypes, authorizedGrantType => {
+        return authorizedGrantType.toLowerCase() === customGrantType.value.toLowerCase()
+          || (authorizedGrantType.toLowerCase() === customGrantType.grantType && customGrantType.createdAt === oldestExtensionGrant.createdAt);
+      });
     });
   }
 
@@ -139,7 +143,7 @@ export class ClientOAuth2Component implements OnInit {
     }
   }
 
-  selectedGrantType(event) {
+  selectGrantType(event) {
     this.grantTypes
       .filter(grantType => grantType.value === event.source.value)
       .map(grantType => grantType.checked = event.checked);
@@ -147,14 +151,14 @@ export class ClientOAuth2Component implements OnInit {
     this.formChanged = true;
   }
 
-  selectedCustomGrantType(event) {
+  selectCustomGrantType(event) {
     this.customGrantTypes
       .filter(grantType => grantType.value === event.source.value)
       .map(grantType => grantType.checked = event.checked);
     this.formChanged = true;
   }
 
-  selectedResponseType(event) {
+  selectResponseType(event) {
     this.responseTypes
       .filter(responseType => responseType.value === event.source.value)
       .map(responseType => responseType.checked = event.checked);
@@ -265,6 +269,10 @@ export class ClientOAuth2Component implements OnInit {
       .map(grantType => grantType.value)
   }
 
+  customGrantTypeIsDisabled(extensionGrant): boolean {
+    return !extensionGrant.checked && this.selectedCustomGrantTypes.length > 0;
+  }
+
   get selectedResponseTypes() {
     return this.responseTypes
       .filter(responseType => responseType.checked)
@@ -342,7 +350,6 @@ export class ClientOAuth2Component implements OnInit {
   toggleExpandGroup(group) {
     this.table.groupHeader.toggleExpandGroup(group);
   }
-
 }
 
 @Component({
