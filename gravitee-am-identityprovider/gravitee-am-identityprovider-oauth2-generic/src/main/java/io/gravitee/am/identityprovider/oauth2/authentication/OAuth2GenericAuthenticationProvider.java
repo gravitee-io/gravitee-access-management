@@ -158,11 +158,16 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
 
         // authorization code flow, exchange code for an access token
         // prepare body request parameters
+        final String authorizationCode = authentication.getContext().request().parameters().getFirst(configuration.getCodeParameter());
+        if (authorizationCode == null || authorizationCode.isEmpty()) {
+            LOGGER.debug("Authorization code is missing, skip authentication");
+            return Maybe.error(new BadCredentialsException("Missing authorization code"));
+        }
         List<NameValuePair> urlParameters = new ArrayList<>();
         urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_ID, configuration.getClientId()));
         urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_SECRET, configuration.getClientSecret()));
         urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, (String) authentication.getContext().get(Parameters.REDIRECT_URI)));
-        urlParameters.add(new BasicNameValuePair(Parameters.CODE, (String) authentication.getCredentials()));
+        urlParameters.add(new BasicNameValuePair(Parameters.CODE, authorizationCode));
         urlParameters.add(new BasicNameValuePair(Parameters.GRANT_TYPE, "authorization_code"));
         String bodyRequest = URLEncodedUtils.format(urlParameters);
 

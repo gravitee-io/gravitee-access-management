@@ -27,14 +27,15 @@ import java.util.Map;
 public class DummyAuthenticationContext implements AuthenticationContext {
 
     private final Map<String, Object> attributes;
+    private final Request request;
 
-    DummyAuthenticationContext(Map<String, Object> attributes) {
+    DummyAuthenticationContext(Map<String, Object> attributes, Request request) {
         this.attributes = attributes;
+        this.request = request;
     }
 
-    @Override
     public Request request() {
-        return null;
+        return request;
     }
 
     @Override

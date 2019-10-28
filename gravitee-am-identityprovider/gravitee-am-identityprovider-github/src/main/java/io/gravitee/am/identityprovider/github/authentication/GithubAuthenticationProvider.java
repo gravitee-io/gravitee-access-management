@@ -106,11 +106,16 @@ public class GithubAuthenticationProvider implements SocialAuthenticationProvide
 
     private Maybe<String> authenticate(Authentication authentication) {
         // prepare body request parameters
+        final String authorizationCode = authentication.getContext().request().parameters().getFirst(configuration.getCodeParameter());
+        if (authorizationCode == null || authorizationCode.isEmpty()) {
+            LOGGER.debug("Authorization code is missing, skip authentication");
+            return Maybe.error(new BadCredentialsException("Missing authorization code"));
+        }
         List<NameValuePair> urlParameters = new ArrayList<>();
         urlParameters.add(new BasicNameValuePair(CLIENT_ID, configuration.getClientId()));
         urlParameters.add(new BasicNameValuePair(CLIENT_SECRET, configuration.getClientSecret()));
         urlParameters.add(new BasicNameValuePair(REDIRECT_URI, (String) authentication.getContext().get(REDIRECT_URI)));
-        urlParameters.add(new BasicNameValuePair(CODE, (String) authentication.getCredentials()));
+        urlParameters.add(new BasicNameValuePair(CODE, authorizationCode));
         String bodyRequest = URLEncodedUtils.format(urlParameters);
 
         return client.postAbs(configuration.getAccessTokenUri())

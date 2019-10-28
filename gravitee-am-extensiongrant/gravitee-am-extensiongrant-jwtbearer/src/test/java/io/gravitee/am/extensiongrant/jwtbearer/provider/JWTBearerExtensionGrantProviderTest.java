@@ -25,8 +25,11 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
 import static org.mockito.Mockito.when;
 
 /**
@@ -36,11 +39,25 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class JWTBearerExtensionGrantProviderTest {
 
+    private static final Pattern SSH_PUB_KEY = Pattern.compile("ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*)( .*)?");
+
     @InjectMocks
     private JWTBearerExtensionGrantProvider jwtBearerExtensionGrantProvider = new JWTBearerExtensionGrantProvider();
 
     @Mock
     private JWTBearerExtensionGrantConfiguration jwtBearerTokenGranterConfiguration;
+
+    @Test
+    public void testParseKey() {
+        final String key = "ssh-rsa AAAAE2VjZHNhLXNoYTItbmlzdHAyNTY=";
+        final String key2 = "ssh-rsa AAAAE2VjZHNhLXNoYTItbmlzdHAyNTY= test@test.com";
+        final String key3 = "ssh";
+        final String key4 = "ssh-rsa";
+        assertTrue(SSH_PUB_KEY.matcher(key).matches());
+        assertTrue(SSH_PUB_KEY.matcher(key2).matches());
+        assertFalse(SSH_PUB_KEY.matcher(key3).matches());
+        assertFalse(SSH_PUB_KEY.matcher(key4).matches());
+    }
 
     @Test
     public void testCreateUser_withClaimsMapper() {
