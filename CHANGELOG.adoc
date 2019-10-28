@@ -1,5 +1,18 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/181?closed=1[AM - 2.9.3 (2019-10-25)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [Oidc] social authentification with OIDC Provider is not working anymore https://github.com/gravitee-io/issues/issues/2772[#2772]
+
+*_Management_*
+
+- Extension grant grant_type missing for update operation https://github.com/gravitee-io/issues/issues/2761[#2761]
+
+
 == https://github.com/gravitee-io/issues/milestone/179?closed=1[AM - 2.9.2 (2019-10-18)]
 
 === Bug fixes
