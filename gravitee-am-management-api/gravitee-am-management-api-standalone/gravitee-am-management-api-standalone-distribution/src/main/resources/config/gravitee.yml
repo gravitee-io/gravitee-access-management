@@ -61,8 +61,8 @@
 #    allow-origin: http://developer.mycompany.com
 #      Allows to define how long the result of the preflight request should be cached for (default value; 1728000 [20 days])
 #    max-age: 864000
-#      Which methods to allow (default value: OPTIONS, GET, POST, PUT, DELETE)
-#    allow-methods: 'OPTIONS, GET, POST, PUT, DELETE'
+#      Which methods to allow (default value: OPTIONS, GET, POST, PUT, DELETE, PATCH)
+#    allow-methods: 'OPTIONS, GET, POST, PUT, DELETE, PATCH'
 #      Which headers to allow (default values: Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match)
 #    allow-headers: 'X-Requested-With'
 
