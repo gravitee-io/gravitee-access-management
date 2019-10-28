@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/179?closed=1[AM - 2.9.2 (2019-10-18)]
+
+=== Bug fixes
+
+*_Management_*
+
+- Be able to create multiple jwt-bearer grant type https://github.com/gravitee-io/issues/issues/2678[#2678]
+
+
 == https://github.com/gravitee-io/issues/milestone/180?closed=1[AM - 2.8.6 (2019-10-17)]
 
 === Bug fixes
