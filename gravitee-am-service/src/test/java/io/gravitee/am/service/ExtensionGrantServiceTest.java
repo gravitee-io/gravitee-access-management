@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Client;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -302,7 +303,7 @@ public class ExtensionGrantServiceTest {
         when(clientService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant2.getGrantType() + "~" + extensionGrant2.getId())).thenReturn(Single.just(Collections.emptySet()));
         when(clientService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant2.getGrantType())).thenReturn(Single.just(Collections.singleton(new Client())));
         when(extensionGrantRepository.findByDomain(DOMAIN)).thenReturn(Single.just(new HashSet<>(Arrays.asList(extensionGrant, extensionGrant2))));
-        when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
         TestObserver testObserver = extensionGrantService.delete(DOMAIN, extensionGrant2.getId()).test();
 
         testObserver.awaitTerminalEvent();
