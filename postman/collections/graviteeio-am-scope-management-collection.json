@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "b3e99880-3d1d-48c1-b7d7-d65b896a8f4b",
+		"_postman_id": "a7d027e7-140b-4ffc-8401-339d4a4091e2",
 		"name": "Gravitee.io - AM - Scope Management",
 		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -1141,7 +1141,7 @@
 									"pm.test(\"Check scope discovery properties\", function () {",
 									"    pm.response.to.be.header('Content-Type', 'application/json');",
 									"    var body = pm.response.json();",
-									"    pm.expect(body.scopes_supported).to.eql([ 'address','body','email','offline_access','openid','phone','profile','wallet']);",
+									"    pm.expect(body.scopes_supported).to.eql([ 'address','body','email','groups','offline_access','openid','phone','profile','roles','wallet']);",
 									"});"
 								],
 								"type": "text/javascript"
