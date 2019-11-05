@@ -1,5 +1,27 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/163?closed=1[AM - 2.10.0 (2019-11-05)]
+
+=== Features
+
+*_Gateway_*
+
+- Auto login after registration https://github.com/gravitee-io/issues/issues/2756[#2756]
+- Auto login after reset password https://github.com/gravitee-io/issues/issues/2757[#2757]
+- [Oidc] retrieve groups and roles on userinfo endpoint https://github.com/gravitee-io/issues/issues/2544[#2544]
+
+*_Management_*
+
+- Group Member Management https://github.com/gravitee-io/issues/issues/1923[#1923]
+
+=== Improvements
+
+*_Gateway_*
+
+- Oauth2] Allow to keep custom claim when refreshing token https://github.com/gravitee-io/issues/issues/2715[#2715]
+- Oidc] handle roles and groups for OIDC social authentification https://github.com/gravitee-io/issues/issues/2773[#2773]
+
+
 == https://github.com/gravitee-io/issues/milestone/181?closed=1[AM - 2.9.3 (2019-10-25)]
 
 === Bug fixes
