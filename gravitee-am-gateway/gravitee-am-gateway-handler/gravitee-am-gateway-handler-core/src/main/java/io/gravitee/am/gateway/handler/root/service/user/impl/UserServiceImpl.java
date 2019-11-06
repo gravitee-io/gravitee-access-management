@@ -141,9 +141,16 @@ public class UserServiceImpl implements UserService {
                             user.setDomain(domain.getId());
                             // internal user
                             user.setInternal(true);
+                            // additional information
+                            extractAdditionalInformation(user, idpUser.getAdditionalInformation());
                             // set date information
                             user.setCreatedAt(new Date());
                             user.setUpdatedAt(user.getCreatedAt());
+                            AccountSettings accountSettings = getAccountSettings(domain, client);
+                            if (accountSettings != null && accountSettings.isAutoLoginAfterRegistration()) {
+                                user.setLoggedAt(new Date());
+                                user.setLoginsCount(1l);
+                            }
                             return userService.create(user);
                         })
                         .flatMap(userService::enhance)
@@ -192,6 +199,14 @@ public class UserServiceImpl implements UserService {
                     user.setEnabled(true);
                     user.setExternalId(idpUser.getId());
                     user.setUpdatedAt(new Date());
+                    // additional information
+                    extractAdditionalInformation(user, idpUser.getAdditionalInformation());
+                    // set login information
+                    AccountSettings accountSettings = getAccountSettings(domain, client);
+                    if (accountSettings != null && accountSettings.isAutoLoginAfterRegistration()) {
+                        user.setLoggedAt(new Date());
+                        user.setLoginsCount(1l);
+                    }
                     return userService.update(user);
                 })
                 .flatMap(userService::enhance)
@@ -241,6 +256,14 @@ public class UserServiceImpl implements UserService {
                     user.setPassword(null);
                     user.setExternalId(idpUser.getId());
                     user.setUpdatedAt(new Date());
+                    // additional information
+                    extractAdditionalInformation(user, idpUser.getAdditionalInformation());
+                    // set login information
+                    AccountSettings accountSettings = getAccountSettings(domain, client);
+                    if (accountSettings != null && accountSettings.isAutoLoginAfterResetPassword()) {
+                        user.setLoggedAt(new Date());
+                        user.setLoginsCount(user.getLoginsCount() + 1);
+                    }
                     return userService.update(user);
                 })
                 // reset login attempts in case of reset password action
@@ -399,6 +422,18 @@ public class UserServiceImpl implements UserService {
         }
         idpUser.setAdditionalInformation(additionalInformation);
         return idpUser;
+    }
+
+    private void extractAdditionalInformation(User user, Map<String, Object> additionalInformation) {
+        if (additionalInformation != null) {
+            Map<String, Object> extraInformation = new HashMap<>(additionalInformation);
+            if (user.getLoggedAt() != null) {
+                extraInformation.put(io.gravitee.am.common.oidc.idtoken.Claims.auth_time, user.getLoggedAt().getTime() / 1000);
+            }
+            extraInformation.put(StandardClaims.SUB, user.getId());
+            extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
+            user.setAdditionalInformation(extraInformation);
+        }
     }
 
 }
