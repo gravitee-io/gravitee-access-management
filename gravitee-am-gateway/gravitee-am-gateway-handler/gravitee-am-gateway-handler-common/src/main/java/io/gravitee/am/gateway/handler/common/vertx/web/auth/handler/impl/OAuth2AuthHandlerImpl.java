@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.impl;
 
-import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.exception.oauth2.InsufficientScopeException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
@@ -39,6 +39,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
 
     private static final String BEARER = "Bearer";
     private static final String realm = "gravitee-io";
+    private static final String ACCESS_TOKEN = "access_token";
     private OAuth2AuthProvider oAuth2AuthProvider;
     private String requiredScope;
     private boolean extractRawToken;
@@ -171,26 +172,34 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
     private void parseAuthorization(RoutingContext context, Handler<AsyncResult<String>> handler) {
         final HttpServerRequest request = context.request();
         final String authorization = request.headers().get(io.vertx.core.http.HttpHeaders.AUTHORIZATION);
-
-        if (authorization == null) {
-            handler.handle(Future.failedFuture(new HttpStatusException(401)));
-            return;
-        }
-
+        String authToken = null;
         try {
-            int idx = authorization.indexOf(' ');
+            if (authorization != null) {
+                // authorization header has been found check the value
+                int idx = authorization.indexOf(' ');
 
-            if (idx <= 0) {
-                handler.handle(Future.failedFuture(new InvalidRequestException("The access token must be sent using the Authorization header field")));
-                return;
+                if (idx <= 0) {
+                    handler.handle(Future.failedFuture(new InvalidRequestException("The access token must be sent using the Authorization header field")));
+                    return;
+                }
+
+                if (!BEARER.equalsIgnoreCase(authorization.substring(0, idx))) {
+                    handler.handle(Future.failedFuture(new HttpStatusException(401)));
+                    return;
+                }
+                authToken = authorization.substring(idx + 1);
+            } else {
+                // if no authorization header found, check authorization in body
+                authToken = request.getParam(ACCESS_TOKEN);
             }
 
-            if (!BEARER.equalsIgnoreCase(authorization.substring(0, idx))) {
+            if (authToken == null) {
                 handler.handle(Future.failedFuture(new HttpStatusException(401)));
                 return;
             }
-            handler.handle(Future.succeededFuture(authorization.substring(idx + 1)));
-        } catch (RuntimeException e) {
+
+            handler.handle(Future.succeededFuture(authToken));
+        }  catch (RuntimeException e) {
             handler.handle(Future.failedFuture(e));
         }
     }

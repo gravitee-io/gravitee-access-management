@@ -47,6 +47,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
+import io.vertx.reactivex.core.buffer.Buffer;
+import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -94,12 +96,14 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         router.route(HttpMethod.GET, "/userinfo")
                 .handler(userInfoEndpoint);
+        router.route(HttpMethod.POST, "/userinfo")
+                .consumes(MediaType.APPLICATION_FORM_URLENCODED)
+                .handler(userInfoEndpoint);
         router.route().failureHandler(new ExceptionHandler());
     }
 
     @Test
     public void shouldNotInvokeUserEndpoint_noBearerToken() throws Exception {
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider()));
 
         testRequest(
@@ -108,8 +112,18 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldNotInvokeUserEndpoint_noBearerToken_post() throws Exception {
+        router.route().order(-1)
+                .handler(BodyHandler.create())
+                .handler(createOAuth2AuthHandler(oAuth2AuthProvider()));
+
+        testRequest(
+                HttpMethod.POST, "/userinfo",
+                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+    }
+
+    @Test
     public void shouldNotInvokeUserEndpoint_invalidHeaderBearerToken() throws Exception {
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider()));
 
         testRequest(
@@ -119,7 +133,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeUserEndpoint_invalidToken_jwtDecode() throws Exception {
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(new ServerErrorException())));
 
         testRequest(
@@ -128,11 +141,26 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldNotInvokeUserEndpoint_invalidToken_jwtDecode_post() throws Exception {
+        router.route().order(-1)
+                .handler(BodyHandler.create())
+                .handler(createOAuth2AuthHandler(oAuth2AuthProvider(new ServerErrorException())));
+
+        testRequest(
+                HttpMethod.POST, "/userinfo", req -> {
+                    final String body = "access_token=test-token";
+                    req.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+                    req.putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(body.length()));
+                    req.write(Buffer.buffer(body));
+                },
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+    }
+
+    @Test
     public void shouldNotInvokeUserEndpoint_invalidToken_noClient() throws Exception {
         JWT jwt = new JWT();
         jwt.setAud("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(new InvalidClientException())));
 
         testRequest(
@@ -145,7 +173,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         JWT jwt = new JWT();
         jwt.setAud("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(new InvalidTokenException())));
 
         testRequest(
@@ -163,7 +190,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         token.setSub("client-id");
         token.setAud("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(token, client)));
 
         testRequest(
@@ -183,7 +209,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         when(userService.findById(anyString())).thenReturn(Maybe.empty());
@@ -204,7 +229,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         testRequest(
@@ -224,7 +248,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         testRequest(
@@ -247,7 +270,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
@@ -255,6 +277,62 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         testRequest(
                 HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
                 HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldInvokeUserEndpoint_post() throws Exception {
+        User user = new User();
+        user.setAdditionalInformation(Collections.singletonMap("sub", "user"));
+
+        JWT jwt = new JWT();
+        jwt.setJti("id-token");
+        jwt.setAud("client-id");
+        jwt.setSub("id-subject");
+        jwt.setScope("openid");
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
+        router.route().order(-1)
+                .handler(BodyHandler.create())
+                .handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
+
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+
+        testRequest(
+                HttpMethod.POST, "/userinfo", req ->
+                {
+                    final String body = "access_token=test-token";
+                    req.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+                    req.putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(body.length()));
+                    req.write(Buffer.buffer(body));
+                },
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldInvokeUserEndpoint_get_queryParam() throws Exception {
+        User user = new User();
+        user.setAdditionalInformation(Collections.singletonMap("sub", "user"));
+
+        JWT jwt = new JWT();
+        jwt.setJti("id-token");
+        jwt.setAud("client-id");
+        jwt.setSub("id-subject");
+        jwt.setScope("openid");
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
+        router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
+
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+
+        testRequest(
+                HttpMethod.GET, "/userinfo?access_token=test-token",
+                HttpStatusCode.OK_200, "OK");
     }
 
     @Test
@@ -270,7 +348,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
@@ -302,7 +379,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
@@ -333,7 +409,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
@@ -366,7 +441,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
@@ -400,7 +474,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
@@ -440,7 +513,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         role2.setId("role2");
         role2.setName("role-2");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
@@ -474,7 +546,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
@@ -515,7 +586,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         group2.setId("group2");
         group2.setName("group-2");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
@@ -564,7 +634,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         group2.setId("group2");
         group2.setName("group-2");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
@@ -602,7 +671,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
@@ -642,7 +710,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setClientId("client-id");
         client.setUserinfoSignedResponseAlg("algorithm");
 
-        createOAuth2AuthHandler(oAuth2AuthProvider());
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
