@@ -15,14 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization;
 
-import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
@@ -103,12 +104,19 @@ public class AuthorizationFailureEndpoint extends AbstractAuthorizationEndpoint 
             } catch (Exception e) {
                 logger.error("Unable to handle authorization error response", e);
                 doRedirect(routingContext.response(),  "/" + domain.getPath() + "/oauth/error");
+            } finally {
+                // clean session
+                cleanSession(routingContext);
             }
         }
     }
 
     private void doRedirect(HttpServerResponse response, String url) {
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    }
+
+    private void cleanSession(RoutingContext context) {
+        context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
     }
 
     private String buildRedirectUri(OAuth2Exception oAuth2Exception, AuthorizationRequest authorizationRequest) throws URISyntaxException {

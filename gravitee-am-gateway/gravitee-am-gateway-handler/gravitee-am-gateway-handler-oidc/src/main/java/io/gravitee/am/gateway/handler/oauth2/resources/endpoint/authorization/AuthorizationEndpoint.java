@@ -20,9 +20,9 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InteractionRequiredException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
-import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
@@ -59,7 +59,7 @@ public class AuthorizationEndpoint extends AbstractAuthorizationEndpoint impleme
 
     @Override
     public void handle(RoutingContext context) {
-        AuthorizationRequest request = createAuthorizationRequest(context);
+        AuthorizationRequest request = resolveInitialAuthorizeRequest(context);
 
         // The authorization server authenticates the resource owner and obtains
         // an authorization decision (by asking the resource owner or by establishing approval via other means).
@@ -77,6 +77,8 @@ public class AuthorizationEndpoint extends AbstractAuthorizationEndpoint impleme
         flow.run(request, client, endUser)
                 .subscribe(authorizationResponse -> {
                     try {
+                        // final step of the authorization flow, we can clean the session and redirect the user
+                        cleanSession(context);
                         doRedirect(context.response(), authorizationResponse.buildRedirectUri());
                     } catch (Exception e) {
                         logger.error("Unable to redirect to client redirect_uri", e);
@@ -106,5 +108,9 @@ public class AuthorizationEndpoint extends AbstractAuthorizationEndpoint impleme
 
     private void doRedirect(HttpServerResponse response, String url) {
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    }
+
+    private void cleanSession(RoutingContext context) {
+        context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
     }
 }
