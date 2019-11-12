@@ -168,7 +168,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     private void extractAdditionalInformation(User user, Map<String, Object> additionalInformation) {
         if (additionalInformation != null) {
             Map<String, Object> extraInformation = new HashMap<>(additionalInformation);
-            extraInformation.put(Claims.auth_time, user.getLoggedAt());
+            if (user.getLoggedAt() != null) {
+                extraInformation.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
+            }
             extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
             user.setSource((String) extraInformation.remove(SOURCE_FIELD));
             user.setClient((String) extraInformation.remove(Parameters.CLIENT_ID));
