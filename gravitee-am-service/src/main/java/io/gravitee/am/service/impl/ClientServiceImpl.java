@@ -488,6 +488,10 @@ public class ClientServiceImpl implements ClientService {
                                 if (!domain.isRedirectUriWildcardAllowed() && uri.getPath().contains("*")) {
                                     return Single.error(new InvalidRedirectUriException("Wildcard are forbidden"));
                                 }
+                                // check fragment
+                                if (uri.getFragment() != null) {
+                                    return Single.error(new InvalidRedirectUriException("redirect_uri with fragment is forbidden"));
+                                }
                             }
                             catch (IllegalArgumentException | URISyntaxException ex) {
                                 return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + " is malformed"));
