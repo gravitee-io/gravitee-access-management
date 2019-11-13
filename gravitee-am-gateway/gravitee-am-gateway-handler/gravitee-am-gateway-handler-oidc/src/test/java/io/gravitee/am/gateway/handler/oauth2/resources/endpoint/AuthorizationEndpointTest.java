@@ -107,7 +107,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(sessionHandler);
         router.route(HttpMethod.GET, "/oauth/authorize")
                 .handler(new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService))
-                .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
+                .handler(new AuthorizationRequestParseClientHandler(domain, clientSyncService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(authorizationEndpointHandler);
         router.route()
@@ -283,6 +283,73 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=redirect_uri_mismatch&error_description=The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_mismatchRedirectUri_strictMatching() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/authorize/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(ResponseType.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/authorize/callback?param=param1");
+
+        when(domain.isRedirectUriStrictMatching()).thenReturn(true);
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/authorize/callback?param=param1",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=redirect_uri_mismatch&error_description=The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_noStrictMatching() throws Exception {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopes(Collections.singletonList("read"));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/authorize/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(ResponseType.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/authorize/callback?param=param1");
+
+        AuthorizationResponse authorizationResponse = new AuthorizationCodeResponse();
+        authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
+        ((AuthorizationCodeResponse) authorizationResponse).setCode("test-code");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            routingContext.next();
+        });
+
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/authorize/callback?param=param1",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/authorize/callback?param=param1&code=test-code", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
