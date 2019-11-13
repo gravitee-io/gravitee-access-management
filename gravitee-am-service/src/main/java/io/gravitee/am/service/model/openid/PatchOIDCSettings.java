@@ -18,6 +18,7 @@ package io.gravitee.am.service.model.openid;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.Optional;
 
@@ -32,6 +33,8 @@ public class PatchOIDCSettings {
     @JsonProperty("clientRegistrationSettings")
     private Optional<PatchClientRegistrationSettings> clientRegistrationSettings;
 
+    private Optional<Boolean> redirectUriStrictMatching;
+
     public Optional<PatchClientRegistrationSettings> getClientRegistrationSettings() {
         return clientRegistrationSettings;
     }
@@ -40,22 +43,33 @@ public class PatchOIDCSettings {
         this.clientRegistrationSettings = clientRegistrationSettings;
     }
 
+    public Optional<Boolean> getRedirectUriStrictMatching() {
+        return redirectUriStrictMatching;
+    }
+
+    public void setRedirectUriStrictMatching(Optional<Boolean> redirectUriStrictMatching) {
+        this.redirectUriStrictMatching = redirectUriStrictMatching;
+    }
+
     public OIDCSettings patch(OIDCSettings toPatch) {
 
         //If source may be null, in such case init with default values
-        OIDCSettings result=toPatch!=null?toPatch:OIDCSettings.defaultSettings();
+        if (toPatch == null ) {
+            toPatch = OIDCSettings.defaultSettings();
+        }
+        SetterUtils.safeSet(toPatch::setRedirectUriStrictMatching, this.getRedirectUriStrictMatching(), boolean.class);
 
         if(getClientRegistrationSettings()!=null) {
             //If present apply settings, else return default settings.
             if(getClientRegistrationSettings().isPresent()) {
                 PatchClientRegistrationSettings patcher = getClientRegistrationSettings().get();
-                ClientRegistrationSettings source = result.getClientRegistrationSettings();
-                result.setClientRegistrationSettings(patcher.patch(source));
+                ClientRegistrationSettings source = toPatch.getClientRegistrationSettings();
+                toPatch.setClientRegistrationSettings(patcher.patch(source));
             } else {
-                result.setClientRegistrationSettings(ClientRegistrationSettings.defaultSettings());
+                toPatch.setClientRegistrationSettings(ClientRegistrationSettings.defaultSettings());
             }
         }
 
-        return result;
+        return toPatch;
     }
 }

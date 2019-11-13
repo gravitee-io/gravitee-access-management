@@ -17,11 +17,17 @@ package io.gravitee.am.model.oidc;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class OIDCSettings {
 
     private ClientRegistrationSettings clientRegistrationSettings;
+
+    /**
+     * Enable redirect_uri strict matching during OIDC flow (check for redirect_uri_mismatch exception)
+     */
+    private boolean redirectUriStrictMatching;
 
     public ClientRegistrationSettings getClientRegistrationSettings() {
         return clientRegistrationSettings!=null?clientRegistrationSettings: ClientRegistrationSettings.defaultSettings();
@@ -31,9 +37,19 @@ public class OIDCSettings {
         this.clientRegistrationSettings = clientRegistrationSettings;
     }
 
+    public boolean isRedirectUriStrictMatching() {
+        return redirectUriStrictMatching;
+    }
+
+    public void setRedirectUriStrictMatching(boolean redirectUriStrictMatching) {
+        this.redirectUriStrictMatching = redirectUriStrictMatching;
+    }
+
     public static OIDCSettings defaultSettings() {
         OIDCSettings defaultSettings = new OIDCSettings();
         defaultSettings.setClientRegistrationSettings(ClientRegistrationSettings.defaultSettings());
+        defaultSettings.setRedirectUriStrictMatching(false);
         return defaultSettings;
     }
+
 }

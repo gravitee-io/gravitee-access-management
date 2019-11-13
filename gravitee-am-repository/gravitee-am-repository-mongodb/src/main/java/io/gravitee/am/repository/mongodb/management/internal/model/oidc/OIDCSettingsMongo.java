@@ -22,6 +22,7 @@ package io.gravitee.am.repository.mongodb.management.internal.model.oidc;
 public class OIDCSettingsMongo {
 
     private ClientRegistrationSettingsMongo clientRegistrationSettings;
+    private boolean redirectUriStrictMatching;
 
     public ClientRegistrationSettingsMongo getClientRegistrationSettings() {
         return clientRegistrationSettings;
@@ -29,5 +30,13 @@ public class OIDCSettingsMongo {
 
     public void setClientRegistrationSettings(ClientRegistrationSettingsMongo clientRegistrationSettings) {
         this.clientRegistrationSettings = clientRegistrationSettings;
+    }
+
+    public boolean isRedirectUriStrictMatching() {
+        return redirectUriStrictMatching;
+    }
+
+    public void setRedirectUriStrictMatching(boolean redirectUriStrictMatching) {
+        this.redirectUriStrictMatching = redirectUriStrictMatching;
     }
 }

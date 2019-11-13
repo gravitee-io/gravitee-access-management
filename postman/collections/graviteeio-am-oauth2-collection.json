@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "31d34e59-af40-4fe5-9a44-8147d51e86cc",
+		"_postman_id": "363baad7-40ce-452c-a5e1-71e611a8b857",
 		"name": "Gravitee.io - AM - Oauth2",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -8288,6 +8288,117 @@
 												{
 													"key": "redirect_uri",
 													"value": "http://my_bad_host:4000"
+												}
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Patch domain",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
+												"exec": [
+													"// wait for sync process",
+													"setTimeout(function(){}, 10000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"oidc\": {\n  \t\"redirectUriStrictMatching\": true\n  }\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Send a bad redirect_uri strict matching",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "9ac8c6d5-9172-44f1-8e03-9e8d92b4b4ea",
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.be.header('Content-Length', '0');",
+													"    pm.response.to.have.header('Location');",
+													"    pm.response.to.not.have.header('Set-Cookie');",
+													"});",
+													"",
+													"pm.test(\"Should be a location error\", function() {",
+													"    var location = postman.getResponseHeader('Location');",
+													"    tests['Contains an error query-parameter'] = location.includes('error=redirect_uri_mismatch');",
+													"    tests['Contains an error description query-parameter'] = location.includes('error_description=The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{authorizationEndpoint}}?response_type=code&client_id=my-client2&redirect_uri=http://localhost:4000?extraParam=test",
+											"host": [
+												"{{authorizationEndpoint}}"
+											],
+											"query": [
+												{
+													"key": "response_type",
+													"value": "code"
+												},
+												{
+													"key": "client_id",
+													"value": "my-client2"
+												},
+												{
+													"key": "redirect_uri",
+													"value": "http://localhost:4000?extraParam=test"
 												}
 											]
 										},

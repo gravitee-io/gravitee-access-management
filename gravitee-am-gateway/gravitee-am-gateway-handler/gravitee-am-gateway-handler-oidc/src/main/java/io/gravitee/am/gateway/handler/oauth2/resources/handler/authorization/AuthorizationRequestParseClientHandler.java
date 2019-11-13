@@ -15,14 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Domain;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -44,9 +45,11 @@ import java.util.List;
 public class AuthorizationRequestParseClientHandler implements Handler<RoutingContext> {
 
     private static final String CLIENT_CONTEXT_KEY = "client";
+    private Domain domain;
     private ClientSyncService clientSyncService;
 
-    public AuthorizationRequestParseClientHandler(ClientSyncService clientSyncService) {
+    public AuthorizationRequestParseClientHandler(Domain domain, ClientSyncService clientSyncService) {
+        this.domain = domain;
         this.clientSyncService = clientSyncService;
     }
 
@@ -147,6 +150,12 @@ public class AuthorizationRequestParseClientHandler implements Handler<RoutingCo
     }
 
     private boolean redirectMatches(String requestedRedirect, String registeredClientUri) {
+        // if redirect_uri strict matching mode is enabled, do string matching
+        if (this.domain.isRedirectUriStrictMatching()) {
+            return requestedRedirect.equals(registeredClientUri);
+        }
+
+        // nominal case
         try {
             URL req = new URL(requestedRedirect);
             URL reg = new URL(registeredClientUri);

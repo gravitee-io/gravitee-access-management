@@ -174,7 +174,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
         // Authorization endpoint
         Handler<RoutingContext> authorizationRequestParseRequiredParametersHandler = new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService);
-        Handler<RoutingContext> authorizationRequestParseClientHandler = new AuthorizationRequestParseClientHandler(clientSyncService);
+        Handler<RoutingContext> authorizationRequestParseClientHandler = new AuthorizationRequestParseClientHandler(domain, clientSyncService);
         Handler<RoutingContext> authorizationRequestParseParametersHandler = new AuthorizationRequestParseParametersHandler(domain);
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpoint(flow, domain);
         Handler<RoutingContext> authorizeFailureEndpoint = new AuthorizationFailureEndpoint(domain);
