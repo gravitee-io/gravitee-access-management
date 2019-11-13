@@ -28,7 +28,7 @@ import io.gravitee.am.plugins.policy.spring.PolicyConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
-import io.gravitee.node.api.Node;
+import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -58,8 +58,8 @@ import org.springframework.context.annotation.Import;
 public class StandaloneConfiguration {
 
     @Bean
-    public Node node() {
-        return new ManagementNode();
+    public NodeFactory node() {
+        return new NodeFactory(ManagementNode.class);
     }
 
     @Bean
