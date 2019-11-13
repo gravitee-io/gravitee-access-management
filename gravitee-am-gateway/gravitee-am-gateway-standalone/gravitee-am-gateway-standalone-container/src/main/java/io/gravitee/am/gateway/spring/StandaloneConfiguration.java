@@ -29,7 +29,7 @@ import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicyConfiguration;
 import io.gravitee.am.plugins.protocol.spring.ProtocolConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
-import io.gravitee.node.api.Node;
+import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import io.vertx.core.Vertx;
@@ -59,8 +59,8 @@ import org.springframework.context.annotation.Import;
 public class StandaloneConfiguration {
 
     @Bean
-    public Node node() {
-        return new GatewayNode();
+    public NodeFactory node() {
+        return new NodeFactory(GatewayNode.class);
     }
 
     @Bean
