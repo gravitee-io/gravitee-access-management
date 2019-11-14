@@ -187,6 +187,7 @@ postman: ## Run postman non regression test (require newman npm module)
 	@newman run postman/collections/graviteeio-am-client-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-policies-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-login-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+	@newman run postman/collections/graviteeio-am-logout-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-user-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 
 oidctest-run: oidctest-install oidctest-start ## Run openid-certification tools, using same docker network

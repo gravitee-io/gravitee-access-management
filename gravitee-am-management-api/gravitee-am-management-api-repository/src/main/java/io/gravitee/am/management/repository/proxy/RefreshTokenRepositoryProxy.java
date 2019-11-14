@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.oauth2.api;
+package io.gravitee.am.management.repository.proxy;
 
+import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -27,15 +29,31 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface RefreshTokenRepository {
+@Component
+public class RefreshTokenRepositoryProxy extends AbstractProxy<RefreshTokenRepository> implements RefreshTokenRepository {
 
-    Maybe<RefreshToken> findByToken(String token);
+    @Override
+    public Maybe<RefreshToken> findByToken(String token) {
+        return target.findByToken(token);
+    }
 
-    Single<RefreshToken> create(RefreshToken refreshToken);
+    @Override
+    public Single<RefreshToken> create(RefreshToken refreshToken) {
+        return target.create(refreshToken);
+    }
 
-    Flowable bulkWrite(List<RefreshToken> refreshTokens);
+    @Override
+    public Flowable bulkWrite(List<RefreshToken> refreshTokens) {
+        return target.bulkWrite(refreshTokens);
+    }
 
-    Completable delete(String token);
+    @Override
+    public Completable delete(String token) {
+        return target.delete(token);
+    }
 
-    Completable deleteByUserId(String userId);
+    @Override
+    public Completable deleteByUserId(String userId) {
+        return target.deleteByUserId(userId);
+    }
 }
