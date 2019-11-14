@@ -52,7 +52,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
@@ -115,7 +115,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private UserService userService;
 
     @Autowired
-    private LoginAttemptService loginAttemptService;
+    private TokenService tokenService;
 
     @Autowired
     private PolicyChainHandler policyChainHandler;
@@ -184,7 +184,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .failureHandler(loginCallbackFailureHandler);
 
         // logout route
-        rootRouter.route("/logout").handler(LogoutEndpoint.create(domain, auditService));
+        rootRouter.route("/logout").handler(new LogoutEndpoint(domain, tokenService, auditService));
 
         // error route
         rootRouter.route(HttpMethod.GET, "/error")

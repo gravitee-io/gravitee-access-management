@@ -59,6 +59,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessTokenCollection.createIndex(new Document(FIELD_TOKEN, 1)).subscribe(new LoggableIndexSubscriber());
         accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1)).subscribe(new LoggableIndexSubscriber());
         accessTokenCollection.createIndex(new Document(FIELD_AUTHORIZATION_CODE, 1)).subscribe(new LoggableIndexSubscriber());
+        accessTokenCollection.createIndex(new Document(FIELD_SUBJECT, 1)).subscribe(new LoggableIndexSubscriber());
 
         // two fields index
         accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1)).subscribe(new LoggableIndexSubscriber());
@@ -123,6 +124,11 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     @Override
     public Single<Long> countByClientId(String clientId) {
         return Single.fromPublisher(accessTokenCollection.count(eq(FIELD_CLIENT_ID, clientId)));
+    }
+
+    @Override
+    public Completable deleteByUserId(String userId) {
+        return Completable.fromPublisher(accessTokenCollection.deleteMany(eq(FIELD_SUBJECT, userId)));
     }
 
     private List<WriteModel<AccessTokenMongo>> convert(List<AccessToken> accessTokens) {

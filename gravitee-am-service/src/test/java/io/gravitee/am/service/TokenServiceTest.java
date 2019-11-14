@@ -18,9 +18,11 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
+import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.TokenServiceImpl;
 import io.gravitee.am.service.model.TotalToken;
+import io.reactivex.Completable;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
@@ -47,6 +49,9 @@ public class TokenServiceTest {
 
     @Mock
     private AccessTokenRepository accessTokenRepository;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
     private ClientService clientService;
@@ -145,6 +150,16 @@ public class TokenServiceTest {
         TestObserver<TotalToken> testObserver = tokenService.findTotalTokens().test();
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldDeleteTokensByUser() {
+        when(accessTokenRepository.deleteByUserId("userId")).thenReturn(Completable.complete());
+        when(refreshTokenRepository.deleteByUserId("userId")).thenReturn(Completable.complete());
+
+        TestObserver testObserver = tokenService.deleteByUserId("userId").test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
     }
 
 }

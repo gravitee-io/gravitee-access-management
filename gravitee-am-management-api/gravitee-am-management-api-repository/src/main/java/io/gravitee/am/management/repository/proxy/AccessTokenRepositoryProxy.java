@@ -69,4 +69,8 @@ public class AccessTokenRepositoryProxy extends AbstractProxy<AccessTokenReposit
         return target.countByClientId(clientId);
     }
 
+    @Override
+    public Completable deleteByUserId(String userId) {
+        return target.deleteByUserId(userId);
+    }
 }

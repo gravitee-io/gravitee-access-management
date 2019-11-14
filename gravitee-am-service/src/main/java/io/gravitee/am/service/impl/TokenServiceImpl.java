@@ -16,10 +16,12 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
+import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.TotalToken;
+import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -41,6 +43,9 @@ public class TokenServiceImpl implements TokenService {
 
     @Autowired
     private AccessTokenRepository accessTokenRepository;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public Single<TotalToken> findTotalTokensByDomain(String domain) {
@@ -76,6 +81,18 @@ public class TokenServiceImpl implements TokenService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find total tokens", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find total tokens", ex));
+                });
+    }
+
+    @Override
+    public Completable deleteByUserId(String userId) {
+        LOGGER.debug("Delete tokens by user : {}", userId);
+        return accessTokenRepository.deleteByUserId(userId)
+                .andThen(refreshTokenRepository.deleteByUserId(userId))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to delete tokens by user {}", userId, ex);
+                    return Completable.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find total tokens by user: %s", userId), ex));
                 });
     }
 }
