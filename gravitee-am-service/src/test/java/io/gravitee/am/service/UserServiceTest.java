@@ -15,11 +15,10 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Group;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
@@ -38,7 +37,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -57,7 +57,7 @@ public class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private GroupRepository groupRepository;
+    private EventService eventService;
 
     private final static String DOMAIN = "domain1";
 
@@ -174,6 +174,7 @@ public class UserServiceTest {
         when(newUser.getSource()).thenReturn("source");
         when(userRepository.create(any(User.class))).thenReturn(Single.just(new User()));
         when(userRepository.findByDomainAndUsernameAndSource(DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.create(DOMAIN, newUser).test();
         testObserver.awaitTerminalEvent();
@@ -182,6 +183,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).create(any(User.class));
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -218,6 +220,7 @@ public class UserServiceTest {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(new User()));
         when(userRepository.update(any(User.class))).thenReturn(Single.just(new User()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
         testObserver.awaitTerminalEvent();
@@ -227,6 +230,7 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).findById("my-user");
         verify(userRepository, times(1)).update(any(User.class));
+        verify(eventService, times(1)).create(any());
     }
 
     @Test
@@ -258,6 +262,7 @@ public class UserServiceTest {
     public void shouldDelete() {
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(new User()));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.delete("my-user").test();
         testObserver.awaitTerminalEvent();
@@ -266,6 +271,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).delete("my-user");
+        verify(eventService, times(1)).create(any());
     }
 
     @Test

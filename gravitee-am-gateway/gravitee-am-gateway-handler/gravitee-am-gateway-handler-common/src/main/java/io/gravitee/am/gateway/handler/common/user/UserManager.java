@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.common.event;
+package io.gravitee.am.gateway.handler.common.user;
+
+import io.gravitee.am.model.User;
+import io.gravitee.common.service.Service;
+import io.reactivex.Maybe;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public interface UserManager extends Service {
 
-    DOMAIN,
-    CLIENT,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL,
-    REPORTER,
-    POLICY,
-    USER
+    Maybe<User> get(String userId);
 }
