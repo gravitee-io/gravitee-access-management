@@ -13,24 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.common.event;
+package io.gravitee.am.gateway.core.event;
+
+import io.gravitee.am.model.common.event.Action;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public enum UserEvent {
 
-    DOMAIN,
-    CLIENT,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL,
-    REPORTER,
-    POLICY,
-    USER
+    DEPLOY,
+    UPDATE,
+    UNDEPLOY;
+
+    public static UserEvent actionOf(Action action) {
+        UserEvent roleEvent = null;
+        switch (action) {
+            case CREATE:
+                roleEvent = UserEvent.DEPLOY;
+                break;
+            case UPDATE:
+                roleEvent = UserEvent.UPDATE;
+                break;
+            case DELETE:
+                roleEvent = UserEvent.UNDEPLOY;
+                break;
+        }
+        return roleEvent;
+    }
 }

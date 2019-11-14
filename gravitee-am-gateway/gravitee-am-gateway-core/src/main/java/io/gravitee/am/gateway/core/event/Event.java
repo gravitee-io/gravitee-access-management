@@ -57,6 +57,9 @@ public abstract class Event {
             case POLICY:
                 event1 =  PolicyEvent.actionOf(event.getPayload().getAction());
                 break;
+            case USER:
+                event1 =  UserEvent.actionOf(event.getPayload().getAction());
+                break;
         }
 
         return event1;

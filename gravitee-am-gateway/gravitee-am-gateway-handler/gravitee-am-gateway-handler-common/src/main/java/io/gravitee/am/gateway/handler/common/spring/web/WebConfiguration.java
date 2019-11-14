@@ -34,6 +34,9 @@ public class WebConfiguration {
     public SessionHandlerFactory sessionHandler() { return new SessionHandlerFactory(); }
 
     @Bean
+    public SSOSessionHandlerFactory ssoSessionHandler() { return new SSOSessionHandlerFactory(); }
+
+    @Bean
     public CookieHandlerFactory cookieHandler() {
         return new CookieHandlerFactory();
     }

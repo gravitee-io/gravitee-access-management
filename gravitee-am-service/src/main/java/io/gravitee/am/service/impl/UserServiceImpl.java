@@ -18,7 +18,12 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.event.Action;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -50,6 +55,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private EventService eventService;
 
     @Override
     public Single<Set<User>> findByDomain(String domain) {
@@ -181,6 +189,11 @@ public class UserServiceImpl implements UserService {
                         return userRepository.create(user);
                     }
                 })
+                .flatMap(user -> {
+                    // create event for sync process
+                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getDomain(), Action.CREATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(user));
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -197,6 +210,11 @@ public class UserServiceImpl implements UserService {
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
         return userRepository.create(user)
+                .flatMap(user1 -> {
+                    // create event for sync process
+                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getDomain(), Action.CREATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(user1));
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -225,6 +243,11 @@ public class UserServiceImpl implements UserService {
                     oldUser.setAdditionalInformation(updateUser.getAdditionalInformation());
                     return userRepository.update(oldUser);
                 })
+                .flatMap(user -> {
+                    // create event for sync process
+                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getDomain(), Action.UPDATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(user));
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -241,6 +264,11 @@ public class UserServiceImpl implements UserService {
         // updated date
         user.setUpdatedAt(new Date());
         return userRepository.update(user)
+                .flatMap(user1 -> {
+                    // create event for sync process
+                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getDomain(), Action.UPDATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(user1));
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -256,7 +284,11 @@ public class UserServiceImpl implements UserService {
 
         return userRepository.findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                .flatMapCompletable(user -> userRepository.delete(userId))
+                .flatMapCompletable(user -> {
+                        // create event for sync process
+                        Event event = new Event(Type.USER, new Payload(user.getId(), user.getDomain(), Action.DELETE));
+                        return userRepository.delete(userId).andThen(eventService.create(event)).toCompletable();
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

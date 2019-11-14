@@ -27,6 +27,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
+import io.vertx.ext.web.handler.impl.HttpStatusException;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -87,6 +88,11 @@ public class AuthorizationFailureEndpoint extends AbstractAuthorizationEndpoint 
                     }
                     // redirect user
                     doRedirect(routingContext.response(), buildRedirectUri(oAuth2Exception, request));
+                } else if (throwable instanceof HttpStatusException) {
+                    routingContext
+                            .response()
+                            .setStatusCode(((HttpStatusException) throwable).getStatusCode())
+                            .end();
                 } else {
                     logger.error("An exception occurs while handling authorization request", throwable);
                     if (routingContext.statusCode() != -1) {
