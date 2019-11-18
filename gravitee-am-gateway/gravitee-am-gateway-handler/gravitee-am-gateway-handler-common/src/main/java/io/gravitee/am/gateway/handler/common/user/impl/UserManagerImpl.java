@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.core.event.EventManager;
 import io.gravitee.am.gateway.core.event.UserEvent;
 import io.gravitee.am.gateway.handler.common.user.UserManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserStore;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.event.Payload;
@@ -30,8 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Objects;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -50,7 +50,12 @@ public class UserManagerImpl extends AbstractService implements UserManager, Eve
     @Autowired
     private UserService userService;
 
-    private ConcurrentMap<String, User> users = new ConcurrentHashMap<>();
+    private UserStore userStore;
+
+    public UserManagerImpl(UserStore userStore) {
+        Objects.requireNonNull(userStore, "User store must not be null");
+        this.userStore = userStore;
+    }
 
     @Override
     protected void doStart() throws Exception {
@@ -66,7 +71,7 @@ public class UserManagerImpl extends AbstractService implements UserManager, Eve
 
         logger.info("Dispose event listener for user events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, UserEvent.class, domain.getId());
-        users.clear();
+        userStore.clear();
     }
 
     @Override
@@ -86,7 +91,7 @@ public class UserManagerImpl extends AbstractService implements UserManager, Eve
 
     @Override
     public Maybe<User> get(String userId) {
-        return users.get(userId) != null ? Maybe.just(users.get(userId)) : Maybe.empty();
+        return userStore.get(userId) != null ? Maybe.just(userStore.get(userId)) : Maybe.empty();
     }
 
     private void updateUser(String userId, UserEvent userEvent) {
@@ -95,7 +100,7 @@ public class UserManagerImpl extends AbstractService implements UserManager, Eve
         userService.findById(userId)
                 .subscribe(
                         user -> {
-                            users.put(userId, user);
+                            userStore.add(user);
                             logger.info("User {} {}d for domain {}", userId, eventType, domain.getName());
                         },
                         error -> logger.error("Unable to {} user for domain {}", eventType, domain.getName(), error),
@@ -104,6 +109,6 @@ public class UserManagerImpl extends AbstractService implements UserManager, Eve
 
     private void removeUser(String userId) {
         logger.info("Domain {} has received user event, delete user {}", domain.getName(), userId);
-        users.remove(userId);
+        userStore.remove(userId);
     }
 }

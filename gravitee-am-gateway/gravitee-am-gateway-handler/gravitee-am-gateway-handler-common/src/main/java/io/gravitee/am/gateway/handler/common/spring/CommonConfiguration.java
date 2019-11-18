@@ -45,6 +45,8 @@ import io.gravitee.am.gateway.handler.common.policy.impl.PolicyManagerImpl;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
 import io.gravitee.am.gateway.handler.common.user.UserManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserStore;
+import io.gravitee.am.gateway.handler.common.user.impl.InMemoryUserStore;
 import io.gravitee.am.gateway.handler.common.user.impl.UserManagerImpl;
 import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
@@ -185,6 +187,7 @@ public class CommonConfiguration {
 
     @Bean
     public UserManager userManager() {
-        return new UserManagerImpl();
+        UserStore userStore = new InMemoryUserStore(vertx, environment.getProperty("http.cookie.session.timeout", Long.class, io.vertx.reactivex.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT));
+        return new UserManagerImpl(userStore);
     }
 }
