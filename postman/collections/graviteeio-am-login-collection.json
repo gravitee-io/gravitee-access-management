@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "441ad7e8-bcba-47e9-8978-78b99b1303a0",
+		"_postman_id": "10177138-2fb6-44ac-843b-ccd4abcb08e6",
 		"name": "Gravitee.io - AM - Login",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -219,6 +219,56 @@
 					"response": []
 				},
 				{
+					"name": "Create client 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var body = JSON.parse(responseBody);",
+									"pm.environment.set('client2', body.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"clientId\": \"my-client-2\",\n  \"clientSecret\": \"my-client-secret-2\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Configure client",
 					"event": [
 						{
@@ -261,6 +311,66 @@
 								"{{domain}}",
 								"clients",
 								"{{client}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Configure client 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "fc6dbe7a-ebb1-4d04-8b0d-081b43170c0a",
+								"exec": [
+									"let domain = pm.environment.get(\"domain\");",
+									"let identityProvider = 'default-idp-'+domain;",
+									"pm.environment.set(\"identityProvider\",identityProvider)"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"redirectUris\": [],\n  \"authorizedGrantTypes\": [\n    \"authorization_code\",\n    \"client_credentials\",\n    \"password\",\n    \"refresh_token\"\n  ],\n  \"scopes\": [\"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"enabled\": true,\n  \"identities\": [\n    \"{{identityProvider}}\"\n  ],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{client2}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"domains",
+								"{{domain}}",
+								"clients",
+								"{{client2}}"
 							]
 						}
 					},
@@ -363,6 +473,339 @@
 								"openid-configuration"
 							]
 						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Case - SSO",
+			"item": [
+				{
+					"name": "Initiate Login Flow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"});",
+									"",
+									"pm.test(\"Should be a redirection to login page\", function() {",
+									"    var location = postman.getResponseHeader('Location');",
+									"    let domain = pm.environment.get(\"domain\");",
+									"    ",
+									"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client';",
+									"    ",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "904f0113-b2b9-4645-9511-48bb10791506",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/login/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"login",
+								"oauth",
+								"authorize",
+								""
+							],
+							"query": [
+								{
+									"key": "response_type",
+									"value": "code"
+								},
+								{
+									"key": "client_id",
+									"value": "my-client"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "http://localhost:4000/"
+								},
+								{
+									"key": "state",
+									"value": "1234-5678-9876"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect to login form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "67df9bf8-89a2-4c95-9728-097aad6d2be4",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Should be ok\", function () {",
+									"    pm.response.to.be.ok;",
+									"    ",
+									"    // Extract the XSRF token to send it with the next request.",
+									"    var responseHTML = cheerio(pm.response.text());",
+									"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    pm.environment.set('xsrf', xsrfToken);",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "904f0113-b2b9-4645-9511-48bb10791506",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Post login form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4afec9f2-a5ba-4647-9a78-6d74cb9c157c",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected to login with invalid account\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    var location = postman.getResponseHeader(\"Location\");",
+									"    pm.environment.set('redirection', location);",
+									"    // if login was ok, we replay the authorize flow",
+									"    tests['Redirect to consent page'] = location.includes('/oauth/authorize');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "904f0113-b2b9-4645-9511-48bb10791506",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "X-XSRF-TOKEN",
+									"value": "{{xsrf}}",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "my-client",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "user",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{gateway_url}}/{{domain}}/login",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domain}}",
+								"login"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Initiate Login Flow - not the same client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"});",
+									"",
+									"pm.test(\"Should be a redirection to login page\", function() {",
+									"    var location = postman.getResponseHeader('Location');",
+									"    let domain = pm.environment.get(\"domain\");",
+									"    ",
+									"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "904f0113-b2b9-4645-9511-48bb10791506",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/login/oauth/authorize/?response_type=code&client_id=my-client-2&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"login",
+								"oauth",
+								"authorize",
+								""
+							],
+							"query": [
+								{
+									"key": "response_type",
+									"value": "code"
+								},
+								{
+									"key": "client_id",
+									"value": "my-client-2"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "http://localhost:4000/"
+								},
+								{
+									"key": "state",
+									"value": "1234-5678-9876"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "ba6b6fb1-32ac-46d5-8e2d-f97961029a05",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"    ",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "904f0113-b2b9-4645-9511-48bb10791506",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{logoutEndpoint}}",
+							"host": [
+								"{{logoutEndpoint}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
 					},
 					"response": []
 				}

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.user.UserManager;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +29,12 @@ public class SSOSessionHandlerFactory implements FactoryBean<SSOSessionHandler> 
     @Autowired
     private UserManager userManager;
 
+    @Autowired
+    private ClientSyncService clientSyncService;
+
     @Override
     public SSOSessionHandler getObject() {
-        return new SSOSessionHandler(userManager);
+        return new SSOSessionHandler(userManager, clientSyncService);
     }
 
     @Override
