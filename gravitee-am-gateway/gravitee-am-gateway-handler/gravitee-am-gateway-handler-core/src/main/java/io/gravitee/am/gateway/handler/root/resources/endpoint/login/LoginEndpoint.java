@@ -15,7 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
-import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.model.Client;
@@ -44,6 +45,7 @@ public class LoginEndpoint implements Handler<RoutingContext> {
     private static final String ERROR_PARAM_KEY = "error";
     private static final String ALLOW_FORGOT_PASSWORD_CONTEXT_KEY = "allowForgotPassword";
     private static final String ALLOW_REGISTER_CONTEXT_KEY = "allowRegister";
+    private static final String REQUEST_CONTEXT_KEY = "request";
     private ThymeleafTemplateEngine engine;
     private Domain domain;
 
@@ -72,13 +74,15 @@ public class LoginEndpoint implements Handler<RoutingContext> {
         routingContext.put(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, domain.getLoginSettings() == null ? false : domain.getLoginSettings().isForgotPasswordEnabled());
         routingContext.put(ALLOW_REGISTER_CONTEXT_KEY, domain.getLoginSettings() == null ? false : domain.getLoginSettings().isRegisterEnabled());
 
-        // put additional parameter (backward compatibility)
+        // put request in context
+        EvaluableRequest evaluableRequest = new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate(), true));
+        routingContext.put(REQUEST_CONTEXT_KEY, evaluableRequest);
+
+        // put request parameters (backward compatibility)
         final String error = routingContext.request().getParam(ERROR_PARAM_KEY);
         Map<String, String> params = new HashMap<>();
-        if (error != null) {
-            params.put(ERROR_PARAM_KEY, error);
-        }
-        params.put(Parameters.CLIENT_ID, routingContext.request().getParam(Parameters.CLIENT_ID));
+        params.computeIfAbsent(ERROR_PARAM_KEY, val -> error);
+        params.putAll(evaluableRequest.getParams().toSingleValueMap());
         routingContext.put(PARAM_CONTEXT_KEY, params);
     }
 

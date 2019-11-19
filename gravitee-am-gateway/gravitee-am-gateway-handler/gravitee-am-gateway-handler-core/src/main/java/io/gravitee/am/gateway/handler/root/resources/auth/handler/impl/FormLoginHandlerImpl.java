@@ -19,10 +19,8 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
-import io.gravitee.am.common.exception.authentication.AuthenticationException;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
@@ -39,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Extends default {@link io.vertx.ext.web.handler.FormLoginHandler} and appends
@@ -137,19 +136,17 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
     }
 
     private void handleException(RoutingContext context) {
-        final HttpServerRequest req = context.request();
+        final io.vertx.reactivex.core.http.HttpServerRequest req = new io.vertx.reactivex.core.http.HttpServerRequest(context.request());
         final HttpServerResponse resp = context.response();
-        final MultiMap requestParameters = req.params();
+        final String returnUrl = context.session().get(returnURLParam);
 
         try {
             // build login url with error message
+            QueryStringDecoder queryStringDecoder = new QueryStringDecoder(returnUrl);
             Map<String, String> parameters = new LinkedHashMap<>();
-            parameters.put(Parameters.CLIENT_ID, requestParameters.get(Parameters.CLIENT_ID));
+            parameters.putAll(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
             parameters.put("error", "login_failed");
-            String uri = UriBuilderRequest.resolveProxyRequest(
-                    new io.vertx.reactivex.core.http.HttpServerRequest(req),
-                    req.uri(),
-                    parameters);
+            String uri = UriBuilderRequest.resolveProxyRequest(req, req.uri(), parameters, true);
             doRedirect(resp, uri);
         } catch (URISyntaxException e) {
             context.fail(503);

@@ -2043,7 +2043,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -2367,7 +2367,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -2967,7 +2967,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -3654,7 +3654,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -4044,7 +4044,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -4441,7 +4441,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -4840,7 +4840,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -5417,7 +5417,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -5821,7 +5821,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -6225,7 +6225,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -6633,7 +6633,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -7041,7 +7041,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -7452,7 +7452,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -8185,7 +8185,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain +'/login?client_id=my-client';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -8775,7 +8775,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -9100,7 +9100,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -9423,7 +9423,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -9751,7 +9751,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
