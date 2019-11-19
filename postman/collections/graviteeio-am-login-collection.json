@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "10177138-2fb6-44ac-843b-ccd4abcb08e6",
+		"_postman_id": "85c1acb8-a716-4cb2-9053-539311fb95ce",
 		"name": "Gravitee.io - AM - Login",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -503,7 +503,7 @@
 									"    var location = postman.getResponseHeader('Location');",
 									"    let domain = pm.environment.get(\"domain\");",
 									"    ",
-									"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client';",
+									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client');",
 									"    ",
 									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 									"});"
@@ -962,7 +962,7 @@
 									"    var location = postman.getResponseHeader('Location');",
 									"    let domain = pm.environment.get(\"domain\");",
 									"    ",
-									"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client';",
+									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client');",
 									"    ",
 									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 									"});"
@@ -1227,7 +1227,7 @@
 									"    var location = postman.getResponseHeader('Location');",
 									"    let domain = pm.environment.get(\"domain\");",
 									"    ",
-									"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client';",
+									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1443,7 +1443,7 @@
 									"    var location = postman.getResponseHeader('Location');",
 									"    let domain = pm.environment.get(\"domain\");",
 									"    ",
-									"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client';",
+									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client');",
 									"    ",
 									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 									"});"
@@ -1564,7 +1564,7 @@
 									"",
 									"    var location = postman.getResponseHeader(\"Location\");",
 									"    pm.environment.set('redirection', location);",
-									"    tests['Redirect to login page'] = location.includes('/login?client_id=my-client&error=login_failed');",
+									"    tests['Redirect to login page'] = location.includes('/login') && location.includes('client_id=my-client') && location.includes('error=login_failed');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1694,7 +1694,7 @@
 									"",
 									"    var location = postman.getResponseHeader(\"Location\");",
 									"    pm.environment.set('redirection', location);",
-									"    tests['Redirect to login page'] = location.includes('/login?client_id=my-client&error=login_failed');",
+									"    tests['Redirect to login page'] = location.includes('/login') && location.includes('client_id=my-client') && location.includes('error=login_failed');",
 									"});"
 								],
 								"type": "text/javascript"
