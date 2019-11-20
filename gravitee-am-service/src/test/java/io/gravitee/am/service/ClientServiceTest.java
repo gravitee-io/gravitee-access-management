@@ -886,6 +886,24 @@ public class ClientServiceTest {
     }
 
     @Test
+    public void validateClientMetadata_invalidRedirectUriException_fragment() {
+        PatchClient patchClient = Mockito.mock(PatchClient.class);
+        Client client = new Client();
+        client.setDomain(DOMAIN);
+        client.setRedirectUris(Arrays.asList("https://gravitee.io#fragment"));
+        when(patchClient.patch(any(), anyBoolean())).thenReturn(client);
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(clientRepository.findById("my-client")).thenReturn(Maybe.just(new Client()));
+
+        TestObserver testObserver = clientService.patch(DOMAIN, "my-client", patchClient).test();
+        testObserver.assertError(InvalidRedirectUriException.class);
+        testObserver.assertNotComplete();
+
+        verify(clientRepository, times(1)).findById(anyString());
+        verify(clientRepository, never()).update(any(Client.class));
+    }
+
+    @Test
     public void validateClientMetadata_invalidClientMetadataException_unknownScope() {
         PatchClient patchClient = Mockito.mock(PatchClient.class);
         Client client = new Client();

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "fd944c15-5a12-4ec9-a15e-10fead98828c",
+		"_postman_id": "4b08a423-7aff-4537-aedc-056db8c0d1ba",
 		"name": "Gravitee.io - AM - Openid Core",
 		"description": "Test Openid core specifications: https://openid.net/specs/openid-connect-core-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -616,7 +616,8 @@
 					},
 					"response": []
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "OIDC Core",
@@ -710,6 +711,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -873,6 +875,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -1042,6 +1045,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -1233,6 +1237,7 @@
 									}
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -1591,6 +1596,7 @@
 									}
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						}
 					],
@@ -1616,6 +1622,7 @@
 							}
 						}
 					],
+					"protocolProfileBehavior": {},
 					"_postman_isSubFolder": true
 				},
 				{
@@ -1766,6 +1773,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -1923,6 +1931,65 @@
 									"response": []
 								},
 								{
+									"name": "Get UserInfo - query param",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "355997a0-4d2d-4585-9428-f2ef4e33495d",
+												"exec": [
+													"function parseJwt (token) {",
+													"            var base64Url = token.split('.')[1];",
+													"            var base64 = base64Url.replace('-', '+').replace('_', '/');",
+													"            return JSON.parse(atob(base64));",
+													"        }",
+													"",
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has an access_token\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    ",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('sub');",
+													"",
+													"    tests['Contains a sub claim'] = pm.environment.get('id_token.sub') === body.sub;",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "deebc9a4-25be-40c4-8f5e-9e074d58cce7",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{userinfoEndpoint}}?access_token={{access_token}}",
+											"host": [
+												"{{userinfoEndpoint}}"
+											],
+											"query": [
+												{
+													"key": "access_token",
+													"value": "{{access_token}}"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
 									"name": "Post UserInfo",
 									"event": [
 										{
@@ -1964,33 +2031,13 @@
 									],
 									"request": {
 										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{access_token}}"
-											}
-										],
+										"header": [],
 										"body": {
 											"mode": "urlencoded",
 											"urlencoded": [
 												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
+													"key": "access_token",
+													"value": "{{access_token}}",
 													"type": "text"
 												}
 											]
@@ -2064,6 +2111,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -2299,9 +2347,11 @@
 									}
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						}
 					],
+					"protocolProfileBehavior": {},
 					"_postman_isSubFolder": true
 				},
 				{
@@ -2328,7 +2378,7 @@
 											"    var location = postman.getResponseHeader('Location');",
 											"    let domain = pm.environment.get(\"domain\");",
 											"    ",
-											"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+											"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 											"    ",
 											"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 											"});"
@@ -2808,6 +2858,7 @@
 							}
 						}
 					],
+					"protocolProfileBehavior": {},
 					"_postman_isSubFolder": true
 				},
 				{
@@ -3035,6 +3086,7 @@
 									}
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -3061,7 +3113,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -3406,6 +3458,7 @@
 									}
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -3432,7 +3485,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -3775,6 +3828,469 @@
 									}
 								}
 							],
+							"protocolProfileBehavior": {},
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Case - Get id_token - twice",
+							"item": [
+								{
+									"name": "Case id_token - Initiate the flow",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to login page\", function() {",
+													"    var location = postman.getResponseHeader('Location');",
+													"    let domain = pm.environment.get(\"domain\");",
+													"    ",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{authorizationEndpoint}}?response_type=id_token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mj",
+											"host": [
+												"{{authorizationEndpoint}}"
+											],
+											"query": [
+												{
+													"key": "response_type",
+													"value": "id_token"
+												},
+												{
+													"key": "client_id",
+													"value": "my-client2"
+												},
+												{
+													"key": "redirect_uri",
+													"value": "http://localhost:4000/"
+												},
+												{
+													"key": "nonce",
+													"value": "n-0S6_WzA2Mj"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Redirect to login form",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "67df9bf8-89a2-4c95-9728-097aad6d2be4",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Should be ok\", function () {",
+													"    pm.response.to.be.ok;",
+													"    ",
+													"    // Extract the XSRF token to send it with the next request.",
+													"    var responseHTML = cheerio(pm.response.text());",
+													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    pm.environment.set('xsrf', xsrfToken);",
+													"});"
+												]
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"type": "text/javascript",
+												"exec": [
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Post login form",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "4afec9f2-a5ba-4647-9a78-6d74cb9c157c",
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "X-XSRF-TOKEN",
+													"value": "{{xsrf}}",
+													"type": "text"
+												},
+												{
+													"key": "client_id",
+													"value": "my-client2",
+													"type": "text"
+												},
+												{
+													"key": "username",
+													"value": "user",
+													"type": "text"
+												},
+												{
+													"key": "password",
+													"value": "password",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/login",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"login"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Follow redirection",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "73f280ec-f0ac-46ec-9424-0cdecd34f1c8",
+												"exec": [
+													"function parseJwt (token) {",
+													"    var base64Url = token.split('.')[1];",
+													"    var base64 = base64Url.replace('-', '+').replace('_', '/');",
+													"    return JSON.parse(atob(base64));",
+													"}",
+													"",
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to redirect_uri with id_token\", function() {",
+													"    var location = postman.getResponseHeader('Location');",
+													"    tests['Redirect to redirect_uri'] = location.includes('http://localhost:4000/#');",
+													"    ",
+													"    tests['Does not contain an access_token param'] = !location.includes('access_token=');",
+													"    tests['Does not contain a token_type param'] = !location.includes('token_type=bearer');",
+													"    tests['Does not contain an expires_in param'] = !location.includes('expires_in=');",
+													"    tests['Does not contain a scope param'] = !location.includes('scope=scope1');",
+													"    tests['Contains an id_token param'] = location.includes('#id_token=');",
+													"    ",
+													"    let id_token = location.substring(location.indexOf('id_token=')+9);",
+													"    let jwt = parseJwt(id_token);",
+													"    ",
+													"    tests['Contains a valid nonce claim'] = jwt.nonce === 'n-0S6_WzA2Mj';",
+													"    tests['Does not contain an at_hash claim'] = jwt.at_hash === undefined;",
+													"    ",
+													"    // set values in environment for the test : Verifies that the same authentication was used twice in the flow",
+													"    pm.environment.set('storedSub', jwt.sub);",
+													"    pm.environment.set('storedAuthtime', jwt.auth_time);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Case id_token - second time",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+												"exec": [
+													"function parseJwt (token) {",
+													"    var base64Url = token.split('.')[1];",
+													"    var base64 = base64Url.replace('-', '+').replace('_', '/');",
+													"    return JSON.parse(atob(base64));",
+													"}",
+													"",
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to redirect_uri with id_token (second time)\", function() {",
+													"    var location = postman.getResponseHeader('Location');",
+													"    tests['Redirect to redirect_uri'] = location.includes('http://localhost:4000/#');",
+													"    ",
+													"    tests['Does not contain an access_token param'] = !location.includes('access_token=');",
+													"    tests['Does not contain a token_type param'] = !location.includes('token_type=bearer');",
+													"    tests['Does not contain an expires_in param'] = !location.includes('expires_in=');",
+													"    tests['Does not contain a scope param'] = !location.includes('scope=scope1');",
+													"    tests['Contains an id_token param'] = location.includes('#id_token=');",
+													"    ",
+													"    let id_token = location.substring(location.indexOf('id_token=')+9);",
+													"    let jwt = parseJwt(id_token);",
+													"    ",
+													"    tests['Contains a valid nonce claim'] = jwt.nonce === 'n-0S6_WzA2Mh';",
+													"    tests['Does not contain an at_hash claim'] = jwt.at_hash === undefined;",
+													"    ",
+													"    // Verifies that the same authentication was used twice in the flow",
+													"    tests['Verifies that the same authentication was used twice in the flow. (same sub)'] = jwt.sub === pm.environment.get('storedSub');",
+													"    tests['Verifies that the same authentication was used twice in the flow. (same auth_time)'] = jwt.auth_time === pm.environment.get('storedAuthtime');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{authorizationEndpoint}}?response_type=id_token&client_id=my-client2&redirect_uri=http://localhost:4000/&nonce=n-0S6_WzA2Mh",
+											"host": [
+												"{{authorizationEndpoint}}"
+											],
+											"query": [
+												{
+													"key": "response_type",
+													"value": "id_token"
+												},
+												{
+													"key": "client_id",
+													"value": "my-client2"
+												},
+												{
+													"key": "redirect_uri",
+													"value": "http://localhost:4000/"
+												},
+												{
+													"key": "nonce",
+													"value": "n-0S6_WzA2Mh"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Logout user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ba6b6fb1-32ac-46d5-8e2d-f97961029a05",
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "X-XSRF-TOKEN",
+													"value": "{{xsrf}}",
+													"type": "text"
+												},
+												{
+													"key": "client_id",
+													"value": "my-client2",
+													"type": "text"
+												},
+												{
+													"key": "username",
+													"value": "user",
+													"type": "text"
+												},
+												{
+													"key": "password",
+													"value": "password",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{logoutEndpoint}}",
+											"host": [
+												"{{logoutEndpoint}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								}
+							],
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "7a9143c0-cc02-4402-bb68-90bb92bb3b19",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"id": "ffcf002d-109b-407f-aab7-a1a5492ed4b1",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -3801,7 +4317,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -4137,6 +4653,7 @@
 									}
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -4163,7 +4680,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/login?client_id=my-client2';",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client2');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -4499,9 +5016,11 @@
 									}
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						}
 					],
+					"protocolProfileBehavior": {},
 					"_postman_isSubFolder": true
 				},
 				{
@@ -4654,12 +5173,15 @@
 									}
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						}
 					],
+					"protocolProfileBehavior": {},
 					"_postman_isSubFolder": true
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "Delete domain",
@@ -4707,5 +5229,6 @@
 			},
 			"response": []
 		}
-	]
+	],
+	"protocolProfileBehavior": {}
 }

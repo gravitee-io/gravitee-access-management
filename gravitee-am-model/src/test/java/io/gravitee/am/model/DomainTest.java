@@ -21,6 +21,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
 
+/**
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public class DomainTest {
 
 
@@ -120,5 +125,14 @@ public class DomainTest {
 
         boolean isEnabled = domain.isRedirectUriWildcardAllowed();
         assertFalse("By default dcr settings should be disabled",isEnabled);
+    }
+
+    @Test
+    public void isRedirectUriStrictMatching() {
+        Domain domain = new Domain();
+        domain.setOidc(OIDCSettings.defaultSettings());
+
+        boolean isEnabled = domain.isRedirectUriStrictMatching();
+        assertFalse("By default strict matching settings should be disabled",isEnabled);
     }
 }

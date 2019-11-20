@@ -21,10 +21,8 @@ import com.mongodb.client.model.WriteModel;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
-import io.gravitee.am.repository.mongodb.oauth2.internal.model.AccessTokenMongo;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.RefreshTokenMongo;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
-import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.*;
 import org.bson.Document;
@@ -48,11 +46,13 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     private static final String FIELD_ID = "_id";
     private static final String FIELD_RESET_TIME = "expire_at";
     private static final String FIELD_TOKEN = "token";
+    private static final String FIELD_SUBJECT = "subject";
 
     @PostConstruct
     public void init() {
         refreshTokenCollection = mongoOperations.getCollection("refresh_tokens", RefreshTokenMongo.class);
         refreshTokenCollection.createIndex(new Document(FIELD_TOKEN, 1)).subscribe(new LoggableIndexSubscriber());
+        refreshTokenCollection.createIndex(new Document(FIELD_SUBJECT, 1)).subscribe(new LoggableIndexSubscriber());
         refreshTokenCollection.createIndex(new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS)).subscribe(new LoggableIndexSubscriber());
     }
 
@@ -91,6 +91,11 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     @Override
     public Completable delete(String token) {
         return Completable.fromPublisher(refreshTokenCollection.deleteOne(eq(FIELD_TOKEN, token)));
+    }
+
+    @Override
+    public Completable deleteByUserId(String userId) {
+        return Completable.fromPublisher(refreshTokenCollection.deleteMany(eq(FIELD_SUBJECT, userId)));
     }
 
     private List<WriteModel<RefreshTokenMongo>> convert(List<RefreshToken> refreshTokens) {

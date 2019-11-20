@@ -59,7 +59,9 @@ public class UserProperties {
 
         // set claims
         claims = new HashMap<>(user.getAdditionalInformation());
-        claims.put(Claims.auth_time, user.getLoggedAt());
+        if (user.getLoggedAt() != null) {
+            claims.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
+        }
     }
 
     public String getId() {

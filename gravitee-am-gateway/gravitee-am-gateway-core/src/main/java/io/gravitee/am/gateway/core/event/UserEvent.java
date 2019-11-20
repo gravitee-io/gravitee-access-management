@@ -13,21 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.gateway.core.event;
 
-import io.gravitee.am.service.model.TotalToken;
-import io.reactivex.Completable;
-import io.reactivex.Single;
+import io.gravitee.am.model.common.event.Action;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface TokenService {
+public enum UserEvent {
 
-    Single<TotalToken> findTotalTokensByDomain(String domain);
+    DEPLOY,
+    UPDATE,
+    UNDEPLOY;
 
-    Single<TotalToken> findTotalTokens();
-
-    Completable deleteByUserId(String userId);
+    public static UserEvent actionOf(Action action) {
+        UserEvent roleEvent = null;
+        switch (action) {
+            case CREATE:
+                roleEvent = UserEvent.DEPLOY;
+                break;
+            case UPDATE:
+                roleEvent = UserEvent.UPDATE;
+                break;
+            case DELETE:
+                roleEvent = UserEvent.UNDEPLOY;
+                break;
+        }
+        return roleEvent;
+    }
 }

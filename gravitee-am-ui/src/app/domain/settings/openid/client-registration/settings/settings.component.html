@@ -66,9 +66,17 @@
           <mat-slide-toggle
             (change)="allowWildCardRedirectUri($event)"
             [checked]="domain.oidc.clientRegistrationSettings.allowWildCardRedirectUri">
-            Allow wildcards redirect_uris.
+            Allow wildcards redirect uris.
           </mat-slide-toggle>
           <mat-hint>Allow clients to be registered with redirect_uris containing wildcards.</mat-hint>
+        </div>
+        <div class="domain-client-registration-settings-state" fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableRedirectUriStrictMatching($event)"
+            [checked]="domain.oidc.redirectUriStrictMatching">
+            Enable/Disable redirect uris strict matching.
+          </mat-slide-toggle>
+          <mat-hint>Enable redirect_uris strict matching when calling OpenID Connect flow.</mat-hint>
         </div>
         <div class="domain-client-registration-settings-form-actions">
           <button mat-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>

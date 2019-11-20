@@ -15,17 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization;
 
-import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
+import io.vertx.ext.web.handler.impl.HttpStatusException;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -85,7 +87,12 @@ public class AuthorizationFailureEndpoint extends AbstractAuthorizationEndpoint 
                         request.setRedirectUri(defaultProxiedOAuthErrorPage);
                     }
                     // redirect user
-                    doRedirect(routingContext.response(), buildRedirectUri(oAuth2Exception, request));
+                    doRedirect(routingContext.response(), buildRedirectUri(oAuth2Exception.getOAuth2ErrorCode(), oAuth2Exception.getMessage(), request));
+                } else if (throwable instanceof HttpStatusException) {
+                    // in case of http status exception, go to the default error page
+                    request.setRedirectUri(defaultProxiedOAuthErrorPage);
+                    HttpStatusException httpStatusException = (HttpStatusException) throwable;
+                    doRedirect(routingContext.response(), buildRedirectUri(httpStatusException.getMessage(), httpStatusException.getPayload(), request));
                 } else {
                     logger.error("An exception occurs while handling authorization request", throwable);
                     if (routingContext.statusCode() != -1) {
@@ -103,6 +110,9 @@ public class AuthorizationFailureEndpoint extends AbstractAuthorizationEndpoint 
             } catch (Exception e) {
                 logger.error("Unable to handle authorization error response", e);
                 doRedirect(routingContext.response(),  "/" + domain.getPath() + "/oauth/error");
+            } finally {
+                // clean session
+                cleanSession(routingContext);
             }
         }
     }
@@ -111,22 +121,21 @@ public class AuthorizationFailureEndpoint extends AbstractAuthorizationEndpoint 
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 
-    private String buildRedirectUri(OAuth2Exception oAuth2Exception, AuthorizationRequest authorizationRequest) throws URISyntaxException {
+    private void cleanSession(RoutingContext context) {
+        context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
+    }
+
+    private String buildRedirectUri(String error, String errorDescription, AuthorizationRequest authorizationRequest) throws URISyntaxException {
         // prepare query
         Map<String, String> query = new LinkedHashMap<>();
         // put client_id parameter for the default error page for branding/custom html purpose
         if (isDefaultErrorPage(authorizationRequest.getRedirectUri())) {
-            if (authorizationRequest.getClientId() != null) {
-                query.put(Parameters.CLIENT_ID, authorizationRequest.getClientId());
-            }
+            query.computeIfAbsent(Parameters.CLIENT_ID, val -> authorizationRequest.getClientId());
         }
-        query.put("error", oAuth2Exception.getOAuth2ErrorCode());
-        if (oAuth2Exception.getMessage() != null) {
-            query.put("error_description", oAuth2Exception.getMessage());
-        }
-        if (authorizationRequest.getState() != null) {
-            query.put(Parameters.STATE, authorizationRequest.getState());
-        }
+
+        query.computeIfAbsent("error", val -> error);
+        query.computeIfAbsent("error_description", val -> errorDescription);
+        query.computeIfAbsent(Parameters.STATE, val -> authorizationRequest.getState());
 
         boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri()) &&
                 (isImplicitFlow(authorizationRequest.getResponseType()) || isHybridFlow(authorizationRequest.getResponseType()));

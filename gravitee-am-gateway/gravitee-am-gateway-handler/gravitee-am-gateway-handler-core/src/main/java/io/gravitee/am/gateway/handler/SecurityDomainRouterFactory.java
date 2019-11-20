@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.common.authentication.listener.Authenticat
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
+import io.gravitee.am.gateway.handler.common.user.UserManager;
 import io.gravitee.am.gateway.handler.email.EmailManager;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.spring.HandlerConfiguration;
@@ -100,6 +101,7 @@ public class SecurityDomainRouterFactory {
         components.add(AuditReporterManager.class);
         components.add(PolicyManager.class);
         components.add(AuthenticationEventListener.class);
+        components.add(UserManager.class);
 
         components.forEach(componentClass -> {
             LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);

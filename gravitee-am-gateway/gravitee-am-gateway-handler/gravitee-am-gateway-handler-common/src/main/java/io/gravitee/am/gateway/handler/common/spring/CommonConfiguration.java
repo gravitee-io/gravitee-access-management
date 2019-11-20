@@ -17,12 +17,12 @@ package io.gravitee.am.gateway.handler.common.spring;
 
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.audit.impl.AuditReporterManagerImpl;
-import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.impl.IdentityProviderManagerImpl;
-import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationServiceImpl;
 import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationServiceImpl;
 import io.gravitee.am.gateway.handler.common.authentication.listener.AuthenticationEventListener;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateProviderManager;
@@ -43,7 +43,11 @@ import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServi
 import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
 import io.gravitee.am.gateway.handler.common.policy.impl.PolicyManagerImpl;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
+import io.gravitee.am.gateway.handler.common.user.UserManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserStore;
+import io.gravitee.am.gateway.handler.common.user.impl.InMemoryUserStore;
+import io.gravitee.am.gateway.handler.common.user.impl.UserManagerImpl;
 import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
@@ -179,5 +183,11 @@ public class CommonConfiguration {
     @Bean
     public UserService userService() {
         return new UserServiceImpl();
+    }
+
+    @Bean
+    public UserManager userManager() {
+        UserStore userStore = new InMemoryUserStore(vertx, environment.getProperty("http.cookie.session.timeout", Long.class, io.vertx.reactivex.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT));
+        return new UserManagerImpl(userStore);
     }
 }

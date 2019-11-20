@@ -262,6 +262,10 @@ public class Domain {
                 this.getOidc().getClientRegistrationSettings().isAllowWildCardRedirectUri();
     }
 
+    public boolean isRedirectUriStrictMatching() {
+        return this.getOidc()!=null && this.getOidc().isRedirectUriStrictMatching();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -22,7 +22,7 @@ info:
 
     Users endpoints are OAuth 2.0 secured and can be access either with a token with "consent_admin" scope
     or if the token 'sub' claim match the "userId" path parameter.
-  version: 2.5.0
+  version: 2.10.x
   title: Gravitee.io - Access Management - Users API
   contact:
     email: contact@graviteesource.com

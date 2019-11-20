@@ -113,7 +113,9 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                         user.setUsername(endUser.getUsername());
 
                                         Map<String, Object> extraInformation = new HashMap<>(idpUser.getAdditionalInformation());
-                                        extraInformation.put(Claims.auth_time, user.getLoggedAt());
+                                        if (user.getLoggedAt() != null) {
+                                            extraInformation.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
+                                        }
                                         extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
 
                                         user.setAdditionalInformation(extraInformation);

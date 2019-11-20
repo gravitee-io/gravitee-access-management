@@ -19,7 +19,7 @@ info:
   description: >-
     Gravitee.io - Access Management - SCIM 2.0 API.
     Defines The SCIM 2.0 Endpoints exposed by AM server.
-  version: 2.5.0
+  version: 2.10.x
   title: Gravitee.io - Access Management - SCIM 2.0 API
   contact:
     email: contact@graviteesource.com

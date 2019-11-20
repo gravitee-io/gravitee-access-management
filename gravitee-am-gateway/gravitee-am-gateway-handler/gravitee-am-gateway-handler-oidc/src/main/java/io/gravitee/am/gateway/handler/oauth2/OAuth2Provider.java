@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.RedirectAuth
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAssertionAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientBasicAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientCredentialsAuthHandler;
@@ -121,6 +122,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     private SessionHandler sessionHandler;
 
     @Autowired
+    private SSOSessionHandler ssoSessionHandler;
+
+    @Autowired
     private CookieHandler cookieHandler;
 
     @Autowired
@@ -174,7 +178,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
         // Authorization endpoint
         Handler<RoutingContext> authorizationRequestParseRequiredParametersHandler = new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService);
-        Handler<RoutingContext> authorizationRequestParseClientHandler = new AuthorizationRequestParseClientHandler(clientSyncService);
+        Handler<RoutingContext> authorizationRequestParseClientHandler = new AuthorizationRequestParseClientHandler(domain, clientSyncService);
         Handler<RoutingContext> authorizationRequestParseParametersHandler = new AuthorizationRequestParseParametersHandler(domain);
         Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpoint(flow, domain);
         Handler<RoutingContext> authorizeFailureEndpoint = new AuthorizationFailureEndpoint(domain);
@@ -268,11 +272,13 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         router
                 .route("/authorize")
                 .handler(cookieHandler)
-                .handler(sessionHandler);
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
         router
                 .route("/confirm_access")
                 .handler(cookieHandler)
-                .handler(sessionHandler);
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
     }
 
     private void csrfHandler(Router router) {

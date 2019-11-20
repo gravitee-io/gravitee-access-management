@@ -32,13 +32,10 @@ public abstract class AbstractAuthorizationEndpoint {
         AuthorizationRequest authorizationRequest = routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
         // we have the authorization request in session if we come from the approval user page
         if (authorizationRequest != null) {
-            // remove OAuth2Constants.AUTHORIZATION_REQUEST session value
-            // should not be used after this step
-            routingContext.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
             return authorizationRequest;
         }
 
-        // the initial request failed for some reasons, we have the required request parameters to re-create the authorize request
+        // if none, we have the required request parameters to re-create the authorize request
         return createAuthorizationRequest(routingContext);
     }
 

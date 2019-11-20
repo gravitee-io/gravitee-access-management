@@ -22,16 +22,36 @@ import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface AccessTokenRepository {
-
+    /**
+     * Find access token by id
+     * @param token access token's id
+     * @return Access token if any
+     */
     Maybe<AccessToken> findByToken(String token);
 
+    /**
+     * Create an access token
+     * @param accessToken access token to store
+     * @return th created access token
+     */
     Single<AccessToken> create(AccessToken accessToken);
 
+    /**
+     * Delete token by its id
+     * @param token token's id
+     * @return acknowledge of the operation
+     */
     Completable delete(String token);
 
+    /**
+     * Bulk insert of access tokens
+     * @param accessTokens access token to store
+     * @return acknowledge of the operation
+     */
     Flowable bulkWrite(List<AccessToken> accessTokens);
 
     /**
@@ -66,4 +86,11 @@ public interface AccessTokenRepository {
      * @return the number of access tokens
      */
     Single<Long> countByClientId(String clientId);
+
+    /**
+     * Delete access tokens by user id
+     * @param userId end-user
+     * @return acknowledge of the operation
+     */
+    Completable deleteByUserId(String userId);
 }

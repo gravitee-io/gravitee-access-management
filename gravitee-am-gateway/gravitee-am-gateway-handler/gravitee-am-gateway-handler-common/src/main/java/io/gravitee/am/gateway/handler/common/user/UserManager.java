@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.gateway.handler.common.user;
 
-import io.gravitee.am.service.model.TotalToken;
-import io.reactivex.Completable;
-import io.reactivex.Single;
+import io.gravitee.am.model.User;
+import io.gravitee.common.service.Service;
+import io.reactivex.Maybe;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface TokenService {
+public interface UserManager extends Service {
 
-    Single<TotalToken> findTotalTokensByDomain(String domain);
-
-    Single<TotalToken> findTotalTokens();
-
-    Completable deleteByUserId(String userId);
+    Maybe<User> get(String userId);
 }

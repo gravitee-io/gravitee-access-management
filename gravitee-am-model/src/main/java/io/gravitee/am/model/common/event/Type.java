@@ -31,5 +31,6 @@ public enum Type {
     FORM,
     EMAIL,
     REPORTER,
-    POLICY
+    POLICY,
+    USER
 }

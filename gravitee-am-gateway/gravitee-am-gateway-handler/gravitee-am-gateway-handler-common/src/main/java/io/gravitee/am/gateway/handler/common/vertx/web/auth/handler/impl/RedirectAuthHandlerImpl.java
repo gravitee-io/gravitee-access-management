@@ -15,12 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.impl;
 
-import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.web.RoutingContext;
@@ -29,13 +27,11 @@ import io.vertx.ext.web.handler.impl.HttpStatusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * Extends default {@link io.vertx.ext.web.handler.RedirectAuthHandler} with X-Forwarded Strategy
- * We also append client_id query parameter
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -59,18 +55,13 @@ public class RedirectAuthHandlerImpl extends io.vertx.ext.web.handler.impl.Redir
         if (session != null) {
             try {
                 // Save current request in session - we'll get redirected back here after successful login
-                HttpServerRequest request = context.request();
-                session.put(returnURLParam,
-                        UriBuilderRequest.resolveProxyRequest(
-                                new io.vertx.reactivex.core.http.HttpServerRequest(request),
-                                request.path(), request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
+                io.vertx.reactivex.core.http.HttpServerRequest request = new io.vertx.reactivex.core.http.HttpServerRequest(context.request());
+                Map<String, String> requestParameters = request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                session.put(returnURLParam, UriBuilderRequest.resolveProxyRequest(request, request.path(), requestParameters));
 
                 // Now redirect to the login url
-                String uri =
-                        UriBuilderRequest.resolveProxyRequest(
-                                new io.vertx.reactivex.core.http.HttpServerRequest(request),
-                                loginRedirectURL,
-                                Collections.singletonMap(Parameters.CLIENT_ID, request.getParam(Parameters.CLIENT_ID)));
+                String uri = UriBuilderRequest.resolveProxyRequest(request, loginRedirectURL, requestParameters, true);
 
                 handler.handle(Future.failedFuture(new HttpStatusException(302, uri)));
             } catch (Exception e) {

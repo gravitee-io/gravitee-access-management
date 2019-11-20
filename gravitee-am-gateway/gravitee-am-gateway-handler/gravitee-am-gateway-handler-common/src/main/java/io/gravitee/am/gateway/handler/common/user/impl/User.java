@@ -13,21 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
-
-import io.gravitee.am.service.model.TotalToken;
-import io.reactivex.Completable;
-import io.reactivex.Single;
+package io.gravitee.am.gateway.handler.common.user.impl;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface TokenService {
+class User {
 
-    Single<TotalToken> findTotalTokensByDomain(String domain);
+    private io.gravitee.am.model.User user;
+    private long lastAccessed;
 
-    Single<TotalToken> findTotalTokens();
+    public User(io.gravitee.am.model.User user, long lastAccessed) {
+        this.user = user;
+        this.lastAccessed = lastAccessed;
+    }
 
-    Completable deleteByUserId(String userId);
+    public io.gravitee.am.model.User getUser() {
+        return user;
+    }
+
+    public void setUser(io.gravitee.am.model.User user) {
+        this.user = user;
+    }
+
+    public long getLastAccessed() {
+        return lastAccessed;
+    }
+
+    public void setLastAccessed(long lastAccessed) {
+        this.lastAccessed = lastAccessed;
+    }
 }

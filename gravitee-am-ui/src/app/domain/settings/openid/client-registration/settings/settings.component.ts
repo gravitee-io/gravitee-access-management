@@ -89,6 +89,11 @@ export class ClientRegistrationSettingsComponent implements OnInit {
     this.formChanged = true;
   }
 
+  enableRedirectUriStrictMatching(event) {
+    this.domain.oidc.redirectUriStrictMatching = event.checked;
+    this.formChanged = true;
+  }
+
   patch() {
     this.domainService.patchOpenidDCRSettings(this.domain.id, this.domain).subscribe(response => {
       this.domain = response;

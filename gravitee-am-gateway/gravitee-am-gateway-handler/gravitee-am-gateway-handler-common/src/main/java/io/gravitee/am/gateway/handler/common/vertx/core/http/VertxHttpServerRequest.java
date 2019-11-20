@@ -31,7 +31,12 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.net.SocketAddress;
 
 import javax.net.ssl.SSLSession;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,16 +48,12 @@ public class VertxHttpServerRequest implements Request {
     private final String transactionId;
     private final String contextPath;
     private final long timestamp;
-
     private final HttpServerRequest httpServerRequest;
-
     private MultiValueMap<String, String> queryParameters = null;
-
     private HttpHeaders headers = null;
-
     protected final Metrics metrics;
-
     private Handler<Long> timeoutHandler;
+    private boolean decoded;
 
     public VertxHttpServerRequest(HttpServerRequest httpServerRequest) {
         this.httpServerRequest = httpServerRequest;
@@ -69,6 +70,11 @@ public class VertxHttpServerRequest implements Request {
         this.metrics.setHost(httpServerRequest.host());
         this.metrics.setUri(uri());
         this.metrics.setUserAgent(httpServerRequest.getHeader(HttpHeaders.USER_AGENT));
+    }
+
+    public VertxHttpServerRequest(HttpServerRequest httpServerRequest, boolean decoded) {
+        this(httpServerRequest);
+        this.decoded = decoded;
     }
 
     @Override
@@ -108,7 +114,23 @@ public class VertxHttpServerRequest implements Request {
             queryParameters = new LinkedMultiValueMap<>(parameters.size());
 
             for(Map.Entry<String, String> param : httpServerRequest.params()) {
-                queryParameters.put(param.getKey(), parameters.getAll(param.getKey()));
+                try {
+                    if (decoded) {
+                        String paramKey = URLDecoder.decode(param.getKey(), StandardCharsets.UTF_8.name());
+                        List<String> paramValues = parameters.getAll(param.getKey()).stream().map(v -> {
+                            try {
+                                return URLDecoder.decode(v, StandardCharsets.UTF_8.name());
+                            } catch (UnsupportedEncodingException e) {
+                                return v;
+                            }
+                        }).collect(Collectors.toList());
+                        queryParameters.put(paramKey, paramValues);
+                    } else {
+                        queryParameters.put(param.getKey(), parameters.getAll(param.getKey()));
+                    }
+                } catch (Exception ex) {
+                    queryParameters.put(param.getKey(), parameters.getAll(param.getKey()));
+                }
             }
         }
 
