@@ -1,5 +1,35 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/190?closed=1[AM - 2.10.3 (2019-11-20)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [oidc] Propagate initial Authorization Request https://github.com/gravitee-io/issues/issues/2848[#2848]
+- [SSO] Clients with different identity providers on same domain, can log in users via SSO https://github.com/gravitee-io/issues/issues/2675[#2675]
+- [oidc] UserInfo with POST method returns 401 https://github.com/gravitee-io/issues/issues/2865[#2865]
+- [oidc] [dcr] Reject registration where a redirect_uri has a fragment https://github.com/gravitee-io/issues/issues/2866[#2866]
+- [oidc] auth_time should be a long value https://github.com/gravitee-io/issues/issues/2867[#2867]
+
+*_Oauth2_*
+
+- Redirect_uri matching act as a wildcard by default https://github.com/gravitee-io/issues/issues/2190[#2190]
+
+=== Features
+
+*_Gateway_*
+
+- Deny access for disabled users with current HTTP session https://github.com/gravitee-io/issues/issues/2563[#2563]
+- [logout] be able to revoke all user tokens after logout https://github.com/gravitee-io/issues/issues/2879[#2879]
+
+=== Improvements
+
+*_Gateway_*
+
+- Propagate request parameters to the login page https://github.com/gravitee-io/issues/issues/2904[#2904]
+
+
 == https://github.com/gravitee-io/issues/milestone/189?closed=1[AM - 2.10.2 (2019-11-07)]
 
 === Bug fixes
