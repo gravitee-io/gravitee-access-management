@@ -18,7 +18,7 @@ import { UserService} from "../../../services/user.service";
 import { SnackbarService } from "../../../services/snackbar.service";
 import { DialogService } from "../../../services/dialog.service";
 import { ActivatedRoute, Router } from "@angular/router";
-import { AppConfig } from "../../../../config/app.config";
+import { PlatformService } from "../../../services/platform.service";
 
 @Component({
   selector: 'app-users',
@@ -33,8 +33,12 @@ export class UsersComponent implements OnInit {
   domainId: string;
   page: any = {};
 
-  constructor(private userService: UserService, private dialogService: DialogService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute, private router: Router) {
+  constructor(private userService: UserService,
+              private platformService: PlatformService,
+              private dialogService: DialogService,
+              private snackbarService: SnackbarService,
+              private route: ActivatedRoute,
+              private router: Router) {
     this.page.pageNumber = 0;
     this.page.size = 25;
   }
@@ -42,7 +46,6 @@ export class UsersComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
       this.adminContext = true;
     }
     this.pagedUsers = this.route.snapshot.data['users'];
@@ -51,13 +54,13 @@ export class UsersComponent implements OnInit {
   }
 
   get isEmpty() {
-    return !this.users || this.users.length == 0 && !this.searchValue;
+    return !this.users || this.users.length === 0 && !this.searchValue;
   }
 
   loadUsers() {
     let findUsers = (this.searchValue) ?
-      this.userService.search(this.domainId, this.searchValue + '*', this.page.pageNumber, this.page.size) :
-      this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size)
+      this.userService.search(this.domainId, this.searchValue + '*', this.page.pageNumber, this.page.size, this.adminContext) :
+      (this.adminContext ? this.platformService.users(this.page.pageNumber, this.page.size) : this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size));
 
     findUsers.subscribe(pagedUsers => {
       this.page.totalElements = pagedUsers.totalCount;
@@ -99,39 +102,5 @@ export class UsersComponent implements OnInit {
       return user.additionalInformation['picture'];
     }
     return 'assets/material-letter-icons/' + user.username.charAt(0).toUpperCase() + '.svg';
-  }
-
-  displayName(user) {
-    // check display name attribute first
-    if (user.displayName) {
-      return user.displayName;
-    }
-
-    // fall back to standard claim 'name'
-    if (user.additionalInformation && user.additionalInformation['name']) {
-      return user.additionalInformation['name'];
-    }
-
-    // fall back to combination of first name and last name
-    if (user.firstName) {
-      let displayName = user.firstName;
-      if (user.lastName) {
-        displayName += ' ' + user.lastName;
-      } else if (user.additionalInformation && user.additionalInformation['family_name']) {
-        displayName += ' ' + user.additionalInformation['family_name']
-      }
-      return displayName;
-    }
-
-    if (user.additionalInformation && user.additionalInformation['given_name']) {
-      let displayName = user.additionalInformation['given_name'];
-      if (user.additionalInformation && user.additionalInformation['family_name']) {
-        displayName += ' ' + user.additionalInformation['family_name']
-      }
-      return displayName;
-    }
-
-    // default display the username
-    return user.username;
   }
 }

@@ -17,7 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.ClientListItem;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -63,6 +67,9 @@ public class ScopesResource extends AbstractResource {
             @ApiResponse(code = 200, message = "List scopes for a security domain",
                     response = ClientListItem.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_SCOPE, acls = RolePermissionAction.READ)
+    })
     public void list(@PathParam("domain") String _domain,
                      @Suspended final AsyncResponse response) {
         scopeService.findByDomain(_domain)
@@ -85,6 +92,9 @@ public class ScopesResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Scope successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_SCOPE, acls = RolePermissionAction.CREATE)
+    })
     public void create(
             @PathParam("domain") String domain,
             @ApiParam(name = "scope", required = true)

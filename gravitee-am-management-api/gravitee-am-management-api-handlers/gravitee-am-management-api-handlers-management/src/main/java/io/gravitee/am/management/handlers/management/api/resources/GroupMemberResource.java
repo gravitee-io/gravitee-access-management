@@ -15,7 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.exception.*;
@@ -60,6 +64,9 @@ public class GroupMemberResource extends AbstractResource {
             @ApiResponse(code = 200, message = "Member has been added successfully"),
             @ApiResponse(code = 400, message = "User does not exist"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_GROUP, acls = RolePermissionAction.UPDATE)
+    })
     public void addMember(
             @PathParam("domain") String domain,
             @PathParam("group") String group,
@@ -103,6 +110,9 @@ public class GroupMemberResource extends AbstractResource {
             @ApiResponse(code = 200, message = "Member has been removed successfully"),
             @ApiResponse(code = 400, message = "User does not exist"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_GROUP, acls = RolePermissionAction.DELETE)
+    })
     public void removeMember(
             @PathParam("domain") String domain,
             @PathParam("group") String group,

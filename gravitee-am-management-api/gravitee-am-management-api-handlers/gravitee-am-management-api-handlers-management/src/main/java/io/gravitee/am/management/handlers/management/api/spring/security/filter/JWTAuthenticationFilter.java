@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.spring.security.filter;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.common.http.HttpHeaders;
@@ -29,7 +30,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -41,10 +44,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.Key;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFilter implements InitializingBean {
 
@@ -99,8 +100,17 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
             claims.put(Claims.user_agent, userAgent(request));
             DefaultUser user = new DefaultUser((String) claims.get(StandardClaims.PREFERRED_USERNAME));
             user.setId((String) claims.get(StandardClaims.SUB));
+            user.setRoles(user.getRoles() != null ? user.getRoles() : (List<String>) claims.get(CustomClaims.ROLES));
             user.setAdditionalInformation(claims);
-            return new UsernamePasswordAuthenticationToken(user, null, AuthorityUtils.NO_AUTHORITIES);
+
+            // check for roles
+            List<GrantedAuthority> authorities;
+            if (user.getRoles() != null) {
+                authorities = user.getRoles().stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+            } else {
+                authorities = AuthorityUtils.NO_AUTHORITIES;
+            }
+            return new UsernamePasswordAuthenticationToken(user, null, authorities);
         } catch (Exception ex) {
             removeJWTAuthenticationCookie(response);
             throw new BadCredentialsException("Error occurs while attempting authentication", ex);

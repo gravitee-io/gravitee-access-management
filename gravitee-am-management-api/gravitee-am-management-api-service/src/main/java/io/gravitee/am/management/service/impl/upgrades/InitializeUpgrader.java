@@ -15,17 +15,23 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.permissions.ManagementPermission;
+import io.gravitee.am.model.permissions.RoleScope;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateDomain;
+import io.gravitee.am.service.model.UpdateIdentityProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +63,9 @@ public class InitializeUpgrader implements Upgrader, Ordered {
 
     @Autowired
     private IdentityProviderService identityProviderService;
+
+    @Autowired
+    private RoleService roleService;
 
     @Override
     public boolean upgrade() {
@@ -109,6 +118,9 @@ public class InitializeUpgrader implements Upgrader, Ordered {
         adminDomain.setDescription("AM Admin domain");
         Domain createdDomain = domainService.create(adminDomain).blockingGet();
 
+        // Create default admin role
+        Role adminRole = roleService.createSystemRole(SystemRole.ADMIN, RoleScope.MANAGEMENT, ManagementPermission.permissions()).blockingGet();
+
         // Create an inline identity provider
         logger.info("Create an user-inline provider");
         NewIdentityProvider adminIdentityProvider = new NewIdentityProvider();
@@ -116,6 +128,13 @@ public class InitializeUpgrader implements Upgrader, Ordered {
         adminIdentityProvider.setName("Inline users");
         adminIdentityProvider.setConfiguration("{\"users\":[{\"firstname\":\"Administrator\",\"lastname\":\"\",\"username\":\"admin\",\"password\":\"adminadmin\"}]}");
         IdentityProvider createdIdentityProvider = identityProviderService.create(createdDomain.getId(), adminIdentityProvider).blockingGet();
+        // Update inline identity provider to apply default role mapping
+        UpdateIdentityProvider updateIdentityProvider = new UpdateIdentityProvider();
+        updateIdentityProvider.setName(createdIdentityProvider.getName());
+        updateIdentityProvider.setConfiguration(createdIdentityProvider.getConfiguration());
+        updateIdentityProvider.setRoleMapper(Collections.singletonMap(adminRole.getId(), new String[]{ "username=admin" } ));
+        identityProviderService.update(createdDomain.getId(), createdIdentityProvider.getId(), updateIdentityProvider).blockingGet();
+
         logger.info("Associate user-inline provider to previously created domain");
         UpdateDomain updateDomain = new UpdateDomain();
         updateDomain.setName(createdDomain.getName());

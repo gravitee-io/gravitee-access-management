@@ -16,7 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -63,6 +67,9 @@ public class ScopeResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Client", response = Scope.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_SCOPE, acls = RolePermissionAction.READ)
+    })
     public void get(
             @PathParam("domain") String domain,
             @PathParam("scope") String scopeId,
@@ -89,6 +96,9 @@ public class ScopeResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Scope successfully patched", response = Scope.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_SCOPE, acls = RolePermissionAction.UPDATE)
+    })
     public void patch(
             @PathParam("domain") String domain,
             @PathParam("scope") String scope,
@@ -112,6 +122,9 @@ public class ScopeResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Scope successfully updated", response = Scope.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_SCOPE, acls = RolePermissionAction.UPDATE)
+    })
     public void update(
             @PathParam("domain") String domain,
             @PathParam("scope") String scope,
@@ -133,6 +146,9 @@ public class ScopeResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 204, message = "Scope successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_SCOPE, acls = RolePermissionAction.DELETE)
+    })
     public void delete(@PathParam("domain") String domain,
                        @PathParam("scope") String scope,
                        @Suspended final AsyncResponse response) {

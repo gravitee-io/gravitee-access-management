@@ -15,7 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -56,6 +60,9 @@ public class ReportersResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered reporters for a security domain", response = Reporter.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_REPORTER, acls = RolePermissionAction.READ)
+    })
     public void list(@PathParam("domain") String domain,
                      @QueryParam("userProvider") boolean userProvider,
                      @Suspended final AsyncResponse response) {

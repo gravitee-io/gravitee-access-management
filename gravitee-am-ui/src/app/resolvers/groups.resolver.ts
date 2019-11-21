@@ -16,21 +16,22 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
-import { AppConfig } from "../../config/app.config";
 import { GroupService } from "../services/group.service";
+import { PlatformService } from "../services/platform.service";
 
 @Injectable()
 export class GroupsResolver implements Resolve<any> {
-  private default_page: number = 0;
-  private default_size: number = 100;
+  private default_page = 0;
+  private default_size = 100;
 
-  constructor(private groupService: GroupService) { }
+  constructor(private groupService: GroupService,
+              private platformService: PlatformService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId: string = AppConfig.settings.authentication.domainId;
-    if (!state.url.startsWith('/settings')) {
-      domainId = (route.parent.parent.paramMap.get('domainId')) ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
+    if (state.url.startsWith('/settings')) {
+      return this.platformService.groups(this.default_page, this.default_size);
     }
+    const domainId = (route.parent.parent.paramMap.get('domainId')) ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
     return this.groupService.findByDomain(domainId, this.default_page, this.default_size);
   }
 

@@ -15,7 +15,17 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform;
 
+import io.gravitee.am.management.handlers.management.api.resources.platform.audits.AuditsResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.forms.FormsResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.groups.GroupsResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.idps.IdentityProvidersResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.PluginsResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.reporters.ReportersResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.roles.RolesResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.search.SearchResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.settings.SettingsResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.tags.TagsResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.users.UsersResource;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ResourceContext;
@@ -23,6 +33,7 @@ import javax.ws.rs.core.Context;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Path("/platform")
@@ -36,9 +47,9 @@ public class PlatformResource {
         return resourceContext.getResource(PluginsResource.class);
     }
 
-    @Path("audit")
-    public AuditResource getAuditResource() {
-        return resourceContext.getResource(AuditResource.class);
+    @Path("audits")
+    public AuditsResource getAuditsResource() {
+        return resourceContext.getResource(AuditsResource.class);
     }
 
     @Path("tags")
@@ -46,4 +57,43 @@ public class PlatformResource {
         return resourceContext.getResource(TagsResource.class);
     }
 
+    @Path("roles")
+    public RolesResource getRolesResource() {
+        return resourceContext.getResource(RolesResource.class);
+    }
+
+    @Path("groups")
+    public GroupsResource getGroupsResource() {
+        return resourceContext.getResource(GroupsResource.class);
+    }
+
+    @Path("identities")
+    public IdentityProvidersResource getIdentityProvidersResource() {
+        return resourceContext.getResource(IdentityProvidersResource.class);
+    }
+
+    @Path("users")
+    public UsersResource getUsersResource() {
+        return resourceContext.getResource(UsersResource.class);
+    }
+
+    @Path("reporters")
+    public ReportersResource getReportersResource() {
+        return resourceContext.getResource(ReportersResource.class);
+    }
+
+    @Path("settings")
+    public SettingsResource getSettingsResource() {
+        return resourceContext.getResource(SettingsResource.class);
+    }
+
+    @Path("forms")
+    public FormsResource getFormsResource() {
+        return resourceContext.getResource(FormsResource.class);
+    }
+
+    @Path("search")
+    public SearchResource getSearchResource() {
+        return resourceContext.getResource(SearchResource.class);
+    }
 }

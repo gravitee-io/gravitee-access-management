@@ -16,7 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
@@ -60,6 +64,9 @@ public class ApplicationResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Application", response = Application.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.APPLICATION_SETTINGS, acls = RolePermissionAction.READ)
+    })
     public void get(
             @PathParam("domain") String domain,
             @PathParam("application") String application,
@@ -86,6 +93,9 @@ public class ApplicationResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Application successfully patched", response = Application.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.APPLICATION_SETTINGS, acls = RolePermissionAction.UPDATE)
+    })
     public void patch(
             @PathParam("domain") String domain,
             @PathParam("application") String application,
@@ -109,6 +119,9 @@ public class ApplicationResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Application successfully updated", response = Application.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.APPLICATION_SETTINGS, acls = RolePermissionAction.UPDATE)
+    })
     public void update(
             @PathParam("domain") String domain,
             @PathParam("application") String application,
@@ -131,6 +144,9 @@ public class ApplicationResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 204, message = "Application successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.APPLICATION_SETTINGS, acls = RolePermissionAction.DELETE)
+    })
     public void delete(@PathParam("domain") String domain,
                        @PathParam("application") String application,
                        @Suspended final AsyncResponse response) {
@@ -149,6 +165,9 @@ public class ApplicationResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Application secret successfully updated", response = Application.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.APPLICATION_OAUTH2, acls = RolePermissionAction.UPDATE)
+    })
     public void renewClientSecret(@PathParam("domain") String domain,
                                   @PathParam("application") String application,
                                   @Suspended final AsyncResponse response) {
@@ -171,5 +190,10 @@ public class ApplicationResource extends AbstractResource {
     @Path("forms")
     public ApplicationFormsResource getFormsResource() {
         return resourceContext.getResource(ApplicationFormsResource.class);
+    }
+
+    @Path("members")
+    public ApplicationMembersResource getMembersResource() {
+        return resourceContext.getResource(ApplicationMembersResource.class);
     }
 }

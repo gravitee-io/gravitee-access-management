@@ -16,7 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.ExtensionGrant;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -60,6 +64,9 @@ public class ExtensionGrantResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Extension grant successfully fetched", response = ExtensionGrant.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_EXTENSION_GRANT, acls = RolePermissionAction.READ)
+    })
     public void get(
             @PathParam("domain") String domain,
             @PathParam("extensionGrant") String extensionGrant,
@@ -86,6 +93,9 @@ public class ExtensionGrantResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Extension grant successfully updated", response = ExtensionGrant.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_EXTENSION_GRANT, acls = RolePermissionAction.UPDATE)
+    })
     public void update(
             @PathParam("domain") String domain,
             @PathParam("extensionGrant") String extensionGrant,
@@ -108,6 +118,9 @@ public class ExtensionGrantResource extends AbstractResource {
             @ApiResponse(code = 204, message = "Extension grant successfully deleted"),
             @ApiResponse(code = 400, message = "Extension grant is bind to existing clients"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_EXTENSION_GRANT, acls = RolePermissionAction.DELETE)
+    })
     public void delete(@PathParam("domain") String domain,
                        @PathParam("extensionGrant") String extensionGrant,
                        @Suspended final AsyncResponse response) {

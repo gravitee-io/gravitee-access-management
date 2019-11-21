@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 import {Component, Inject, OnInit} from '@angular/core';
+import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material";
 import {ActivatedRoute, Router} from "@angular/router";
 import {SnackbarService} from "../../../../../services/snackbar.service";
 import {DialogService} from "../../../../../services/dialog.service";
 import {UserService} from "../../../../../services/user.service";
-import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material";
 import {RoleService} from "../../../../../services/role.service";
+import {PlatformService} from "../../../../../services/platform.service";
 
 @Component({
   selector: 'app-user-roles',
@@ -29,6 +30,7 @@ import {RoleService} from "../../../../../services/role.service";
 export class UserRolesComponent implements OnInit {
   private domainId: string;
   private user: any;
+  private adminContext = false;
   userRoles: any[];
 
   constructor(private route: ActivatedRoute,
@@ -36,21 +38,25 @@ export class UserRolesComponent implements OnInit {
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
               private userService: UserService,
+              private platformService: PlatformService,
               private dialog: MatDialog) {
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.adminContext = true;
+    }
     this.user = this.route.snapshot.parent.data['user'];
     this.userRoles = this.route.snapshot.data['roles'];
   }
 
   get isEmpty() {
-    return !this.userRoles || this.userRoles.length == 0;
+    return !this.userRoles || this.userRoles.length === 0;
   }
 
   add() {
-    let dialogRef = this.dialog.open(AddUserRolesComponent, { width : '700px', data: { domain: this.domainId, assignedRoles: this.userRoles }});
+    let dialogRef = this.dialog.open(AddUserRolesComponent, { width : '700px', data: { domain: this.domainId, adminContext: this.adminContext, assignedRoles: this.userRoles }});
     dialogRef.afterClosed().subscribe(roles => {
       if (roles) {
           this.assignRoles(roles);
@@ -64,7 +70,7 @@ export class UserRolesComponent implements OnInit {
       .confirm('Revoke role', 'Are you sure you want to remove role from the user ?')
       .subscribe(res => {
         if (res) {
-          this.userService.revokeRole(this.domainId, this.user.id, role.id).subscribe(user => {
+          this.userService.revokeRole(this.domainId, this.user.id, role.id, this.adminContext).subscribe(user => {
             this.user = user;
             this.route.snapshot.parent.data['user'] = user;
             this.snackbarService.open('Role ' + role.name + ' revoked');
@@ -75,16 +81,17 @@ export class UserRolesComponent implements OnInit {
   }
 
   loadRoles() {
-    this.userService.roles(this.domainId, this.user.id).subscribe(roles => {
+    const userRolesCall = this.adminContext ? this.platformService.userRoles(this.user.id) : this.userService.roles(this.domainId, this.user.id);
+    userRolesCall.subscribe(roles => {
       this.userRoles = roles;
     });
   }
 
   private assignRoles(roles) {
-    this.userService.assignRoles(this.domainId, this.user.id, roles).subscribe(user => {
+    this.userService.assignRoles(this.domainId, this.user.id, roles, this.adminContext).subscribe(user => {
       this.user = user;
       this.route.snapshot.parent.data['user'] = user;
-      this.snackbarService.open("Role(s) assigned");
+      this.snackbarService.open('Role(s) assigned');
       this.loadRoles();
     });
   }
@@ -96,6 +103,7 @@ export class UserRolesComponent implements OnInit {
 })
 export class AddUserRolesComponent implements OnInit {
   private domainId: string;
+  private adminContext: boolean;
   roles: any[];
   initialSelectedRoles: any[];
   assignedRoles: string[] = [];
@@ -103,15 +111,23 @@ export class AddUserRolesComponent implements OnInit {
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,
               public dialogRef: MatDialogRef<AddUserRolesComponent>,
-              private roleService: RoleService) {
+              private roleService: RoleService,
+              private platformService: PlatformService) {
     this.domainId = data.domain;
+    this.adminContext = data.adminContext;
     this.initialSelectedRoles = data.assignedRoles;
   }
 
   ngOnInit() {
-    this.roleService.findByDomain(this.domainId).subscribe(roles => {
-      this.roles = roles;
-    });
+    if (this.adminContext) {
+      this.platformService.roles('MANAGEMENT').subscribe(roles => {
+        this.roles = roles;
+      })
+    } else {
+      this.roleService.findByDomain(this.domainId).subscribe(roles => {
+        this.roles = roles;
+      });
+    }
   }
 
   onRoleSelectionChanges(selection) {

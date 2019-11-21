@@ -1,0 +1,158 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="memberships-content">
+  <div class="gs-form-section">
+    <div class="gs-form-section-title">
+      <h5>Users</h5>
+      <small>Add a user by their username</small>
+      <mat-divider></mat-divider>
+    </div>
+
+    <div fxLayout="row" fxLayoutGap="10px">
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-label><mat-icon matPrefix>search</mat-icon></mat-label>
+        <input matInput placeholder="Enter username" [matAutocomplete]="auto" [formControl]="userCtrl"/>
+        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onUserSelectionChanged($event)" [displayWith]="displayUserFn">
+          <mat-option *ngFor="let user of filteredUsers" [value]="user">
+            <span>{{user.displayName}}</span> |
+            <small>{{user.username}}</small> |
+            <small style="color:grey;">{{user.source}}</small>
+          </mat-option>
+        </mat-autocomplete>
+        <mat-hint>The user's username.</mat-hint>
+      </mat-form-field>
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-select placeholder="Role" name="userRole" [(ngModel)]="selectedUserRole">
+          <mat-option *ngFor="let role of roles" [value]="role.id">
+            <span>{{ role.name }}</span>
+          </mat-option>
+        </mat-select>
+        <mat-hint>The role's name.</mat-hint>
+      </mat-form-field>
+      <div>
+        <button style="margin-top: 7px;" mat-stroked-button (click)="addUserMembership($event)" [disabled]="!selectedUser || !selectedUserRole">+ ADD</button>
+      </div>
+    </div>
+
+    <ngx-datatable class="material"
+                   [columnMode]="'flex'"
+                   [headerHeight]="40"
+                   [footerHeight]="40"
+                   [rowHeight]="50"
+                   [rows]='userMembers'>
+      <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'membership-name-cell'">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div class="membership-header" fxLayout="row">
+            <div class="user-avatar">
+              <img [src]="avatarUrl(row)" alt="Photo of a {{row.name}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="40"/>
+            </div>
+            <div class="membership-information" fxLayout="column">
+              <h3>{{row.name}}</h3>
+            </div>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Role" [flexGrow]="2" [cellClass]="'membership-name-cell'">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <mat-form-field>
+            <mat-select name="memberUserRole" [value]="row.role" (selectionChange)="update(row.memberId, row.memberType, $event)">
+              <mat-option *ngFor="let role of roles" [value]="role.id">
+                <span>{{ role.name }}</span>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div fxLayout="row" class="members-actions">
+            <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">clear</mat-icon></button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+  </div>
+
+  <div class="gs-form-section">
+    <div class="gs-form-section-title">
+      <h5>Groups</h5>
+      <small>Add a group by their name</small>
+      <mat-divider></mat-divider>
+    </div>
+
+    <div fxLayout="row" fxLayoutGap="10px">
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-select placeholder="Group" name="group" [(ngModel)]="selectedGroup">
+          <mat-option *ngFor="let group of groups" [value]="group.id">
+            <span>{{ group.name }}</span>
+          </mat-option>
+        </mat-select>
+        <mat-hint>The group's name.</mat-hint>
+      </mat-form-field>
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-select placeholder="Role" name="groupRole" [(ngModel)]="selectedGroupRole">
+          <mat-option *ngFor="let role of roles" [value]="role.id">
+            <span>{{ role.name }}</span>
+          </mat-option>
+        </mat-select>
+        <mat-hint>The role's name.</mat-hint>
+      </mat-form-field>
+      <div>
+        <button style="margin-top: 7px;" mat-stroked-button (click)="addGroupMembership($event)" [disabled]="!selectedGroup || !selectedGroupRole">+ ADD</button>
+      </div>
+    </div>
+
+    <ngx-datatable class="material"
+                   [columnMode]="'flex'"
+                   [headerHeight]="40"
+                   [footerHeight]="40"
+                   [rowHeight]="50"
+                   [rows]='groupMembers'>
+      <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'membership-name-cell'">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div class="membership-header" fxLayout="row">
+            <div class="membership-icon">
+              <mat-icon>group</mat-icon>
+            </div>
+            <div class="membership-information" fxLayout="column">
+              <h3>{{row.name}}</h3>
+            </div>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Role" [flexGrow]="2" [cellClass]="'membership-name-cell'">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <mat-form-field>
+            <mat-select name="memberGroupRole" [value]="row.role" (selectionChange)="update(row.memberId, row.memberType, $event)">
+              <mat-option *ngFor="let role of roles" [value]="role.id">
+                <span>{{ role.name }}</span>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div fxLayout="row" class="members-actions">
+            <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">clear</mat-icon></button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+  </div>
+</div>

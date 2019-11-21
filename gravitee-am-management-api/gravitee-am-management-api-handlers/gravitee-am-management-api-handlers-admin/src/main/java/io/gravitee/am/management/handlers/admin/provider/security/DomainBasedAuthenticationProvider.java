@@ -63,6 +63,7 @@ public class DomainBasedAuthenticationProvider implements AuthenticationProvider
         Set<String> identities = domain.getIdentities();
         Iterator<String> iter = identities.iterator();
         io.gravitee.am.identityprovider.api.User user = null;
+        AuthenticationException lastException = null;
 
         // Create a end-user authentication for underlying providers associated to the domain
         io.gravitee.am.identityprovider.api.Authentication provAuthentication = new EndUserAuthentication(
@@ -82,10 +83,15 @@ public class DomainBasedAuthenticationProvider implements AuthenticationProvider
                 user = authenticationProvider.loadUserByUsername(provAuthentication).blockingGet();
                 // set user identity provider source
                 details.put(SOURCE, provider);
+                lastException = null;
             } catch (Exception ex) {
                 logger.info("Unable to authenticate user {} with provider {}", authentication.getName(), provider, ex);
-                throw new BadCredentialsException(ex.getMessage(), ex);
+                lastException = new BadCredentialsException(ex.getMessage(), ex);
             }
+        }
+
+        if (lastException != null) {
+            throw lastException;
         }
 
         if (user != null) {

@@ -20,12 +20,22 @@
   <h1>New Role</h1>
   <div class="new-role-content">
     <form (ngSubmit)="create()" #roleForm="ngForm" fxLayout="column" fxFlex="70">
-      <mat-form-field>
+      <mat-form-field *ngIf="adminContext" appearance="outline" floatLabel="always">
+        <mat-label>Scope</mat-label>
+        <mat-select placeholder="Scope" [(ngModel)]="role.scope" name="scope" required>
+          <mat-option *ngFor="let roleScope of roleScopes" [value]="roleScope">{{ roleScope }}</mat-option>
+        </mat-select>
+        <mat-hint>A scope for your role.</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-label>Name</mat-label>
         <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required>
         <mat-hint>A name for your role.</mat-hint>
       </mat-form-field>
 
-      <mat-form-field fxFlex>
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-label>Description</mat-label>
         <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description">
         <mat-hint>A description for your role.</mat-hint>
       </mat-form-field>
@@ -39,8 +49,18 @@
       <div class="new-role-description-content">
         <p>
           Role determines how users can access protected resources.
-          Each role has a set of permissions to limit user actions.
+          <span *ngIf="!adminContext">Each role has a set of permissions to limit user actions.</span>
         </p>
+        <div *ngIf="adminContext">
+          <p>
+            Each role has a scope to specify what a user can do on a specific part of the Admin Portal.
+          </p>
+          <small>
+            <b><i>MANAGEMENT : </i></b> Platform settings<br>
+            <b><i>DOMAIN : </i></b> Security domain settings<br>
+            <b><i>APPLICATION : </i></b> Application settings<br>
+          </small>
+        </div>
       </div>
     </div>
   </div>

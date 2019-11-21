@@ -21,6 +21,8 @@ import { AppConfig } from "../../config/app.config";
 @Injectable()
 export class PlatformService {
   private platformURL = AppConfig.settings.baseURL + '/platform/';
+  private domainsURL = AppConfig.settings.baseURL + '/domains/';
+  private adminDomain = AppConfig.settings.authentication.domainId;
 
   constructor(private http: HttpClient) { }
 
@@ -34,6 +36,31 @@ export class PlatformService {
 
   identitySchema(id): Observable<any> {
     return this.http.get<any>(this.platformURL + 'plugins/identities/' + id + '/schema');
+  }
+
+  identityProviders(): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'identities');
+  }
+
+  identityProvider(id): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'identities/' + id);
+  }
+
+  createIdentityProvider(idp) {
+    return this.http.post<any>(this.platformURL + 'identities', idp);
+  }
+
+  updateIdentityProvider(id, idp) {
+    return this.http.put<any>(this.platformURL + 'identities/' + id, {
+      'name' : idp.name,
+      'configuration' : idp.configuration,
+      'mappers' : idp.mappers,
+      'roleMapper' : idp.roleMapper
+    });
+  }
+
+  deleteIdentityProvider(id) {
+    return this.http.delete<any>(this.platformURL + 'identities/' + id);
   }
 
   certificates(): Observable<any> {
@@ -56,8 +83,21 @@ export class PlatformService {
     return this.http.get<any>(this.platformURL + 'plugins/reporters/' + id + '/schema');
   }
 
+  audits(page, size, type?, status?, user?, from?, to?): Observable<any> {
+    return this.http.get(this.platformURL + 'audits?page=' + page + '&size=' + size +
+      (type ? '&type=' + type : '') +
+      (status ? '&status=' + status : '') +
+      (user ? '&user=' + user : '') +
+      (from ? '&from=' + from : '') +
+      (to ? '&to=' + to : ''));
+  }
+
+  audit(auditId): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'audits/' + auditId);
+  }
+
   auditEventTypes(): Observable<any> {
-    return this.http.get<any>(this.platformURL + 'audit/events');
+    return this.http.get<any>(this.platformURL + 'audits/events');
   }
 
   policies(): Observable<any> {
@@ -66,5 +106,123 @@ export class PlatformService {
 
   policySchema(id): Observable<any> {
     return this.http.get<any>(this.platformURL + 'plugins/policies/' + id + '/schema');
+  }
+
+  searchUsers(searchTerm, page, size): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'search/users?q=' + searchTerm + '&page=' + page + '&size=' + size);
+  }
+
+  roles(scope?): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'roles' + (scope ? '?scope=' + scope : ''));
+  }
+
+  role(roleId): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'roles/' + roleId);
+  }
+
+  createRole(role): Observable<any> {
+    return this.http.post<any>(this.platformURL + 'roles', role);
+  }
+
+  updateRole(roleId, role): Observable<any> {
+    return this.http.put<any>(this.platformURL + 'roles/' + roleId, {
+      'name' : role.name,
+      'description' : role.description,
+      'permissions' : role.permissions
+    });
+  }
+
+  deleteRole(roleId): Observable<any> {
+    return this.http.delete<any>(this.platformURL + 'roles/' + roleId);
+  }
+
+  groups(page?: number, size?: number): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'groups' +
+      (page !== undefined ? '?page=' + page : '') +
+      (size !== undefined ? '&size=' + size : ''));
+  }
+
+  group(groupId) {
+    return this.http.get<any>(this.platformURL + 'groups/' + groupId);
+  }
+
+  createGroup(group): Observable<any> {
+    return this.http.post<any>(this.platformURL + 'groups', group);
+  }
+
+  updateGroup(groupId, group): Observable<any> {
+    return this.http.put<any>(this.platformURL + 'groups/' + groupId, {
+      'name' : group.name,
+      'description' : group.description,
+      'members' : group.members
+    });
+  }
+
+  deleteGroup(groupId): Observable<any> {
+    return this.http.delete<any>(this.platformURL + 'groups/' + groupId);
+  }
+
+  groupRoles(groupId): Observable<any>  {
+    return this.http.get<any>(this.platformURL + 'groups/' + groupId + '/roles');
+  }
+
+  revokeGroupRole(groupId, roleId): Observable<any> {
+    return this.http.delete<any>(this.platformURL + 'groups/' + groupId + '/roles/' + roleId);
+  }
+
+  assignGroupRoles(groupId, roles): Observable<any> {
+    return this.http.post<any>(this.platformURL + 'groups/' + groupId + '/roles', roles);
+  }
+
+  groupMembers(groupId): Observable<any>  {
+    return this.http.get<any>(this.platformURL + 'groups/' + groupId + '/members');
+  }
+
+  users(page, size): Observable<any>  {
+    return this.http.get<any>(this.platformURL + 'users?page=' + page + '&size=' + size);
+  }
+
+  user(userId): Observable<any>  {
+    return this.http.get<any>(this.platformURL + 'users/' + userId);
+  }
+
+  userRoles(userId): Observable<any>  {
+    return this.http.get<any>(this.platformURL + 'users/' + userId + '/roles');
+  }
+
+  revokeUserRole(userId, roleId): Observable<any> {
+    return this.http.delete<any>(this.platformURL + 'users/' + userId + '/roles/' + roleId);
+  }
+
+  assignUserRoles(userId, roles): Observable<any> {
+    return this.http.post<any>(this.platformURL + 'users/' + userId + '/roles', roles);
+  }
+
+  reporters(): Observable<any>  {
+    return this.http.get<any>(this.platformURL + 'reporters');
+  }
+
+  reporter(reporterId): Observable<any>  {
+    return this.http.get<any>(this.platformURL + 'reporters/' + reporterId);
+  }
+
+  updateReporter(reporterId, reporter): Observable<any> {
+    return this.http.put<any>(this.platformURL + 'reporters/' + reporterId, {
+      'name' : reporter.name,
+      'enabled': reporter.enabled,
+      'configuration' : reporter.configuration
+    });
+  }
+
+  settings(): Observable<any>  {
+    return this.http.get<any>(this.platformURL + 'settings');
+  }
+
+  patchSettings(settings): Observable<any>  {
+    return this.http.patch<any>(this.platformURL + 'settings', settings);
+  }
+
+  forms(template): Observable<any>  {
+    return this.http.get<any>(this.platformURL + 'forms?template=' + template);
   }
 }

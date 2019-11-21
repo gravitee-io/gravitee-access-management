@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 import java.util.Collection;
@@ -29,6 +30,8 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface DomainRepository extends CrudRepository<Domain, String> {
+
+    Maybe<Domain> findMaster();
 
     Single<Set<Domain>> findAll();
 

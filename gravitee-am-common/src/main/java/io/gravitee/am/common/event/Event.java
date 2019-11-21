@@ -60,6 +60,12 @@ public abstract class Event {
             case USER:
                 event1 =  UserEvent.actionOf(action);
                 break;
+            case GROUP:
+                event1 =  GroupEvent.actionOf(action);
+                break;
+            case MEMBERSHIP:
+                event1 =  MembershipEvent.actionOf(action);
+                break;
         }
 
         return event1;

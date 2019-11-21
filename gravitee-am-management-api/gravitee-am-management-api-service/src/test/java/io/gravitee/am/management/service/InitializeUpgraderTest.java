@@ -16,12 +16,17 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.management.service.impl.upgrades.InitializeUpgrader;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.permissions.ManagementPermission;
+import io.gravitee.am.model.permissions.RoleScope;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateDomain;
@@ -59,14 +64,22 @@ public class InitializeUpgraderTest {
     @Mock
     private IdentityProviderService identityProviderService;
 
+    @Mock
+    private RoleService roleService;
+
     @Test
     public void shouldCreateAdminDomain() {
         final Domain adminDomain = new Domain();
         adminDomain.setId(ADMIN_DOMAIN);
         adminDomain.setName("ADMIN");
 
+        final Role adminRole = new Role();
+        adminRole.setId("role-id");
+
         when(domainService.findById(ADMIN_DOMAIN)).thenReturn(Maybe.empty());
         when(identityProviderService.create(eq(ADMIN_DOMAIN), any(NewIdentityProvider.class))).thenReturn(Single.just(new IdentityProvider()));
+        when(identityProviderService.update(any(), any(), any())).thenReturn(Single.just(new IdentityProvider()));
+        when(roleService.createSystemRole(SystemRole.ADMIN, RoleScope.MANAGEMENT, ManagementPermission.permissions())).thenReturn(Single.just(adminRole));
         when(domainService.create(any(NewDomain.class))).thenReturn(Single.just(adminDomain));
         when(domainService.update(eq(ADMIN_DOMAIN), any(UpdateDomain.class))).thenReturn(Single.just(adminDomain));
         when(domainService.setMasterDomain(ADMIN_DOMAIN, true)).thenReturn(Single.just(adminDomain));

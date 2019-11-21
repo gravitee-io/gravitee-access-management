@@ -33,5 +33,7 @@ public enum Type {
     EMAIL,
     REPORTER,
     POLICY,
-    USER
+    USER,
+    MEMBERSHIP,
+    GROUP
 }

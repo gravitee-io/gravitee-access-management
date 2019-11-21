@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.service.exception.RoleAlreadyExistsException;
@@ -61,6 +62,9 @@ public class RoleServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private EventService eventService;
 
     private final static String DOMAIN = "domain1";
 
@@ -143,6 +147,7 @@ public class RoleServiceTest {
         NewRole newRole = Mockito.mock(NewRole.class);
         when(roleRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
         when(roleRepository.create(any(Role.class))).thenReturn(Single.just(new Role()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = roleService.create(DOMAIN, newRole).test();
         testObserver.awaitTerminalEvent();
@@ -194,6 +199,7 @@ public class RoleServiceTest {
         when(roleRepository.findById("my-role")).thenReturn(Maybe.just(new Role()));
         when(roleRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
         when(roleRepository.update(any(Role.class))).thenReturn(Single.just(new Role()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = roleService.update(DOMAIN,"my-role", updateRole).test();
         testObserver.awaitTerminalEvent();
@@ -284,6 +290,7 @@ public class RoleServiceTest {
     public void shouldDelete() {
         when(roleRepository.findById("my-role")).thenReturn(Maybe.just(new Role()));
         when(roleRepository.delete("my-role")).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = roleService.delete( "my-role").test();
         testObserver.awaitTerminalEvent();

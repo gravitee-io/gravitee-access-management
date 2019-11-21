@@ -51,6 +51,7 @@ import static com.mongodb.client.model.Filters.in;
 public class MongoDomainRepository extends AbstractManagementMongoRepository implements DomainRepository {
 
     private static final String FIELD_ID = "_id";
+    private static final String FIELD_MASTER = "master";
     private MongoCollection<DomainMongo> domainsCollection;
 
     @PostConstruct
@@ -71,6 +72,11 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     @Override
     public Single<Set<Domain>> findByIdIn(Collection<String> ids) {
         return Observable.fromPublisher(domainsCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
+    public Maybe<Domain> findMaster() {
+        return Observable.fromPublisher(domainsCollection.find(eq(FIELD_MASTER, true)).first()).firstElement().map(this::convert);
     }
 
     @Override

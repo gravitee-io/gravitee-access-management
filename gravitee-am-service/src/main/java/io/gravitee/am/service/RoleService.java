@@ -17,6 +17,8 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.permissions.RoleScope;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
 import io.reactivex.Completable;
@@ -38,11 +40,19 @@ public interface RoleService {
 
     Single<Set<Role>> findByIdIn(List<String> ids);
 
+    Single<Role> createSystemRole(SystemRole systemRole, RoleScope roleScope, List<String> permissions, User principal);
+
     Single<Role> create(String domain, NewRole role, User principal);
 
     Single<Role> update(String domain, String id, UpdateRole role, User principal);
 
     Completable delete(String roleId, User principal);
+
+    Completable createOrUpdateSystemRoles();
+
+    default Single<Role> createSystemRole(SystemRole systemRole, RoleScope roleScope, List<String> permissions) {
+        return createSystemRole(systemRole, roleScope, permissions, null);
+    }
 
     default Single<Role> create(String domain, NewRole role) {
         return create(domain, role, null);

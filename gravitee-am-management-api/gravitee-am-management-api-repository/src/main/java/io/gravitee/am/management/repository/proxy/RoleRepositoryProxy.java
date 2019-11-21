@@ -61,4 +61,9 @@ public class RoleRepositoryProxy extends AbstractProxy<RoleRepository> implement
     public Completable delete(String id) {
         return target.delete(id);
     }
+
+    @Override
+    public Maybe<Role> findByDomainAndNameAndScope(String domain, String name, int scope) {
+        return target.findByDomainAndNameAndScope(domain, name, scope);
+    }
 }

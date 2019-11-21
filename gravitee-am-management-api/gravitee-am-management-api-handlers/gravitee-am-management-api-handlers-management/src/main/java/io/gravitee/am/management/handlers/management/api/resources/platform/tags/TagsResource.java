@@ -17,7 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.tag
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.TagService;
 import io.gravitee.am.service.model.NewTag;
 import io.gravitee.common.http.MediaType;
@@ -75,6 +79,9 @@ public class TagsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Sharding tag successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.MANAGEMENT_TAG, acls = RolePermissionAction.CREATE)
+    })
     public void create(
             @ApiParam(name = "tag", required = true)
             @Valid @NotNull final NewTag newTag,

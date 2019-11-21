@@ -17,17 +17,11 @@ package io.gravitee.am.gateway.handler.common.user.impl;
 
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.User;
-import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.RoleService;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,12 +31,6 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private io.gravitee.am.service.UserService userService;
-
-    @Autowired
-    private GroupService groupService;
-
-    @Autowired
-    private RoleService roleService;
 
     @Override
     public Maybe<User> findById(String id) {
@@ -76,32 +64,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<User> enhance(User user) {
-        // fetch user groups
-        return groupService.findByMember(user.getId())
-                .flatMap(groups -> {
-                    Set<String> roles = new HashSet<>();
-                    // get groups roles
-                    if (!groups.isEmpty()) {
-                        roles.addAll(groups
-                                .stream()
-                                .filter(group ->  group.getRoles() != null && !group.getRoles().isEmpty())
-                                .flatMap(group -> group.getRoles().stream())
-                                .collect(Collectors.toSet()));
-                    }
-                    // get user roles
-                    if (user.getRoles() != null && !user.getRoles().isEmpty()) {
-                        roles.addAll(user.getRoles());
-                    }
-                    // fetch roles information and enhance user data
-                    if (!roles.isEmpty()) {
-                        return roleService.findByIdIn(new ArrayList<>(roles))
-                                .map(roles1 -> {
-                                    user.setRolesPermissions(roles1);
-                                    return user;
-                                });
-
-                    }
-                    return Single.just(user);
-                });
+        return userService.enhance(user);
     }
 }

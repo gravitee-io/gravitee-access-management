@@ -16,8 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -69,6 +73,9 @@ public class ClientEmailsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Email successfully fetched"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.APPLICATION_EMAIL_TEMPLATE, acls = RolePermissionAction.READ)
+    })
     public void get(
             @PathParam("domain") String domain,
             @PathParam("client") String client,
@@ -89,6 +96,9 @@ public class ClientEmailsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Email successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.APPLICATION_EMAIL_TEMPLATE, acls = RolePermissionAction.CREATE)
+    })
     public void create(
             @PathParam("domain") String domain,
             @PathParam("client") String client,

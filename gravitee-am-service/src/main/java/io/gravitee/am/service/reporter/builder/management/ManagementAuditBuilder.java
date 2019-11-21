@@ -36,6 +36,7 @@ public abstract class ManagementAuditBuilder<T> extends AuditBuilder<T> {
     public ManagementAuditBuilder() {
         super();
         client(ADMIN_CLIENT);
+        setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, SYSTEM);
     }
 
     public T principal(User principal) {
@@ -49,8 +50,6 @@ public abstract class ManagementAuditBuilder<T> extends AuditBuilder<T> {
                     userAgent((String) principal.getAdditionalInformation().get(Claims.user_agent));
                 }
             }
-        } else {
-            setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, SYSTEM);
         }
         return (T) this;
     }

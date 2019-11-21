@@ -34,6 +34,7 @@ export class ProviderSettingsComponent implements OnInit {
   @ViewChild('providerForm') public form: NgForm;
   private domainId: string;
   private certificates: any[];
+  adminContext = false;
   domain: any = {};
   configurationIsValid: boolean = true;
   configurationPristine: boolean = true;
@@ -55,9 +56,13 @@ export class ProviderSettingsComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.certificates = this.route.snapshot.data['certificates'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
+      this.adminContext = true;
     }
-    this.domainService.get(this.domainId).subscribe(data => this.domain = data);
+    if (this.adminContext) {
+      this.platformService.settings().subscribe(data => this.domain = data);
+    } else {
+      this.domainService.get(this.domainId).subscribe(data => this.domain = data);
+    }
     this.provider = this.route.snapshot.parent.data['provider'];
     this.providerConfiguration = JSON.parse(this.provider.configuration);
     this.updateProviderConfiguration = this.providerConfiguration;
@@ -82,9 +87,13 @@ export class ProviderSettingsComponent implements OnInit {
 
   update() {
     this.provider.configuration = JSON.stringify(this.updateProviderConfiguration);
-    this.providerService.update(this.domainId, this.provider.id, this.provider).subscribe(data => {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/providers/'+this.provider.id+'$', this.provider.name);
-      this.snackbarService.open("Provider updated");
+    this.providerService.update(this.domainId, this.provider.id, this.provider, this.adminContext).subscribe(data => {
+      if (this.adminContext) {
+        this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/providers/' + this.provider.id + '$', this.provider.name);
+      } else {
+        this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/providers/' + this.provider.id + '$', this.provider.name);
+      }
+      this.snackbarService.open('Provider updated');
       this.configurationPristine = true;
       this.form.reset(data);
     });
@@ -96,9 +105,13 @@ export class ProviderSettingsComponent implements OnInit {
       .confirm('Delete Provider', 'Are you sure you want to delete this provider ?')
       .subscribe(res => {
         if (res) {
-          this.providerService.delete(this.domainId, this.provider.id).subscribe(() => {
-            this.snackbarService.open("Identity provider deleted");
-            this.router.navigate(['/domains', this.domainId, 'settings', 'providers']);
+          this.providerService.delete(this.domainId, this.provider.id, this.adminContext).subscribe(() => {
+            this.snackbarService.open('Identity provider deleted');
+            if (this.adminContext) {
+              this.router.navigate(['/settings', 'management', 'providers']);
+            } else {
+              this.router.navigate(['/domains', this.domainId, 'settings', 'providers']);
+            }
           });
         }
       });

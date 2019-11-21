@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.permissions.RoleScope;
+
 import javax.validation.constraints.NotNull;
 
 /**
@@ -26,6 +28,8 @@ public class NewRole {
     @NotNull
     private String name;
 
+    private RoleScope scope;
+
     private String description;
 
     public String getName() {
@@ -34,6 +38,14 @@ public class NewRole {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public RoleScope getScope() {
+        return scope;
+    }
+
+    public void setScope(RoleScope scope) {
+        this.scope = scope;
     }
 
     public String getDescription() {

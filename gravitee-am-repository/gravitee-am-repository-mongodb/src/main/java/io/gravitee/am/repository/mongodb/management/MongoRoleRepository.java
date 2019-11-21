@@ -33,8 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -45,12 +44,15 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
 
     private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
+    private static final String FIELD_NAME = "name";
+    private static final String FIELD_SCOPE = "scope";
     private MongoCollection<RoleMongo> rolesCollection;
 
     @PostConstruct
     public void init() {
         rolesCollection = mongoOperations.getCollection("roles", RoleMongo.class);
         rolesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
+        rolesCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1).append(FIELD_SCOPE, 1)).subscribe(new LoggableIndexSubscriber());
     }
 
     @Override
@@ -86,6 +88,11 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         return Completable.fromPublisher(rolesCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Maybe<Role> findByDomainAndNameAndScope(String domain, String name, int scope) {
+        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_NAME, name), eq(FIELD_SCOPE, scope))).first()).firstElement().map(this::convert);
+    }
+
     private Role convert(RoleMongo roleMongo) {
         if (roleMongo == null) {
             return null;
@@ -96,6 +103,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         role.setName(roleMongo.getName());
         role.setDescription(roleMongo.getDescription());
         role.setDomain(roleMongo.getDomain());
+        role.setScope(roleMongo.getScope());
+        role.setSystem(roleMongo.isSystem());
         role.setPermissions(roleMongo.getPermissions());
         role.setCreatedAt(roleMongo.getCreatedAt());
         role.setUpdatedAt(roleMongo.getUpdatedAt());
@@ -112,6 +121,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         roleMongo.setName(role.getName());
         roleMongo.setDescription(role.getDescription());
         roleMongo.setDomain(role.getDomain());
+        roleMongo.setScope(role.getScope());
+        roleMongo.setSystem(role.isSystem());
         roleMongo.setPermissions(role.getPermissions());
         roleMongo.setCreatedAt(role.getCreatedAt());
         roleMongo.setUpdatedAt(role.getUpdatedAt());

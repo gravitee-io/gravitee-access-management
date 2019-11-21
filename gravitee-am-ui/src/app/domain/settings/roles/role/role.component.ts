@@ -98,7 +98,7 @@ export class RoleComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.roleService.delete(this.domainId, this.role.id).subscribe(() => {
-            this.snackbarService.open('Group '+ this.role.name + ' deleted');
+            this.snackbarService.open('Role '+ this.role.name + ' deleted');
             this.router.navigate(['/domains', this.domainId, 'settings', 'roles']);
           });
         }

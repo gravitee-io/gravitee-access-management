@@ -28,6 +28,8 @@ public class Role {
     private String name;
     private String description;
     private String domain;
+    private Integer scope;
+    private boolean system;
     private List<String> permissions;
     private Date createdAt;
     private Date updatedAt;
@@ -40,7 +42,9 @@ public class Role {
         this.name = other.name;
         this.description = other.description;
         this.domain = other.domain;
+        this.scope = other.scope;
         this.permissions = other.permissions;
+        this.system = other.system;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
@@ -75,6 +79,22 @@ public class Role {
 
     public void setDomain(String domain) {
         this.domain = domain;
+    }
+
+    public Integer getScope() {
+        return scope;
+    }
+
+    public void setScope(Integer scope) {
+        this.scope = scope;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public void setSystem(boolean system) {
+        this.system = system;
     }
 
     public List<String> getPermissions() {

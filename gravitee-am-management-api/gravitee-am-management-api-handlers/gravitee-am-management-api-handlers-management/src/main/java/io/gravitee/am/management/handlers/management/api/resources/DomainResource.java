@@ -16,8 +16,13 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.membership.ReferenceType;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.PatchDomain;
@@ -61,14 +66,33 @@ public class DomainResource extends AbstractResource {
             @ApiResponse(code = 200, message = "Domain", response = Domain.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void get(@PathParam("domain") String domainId, @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                .map(domain -> {
+                    if (filterResource(domain, ReferenceType.DOMAIN, authenticatedUser) == null) {
+                        throw new ForbiddenException();
+                    }
+                    // check if the user can see domain sensitive settings
+                    if (isAdmin(authenticatedUser) || hasPermission(authenticatedUser, RolePermission.DOMAIN_SETTINGS, RolePermissionAction.READ)) {
+                        return domain;
+                    }
+                    // clear data
+                    domain.setAccountSettings(null);
+                    domain.setIdentities(null);
+                    domain.setLoginForm(null);
+                    domain.setLoginSettings(null);
+                    domain.setOidc(null);
+                    domain.setScim(null);
+                    domain.setTags(null);
+                    return domain;
+                })
                 .map(domain -> Response.ok(domain).build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));
     }
-
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
@@ -77,6 +101,9 @@ public class DomainResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Domain successfully updated", response = Domain.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_SETTINGS, acls = RolePermissionAction.UPDATE)
+    })
     public void update(
             @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
             @PathParam("domain") String domainId,
@@ -97,6 +124,9 @@ public class DomainResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Domain successfully patched", response = Domain.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_SETTINGS, acls = RolePermissionAction.UPDATE)
+    })
     public void patch(
             @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
             @PathParam("domain") String domainId,
@@ -114,6 +144,9 @@ public class DomainResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 204, message = "Domain successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_SETTINGS, acls = RolePermissionAction.DELETE)
+    })
     public void delete(@PathParam("domain") String domain,
                        @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
@@ -193,5 +226,10 @@ public class DomainResource extends AbstractResource {
     @Path("policies")
     public PoliciesResource getPoliciesResource() {
         return resourceContext.getResource(PoliciesResource.class);
+    }
+
+    @Path("members")
+    public MembersResource getMembersResource() {
+        return resourceContext.getResource(MembersResource.class);
     }
 }

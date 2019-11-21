@@ -43,6 +43,11 @@ public class DomainRepositoryProxy extends AbstractProxy<DomainRepository> imple
     }
 
     @Override
+    public Maybe<Domain> findMaster() {
+        return target.findMaster();
+    }
+
+    @Override
     public Maybe<Domain> findById(String id) {
         return target.findById(id);
     }

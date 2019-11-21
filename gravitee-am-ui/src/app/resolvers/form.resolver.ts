@@ -19,26 +19,31 @@ import { Observable , of} from "rxjs";
 import { AppConfig } from "../../config/app.config";
 import { FormService } from "../services/form.service";
 import {catchError} from "rxjs/operators";
+import {PlatformService} from "../services/platform.service";
 
 @Injectable()
 export class FormResolver implements Resolve<any> {
 
-  constructor(private formService: FormService) { }
+  constructor(private formService: FormService, private platformService: PlatformService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId = AppConfig.settings.authentication.domainId;
-    let appId = route.parent.parent.paramMap.get('appId');
-    let pageTemplate = 'LOGIN';
-    if (!state.url.startsWith('/settings')) {
-      pageTemplate = route.queryParams['template'];
-      domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
+    if (state.url.startsWith('/settings')) {
+      return this.platformService.forms('LOGIN')
+        .pipe(
+          catchError(__ => {
+            return of({});
+          })
+        );
     }
-    return this.formService.get(domainId, appId, pageTemplate)
+    const domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
+    const appId = route.parent.parent.paramMap.get('appId');
+    const template = route.queryParams['template'];
+    return this.formService.get(domainId, appId, template)
       .pipe(
         catchError(__ => {
           return of({});
         })
-      );;
+      );
   }
 
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { ProviderService } from "../../../../../services/provider.service";
 import { DialogService } from "../../../../../services/dialog.service";
@@ -27,23 +27,31 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 })
 export class ProviderMappersComponent implements OnInit {
   private domainId: string;
+  private adminContext = false;
   private defaultMappers: any = {
-    "sub" : "uid",
-    "email" : "mail",
-    "name" : "displayname",
-    "given_name" : "givenname",
-    "family_name" : "sn"
+    'sub' : 'uid',
+    'email' : 'mail',
+    'name' : 'displayname',
+    'given_name' : 'givenname',
+    'family_name' : 'sn'
   };
   mappers: any = [];
   provider: any;
   editing = {};
 
-  constructor(private providerService: ProviderService, private snackbarService: SnackbarService,
-              private dialogService: DialogService, private route: ActivatedRoute, private dialog: MatDialog) { }
+  constructor(private providerService: ProviderService,
+              private snackbarService: SnackbarService,
+              private dialogService: DialogService,
+              private route: ActivatedRoute,
+              private router: Router,
+              private dialog: MatDialog) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.provider = this.route.snapshot.parent.data['provider'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.adminContext = true;
+    }
     if (!this.provider.mappers) {
       this.setMappers(this.defaultMappers);
     } else {
@@ -80,7 +88,7 @@ export class ProviderMappersComponent implements OnInit {
 
   update(message) {
     this.provider.mappers = this.mappers.reduce(function(map, obj) { map[obj.key] = obj.value; return map; }, {});
-    this.providerService.update(this.domainId, this.provider.id, this.provider).subscribe(data => {
+    this.providerService.update(this.domainId, this.provider.id, this.provider, this.adminContext).subscribe(data => {
       this.snackbarService.open(message);
     })
   }

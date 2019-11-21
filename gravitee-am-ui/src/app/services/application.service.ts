@@ -51,4 +51,20 @@ export class ApplicationService {
   renewClientSecret(domainId, id): Observable<any> {
     return this.http.post<any>(this.appsURL + domainId + "/applications/" + id + "/secret/_renew", {});
   }
+
+  members(domainId, id): Observable<any> {
+    return this.http.get<any>(this.appsURL + domainId + "/applications/" + id + "/members");
+  }
+
+  addMember(domainId, id, memberId, memberType, role) {
+    return this.http.post<any>(this.appsURL + domainId + "/applications/" + id + "/members", {
+      'memberId': memberId,
+      'memberType': memberType,
+      'role': role
+    });
+  }
+
+  removeMember(domainId, id, membershipId) {
+    return this.http.delete<any>(this.appsURL + domainId + "/applications/" + id + "/members/" + membershipId);
+  }
 }

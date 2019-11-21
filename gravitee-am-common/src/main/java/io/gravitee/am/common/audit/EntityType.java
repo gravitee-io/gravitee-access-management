@@ -26,7 +26,7 @@ public interface EntityType {
     String APPLICATION = "APPLICATION";
     String DOMAIN = "DOMAIN";
     String CERTIFICATE = "CERTIFICATE";
-    String EXTENSION_GRANT = "EXTENSTION_GRANT";
+    String EXTENSION_GRANT = "EXTENSION_GRANT";
     String USER = "USER";
     String GROUP = "GROUP";
     String ROLE = "ROLE";
@@ -37,4 +37,5 @@ public interface EntityType {
     String REPORTER = "REPORTER";
     String TAG = "TAG";
     String POLICY = "POLICY";
+    String MEMBERSHIP = "MEMBERSHIP";
 }

@@ -35,6 +35,10 @@ public class RoleMongo extends Auditable {
 
     private String domain;
 
+    private Integer scope;
+
+    private boolean system;
+
     private List<String> permissions;
 
     public String getId() {
@@ -67,6 +71,22 @@ public class RoleMongo extends Auditable {
 
     public void setDomain(String domain) {
         this.domain = domain;
+    }
+
+    public Integer getScope() {
+        return scope;
+    }
+
+    public void setScope(Integer scope) {
+        this.scope = scope;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public void setSystem(boolean system) {
+        this.system = system;
     }
 
     public List<String> getPermissions() {

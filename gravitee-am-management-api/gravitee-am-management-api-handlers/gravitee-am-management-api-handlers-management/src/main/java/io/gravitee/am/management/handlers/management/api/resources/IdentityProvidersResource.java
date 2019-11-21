@@ -16,8 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -66,6 +70,9 @@ public class IdentityProvidersResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered identity providers for a security domain", response = IdentityProvider.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_IDENTITY_PROVIDER, acls = RolePermissionAction.READ)
+    })
     public void list(@PathParam("domain") String domain,
                      @QueryParam("userProvider") boolean userProvider,
                      @Suspended final AsyncResponse response) {
@@ -98,6 +105,9 @@ public class IdentityProvidersResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Identity provider successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_IDENTITY_PROVIDER, acls = RolePermissionAction.CREATE)
+    })
     public void create(
             @PathParam("domain") String domain,
             @ApiParam(name = "identity", required = true)

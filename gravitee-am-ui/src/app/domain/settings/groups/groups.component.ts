@@ -17,8 +17,8 @@ import { Component, OnInit } from '@angular/core';
 import { SnackbarService } from "../../../services/snackbar.service";
 import { DialogService } from "../../../services/dialog.service";
 import { ActivatedRoute, Router } from "@angular/router";
-import { AppConfig } from "../../../../config/app.config";
 import { GroupService } from "../../../services/group.service";
+import { PlatformService } from "../../../services/platform.service";
 
 @Component({
   selector: 'app-groups',
@@ -26,13 +26,18 @@ import { GroupService } from "../../../services/group.service";
   styleUrls: ['./groups.component.scss']
 })
 export class GroupsComponent implements OnInit {
+  private adminContext = false;
   pagedGroups: any;
   groups: any[];
   domainId: string;
   page: any = {};
 
-  constructor(private groupService: GroupService, private dialogService: DialogService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute, private router: Router) {
+  constructor(private groupService: GroupService,
+              private platformService: PlatformService,
+              private dialogService: DialogService,
+              private snackbarService: SnackbarService,
+              private route: ActivatedRoute,
+              private router: Router) {
     this.page.pageNumber = 0;
     this.page.size = 25;
   }
@@ -40,7 +45,7 @@ export class GroupsComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
+      this.adminContext = true;
     }
     this.pagedGroups = this.route.snapshot.data['groups'];
     this.groups = this.pagedGroups.data;
@@ -48,11 +53,13 @@ export class GroupsComponent implements OnInit {
   }
 
   get isEmpty() {
-    return !this.groups || this.groups.length == 0;
+    return !this.groups || this.groups.length === 0;
   }
 
   loadGroups() {
-    this.groupService.findByDomain(this.domainId, this.page.pageNumber, this.page.size).subscribe(pagedGroups => {
+    const groupsCall = this.adminContext ? this.platformService.groups(this.page.pageNumber, this.page.size)
+      : this.groupService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
+    groupsCall.subscribe(pagedGroups => {
       this.page.totalElements = pagedGroups.totalCount;
       this.groups = pagedGroups.data;
     });
@@ -64,8 +71,8 @@ export class GroupsComponent implements OnInit {
       .confirm('Delete Group', 'Are you sure you want to delete this group ?')
       .subscribe(res => {
         if (res) {
-          this.groupService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open("Group deleted");
+          this.groupService.delete(this.domainId, id, this.adminContext).subscribe(response => {
+            this.snackbarService.open('Group deleted');
             this.page.pageNumber = 0;
             this.loadGroups();
           });
@@ -73,7 +80,7 @@ export class GroupsComponent implements OnInit {
       });
   }
 
-  setPage(pageInfo){
+  setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
     this.loadGroups();
   }

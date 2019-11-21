@@ -16,9 +16,14 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.model.DomainListItem;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.IdentityProviderManager;
-import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.membership.ReferenceType;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.NewDomain;
@@ -68,17 +73,17 @@ public class DomainsResource extends AbstractResource {
             value = "List security domains",
             notes = "List all the security domains accessible to the current user.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List accessible security domains for current user", response = Domain.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "List accessible security domains for current user", response = DomainListItem.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(@Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
          domainService.findAll()
+                 .map(domains -> filterResources(domains, ReferenceType.DOMAIN, authenticatedUser))
                  .map(domains ->
                         domains.stream()
                                 .filter(domain -> !domain.isMaster())
-                                .map(domain -> {
-                                    domain.setLoginForm(null);
-                                    return domain;
-                                })
+                                .map(domain -> new DomainListItem(domain))
                                 .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                                 .collect(Collectors.toList()))
                 .subscribe(
@@ -93,6 +98,9 @@ public class DomainsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Domain successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.MANAGEMENT_DOMAIN, acls = RolePermissionAction.CREATE)
+    })
     public void create(
             @ApiParam(name = "domain", required = true)
             @Valid @NotNull final NewDomain newDomain,
@@ -118,5 +126,4 @@ public class DomainsResource extends AbstractResource {
     public DomainResource getDomainResource() {
         return resourceContext.getResource(DomainResource.class);
     }
-
 }
