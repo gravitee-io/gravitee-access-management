@@ -17,12 +17,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
 import { Observable } from "rxjs";
+import { PlatformService } from "./platform.service";
 
 @Injectable()
 export class ProviderService {
   private providersURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient,
+              private platformService: PlatformService) { }
 
   findByDomain(domainId): Observable<any> {
     return this.http.get<any>(this.providersURL + domainId + "/identities");
@@ -36,11 +38,17 @@ export class ProviderService {
     return this.http.get<any>(this.providersURL + domainId + "/identities/" + id);
   }
 
-  create(domainId, provider): Observable<any> {
+  create(domainId, provider, adminContext): Observable<any> {
+    if (adminContext) {
+      return this.platformService.createIdentityProvider(provider);
+    }
     return this.http.post<any>(this.providersURL + domainId + "/identities", provider);
   }
 
-  update(domainId, id, provider): Observable<any> {
+  update(domainId, id, provider, adminContext): Observable<any> {
+    if (adminContext) {
+      return this.platformService.updateIdentityProvider(id, provider);
+    }
     return this.http.put<any>(this.providersURL + domainId + "/identities/" + id, {
       'name' : provider.name,
       'configuration' : provider.configuration,
@@ -49,7 +57,10 @@ export class ProviderService {
     });
   }
 
-  delete(domainId, id): Observable<any> {
+  delete(domainId, id, adminContext): Observable<any> {
+    if (adminContext) {
+      return this.platformService.deleteIdentityProvider(id);
+    }
     return this.http.delete<any>(this.providersURL + domainId + "/identities/" + id);
   }
 

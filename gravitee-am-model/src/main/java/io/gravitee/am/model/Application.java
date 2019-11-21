@@ -27,7 +27,7 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class Application {
+public class Application implements Resource {
 
     /**
      * Application technical id

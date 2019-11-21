@@ -16,9 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
+import io.gravitee.am.management.handlers.management.api.manager.certificate.CertificateManager;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.service.CertificatePluginService;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -57,9 +60,6 @@ public class CertificatesResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private CertificatePluginService certificatePluginService;
-
-    @Autowired
     private CertificateManager certificateManager;
 
     @GET
@@ -68,6 +68,9 @@ public class CertificatesResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered certificates for a security domain", response = Certificate.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_CERTIFICATE, acls = RolePermissionAction.READ)
+    })
     public void list(@PathParam("domain") String domain,
                      @Suspended final AsyncResponse response) {
         domainService.findById(domain)
@@ -92,6 +95,9 @@ public class CertificatesResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Certificate successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_CERTIFICATE, acls = RolePermissionAction.CREATE)
+    })
     public void create(
             @PathParam("domain") String domain,
             @ApiParam(name = "certificate", required = true)

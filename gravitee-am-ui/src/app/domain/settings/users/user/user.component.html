@@ -22,7 +22,7 @@
       <img [src]="avatarUrl" alt="Photo of a {{user.username}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="80"/>
     </div>
     <div class="user-information" fxLayout="column">
-      <span class="user-display-name">{{displayName}}</span>
+      <span class="user-display-name">{{user.displayName}}</span>
       <span class="user-username">{{user.username}}</span>
     </div>
   </div>

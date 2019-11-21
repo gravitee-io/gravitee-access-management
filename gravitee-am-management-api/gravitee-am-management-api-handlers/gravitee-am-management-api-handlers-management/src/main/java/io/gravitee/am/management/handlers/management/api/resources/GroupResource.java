@@ -15,8 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -60,6 +64,9 @@ public class GroupResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Group successfully fetched", response = Group.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_GROUP, acls = RolePermissionAction.READ)
+    })
     public void get(
             @PathParam("domain") String domain,
             @PathParam("group") String group,
@@ -87,6 +94,9 @@ public class GroupResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Group successfully updated", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_GROUP, acls = RolePermissionAction.UPDATE)
+    })
     public void updateGroup(
             @PathParam("domain") String domain,
             @PathParam("group") String group,
@@ -108,6 +118,9 @@ public class GroupResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 204, message = "Group successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_GROUP, acls = RolePermissionAction.DELETE)
+    })
     public void delete(@PathParam("domain") String domain,
                            @PathParam("group") String group,
                            @Suspended final AsyncResponse response) {

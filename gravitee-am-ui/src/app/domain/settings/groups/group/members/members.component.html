@@ -43,7 +43,7 @@
             <img [src]="avatarUrl(row)" alt="Photo of a {{row.username}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="40"/>
           </div>
           <div class="user-information" fxLayout="column">
-            <a [routerLink]="userLink(row)">{{displayName(row)}}</a>
+            <a [routerLink]="userLink(row)">{{row.displayName}}</a>
             <small>{{row.username}}</small>
           </div>
         </div>

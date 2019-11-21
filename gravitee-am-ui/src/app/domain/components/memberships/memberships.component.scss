@@ -1,0 +1,54 @@
+.memberships-content {
+  .select-user-membership {
+    padding: 15px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+  }
+  ngx-datatable {
+    box-shadow: none;
+    background: transparent;
+    font-size: 14px;
+    .membership-header {
+      margin: 5px;
+      align-items: center;
+      .membership-icon {
+        margin: 0 12px 0 0;
+      }
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        margin: 0 12px 0 0;
+        img {
+          border-radius: 50%;
+        }
+      }
+      .membership-information {
+        h3 {
+          font-size: 14px;
+          font-weight: normal;
+          margin: 0;
+        }
+        small {
+          color: rgba(0,0,0,.54);
+        }
+      }
+    }
+    .members-actions {
+      margin-left: -10px;
+
+      button, a {
+        top: -9px;
+        color: grey;
+      }
+    }
+  }
+}
+
+:host {
+  /deep/ .ngx-datatable.material .datatable-footer {
+    display: none;
+  }
+  /deep/ .membership-name-cell {
+    padding: 0 !important;
+  }
+}

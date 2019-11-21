@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 
 @Component({
@@ -24,29 +24,42 @@ import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/compo
 })
 export class UserComponent implements OnInit {
   private domainId: string;
+  private adminContext = false;
   user: any;
-  displayName: string;
   avatarUrl: string;
-  navLinks: any = [
-    {'href': 'profile' , 'label': 'Profile'},
-    {'href': 'applications' , 'label': 'Authorized Apps'},
-    {'href': 'roles' , 'label': 'Roles'},
-  ];
+  navLinks: any = [];
 
-  constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) {
+  constructor(private route: ActivatedRoute,
+              private router: Router,
+              private breadcrumbService: BreadcrumbService) {
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.user = this.route.snapshot.data['user'];
-    this.initDisplayName();
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.adminContext = true;
+    }
+    this.initNavLinks();
     this.initAvatar();
     this.initBreadcrumb();
   }
 
+  initNavLinks() {
+    this.navLinks.push({'href': 'profile' , 'label': 'Profile'});
+    if (!this.adminContext) {
+      this.navLinks.push({'href': 'applications' , 'label': 'Authorized Apps'});
+    }
+    this.navLinks.push({'href': 'roles' , 'label': 'Roles'});
+  }
+
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/users/'+this.user.id+'$', this.user.username);
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/users/'+this.user.id+'/applications$', 'Authorized Apps');
+    if (this.adminContext) {
+      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/users/' + this.user.id + '$', this.user.username);
+    } else {
+      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.user.id + '$', this.user.username);
+      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.user.id + '/applications$', 'Authorized Apps');
+    }
   }
 
   initAvatar() {
@@ -55,41 +68,5 @@ export class UserComponent implements OnInit {
       return;
     }
     this.avatarUrl = 'assets/material-letter-icons/' + this.user.username.charAt(0).toUpperCase() + '.svg';
-  }
-
-  initDisplayName() {
-    // check display name attribute first
-    if (this.user.displayName) {
-      this.displayName = this.user.displayName;
-      return;
-    }
-
-    // fall back to standard claim 'name'
-    if (this.user.additionalInformation && this.user.additionalInformation['name']) {
-      this.displayName = this.user.additionalInformation['name'];
-      return;
-    }
-
-    // fall back to combination of first name and last name
-    if (this.user.firstName) {
-      this.displayName = this.user.firstName;
-      if (this.user.lastName) {
-        this.displayName += ' ' + this.user.lastName;
-      } else if (this.user.additionalInformation && this.user.additionalInformation['family_name']) {
-        this.displayName += ' ' + this.user.additionalInformation['family_name']
-      }
-      return;
-    }
-
-    if (this.user.additionalInformation && this.user.additionalInformation['given_name']) {
-      this.displayName = this.user.additionalInformation['given_name'];
-      if (this.user.additionalInformation && this.user.additionalInformation['family_name']) {
-        this.displayName += ' ' + this.user.additionalInformation['family_name']
-      }
-      return;
-    }
-
-    // default display the username
-    this.displayName = this.user.username;
   }
 }

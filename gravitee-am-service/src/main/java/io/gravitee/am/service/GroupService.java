@@ -34,15 +34,17 @@ public interface GroupService {
 
     Single<Page<Group>> findByDomain(String domain, int page, int size);
 
+    Single<Page<User>> findMembers(String groupId, int page, int size);
+
     Single<List<Group>> findByDomain(String domain);
 
     Single<List<Group>> findByMember(String userId);
 
+    Single<List<Group>> findByIdIn(List<String> ids);
+
     Maybe<Group> findByDomainAndName(String domain, String groupName);
 
     Maybe<Group> findById(String id);
-
-    Single<Page<User>> findMembers(String groupId, int page, int size);
 
     Single<Group> create(String domain, NewGroup group, io.gravitee.am.identityprovider.api.User principal);
 

@@ -16,16 +16,17 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.GroupRepository;
-import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.am.service.model.UpdateGroup;
@@ -64,6 +65,9 @@ public class GroupServiceImpl implements GroupService {
 
     @Autowired
     private RoleService roleService;
+
+    @Autowired
+    private EventService eventService;
 
     @Override
     public Single<Page<Group>> findByDomain(String domain, int page, int size) {
@@ -136,6 +140,17 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    public Single<List<Group>> findByIdIn(List<String> ids) {
+        LOGGER.debug("Find groups for ids : {}", ids);
+        return groupRepository.findByIdIn(ids)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a group using ids", ids, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a group using ids: %s", ids), ex));
+                });
+    }
+
+    @Override
     public Single<Group> create(String domain, NewGroup newGroup, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Create a new group {} for domain {}", newGroup.getName(), domain);
 
@@ -159,6 +174,11 @@ public class GroupServiceImpl implements GroupService {
                 })
                 .flatMap(group -> setMembers(group))
                 .flatMap(group -> groupRepository.create(group))
+                // create event for sync process
+                .flatMap(group -> {
+                    Event event = new Event(Type.GROUP, new Payload(group.getId(), group.getDomain(), Action.CREATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(group));
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -199,6 +219,11 @@ public class GroupServiceImpl implements GroupService {
                     // set members and update
                     return setMembers(groupToUpdate)
                             .flatMap(group -> groupRepository.update(group))
+                            // create event for sync process
+                            .flatMap(group -> {
+                                Event event = new Event(Type.GROUP, new Payload(group.getId(), group.getDomain(), Action.UPDATE));
+                                return eventService.create(event).flatMap(__ -> Single.just(group));
+                            })
                             .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).oldValue(oldGroup).group(group)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).throwable(throwable)));
 
@@ -220,6 +245,7 @@ public class GroupServiceImpl implements GroupService {
         return groupRepository.findById(groupId)
                 .switchIfEmpty(Maybe.error(new GroupNotFoundException(groupId)))
                 .flatMapCompletable(group -> groupRepository.delete(groupId)
+                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(group.getId(), group.getDomain(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).throwable(throwable)))
                 )
@@ -229,7 +255,7 @@ public class GroupServiceImpl implements GroupService {
                     }
                     LOGGER.error("An error occurs while trying to delete group: {}", groupId, ex);
                     return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete user: %s", groupId), ex));
+                            String.format("An error occurs while trying to delete group: %s", groupId), ex));
                 });
     }
 

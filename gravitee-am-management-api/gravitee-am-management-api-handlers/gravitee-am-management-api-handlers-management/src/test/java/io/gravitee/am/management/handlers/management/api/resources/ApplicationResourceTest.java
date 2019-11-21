@@ -27,6 +27,8 @@ import org.junit.Test;
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -117,7 +119,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
         mockClient.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockClient)).when(applicationService).renewClientSecret(domainId, clientId, null);
+        doReturn(Single.just(mockClient)).when(applicationService).renewClientSecret(eq(domainId), eq(clientId), any());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -142,7 +144,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
         mockClient.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.error(new ApplicationNotFoundException(clientId))).when(applicationService).renewClientSecret(domainId, clientId, null);
+        doReturn(Single.error(new ApplicationNotFoundException(clientId))).when(applicationService).renewClientSecret(eq(domainId), eq(clientId), any());
 
         final Response response = target("domains")
                 .path(domainId)

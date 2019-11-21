@@ -16,7 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -56,15 +60,18 @@ public class RolesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered rogles for a security domain")
+    @ApiOperation(value = "List registered roles for a security domain")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered roles for a security domain", response = Role.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_ROLE, acls = RolePermissionAction.READ)
+    })
     public void list(@PathParam("domain") String domain,
                      @Suspended final AsyncResponse response) {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> roleService.findByDomain(domain)
+                .flatMapSingle(__ -> roleService.findByDomain(domain)
                         .map(roles -> {
                             List<Role> sortedRoles = roles.stream()
                                     .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
@@ -84,6 +91,9 @@ public class RolesResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Role successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_ROLE, acls = RolePermissionAction.CREATE)
+    })
     public void create(
             @PathParam("domain") String domain,
             @ApiParam(name = "role", required = true)

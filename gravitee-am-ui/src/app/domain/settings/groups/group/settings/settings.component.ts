@@ -19,7 +19,6 @@ import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/co
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { DialogService } from "../../../../../services/dialog.service";
 import { GroupService } from "../../../../../services/group.service";
-import { AppConfig } from "../../../../../../config/app.config";
 
 @Component({
   selector: 'app-group-settings',
@@ -29,6 +28,7 @@ import { AppConfig } from "../../../../../../config/app.config";
 export class GroupSettingsComponent implements OnInit {
   @ViewChild('groupForm') form: any;
   private domainId: string;
+  private adminContext = false;
   group: any;
 
   constructor(private route: ActivatedRoute,
@@ -41,22 +41,22 @@ export class GroupSettingsComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
+      this.adminContext = true;
     }
     this.group = this.route.snapshot.parent.data['group'];
     this.initBreadcrumb();
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/groups/'+this.group.id+'$', this.group.name);
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/groups/' + this.group.id + '$', this.group.name);
   }
 
   update() {
-    this.groupService.update(this.domainId, this.group.id, this.group).subscribe(data => {
+    this.groupService.update(this.domainId, this.group.id, this.group, this.adminContext).subscribe(data => {
       this.group = data;
       this.form.reset(this.group);
       this.initBreadcrumb();
-      this.snackbarService.open("Group updated");
+      this.snackbarService.open('Group updated');
     });
   }
 
@@ -66,9 +66,13 @@ export class GroupSettingsComponent implements OnInit {
       .confirm('Delete Group', 'Are you sure you want to delete this group ?')
       .subscribe(res => {
         if (res) {
-          this.groupService.delete(this.domainId, this.group.id).subscribe(response => {
-            this.snackbarService.open('Group '+ this.group.name + ' deleted');
-            this.router.navigate(['/domains', this.domainId, 'settings', 'groups']);
+          this.groupService.delete(this.domainId, this.group.id, this.adminContext).subscribe(response => {
+            this.snackbarService.open('Group ' + this.group.name + ' deleted');
+            if (this.adminContext) {
+              this.router.navigate(['/settings', 'management', 'groups']);
+            } else {
+              this.router.navigate(['/domains', this.domainId, 'settings', 'groups']);
+            }
           });
         }
       });

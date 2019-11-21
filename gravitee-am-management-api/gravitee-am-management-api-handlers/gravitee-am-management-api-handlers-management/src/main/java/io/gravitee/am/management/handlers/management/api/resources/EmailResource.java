@@ -16,8 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -59,6 +63,9 @@ public class EmailResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Email successfully updated", response = Email.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_EMAIL_TEMPLATE, acls = RolePermissionAction.UPDATE)
+    })
     public void update(
             @PathParam("domain") String domain,
             @PathParam("email") String email,
@@ -81,6 +88,9 @@ public class EmailResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 204, message = "Email successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_EMAIL_TEMPLATE, acls = RolePermissionAction.DELETE)
+    })
     public void delete(@PathParam("domain") String domain,
                            @PathParam("email") String email,
                            @Suspended final AsyncResponse response) {

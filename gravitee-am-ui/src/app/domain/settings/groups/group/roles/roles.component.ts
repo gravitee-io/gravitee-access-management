@@ -20,6 +20,7 @@ import {DialogService} from "../../../../../services/dialog.service";
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material";
 import {RoleService} from "../../../../../services/role.service";
 import {GroupService} from "../../../../../services/group.service";
+import {PlatformService} from "../../../../../services/platform.service";
 
 @Component({
   selector: 'app-group-roles',
@@ -29,6 +30,7 @@ import {GroupService} from "../../../../../services/group.service";
 export class GroupRolesComponent implements OnInit {
   private domainId: string;
   private group: any;
+  private adminContext: any;
   groupRoles: any[];
 
   constructor(private route: ActivatedRoute,
@@ -36,6 +38,7 @@ export class GroupRolesComponent implements OnInit {
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
               private groupService: GroupService,
+              private platformService: PlatformService,
               private dialog: MatDialog) {
   }
 
@@ -43,14 +46,17 @@ export class GroupRolesComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.group = this.route.snapshot.parent.data['group'];
     this.groupRoles = this.route.snapshot.data['roles'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.adminContext = true;
+    }
   }
 
   get isEmpty() {
-    return !this.groupRoles || this.groupRoles.length == 0;
+    return !this.groupRoles || this.groupRoles.length === 0;
   }
 
   add() {
-    let dialogRef = this.dialog.open(AddGroupRolesComponent, { width : '700px', data: { domain: this.domainId, assignedRoles: this.groupRoles }});
+    let dialogRef = this.dialog.open(AddGroupRolesComponent, { width : '700px', data: { domain: this.domainId, adminContext: this.adminContext, assignedRoles: this.groupRoles }});
     dialogRef.afterClosed().subscribe(roles => {
       if (roles) {
           this.assignRoles(roles);
@@ -64,7 +70,7 @@ export class GroupRolesComponent implements OnInit {
       .confirm('Revoke role', 'Are you sure you want to remove role from this group ?')
       .subscribe(res => {
         if (res) {
-          this.groupService.revokeRole(this.domainId, this.group.id, role.id).subscribe(group => {
+          this.groupService.revokeRole(this.domainId, this.group.id, role.id, this.adminContext).subscribe(group => {
             this.group = group;
             this.route.snapshot.parent.data['group'] = group;
             this.snackbarService.open('Role ' + role.name + ' revoked');
@@ -75,16 +81,22 @@ export class GroupRolesComponent implements OnInit {
   }
 
   loadRoles() {
-    this.groupService.roles(this.domainId, this.group.id).subscribe(roles => {
-      this.groupRoles = roles;
-    });
+    if (this.adminContext) {
+      this.platformService.groupRoles(this.group.id).subscribe(roles => {
+        this.groupRoles = roles;
+      });
+    } else {
+      this.groupService.roles(this.domainId, this.group.id).subscribe(roles => {
+        this.groupRoles = roles;
+      });
+    }
   }
 
   private assignRoles(roles) {
-    this.groupService.assignRoles(this.domainId, this.group.id, roles).subscribe(group => {
+    this.groupService.assignRoles(this.domainId, this.group.id, roles, this.adminContext).subscribe(group => {
       this.group = group;
       this.route.snapshot.parent.data['group'] = group;
-      this.snackbarService.open("Role(s) assigned");
+      this.snackbarService.open('Role(s) assigned');
       this.loadRoles();
     });
   }
@@ -96,6 +108,7 @@ export class GroupRolesComponent implements OnInit {
 })
 export class AddGroupRolesComponent implements OnInit {
   private domainId: string;
+  private adminContext = false;
   roles: any[];
   initialSelectedRoles: any[];
   assignedRoles: string[] = [];
@@ -103,15 +116,23 @@ export class AddGroupRolesComponent implements OnInit {
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,
               public dialogRef: MatDialogRef<AddGroupRolesComponent>,
-              private roleService: RoleService) {
+              private roleService: RoleService,
+              private platformService: PlatformService) {
     this.domainId = data.domain;
+    this.adminContext = data.adminContext;
     this.initialSelectedRoles = data.assignedRoles;
   }
 
   ngOnInit() {
-    this.roleService.findByDomain(this.domainId).subscribe(roles => {
-      this.roles = roles;
-    });
+    if (this.adminContext) {
+      this.platformService.roles('MANAGEMENT').subscribe(roles => {
+        this.roles = roles;
+      })
+    } else {
+      this.roleService.findByDomain(this.domainId).subscribe(roles => {
+        this.roles = roles;
+      });
+    }
   }
 
   onRoleSelectionChanges(selection) {

@@ -30,6 +30,8 @@ import org.junit.Test;
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -103,7 +105,7 @@ public class UserConsentResourceTest extends JerseySpringTest {
         mockUser.setId("user-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(scopeApprovalService).revokeByConsent(domainId, mockUser.getId(), "consent1", null);
+        doReturn(Completable.complete()).when(scopeApprovalService).revokeByConsent(eq(domainId), eq(mockUser.getId()), eq("consent1"), any());
 
         final Response response = target("domains")
                 .path(domainId)

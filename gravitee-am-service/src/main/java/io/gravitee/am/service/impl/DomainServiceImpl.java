@@ -116,6 +116,16 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
+    public Maybe<Domain> findMaster() {
+        LOGGER.debug("Find master domain");
+        return domainRepository.findMaster()
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find the master domain", ex);
+                    return Maybe.error(new TechnicalManagementException("An error occurs while trying to find the master domain", ex));
+                });
+    }
+
+    @Override
     public Single<Set<Domain>> findAll() {
         LOGGER.debug("Find all domains");
         return domainRepository.findAll()

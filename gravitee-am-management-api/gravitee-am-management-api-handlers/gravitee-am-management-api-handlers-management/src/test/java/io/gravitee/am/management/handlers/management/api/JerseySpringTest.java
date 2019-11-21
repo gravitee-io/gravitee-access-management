@@ -15,7 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api;
 
-import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.manager.certificate.CertificateManager;
+import io.gravitee.am.management.handlers.management.api.manager.group.GroupManager;
+import io.gravitee.am.management.handlers.management.api.manager.membership.MembershipManager;
+import io.gravitee.am.management.handlers.management.api.manager.role.RoleManager;
 import io.gravitee.am.management.service.*;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.AuditService;
@@ -31,14 +36,23 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
+import javax.annotation.Priority;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.SecurityContext;
+import java.io.IOException;
+import java.security.Principal;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,6 +61,8 @@ import static org.mockito.Mockito.mock;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(loader = AnnotationConfigContextLoader.class)
 public abstract class JerseySpringTest {
+
+    protected static final String USER_NAME = "UnitTests";
 
     @Autowired
     protected DomainService domainService;
@@ -122,6 +138,20 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected ApplicationService applicationService;
+
+    @Autowired
+    protected GroupManager groupManager;
+
+    @Autowired
+    protected RoleManager roleManager;
+
+    @Autowired
+    protected MembershipManager membershipManager;
+
+    @Before
+    public void init() {
+        when(roleManager.isAdminRoleGranted(any())).thenReturn(true);
+    }
 
     @Configuration
     @ComponentScan("io.gravitee.am.management.handlers.management.api.resources.enhancer")
@@ -255,6 +285,21 @@ public abstract class JerseySpringTest {
         public ApplicationService applicationService() {
             return mock(ApplicationService.class);
         }
+
+        @Bean
+        public GroupManager groupManager() {
+            return mock(GroupManager.class);
+        }
+
+        @Bean
+        public RoleManager roleManager() {
+            return mock(RoleManager.class);
+        }
+
+        @Bean
+        public MembershipManager membershipManager() {
+            return mock(MembershipManager.class);
+        }
     }
 
     private JerseyTest _jerseyTest;
@@ -281,10 +326,33 @@ public abstract class JerseySpringTest {
             protected Application configure()
             {
                 ResourceConfig application = new ManagementApplication();
+                application.register(AuthenticationFilter.class);
                 application.property("contextConfig", context);
 
                 return application;
             }
         };
+    }
+
+    @Priority(50)
+    public static class AuthenticationFilter implements ContainerRequestFilter {
+        @Override
+        public void filter(final ContainerRequestContext requestContext) throws IOException {
+            requestContext.setSecurityContext(new SecurityContext() {
+                @Override
+                public Principal getUserPrincipal() {
+                    User endUser = new DefaultUser(USER_NAME);
+                    return new UsernamePasswordAuthenticationToken(endUser, null);
+                }
+                @Override
+                public boolean isUserInRole(String string) {
+                    return true;
+                }
+                @Override
+                public boolean isSecure() { return true; }
+                @Override
+                public String getAuthenticationScheme() { return "BASIC"; }
+            });
+        }
     }
 }

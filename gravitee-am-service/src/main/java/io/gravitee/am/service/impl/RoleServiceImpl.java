@@ -16,11 +16,17 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.permissions.*;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.RoleAlreadyExistsException;
@@ -32,15 +38,14 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.RoleAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,6 +61,9 @@ public class RoleServiceImpl implements RoleService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private EventService eventService;
 
     @Override
     public Single<Set<Role>> findByDomain(String domain) {
@@ -97,15 +105,21 @@ public class RoleServiceImpl implements RoleService {
 
         // check if role name is unique
         return checkRoleUniqueness(newRole.getName(), roleId, domain)
-                .flatMap(irrelevant -> {
+                .flatMap(__ -> {
                     Role role = new Role();
                     role.setId(roleId);
                     role.setDomain(domain);
                     role.setName(newRole.getName());
                     role.setDescription(newRole.getDescription());
+                    role.setScope(newRole.getScope() != null ? newRole.getScope().getId() : null);
                     role.setCreatedAt(new Date());
                     role.setUpdatedAt(role.getCreatedAt());
                     return roleRepository.create(role);
+                })
+                // create event for sync process
+                .flatMap(role -> {
+                    Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getDomain(), Action.CREATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(role));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -135,6 +149,11 @@ public class RoleServiceImpl implements RoleService {
                                 roleToUpdate.setPermissions(updateRole.getPermissions());
                                 roleToUpdate.setUpdatedAt(new Date());
                                 return roleRepository.update(roleToUpdate)
+                                        // create event for sync process
+                                        .flatMap(role -> {
+                                            Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getDomain(), Action.UPDATE));
+                                            return eventService.create(event).flatMap(__ -> Single.just(role));
+                                        })
                                         .doOnSuccess(role -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_UPDATED).oldValue(oldRole).role(role)))
                                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_UPDATED).throwable(throwable)));
                             });
@@ -156,6 +175,7 @@ public class RoleServiceImpl implements RoleService {
         return roleRepository.findById(roleId)
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(roleId)))
                 .flatMapCompletable(role -> roleRepository.delete(roleId)
+                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.ROLE, new Payload(role.getId(), role.getDomain(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).role(role)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).throwable(throwable)))
                 )
@@ -170,8 +190,109 @@ public class RoleServiceImpl implements RoleService {
                 });
     }
 
-    private Single<Set<Role>> checkRoleUniqueness(String roleName, String roleId, String domain) {
+    @Override
+    public Single<Role> createSystemRole(SystemRole systemRole, RoleScope roleScope, List<String> permissions, User principal) {
+        Role role = initSystemRole(systemRole.name(), roleScope.getId(), permissions);
+        return roleRepository.create(role)
+                .flatMap(role1 -> {
+                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getDomain(), Action.CREATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(role1));
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to create a system role {}", RoleScope.valueOf(role.getScope()) + ":" + role.getName(), ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a role", ex));
+                })
+                .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).role(role1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).throwable(throwable)));
+    }
 
+    @Override
+    public Completable createOrUpdateSystemRoles() {
+        // MANAGEMENT - ADMIN
+        Role managementAdmin = initSystemRole(SystemRole.ADMIN.name(), RoleScope.MANAGEMENT.getId(), ManagementPermission.permissions());
+        // DOMAIN  - PRIMARY_OWNER
+        Role domainPrimaryOwner = initSystemRole(SystemRole.PRIMARY_OWNER.name(), RoleScope.DOMAIN.getId(), DomainPermission.permissions());
+        // APPLICATION  - PRIMARY_OWNER
+        Role applicationPrimaryOwner = initSystemRole(SystemRole.PRIMARY_OWNER.name(), RoleScope.APPLICATION.getId(), DomainPermission.permissions());
+
+        return Observable.fromIterable(Arrays.asList(managementAdmin, domainPrimaryOwner, applicationPrimaryOwner))
+                .flatMapCompletable(this::upsert);
+    }
+
+    private Completable upsert(Role role) {
+        return roleRepository.findByDomainAndNameAndScope(role.getDomain(), role.getName(), role.getScope())
+                .map(Optional::ofNullable)
+                .defaultIfEmpty(Optional.empty())
+                .flatMapCompletable(optRole -> {
+                    if (!optRole.isPresent()) {
+                        LOGGER.debug("Create a system role {}", RoleScope.valueOf(role.getScope()) + ":" + role.getName());
+                        role.setCreatedAt(new Date());
+                        role.setUpdatedAt(role.getCreatedAt());
+                        return roleRepository.create(role)
+                                .flatMap(role1 -> {
+                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getDomain(), Action.CREATE));
+                                    return eventService.create(event).flatMap(__ -> Single.just(role1));
+                                })
+                                .onErrorResumeNext(ex -> {
+                                    if (ex instanceof AbstractManagementException) {
+                                        return Single.error(ex);
+                                    }
+                                    LOGGER.error("An error occurs while trying to create a system role {}", RoleScope.valueOf(role.getScope()) + ":" + role.getName(), ex);
+                                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a role", ex));
+                                })
+                                .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).role(role1)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).throwable(throwable)))
+                                .toCompletable();
+
+                    } else {
+                        // check if permission set has changed
+                        Role currentRole = optRole.get();
+                        if (!permissionsAreDifferent(currentRole, role)) {
+                            return Completable.complete();
+                        }
+                        LOGGER.debug("Update a system role {}", RoleScope.valueOf(role.getScope()) + ":" + role.getName());
+                        // update the role
+                        role.setId(currentRole.getId());
+                        role.setPermissions(role.getPermissions());
+                        role.setUpdatedAt(new Date());
+                        return roleRepository.update(role)
+                                .flatMap(role1 -> {
+                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getDomain(), Action.UPDATE));
+                                    return eventService.create(event).flatMap(__ -> Single.just(role1));
+                                })
+                                .onErrorResumeNext(ex -> {
+                                    if (ex instanceof AbstractManagementException) {
+                                        return Single.error(ex);
+                                    }
+                                    LOGGER.error("An error occurs while trying to update a system role {}", RoleScope.valueOf(role.getScope()) + ":" + role.getName(), ex);
+                                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a role", ex));
+                                })
+                                .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).oldValue(currentRole).role(role1)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).throwable(throwable)))
+                                .toCompletable();
+                    }
+                });
+
+    }
+
+    private Role initSystemRole(String roleName, int roleScope, List<String> permissions) {
+        Role role = new Role();
+        role.setSystem(true);
+        role.setDomain("admin");
+        role.setName(roleName);
+        role.setDescription("System Role. Created by Gravitee.io");
+        role.setScope(roleScope);
+        // set permissions
+        List<String> perms = new ArrayList<>();
+        permissions.forEach(p -> RolePermissionAction.actions().forEach(a -> perms.add(p + "_" + a)));
+        role.setPermissions(perms);
+        return role;
+    }
+
+    private Single<Set<Role>> checkRoleUniqueness(String roleName, String roleId, String domain) {
         return roleRepository.findByDomain(domain)
                 .flatMap(roles -> {
                     if (roles.stream()
@@ -182,5 +303,19 @@ public class RoleServiceImpl implements RoleService {
                     return Single.just(roles);
                 });
     }
+
+    private boolean permissionsAreDifferent(Role role1, Role role2) {
+        if (role1.getPermissions().size() != role2.getPermissions().size()) {
+            return true;
+        } else {
+            ArrayList<String> listOne = new ArrayList<>(role1.getPermissions());
+            ArrayList<String> listTwo = new ArrayList<>(role2.getPermissions());
+
+            //remove all elements from second list
+            listOne.removeAll(listTwo);
+            return !listOne.isEmpty();
+        }
+    }
+
 
 }

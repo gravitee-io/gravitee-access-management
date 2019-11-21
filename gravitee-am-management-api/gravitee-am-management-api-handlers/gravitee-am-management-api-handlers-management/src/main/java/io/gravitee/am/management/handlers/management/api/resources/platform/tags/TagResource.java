@@ -17,7 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.tag
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Tag;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.TagService;
 import io.gravitee.am.service.exception.TagNotFoundException;
 import io.gravitee.am.service.model.UpdateTag;
@@ -56,6 +60,9 @@ public class TagResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Sharding tag", response = Tag.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.MANAGEMENT_TAG, acls = RolePermissionAction.READ)
+    })
     public void get(@PathParam("tag") String tagId, @Suspended final AsyncResponse response) {
         tagService.findById(tagId)
                 .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
@@ -71,6 +78,9 @@ public class TagResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Sharding tag successfully updated", response = Tag.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.MANAGEMENT_TAG, acls = RolePermissionAction.UPDATE)
+    })
     public void update(
             @ApiParam(name = "tag", required = true) @Valid @NotNull final UpdateTag tagToUpdate,
             @PathParam("tag") String tagId,
@@ -88,6 +98,9 @@ public class TagResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 204, message = "Sharding tag successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.MANAGEMENT_TAG, acls = RolePermissionAction.DELETE)
+    })
     public void delete(@PathParam("tag") String tag,
                        @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();

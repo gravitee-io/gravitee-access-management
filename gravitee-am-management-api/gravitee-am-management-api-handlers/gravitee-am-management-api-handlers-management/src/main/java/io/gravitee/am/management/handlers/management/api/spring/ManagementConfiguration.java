@@ -15,11 +15,17 @@
  */
 package io.gravitee.am.management.handlers.management.api.spring;
 
-import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
-import io.gravitee.am.management.handlers.management.api.email.EmailManager;
-import io.gravitee.am.management.handlers.management.api.email.impl.EmailManagerImpl;
-import io.gravitee.am.management.handlers.management.api.idp.IdentityProviderManager;
-import io.gravitee.am.management.handlers.management.api.idp.impl.IdentityProviderManagerImpl;
+import io.gravitee.am.management.handlers.management.api.manager.certificate.CertificateManager;
+import io.gravitee.am.management.handlers.management.api.manager.email.EmailManager;
+import io.gravitee.am.management.handlers.management.api.manager.email.impl.EmailManagerImpl;
+import io.gravitee.am.management.handlers.management.api.manager.group.GroupManager;
+import io.gravitee.am.management.handlers.management.api.manager.group.impl.GroupManagerImpl;
+import io.gravitee.am.management.handlers.management.api.manager.idp.IdentityProviderManager;
+import io.gravitee.am.management.handlers.management.api.manager.idp.impl.IdentityProviderManagerImpl;
+import io.gravitee.am.management.handlers.management.api.manager.membership.MembershipManager;
+import io.gravitee.am.management.handlers.management.api.manager.membership.impl.MembershipManagerImpl;
+import io.gravitee.am.management.handlers.management.api.manager.role.RoleManager;
+import io.gravitee.am.management.handlers.management.api.manager.role.impl.RoleManagerImpl;
 import io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -48,6 +54,21 @@ public class ManagementConfiguration {
     @Bean
     public EmailManager emailManager() {
         return new EmailManagerImpl();
+    }
+
+    @Bean
+    public RoleManager roleManager() {
+        return new RoleManagerImpl();
+    }
+
+    @Bean
+    public GroupManager groupManager() {
+        return new GroupManagerImpl();
+    }
+
+    @Bean
+    public MembershipManager membershipManager() {
+        return new MembershipManagerImpl();
     }
 
 }

@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.admin.authentication;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -36,6 +37,8 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -99,6 +102,14 @@ public class CustomSavedRequestAwareAuthenticationSuccessHandler extends SavedRe
         ((DefaultUser) principal).setId(endUser.getId());
         principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
         principal.getAdditionalInformation().put(Claims.domain, endUser.getDomain());
+
+        // set roles
+        Set<String> roles = endUser.getRoles() != null ? new HashSet<>(endUser.getRoles()) : new HashSet<>();
+        if (principal.getRoles() != null) {
+            roles.addAll(principal.getRoles());
+        }
+        principal.getAdditionalInformation().put(CustomClaims.ROLES, roles);
+
         return jwtGenerator.generateCookie(principal);
     }
 }

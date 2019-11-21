@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.service.exception.GroupAlreadyExistsException;
@@ -61,6 +62,9 @@ public class GroupServiceTest {
 
     @Mock
     private RoleService roleService;
+
+    @Mock
+    private EventService eventService;
 
     private final static String DOMAIN = "domain1";
 
@@ -146,6 +150,7 @@ public class GroupServiceTest {
         when(newGroup.getName()).thenReturn("name");
         when(groupRepository.findByDomainAndName(DOMAIN, newGroup.getName())).thenReturn(Maybe.empty());
         when(groupRepository.create(any(Group.class))).thenReturn(Single.just(new Group()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = groupService.create(DOMAIN, newGroup).test();
         testObserver.awaitTerminalEvent();
@@ -190,6 +195,7 @@ public class GroupServiceTest {
         when(groupRepository.findById("my-group")).thenReturn(Maybe.just(new Group()));
         when(groupRepository.findByDomainAndName(DOMAIN, updateGroup.getName())).thenReturn(Maybe.empty());
         when(groupRepository.update(any(Group.class))).thenReturn(Single.just(new Group()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = groupService.update(DOMAIN, "my-group", updateGroup).test();
         testObserver.awaitTerminalEvent();
@@ -229,6 +235,7 @@ public class GroupServiceTest {
     public void shouldDelete() {
         when(groupRepository.findById("my-group")).thenReturn(Maybe.just(new Group()));
         when(groupRepository.delete("my-group")).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = groupService.delete("my-group").test();
         testObserver.awaitTerminalEvent();

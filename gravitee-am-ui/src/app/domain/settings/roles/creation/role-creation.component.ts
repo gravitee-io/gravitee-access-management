@@ -17,7 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { RoleService } from "../../../../services/role.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../../services/snackbar.service";
-import { AppConfig } from "../../../../../config/app.config";
+import { PlatformService } from "../../../../services/platform.service";
 
 @Component({
   selector: 'app-creation',
@@ -27,31 +27,36 @@ import { AppConfig } from "../../../../../config/app.config";
 export class RoleCreationComponent implements OnInit {
   private scopes: any[];
   private domainId: string;
-  private adminContext: boolean;
+  adminContext: boolean;
   role: any = {};
+  roleScopes: any[] = ['MANAGEMENT', 'DOMAIN', 'APPLICATION'];
 
-
-  constructor(private roleService: RoleService, private router: Router, private route: ActivatedRoute,
-              private snackbarService : SnackbarService) { }
+  constructor(private roleService: RoleService,
+              private platformService: PlatformService,
+              private router: Router,
+              private route: ActivatedRoute,
+              private snackbarService: SnackbarService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
       this.adminContext = true;
     }
     this.scopes = this.route.snapshot.data['scopes'];
   }
 
   create() {
-    this.roleService.create(this.domainId, this.role).subscribe(data => {
-      this.snackbarService.open("Role " + data.name + " created");
-      if (this.adminContext) {
+    if (this.adminContext) {
+      this.platformService.createRole(this.role).subscribe(data => {
+        this.snackbarService.open('Role ' + data.name + ' created');
         this.router.navigate(['/settings', 'management', 'roles', data.id]);
-      } else {
+      });
+    } else {
+      this.roleService.create(this.domainId, this.role).subscribe(data => {
+        this.snackbarService.open('Role ' + data.name + ' created');
         this.router.navigate(['/domains', this.domainId, 'settings', 'roles', data.id]);
-      }
-    });
+      });
+    }
   }
 
 }

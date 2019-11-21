@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ProviderService } from "../../../services/provider.service";
-import { AppConfig } from "../../../../config/app.config";
 import { ActivatedRoute } from "@angular/router";
-import { DomainService } from "../../../services/domain.service";
+import { ProviderService } from "../../../services/provider.service";
 import { SnackbarService } from "../../../services/snackbar.service";
+import { PlatformService } from "../../../services/platform.service";
 
 @Component({
   selector: 'app-settings-management-general',
@@ -26,26 +25,29 @@ import { SnackbarService } from "../../../services/snackbar.service";
   styleUrls: ['./general.component.scss']
 })
 export class ManagementGeneralComponent implements OnInit {
-  private domainId: string = AppConfig.settings.authentication.domainId;
-  domain: any = {};
+  settings: any;
   identityProviders: any[] = [];
   oauth2IdentityProviders: any[] = [];
 
-  constructor(private providerService: ProviderService, private domainService: DomainService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute) { }
+  constructor(private providerService: ProviderService,
+              private platformService: PlatformService,
+              private snackbarService: SnackbarService,
+              private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
-    this.providerService.findByDomain(this.domainId).subscribe(data => {
+    this.settings = this.route.snapshot.data['settings'];
+    this.platformService.identityProviders().subscribe(data => {
       this.identityProviders = data.filter(idp => !idp.external);
       this.oauth2IdentityProviders = data.filter(idp => idp.external);
-    });
+    })
   }
 
   update() {
-    this.domainService.patchIdentityProviders(this.domain.id, this.domain).subscribe(response => {
-      this.domain = response;
-      this.snackbarService.open("Settings updated");
+    const settings = {};
+    settings['identities'] = this.settings.identities;
+    this.platformService.patchSettings(settings).subscribe(response => {
+      this.settings = response;
+      this.snackbarService.open('Settings updated');
     });
   }
 

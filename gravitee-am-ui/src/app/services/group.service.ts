@@ -17,12 +17,14 @@ import {Injectable} from '@angular/core';
 import {AppConfig} from "../../config/app.config";
 import {HttpClient} from "@angular/common/http";
 import {Observable} from "rxjs";
+import {PlatformService} from "./platform.service";
 
 @Injectable()
 export class GroupService {
   private groupsURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient,
+              private platformService: PlatformService) { }
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.groupsURL + domainId + "/groups?page=" + page + "&size=" + size);
@@ -36,7 +38,10 @@ export class GroupService {
     return this.http.post<any>(this.groupsURL + domainId + "/groups", user);
   }
 
-  update(domainId, id, group): Observable<any> {
+  update(domainId, id, group, adminContext): Observable<any> {
+    if (adminContext) {
+      return this.platformService.updateGroup(id, group);
+    }
     return this.http.put<any>(this.groupsURL + domainId + "/groups/" + id, {
       'name' : group.name,
       'description' : group.description,
@@ -44,7 +49,10 @@ export class GroupService {
     });
   }
 
-  delete(domainId, id): Observable<any> {
+  delete(domainId, id, adminContext): Observable<any> {
+    if (adminContext) {
+      return this.platformService.deleteGroup(id);
+    }
     return this.http.delete<any>(this.groupsURL + domainId + "/groups/" + id);
   }
 
@@ -56,11 +64,17 @@ export class GroupService {
     return this.http.get<any>(this.groupsURL + domainId + "/groups/" + groupId + "/roles");
   }
 
-  revokeRole(domainId, groupId, roleId): Observable<any> {
+  revokeRole(domainId, groupId, roleId, adminContext): Observable<any> {
+    if (adminContext) {
+      return this.platformService.revokeGroupRole(groupId, roleId);
+    }
     return this.http.delete<any>(this.groupsURL + domainId + "/groups/" + groupId + "/roles/" + roleId);
   }
 
-  assignRoles(domainId, groupId, roles): Observable<any> {
+  assignRoles(domainId, groupId, roles, adminContext): Observable<any> {
+    if (adminContext) {
+      return this.platformService.assignGroupRoles(groupId, roles);
+    }
     return this.http.post<any>(this.groupsURL + domainId + "/groups/" + groupId + "/roles", roles);
   }
 

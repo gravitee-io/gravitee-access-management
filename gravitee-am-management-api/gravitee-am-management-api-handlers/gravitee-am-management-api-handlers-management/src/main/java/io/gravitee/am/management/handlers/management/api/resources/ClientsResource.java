@@ -18,7 +18,12 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.ClientListItem;
 import io.gravitee.am.management.handlers.management.api.resources.enhancer.ClientEnhancer;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.membership.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -74,9 +79,12 @@ public class ClientsResource extends AbstractResource {
     public void list(@PathParam("domain") String _domain,
                      @QueryParam("q") String query,
                      @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(_domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(_domain)))
                 .flatMapSingle(domain -> getClients(_domain, query)
+                        .map(clients -> filterResources(clients, ReferenceType.APPLICATION, authenticatedUser))
                         .map(clients -> {
                             List<ClientListItem> sortedClients = clients.stream()
                                     .map(clientEnhancer.enhanceClient(Collections.singletonMap(_domain, domain)))
@@ -97,6 +105,9 @@ public class ClientsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Client successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_APPLICATION, acls = RolePermissionAction.CREATE)
+    })
     public void createClient(
             @PathParam("domain") String domain,
             @ApiParam(name = "client", required = true)

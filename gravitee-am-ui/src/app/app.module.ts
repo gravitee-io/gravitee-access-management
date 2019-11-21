@@ -93,6 +93,7 @@ import { DomainSettingsEmailsComponent } from "./domain/settings/emails/emails.c
 import { DomainSettingsEmailComponent } from "./domain/settings/emails/email/email.component";
 import { DomainSettingsAccountComponent } from "./domain/settings/account/account.component";
 import { DomainSettingsPoliciesComponent, PoliciesInfoDialog } from "./domain/settings/policies/policies.component";
+import { DomainSettingsMembershipsComponent } from "./domain/settings/memberships/memberships.component";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
 import { ProviderResolver } from "./resolvers/provider.resolver";
 import { ProviderSettingsComponent } from './domain/settings/providers/provider/settings/settings.component';
@@ -221,6 +222,12 @@ import { ApplicationOAuth2Component, ClaimsInfoDialog, CreateClaimComponent } fr
 import { ApplicationScopeComponent } from "./domain/applications/application/advanced/oauth2/scopes/application-scope.component";
 import { ApplicationCertificatesComponent } from "./domain/applications/application/advanced/certificates/certificates.component";
 import { ApplicationMetadataComponent } from "./domain/applications/application/advanced/metadata/metadata.component";
+import { ApplicationMembershipsComponent } from "./domain/applications/application/advanced/memberships/memberships.component";
+import { ManagementRolesComponent } from "./settings/management/roles/roles.component";
+import { ManagementRoleComponent } from "./settings/management/roles/role/role.component";
+import { MembershipsResolver } from "./resolvers/memberships.resolver";
+import { SettingsResolver } from "./resolvers/settings.resolver";
+import { MembershipsComponent } from "./domain/components/memberships/memberships.component";
 
 @NgModule({
   declarations: [
@@ -251,6 +258,7 @@ import { ApplicationMetadataComponent } from "./domain/applications/application/
     DomainSettingsEmailComponent,
     DomainSettingsAccountComponent,
     DomainSettingsPoliciesComponent,
+    DomainSettingsMembershipsComponent,
     ConfirmComponent,
     EmptystateComponent,
     DomainCreationComponent,
@@ -353,7 +361,11 @@ import { ApplicationMetadataComponent } from "./domain/applications/application/
     ApplicationOAuth2Component,
     ApplicationScopeComponent,
     ApplicationCertificatesComponent,
-    ApplicationMetadataComponent
+    ApplicationMetadataComponent,
+    ApplicationMembershipsComponent,
+    ManagementRolesComponent,
+    ManagementRoleComponent,
+    MembershipsComponent
   ],
   imports: [
     BrowserModule,
@@ -425,6 +437,8 @@ import { ApplicationMetadataComponent } from "./domain/applications/application/
     ApplicationService,
     ApplicationsResolver,
     ApplicationResolver,
+    MembershipsResolver,
+    SettingsResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

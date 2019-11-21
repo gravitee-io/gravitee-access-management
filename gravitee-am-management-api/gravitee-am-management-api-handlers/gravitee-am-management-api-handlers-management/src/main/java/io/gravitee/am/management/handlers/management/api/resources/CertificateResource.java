@@ -16,10 +16,13 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
-import io.gravitee.am.service.CertificatePluginService;
+import io.gravitee.am.management.handlers.management.api.manager.certificate.CertificateManager;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
@@ -58,9 +61,6 @@ public class CertificateResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private CertificatePluginService certificatePluginService;
-
-    @Autowired
     private CertificateManager certificateManager;
 
     @GET
@@ -69,6 +69,9 @@ public class CertificateResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Certificate successfully fetched", response = Certificate.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_CERTIFICATE, acls = RolePermissionAction.READ)
+    })
     public void get(
             @PathParam("domain") String domain,
             @PathParam("certificate") String certificate,
@@ -139,6 +142,9 @@ public class CertificateResource extends AbstractResource {
             @ApiResponse(code = 204, message = "Certificate successfully deleted"),
             @ApiResponse(code = 400, message = "Certificate is bind to existing clients"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_CERTIFICATE, acls = RolePermissionAction.DELETE)
+    })
     public void delete(@PathParam("domain") String domain,
                        @PathParam("certificate") String certificate,
                        @Suspended final AsyncResponse response) {

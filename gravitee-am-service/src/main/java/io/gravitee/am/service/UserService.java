@@ -59,6 +59,8 @@ public interface UserService {
 
     Single<User> update(User user);
 
+    Single<User> enhance(User user);
+
     Completable delete(String userId);
 
     default Single<List<User>> findByDomainAndEmail(String domain, String email) {

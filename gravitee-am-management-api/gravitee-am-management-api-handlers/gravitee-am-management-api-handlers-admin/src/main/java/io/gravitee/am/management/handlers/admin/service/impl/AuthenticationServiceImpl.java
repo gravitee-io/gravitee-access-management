@@ -24,8 +24,6 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.model.NewUser;
-import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
 import io.reactivex.Maybe;
@@ -73,28 +71,39 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return userService.findByDomainAndExternalIdAndSource(domain.getId(), principal.getId(), source)
                 .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), principal.getUsername(), source)))
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
-                .flatMapSingle(user -> {
-                    UpdateUser updateUser = new UpdateUser();
-                    updateUser.setSource(details.get(SOURCE));
-                    updateUser.setLoggedAt(new Date());
-                    updateUser.setLoginsCount(user.getLoginsCount() + 1);
-                    updateUser.setAdditionalInformation(principal.getAdditionalInformation());
-                    return userService.update(domain.getId(), user.getId(), updateUser);
+                .flatMapSingle(existingUser -> {
+                    existingUser.setSource(details.get(SOURCE));
+                    existingUser.setClient(CLIENT_ID);
+                    existingUser.setLoggedAt(new Date());
+                    existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
+                    // set roles
+                    if (existingUser.getRoles() == null) {
+                        existingUser.setRoles(principal.getRoles());
+                    } else if (principal.getRoles() != null) {
+                        // filter roles
+                        principal.getRoles().removeAll(existingUser.getRoles());
+                        existingUser.getRoles().addAll(principal.getRoles());
+                    }
+                    existingUser.setAdditionalInformation(principal.getAdditionalInformation());
+                    return userService.update(existingUser);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof UserNotFoundException) {
-                        final NewUser newUser = new NewUser();
+                        final User newUser = new User();
                         newUser.setInternal(false);
                         newUser.setUsername(principal.getUsername());
                         newUser.setSource(details.get(SOURCE));
                         newUser.setClient(CLIENT_ID);
+                        newUser.setDomain(domain.getId());
                         newUser.setLoggedAt(new Date());
                         newUser.setLoginsCount(1l);
+                        newUser.setRoles(principal.getRoles());
                         newUser.setAdditionalInformation(principal.getAdditionalInformation());
-                        return userService.create(domain.getId(), newUser);
+                        return userService.create(newUser);
                     }
                     return Single.error(ex);
                 })
+                .flatMap(userService::enhance)
                 .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).domain(domain.getId()).client(CLIENT_ID).user(user)))
                 .blockingGet();
     }

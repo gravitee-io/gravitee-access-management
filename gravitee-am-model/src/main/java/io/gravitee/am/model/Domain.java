@@ -28,7 +28,7 @@ import java.util.Set;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class Domain {
+public class Domain implements Resource {
 
     /**
      * Domain identifier.

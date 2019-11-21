@@ -17,12 +17,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
 import { Observable } from "rxjs";
+import {PlatformService} from "./platform.service";
 
 @Injectable()
 export class ReporterService {
   private reportersURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient,
+              private platformService: PlatformService) { }
 
   findByDomain(domainId): Observable<any> {
     return this.http.get<any>(this.reportersURL + domainId + "/reporters");
@@ -32,7 +34,10 @@ export class ReporterService {
     return this.http.get<any>(this.reportersURL + domainId + "/reporters/" + id);
   }
 
-  update(domainId, id, reporter): Observable<any> {
+  update(domainId, id, reporter, adminContext): Observable<any> {
+    if (adminContext) {
+      return this.platformService.updateReporter(id, reporter);
+    }
     return this.http.put<any>(this.reportersURL + domainId + "/reporters/" + id, {
       'name' : reporter.name,
       'enabled': reporter.enabled,

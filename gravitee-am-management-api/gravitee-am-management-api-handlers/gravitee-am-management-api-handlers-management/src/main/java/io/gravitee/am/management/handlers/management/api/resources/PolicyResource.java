@@ -16,7 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Policy;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.PolicyService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -60,6 +64,9 @@ public class PolicyResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Policy", response = Policy.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_EXTENSION_POINT, acls = RolePermissionAction.READ)
+    })
     public void get(
             @PathParam("domain") String domain,
             @PathParam("policy") String policy,
@@ -86,6 +93,9 @@ public class PolicyResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Policy successfully updated", response = Policy.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_EXTENSION_POINT, acls = RolePermissionAction.UPDATE)
+    })
     public void update(
             @PathParam("domain") String domain,
             @PathParam("policy") String policy,
@@ -107,6 +117,9 @@ public class PolicyResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 204, message = "Policy successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_EXTENSION_POINT, acls = RolePermissionAction.DELETE)
+    })
     public void delete(@PathParam("domain") String domain,
                        @PathParam("policy") String policy,
                        @Suspended final AsyncResponse response) {

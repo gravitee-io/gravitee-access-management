@@ -15,7 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.AuditService;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.ApiOperation;
@@ -45,6 +49,9 @@ public class AuditResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Audit log successfully fetched", response = Audit.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_AUDIT, acls = RolePermissionAction.READ)
+    })
     public void get(
             @PathParam("domain") String domain,
             @PathParam("audit") String audit,

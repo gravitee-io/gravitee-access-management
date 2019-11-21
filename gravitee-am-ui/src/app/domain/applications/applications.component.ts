@@ -27,7 +27,6 @@ import { ApplicationService } from "../../services/application.service";
 export class ApplicationsComponent implements OnInit {
   private applications: any[];
   domainId: string;
-  domain: any = {};
   newApplicationRouterLink: any[] = ['/dashboard', 'applications', 'new'];
   page: any = {};
 
@@ -38,12 +37,12 @@ export class ApplicationsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
-    let pagedApps = this.route.snapshot.data['applications'];
+    this.domainId = this.route.snapshot.parent.params['domainId'];
+    const pagedApps = this.route.snapshot.data['applications'];
     this.applications = pagedApps.data;
     this.page.totalElements = pagedApps.totalCount;
-    if (this.domain) {
-      this.newApplicationRouterLink = ['/domains', this.domain.id, 'applications', 'new'];
+    if (this.domainId) {
+      this.newApplicationRouterLink = ['/domains', this.domainId, 'applications', 'new'];
     }
   }
 
@@ -54,7 +53,7 @@ export class ApplicationsComponent implements OnInit {
     });
   }
 
-  setPage(pageInfo){
+  setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
     this.loadApps();
   }

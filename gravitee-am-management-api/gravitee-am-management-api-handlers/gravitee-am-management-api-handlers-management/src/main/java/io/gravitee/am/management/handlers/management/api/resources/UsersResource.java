@@ -15,9 +15,13 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
@@ -73,6 +77,9 @@ public class UsersResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "List users for a security domain", response = User.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.READ)
+    })
     public void list(@PathParam("domain") String domain,
                                 @QueryParam("q") String query,
                                 @QueryParam("page") @DefaultValue("0") int page,
@@ -117,6 +124,9 @@ public class UsersResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "User successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.CREATE)
+    })
     public void create(
             @PathParam("domain") String domain,
             @ApiParam(name = "user", required = true)

@@ -19,8 +19,12 @@ import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity
 import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
@@ -76,6 +80,9 @@ public class UserResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "User successfully fetched", response = UserEntity.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.READ)
+    })
     public void get(
             @PathParam("domain") String domain,
             @PathParam("user") String user,
@@ -105,6 +112,9 @@ public class UserResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "User successfully updated", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.UPDATE)
+    })
     public void updateUser(
             @PathParam("domain") String domain,
             @PathParam("user") String user,
@@ -129,6 +139,9 @@ public class UserResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "User status successfully updated", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.UPDATE)
+    })
     public void updateUserStatus(
             @PathParam("domain") String domain,
             @PathParam("user") String user,
@@ -150,6 +163,9 @@ public class UserResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 204, message = "User successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.DELETE)
+    })
     public void delete(@PathParam("domain") String domain,
                        @PathParam("user") String user,
                        @Suspended final AsyncResponse response) {
@@ -169,6 +185,9 @@ public class UserResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Password reset"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.UPDATE)
+    })
     public void resetPassword(@PathParam("domain") String domain,
                               @PathParam("user") String user,
                               @ApiParam(name = "password", required = true) @Valid @NotNull PasswordValue password,
@@ -196,6 +215,9 @@ public class UserResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Email sent"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.UPDATE)
+    })
     public void sendRegistrationConfirmation(@PathParam("domain") String domain,
                                              @PathParam("user") String user,
                                              @Suspended final AsyncResponse response) {
@@ -217,6 +239,9 @@ public class UserResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "User unlocked"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.UPDATE)
+    })
     public void unlockUser(@PathParam("domain") String domain,
                                              @PathParam("user") String user,
                                              @Suspended final AsyncResponse response) {

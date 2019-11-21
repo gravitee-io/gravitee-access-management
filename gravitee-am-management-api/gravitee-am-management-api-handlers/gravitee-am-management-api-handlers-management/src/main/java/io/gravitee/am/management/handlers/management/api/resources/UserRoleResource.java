@@ -15,8 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -53,6 +57,9 @@ public class UserRoleResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Roles successfully revoked", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.DELETE)
+    })
     public void list(@PathParam("domain") String domain,
                      @PathParam("user") String user,
                      @PathParam("role") String role,

@@ -17,19 +17,20 @@ import { Injectable } from '@angular/core';
 import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { ReporterService } from "../services/reporter.service";
-import { AppConfig } from "../../config/app.config";
+import { PlatformService } from "../services/platform.service";
 
 @Injectable()
 export class ReporterResolver implements Resolve<any> {
 
-  constructor(private reporterService: ReporterService) { }
+  constructor(private reporterService: ReporterService,
+              private platformService: PlatformService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId: string = AppConfig.settings.authentication.domainId;
-    if (!state.url.startsWith('/settings')) {
-       domainId = route.parent.parent.paramMap.get('domainId');
+    const reporterId = route.paramMap.get('reporterId');
+    if (state.url.startsWith('/settings')) {
+      return this.platformService.reporter(reporterId);
     }
-    let reporterId: string = route.paramMap.get('reporterId');
+    const domainId = route.parent.parent.paramMap.get('domainId');
     return this.reporterService.get(domainId, reporterId);
   }
 

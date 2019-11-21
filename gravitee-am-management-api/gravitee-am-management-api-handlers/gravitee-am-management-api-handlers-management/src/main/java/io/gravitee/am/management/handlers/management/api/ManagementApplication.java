@@ -58,8 +58,10 @@ public class ManagementApplication extends ResourceConfig {
         register(Oauth2ExceptionMapper.class);
         register(ValidationExceptionMapper.class);
         register(JsonMappingExceptionMapper.class);
+        register(WebApplicationExceptionMapper.class);
 
         register(UriBuilderRequestFilter.class);
+        register(PermissionsFilter.class);
         register(ByteArrayOutputStreamWriter.class);
         register(JacksonJaxbJsonProvider.class);
 

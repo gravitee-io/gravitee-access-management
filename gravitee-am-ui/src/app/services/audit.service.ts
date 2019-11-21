@@ -16,30 +16,36 @@
 import { Injectable } from '@angular/core';
 import { AppConfig } from "../../config/app.config";
 import { HttpClient } from "@angular/common/http";
+import { PlatformService } from "./platform.service";
 import * as moment from 'moment';
 
 @Injectable()
 export class AuditService {
   private auditsURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient,
+              private platformService: PlatformService) { }
 
   findByDomain(domainId, page, size): any  {
     let from = moment().subtract(1, 'days').valueOf();
     let to = moment().valueOf();
-    return this.http.get(this.auditsURL + domainId + "/audits?page=" + page + "&size=" + size + "&from=" + from + '&to=' + to);
+    return this.http.get(this.auditsURL + domainId + '/audits?page=' + page + '&size=' + size + "&from=" + from + '&to=' + to);
   }
 
   get(domainId, auditId): any  {
-    return this.http.get(this.auditsURL + domainId + "/audits/" + auditId);
+    return this.http.get(this.auditsURL + domainId + '/audits/' + auditId);
   }
 
-  search(domainId, page, size, type, status, user, from, to): any {
-    return this.http.get(this.auditsURL + domainId + "/audits?page=" + page + "&size=" + size +
-      (type ? "&type=" + type : "") +
-      (status ? "&status=" + status : "") +
-      (user ? "&user=" + user : "") +
-      (from ? "&from=" + from : "") +
-      (to ? "&to=" + to : ""));
+  search(domainId, page, size, type, status, user, from, to, adminContext): any {
+    if (adminContext) {
+      return this.platformService.audits(page, size, type, status, user, from, to);
+    }
+
+    return this.http.get(this.auditsURL + domainId + '/audits?page=' + page + '&size=' + size +
+      (type ? '&type=' + type : '') +
+      (status ? '&status=' + status : '') +
+      (user ? '&user=' + user : '') +
+      (from ? '&from=' + from : '') +
+      (to ? '&to=' + to : ''));
   }
 }

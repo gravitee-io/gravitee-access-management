@@ -16,7 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.model.RoleEntity;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -60,6 +64,9 @@ public class RoleResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Role successfully fetched", response = Role.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @io.gravitee.am.management.handlers.management.api.security.Permission(value = RolePermission.DOMAIN_ROLE, acls = RolePermissionAction.READ)
+    })
     public void get(
             @PathParam("domain") String domain,
             @PathParam("role") String role,
@@ -84,8 +91,11 @@ public class RoleResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Update a role")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Role successfully updated", response = Role.class),
+            @ApiResponse(code = 201, message = "Role successfully updated", response = RoleEntity.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @io.gravitee.am.management.handlers.management.api.security.Permission(value = RolePermission.DOMAIN_ROLE, acls = RolePermissionAction.UPDATE)
+    })
     public void update(
             @PathParam("domain") String domain,
             @PathParam("role") String role,
@@ -108,6 +118,9 @@ public class RoleResource extends AbstractResource {
             @ApiResponse(code = 204, message = "Role successfully deleted"),
             @ApiResponse(code = 400, message = "Role is bind to existing users"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @io.gravitee.am.management.handlers.management.api.security.Permission(value = RolePermission.DOMAIN_ROLE, acls = RolePermissionAction.DELETE)
+    })
     public void delete(@PathParam("domain") String domain,
                            @PathParam("role") String role,
                            @Suspended final AsyncResponse response) {

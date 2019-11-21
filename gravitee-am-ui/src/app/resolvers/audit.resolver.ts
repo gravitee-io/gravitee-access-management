@@ -16,20 +16,22 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
-import { AppConfig } from "../../config/app.config";
 import { AuditService } from "../services/audit.service";
+import { PlatformService } from "../services/platform.service";
 
 @Injectable()
 export class AuditResolver implements Resolve<any> {
 
-  constructor(private auditService: AuditService) { }
+  constructor(private auditService: AuditService,
+              private platformService: PlatformService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId: string = AppConfig.settings.authentication.domainId;
-    if (!state.url.startsWith('/settings')) {
-      domainId = route.parent.parent.paramMap.get('domainId');
+    const auditId = route.paramMap.get('auditId');
+    if (state.url.startsWith('/settings')) {
+      return this.platformService.audit(auditId);
     }
-    let auditId: string = route.paramMap.get('auditId');
+
+    const domainId = route.parent.parent.paramMap.get('domainId');
     return this.auditService.get(domainId, auditId);
   }
 

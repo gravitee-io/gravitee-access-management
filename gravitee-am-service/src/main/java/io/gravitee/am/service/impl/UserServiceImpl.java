@@ -22,8 +22,11 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -39,9 +42,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -55,6 +57,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private GroupService groupService;
 
     @Autowired
     private EventService eventService;
@@ -275,6 +283,56 @@ public class UserServiceImpl implements UserService {
                     }
                     LOGGER.error("An error occurs while trying to update a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
+                });
+    }
+
+    @Override
+    public Single<User> enhance(User user) {
+        LOGGER.debug("Enhance user {} with groups and roles", user.getId());
+
+        // fetch user groups
+        return groupService.findByMember(user.getId())
+                .flatMap(groups -> {
+                    Set<String> roles = new HashSet<>();
+                    // get groups roles
+                    if (!groups.isEmpty()) {
+                        roles.addAll(groups
+                                .stream()
+                                .filter(group ->  group.getRoles() != null && !group.getRoles().isEmpty())
+                                .flatMap(group -> group.getRoles().stream())
+                                .collect(Collectors.toSet()));
+                    }
+                    // get user roles
+                    if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+                        roles.addAll(user.getRoles());
+                    }
+                    // fetch roles information and enhance user data
+                    if (!roles.isEmpty()) {
+                        return roleService.findByIdIn(new ArrayList<>(roles))
+                                // update role permission for role with scope
+                                .map(roles1 -> {
+                                    return roles1.stream()
+                                            .map(role -> {
+                                                if (role.getScope() != null) {
+                                                    role.getPermissions().forEach(p -> p = RoleScope.valueOf(role.getScope()).name() + "_" + p);
+                                                }
+                                                return role;
+                                            }).collect(Collectors.toSet());
+                                })
+                                .map(roles1 -> {
+                                    user.setRolesPermissions(roles1);
+                                    return user;
+                                });
+
+                    }
+                    return Single.just(user);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to enhance user {}", user.getId(), ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to enhance user %s", user.getId()), ex));
                 });
     }
 

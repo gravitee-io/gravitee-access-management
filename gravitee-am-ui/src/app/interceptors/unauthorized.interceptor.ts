@@ -36,9 +36,11 @@ export class UnauthorizedInterceptor implements HttpInterceptor {
       }
     }, (err: any) => {
       if (err instanceof HttpErrorResponse) {
-        if (err.status === 401 || err.status === 403) {
+        if (err.status === 401) {
           this.snackbarService.open('The authentication session expires or the user is not authorized');
           this.authService.unauthorized();
+        } else if (err.status === 403) {
+          this.snackbarService.open('Access denied');
         } else {
           this.snackbarService.open(err.error.message || 'Server error');
         }

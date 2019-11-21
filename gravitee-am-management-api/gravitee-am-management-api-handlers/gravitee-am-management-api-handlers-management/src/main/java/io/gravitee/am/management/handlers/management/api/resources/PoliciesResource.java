@@ -16,7 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Policy;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.PolicyService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -61,6 +65,9 @@ public class PoliciesResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered policies for a security domain", response = Policy.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_EXTENSION_POINT, acls = RolePermissionAction.READ)
+    })
     public void list(@PathParam("domain") String domain,
                      @Suspended final AsyncResponse response) {
         domainService.findById(domain)
@@ -84,6 +91,9 @@ public class PoliciesResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Policy successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_EXTENSION_POINT, acls = RolePermissionAction.CREATE)
+    })
     public void create(
             @PathParam("domain") String domain,
             @ApiParam(name = "policy", required = true) @Valid @NotNull final NewPolicy newPolicy,
@@ -109,6 +119,9 @@ public class PoliciesResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Policies successfully updated"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_EXTENSION_POINT, acls = RolePermissionAction.UPDATE)
+    })
     public void update(
             @PathParam("domain") String domain,
             @ApiParam(name = "policies", required = true) @Valid @NotNull final List<Policy> policies,

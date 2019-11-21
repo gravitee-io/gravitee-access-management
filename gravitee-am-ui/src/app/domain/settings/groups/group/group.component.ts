@@ -25,28 +25,34 @@ import { AppConfig } from "../../../../../config/app.config";
 })
 export class GroupComponent implements OnInit {
   private domainId: string;
+  private adminContext = false;
   group: any;
   navLinks: any = [
     {'href': 'settings' , 'label': 'Settings'},
     {'href': 'members' , 'label': 'Members'},
     {'href': 'roles' , 'label': 'Roles'},
   ];
-  
+
   constructor(private route: ActivatedRoute,
               private router: Router,
               private breadcrumbService: BreadcrumbService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
-    }
     this.group = this.route.snapshot.data['group'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.adminContext = true;
+    }
     this.initBreadcrumb();
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/groups/'+this.group.id+'$', this.group.name);
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/groups/'+this.group.id+'/members', 'Members');
+    if (this.adminContext) {
+      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/groups/' + this.group.id + '$', this.group.name);
+      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/groups/members', 'Members');
+    } else {
+      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/groups/' + this.group.id + '$', this.group.name);
+      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/groups/' + this.group.id + '/members', 'Members');
+    }
   }
 }

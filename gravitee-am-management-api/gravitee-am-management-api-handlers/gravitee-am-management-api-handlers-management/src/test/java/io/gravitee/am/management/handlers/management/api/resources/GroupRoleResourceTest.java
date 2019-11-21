@@ -28,6 +28,8 @@ import javax.ws.rs.core.Response;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -46,7 +48,7 @@ public class GroupRoleResourceTest extends JerseySpringTest {
         mockGroup.setId("group-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockGroup)).when(groupService).revokeRoles(mockGroup.getId(), Collections.singletonList("role-1"), null);
+        doReturn(Single.just(mockGroup)).when(groupService).revokeRoles(eq(mockGroup.getId()), eq(Collections.singletonList("role-1")), any());
 
         final Response response = target("domains")
                 .path(domainId)

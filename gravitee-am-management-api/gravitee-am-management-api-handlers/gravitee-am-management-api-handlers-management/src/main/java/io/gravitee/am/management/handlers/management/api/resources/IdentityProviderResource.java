@@ -16,9 +16,13 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.security.Permission;
+import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.permissions.RolePermission;
+import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -66,6 +70,9 @@ public class IdentityProviderResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Identity provider", response = IdentityProvider.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_IDENTITY_PROVIDER, acls = RolePermissionAction.READ)
+    })
     public void get(
             @PathParam("domain") String domain,
             @PathParam("identity") String identityProvider,
@@ -92,6 +99,9 @@ public class IdentityProviderResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 201, message = "Identity provider successfully updated", response = Client.class),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_IDENTITY_PROVIDER, acls = RolePermissionAction.UPDATE)
+    })
     public void update(
             @PathParam("domain") String domain,
             @PathParam("identity") String identity,
@@ -115,6 +125,9 @@ public class IdentityProviderResource extends AbstractResource {
             @ApiResponse(code = 204, message = "Identity provider successfully deleted"),
             @ApiResponse(code = 400, message = "Identity provider is bind to existing clients"),
             @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.DOMAIN_IDENTITY_PROVIDER, acls = RolePermissionAction.DELETE)
+    })
     public void delete(@PathParam("domain") String domain,
                        @PathParam("identity") String identity,
                        @Suspended final AsyncResponse response) {

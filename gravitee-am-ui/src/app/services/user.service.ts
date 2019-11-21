@@ -17,12 +17,14 @@ import {Injectable} from '@angular/core';
 import {AppConfig} from "../../config/app.config";
 import {HttpClient} from "@angular/common/http";
 import {Observable} from "rxjs";
+import {PlatformService} from "./platform.service";
 
 @Injectable()
 export class UserService {
   private usersURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient,
+              private platformService: PlatformService) { }
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.usersURL + domainId + "/users?page=" + page + "&size=" + size);
@@ -71,7 +73,10 @@ export class UserService {
     return this.http.post<any>(this.usersURL + domainId + "/users/" + id + "/unlock", {});
   }
 
-  search(domainId, searchTerm, page, size): Observable<any> {
+  search(domainId, searchTerm, page, size, adminContext): Observable<any> {
+    if (adminContext) {
+      return this.platformService.searchUsers(searchTerm, page, size);
+    }
     return this.http.get<any>(this.usersURL + domainId + "/users?q=" + searchTerm + "&page=" + page + "&size=" + size);
   }
 
@@ -91,11 +96,17 @@ export class UserService {
     return this.http.get<any>(this.usersURL + domainId + "/users/" + userId + "/roles");
   }
 
-  revokeRole(domainId, userId, roleId): Observable<any> {
+  revokeRole(domainId, userId, roleId, adminContext): Observable<any> {
+    if (adminContext) {
+      return this.platformService.revokeUserRole(userId, roleId);
+    }
     return this.http.delete<any>(this.usersURL + domainId + "/users/" + userId + "/roles/" + roleId);
   }
 
-  assignRoles(domainId, userId, roles): Observable<any> {
+  assignRoles(domainId, userId, roles, adminContext): Observable<any> {
+    if (adminContext) {
+      return this.platformService.assignUserRoles(userId, roles);
+    }
     return this.http.post<any>(this.usersURL + domainId + "/users/" + userId + "/roles", roles);
   }
 }

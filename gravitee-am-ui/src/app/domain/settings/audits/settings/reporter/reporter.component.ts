@@ -30,6 +30,7 @@ export class ReporterComponent implements OnInit {
   @ViewChild('reporterForm') form: any;
 
   private domainId: string;
+  private adminContext = false;
   configurationIsValid: boolean = true;
   configurationPristine: boolean = true;
   reporterSchema: any;
@@ -48,7 +49,7 @@ export class ReporterComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
+      this.adminContext = true;
     }
     this.reporter = this.route.snapshot.data['reporter'];
     this.reporterConfiguration = JSON.parse(this.reporter.configuration);
@@ -66,14 +67,14 @@ export class ReporterComponent implements OnInit {
 
   update() {
     this.reporter.configuration = JSON.stringify(this.updateReporterConfiguration);
-    this.reporterService.update(this.domainId, this.reporter.id, this.reporter).subscribe(data => {
+    this.reporterService.update(this.domainId, this.reporter.id, this.reporter, this.adminContext).subscribe(data => {
       this.reporter = data;
       this.reporterConfiguration = JSON.parse(this.reporter.configuration);
       this.updateReporterConfiguration = this.reporterConfiguration;
       this.formChanged = false;
       this.form.reset(this.reporter);
       this.initBreadcrumb();
-      this.snackbarService.open("Reporter updated");
+      this.snackbarService.open('Reporter updated');
     });
   }
 
@@ -91,7 +92,11 @@ export class ReporterComponent implements OnInit {
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/audits/settings/'+this.reporter.id+'$', this.reporter.name);
+    if (this.adminContext) {
+      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/audits/settings/' + this.reporter.id + '$', this.reporter.name);
+    } else {
+      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/audits/settings/' + this.reporter.id + '$', this.reporter.name);
+    }
   }
 
 }

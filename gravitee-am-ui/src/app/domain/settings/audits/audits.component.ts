@@ -46,6 +46,7 @@ export class AuditsComponent implements OnInit {
   filteredUsers: any[];
   private startDateChanged: boolean = false;
   private endDateChanged: boolean = false;
+  private adminContext = false;
   selectedUser: any;
   selectedTimeRange = '1d';
   timeRanges: any[] = [
@@ -95,10 +96,9 @@ export class AuditsComponent implements OnInit {
               private userService: UserService) {
     this.page.pageNumber = 0;
     this.page.size = 10;
-
     this.userCtrl.valueChanges
       .subscribe(searchTerm => {
-        this.userService.search(this.domainId, searchTerm + '*', 0, 30).subscribe(response => {
+        this.userService.search(this.domainId, searchTerm + '*', 0, 30, this.adminContext).subscribe(response => {
           this.filteredUsers = response.data;
         });
       });
@@ -107,7 +107,7 @@ export class AuditsComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
+      this.adminContext = true;
     }
 
     this.pagedAudits = this.route.snapshot.data['audits'];
@@ -119,7 +119,7 @@ export class AuditsComponent implements OnInit {
   }
 
   get isEmpty() {
-    return !this.audits || this.audits.length == 0 && !this.displayReset;
+    return !this.audits || this.audits.length === 0 && !this.displayReset;
   }
 
   setPage(pageInfo){
@@ -230,7 +230,7 @@ export class AuditsComponent implements OnInit {
     let from = this.startDateChanged ? moment(this.startDate).valueOf() : moment().subtract(selectedTimeRange.value, selectedTimeRange.unit);
     let to = this.endDateChanged ? moment(this.endDate).valueOf() : moment().valueOf();
     let user = this.selectedUser || (this.userCtrl.value ? (typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username) : null);
-    this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, user, from, to).subscribe(pagedAudits => {
+    this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, user, from, to, this.adminContext).subscribe(pagedAudits => {
       this.page.totalElements = pagedAudits.totalCount;
       this.audits = pagedAudits.data;
       this.selectedUser = null;

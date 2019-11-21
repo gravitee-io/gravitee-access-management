@@ -16,14 +16,14 @@
 import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from "@angular/router";
 import { GroupService } from "../../../../../services/group.service";
-import { AppConfig } from "../../../../../../config/app.config";
 import { DialogService } from "../../../../../services/dialog.service";
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { MAT_DIALOG_DATA, MatAutocompleteTrigger, MatDialog, MatDialogRef } from "@angular/material";
 import { FormControl } from "@angular/forms";
 import { UserService } from "../../../../../services/user.service";
-import {COMMA, ENTER} from "@angular/cdk/keycodes";
+import { COMMA, ENTER } from "@angular/cdk/keycodes";
 import * as _ from 'lodash';
+import { PlatformService } from "../../../../../services/platform.service";
 
 @Component({
   selector: 'app-group-members',
@@ -32,6 +32,7 @@ import * as _ from 'lodash';
 })
 export class GroupMembersComponent implements OnInit {
   private domainId: string;
+  private adminContext = false;
   group: any;
   members: any[];
   page: any = {};
@@ -41,6 +42,7 @@ export class GroupMembersComponent implements OnInit {
               private groupService: GroupService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
+              private platformService: PlatformService,
               private dialog: MatDialog) {
     this.page.pageNumber = 0;
     this.page.size = 25;
@@ -49,7 +51,7 @@ export class GroupMembersComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
+      this.adminContext = true;
     }
     this.group = this.route.snapshot.parent.data['group'];
     let pagedMembers = this.route.snapshot.data['members'];
@@ -58,12 +60,14 @@ export class GroupMembersComponent implements OnInit {
   }
 
   get isEmpty() {
-    return !this.members || this.members.length == 0;
+    return !this.members || this.members.length === 0;
   }
 
   loadMembers() {
-    this.groupService.findMembers(this.domainId, this.group.id,  this.page.pageNumber,  this.page.size)
-      .subscribe(pagedMembers => {
+    const findMembers = this.adminContext ? this.platformService.groupMembers(this.group.id) :
+      this.groupService.findMembers(this.domainId, this.group.id,  this.page.pageNumber,  this.page.size);
+
+    findMembers.subscribe(pagedMembers => {
         this.page.totalElements = pagedMembers.totalCount;
         this.members = Object.assign([], pagedMembers.data);
       });
@@ -79,7 +83,7 @@ export class GroupMembersComponent implements OnInit {
           if (index > -1) {
             this.group.members.splice(index, 1);
           }
-          this.update("Member deleted")
+          this.update('Member deleted')
         }
       });
   }
@@ -90,12 +94,12 @@ export class GroupMembersComponent implements OnInit {
   }
 
   add() {
-    let dialogRef = this.dialog.open(AddMemberComponent, { width : '700px', data: { domain: this.domainId, groupMembers: this.group.members }});
+    let dialogRef = this.dialog.open(AddMemberComponent, { width : '700px', data: { domain: this.domainId, adminContext: this.adminContext, groupMembers: this.group.members }});
     dialogRef.afterClosed().subscribe(members => {
       if (members) {
         let memberIds = _.map(members, 'id');
         this.group.members = (this.group.members = this.group.members || []).concat(memberIds);
-        this.update("Member(s) added");
+        this.update('Member(s) added');
       }
     });
   }
@@ -112,49 +116,15 @@ export class GroupMembersComponent implements OnInit {
   }
 
   userLink(user) {
-    if (this.domainId == AppConfig.settings.authentication.domainId) {
+    if (this.adminContext) {
       return '/settings/management/users/' + user.id;
     } else {
       return '/domains/' + this.domainId + '/settings/users/' + user.id;
     }
   }
 
-  displayName(user) {
-    // check display name attribute first
-    if (user.displayName) {
-      return user.displayName;
-    }
-
-    // fall back to standard claim 'name'
-    if (user.additionalInformation && user.additionalInformation['name']) {
-      return user.additionalInformation['name'];
-    }
-
-    // fall back to combination of first name and last name
-    if (user.firstName) {
-      let displayName = user.firstName;
-      if (user.lastName) {
-        displayName += ' ' + user.lastName;
-      } else if (user.additionalInformation && user.additionalInformation['family_name']) {
-        displayName += ' ' + user.additionalInformation['family_name']
-      }
-      return displayName;
-    }
-
-    if (user.additionalInformation && user.additionalInformation['given_name']) {
-      let displayName = user.additionalInformation['given_name'];
-      if (user.additionalInformation && user.additionalInformation['family_name']) {
-        displayName += ' ' + user.additionalInformation['family_name']
-      }
-      return displayName;
-    }
-
-    // default display the username
-    return user.username;
-  }
-
   private update(message) {
-    this.groupService.update(this.domainId, this.group.id, this.group).subscribe(data => {
+    this.groupService.update(this.domainId, this.group.id, this.group, this.adminContext).subscribe(data => {
       this.group = data;
       this.loadMembers();
       this.snackbarService.open(message);
@@ -184,7 +154,7 @@ export class AddMemberComponent {
     this.memberCtrl.valueChanges
       .subscribe(searchTerm => {
         if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
-          this.userService.search(data.domain, searchTerm + '*', 0, 30).subscribe(response => {
+          this.userService.search(data.domain, searchTerm + '*', 0, 30, data.adminContext).subscribe(response => {
             this.filteredUsers = response.data.filter(domainUser => _.map(this.selectedMembers, 'id').indexOf(domainUser.id) === -1 && this.groupMembers.indexOf(domainUser.id) === -1);
           });
         }
@@ -207,7 +177,7 @@ export class AddMemberComponent {
 
   displayName(user) {
     if (user.firstName) {
-      return user.firstName + " " + (user.lastName ? user.lastName : '');
+      return user.firstName + ' ' + (user.lastName ? user.lastName : '');
     } else {
       return user.username;
     }

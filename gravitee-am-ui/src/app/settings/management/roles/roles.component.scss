@@ -1,0 +1,63 @@
+.roles-container {
+  padding: 20px 70px 20px 50px;
+  h1 {
+    font-weight: 400;
+  }
+  ngx-datatable {
+    font-size: 14px;
+    box-shadow: none;
+    .role-header {
+      margin: 5px;
+      align-items: center;
+      .role-icon {
+        margin: 0 12px 0 0;
+      }
+      .role-information {
+        h3 {
+          font-size: 14px;
+          font-weight: normal;
+          margin: 0;
+        }
+        small {
+          color: rgba(0,0,0,.54);
+        }
+      }
+    }
+  }
+}
+
+.roles-actions {
+  margin-left: -10px;
+
+  button, a {
+    top: -9px;
+    color: grey;
+  }
+}
+
+.add-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
+
+.add-button-center {
+  text-align: center;
+}
+
+:host /deep/ {
+  .mat-chip-list-wrapper .mat-standard-chip, .mat-chip-list-wrapper input.mat-input-element {
+    margin: 2px 0px 0px 10px;
+    min-height: 24px;
+  }
+  .role-name-cell {
+    padding: 0 !important;
+    a {
+      color: #006CAB;
+      text-decoration: none;
+      &:hover {
+        color: #2196f3;
+      }
+    }
+  }
+}

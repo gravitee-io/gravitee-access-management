@@ -24,14 +24,14 @@
       <form (ngSubmit)="update()" #managementForm="ngForm" fxLayout="column">
         <h4>Identities</h4>
         <mat-form-field>
-          <mat-select placeholder="Identity providers" multiple name="identities" [(ngModel)]="domain.identities">
+          <mat-select placeholder="Identity providers" multiple name="identities" [(ngModel)]="settings.identities">
             <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
           </mat-select>
         </mat-form-field>
 
         <h4>Social</h4>
         <mat-form-field>
-          <mat-select placeholder="Social providers" multiple name="oauth2Identities" [(ngModel)]="domain.socialIdentities">
+          <mat-select placeholder="Social providers" multiple name="oauth2Identities" [(ngModel)]="settings.socialIdentities">
             <mat-option *ngFor="let identityProvider of oauth2IdentityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
           </mat-select>
         </mat-form-field>

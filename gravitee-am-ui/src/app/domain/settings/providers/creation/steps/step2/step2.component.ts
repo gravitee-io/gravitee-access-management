@@ -42,7 +42,6 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.certificates = this.route.snapshot.data['certificates'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
       this.adminContext = true;
     }
   }
@@ -71,8 +70,8 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
 
   create() {
     this.provider.configuration = JSON.stringify(this.provider.configuration);
-    this.providerService.create(this.domainId, this.provider).subscribe(data => {
-      this.snackbarService.open("Provider " + data.name + " created");
+    this.providerService.create(this.domainId, this.provider, this.adminContext).subscribe(data => {
+      this.snackbarService.open('Provider ' + data.name + ' created');
       if (this.adminContext) {
         this.router.navigate(['/settings', 'management', 'providers', data.id]);
       } else {
