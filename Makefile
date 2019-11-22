@@ -81,6 +81,8 @@ GIO_AM_GATEWAY_IMAGE:=graviteeio/am-gateway
 GIO_AM_MANAGEMENT_API_IMAGE:=graviteeio/am-management-api
 GIO_AM_MANAGEMENT_UI_IMAGE:=graviteeio/am-management-ui
 
+GIO_AM_GATEWAY_PLUGINS:=gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/src/main/resources/plugins/
+GIO_AM_MANAGEMENT_API_PLUGINS:=gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/src/main/resources/plugins/
 OIDC_TEST_SOURCE:="https://github.com/openid-certification/oidctest.git"
 OIDC_TEST_BRANCH:="stable-release-1.1.x"
 OIDC_TEST_FOLDER:=".working/oidctest"
@@ -234,6 +236,44 @@ deleteOidcTest: # delete Oidc Test
 
 prune: deleteData deleteContainer deleteImage deleteNetwork ## /!\ Erase all (repositories folder & volumes, containers, images & data)
 	@rm -rf .working
+
+plugins: # Copy plugins to Gateway and Management API
+	@make version
+	@make pluginsGateway
+	@make pluginsManagement
+
+pluginsGateway: # Copy plugins to Gateway
+	@rm -fr $(GIO_AM_GATEWAY_PLUGINS)/gravitee-am*.zip
+	@cp -fr gravitee-am-certificate/gravitee-am-certificate-javakeystore/target/gravitee-am-certificate-javakeystore-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-certificate/gravitee-am-certificate-pkcs12/target/gravitee-am-certificate-pkcs12-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-extensiongrant/gravitee-am-extensiongrant-jwtbearer/target/gravitee-am-extensiongrant-jwtbearer-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-gateway/gravitee-am-gateway-services/gravitee-am-gateway-services-sync/target/gravitee-am-gateway-services-sync-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-oidc/target/gravitee-am-gateway-handler-oidc-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-scim/target/gravitee-am-gateway-handler-scim-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-users/target/gravitee-am-gateway-handler-users-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-github/target/gravitee-am-identityprovider-github-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-inline/target/gravitee-am-identityprovider-inline-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-ldap/target/gravitee-am-identityprovider-ldap-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-mongo/target/gravitee-am-identityprovider-mongo-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-oauth2-generic/target/gravitee-am-identityprovider-oauth2-generic-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-reporter/gravitee-am-reporter-mongodb/target/gravitee-am-reporter-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-repository/gravitee-am-repository-mongodb/target/gravitee-am-repository-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+
+pluginsManagement: # Copy plugins to Management API
+	@rm -fr $(GIO_AM_MANAGEMENT_API_PLUGINS)/gravitee-am*.zip
+	@cp -fr gravitee-am-certificate/gravitee-am-certificate-javakeystore/target/gravitee-am-certificate-javakeystore-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-certificate/gravitee-am-certificate-pkcs12/target/gravitee-am-certificate-pkcs12-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-extensiongrant/gravitee-am-extensiongrant-jwtbearer/target/gravitee-am-extensiongrant-jwtbearer-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-management-api/gravitee-am-management-api-services/gravitee-am-management-api-services-sync/target/gravitee-am-management-api-services-sync-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-github/target/gravitee-am-identityprovider-github-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-inline/target/gravitee-am-identityprovider-inline-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-ldap/target/gravitee-am-identityprovider-ldap-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-mongo/target/gravitee-am-identityprovider-mongo-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-oauth2-generic/target/gravitee-am-identityprovider-oauth2-generic-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-oauth2-generic/target/gravitee-am-identityprovider-oauth2-generic-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-oauth2-generic/target/gravitee-am-identityprovider-oauth2-generic-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-reporter/gravitee-am-reporter-mongodb/target/gravitee-am-reporter-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-repository/gravitee-am-repository-mongodb/target/gravitee-am-repository-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 
 .DEFAULT_GOAL := help
 .PHONY: all test clean build version postman
