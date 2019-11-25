@@ -20,7 +20,7 @@
     <h1>Audit log</h1>
   </div>
 
-  <form (submit)="search($event)" #auditsSearchForm="ngForm" fxLayout="row" fxLayoutGap="10px" class="audits-search">
+  <form (submit)="search()" #auditsSearchForm="ngForm" fxLayout="row" fxLayoutGap="10px" class="audits-search">
     <mat-form-field fxFlex="10">
       <mat-label>Event</mat-label>
       <mat-select name="eventType" [(ngModel)]="eventType" (selectionChange)="updateForm()">
@@ -68,21 +68,29 @@
       <mat-datepicker #pickerEndDate></mat-datepicker>
     </mat-form-field>
 
-    <div fxFlex fxLayout="row" fxLayoutAlign="center">
+    <div fxFlex fxLayout="row" style="align-items: baseline;">
       <button type="submit" mat-icon-button><mat-icon matTooltip="Search">search</mat-icon></button>
       <button *ngIf="displayReset" style="color:grey;" type="button" (click)="resetForm()" mat-icon-button><mat-icon matTooltip="Reset">clear</mat-icon></button>
       <span fxFlex></span>
+      <mat-form-field appearance="fill" floatLabel="always" fxFlex="40" style="font-size: 12px;">
+        <mat-icon matPrefix>timer</mat-icon>
+        <mat-label>Quick Time Range</mat-label>
+        <mat-select name="quickTimeRange" [(value)]="selectedTimeRange" (selectionChange)="search()">
+          <mat-option *ngFor="let timeRange of timeRanges" [value]="timeRange.id">{{timeRange.name}}</mat-option>
+        </mat-select>
+      </mat-form-field>
       <button mat-icon-button (click)="refresh()"><mat-icon matTooltip="Refresh">refresh</mat-icon></button>
-      <a [routerLink]="['settings']"><mat-icon matTooltip="Settings">settings</mat-icon></a>
+      <a mat-icon-button [routerLink]="['settings']"><mat-icon matTooltip="Settings">settings</mat-icon></a>
     </div>
   </form>
 
-  <div class="audits-content" *ngIf="!isEmpty">
+  <div class="audits-content">
     <ngx-datatable class="material" #auditsTable
                    [columnMode]="'flex'"
                    [headerHeight]="40"
                    [footerHeight]="40"
                    [rowHeight]="50"
+                   [messages]="{emptyMessage: 'There is no audit to display.', totalMessage: 'total'}"
                    [rows]='audits'
                    [externalPaging]="true"
                    [count]="page.totalElements"
@@ -153,9 +161,4 @@
       </ngx-datatable-column>
     </ngx-datatable>
   </div>
-
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Audits will appear here'"
-                  [subMessage]="'Start using the platform to collect data'"
-                  [icon]="'list'"></app-emptystate>
 </div>
