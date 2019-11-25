@@ -67,8 +67,8 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     private static final String FIELD_TIMESTAMP = "timestamp";
     private static final String FIELD_TYPE = "type";
     private static final String FIELD_STATUS = "outcome.status";
-    private static final String FIELD_TARGET = "target.id";
-    private static final String FIELD_ACTOR = "actor.id";
+    private static final String FIELD_TARGET = "target.alternativeId";
+    private static final String FIELD_ACTOR = "actor.alternativeId";
 
     @Autowired
     private MongoClient mongoClient;

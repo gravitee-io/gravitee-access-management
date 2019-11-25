@@ -57,7 +57,7 @@ export class AuditsComponent implements OnInit {
 
     this.userCtrl.valueChanges
       .subscribe(searchTerm => {
-        this.userService.search(this.domainId, searchTerm, 0, 30).subscribe(response => {
+        this.userService.search(this.domainId, searchTerm + '*', 0, 30).subscribe(response => {
           this.filteredUsers = response.data;
         });
       });
@@ -151,15 +151,15 @@ export class AuditsComponent implements OnInit {
 
   startDateChange(element, event) {
     this.startDateChanged = true;
-    this.updateForm(element, event);
+    this.updateForm();
   }
 
   endDateChange(element, event) {
     this.endDateChanged = true;
-    this.updateForm(element, event);
+    this.updateForm();
   }
 
-  updateForm(element, event) {
+  updateForm() {
     this.displayReset = true;
   }
 
@@ -182,9 +182,11 @@ export class AuditsComponent implements OnInit {
   searchAudits() {
     let from = this.startDateChanged ? moment(this.startDate).valueOf() : null;
     let to = this.endDateChanged ? moment(this.endDate).valueOf() : null;
-    this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, this.selectedUser, from, to).subscribe(pagedAudits => {
+    let user = this.selectedUser || (this.userCtrl.value ? (typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username) : null);
+    this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, user, from, to).subscribe(pagedAudits => {
       this.page.totalElements = pagedAudits.totalCount;
       this.audits = pagedAudits.data;
+      this.selectedUser = null;
     });
   }
 
@@ -205,7 +207,7 @@ export class AuditsComponent implements OnInit {
   }
 
   onUserSelectionChanged(event) {
-    this.selectedUser = event.option.value["id"];
+    this.selectedUser = event.option.value["username"];
     this.displayReset = true;
   }
 
