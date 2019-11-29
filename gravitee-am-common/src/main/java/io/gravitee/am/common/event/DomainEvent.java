@@ -13,18 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.common.event;
+package io.gravitee.am.common.event;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Action {
+public enum DomainEvent {
 
-    CREATE,
+    DEPLOY,
     UPDATE,
-    DELETE,
-    BULK_CREATE,
-    BULK_UPDATE,
-    BULK_DELETE
+    UNDEPLOY;
+
+    public static DomainEvent actionOf(Action action) {
+        DomainEvent domainEvent = null;
+        switch (action) {
+            case CREATE:
+                domainEvent = DomainEvent.DEPLOY;
+                break;
+            case UPDATE:
+                domainEvent = DomainEvent.UPDATE;
+                break;
+            case DELETE:
+                domainEvent = DomainEvent.UNDEPLOY;
+                break;
+        }
+        return domainEvent;
+    }
 }

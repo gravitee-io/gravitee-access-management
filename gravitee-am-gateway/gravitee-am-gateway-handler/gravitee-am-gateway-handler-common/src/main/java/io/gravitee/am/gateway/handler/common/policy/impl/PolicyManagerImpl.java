@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.common.policy.impl;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
-import io.gravitee.am.gateway.core.event.EventManager;
-import io.gravitee.am.gateway.core.event.PolicyEvent;
+import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.event.PolicyEvent;
 import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.model.Domain;

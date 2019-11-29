@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.reactor;
 
-import io.gravitee.am.gateway.core.event.DomainEvent;
-import io.gravitee.am.gateway.core.event.EventManager;
+import io.gravitee.am.common.event.DomainEvent;
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.reactor.impl.DefaultSecurityDomainManager;
 import io.gravitee.am.model.Domain;
 import org.junit.Assert;

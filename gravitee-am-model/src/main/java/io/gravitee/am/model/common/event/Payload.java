@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.common.event;
 
+import io.gravitee.am.common.event.Action;
+
 import java.util.HashMap;
 import java.util.Map;
 

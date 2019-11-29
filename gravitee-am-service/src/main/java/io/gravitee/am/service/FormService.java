@@ -32,6 +32,8 @@ import java.util.List;
  */
 public interface FormService {
 
+    Maybe<Form> findById(String id);
+
     Single<List<Form>> findByDomain(String domain);
 
     Single<List<Form>> findByDomainAndClient(String domain, String client);

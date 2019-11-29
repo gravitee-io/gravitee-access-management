@@ -13,33 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.core.event;
-
-import io.gravitee.am.model.common.event.Action;
+package io.gravitee.am.management.handlers.admin.form;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum ReporterEvent {
-
-    DEPLOY,
-    UPDATE,
-    UNDEPLOY;
-
-    public static ReporterEvent actionOf(Action action) {
-        ReporterEvent reporterEvent = null;
-        switch (action) {
-            case CREATE:
-                reporterEvent = ReporterEvent.DEPLOY;
-                break;
-            case UPDATE:
-                reporterEvent = ReporterEvent.UPDATE;
-                break;
-            case DELETE:
-                reporterEvent = ReporterEvent.UNDEPLOY;
-                break;
-        }
-        return reporterEvent;
-    }
+public interface FormManager {
 }

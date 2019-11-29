@@ -13,33 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.core.event;
-
-import io.gravitee.am.model.common.event.Action;
+package io.gravitee.am.common.event;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum DomainEvent {
+public enum EmailEvent {
 
     DEPLOY,
     UPDATE,
     UNDEPLOY;
 
-    public static DomainEvent actionOf(Action action) {
-        DomainEvent domainEvent = null;
+    public static EmailEvent actionOf(Action action) {
+        EmailEvent emailEvent = null;
         switch (action) {
             case CREATE:
-                domainEvent = DomainEvent.DEPLOY;
+                emailEvent = EmailEvent.DEPLOY;
                 break;
             case UPDATE:
-                domainEvent = DomainEvent.UPDATE;
+                emailEvent = EmailEvent.UPDATE;
                 break;
             case DELETE:
-                domainEvent = DomainEvent.UNDEPLOY;
+                emailEvent = EmailEvent.UNDEPLOY;
                 break;
         }
-        return domainEvent;
+        return emailEvent;
     }
 }

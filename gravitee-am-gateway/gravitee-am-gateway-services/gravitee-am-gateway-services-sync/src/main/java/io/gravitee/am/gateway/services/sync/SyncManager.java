@@ -17,9 +17,9 @@ package io.gravitee.am.gateway.services.sync;
 
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.common.event.Action;
+import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.common.event.Type;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
@@ -138,7 +138,7 @@ public class SyncManager implements InitializingBean {
             } else {
                 // other events (inner domain events such as client events, template events and so one ...)
                 // just propagate the event
-                eventManager.publishEvent(io.gravitee.am.gateway.core.event.Event.valueOf(event), event.getPayload());
+                eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
             }
         });
     }
