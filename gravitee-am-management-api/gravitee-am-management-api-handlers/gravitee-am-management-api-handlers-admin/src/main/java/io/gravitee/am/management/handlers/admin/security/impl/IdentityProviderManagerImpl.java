@@ -15,30 +15,33 @@
  */
 package io.gravitee.am.management.handlers.admin.security.impl;
 
+import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.common.event.Event;
+import io.gravitee.common.event.EventListener;
+import io.gravitee.common.event.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IdentityProviderManagerImpl implements IdentityProviderManager, InitializingBean {
+public class IdentityProviderManagerImpl implements IdentityProviderManager, InitializingBean, EventListener<IdentityProviderEvent, Payload> {
 
-    /**
-     * Logger
-     */
     private final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
 
     @Autowired
@@ -50,8 +53,11 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     @Autowired
     private IdentityProviderService identityProviderService;
 
-    private Map<String, AuthenticationProvider> providers = new HashMap<>();
-    private Map<String, IdentityProvider> identities = new HashMap<>();
+    @Autowired
+    private EventManager eventManager;
+
+    private ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
 
     @Override
     public AuthenticationProvider get(String id) {
@@ -64,25 +70,84 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        logger.info("Register event listener for identity provider events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, IdentityProviderEvent.class);
+
         logger.info("Initializing identity providers for domain {}", domain.getName());
-        List<IdentityProvider> identityProviders = identityProviderService.findByDomain(domain.getId()).blockingGet();
+        try {
+            List<IdentityProvider> identityProviders = identityProviderService.findByDomain(domain.getId()).blockingGet();
+            identityProviders.forEach(identityProvider -> updateAuthenticationProvider(identityProvider));
+            logger.info("Identity providers loaded for domain {}", domain.getName());
+        } catch (Exception e) {
+            logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);
+        }
+    }
 
-        identityProviders.forEach(identityProvider -> {
-            logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+    @Override
+    public void onEvent(Event<IdentityProviderEvent, Payload> event) {
+        if (domain.getId().equals(event.content().getDomain())) {
+            switch (event.type()) {
+                case DEPLOY:
+                case UPDATE:
+                    updateIdentityProvider(event.content().getId(), event.type());
+                    break;
+                case UNDEPLOY:
+                    removeIdentityProvider(event.content().getId());
+                    break;
+            }
+        }
+    }
 
+    private void updateIdentityProvider(String identityProviderId, IdentityProviderEvent identityProviderEvent) {
+        final String eventType = identityProviderEvent.toString().toLowerCase();
+        logger.info("Domain {} has received {} identity provider event for {}", domain.getName(), eventType, identityProviderId);
+        identityProviderService.findById(identityProviderId)
+                .subscribe(
+                        identityProvider -> {
+                            updateAuthenticationProvider(identityProvider);
+                            logger.info("Identity provider {} {}d for domain {}", identityProviderId, eventType, domain.getName());
+                        },
+                        error -> logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error),
+                        () -> logger.error("No identity provider found with id {}", identityProviderId));
+    }
+
+    private void updateAuthenticationProvider(IdentityProvider identityProvider) {
+        logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+        try {
+            // stop existing provider, if any
+            clearProvider(identityProvider.getId());
+            // create and start the new provider
             AuthenticationProvider authenticationProvider =
                     identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
                             identityProvider.getMappers(), identityProvider.getRoleMapper());
-            // start the authentication provider
             if (authenticationProvider != null) {
-                try {
-                    authenticationProvider.start();
-                    providers.put(identityProvider.getId(), authenticationProvider);
-                    identities.put(identityProvider.getId(), identityProvider);
-                } catch (Exception ex) {
-                    logger.error("An error occurs while starting the {} identity provider", identityProvider, ex);
-                }
+                // start the authentication provider
+                authenticationProvider.start();
+                providers.put(identityProvider.getId(), authenticationProvider);
+                identities.put(identityProvider.getId(), identityProvider);
             }
-        });
+        } catch (Exception ex) {
+            // failed to load the plugin
+            logger.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), ex);
+            clearProvider(identityProvider.getId());
+        }
+    }
+
+    private void removeIdentityProvider(String identityProviderId) {
+        logger.info("Domain {} has received identity provider event, delete identity provider {}", domain.getName(), identityProviderId);
+        clearProvider(identityProviderId);
+    }
+
+    private void clearProvider(String identityProviderId) {
+        AuthenticationProvider authenticationProvider = providers.remove(identityProviderId);
+        if (authenticationProvider != null) {
+            // stop the authentication provider
+            try {
+                authenticationProvider.stop();
+            } catch (Exception e) {
+                logger.error("An error occurs while stopping the identity provider : {}", identityProviderId, e);
+            }
+        }
+        identities.remove(identityProviderId);
     }
 }

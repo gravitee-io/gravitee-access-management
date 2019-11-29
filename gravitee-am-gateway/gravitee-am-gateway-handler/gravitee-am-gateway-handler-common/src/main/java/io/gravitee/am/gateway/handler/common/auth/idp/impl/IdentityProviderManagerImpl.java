@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.auth.idp.impl;
 
-import io.gravitee.am.gateway.core.event.EventManager;
-import io.gravitee.am.gateway.core.event.IdentityProviderEvent;
+import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateProviderManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;

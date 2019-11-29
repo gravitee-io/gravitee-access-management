@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.form.impl;
+package io.gravitee.am.management.handlers.admin.form.impl;
 
-import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.FormEvent;
-import io.gravitee.am.gateway.handler.form.FormManager;
-import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.DomainBasedTemplateResolver;
+import io.gravitee.am.management.handlers.admin.form.FormManager;
+import io.gravitee.am.management.handlers.admin.view.DomainBasedTemplateResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.repository.management.api.FormRepository;
+import io.gravitee.am.service.FormService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.service.AbstractService;
+import io.gravitee.common.event.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -41,49 +40,37 @@ import java.util.concurrent.ConcurrentMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FormManagerImpl extends AbstractService implements FormManager, InitializingBean, EventListener<FormEvent, Payload> {
+public class FormManagerImpl implements FormManager, InitializingBean, EventListener<FormEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(FormManagerImpl.class);
     private ConcurrentMap<String, Form> forms = new ConcurrentHashMap<>();
 
     @Autowired
-    private ITemplateResolver templateResolver;
-
-    @Autowired
-    private FormRepository formRepository;
-
-    @Autowired
     private Domain domain;
+
+    @Autowired
+    private FormService formService;
 
     @Autowired
     private EventManager eventManager;
 
+    @Autowired
+    private ITemplateResolver templateResolver;
+
     @Override
-    public void afterPropertiesSet() {
+    public void afterPropertiesSet() throws Exception {
+        logger.info("Register event listener for form events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, FormEvent.class);
+
         logger.info("Initializing forms for domain {}", domain.getName());
-        formRepository.findByDomain(domain.getId())
+        formService.findByDomain(domain.getId())
                 .subscribe(
                         forms -> {
                             updateForms(forms);
                             logger.info("Forms loaded for domain {}", domain.getName());
                         },
                         error -> logger.error("Unable to initialize forms for domain {}", domain.getName(), error));
-    }
 
-    @Override
-    protected void doStart() throws Exception {
-        super.doStart();
-
-        logger.info("Register event listener for form events for domain {}", domain.getName());
-        eventManager.subscribeForEvents(this, FormEvent.class, domain.getId());
-    }
-
-    @Override
-    protected void doStop() throws Exception {
-        super.doStop();
-
-        logger.info("Dispose event listener for form events for domain {}", domain.getName());
-        eventManager.unsubscribeForEvents(this, FormEvent.class, domain.getId());
     }
 
     @Override
@@ -104,7 +91,7 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
     private void updateForm(String formId, FormEvent formEvent) {
         final String eventType = formEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} form event for {}", domain.getName(), eventType, formId);
-        formRepository.findById(formId)
+        formService.findById(formId)
                 .subscribe(
                         form -> {
                             // check if form has been disabled
@@ -123,7 +110,7 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
         logger.info("Domain {} has received form event, delete form {}", domain.getName(), formId);
         Form deletedForm = forms.remove(formId);
         if (deletedForm != null) {
-            ((DomainBasedTemplateResolver) templateResolver).removeForm(getTemplateName(deletedForm));
+            ((DomainBasedTemplateResolver) templateResolver).removeForm(deletedForm.getTemplate());
         }
     }
 
@@ -133,13 +120,8 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
                 .filter(Form::isEnabled)
                 .forEach(form -> {
                     this.forms.put(form.getId(), form);
-                    ((DomainBasedTemplateResolver) templateResolver).addForm(getTemplateName(form), form.getContent());
+                    ((DomainBasedTemplateResolver) templateResolver).addForm(form.getTemplate(), form.getContent());
                     logger.info("Form {} loaded for domain {} " + (form.getClient() != null ? "and client {}" : ""), form.getTemplate(), domain.getName(), form.getClient());
                 });
-    }
-
-    private String getTemplateName(Form form) {
-        return form.getTemplate()
-                + ((form.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + form.getClient() : "");
     }
 }

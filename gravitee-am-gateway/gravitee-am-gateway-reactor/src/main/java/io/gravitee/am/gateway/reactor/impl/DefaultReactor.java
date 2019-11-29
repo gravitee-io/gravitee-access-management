@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.reactor.impl;
 
-import io.gravitee.am.gateway.core.event.DomainEvent;
+import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.reactor.impl.transaction.TransactionProcessorFactory;

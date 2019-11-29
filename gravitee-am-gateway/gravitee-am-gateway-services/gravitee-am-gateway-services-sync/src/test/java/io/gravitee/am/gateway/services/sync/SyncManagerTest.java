@@ -17,10 +17,10 @@ package io.gravitee.am.gateway.services.sync;
 
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.common.event.Action;
+import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.common.event.Type;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;

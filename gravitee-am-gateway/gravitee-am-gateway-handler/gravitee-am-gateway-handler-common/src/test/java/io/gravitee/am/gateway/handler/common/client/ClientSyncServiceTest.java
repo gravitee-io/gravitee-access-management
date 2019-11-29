@@ -15,16 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.common.client;
 
-import io.gravitee.am.gateway.core.event.ClientEvent;
+import io.gravitee.am.common.event.ClientEvent;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.common.event.Action;
+import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.event.EventManager;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;

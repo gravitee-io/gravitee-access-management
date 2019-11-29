@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.scope.impl;
 
-import io.gravitee.am.gateway.core.event.EventManager;
-import io.gravitee.am.gateway.core.event.ScopeEvent;
+import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.event.ScopeEvent;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Payload;

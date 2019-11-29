@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.user.impl;
 
-import io.gravitee.am.gateway.core.event.EventManager;
-import io.gravitee.am.gateway.core.event.UserEvent;
+import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.event.UserEvent;
 import io.gravitee.am.gateway.handler.common.user.UserManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.user.UserStore;

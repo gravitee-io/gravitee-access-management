@@ -16,7 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.common.event.Type;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.reactivex.observers.TestObserver;

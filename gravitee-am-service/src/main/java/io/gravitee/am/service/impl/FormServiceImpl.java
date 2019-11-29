@@ -16,14 +16,14 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.Template;
-import io.gravitee.am.model.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.common.event.Type;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -68,13 +68,24 @@ public class FormServiceImpl implements FormService {
     private AuditService auditService;
 
     @Override
+    public Maybe<Form> findById(String id) {
+        LOGGER.debug("Find form by id {}", id);
+        return formRepository.findById(id)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a form using its id {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a form using its id %s", id), ex));
+                });
+    }
+
+    @Override
     public Single<List<Form>> findByDomain(String domain) {
         LOGGER.debug("Find form by domain {}", domain);
         return formRepository.findByDomain(domain)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a form using its domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a role using its domain %s", domain), ex));
+                            String.format("An error occurs while trying to find a form using its domain %s", domain), ex));
                 });
     }
 
@@ -85,7 +96,7 @@ public class FormServiceImpl implements FormService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a form using its domain {} and its client {}", domain, client, ex);
                     return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a role using its domain %s and client %s", domain, client), ex));
+                            String.format("An error occurs while trying to find a form using its domain %s and client %s", domain, client), ex));
                 });
     }
 
@@ -96,7 +107,7 @@ public class FormServiceImpl implements FormService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a form using its domain {} and template {}", domain, template, ex);
                     return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a role using its domain %s and template %s", domain, template), ex));
+                            String.format("An error occurs while trying to find a form using its domain %s and template %s", domain, template), ex));
                 });
     }
 

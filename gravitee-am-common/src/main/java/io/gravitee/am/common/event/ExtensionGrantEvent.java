@@ -13,33 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.core.event;
-
-import io.gravitee.am.model.common.event.Action;
+package io.gravitee.am.common.event;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum ClientEvent {
+public enum ExtensionGrantEvent {
 
     DEPLOY,
     UPDATE,
     UNDEPLOY;
 
-    public static ClientEvent actionOf(Action action) {
-        ClientEvent clientEvent = null;
+    public static ExtensionGrantEvent actionOf(Action action) {
+        ExtensionGrantEvent extensionGrantEvent = null;
         switch (action) {
             case CREATE:
-                clientEvent = ClientEvent.DEPLOY;
+                extensionGrantEvent = ExtensionGrantEvent.DEPLOY;
                 break;
             case UPDATE:
-                clientEvent = ClientEvent.UPDATE;
+                extensionGrantEvent = ExtensionGrantEvent.UPDATE;
                 break;
             case DELETE:
-                clientEvent = ClientEvent.UNDEPLOY;
+                extensionGrantEvent = ExtensionGrantEvent.UNDEPLOY;
                 break;
         }
-        return clientEvent;
+        return extensionGrantEvent;
     }
 }
