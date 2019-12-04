@@ -76,23 +76,19 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
                         .map(role -> role.getPermissions() != null ? role.getPermissions() : Collections.<String>emptyList())
                         .flatMap(List::stream)
                         .collect(Collectors.toSet());
-                // no requested scope, set default user permissions scopes to the request
-                if (requestScopes == null || requestScopes.isEmpty()) {
-                    resolvedScopes.addAll(new HashSet<>(permissions));
-                } else {
-                    // filter the actual scopes granted by the resource owner
+                
+                if (requestScopes != null) {
+                	// filter the actual scopes granted by the resource owner
                     requestScopes.forEach(scope -> {
-                        if (permissions.contains(scope)) {
-                            // scope can be rejected by the client but approved by the resource owner
-                            resolvedScopes.add(scope);
-                            invalidScopes.remove(scope);
-                        } else {
-                            if (!clientResolvedScopes.contains(scope)) {
-                                invalidScopes.add(scope);
-                            }
+                        if (!permissions.contains(scope) && !clientResolvedScopes.contains(scope)) {
+                        	invalidScopes.add(scope);
                         }
                     });
                 }
+                
+                // The request must be enhanced with all of user's permissions
+                invalidScopes.removeAll(permissions);
+                resolvedScopes.addAll(permissions);
             }
         }
 
