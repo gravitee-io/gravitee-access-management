@@ -13,19 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.admin.security;
-
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.model.IdentityProvider;
+package io.gravitee.am.common.event;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdentityProviderManager {
+public enum ApplicationEvent {
 
-    AuthenticationProvider get(String id);
+    DEPLOY,
+    UPDATE,
+    UNDEPLOY;
 
-    IdentityProvider getIdentityProvider(String id);
+    public static ApplicationEvent actionOf(Action action) {
+        ApplicationEvent applicationEvent = null;
+        switch (action) {
+            case CREATE:
+                applicationEvent = ApplicationEvent.DEPLOY;
+                break;
+            case UPDATE:
+                applicationEvent = ApplicationEvent.UPDATE;
+                break;
+            case DELETE:
+                applicationEvent = ApplicationEvent.UNDEPLOY;
+                break;
+        }
+        return applicationEvent;
+    }
 }

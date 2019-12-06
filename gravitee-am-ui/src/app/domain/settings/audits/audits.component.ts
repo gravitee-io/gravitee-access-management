@@ -21,6 +21,7 @@ import * as moment from 'moment';
 import { PlatformService } from "../../../services/platform.service";
 import { UserService } from "../../../services/user.service";
 import { FormControl } from "@angular/forms";
+import * as _ from 'lodash';
 
 @Component({
   selector: 'app-audits',
@@ -46,6 +47,46 @@ export class AuditsComponent implements OnInit {
   private startDateChanged: boolean = false;
   private endDateChanged: boolean = false;
   selectedUser: any;
+  selectedTimeRange = '1d';
+  timeRanges: any[] = [
+    {
+      'id': '1h',
+      'name': 'Last hour',
+      'value': 1,
+      'unit': 'hours'
+    },
+    {
+      'id': '12h',
+      'name': 'Last 12 hours',
+      'value': 12,
+      'unit': 'hours'
+    },
+    {
+      'id': '1d',
+      'name': 'Today',
+      'value': 1,
+      'unit': 'days',
+      'default': true
+    },
+    {
+      'id': '7d',
+      'name': 'This week',
+      'value': 1,
+      'unit': 'weeks'
+    },
+    {
+      'id': '30d',
+      'name': 'This month',
+      'value': 1,
+      'unit': 'months'
+    },
+    {
+      'id': '90d',
+      'name': 'Last 90 days',
+      'value': 3,
+      'unit': 'months'
+    }
+  ]
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -57,7 +98,7 @@ export class AuditsComponent implements OnInit {
 
     this.userCtrl.valueChanges
       .subscribe(searchTerm => {
-        this.userService.search(this.domainId, searchTerm, 0, 30).subscribe(response => {
+        this.userService.search(this.domainId, searchTerm + '*', 0, 30).subscribe(response => {
           this.filteredUsers = response.data;
         });
       });
@@ -147,23 +188,22 @@ export class AuditsComponent implements OnInit {
     return params;
   }
 
-  search(event) {
-    event.preventDefault();
+  search() {
     this.page.pageNumber = 0;
     this.searchAudits();
   }
 
   startDateChange(element, event) {
     this.startDateChanged = true;
-    this.updateForm(element, event);
+    this.updateForm();
   }
 
   endDateChange(element, event) {
     this.endDateChanged = true;
-    this.updateForm(element, event);
+    this.updateForm();
   }
 
-  updateForm(element, event) {
+  updateForm() {
     this.displayReset = true;
   }
 
@@ -171,8 +211,10 @@ export class AuditsComponent implements OnInit {
     this.page.pageNumber = 0;
     this.eventType = null;
     this.eventStatus = null;
+    this.startDateChanged = false;
     this.startDate = null;
     this.endDate = null;
+    this.endDateChanged = false;
     this.displayReset = false;
     this.selectedUser = null;
     this.userCtrl.reset();
@@ -184,11 +226,14 @@ export class AuditsComponent implements OnInit {
   }
 
   searchAudits() {
-    let from = this.startDateChanged ? moment(this.startDate).valueOf() : null;
-    let to = this.endDateChanged ? moment(this.endDate).valueOf() : null;
-    this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, this.selectedUser, from, to).subscribe(pagedAudits => {
+    let selectedTimeRange = _.find(this.timeRanges, { id : this.selectedTimeRange });
+    let from = this.startDateChanged ? moment(this.startDate).valueOf() : moment().subtract(selectedTimeRange.value, selectedTimeRange.unit);
+    let to = this.endDateChanged ? moment(this.endDate).valueOf() : moment().valueOf();
+    let user = this.selectedUser || (this.userCtrl.value ? (typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username) : null);
+    this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, user, from, to).subscribe(pagedAudits => {
       this.page.totalElements = pagedAudits.totalCount;
       this.audits = pagedAudits.data;
+      this.selectedUser = null;
     });
   }
 
@@ -209,7 +254,7 @@ export class AuditsComponent implements OnInit {
   }
 
   onUserSelectionChanged(event) {
-    this.selectedUser = event.option.value["id"];
+    this.selectedUser = event.option.value["username"];
     this.displayReset = true;
   }
 

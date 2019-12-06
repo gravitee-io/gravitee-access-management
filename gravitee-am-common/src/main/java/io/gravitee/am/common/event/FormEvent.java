@@ -13,21 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.core.event;
+package io.gravitee.am.common.event;
 
 /**
- * Event manager for AM gateway context
- *
- * We should unregister event listeners when a domain is removed
- *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-import io.gravitee.common.event.EventListener;
+public enum FormEvent {
 
-public interface EventManager extends io.gravitee.common.event.EventManager {
+    DEPLOY,
+    UPDATE,
+    UNDEPLOY;
 
-    <T extends Enum> void subscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain);
-
-    <T extends Enum> void unsubscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain);
+    public static FormEvent actionOf(Action action) {
+        FormEvent formEvent = null;
+        switch (action) {
+            case CREATE:
+                formEvent = FormEvent.DEPLOY;
+                break;
+            case UPDATE:
+                formEvent = FormEvent.UPDATE;
+                break;
+            case DELETE:
+                formEvent = FormEvent.UNDEPLOY;
+                break;
+        }
+        return formEvent;
+    }
 }

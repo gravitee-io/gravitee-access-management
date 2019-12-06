@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.audit.impl;
 
-import io.gravitee.am.gateway.core.event.EventManager;
-import io.gravitee.am.gateway.core.event.ReporterEvent;
+import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reporter;

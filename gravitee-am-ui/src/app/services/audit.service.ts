@@ -16,6 +16,7 @@
 import { Injectable } from '@angular/core';
 import { AppConfig } from "../../config/app.config";
 import { HttpClient } from "@angular/common/http";
+import * as moment from 'moment';
 
 @Injectable()
 export class AuditService {
@@ -24,7 +25,9 @@ export class AuditService {
   constructor(private http: HttpClient) { }
 
   findByDomain(domainId, page, size): any  {
-    return this.http.get(this.auditsURL + domainId + "/audits?page=" + page + "&size=" + size);
+    let from = moment().subtract(1, 'days').valueOf();
+    let to = moment().valueOf();
+    return this.http.get(this.auditsURL + domainId + "/audits?page=" + page + "&size=" + size + "&from=" + from + '&to=' + to);
   }
 
   get(domainId, auditId): any  {

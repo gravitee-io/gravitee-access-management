@@ -13,33 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.core.event;
-
-import io.gravitee.am.model.common.event.Action;
+package io.gravitee.am.common.event;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum CertificateEvent {
+public enum ScopeEvent {
 
     DEPLOY,
     UPDATE,
     UNDEPLOY;
 
-    public static CertificateEvent actionOf(Action action) {
-        CertificateEvent certificateEvent = null;
+    public static ScopeEvent actionOf(Action action) {
+        ScopeEvent scopeEvent = null;
         switch (action) {
             case CREATE:
-                certificateEvent = CertificateEvent.DEPLOY;
+                scopeEvent = ScopeEvent.DEPLOY;
                 break;
             case UPDATE:
-                certificateEvent = CertificateEvent.UPDATE;
+                scopeEvent = ScopeEvent.UPDATE;
                 break;
             case DELETE:
-                certificateEvent = CertificateEvent.UNDEPLOY;
+                scopeEvent = ScopeEvent.UNDEPLOY;
                 break;
         }
-        return certificateEvent;
+        return scopeEvent;
     }
 }

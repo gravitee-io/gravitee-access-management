@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.spring;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import io.gravitee.am.gateway.core.event.EventManager;
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.event.EventManagerImpl;
 import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.reactor.spring.ReactorConfiguration;

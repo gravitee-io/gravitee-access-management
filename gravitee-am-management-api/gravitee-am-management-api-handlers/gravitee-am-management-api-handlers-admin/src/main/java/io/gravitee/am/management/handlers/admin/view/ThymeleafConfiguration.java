@@ -35,7 +35,11 @@ public class ThymeleafConfiguration {
     public TemplateEngine getTemplateEngine() {
         SpringTemplateEngine templateEngine = new SpringTemplateEngine();
         templateEngine.setEnableSpringELCompiler(true);
-        templateEngine.setTemplateResolver(overrideTemplateResolver());
+
+        // set template resolvers
+        DomainBasedTemplateResolver overrideTemplateResolver = (DomainBasedTemplateResolver) overrideTemplateResolver();
+        overrideTemplateResolver.setTemplateEngine(templateEngine);
+        templateEngine.setTemplateResolver(overrideTemplateResolver);
         templateEngine.addTemplateResolver(defaultTemplateResolver());
         return templateEngine;
     }

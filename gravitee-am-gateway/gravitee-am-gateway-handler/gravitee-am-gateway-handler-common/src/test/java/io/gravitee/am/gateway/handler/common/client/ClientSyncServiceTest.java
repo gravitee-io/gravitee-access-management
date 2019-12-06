@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.common.client;
 
-import io.gravitee.am.gateway.core.event.ApplicationEvent;
+import io.gravitee.am.common.event.ApplicationEvent;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.common.event.Action;
+import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.ClientService;

@@ -13,25 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.common.event;
+package io.gravitee.am.common.event;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public enum ExtensionGrantEvent {
 
-    DOMAIN,
-    CLIENT,
-    APPLICATION,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL,
-    REPORTER,
-    POLICY,
-    USER
+    DEPLOY,
+    UPDATE,
+    UNDEPLOY;
+
+    public static ExtensionGrantEvent actionOf(Action action) {
+        ExtensionGrantEvent extensionGrantEvent = null;
+        switch (action) {
+            case CREATE:
+                extensionGrantEvent = ExtensionGrantEvent.DEPLOY;
+                break;
+            case UPDATE:
+                extensionGrantEvent = ExtensionGrantEvent.UPDATE;
+                break;
+            case DELETE:
+                extensionGrantEvent = ExtensionGrantEvent.UNDEPLOY;
+                break;
+        }
+        return extensionGrantEvent;
+    }
 }

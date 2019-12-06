@@ -45,11 +45,17 @@ public class VertxHttpServerConfiguration {
     @Value("${http.ssl.keystore.password:#{null}}")
     private String keyStorePassword;
 
+    @Value("${http.ssl.keystore.type:#{null}}")
+    private String keyStoreType;
+
     @Value("${http.ssl.truststore.path:#{null}}")
     private String trustStorePath;
 
     @Value("${http.ssl.truststore.password:#{null}}")
     private String trustStorePassword;
+
+    @Value("${http.ssl.truststore.type:#{null}}")
+    private String trustStoreType;
 
     @Value("${http.compressionSupported:" + HttpServerOptions.DEFAULT_COMPRESSION_SUPPORTED + "}")
     private boolean compressionSupported;
@@ -154,5 +160,21 @@ public class VertxHttpServerConfiguration {
 
     public void setAlpn(boolean alpn) {
         this.alpn = alpn;
+    }
+
+    public String getKeyStoreType() {
+        return keyStoreType;
+    }
+
+    public void setKeyStoreType(String keyStoreType) {
+        this.keyStoreType = keyStoreType;
+    }
+
+    public String getTrustStoreType() {
+        return trustStoreType;
+    }
+
+    public void setTrustStoreType(String trustStoreType) {
+        this.trustStoreType = trustStoreType;
     }
 }

@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.impl;
 
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
-import io.gravitee.am.gateway.core.event.EventManager;
-import io.gravitee.am.gateway.core.event.ExtensionGrantEvent;
+import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.event.ExtensionGrantEvent;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.CompositeTokenGranter;

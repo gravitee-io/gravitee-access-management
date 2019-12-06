@@ -17,10 +17,10 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.common.event.Action;
+import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.common.event.Type;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.EventMongo;

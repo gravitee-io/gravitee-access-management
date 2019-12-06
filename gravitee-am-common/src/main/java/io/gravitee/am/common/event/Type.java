@@ -13,33 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.core.event;
-
-import io.gravitee.am.model.common.event.Action;
+package io.gravitee.am.common.event;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum ApplicationEvent {
+public enum Type {
 
-    DEPLOY,
-    UPDATE,
-    UNDEPLOY;
-
-    public static ApplicationEvent actionOf(Action action) {
-        ApplicationEvent applicationEvent = null;
-        switch (action) {
-            case CREATE:
-                applicationEvent = ApplicationEvent.DEPLOY;
-                break;
-            case UPDATE:
-                applicationEvent = ApplicationEvent.UPDATE;
-                break;
-            case DELETE:
-                applicationEvent = ApplicationEvent.UNDEPLOY;
-                break;
-        }
-        return applicationEvent;
-    }
+    DOMAIN,
+    CLIENT,
+    APPLICATION,
+    IDENTITY_PROVIDER,
+    CERTIFICATE,
+    EXTENSION_GRANT,
+    SCOPE,
+    ROLE,
+    FORM,
+    EMAIL,
+    REPORTER,
+    POLICY,
+    USER
 }

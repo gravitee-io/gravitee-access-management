@@ -20,71 +20,77 @@
     <h1>Audit log</h1>
   </div>
 
-  <div fxLayout="row" class="audits-search">
-    <form (submit)="search($event)" #auditsSearchForm="ngForm">
-      <mat-form-field fxFlex="10">
-        <mat-label>Event</mat-label>
-        <mat-select name="eventType" [(ngModel)]="eventType" (selectionChange)="updateForm($event.value, $event)">
-          <mat-option></mat-option>
-          <mat-option *ngFor="let eventType of eventTypes" [value]="eventType">
-            {{eventType}}
-          </mat-option>
+  <form (submit)="search()" #auditsSearchForm="ngForm" fxLayout="row" fxLayoutGap="10px" class="audits-search">
+    <mat-form-field fxFlex="10">
+      <mat-label>Event</mat-label>
+      <mat-select name="eventType" [(ngModel)]="eventType" (selectionChange)="updateForm()">
+        <mat-option></mat-option>
+        <mat-option *ngFor="let eventType of eventTypes" [value]="eventType">
+          {{eventType}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field fxFlex="10">
+      <mat-label>Status</mat-label>
+      <mat-select name="eventStatus" [(ngModel)]="eventStatus" (selectionChange)="updateForm()">
+        <mat-option></mat-option>
+        <mat-option [value]="'SUCCESS'">SUCCESS</mat-option>
+        <mat-option [value]="'FAILURE'">FAILURE</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+
+    <mat-form-field fxFlex="10">
+      <input matInput placeholder="User" [matAutocomplete]="auto" [formControl]="userCtrl" (input)="updateForm()"/>
+      <button mat-button *ngIf="selectedUser" matSuffix mat-icon-button aria-label="Clear" (click)="clearUserInput()">
+        <mat-icon style="margin: 0px 0px 0px 3px;">close</mat-icon>
+      </button>
+      <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayUserFn" (optionSelected)="onUserSelectionChanged($event)">
+        <mat-option *ngFor="let user of filteredUsers" [value]="user" matTooltip="{{displayUserName(user)}} | {{user.username}} | {{user.source}}">
+          <span>{{displayUserName(user)}}</span> |
+          <small>{{user.username}}</small> |
+          <small style="color:grey;">{{user.source}}</small>
+        </mat-option>
+      </mat-autocomplete>
+      <mat-hint align="end">By username</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field fxFlex="10">
+      <input (dateInput)="updateForm()" (dateChange)="startDateChange('input', $event)" matInput name="startDate" [max]="endDate" [matDatepicker]="pickerStartDate" placeholder="Start date" [(ngModel)]="startDate">
+      <mat-datepicker-toggle matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
+      <mat-datepicker #pickerStartDate></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field fxFlex="10">
+      <input (dateInput)="updateForm()" (dateChange)="endDateChange('input', $event)" matInput name="endDate" [min]="startDate" [matDatepicker]="pickerEndDate" placeholder="End date" [(ngModel)]="endDate">
+      <mat-datepicker-toggle matSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
+      <mat-datepicker #pickerEndDate></mat-datepicker>
+    </mat-form-field>
+
+    <div fxFlex fxLayout="row" style="align-items: baseline;">
+      <button type="submit" mat-icon-button><mat-icon matTooltip="Search">search</mat-icon></button>
+      <button *ngIf="displayReset" style="color:grey;" type="button" (click)="resetForm()" mat-icon-button><mat-icon matTooltip="Reset">clear</mat-icon></button>
+      <span fxFlex></span>
+      <mat-form-field appearance="fill" floatLabel="always" fxFlex="40" style="font-size: 12px;">
+        <mat-icon matPrefix>timer</mat-icon>
+        <mat-label>Quick Time Range</mat-label>
+        <mat-select name="quickTimeRange" [(value)]="selectedTimeRange" (selectionChange)="search()">
+          <mat-option *ngFor="let timeRange of timeRanges" [value]="timeRange.id">{{timeRange.name}}</mat-option>
         </mat-select>
       </mat-form-field>
-
-      <mat-form-field fxFlex="10" style="margin-left: 20px;">
-        <mat-label>Status</mat-label>
-        <mat-select name="eventStatus" [(ngModel)]="eventStatus" (selectionChange)="updateForm($event.value, $event)">
-          <mat-option></mat-option>
-          <mat-option [value]="'SUCCESS'">SUCCESS</mat-option>
-          <mat-option [value]="'FAILURE'">FAILURE</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-
-      <mat-form-field fxFlex="10" style="margin-left: 20px;">
-        <input matInput placeholder="User" [matAutocomplete]="auto" [formControl]="userCtrl"/>
-        <button mat-button *ngIf="selectedUser" matSuffix mat-icon-button aria-label="Clear" (click)="clearUserInput()">
-          <mat-icon style="margin: 0px 0px 0px 3px;">close</mat-icon>
-        </button>
-        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayUserFn" (optionSelected)="onUserSelectionChanged($event)">
-          <mat-option *ngFor="let user of filteredUsers" [value]="user" matTooltip="{{displayUserName(user)}} | {{user.username}} | {{user.source}}">
-            <span>{{displayUserName(user)}}</span> |
-            <small>{{user.username}}</small> |
-            <small style="color:grey;">{{user.source}}</small>
-          </mat-option>
-        </mat-autocomplete>
-        <mat-hint align="end">By username</mat-hint>
-      </mat-form-field>
-
-      <mat-form-field fxFlex="10" style="margin-left: 20px;">
-        <input (dateInput)="updateForm('input', $event)" (dateChange)="startDateChange('input', $event)" matInput name="startDate" [max]="endDate" [matDatepicker]="pickerStartDate" placeholder="Start date" [(ngModel)]="startDate">
-        <mat-datepicker-toggle matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
-        <mat-datepicker #pickerStartDate></mat-datepicker>
-      </mat-form-field>
-
-      <mat-form-field fxFlex="10" style="margin-left: 20px;">
-        <input (dateInput)="updateForm('input', $event)" (dateChange)="endDateChange('input', $event)" matInput name="endDate" [min]="startDate" [matDatepicker]="pickerEndDate" placeholder="End date" [(ngModel)]="endDate">
-        <mat-datepicker-toggle matSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
-        <mat-datepicker #pickerEndDate></mat-datepicker>
-      </mat-form-field>
-
-      <button style="margin: 5px 0px 0px 20px;" type="submit" mat-icon-button><mat-icon matTooltip="Search">search</mat-icon></button>
-      <button *ngIf="displayReset" style="margin: 5px 0; color:grey;" type="button" (click)="resetForm()" mat-icon-button><mat-icon matTooltip="Reset">clear</mat-icon></button>
-    </form>
-
-    <div fxFlex fxLayoutAlign="end">
       <button mat-icon-button (click)="refresh()"><mat-icon matTooltip="Refresh">refresh</mat-icon></button>
-      <a [routerLink]="['settings']"><mat-icon matTooltip="Settings">settings</mat-icon></a>
+      <a mat-icon-button [routerLink]="['settings']"><mat-icon matTooltip="Settings">settings</mat-icon></a>
     </div>
-  </div>
+  </form>
 
-  <div class="audits-content" *ngIf="!isEmpty">
+  <div class="audits-content">
     <ngx-datatable class="material" #auditsTable
                    [columnMode]="'flex'"
                    [headerHeight]="40"
                    [footerHeight]="40"
                    [rowHeight]="50"
+                   [messages]="{emptyMessage: 'There is no audit to display.', totalMessage: 'total'}"
                    [rows]='audits'
                    [externalPaging]="true"
                    [count]="page.totalElements"
@@ -155,9 +161,4 @@
       </ngx-datatable-column>
     </ngx-datatable>
   </div>
-
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Audits will appear here'"
-                  [subMessage]="'Start using the platform to collect data'"
-                  [icon]="'list'"></app-emptystate>
 </div>

@@ -13,33 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.core.event;
-
-import io.gravitee.am.model.common.event.Action;
+package io.gravitee.am.common.event;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum FormEvent {
+public enum PolicyEvent {
 
     DEPLOY,
     UPDATE,
     UNDEPLOY;
 
-    public static FormEvent actionOf(Action action) {
-        FormEvent formEvent = null;
+    public static PolicyEvent actionOf(Action action) {
+        PolicyEvent policyEvent = null;
         switch (action) {
             case CREATE:
-                formEvent = FormEvent.DEPLOY;
+                policyEvent = PolicyEvent.DEPLOY;
                 break;
             case UPDATE:
-                formEvent = FormEvent.UPDATE;
+                policyEvent = PolicyEvent.UPDATE;
                 break;
             case DELETE:
-                formEvent = FormEvent.UNDEPLOY;
+                policyEvent = PolicyEvent.UNDEPLOY;
+                break;
+            case BULK_UPDATE:
+                policyEvent = PolicyEvent.UPDATE;
                 break;
         }
-        return formEvent;
+        return policyEvent;
     }
 }

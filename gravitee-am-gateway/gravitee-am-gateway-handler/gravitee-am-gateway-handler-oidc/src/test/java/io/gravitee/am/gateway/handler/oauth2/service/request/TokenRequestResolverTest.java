@@ -22,9 +22,11 @@ import io.gravitee.am.model.User;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,23 +49,95 @@ public class TokenRequestResolverTest {
     }
 
     @Test
-    public void shouldResolveTokenRequest_withUser() {
+    public void shouldResolveTokenRequest_withUser_permissionsRequestedAll() {
         final String scope = "read";
-        final String userScope = "user";
+        final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
+        
         TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setScopes(new HashSet<>(Arrays.asList(scope, userScope)));
+        List<String> reqScopes = new ArrayList<>();
+        reqScopes.add(scope);
+        reqScopes.addAll(userScopes);
+        tokenRequest.setScopes(new HashSet<>(reqScopes));
+        
         Client client = new Client();
         client.setEnhanceScopesWithUserPermissions(true);
         client.setScopes(Collections.singletonList(scope));
 
         User user = new User();
         Role role = new Role();
-        role.setPermissions(Collections.singletonList("user"));
+        role.setPermissions(userScopes);
         user.setRolesPermissions(Collections.singleton(role));
 
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        
+        List<String> expectedScopes = new ArrayList<>();
+        expectedScopes.add(scope);
+        expectedScopes.addAll(userScopes);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
+    }
+    
+    @Test
+    public void shouldResolveTokenRequest_withUser_permissionsRequestedAny() {
+        final String scope = "read";
+        final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
+        
+        TokenRequest tokenRequest = new TokenRequest();
+        List<String> reqScopes = new ArrayList<>();
+        reqScopes.add(scope);
+        reqScopes.add(userScopes.get(1)); // Request only the second of the three user scopes
+        tokenRequest.setScopes(new HashSet<>(reqScopes));
+        
+        Client client = new Client();
+        client.setEnhanceScopesWithUserPermissions(true);
+        client.setScopes(Collections.singletonList(scope));
+
+        User user = new User();
+        Role role = new Role();
+        role.setPermissions(userScopes);
+        user.setRolesPermissions(Collections.singleton(role));
+
+        TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        
+        // Request should have been enhanced with all of user's permissions, even though only one has been requested
+        List<String> expectedScopes = new ArrayList<>();
+        expectedScopes.add(scope);
+        expectedScopes.addAll(userScopes);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
+    }
+    
+    @Test
+    public void shouldResolveTokenRequest_withUser_permissionsRequestedNone() {
+        final String scope = "read";
+        final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
+        
+        TokenRequest tokenRequest = new TokenRequest();
+        List<String> reqScopes = new ArrayList<>();
+        reqScopes.add(scope);
+        // Request none of the three user scopes
+        tokenRequest.setScopes(new HashSet<>(reqScopes));
+        
+        Client client = new Client();
+        client.setEnhanceScopesWithUserPermissions(true);
+        client.setScopes(Collections.singletonList(scope));
+
+        User user = new User();
+        Role role = new Role();
+        role.setPermissions(userScopes);
+        user.setRolesPermissions(Collections.singleton(role));
+
+        TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        
+        // Request should have been enhanced with all of user's permissions, even though none of them has been requested
+        List<String> expectedScopes = new ArrayList<>();
+        expectedScopes.add(scope);
+        expectedScopes.addAll(userScopes);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
     }
 
     @Test
@@ -139,4 +213,5 @@ public class TokenRequestResolverTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(request -> request.getScopes().iterator().next().equals(scope));
     }
+    
 }
