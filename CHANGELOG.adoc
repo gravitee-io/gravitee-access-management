@@ -1,5 +1,25 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/193?closed=1[AM - 2.10.4 (2019-12-06)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [oauth2] Scopes should be enhanced also when the user requires some specific scopes https://github.com/gravitee-io/issues/issues/2958[#2958]
+
+*_Management_*
+
+- Apply new sync process to the management part https://github.com/gravitee-io/issues/issues/2953[#2953]
+- Search audits for a specific user https://github.com/gravitee-io/issues/issues/2925[#2925]
+
+=== Improvements
+
+*_Management_*
+
+- [Audit] add timeframe for the audit logs https://github.com/gravitee-io/issues/issues/2748[#2748]
+
+
 == https://github.com/gravitee-io/issues/milestone/190?closed=1[AM - 2.10.3 (2019-11-20)]
 
 === Bug fixes
