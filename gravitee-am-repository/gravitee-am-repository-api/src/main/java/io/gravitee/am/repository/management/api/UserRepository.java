@@ -34,7 +34,7 @@ public interface UserRepository extends CrudRepository<User, String> {
 
     Single<Page<User>> findByDomain(String domain, int page, int size);
 
-    Single<Page<User>> search(String domain, String query, int limit);
+    Single<Page<User>> search(String domain, String query, int page, int size);
 
     Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict);
 

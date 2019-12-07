@@ -80,9 +80,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<Page<User>> search(String domain, String query, int limit) {
+    public Single<Page<User>> search(String domain, String query, int page, int size) {
         LOGGER.debug("Search users for domain {} with query {}", domain, query);
-        return userRepository.search(domain, query, limit)
+        return userRepository.search(domain, query, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to search users for domain {} and query {}", domain, query, ex);
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for domain %s and query %s", domain, query), ex));

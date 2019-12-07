@@ -44,8 +44,8 @@ public class UserRepositoryProxy extends AbstractProxy<UserRepository> implement
     }
 
     @Override
-    public Single<Page<User>> search(String domain, String query, int limit) {
-        return target.search(domain, query, limit);
+    public Single<Page<User>> search(String domain, String query, int page, int size) {
+        return target.search(domain, query, page, size);
     }
 
     @Override

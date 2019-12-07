@@ -100,8 +100,8 @@ public class UserServiceImpl implements UserService {
     private RoleService roleService;
 
     @Override
-    public Single<Page<User>> search(String domain, String query, int limit) {
-        return userService.search(domain, query, limit);
+    public Single<Page<User>> search(String domain, String query, int page, int size) {
+        return userService.search(domain, query, page, size);
     }
 
     @Override
