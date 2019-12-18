@@ -18,6 +18,7 @@ import { ActivatedRoute } from "@angular/router";
 import { ProviderService } from "../../../services/provider.service";
 import { SnackbarService } from "../../../services/snackbar.service";
 import { PlatformService } from "../../../services/platform.service";
+import { AuthService } from "../../../services/auth.service";
 
 @Component({
   selector: 'app-settings-management-general',
@@ -28,14 +29,17 @@ export class ManagementGeneralComponent implements OnInit {
   settings: any;
   identityProviders: any[] = [];
   oauth2IdentityProviders: any[] = [];
+  readonly: boolean;
 
   constructor(private providerService: ProviderService,
               private platformService: PlatformService,
               private snackbarService: SnackbarService,
+              private authService: AuthService,
               private route: ActivatedRoute) { }
 
   ngOnInit() {
     this.settings = this.route.snapshot.data['settings'];
+    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['management_settings_update']);
     this.platformService.identityProviders().subscribe(data => {
       this.identityProviders = data.filter(idp => !idp.external);
       this.oauth2IdentityProviders = data.filter(idp => idp.external);

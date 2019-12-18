@@ -21,7 +21,7 @@
     <div fxLayout="row" style="align-items: center;">
       <h1>{{clientId}}</h1>
       <div fxFlex fxLayoutAlign="end">
-        <button *ngIf="canRevokeAccess();" style="height: 40px;" mat-stroked-button color="warn" (click)="revokeApplication($event)">Revoke access</button>
+        <button *ngIf="canRevokeAccess() && canRevoke" style="height: 40px;" mat-stroked-button color="warn" (click)="revokeApplication($event)">Revoke access</button>
       </div>
     </div>
     <ngx-datatable class="material"
@@ -57,7 +57,7 @@
       <ngx-datatable-column [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="user-application-actions">
-            <button *ngIf="row.status === 'approved'" mat-icon-button (click)="revokeConsent($event, row);"><mat-icon matTooltip="Revoke access">highlight_off</mat-icon></button>
+            <button *ngIf="row.status === 'approved' && canRevoke" mat-icon-button (click)="revokeConsent($event, row);"><mat-icon matTooltip="Revoke access">highlight_off</mat-icon></button>
           </div>
         </ng-template>
       </ngx-datatable-column>

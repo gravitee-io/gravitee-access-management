@@ -25,7 +25,7 @@
             <small>You can add custom information to your application and retrieve them via the <em>client.metadata</em> execution context value.</small>
             <mat-divider></mat-divider>
           </div>
-          <div fxLayout="row" fxLayoutGap="10px" style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px;">
+          <div fxLayout="row" fxLayoutGap="10px" style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px;" *hasPermission="['application_metadata_update']">
             <mat-form-field appearance="outline" floatLabel="always">
               <input matInput name="Name" placeholder="Metadata name" [(ngModel)]="metadata.name"/>
               <mat-hint>The metadata's name.</mat-hint>
@@ -39,7 +39,11 @@
             </div>
           </div>
 
-          <small *ngIf="!metadataIsEmpty()" style="display: block; margin-top: 10px;"><i>Double click to edit and press enter to save changes</i></small>
+          <div *ngIf="!metadataIsEmpty()">
+            <small *hasPermission="['application_metadata_update']" style="display: block; margin-top: 10px;">
+              <i>Double click to edit and press enter to save changes</i>
+            </small>
+          </div>
           <ngx-datatable class="material"
                          [columnMode]="'flex'"
                          [headerHeight]="40"
@@ -73,7 +77,7 @@
                 </mat-form-field>
               </ng-template>
             </ngx-datatable-column>
-            <ngx-datatable-column name="" [flexGrow]="1">
+            <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['application_metadata_update']">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 <div fxLayout="row" class="provider-claims-actions">
                   <button mat-icon-button (click)="deleteMetadata(row.id, $event)"><mat-icon>close</mat-icon></button>
@@ -83,7 +87,7 @@
           </ngx-datatable>
         </div>
 
-        <div fxLayout="row" style="margin-top: 20px;">
+        <div fxLayout="row" style="margin-top: 20px;" *hasPermission="['application_metadata_update']">
           <button mat-raised-button type="submit" [disabled]="!formChanged">SAVE</button>
         </div>
       </form>

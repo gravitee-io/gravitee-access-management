@@ -19,6 +19,7 @@ import { DialogService } from "../../../services/dialog.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { GroupService } from "../../../services/group.service";
 import { PlatformService } from "../../../services/platform.service";
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-groups',
@@ -31,11 +32,14 @@ export class GroupsComponent implements OnInit {
   groups: any[];
   domainId: string;
   page: any = {};
+  createMode: boolean;
+  deleteMode: boolean;
 
   constructor(private groupService: GroupService,
               private platformService: PlatformService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
+              private authService: AuthService,
               private route: ActivatedRoute,
               private router: Router) {
     this.page.pageNumber = 0;
@@ -46,6 +50,11 @@ export class GroupsComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.adminContext = true;
+      this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_create']);
+      this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_delete']);
+    } else {
+      this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_group_create']);
+      this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_group_delete']);
     }
     this.pagedGroups = this.route.snapshot.data['groups'];
     this.groups = this.pagedGroups.data;

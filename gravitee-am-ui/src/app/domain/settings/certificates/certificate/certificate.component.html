@@ -29,12 +29,12 @@
         <h4>Configuration</h4>
         <certificate-form *ngIf="certificate" [certificateConfiguration]="certificateConfiguration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateUpdate($event)"></certificate-form>
 
-        <div fxLayout="row" fxLayoutAlign="end end" class="certificate-actions">
+        <div *hasPermission="['domain_certificate_update']" fxLayout="row" fxLayoutAlign="end end" class="certificate-actions">
           <button mat-raised-button [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
         </div>
       </form>
 
-      <div class="certificate-delete-zone" fxLayout="column">
+      <div *hasPermission="['domain_certificate_delete']" class="certificate-delete-zone" fxLayout="column">
         <p>This operation cannot be undone.</p>
         Certificate will be deleted, clients will not be able to use this certificate to sign tokens.
         <div class="certificate-delete-button" fxLayout="row">

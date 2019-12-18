@@ -33,6 +33,7 @@ public enum RolePermission {
     MANAGEMENT_FORM(RoleScope.MANAGEMENT, ManagementPermission.FORM),
 
     DOMAIN_SETTINGS(RoleScope.DOMAIN, DomainPermission.SETTINGS),
+    DOMAIN_LOGIN_SETTINGS(RoleScope.DOMAIN, DomainPermission.LOGIN_SETTINGS),
     DOMAIN_APPLICATION(RoleScope.DOMAIN, DomainPermission.APPLICATION),
     DOMAIN_FORM(RoleScope.DOMAIN, DomainPermission.FORM),
     DOMAIN_EMAIL_TEMPLATE(RoleScope.DOMAIN, DomainPermission.EMAIL_TEMPLATE),

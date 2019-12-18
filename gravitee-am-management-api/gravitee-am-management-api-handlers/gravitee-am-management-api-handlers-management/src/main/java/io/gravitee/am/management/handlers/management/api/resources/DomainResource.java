@@ -42,6 +42,7 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -71,21 +72,31 @@ public class DomainResource extends AbstractResource {
         domainService.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .map(domain -> {
-                    if (filterResource(domain, ReferenceType.DOMAIN, authenticatedUser) == null) {
-                        throw new ForbiddenException();
-                    }
-                    // check if the user can see domain sensitive settings
-                    if (isAdmin(authenticatedUser) || hasPermission(authenticatedUser, RolePermission.DOMAIN_SETTINGS, RolePermissionAction.READ)) {
+                    if (isAdmin(authenticatedUser)) {
                         return domain;
                     }
-                    // clear data
-                    domain.setAccountSettings(null);
-                    domain.setIdentities(null);
-                    domain.setLoginForm(null);
-                    domain.setLoginSettings(null);
-                    domain.setOidc(null);
-                    domain.setScim(null);
-                    domain.setTags(null);
+                    List<String> resourcePermissions = resourcePermissions(domain, ReferenceType.DOMAIN, authenticatedUser);
+                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_USER_ACCOUNT, RolePermissionAction.READ)) {
+                        domain.setAccountSettings(null);
+                    }
+                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_IDENTITY_PROVIDER, RolePermissionAction.READ)) {
+                        domain.setIdentities(null);
+                    }
+                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_FORM, RolePermissionAction.READ)) {
+                        domain.setLoginForm(null);
+                    }
+                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_LOGIN_SETTINGS, RolePermissionAction.READ)) {
+                        domain.setLoginSettings(null);
+                    }
+                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_DCR, RolePermissionAction.READ)) {
+                        domain.setOidc(null);
+                    }
+                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_SCIM, RolePermissionAction.READ)) {
+                        domain.setScim(null);
+                    }
+                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_SETTINGS, RolePermissionAction.READ)) {
+                        domain.setTags(null);
+                    }
                     return domain;
                 })
                 .map(domain -> Response.ok(domain).build())

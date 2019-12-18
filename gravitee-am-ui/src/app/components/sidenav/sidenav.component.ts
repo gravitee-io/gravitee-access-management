@@ -19,9 +19,9 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd, ActivatedRoute } from "@angular/router";
 import { SidenavService } from "./sidenav.service";
 import { Subscription} from "rxjs";
-import { AuthService } from "../../services/auth.service";
 import { AppConfig } from "../../../config/app.config";
 import * as _ from 'lodash';
+import { AuthGuard } from "../../guards/auth-guard.service";
 
 @Component({
   selector: 'gs-sidenav',
@@ -40,16 +40,19 @@ export class SidenavComponent implements OnInit, OnDestroy {
   displayFirstLevel: boolean = false;
   displaySettingsLevel: boolean = false;
 
-  constructor(private router: Router, private currentRoute:ActivatedRoute, private sidenavService : SidenavService, private authService: AuthService) {
+  constructor(private router: Router,
+              private currentRoute: ActivatedRoute,
+              private sidenavService: SidenavService,
+              private authGuard: AuthGuard) {
   }
 
   ngOnInit() {
     for (let route of this.router.config) {
-      if (route.data && route.data.menu.firstLevel) {
+      if (route.data && route.data.menu && route.data.menu.firstLevel) {
         this.paths.push(route);
       }
       if (route.children) {
-        this.subPaths[route.path.split('/')[0]] = route.children.filter(c => c.data);
+        this.subPaths[route.path.split('/')[0]] = route.children.filter(c => c.data && c.data.menu);
       }
     }
     this.watchRoute();
@@ -96,6 +99,8 @@ export class SidenavComponent implements OnInit, OnDestroy {
         if (_currentSubPaths.length > 2) {
           this.currentSubPaths = this.subPaths[_currentSubPaths[1]];
           if (this.currentSubPaths) {
+            // filter paths to display
+            this.currentSubPaths = this.currentSubPaths.filter(subPath => this.authGuard.canDisplay(currentSnapshot, subPath));
             this.currentSubPaths.forEach(cS => {
               cS.parentPath = _currentSubPaths[1];
               cS.currentResourceId = _currentSubPaths[2];
@@ -109,19 +114,6 @@ export class SidenavComponent implements OnInit, OnDestroy {
           }
         }
       })
-  }
-
-  get user() {
-    return this.authService.user();
-  }
-
-  isAuthenticated() {
-    return this.authService.isAuthenticated();
-  }
-
-  logout() {
-    this.authService.logout();
-    this.router.navigate(['/login']);
   }
 
   resize() {

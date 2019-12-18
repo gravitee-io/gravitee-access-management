@@ -44,7 +44,7 @@
             <mat-slide-toggle
               (change)="enableScopeDiscovery(row.id, $event)"
               [checked]="row.discovery"
-              [disabled]="row.system">
+              [disabled]="row.system || !canEdit">
             </mat-slide-toggle>
           </span>
         </ng-template>
@@ -59,7 +59,7 @@
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="scopes-actions">
             <a mat-icon-button [routerLink]="[row.id]"><mat-icon>settings</mat-icon></a>
-            <button *ngIf="!row.system" mat-icon-button (click)="delete(row.id, $event)"><mat-icon>delete</mat-icon></button>
+            <button *ngIf="!row.system && canDelete" mat-icon-button (click)="delete(row.id, $event)"><mat-icon>delete</mat-icon></button>
           </div>
         </ng-template>
       </ngx-datatable-column>
@@ -68,10 +68,10 @@
 
   <app-emptystate *ngIf="isEmpty"
                   [message]="'Scopes will appear here'"
-                  [subMessage]="'Start creating a scope'"
+                  [subMessage]="'No data to display'"
                   [icon]="'donut_large'"></app-emptystate>
 
-  <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div *hasPermission="['domain_scope_create']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

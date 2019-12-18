@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute} from "@angular/router";
 import {DomainService} from "../../../services/domain.service";
 import {SnackbarService} from "../../../services/snackbar.service";
-import {AppConfig} from "../../../../config/app.config";
-import {ActivatedRoute, Router} from "@angular/router";
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-domain-login',
@@ -27,27 +27,26 @@ import {ActivatedRoute, Router} from "@angular/router";
 export class DomainSettingsLoginComponent implements OnInit {
   domainId: string;
   domain: any = {};
-  formChanged: boolean = false;
+  formChanged = false;
+  readonly = false;
 
   constructor(private domainService: DomainService,
               private snackbarService: SnackbarService,
-              private route: ActivatedRoute,
-              private router: Router) { }
+              private authService: AuthService,
+              private route: ActivatedRoute) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
-    }
     this.domain = this.route.snapshot.data['domain'];
     this.domain.loginSettings = this.domain.loginSettings || {};
+    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['domain_login_settings_update']);
   }
 
   save() {
     this.domainService.patchLoginSettings(this.domainId, this.domain).subscribe(data => {
       this.domain = data;
       this.formChanged = false;
-      this.snackbarService.open("Login configuration updated");
+      this.snackbarService.open('Login configuration updated');
     });
   }
 

@@ -123,14 +123,14 @@ public class RoleManagerImpl implements RoleManager, InitializingBean, EventList
                 .subscribe(
                         role -> {
                             roles.put(role.getId(), role);
-                            logger.info("Role {} {}d", roleId, eventType);
+                            logger.info("Role {} loaded", role.getName(), eventType);
                         },
                         error -> logger.error("Unable to {} role", eventType, error),
                         () -> logger.error("No role found with id {}", roleId));
     }
 
     private void removeRole(String roleId) {
-        logger.info("Management API has received role event, delete role {}", roleId);
+        logger.info("Management API has received delete role event, remove role {}", roleId);
         roles.remove(roleId);
     }
 

@@ -47,6 +47,7 @@ import {LogoutCallbackComponent} from "./logout/callback/callback.component";
 import {LogoutComponent} from "./logout/logout.component";
 import {DomainsResolver} from "./resolvers/domains.resolver";
 import {DomainResolver} from "./resolvers/domain.resolver";
+import {DomainPermissionsResolver} from "./resolvers/domain-permissions.resolver";
 import {ProvidersResolver} from "./resolvers/providers.resolver";
 import {ProviderResolver} from "./resolvers/provider.resolver";
 import {ProviderRolesComponent} from "./domain/settings/providers/provider/roles/roles.component";
@@ -116,6 +117,7 @@ import {ApplicationsResolver} from "./resolvers/applications.resolver";
 import {ApplicationCreationComponent} from "./domain/applications/creation/application-creation.component";
 import {ApplicationComponent} from "./domain/applications/application/application.component";
 import {ApplicationResolver} from "./resolvers/application.resolver";
+import {ApplicationPermissionsResolver} from "./resolvers/application-permissions.resolver";
 import {ApplicationGeneralComponent} from "./domain/applications/application/general/general.component";
 import {ApplicationIdPComponent} from "./domain/applications/application/idp/idp.component";
 import {ApplicationDesignComponent} from "./domain/applications/application/design/design.component";
@@ -133,6 +135,7 @@ import {ManagementRolesComponent} from "./settings/management/roles/roles.compon
 import {ManagementRoleComponent} from "./settings/management/roles/role/role.component";
 import {MembershipsResolver} from "./resolvers/memberships.resolver";
 import {SettingsResolver} from "./resolvers/settings.resolver";
+import {AuthGuard} from "./guards/auth-guard.service";
 
 const routes: Routes = [
   { path: 'dashboard',
@@ -193,7 +196,13 @@ const routes: Routes = [
         }
       },
       { path: 'domains/new',
-        component: DomainCreationComponent
+        component: DomainCreationComponent,
+        canActivate: [AuthGuard],
+        data: {
+          perms: {
+            only: ['management_domain_create']
+          }
+        }
       },
       {
         path: 'management',
@@ -202,12 +211,16 @@ const routes: Routes = [
           menu: {
             label: 'Settings',
             icon: 'settings'
+          },
+          perms: {
+            only: ['management_settings_read']
           }
         },
         children: [
           { path: '', redirectTo: 'general', pathMatch: 'full' },
           { path: 'general',
             component: ManagementGeneralComponent,
+            canActivate: [AuthGuard],
             resolve: {
               settings: SettingsResolver,
             },
@@ -215,12 +228,16 @@ const routes: Routes = [
               menu: {
                 label: 'General',
                 section: 'Settings'
+              },
+              perms: {
+                only: ['management_settings_read']
               }
             }
           },
           {
             path: 'login',
             component: DomainSettingsFormComponent,
+            canActivate: [AuthGuard],
             resolve: {
               form: FormResolver
             },
@@ -228,11 +245,15 @@ const routes: Routes = [
               menu: {
                 label: 'Login Page',
                 section: 'Settings'
+              },
+              perms: {
+                only: ['management_form_read']
               }
             }
           },
           { path: 'providers',
             component: DomainSettingsProvidersComponent,
+            canActivate: [AuthGuard],
             resolve: {
               providers: ProvidersResolver
             },
@@ -240,16 +261,31 @@ const routes: Routes = [
               menu: {
                 label: 'Providers',
                 section: 'Identities'
+              },
+              perms: {
+                only: ['management_identity_provider_read']
               }
             }
           },
           { path: 'providers/new',
-            component: ProviderCreationComponent
+            component: ProviderCreationComponent,
+            canActivate: [AuthGuard],
+            data: {
+              perms: {
+                only: ['management_identity_provider_create']
+              }
+            }
           },
           { path: 'providers/:providerId',
             component: ProviderComponent,
+            canActivate: [AuthGuard],
             resolve: {
               provider: ProviderResolver
+            },
+            data: {
+              perms: {
+                only: ['management_identity_provider_read']
+              }
             },
             children: [
               { path: '', redirectTo: 'settings', pathMatch: 'full' },
@@ -260,6 +296,7 @@ const routes: Routes = [
           },
           { path: 'audits',
             component: AuditsComponent,
+            canActivate: [AuthGuard],
             resolve: {
               audits: AuditsResolver,
             },
@@ -267,28 +304,51 @@ const routes: Routes = [
               menu: {
                 label: 'Audit Log',
                 section: 'Security'
+              },
+              perms: {
+                only: ['management_audit_read']
               }
             }
           },
           { path: 'audits/settings',
             component: AuditsSettingsComponent,
+            canActivate: [AuthGuard],
             resolve: {
               reporters: ReportersResolver
+            },
+            data: {
+              perms: {
+                only: ['management_audit_read']
+              }
             }
           },
           { path: 'audits/settings/:reporterId',
             component: ReporterComponent,
+            canActivate: [AuthGuard],
             resolve: {
               reporter: ReporterResolver
+            },
+            data: {
+              perms: {
+                only: ['management_audit_read']
+              }
             }
           },
           { path: 'audits/:auditId',
             component: AuditComponent,
+            canActivate: [AuthGuard],
             resolve: {
               audit: AuditResolver
+            },
+            data: {
+              perms: {
+                only: ['management_audit_read']
+              }
             }
           },
-          { path: 'users', component: UsersComponent,
+          { path: 'users',
+            component: UsersComponent,
+            canActivate: [AuthGuard],
             resolve: {
               users: UsersResolver
             },
@@ -296,14 +356,23 @@ const routes: Routes = [
               menu: {
                 label: 'Users',
                 section: 'User Management'
+              },
+              perms: {
+                only: ['management_user_read']
               }
             }
           },
           {
             path: 'users/:userId',
             component: UserComponent,
+            canActivate: [AuthGuard],
             resolve: {
               user: UserResolver
+            },
+            data: {
+              perms: {
+                only: ['management_user_read']
+              }
             },
             children: [
               { path: '', redirectTo: 'profile', pathMatch: 'full' },
@@ -313,7 +382,9 @@ const routes: Routes = [
               { path: 'roles', component: UserRolesComponent, resolve: { roles : UserRolesResolver}}
             ]
           },
-          { path: 'groups', component: GroupsComponent,
+          { path: 'groups',
+            component: GroupsComponent,
+            canActivate: [AuthGuard],
             resolve: {
               groups: GroupsResolver
             },
@@ -321,17 +392,32 @@ const routes: Routes = [
               menu: {
                 label: 'Groups',
                 section: 'User Management'
+              },
+              perms: {
+                only: ['management_group_read']
               }
             }
           },
           { path: 'groups/new',
-            component: GroupCreationComponent
+            component: GroupCreationComponent,
+            canActivate: [AuthGuard],
+            data: {
+              perms: {
+                only: ['management_group_create']
+              }
+            }
           },
           {
             path: 'groups/:groupId',
             component: GroupComponent,
+            canActivate: [AuthGuard],
             resolve: {
               group: GroupResolver
+            },
+            data: {
+              perms: {
+                only: ['management_group_read']
+              }
             },
             children: [
               { path: '', redirectTo: 'settings', pathMatch: 'full' },
@@ -340,7 +426,9 @@ const routes: Routes = [
               { path: 'roles', component: GroupRolesComponent, resolve: { roles : GroupRolesResolver}}
             ]
           },
-          { path: 'roles', component: ManagementRolesComponent,
+          { path: 'roles',
+            component: ManagementRolesComponent,
+            canActivate: [AuthGuard],
             resolve: {
               roles: RolesResolver
             },
@@ -348,20 +436,37 @@ const routes: Routes = [
               menu: {
                 label: 'Roles',
                 section: 'User Management',
+              },
+              perms: {
+                only: ['management_role_read']
               }
             }
           },
           { path: 'roles/new',
-            component: RoleCreationComponent
+            component: RoleCreationComponent,
+            canActivate: [AuthGuard],
+            data: {
+              perms: {
+                only: ['management_role_create']
+              }
+            }
           },
           {
             path: 'roles/:roleId',
             component: ManagementRoleComponent,
+            canActivate: [AuthGuard],
             resolve: {
               role: RoleResolver
+            },
+            data: {
+              perms: {
+                only: ['management_role_read']
+              }
             }
           },
-          { path: 'tags', component: TagsComponent,
+          { path: 'tags',
+            component: TagsComponent,
+            canActivate: [AuthGuard],
             resolve: {
               tags: TagsResolver
             },
@@ -369,26 +474,43 @@ const routes: Routes = [
               menu: {
                 label: 'Sharding tags',
                 section: 'Deployment'
+              },
+              perms: {
+                only: ['management_shard_read']
               }
             }
           },
           { path: 'tags/new',
-            component: TagCreationComponent
+            component: TagCreationComponent,
+            canActivate: [AuthGuard],
+            data: {
+              perms: {
+                only: ['management_shard_create']
+              }
+            }
           },
           {
             path: 'tags/:tagId',
             component: TagComponent,
+            canActivate: [AuthGuard],
             resolve: {
               tag: TagResolver
+            },
+            data: {
+              perms: {
+                only: ['management_shard_read']
+              }
             }
           }
         ]
       }
     ]
   },
-  { path: 'domains/:domainId', component: DomainComponent,
+  { path: 'domains/:domainId',
+    component: DomainComponent,
     resolve: {
       domain: DomainResolver,
+      permissions: DomainPermissionsResolver
     },
     data: {
       menu: {
@@ -420,72 +542,120 @@ const routes: Routes = [
       },
       { path: 'applications/new',
         component: ApplicationCreationComponent,
+        canActivate: [AuthGuard],
         resolve: {
           domains: DomainsResolver
+        },
+        data: {
+          perms: {
+            only: ['domain_application_create']
+          }
         }
       },
       { path: 'applications/:appId',
         component: ApplicationComponent,
         resolve: {
-          application: ApplicationResolver
+          application: ApplicationResolver,
+          permissions: ApplicationPermissionsResolver
         },
         children: [
           { path: '', redirectTo: 'general', pathMatch: 'full' },
           { path: 'general', component: ApplicationGeneralComponent, resolve: { domain: DomainResolver } },
-          { path: 'idp', component: ApplicationIdPComponent },
+          { path: 'idp',
+            component: ApplicationIdPComponent,
+            canActivate: [AuthGuard],
+            data: {
+              perms: {
+                only: ['application_identity_provider_read']
+              }
+            }
+          },
           { path: 'design',
             component: ApplicationDesignComponent,
             children: [
-              { path: '', redirectTo: 'forms', pathMatch: 'full' },
               { path: 'forms',
                 component: ApplicationFormsComponent,
+                canActivate: [AuthGuard],
                 resolve: { domain: DomainResolver },
                 data: {
                   menu: {
                     label: 'Forms',
                     section: 'Design'
+                  },
+                  perms: {
+                    only: ['application_form_read']
                   }
                 }
               },
-              { path: 'forms/form', component: ApplicationFormComponent, resolve: { form: FormResolver } },
+              { path: 'forms/form',
+                component: ApplicationFormComponent,
+                canActivate: [AuthGuard],
+                resolve: { form: FormResolver },
+                data: {
+                  perms: {
+                    only: ['application_form_read']
+                  }
+                }
+              },
               { path: 'emails',
                 component: ApplicationEmailsComponent,
+                canActivate: [AuthGuard],
                 resolve: { domain: DomainResolver },
                 data: {
                   menu: {
                     label: 'Emails',
                     section: 'Design'
+                  },
+                  perms: {
+                    only: ['application_email_template_read']
                   }
                 }
               },
-              { path: 'emails/email', component: ApplicationEmailComponent, resolve: { email: EmailResolver} }
+              { path: 'emails/email',
+                component: ApplicationEmailComponent,
+                canActivate: [AuthGuard],
+                resolve: { email: EmailResolver},
+                data: {
+                  perms: {
+                    only: ['application_email_template_read']
+                  }
+                }
+              }
             ]
           },
           { path: 'settings',
             component: ApplicationAdvancedComponent,
             children: [
-              { path: '', redirectTo: 'metadata', pathMatch: 'full' },
               { path: 'metadata',
                 component: ApplicationMetadataComponent,
+                canActivate: [AuthGuard],
                 data: {
                   menu: {
                     label: 'Application metadata',
                     section: 'Settings'
+                  },
+                  perms: {
+                    only: ['application_metadata_read']
                   }
                 }
               },
               { path: 'oauth2',
                 component: ApplicationOAuth2Component,
+                canActivate: [AuthGuard],
                 resolve: { domainGrantTypes: ExtensionGrantsResolver, scopes: ScopesResolver },
                 data: {
                   menu: {
                     label: 'OAuth 2.0 / OIDC',
                     section: 'Settings'
+                  },
+                  perms: {
+                    only: ['application_oauth2_read']
                   }
                 }
               },
               { path: 'members',
                 component: ApplicationMembershipsComponent,
+                canActivate: [AuthGuard],
                 resolve: {
                   members: MembershipsResolver
                 },
@@ -493,25 +663,36 @@ const routes: Routes = [
                   menu: {
                     label: 'User and group access',
                     section: 'Settings'
+                  },
+                  perms: {
+                    only: ['application_member_read']
                   }
                 }
               },
               { path: 'account',
                 component: ApplicationAccountSettingsComponent,
+                canActivate: [AuthGuard],
                 data: {
                   menu: {
                     label: 'User Accounts',
                     section: 'Security'
+                  },
+                  perms: {
+                    only: ['application_user_account_read']
                   }
                 }
               },
               { path: 'certificates',
                 component: ApplicationCertificatesComponent,
+                canActivate: [AuthGuard],
                 resolve : { certificates: CertificatesResolver },
                 data: {
                   menu: {
                     label: 'Certificates',
                     section: 'Security'
+                  },
+                  perms: {
+                    only: ['application_certificate_read']
                   }
                 }
               }
@@ -519,7 +700,9 @@ const routes: Routes = [
           }
         ]
       },
-      { path: 'settings', component: DomainSettingsComponent,
+      { path: 'settings',
+        component: DomainSettingsComponent,
+        canActivate: [AuthGuard],
         resolve: {
           domain: DomainResolver,
         },
@@ -527,12 +710,16 @@ const routes: Routes = [
           menu: {
             label: 'Settings',
             icon: 'settings',
+          },
+          perms: {
+            only: ['domain_settings_read']
           }
         },
         children: [
           { path: '', redirectTo: 'general', pathMatch: 'full' },
           { path: 'general',
             component: DomainSettingsGeneralComponent,
+            canActivate: [AuthGuard],
             resolve: {
               tags: TagsResolver
             },
@@ -540,11 +727,15 @@ const routes: Routes = [
               menu: {
                 label: 'General',
                 section: 'Settings'
+              },
+              perms: {
+                only: ['domain_settings_read']
               }
             }
           },
           { path: 'members',
             component: DomainSettingsMembershipsComponent,
+            canActivate: [AuthGuard],
             resolve: {
               members: MembershipsResolver
             },
@@ -552,11 +743,15 @@ const routes: Routes = [
               menu: {
                 label: 'User and group access',
                 section: 'Settings'
+              },
+              perms: {
+                only: ['domain_member_read']
               }
             }
           },
           { path: 'login',
             component: DomainSettingsLoginComponent,
+            canActivate: [AuthGuard],
             resolve: {
               domain: DomainResolver
             },
@@ -564,16 +759,23 @@ const routes: Routes = [
               menu: {
                 label: 'Login',
                 section: 'Settings'
+              },
+              perms: {
+                only: ['domain_login_settings_read']
               }
             }
           },
           { path: 'forms',
             component: DomainSettingsFormsComponent,
+            canActivate: [AuthGuard],
             resolve: { domain: DomainResolver },
             data: {
               menu: {
                 label: 'Forms',
                 section: 'Settings'
+              },
+              perms: {
+                only: ['domain_form_read']
               }
             }
           },
@@ -585,11 +787,15 @@ const routes: Routes = [
           },
           { path: 'emails',
             component: DomainSettingsEmailsComponent,
+            canActivate: [AuthGuard],
             resolve: { domain: DomainResolver },
             data: {
               menu: {
                 label: 'Emails',
                 section: 'Settings'
+              },
+              perms: {
+                only: ['domain_email_template_read']
               }
             }
           },
@@ -601,6 +807,7 @@ const routes: Routes = [
           },
           { path: 'policies',
             component: DomainSettingsPoliciesComponent,
+            canActivate: [AuthGuard],
             resolve: {
               policies: PoliciesResolver
             },
@@ -608,11 +815,15 @@ const routes: Routes = [
               menu: {
                 label: 'Extension Points',
                 section: 'Design'
+              },
+              perms: {
+                only: ['domain_extension_point_read']
               }
             }
           },
           { path: 'providers',
             component: DomainSettingsProvidersComponent,
+            canActivate: [AuthGuard],
             resolve: {
               providers: ProvidersResolver
             },
@@ -620,6 +831,9 @@ const routes: Routes = [
               menu: {
                 label: 'Providers',
                 section: 'Identities'
+              },
+              perms: {
+                only: ['domain_identity_provider_read']
               }
             }
           },
@@ -643,6 +857,7 @@ const routes: Routes = [
           },
           { path: 'audits',
             component: AuditsComponent,
+            canActivate: [AuthGuard],
             resolve: {
               audits: AuditsResolver,
             },
@@ -650,13 +865,22 @@ const routes: Routes = [
               menu: {
                 label: 'Audit Log',
                 section: 'Security'
+              },
+              perms: {
+                only: ['domain_audit_read']
               }
             }
           },
           { path: 'audits/settings',
             component: AuditsSettingsComponent,
+            canActivate: [AuthGuard],
             resolve: {
               reporters: ReportersResolver
+            },
+            data: {
+              perms: {
+                only: ['domain_audit_update']
+              }
             }
           },
           { path: 'audits/settings/:reporterId',
@@ -673,6 +897,7 @@ const routes: Routes = [
           },
           { path: 'account',
             component: DomainSettingsAccountComponent,
+            canActivate: [AuthGuard],
             resolve: {
               domain: DomainResolver
             },
@@ -680,11 +905,15 @@ const routes: Routes = [
               menu: {
                 label: 'User Accounts',
                 section: 'Security'
+              },
+              perms: {
+                only: ['domain_user_account_read']
               }
             }
           },
           { path: 'certificates',
             component: DomainSettingsCertificatesComponent,
+            canActivate: [AuthGuard],
             resolve: {
               certificates: CertificatesResolver
             },
@@ -692,6 +921,9 @@ const routes: Routes = [
               menu: {
                 label: 'Certificates',
                 section: 'Security'
+              },
+              perms: {
+                only: ['domain_certificate_read']
               }
             }
           },
@@ -701,11 +933,19 @@ const routes: Routes = [
           {
             path: 'certificates/:certificateId',
             component: CertificateComponent,
+            canActivate: [AuthGuard],
             resolve: {
               certificate: CertificateResolver
+            },
+            data: {
+              perms: {
+                only: ['domain_certificate_read']
+              }
             }
           },
-          { path: 'users', component: UsersComponent,
+          { path: 'users',
+            component: UsersComponent,
+            canActivate: [AuthGuard],
             resolve: {
               users: UsersResolver
             },
@@ -713,17 +953,32 @@ const routes: Routes = [
               menu: {
                 label: 'Users',
                 section: 'User Management'
+              },
+              perms: {
+                only: ['domain_user_read']
               }
             }
           },
           { path: 'users/new',
-            component: UserCreationComponent
+            component: UserCreationComponent,
+            canActivate: [AuthGuard],
+            data: {
+              perms: {
+                only: ['domain_user_create']
+              }
+            }
           },
           {
             path: 'users/:userId',
             component: UserComponent,
+            canActivate: [AuthGuard],
             resolve: {
               user: UserResolver
+            },
+            data: {
+              perms: {
+                only: ['domain_user_read']
+              }
             },
             children: [
               { path: '', redirectTo: 'profile', pathMatch: 'full' },
@@ -733,7 +988,9 @@ const routes: Routes = [
               { path: 'roles', component: UserRolesComponent, resolve: { roles : UserRolesResolver}}
             ]
           },
-          { path: 'groups', component: GroupsComponent,
+          { path: 'groups',
+            component: GroupsComponent,
+            canActivate: [AuthGuard],
             resolve: {
               groups: GroupsResolver
             },
@@ -741,17 +998,32 @@ const routes: Routes = [
               menu: {
                 label: 'Groups',
                 section: 'User Management'
+              },
+              perms: {
+                only: ['domain_group_read']
               }
             }
           },
           { path: 'groups/new',
-            component: GroupCreationComponent
+            component: GroupCreationComponent,
+            canActivate: [AuthGuard],
+            data: {
+              perms: {
+                only: ['domain_group_create']
+              }
+            }
           },
           {
             path: 'groups/:groupId',
             component: GroupComponent,
+            canActivate: [AuthGuard],
             resolve: {
               group: GroupResolver
+            },
+            data: {
+              perms: {
+                only: ['domain_group_read']
+              }
             },
             children: [
               { path: '', redirectTo: 'settings', pathMatch: 'full' },
@@ -760,7 +1032,9 @@ const routes: Routes = [
               { path: 'roles', component: GroupRolesComponent, resolve: { roles : GroupRolesResolver}}
             ]
           },
-          { path: 'roles', component: DomainSettingsRolesComponent,
+          { path: 'roles',
+            component: DomainSettingsRolesComponent,
+            canActivate: [AuthGuard],
             resolve: {
               roles: RolesResolver
             },
@@ -768,24 +1042,41 @@ const routes: Routes = [
               menu: {
                 label: 'Roles',
                 section: 'User Management',
+              },
+              perms: {
+                only: ['domain_role_read']
               }
             }
           },
           { path: 'roles/new',
             component: RoleCreationComponent,
+            canActivate: [AuthGuard],
             resolve: {
               scopes: ScopesResolver
+            },
+            data: {
+              perms: {
+                only: ['domain_role_create']
+              }
             }
           },
           {
             path: 'roles/:roleId',
             component: RoleComponent,
+            canActivate: [AuthGuard],
             resolve: {
               role: RoleResolver,
               scopes: ScopesResolver
+            },
+            data: {
+              perms: {
+                only: ['domain_role_read']
+              }
             }
           },
-          { path: 'scim', component: ScimComponent,
+          { path: 'scim',
+            component: ScimComponent,
+            canActivate: [AuthGuard],
             resolve: {
               domain: DomainResolver
             },
@@ -793,11 +1084,15 @@ const routes: Routes = [
               menu: {
                 label: 'SCIM',
                 section: 'User Management'
+              },
+              perms: {
+                only: ['domain_scim_read']
               }
             }
           },
           { path: 'scopes',
             component: DomainSettingsScopesComponent,
+            canActivate: [AuthGuard],
             resolve: {
               scopes: ScopesResolver
             },
@@ -805,20 +1100,36 @@ const routes: Routes = [
               menu: {
                 label: 'Scopes',
                 section: 'OAuth 2.0'
+              },
+              perms: {
+                only: ['domain_scope_read']
               }
             }
           },
           { path: 'scopes/new',
-            component: ScopeCreationComponent
+            component: ScopeCreationComponent,
+            canActivate: [AuthGuard],
+            data: {
+              perms: {
+                only: ['domain_scope_create']
+              }
+            }
           },
           { path: 'scopes/:scopeId',
             component: ScopeComponent,
+            canActivate: [AuthGuard],
             resolve: {
               scope: ScopeResolver
+            },
+            data: {
+              perms: {
+                only: ['domain_scope_read']
+              }
             }
           },
           { path: 'extensionGrants',
             component: DomainSettingsExtensionGrantsComponent,
+            canActivate: [AuthGuard],
             resolve: {
               extensionGrants: ExtensionGrantsResolver
             },
@@ -826,29 +1137,48 @@ const routes: Routes = [
               menu: {
                 label: 'Extension Grants',
                 section: 'OAuth 2.0'
+              },
+              perms: {
+                only: ['domain_extension_grant_read']
               }
             }
           },
           { path: 'extensionGrants/new',
             component: ExtensionGrantCreationComponent,
+            canActivate: [AuthGuard],
             resolve: {
               identityProviders: ProvidersResolver
+            },
+            data: {
+              perms: {
+                only: ['domain_extension_grant_create']
+              }
             }
           },
           {
             path: 'extensionGrants/:extensionGrantId',
             component: ExtensionGrantComponent,
+            canActivate: [AuthGuard],
             resolve: {
               extensionGrant: ExtensionGrantResolver,
               identityProviders: ProvidersResolver
+            },
+            data: {
+              perms: {
+                only: ['domain_extension_grant_read']
+              }
             }
           },
           { path: 'openid/clientRegistration',
             component: DomainSettingsOpenidClientRegistrationComponent,
+            canActivate: [AuthGuard],
             data: {
               menu: {
                 label: 'Client Registration',
                 section: 'Openid'
+              },
+              perms: {
+                only: ['domain_dcr_read']
               }
             },
             children: [

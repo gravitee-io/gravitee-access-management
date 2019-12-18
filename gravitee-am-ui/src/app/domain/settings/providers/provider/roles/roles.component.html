@@ -23,7 +23,7 @@
         <mat-list-item *ngFor="let user of providerRoleMapper[role]">
           <mat-icon mat-list-icon>person</mat-icon>
           <h4 matLine>{{displayMapping(user)}}</h4>
-          <button mat-icon-button (click)="deleteUserFromRole(role, user, $event);"><mat-icon>delete</mat-icon></button>
+          <button *hasPermission="['domain_identity_provider_update']" mat-icon-button (click)="deleteUserFromRole(role, user, $event);"><mat-icon>delete</mat-icon></button>
         </mat-list-item>
         <mat-divider></mat-divider>
       </span>
@@ -34,7 +34,7 @@
                     [subMessage]="'Start adding users to roles'"
                     [icon]="'supervisor_account'"></app-emptystate>
 
-    <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+    <div *hasPermission="['domain_identity_provider_update']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
       <button mat-fab color="accent" (click)="add()">
         <mat-icon>add</mat-icon>
       </button>

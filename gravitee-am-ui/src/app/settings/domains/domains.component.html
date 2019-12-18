@@ -44,7 +44,7 @@
                   [subMessage]="'Start creating a domain'"
                   [icon]="'domain'"></app-emptystate>
 
-  <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div *hasPermission="['management_domain_create']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

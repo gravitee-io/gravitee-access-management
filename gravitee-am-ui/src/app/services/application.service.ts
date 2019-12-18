@@ -17,12 +17,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
 import { Observable } from "rxjs";
+import {AuthService} from "./auth.service";
+import {map} from "rxjs/operators";
 
 @Injectable()
 export class ApplicationService {
   private appsURL = AppConfig.settings.baseURL + '/domains/';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private authService: AuthService) { }
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.appsURL + domainId + "/applications?page=" + page + "&size=" + size);
@@ -66,5 +68,13 @@ export class ApplicationService {
 
   removeMember(domainId, id, membershipId) {
     return this.http.delete<any>(this.appsURL + domainId + "/applications/" + id + "/members/" + membershipId);
+  }
+
+  permissions(domainId, id): Observable<any> {
+    return this.http.get<any>(this.appsURL + domainId + '/applications/' + id + '/members/permissions')
+      .pipe(map(perms => {
+        this.authService.reloadApplicationPermissions(perms);
+        return perms;
+      }));
   }
 }

@@ -19,6 +19,7 @@ import { SnackbarService } from "../../../services/snackbar.service";
 import { DialogService } from "../../../services/dialog.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { PlatformService } from "../../../services/platform.service";
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-users',
@@ -32,11 +33,13 @@ export class UsersComponent implements OnInit {
   users: any[];
   domainId: string;
   page: any = {};
+  createMode: boolean;
 
   constructor(private userService: UserService,
               private platformService: PlatformService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
+              private authService: AuthService,
               private route: ActivatedRoute,
               private router: Router) {
     this.page.pageNumber = 0;
@@ -47,6 +50,9 @@ export class UsersComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.adminContext = true;
+      this.createMode = false;
+    } else {
+      this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_create']);
     }
     this.pagedUsers = this.route.snapshot.data['users'];
     this.users = this.pagedUsers.data;
@@ -88,7 +94,7 @@ export class UsersComponent implements OnInit {
     this.loadUsers();
   }
 
-  setPage(pageInfo){
+  setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
     this.loadUsers();
   }

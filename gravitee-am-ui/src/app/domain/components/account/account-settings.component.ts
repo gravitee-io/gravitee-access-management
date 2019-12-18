@@ -24,14 +24,15 @@ import * as moment from "moment";
 export class AccountSettingsComponent implements OnInit, OnChanges {
   @Output() onSavedAccountSettings = new EventEmitter<any>();
   @Input() accountSettings: any;
-  @Input() inheritMode: boolean = false;
+  @Input() inheritMode = false;
+  @Input() readonly = false;
   @ViewChild('accountForm') form: any;
-  formChanged: boolean = false;
-  private defaultMaxAttempts: number = 10;
-  private defaultLoginAttemptsResetTime: number = 12;
-  private defaultLoginAttemptsResetTimeUnit: string = "hours";
-  private defaultAccountBlockedDuration: number = 2;
-  private defaultAccountBlockedDurationUnit: string = "hours";
+  formChanged = false;
+  private defaultMaxAttempts = 10;
+  private defaultLoginAttemptsResetTime = 12;
+  private defaultLoginAttemptsResetTimeUnit = 'hours';
+  private defaultAccountBlockedDuration = 2;
+  private defaultAccountBlockedDurationUnit = 'hours';
 
   constructor() {}
 

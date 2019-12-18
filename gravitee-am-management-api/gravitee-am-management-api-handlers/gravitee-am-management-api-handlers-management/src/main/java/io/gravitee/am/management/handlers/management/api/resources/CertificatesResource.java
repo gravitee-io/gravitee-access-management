@@ -17,9 +17,9 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.manager.certificate.CertificateManager;
+import io.gravitee.am.management.handlers.management.api.model.CertificateListItem;
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
-import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.CertificateService;
@@ -66,18 +66,16 @@ public class CertificatesResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered certificates for a security domain")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered certificates for a security domain", response = Certificate.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List registered certificates for a security domain", response = CertificateListItem.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_CERTIFICATE, acls = RolePermissionAction.READ)
-    })
     public void list(@PathParam("domain") String domain,
                      @Suspended final AsyncResponse response) {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapSingle(irrelevant -> certificateService.findByDomain(domain)
                         .map(certificates -> {
-                            List<Certificate> sortedCertificates = certificates.stream()
+                            List<CertificateListItem> sortedCertificates = certificates.stream()
+                                    .map(certificate -> new CertificateListItem(certificate))
                                     .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                                     .collect(Collectors.toList());
                             return Response.ok(sortedCertificates).build();

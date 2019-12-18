@@ -22,6 +22,7 @@ import { UserService } from "../../../../../services/user.service";
 import { AppConfig } from "../../../../../../config/app.config";
 import { UserClaimComponent } from "../../creation/user-claim.component";
 import * as _ from 'lodash';
+import {AuthService} from "../../../../../services/auth.service";
 
 @Component({
   selector: 'app-user-profile',
@@ -38,7 +39,9 @@ export class UserProfileComponent implements OnInit {
   userClaims: any = {};
   userAdditionalInformation: any = {};
   password: any;
-  formChanged: boolean = false;
+  formChanged = false;
+  canEdit: boolean;
+  canDelete: boolean;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -46,6 +49,7 @@ export class UserProfileComponent implements OnInit {
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
               private userService: UserService,
+              private authService: AuthService,
               private factoryResolver: ComponentFactoryResolver) { }
 
   ngOnInit() {
@@ -53,13 +57,18 @@ export class UserProfileComponent implements OnInit {
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.domainId = AppConfig.settings.authentication.domainId;
       this.adminContext = true;
+      this.canEdit = this.authService.isAdmin() || this.authService.hasPermissions(['management_user_update']);
+      this.canDelete = this.authService.isAdmin() || this.authService.hasPermissions(['management_user_delete']);
+    } else {
+      this.canEdit = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_update']);
+      this.canDelete = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_delete']);
     }
     this.user = this.route.snapshot.parent.data['user'];
     this.userAdditionalInformation = Object.assign({}, this.user.additionalInformation);
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/users/'+this.user.id+'$', this.user.username);
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.user.id + '$', this.user.username);
   }
 
   update() {
@@ -80,7 +89,7 @@ export class UserProfileComponent implements OnInit {
       this.initBreadcrumb();
       this.form.reset(this.user);
       this.formChanged = false;
-      this.snackbarService.open("User updated");
+      this.snackbarService.open('User updated');
     });
   }
 
@@ -91,7 +100,7 @@ export class UserProfileComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.userService.delete(this.domainId, this.user.id).subscribe(response => {
-            this.snackbarService.open('User '+ this.user.username + ' deleted');
+            this.snackbarService.open('User ' + this.user.username + ' deleted');
             this.router.navigate(['/domains', this.domainId, 'settings', 'users']);
           });
         }
@@ -105,7 +114,7 @@ export class UserProfileComponent implements OnInit {
       .subscribe( res => {
         if (res) {
           this.userService.resendRegistrationConfirmation(this.domainId, this.user.id).subscribe(() => {
-            this.snackbarService.open("Email sent");
+            this.snackbarService.open('Email sent');
           });
         }
       });
@@ -123,7 +132,7 @@ export class UserProfileComponent implements OnInit {
             for (let name in this.passwordForm.controls) {
               this.passwordForm.controls[name].setErrors(null);
             }
-            this.snackbarService.open("Password reset");
+            this.snackbarService.open('Password reset');
           });
         }
       });
@@ -139,7 +148,7 @@ export class UserProfileComponent implements OnInit {
             this.user.accountNonLocked = true;
             this.user.accountLockedAt = null;
             this.user.accountLockedUntil = null;
-            this.snackbarService.open("User unlocked");
+            this.snackbarService.open('User unlocked');
           });
         }
       });

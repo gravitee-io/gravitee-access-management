@@ -62,7 +62,7 @@
 
       <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="roles-actions">
+          <div fxLayout="row" class="roles-actions" *hasPermission="['management_role_delete']">
             <button *ngIf="!row.system" mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
           </div>
         </ng-template>
@@ -75,7 +75,7 @@
                   [subMessage]="'Start creating a role'"
                   [icon]="'supervisor_account'"></app-emptystate>
 
-  <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div *hasPermission="['management_role_create']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

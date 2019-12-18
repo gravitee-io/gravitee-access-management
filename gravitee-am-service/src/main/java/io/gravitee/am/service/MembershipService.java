@@ -38,6 +38,8 @@ public interface MembershipService {
 
     Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType);
 
+    Maybe<Membership> findByReferenceAndMember(String referenceId, String memberId);
+
     Single<Membership> addOrUpdate(Membership membership, User principal);
 
     Single<Map<String, Map<String, Object>>> getMetadata(List<Membership> memberships);

@@ -21,6 +21,7 @@ import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/compo
 import * as moment from "moment";
 import { NgForm } from "@angular/forms";
 import { DialogService } from "../../../../services/dialog.service";
+import {AuthService} from "../../../../services/auth.service";
 
 @Component({
   selector: 'app-scope',
@@ -30,9 +31,11 @@ import { DialogService } from "../../../../services/dialog.service";
 export class ScopeComponent implements OnInit {
   private domainId: string;
   scope: any;
-  formChanged: boolean = false;
+  formChanged = false;
   expiresIn: any;
   unitTime: any;
+  editMode: boolean;
+  deleteMode: boolean;
   @ViewChild('scopeForm') public scopeForm: NgForm;
 
   constructor(private scopeService: ScopeService,
@@ -40,11 +43,14 @@ export class ScopeComponent implements OnInit {
               private route: ActivatedRoute,
               private router: Router,
               private breadcrumbService: BreadcrumbService,
-              private dialogService: DialogService) { }
+              private dialogService: DialogService,
+              private authService: AuthService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.scope = this.route.snapshot.data['scope'];
+    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_scope_update']);
+    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_scope_delete']);
     this.initBreadcrumb();
   }
 
@@ -62,12 +68,12 @@ export class ScopeComponent implements OnInit {
       this.scopeForm.reset(this.scope);
       this.expiresIn = null;
       this.unitTime = null;
-      this.snackbarService.open("Scope updated");
+      this.snackbarService.open('Scope updated');
     });
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/scopes/'+this.scope.id+'$', this.scope.name);
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/scopes/' + this.scope.id + '$', this.scope.name);
   }
 
   formIsInvalid() {
@@ -99,7 +105,7 @@ export class ScopeComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.scopeService.delete(this.domainId, this.scope.id).subscribe(() => {
-            this.snackbarService.open("Scope deleted");
+            this.snackbarService.open('Scope deleted');
             this.router.navigate(['/domains', this.domainId, 'settings', 'scopes']);
           });
         }

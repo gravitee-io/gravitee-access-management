@@ -16,44 +16,35 @@
 
 -->
 <div fxLayout="column" class="token-granter-creation-step2-container">
-  <small>
+  <p class="extension-grant-creation-description">
     Configure your extension grant.
-  </small>
+  </p>
   <div *ngIf="extensionGrantSchema && extensionGrantSchema.description" class="token-granter-contextual-help">
     <pre [innerHTML]="extensionGrantSchema?.description"></pre>
   </div>
   <div class="token-granter-creation-step2-content">
     <form class="token-granter-creation-step2-form" fxLayout="column">
-      <h4>General</h4>
-      <mat-form-field>
-        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="extensionGrant.name" required>
-      </mat-form-field>
-      <mat-form-field>
-        <input matInput type="text" placeholder="Grant type" name="grantType" [(ngModel)]="extensionGrant.grantType" [pattern]="rfc3986_absolute_URI" required disabled>
-        <mat-hint align="end">OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type" parameter of the token endpoint.</mat-hint>
-      </mat-form-field>
+      <div class="gs-form-section">
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Name</mat-label>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="extensionGrant.name" required>
+          <mat-hint>Extension grant name</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Grant type</mat-label>
+          <input matInput type="text" placeholder="Grant type" name="grantType" [(ngModel)]="extensionGrant.grantType" [pattern]="rfc3986_absolute_URI" required disabled>
+          <mat-hint align="end">OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type" parameter of the token endpoint.</mat-hint>
+        </mat-form-field>
+      </div>
 
-      <h4 style="margin: 10px 0 10px 0;">User creation</h4>
-      <mat-slide-toggle
-        (change)="enableCreateUser($event)"
-        [checked]="extensionGrant.createUser">
-      </mat-slide-toggle>
-      <mat-hint style="font-size: 75%;">Allow to store user information. Used for user account activity and OAuth 2.0 refresh token flow.</mat-hint>
-
-
-      <h4>Identity provider</h4>
-      <mat-form-field>
-        <mat-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider">
-          <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
-        </mat-select>
-        <mat-hint align="end" style="font-size: 75%;">Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
-      </mat-form-field>
-
-      <h4>Configuration</h4>
-      <extension-grant-form [extensionGrantConfiguration]="configuration" [extensionGrantSchema]="extensionGrantSchema" (configurationCompleted)="enableTokenGranterCreation($event)"></extension-grant-form>
-
-      <div fxLayout="row" fxLayoutAlign="end end" class="next-button">
-        <button mat-raised-button [disabled]="!isValid && !formChanged" (click)="create()">CREATE</button>
+      <div class="gs-form-section">
+        <div class="gs-form-section-title">
+          <h5>Configuration</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <extension-grant-form [extensionGrantConfiguration]="configuration" [extensionGrantSchema]="extensionGrantSchema" (configurationCompleted)="enableTokenGranterCreation($event)"></extension-grant-form>
+        </div>
       </div>
     </form>
   </div>

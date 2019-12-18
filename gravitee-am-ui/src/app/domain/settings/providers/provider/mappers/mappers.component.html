@@ -47,7 +47,7 @@
       </ngx-datatable-column>
       <ngx-datatable-column name="Actions" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="provider-mappers-actions">
+          <div fxLayout="row" class="provider-mappers-actions" *hasPermission="['domain_identity_provider_update']">
             <button mat-icon-button (click)="delete(row.key, $event)"><mat-icon>delete</mat-icon></button>
           </div>
         </ng-template>
@@ -59,7 +59,7 @@
                     [subMessage]="'Start creating a mapper'"
                     [icon]="'compare_arrows'"></app-emptystate>
 
-    <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+    <div *hasPermission="['domain_identity_provider_update']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
       <button mat-fab color="accent" (click)="add()">
         <mat-icon>add</mat-icon>
       </button>

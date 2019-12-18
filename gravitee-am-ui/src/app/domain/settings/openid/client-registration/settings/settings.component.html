@@ -19,66 +19,68 @@
   <div class="domain-client-registration-settings-content">
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="patch()" #domainForm="ngForm" fxLayout="column">
-        <div class="domain-client-registration-settings-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableDynamicClientRegistration($event)"
-            [checked]="domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled">
-            Enable/Disable Dynamic Client Registration.
-          </mat-slide-toggle>
-          <mat-hint>
-            Enable application owner to self register their application through an openid connect endpoint.<br>
-            The endpoint is available under the oidc Discovery service. <i>/.well-known/openid-configuration</i>
-          </mat-hint>
+        <div class="gs-form-section">
+          <div class="domain-client-registration-settings-state" fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableDynamicClientRegistration($event)"
+              [checked]="domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled" [disabled]="readonly">
+              Enable/Disable Dynamic Client Registration.
+            </mat-slide-toggle>
+            <mat-hint>
+              Enable application owner to self register their application through an openid connect endpoint.<br>
+              The endpoint is available under the oidc Discovery service. <i>/.well-known/openid-configuration</i>
+            </mat-hint>
+          </div>
+          <div class="domain-client-registration-settings-state" fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableOpenDynamicClientRegistration($event)"
+              [checked]="domain.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled" [disabled]="readonly">
+              Enable/Disable Open Dynamic Client Registration
+            </mat-slide-toggle>
+            <mat-hint>Enable application owner to self register their application without needing to be authenticated.</mat-hint>
+          </div>
+          <div class="domain-client-registration-settings-state" fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableDynamicClientRegistrationTemplate($event)"
+              [checked]="domain.oidc.clientRegistrationSettings.isClientTemplateEnabled" [disabled]="readonly">
+              Enable/Disable Dynamic Client Registration Templates
+            </mat-slide-toggle>
+            <mat-hint>Enable application owner to use an existing client application as template when registering a new application.</mat-hint>
+          </div>
+          <div class="domain-client-registration-settings-state" fxLayout="column">
+            <mat-slide-toggle
+              (change)="allowLocalhostRedirectUri($event)"
+              [checked]="domain.oidc.clientRegistrationSettings.allowLocalhostRedirectUri" [disabled]="readonly">
+              Allow localhost redirect uris.
+            </mat-slide-toggle>
+            <mat-hint>Allow clients to be registered with redirect_uris using localhost as host.</mat-hint>
+          </div>
+          <div class="domain-client-registration-settings-state" fxLayout="column">
+            <mat-slide-toggle
+              (change)="allowHttpSchemeRedirectUri($event)"
+              [checked]="domain.oidc.clientRegistrationSettings.allowHttpSchemeRedirectUri" [disabled]="readonly">
+              Allow unsecured (http) redirect uris.
+            </mat-slide-toggle>
+            <mat-hint>Allow clients to be registered with redirect_uris using unsecured (http) scheme.</mat-hint>
+          </div>
+          <div class="domain-client-registration-settings-state" fxLayout="column">
+            <mat-slide-toggle
+              (change)="allowWildCardRedirectUri($event)"
+              [checked]="domain.oidc.clientRegistrationSettings.allowWildCardRedirectUri" [disabled]="readonly">
+              Allow wildcards redirect uris.
+            </mat-slide-toggle>
+            <mat-hint>Allow clients to be registered with redirect_uris containing wildcards.</mat-hint>
+          </div>
+          <div class="domain-client-registration-settings-state" fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableRedirectUriStrictMatching($event)"
+              [checked]="domain.oidc.redirectUriStrictMatching" [disabled]="readonly">
+              Enable/Disable redirect uris strict matching.
+            </mat-slide-toggle>
+            <mat-hint>Enable redirect_uris strict matching when calling OpenID Connect flow.</mat-hint>
+          </div>
         </div>
-        <div class="domain-client-registration-settings-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableOpenDynamicClientRegistration($event)"
-            [checked]="domain.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled">
-            Enable/Disable Open Dynamic Client Registration
-          </mat-slide-toggle>
-          <mat-hint>Enable application owner to self register their application without needing to be authenticated.</mat-hint>
-        </div>
-        <div class="domain-client-registration-settings-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableDynamicClientRegistrationTemplate($event)"
-            [checked]="domain.oidc.clientRegistrationSettings.isClientTemplateEnabled">
-            Enable/Disable Dynamic Client Registration Templates
-          </mat-slide-toggle>
-          <mat-hint>Enable application owner to use an existing client application as template when registering a new application.</mat-hint>
-        </div>
-        <div class="domain-client-registration-settings-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="allowLocalhostRedirectUri($event)"
-            [checked]="domain.oidc.clientRegistrationSettings.allowLocalhostRedirectUri">
-            Allow localhost redirect uris.
-          </mat-slide-toggle>
-          <mat-hint>Allow clients to be registered with redirect_uris using localhost as host.</mat-hint>
-        </div>
-        <div class="domain-client-registration-settings-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="allowHttpSchemeRedirectUri($event)"
-            [checked]="domain.oidc.clientRegistrationSettings.allowHttpSchemeRedirectUri">
-            Allow unsecured (http) redirect uris.
-          </mat-slide-toggle>
-          <mat-hint>Allow clients to be registered with redirect_uris using unsecured (http) scheme.</mat-hint>
-        </div>
-        <div class="domain-client-registration-settings-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="allowWildCardRedirectUri($event)"
-            [checked]="domain.oidc.clientRegistrationSettings.allowWildCardRedirectUri">
-            Allow wildcards redirect uris.
-          </mat-slide-toggle>
-          <mat-hint>Allow clients to be registered with redirect_uris containing wildcards.</mat-hint>
-        </div>
-        <div class="domain-client-registration-settings-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableRedirectUriStrictMatching($event)"
-            [checked]="domain.oidc.redirectUriStrictMatching">
-            Enable/Disable redirect uris strict matching.
-          </mat-slide-toggle>
-          <mat-hint>Enable redirect_uris strict matching when calling OpenID Connect flow.</mat-hint>
-        </div>
-        <div class="domain-client-registration-settings-form-actions">
+        <div *ngIf="!readonly">
           <button mat-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>

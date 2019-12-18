@@ -13,24 +13,8 @@
       font-size: 12px;
       color: rgba(0, 0, 0, 0.38);
     }
-    form {
-      margin-top: 10px;
-      padding: 20px;
-      background: #fafafa;
-      border-radius: 2px;
-      border: 1px solid rgb(226, 229, 231);
-      .management-enable-state {
-        margin-bottom: 30px;
-        mat-hint {
-          font-size: 75%;
-        }
-      }
-      .management-general-form-actions {
-        margin-top: 20px;
-      }
-      h4 {
-        margin: 0px 0px 5px 0px;
-      }
+    h4 {
+      margin: 0px 0px 5px 0px;
     }
     .management-general-description {
       margin-left: 20px;

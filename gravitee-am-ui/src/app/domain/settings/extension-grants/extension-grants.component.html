@@ -38,7 +38,7 @@
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="token-granters-actions">
             <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="Settings">settings</mat-icon></a>
-            <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
+            <button *hasPermission="['domain_extension_grant_delete']" mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
           </div>
         </ng-template>
       </ngx-datatable-column>
@@ -47,10 +47,10 @@
 
   <app-emptystate *ngIf="isEmpty"
                   [message]="'Extension Grants will appear here'"
-                  [subMessage]="'Start creating an extension grant'"
+                  [subMessage]="'No data to display'"
                   [icon]="'vpn_key'"></app-emptystate>
 
-  <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div *hasPermission="['domain_extension_grant_create']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

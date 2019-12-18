@@ -21,6 +21,7 @@ import {DialogService} from "../../../../../services/dialog.service";
 import {UserService} from "../../../../../services/user.service";
 import {RoleService} from "../../../../../services/role.service";
 import {PlatformService} from "../../../../../services/platform.service";
+import {AuthService} from "../../../../../services/auth.service";
 
 @Component({
   selector: 'app-user-roles',
@@ -32,6 +33,7 @@ export class UserRolesComponent implements OnInit {
   private user: any;
   private adminContext = false;
   userRoles: any[];
+  editMode: boolean;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -39,6 +41,7 @@ export class UserRolesComponent implements OnInit {
               private dialogService: DialogService,
               private userService: UserService,
               private platformService: PlatformService,
+              private authService: AuthService,
               private dialog: MatDialog) {
   }
 
@@ -46,6 +49,9 @@ export class UserRolesComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.adminContext = true;
+      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_user_update']);
+    } else {
+      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_update']);
     }
     this.user = this.route.snapshot.parent.data['user'];
     this.userRoles = this.route.snapshot.data['roles'];

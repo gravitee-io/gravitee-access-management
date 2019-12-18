@@ -23,7 +23,7 @@
       <mat-divider></mat-divider>
     </div>
 
-    <div fxLayout="row" fxLayoutGap="10px">
+    <div fxLayout="row" fxLayoutGap="10px" *ngIf="createMode">
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label><mat-icon matPrefix>search</mat-icon></mat-label>
         <input matInput placeholder="Enter username" [matAutocomplete]="auto" [formControl]="userCtrl"/>
@@ -70,7 +70,7 @@
       <ngx-datatable-column name="Role" [flexGrow]="2" [cellClass]="'membership-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <mat-form-field>
-            <mat-select name="memberUserRole" [value]="row.role" (selectionChange)="update(row.memberId, row.memberType, $event)">
+            <mat-select name="memberUserRole" [value]="row.role" (selectionChange)="update(row.memberId, row.memberType, $event)" [disabled]="!editMode">
               <mat-option *ngFor="let role of roles" [value]="role.id">
                 <span>{{ role.name }}</span>
               </mat-option>
@@ -80,7 +80,7 @@
       </ngx-datatable-column>
       <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="members-actions">
+          <div fxLayout="row" class="members-actions" *ngIf="deleteMode">
             <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">clear</mat-icon></button>
           </div>
         </ng-template>
@@ -95,10 +95,10 @@
       <mat-divider></mat-divider>
     </div>
 
-    <div fxLayout="row" fxLayoutGap="10px">
+    <div fxLayout="row" fxLayoutGap="10px" *ngIf="createMode">
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-select placeholder="Group" name="group" [(ngModel)]="selectedGroup">
-          <mat-option *ngFor="let group of groups" [value]="group.id">
+          <mat-option *ngFor="let group of filteredGroups" [value]="group.id">
             <span>{{ group.name }}</span>
           </mat-option>
         </mat-select>
@@ -138,7 +138,7 @@
       <ngx-datatable-column name="Role" [flexGrow]="2" [cellClass]="'membership-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <mat-form-field>
-            <mat-select name="memberGroupRole" [value]="row.role" (selectionChange)="update(row.memberId, row.memberType, $event)">
+            <mat-select name="memberGroupRole" [value]="row.role" (selectionChange)="update(row.memberId, row.memberType, $event)" [disabled]="!editMode">
               <mat-option *ngFor="let role of roles" [value]="role.id">
                 <span>{{ role.name }}</span>
               </mat-option>
@@ -148,7 +148,7 @@
       </ngx-datatable-column>
       <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="members-actions">
+          <div fxLayout="row" class="members-actions" *ngIf="deleteMode">
             <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">clear</mat-icon></button>
           </div>
         </ng-template>

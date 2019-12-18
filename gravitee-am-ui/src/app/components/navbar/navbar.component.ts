@@ -35,7 +35,7 @@ export class NavbarComponent implements OnInit {
   }
 
   get user() {
-    return this.authService.user();
+    return this.authService.user() != null ? this.authService.user().preferred_username : null;
   }
 
   isAuthenticated() {

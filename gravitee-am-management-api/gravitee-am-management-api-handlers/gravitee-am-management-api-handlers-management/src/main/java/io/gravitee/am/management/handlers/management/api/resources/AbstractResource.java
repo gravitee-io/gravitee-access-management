@@ -22,18 +22,17 @@ import io.gravitee.am.management.handlers.management.api.manager.role.RoleManage
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Resource;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.membership.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -73,16 +72,11 @@ public abstract class AbstractResource {
         return roleManager.isAdminRoleGranted(authenticatedUser.getRoles());
     }
 
-    protected boolean hasPermission(User authenticatedUser, RolePermission rolePermission, RolePermissionAction action) {
-        if (authenticatedUser == null) {
+    protected boolean hasPermission(List<String> permissions, RolePermission rolePermission, RolePermissionAction action) {
+        if (permissions == null || permissions.isEmpty()) {
             return false;
         }
-        return roleManager.hasPermission(authenticatedUser.getRoles(), rolePermission, action);
-    }
-
-    protected <T extends Resource> T filterResource(T resource, ReferenceType referenceType, User authenticatedUser) {
-        List<T> filteredResources = filterResources(Collections.singletonList(resource), referenceType, authenticatedUser);
-        return (filteredResources != null && !filteredResources.isEmpty()) ? filteredResources.get(0) : null;
+        return permissions.contains(rolePermission.getPermission().getMask() + "_" + action.getMask());
     }
 
     protected <T extends Resource> List<T> filterResources(Collection<? extends T> resources, ReferenceType referenceType, User authenticatedUser) {
@@ -102,4 +96,36 @@ public abstract class AbstractResource {
             return membershipIds.contains(authenticatedUser.getId()) || membershipIds.stream().anyMatch(mId -> groups.contains(mId));
         }).collect(Collectors.toList());
     }
+
+    protected List<String> resourcePermissions(Resource resource, ReferenceType referenceType, User authenticatedUser) throws ForbiddenException {
+        // if resource has no member, throw forbidden exception
+        List<Membership> memberships = membershipManager.findByReference(resource.getId(), referenceType);
+        if (memberships ==  null || memberships.isEmpty()) {
+            throw new ForbiddenException();
+        }
+
+        // get user groups
+        List<Group> groups = groupManager.findByMember(authenticatedUser.getId());
+        List<String> groupIds = (groups != null) ? groups.stream().map(Group::getId).collect(Collectors.toList()) : Collections.emptyList();
+        List<Membership> resourceMemberships = memberships.stream().filter(membership -> membership.getMemberId().equals(authenticatedUser.getId()) || groupIds.contains(membership.getMemberId())).collect(Collectors.toList());
+
+        // if user or group is not a member of the resource, throw forbidden exception
+        if (resourceMemberships == null || resourceMemberships.isEmpty()) {
+            throw new ForbiddenException();
+        }
+
+        // check if the member has the resource permission
+        List<String> roleIds = resourceMemberships.stream().map(Membership::getRole).collect(Collectors.toList());
+        Set<Role> roles = roleManager.findByIdIn(roleIds);
+        if (roles == null || roles.isEmpty()) {
+            throw new ForbiddenException();
+        }
+        return roles.stream()
+                .filter(role -> role.getPermissions() != null)
+                .map(Role::getPermissions)
+                .flatMap(List::stream)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
 }

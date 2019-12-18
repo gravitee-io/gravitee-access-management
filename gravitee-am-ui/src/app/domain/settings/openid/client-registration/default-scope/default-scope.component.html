@@ -19,16 +19,16 @@
   <div class="domain-client-registration-default-scope-content" *ngIf="dcrIsEnabled">
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="patch()" #defaultScopeForm="ngForm" fxLayout="column">
-
-        <scope-selection
-          [initialSelectedScopes]="initialSelectedScopes"
-          (onScopeSelection)="onChange($event)">
-        </scope-selection>
-
-        <div class="domain-client-registration-default-scope-form-actions">
+        <div class="gs-form-section">
+          <scope-selection
+            [initialSelectedScopes]="initialSelectedScopes"
+            [readonly]="readonly"
+            (onScopeSelection)="onChange($event)">
+          </scope-selection>
+        </div>
+        <div *ngIf="!readonly">
           <button mat-raised-button [disabled]="(!defaultScopeForm.valid || defaultScopeForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
-
       </form>
     </div>
     <div class="domain-client-registration-default-scope-description" fxFlex>

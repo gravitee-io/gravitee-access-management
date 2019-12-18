@@ -18,44 +18,38 @@
 <div class="new-token-granter-container" fxLayout="column">
   <h1>New extension grant</h1>
   <div fxLayout="row">
-    <mat-horizontal-stepper linear fxFlex="70" #stepper="matHorizontalStepper">
-      <mat-step label="Extension grant type" [completed]="extensionGrant.type">
+    <mat-horizontal-stepper linear labelPosition="bottom" fxFlex="70" #stepper="matHorizontalStepper">
+      <ng-template matStepperIcon="edit">
+        <mat-icon>check</mat-icon>
+      </ng-template>
+      <mat-step>
+        <ng-template matStepLabel>
+          <h5>Platform</h5>
+          <small>Extension grant type</small>
+        </ng-template>
         <extension-grant-creation-step1 [extensionGrant]="extensionGrant"></extension-grant-creation-step1>
         <div fxLayout="row" fxLayoutAlign="end end">
-          <button mat-button matStepperNext type="button"[disabled]="!extensionGrant.type">NEXT</button>
+          <button mat-raised-button color="accent" matStepperNext type="button"[disabled]="!extensionGrant.type">Next</button>
         </div>
       </mat-step>
-      <mat-step label="Extension grant configuration">
-        <extension-grant-creation-step2 *ngIf="stepper.selectedIndex == 1" [extensionGrant]="extensionGrant"></extension-grant-creation-step2>
-        <div>
-          <button mat-button matStepperPrevious type="button">BACK</button>
+      <mat-step>
+        <ng-template matStepLabel>
+          <h5>Settings</h5>
+          <small>Extension grant configuration</small>
+        </ng-template>
+          <extension-grant-creation-step2 *ngIf="stepper.selectedIndex == 1" [extensionGrant]="extensionGrant" [(configurationIsValid)]="configurationIsValid"></extension-grant-creation-step2>
+        <div class="extension-grant-creation-stepper-button-zone">
+          <button mat-raised-button matStepperPrevious type="button">Back</button>
+          <span fxFlex></span>
+          <button mat-raised-button color="accent" (click)="create()" [disabled]="!stepperValid()">Create</button>
         </div>
       </mat-step>
     </mat-horizontal-stepper>
-    <div fxFlex fxLayout="column" class="new-extension-grant-steps-info">
-      <div class="new-extension-grant-steps-info-header">
-        <h4>Create your extension grant</h4>
-        <mat-divider></mat-divider>
+    <div class="new-extension-grant-description" fxFlex>
+      <h3>Extension Grant ?</h3>
+      <div class="new-extension-grant-description-content">
+        <p>OAuth 2.0 Extension grant act as an extensibility mechanism to request for tokens.</p>
       </div>
-      <mat-vertical-stepper>
-        <mat-step [editable]="false">
-          <ng-template matStepLabel>
-            <h5>
-              <span *ngIf="stepper.selectedIndex == 0; else step1Completed;">General</span>
-              <ng-template #step1Completed>
-                <span class="extension-grant-selected">{{extensionGrant.type}}</span>
-              </ng-template>
-            </h5>
-            <small>Extension grant type</small>
-          </ng-template>
-        </mat-step>
-        <mat-step *ngIf="stepper.selectedIndex == 1" [editable]="false">
-          <ng-template matStepLabel>
-            <h5>Configuration</h5>
-            <small>Extension grant configuration</small>
-          </ng-template>
-        </mat-step>
-      </mat-vertical-stepper>
     </div>
   </div>
 </div>

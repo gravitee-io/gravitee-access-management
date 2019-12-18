@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import { DomainService } from "../../../services/domain.service";
-import { DialogService } from "../../../services/dialog.service";
-import { ActivatedRoute, Router } from "@angular/router";
-import { SnackbarService } from "../../../services/snackbar.service";
-import { BreadcrumbService } from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { SidenavService } from "../../../components/sidenav/sidenav.service";
-import { Scope } from "../roles/role/role.component";
-import * as _ from "lodash";
 import {MatInput} from "@angular/material";
+import {ActivatedRoute, Router} from "@angular/router";
+import {DomainService} from "../../../services/domain.service";
+import {DialogService} from "../../../services/dialog.service";
+import {SnackbarService} from "../../../services/snackbar.service";
+import {BreadcrumbService} from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
+import {SidenavService} from "../../../components/sidenav/sidenav.service";
+import {AuthService} from "../../../services/auth.service";
+import * as _ from "lodash";
 
 export interface Tag {
   id: string;
@@ -36,20 +36,26 @@ export interface Tag {
 })
 export class DomainSettingsGeneralComponent implements OnInit {
   @ViewChild('chipInput') chipInput: MatInput;
-
-  formChanged: boolean = false;
+  formChanged = false;
   domain: any = {};
   tags: Tag[];
-  selectedTags: Scope[];
+  selectedTags: Tag[];
+  readonly = false;
 
-  constructor(private domainService: DomainService, private dialogService: DialogService, private snackbarService: SnackbarService,
-              private router: Router, private route: ActivatedRoute, private breadcrumbService: BreadcrumbService, private sidenavService: SidenavService) {
+  constructor(private domainService: DomainService,
+              private dialogService: DialogService,
+              private snackbarService: SnackbarService,
+              private router: Router,
+              private route: ActivatedRoute,
+              private breadcrumbService: BreadcrumbService,
+              private sidenavService: SidenavService,
+              private authService: AuthService) {
   }
 
   ngOnInit() {
     this.domain = this.route.snapshot.parent.data['domain'];
     this.tags = this.route.snapshot.data['tags'];
-
+    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['domain_settings_update']);
     this.initTags();
   }
 
@@ -95,9 +101,9 @@ export class DomainSettingsGeneralComponent implements OnInit {
       this.domain = response;
       this.domainService.notify(this.domain);
       this.sidenavService.notify(this.domain);
-      this.breadcrumbService.addFriendlyNameForRoute('/domains/'+this.domain.id, this.domain.name);
+      this.breadcrumbService.addFriendlyNameForRoute('/domains/' + this.domain.id, this.domain.name);
       this.formChanged = false;
-      this.snackbarService.open("Domain " + this.domain.name + " updated");
+      this.snackbarService.open('Domain ' + this.domain.name + ' updated');
     });
   }
 
@@ -108,7 +114,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.domainService.delete(this.domain.id).subscribe(response => {
-            this.snackbarService.open("Domain " + this.domain.name + " deleted");
+            this.snackbarService.open('Domain ' + this.domain.name + ' deleted');
             this.router.navigate(['']);
           })
         }

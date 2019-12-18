@@ -31,12 +31,12 @@
         <h4 style="margin-top: 10px;">Configuration</h4>
         <provider-form *ngIf="provider" [providerConfiguration]="providerConfiguration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderUpdate($event)"></provider-form>
 
-        <div fxLayout="row" fxLayoutAlign="end end" class="update-provider">
+        <div *hasPermission="['domain_identity_provider_update']" fxLayout="row" fxLayoutAlign="end end" class="update-provider">
           <button mat-raised-button [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
         </div>
       </form>
 
-      <div class="provider-settings-delete-zone" fxLayout="column">
+      <div *hasPermission="['domain_identity_provider_delete']" class="provider-settings-delete-zone" fxLayout="column">
         <p>This operation cannot be undone.</p>
         Identity provider will be deleted, clients will not be able to use this identity provider to authenticate users.
         <div class="provider-settings-delete-button" fxLayout="row">

@@ -19,18 +19,19 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.MembershipListItem;
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.membership.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.model.permissions.RoleScope;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -45,6 +46,10 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,6 +68,12 @@ public class ApplicationMembersResource extends AbstractResource {
 
     @Autowired
     private ApplicationService applicationService;
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private GroupService groupService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -118,6 +129,38 @@ public class ApplicationMembersResource extends AbstractResource {
                         .created(URI.create("/domains/" + domain + "/applications/" + application + "/members/" + membership1.getId()))
                         .entity(membership1)
                         .build())
+                .subscribe(
+                        result -> response.resume(result),
+                        error -> response.resume(error));
+    }
+
+    @GET
+    @Path("permissions")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "List application member's permissions")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Application member's permissions", response = List.class),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void permissions(@PathParam("domain") String domain,
+                            @PathParam("application") String application,
+                            @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
+        groupService.findByMember(authenticatedUser.getId())
+                .flatMap(groups -> {
+                    List<String> members = new ArrayList<>();
+                    members.add(authenticatedUser.getId());
+                    members.addAll(groups.stream().map(Group::getId).collect(Collectors.toList()));
+                    return Observable.fromIterable(members)
+                            .flatMapMaybe(member -> {
+                                return membershipService.findByReferenceAndMember(application, authenticatedUser.getId())
+                                        .flatMap(membership -> roleService.findById(membership.getRole()))
+                                        .filter(role -> role.getPermissions() != null)
+                                        .map(role -> role.getPermissions().stream().map(perm -> RoleScope.valueOf(role.getScope()).name().toLowerCase() + "_" + perm).collect(Collectors.toList()));
+                            })
+                            .toList()
+                            .map(perms -> perms.stream().flatMap(List::stream).collect(Collectors.toList()));
+                })
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

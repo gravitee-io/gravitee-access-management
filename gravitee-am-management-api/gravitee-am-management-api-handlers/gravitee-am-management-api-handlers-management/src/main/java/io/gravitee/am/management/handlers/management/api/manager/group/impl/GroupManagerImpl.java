@@ -92,7 +92,7 @@ public class GroupManagerImpl implements GroupManager, InitializingBean, EventLi
                 .subscribe(
                         group -> {
                             groups.put(group.getId(), group);
-                            logger.info("Group {} {}d", groupId, eventType);
+                            logger.info("Group {} loaded", group.getName(), eventType);
                         },
                         error -> logger.error("Unable to {} group", eventType, error),
                         () -> logger.error("No group found with id {}", groupId));

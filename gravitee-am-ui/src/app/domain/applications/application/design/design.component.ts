@@ -13,14 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {AuthService} from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-design',
   templateUrl: './design.component.html',
   styleUrls: ['./design.component.scss']
 })
-export class ApplicationDesignComponent {
+export class ApplicationDesignComponent implements OnInit {
 
-  constructor() { }
+  constructor(private authService: AuthService,
+              private router: Router,
+              private route: ActivatedRoute) { }
+
+  ngOnInit(): void {
+    const domainId = this.route.snapshot.parent.parent.params['domainId'];
+    const appId = this.route.snapshot.parent.params['appId'];
+    if (this.canNavigate(['application_form_read'])) {
+      this.router.navigate(['/domains', domainId, 'applications', appId, 'design', 'forms']);
+    } else if (this.canNavigate(['application_email_template_read'])) {
+      this.router.navigate(['/domains', domainId, 'applications', appId, 'design', 'emails']);
+    }
+  }
+
+  private canNavigate(permissions): boolean {
+    return this.authService.isAdmin() || this.authService.hasPermissions(permissions);
+  }
 }

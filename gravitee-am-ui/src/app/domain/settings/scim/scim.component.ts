@@ -18,6 +18,7 @@ import {SnackbarService} from "../../../services/snackbar.service";
 import {ActivatedRoute, Router} from "@angular/router";
 import {AppConfig} from "../../../../config/app.config";
 import {DomainService} from "../../../services/domain.service";
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-scim',
@@ -27,27 +28,27 @@ import {DomainService} from "../../../services/domain.service";
 export class ScimComponent implements OnInit {
   domainId: string;
   domain: any = {};
-  formChanged: boolean = false;
+  formChanged = false;
+  editMode: boolean;
 
   constructor(private domainService: DomainService,
               private snackbarService: SnackbarService,
+              private authService: AuthService,
               private route: ActivatedRoute,
               private router: Router) {
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
-    }
     this.domain = this.route.snapshot.data['domain'];
+    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_scim_update']);
   }
 
   save() {
     this.domainService.patchScimSettings(this.domainId, this.domain).subscribe(data => {
       this.domain = data;
       this.formChanged = false;
-      this.snackbarService.open("SCIM configuration updated");
+      this.snackbarService.open('SCIM configuration updated');
     });
   }
 

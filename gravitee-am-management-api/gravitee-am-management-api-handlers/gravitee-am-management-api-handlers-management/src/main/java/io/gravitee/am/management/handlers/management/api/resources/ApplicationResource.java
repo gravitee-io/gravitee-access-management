@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.membership.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.ApplicationService;
@@ -42,6 +43,7 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -64,17 +66,39 @@ public class ApplicationResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Application", response = Application.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.APPLICATION_SETTINGS, acls = RolePermissionAction.READ)
-    })
-    public void get(
-            @PathParam("domain") String domain,
-            @PathParam("application") String application,
-            @Suspended final AsyncResponse response) {
+    public void get(@PathParam("domain") String domain,
+                    @PathParam("application") String application,
+                    @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMap(irrelevant -> applicationService.findById(application))
                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
+                .map(application1 -> {
+                    if (isAdmin(authenticatedUser)) {
+                        return application1;
+                    }
+                    List<String> resourcePermissions = resourcePermissions(application1, ReferenceType.APPLICATION, authenticatedUser);
+                    if (!hasPermission(resourcePermissions, RolePermission.APPLICATION_IDENTITY_PROVIDER, RolePermissionAction.READ)) {
+                        application1.setIdentities(null);
+                    }
+                    if (!hasPermission(resourcePermissions, RolePermission.APPLICATION_CERTIFICATE, RolePermissionAction.READ)) {
+                        application1.setCertificate(null);
+                    }
+                    if (!hasPermission(resourcePermissions, RolePermission.APPLICATION_METADATA, RolePermissionAction.READ)) {
+                        application1.setMetadata(null);
+                    }
+                    if (application1.getSettings() != null) {
+                        if (!hasPermission(resourcePermissions, RolePermission.APPLICATION_USER_ACCOUNT, RolePermissionAction.READ)) {
+                            application1.getSettings().setAccount(null);
+                        }
+                        if (!hasPermission(resourcePermissions, RolePermission.APPLICATION_SETTINGS, RolePermissionAction.READ)) {
+                            application1.getSettings().setAdvanced(null);
+                        }
+                    }
+                    return application1;
+                })
                 .map(application1 -> {
                     if (!application1.getDomain().equalsIgnoreCase(domain)) {
                         throw new BadRequestException("Application does not belong to domain");

@@ -21,6 +21,7 @@ import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material";
 import {RoleService} from "../../../../../services/role.service";
 import {GroupService} from "../../../../../services/group.service";
 import {PlatformService} from "../../../../../services/platform.service";
+import {AuthService} from "../../../../../services/auth.service";
 
 @Component({
   selector: 'app-group-roles',
@@ -32,6 +33,7 @@ export class GroupRolesComponent implements OnInit {
   private group: any;
   private adminContext: any;
   groupRoles: any[];
+  editMode: boolean;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -39,6 +41,7 @@ export class GroupRolesComponent implements OnInit {
               private dialogService: DialogService,
               private groupService: GroupService,
               private platformService: PlatformService,
+              private authService: AuthService,
               private dialog: MatDialog) {
   }
 
@@ -48,6 +51,9 @@ export class GroupRolesComponent implements OnInit {
     this.groupRoles = this.route.snapshot.data['roles'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.adminContext = true;
+      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_update']);
+    } else {
+      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_group_update']);
     }
   }
 

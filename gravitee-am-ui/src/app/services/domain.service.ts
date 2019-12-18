@@ -17,6 +17,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
 import { Subject , Observable} from "rxjs";
+import {map} from "rxjs/operators";
+import {AuthService} from "./auth.service";
 
 @Injectable()
 export class DomainService {
@@ -24,7 +26,7 @@ export class DomainService {
   private domainUpdatedSource = new Subject<any>();
   domainUpdated$ = this.domainUpdatedSource.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
   list(): Observable<any> {
     return this.http.get<any>(this.domainsURL);
@@ -100,5 +102,13 @@ export class DomainService {
 
   removeMember(id, membershipId) {
     return this.http.delete<any>(this.domainsURL + id + '/members/' + membershipId);
+  }
+
+  permissions(id): Observable<any> {
+    return this.http.get<any>(this.domainsURL + id + '/members/permissions')
+      .pipe(map(perms => {
+        this.authService.reloadDomainPermissions(perms);
+        return perms;
+      }));
   }
 }

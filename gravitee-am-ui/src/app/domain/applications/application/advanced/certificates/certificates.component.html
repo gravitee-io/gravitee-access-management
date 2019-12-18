@@ -24,7 +24,7 @@
             <h5>Certificate</h5>
             <mat-divider></mat-divider>
           </div>
-          <mat-form-field appearance="outline" floatLabel="always">
+          <mat-form-field appearance="outline" floatLabel="always" *hasPermission="['application_certificate_update']">
             <mat-select placeholder="Certificate" name="certificate" [(ngModel)]="selectedCertificate" (selectionChange)="onChange($event)">
               <mat-option><em>None</em></mat-option>
               <mat-option *ngFor="let certificate of certificates" [value]="certificate.id">{{ certificate.name }}</mat-option>
@@ -43,7 +43,7 @@
                           [icon]="'vpn_key'"></app-emptystate>
         </div>
 
-        <div fxLayout="row" style="margin-top: 20px;">
+        <div fxLayout="row" style="margin-top: 20px;" *hasPermission="['application_certificate_update']">
           <button mat-raised-button type="submit" [disabled]="!formChanged">SAVE</button>
         </div>
       </form>

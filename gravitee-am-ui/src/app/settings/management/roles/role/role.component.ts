@@ -21,6 +21,7 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {BreadcrumbService} from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import {DialogService} from "../../../../services/dialog.service";
 import {PlatformService} from "../../../../services/platform.service";
+import {AuthService} from "../../../../services/auth.service";
 
 @Component({
   selector: 'app-settings-management-role',
@@ -32,20 +33,25 @@ export class ManagementRoleComponent implements OnInit {
   private readPermissions: any[];
   private updatePermissions: any[];
   private deletePermissions: any[];
+  private deleteMode: boolean;
   role: any;
-  formChanged: boolean = false;
+  formChanged = false;
   permissions: any[];
+  readonly: boolean;
 
   constructor(private platformService: PlatformService,
               private snackbarService: SnackbarService,
               private route: ActivatedRoute,
               private router: Router,
               private breadcrumbService: BreadcrumbService,
+              private authService: AuthService,
               private dialogService: DialogService) { }
 
   ngOnInit() {
     this.role = this.route.snapshot.data['role'];
     this.role.permissions = this.role.permissions || [];
+    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['management_role_update']);
+    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_role_delete']);
     this.initPermissions();
   }
 
@@ -55,6 +61,10 @@ export class ManagementRoleComponent implements OnInit {
       this.formChanged = false;
       this.snackbarService.open('Role updated');
     });
+  }
+
+  canDelete(): boolean {
+    return !this.role.system && this.deleteMode;
   }
 
   delete(event) {

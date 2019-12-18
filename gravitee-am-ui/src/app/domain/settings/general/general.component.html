@@ -20,56 +20,70 @@
   <div class="domain-general-content">
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column">
-        <div class="domain-enable-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableDomain($event)"
-            [checked]="domain.enabled">
-          </mat-slide-toggle>
-          <mat-hint>Enable domain to handle incoming clients requests.</mat-hint>
+        <div class="gs-form-section">
+          <div class="domain-enable-state" fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableDomain($event)"
+              [checked]="domain.enabled" [disabled]="readonly">
+            </mat-slide-toggle>
+            <mat-hint>Enable domain to handle incoming clients requests.</mat-hint>
+          </div>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Name</mat-label>
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required [readonly]="readonly">
+            <mat-hint>Your domain's name.</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Path</mat-label>
+            <input matInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required [readonly]="readonly">
+            <mat-hint>Your domain's path. Context path for Authentication and Authorization API operations.</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Description</mat-label>
+            <textarea matInput placeholder="Description" name="description" [(ngModel)]="domain.description" [readonly]="readonly"></textarea>
+            <mat-hint>Your domain's description.</mat-hint>
+          </mat-form-field>
         </div>
-        <mat-form-field fxFlex style="margin-top: -20px;">
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required>
-          <mat-hint>Your domain's name</mat-hint>
-        </mat-form-field>
-        <mat-form-field fxFlex>
-          <input matInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required>
-          <mat-hint>Your domain's path. Context path for Authentication and Authorization API operations.</mat-hint>
-        </mat-form-field>
-        <mat-form-field>
-          <textarea matInput placeholder="Description" name="description" [(ngModel)]="domain.description"></textarea>
-          <mat-hint>Your domain's description.</mat-hint>
-        </mat-form-field>
 
-        <h4 style="margin-bottom: 0px;">Deployment</h4>
-        <mat-form-field>
-          <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" #chipListTags>
-            <mat-chip *ngFor="let tag of selectedTags" color="accent"
-                      selected="true" (removed)="removeTag(tag)">
-              <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
-              &nbsp;<span>{{tag.id}}</span>&nbsp;|&nbsp;<small>{{tag.name}}</small>
-              <mat-icon matChipRemove>cancel</mat-icon>
-            </mat-chip>
-            <input matInput
-                   placeholder="Sharding Tags"
-                   aria-label="Sharding Tags"
-                   [matAutocomplete]="auto"
-                   [matChipInputFor]="chipListTags"
-                   #chipInput>
-          </mat-chip-list>
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>Deployment</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Sharding tags</mat-label>
+              <mat-chip-list #chipListTags>
+                <mat-chip *ngFor="let tag of selectedTags" color="accent"
+                          selected="true" (removed)="removeTag(tag)">
+                  <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
+                  &nbsp;<span>{{tag.id}}</span>&nbsp;|&nbsp;<small>{{tag.name}}</small>
+                  <mat-icon matChipRemove>cancel</mat-icon>
+                </mat-chip>
+                <input matInput
+                       aria-label="Sharding Tags"
+                       placeholder="Sharding Tags"
+                       [matAutocomplete]="auto"
+                       [matChipInputFor]="chipListTags" [readonly]="readonly"
+                       #chipInput>
+              </mat-chip-list>
 
-          <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addTag($event)">
-            <mat-option *ngFor="let tag of tags" [value]="tag.id">
-              <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
-              <span>{{ tag.id }}</span> | <small>{{tag.name}}</small>
-            </mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
+              <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addTag($event)">
+                <mat-option *ngFor="let tag of tags" [value]="tag.id">
+                  <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
+                  <span>{{ tag.id }}</span> | <small>{{tag.name}}</small>
+                </mat-option>
+              </mat-autocomplete>
+              <mat-hint>Select a sharding tag and press enter.</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
 
-        <div class="domain-general-form-actions">
+        <div *hasPermission="['domain_settings_update']">
           <button mat-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
-      <div class="domain-general-delete-zone" fxLayout="column" *ngIf="!domain.master">
+      <div *hasPermission="['domain_settings_delete']" class="domain-general-delete-zone" fxLayout="column">
         <p>This operation cannot be undone.</p>
         Domain will be deleted included all related data such as clients, identity providers, certificates and roles.
         Current domain's users will no longer have access to the platform to log in and access protected resources.

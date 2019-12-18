@@ -33,8 +33,6 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this.authService.notifyObservable$.subscribe(response => {
       if (response && response === 'Unauthorized') {
-        sessionStorage.removeItem('access_token');
-        sessionStorage.removeItem('user');
         this.router.navigate(['/login']);
       }
     })

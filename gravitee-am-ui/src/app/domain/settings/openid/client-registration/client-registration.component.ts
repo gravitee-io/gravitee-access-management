@@ -31,21 +31,18 @@ export class DomainSettingsOpenidClientRegistrationComponent implements OnInit {
     {'href': 'templates' , 'label': 'Client templates'}
   ];
 
-  formChanged: boolean = false;
-  domain: any = {};
-
-  constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) {
-  }
+  constructor(private route: ActivatedRoute,
+              private breadcrumbService: BreadcrumbService) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.data['domain'].name;
+    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.initBreadcrumb();
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/openid/clientRegistration/settings', 'settings');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/openid/clientRegistration/default-scope', 'default scopes');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/openid/clientRegistration/allowed-scope', 'allowed scopes');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/openid/clientRegistration/client-templates', 'client templates');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/openid/clientRegistration/settings', 'settings');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/openid/clientRegistration/default-scope', 'default scopes');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/openid/clientRegistration/allowed-scope', 'allowed scopes');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/openid/clientRegistration/client-templates', 'client templates');
   }
 }

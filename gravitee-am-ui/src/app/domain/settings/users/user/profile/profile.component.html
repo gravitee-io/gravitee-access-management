@@ -26,31 +26,31 @@
         </div>
         <div fxLayout="row">
           <mat-form-field *ngIf="user.firstName" style="margin-right: 20px;">
-            <input matInput type="text" placeholder="First name" [disabled]="!editMode()" #firstName="ngModel" name="firstName" [(ngModel)]="user.firstName" required>
+            <input matInput type="text" placeholder="First name" [disabled]="!editMode() && !canEdit" #firstName="ngModel" name="firstName" [(ngModel)]="user.firstName" required>
             <mat-hint *ngIf="editMode()">The first name of the User.</mat-hint>
             <mat-error *ngIf="firstName.errors?.required">Enter first name</mat-error>
           </mat-form-field>
           <mat-form-field *ngIf="user.lastName">
-            <input matInput type="text" placeholder="Last name" [disabled]="!editMode()" #lastName="ngModel" name="lastName" [(ngModel)]="user.lastName" required>
+            <input matInput type="text" placeholder="Last name" [disabled]="!editMode() && !canEdit" #lastName="ngModel" name="lastName" [(ngModel)]="user.lastName" required>
             <mat-hint *ngIf="editMode()">The last name of the User.</mat-hint>
             <mat-error *ngIf="lastName.errors?.required">Enter last name</mat-error>
           </mat-form-field>
         </div>
         <div fxLayout="row" *ngIf="user.email">
           <mat-form-field>
-            <input matInput placeholder="Email" [disabled]="!editMode()" #email="ngModel" name="email" [(ngModel)]="user.email" [email]="user.email !== ''" required>
+            <input matInput placeholder="Email" [disabled]="!editMode() && !canEdit" #email="ngModel" name="email" [(ngModel)]="user.email" [email]="user.email !== ''" required>
             <mat-hint *ngIf="editMode()">Email address for the User.</mat-hint>
             <mat-error *ngIf="email.errors?.required">Enter email</mat-error>
             <mat-error *ngIf="user.email && email.errors?.email">Not a valid email</mat-error>
           </mat-form-field>
         </div>
-        <div *ngIf="editMode()">
+        <div *ngIf="editMode() && canEdit">
           <app-select-applications [selectedApp]="user.applicationEntity" (onSelectApp)="onAppSelectionChanged($event)" (onRemoveApp)="onAppDeleted($event)"></app-select-applications>
         </div>
         <div fxLayout="column" class="additional-information" *ngIf="!isEmptyObject(user.additionalInformation) || editMode()">
           <h4>Additional information</h4>
           <span>Custom information about the user. These details are available in the user's profile.</span>
-          <a (click)="addDynamicComponent()" *ngIf="editMode()">(+) add user attribute</a>
+          <a (click)="addDynamicComponent()" *ngIf="editMode() && canEdit">(+) add user attribute</a>
           <template #dynamic></template>
           <div *ngFor="let keyValuePair of userAdditionalInformation | mapToIterable">
             <div *ngIf="keyValuePair.value" fxLayout="row">
@@ -65,7 +65,7 @@
           </div>
         </div>
 
-        <div>
+        <div *ngIf="canEdit">
           <h5>Actions</h5>
           <mat-divider></mat-divider>
           <div class="additional-information" fxLayout="column">
@@ -111,12 +111,12 @@
           </div>
         </div>
 
-        <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;" *ngIf="editMode()">
+        <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;" *ngIf="editMode() && canEdit">
           <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
           <button mat-raised-button [disabled]="(!userForm.valid || userForm.pristine) && !formChanged" type="submit">UPDATE</button>
         </div>
       </form>
-      <div class="user-profile-settings-delete-zone" fxLayout="column" *ngIf="editMode()">
+      <div class="user-profile-settings-delete-zone" fxLayout="column" *ngIf="editMode() && canDelete">
         <p>This operation cannot be undone.</p>
         User will be deleted and will no longer be able to sign in to applications.
         <div class="user-profile-settings-delete-button" fxLayout="row">

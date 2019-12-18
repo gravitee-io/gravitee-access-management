@@ -28,8 +28,11 @@ import { SnackbarService } from "../services/snackbar.service";
 export class DomainComponent implements OnInit {
   domain: any = {};
 
-  constructor(private route: ActivatedRoute, private sidenavService: SidenavService, private snackbarService: SnackbarService,
-              private breadcrumbService: BreadcrumbService, private domainService: DomainService) {
+  constructor(private route: ActivatedRoute,
+              private sidenavService: SidenavService,
+              private snackbarService: SnackbarService,
+              private breadcrumbService: BreadcrumbService,
+              private domainService: DomainService) {
   }
 
   ngOnInit() {

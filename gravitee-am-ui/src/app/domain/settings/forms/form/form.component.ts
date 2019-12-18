@@ -17,6 +17,7 @@ import { Component, OnInit } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { AppConfig } from "../../../../../config/app.config";
+import {AuthService} from "../../../../services/auth.service";
 
 @Component({
   selector: 'app-domain-form',
@@ -27,10 +28,14 @@ export class DomainSettingsFormComponent implements OnInit {
   private domainId: string;
   template: string;
   rawTemplate: string;
+  createMode: boolean;
+  editMode: boolean;
+  deleteMode: boolean;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
-              private breadcrumbService: BreadcrumbService) {
+              private breadcrumbService: BreadcrumbService,
+              private authService: AuthService) {
   }
 
   ngOnInit() {
@@ -41,6 +46,9 @@ export class DomainSettingsFormComponent implements OnInit {
     } else {
       this.rawTemplate = this.route.snapshot.queryParams['template'];
     }
+    this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_form_create']);
+    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_form_update']);
+    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_form_delete']);
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
     this.initBreadcrumb();

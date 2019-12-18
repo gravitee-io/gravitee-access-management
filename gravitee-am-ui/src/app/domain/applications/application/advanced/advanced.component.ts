@@ -13,14 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {AuthService} from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-advanced',
   templateUrl: './advanced.component.html',
   styleUrls: ['./advanced.component.scss']
 })
-export class ApplicationAdvancedComponent {
+export class ApplicationAdvancedComponent implements OnInit {
 
-  constructor() { }
+  constructor(private router: Router,
+              private route: ActivatedRoute,
+              private authService: AuthService) { }
+
+  ngOnInit(): void {
+    const domainId = this.route.snapshot.parent.parent.params['domainId'];
+    const appId = this.route.snapshot.parent.params['appId'];
+    if (this.canNavigate(['application_metadata_read'])) {
+      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'metadata']);
+    } else if (this.canNavigate(['application_oauth_read'])) {
+      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'oauth2']);
+    } else if (this.canNavigate(['application_member_read'])) {
+      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'members']);
+    } else if (this.canNavigate(['application_user_account_read'])) {
+      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'account']);
+    } else if (this.canNavigate(['application_certificate_read'])) {
+      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'certificates']);
+    }
+  }
+
+  private canNavigate(permissions): boolean {
+    return this.authService.isAdmin() || this.authService.hasPermissions(permissions);
+  }
 }

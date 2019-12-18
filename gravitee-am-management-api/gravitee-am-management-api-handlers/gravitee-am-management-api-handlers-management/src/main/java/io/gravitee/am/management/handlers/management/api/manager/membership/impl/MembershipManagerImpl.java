@@ -89,7 +89,7 @@ public class MembershipManagerImpl implements MembershipManager, InitializingBea
                 .subscribe(
                         membership -> {
                             memberships.put(membership.getId(), membership);
-                            logger.info("Membership provider {} {}d", membershipId, eventType);
+                            logger.info("Membership {} - {} loaded", membership.getMemberType(), membership.getMemberId(), eventType);
                         },
                         error -> logger.error("Unable to {} membership", eventType, error),
                         () -> logger.error("No membership found with id {}", membershipId));

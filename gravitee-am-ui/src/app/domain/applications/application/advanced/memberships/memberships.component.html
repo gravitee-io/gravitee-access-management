@@ -20,6 +20,9 @@
     <div fxFlex="70">
       <app-memberships [members]="members"
                        [roleScope]="applicationRoleScope"
+                       [createMode]="createMode"
+                       [editMode]="editMode"
+                       [deleteMode]="deleteMode"
                        (userMembershipAdded)="addUserMembership($event)"
                        (groupMembershipAdded)="addGroupMembership($event)"
                        (membershipDeleted)="delete($event)"

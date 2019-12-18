@@ -20,8 +20,8 @@ import { SnackbarService } from "../../../../services/snackbar.service";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { MatInput } from "@angular/material/input";
 import * as _ from "lodash";
-import { AppConfig } from "../../../../../config/app.config";
 import { DialogService } from "../../../../services/dialog.service";
+import {AuthService} from "../../../../services/auth.service";
 
 export interface Scope {
   id: string;
@@ -35,29 +35,27 @@ export interface Scope {
   styleUrls: ['./role.component.scss']
 })
 export class RoleComponent implements OnInit {
-
   @ViewChild('chipInput') chipInput: MatInput;
-
   private domainId: string;
   scopes: Scope[];
   selectedPermissions: Scope[];
   role: any;
-  formChanged: boolean = false;
+  formChanged = false;
+  editMode: boolean;
 
   constructor(private roleService: RoleService,
               private snackbarService: SnackbarService,
               private route: ActivatedRoute,
               private router: Router,
               private breadcrumbService: BreadcrumbService,
-              private dialogService: DialogService) { }
+              private dialogService: DialogService,
+              private authService: AuthService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
-    }
     this.role = this.route.snapshot.data['role'];
     this.scopes = this.route.snapshot.data['scopes'];
+    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_role_update']);
 
     if (!this.role.permissions) {
       this.role.permissions = [];
