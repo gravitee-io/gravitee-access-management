@@ -36,6 +36,7 @@ export interface Scope {
 export class ScopeSelectionComponent implements OnInit, AfterViewInit {
   @Output() onScopeSelection = new EventEmitter();
   @Input() initialSelectedScopes: string[];
+  @Input() readonly: boolean;
 
   scopes: MatTableDataSource<Scope>;
   selection: SelectionModel<Scope>;

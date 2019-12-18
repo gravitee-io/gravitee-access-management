@@ -16,10 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.model.IdentityProviderListItem;
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.IdentityProviderManager;
-import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
@@ -68,17 +68,14 @@ public class IdentityProvidersResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered identity providers for a security domain")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered identity providers for a security domain", response = IdentityProvider.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List registered identity providers for a security domain", response = IdentityProviderListItem.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_IDENTITY_PROVIDER, acls = RolePermissionAction.READ)
-    })
     public void list(@PathParam("domain") String domain,
                      @QueryParam("userProvider") boolean userProvider,
                      @Suspended final AsyncResponse response) {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> identityProviderService.findByDomain(domain))
+                .flatMapSingle(__ -> identityProviderService.findByDomain(domain))
                 .flatMapObservable(identities -> Observable.fromIterable(identities))
                 .filter(identityProvider -> {
                     if (userProvider) {
@@ -88,7 +85,8 @@ public class IdentityProvidersResource extends AbstractResource {
                 })
                 .toList()
                 .map(identities -> {
-                    List<IdentityProvider> sortedIdentityProviders = identities.stream()
+                    List<IdentityProviderListItem> sortedIdentityProviders = identities.stream()
+                            .map(identityProvider -> new IdentityProviderListItem(identityProvider))
                             .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                             .collect(Collectors.toList());
                     return Response.ok(sortedIdentityProviders).build();

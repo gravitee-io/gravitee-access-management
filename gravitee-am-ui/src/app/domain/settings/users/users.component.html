@@ -78,10 +78,10 @@
 
   <app-emptystate *ngIf="isEmpty"
                   [message]="'Users will appear here'"
-                  [subMessage]="'Start creating a user'"
+                  [subMessage]="'No data to display'"
                   [icon]="'person'"></app-emptystate>
 
-  <div *ngIf="!adminContext" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div *ngIf="createMode" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

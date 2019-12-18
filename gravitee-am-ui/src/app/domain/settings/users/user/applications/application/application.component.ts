@@ -19,6 +19,7 @@ import {SnackbarService} from "../../../../../../services/snackbar.service";
 import {DialogService} from "../../../../../../services/dialog.service";
 import {UserService} from "../../../../../../services/user.service";
 import * as _ from 'lodash';
+import {AuthService} from "../../../../../../services/auth.service";
 
 @Component({
   selector: 'app-user-application',
@@ -26,17 +27,18 @@ import * as _ from 'lodash';
   styleUrls: ['./application.component.scss']
 })
 export class UserApplicationComponent implements OnInit {
-
   private domainId: string;
   private userId: string;
   clientId: string;
   consents: any[];
+  canRevoke: boolean;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
-              private userService: UserService) {
+              private userService: UserService,
+              private authService: AuthService) {
   }
 
   ngOnInit() {
@@ -44,6 +46,7 @@ export class UserApplicationComponent implements OnInit {
     this.userId = this.route.snapshot.parent.params['userId'];
     this.clientId = this.route.snapshot.params['clientId'];
     this.consents = this.route.snapshot.data['consents'];
+    this.canRevoke = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_update']);
   }
 
   revokeApplication(event) {

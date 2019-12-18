@@ -1,4 +1,3 @@
-
 import {map} from 'rxjs/operators';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
@@ -15,10 +14,10 @@ import {map} from 'rxjs/operators';
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { Observable, Subject } from "rxjs";
-import { HttpClient } from "@angular/common/http";
-import { AppConfig } from "../../config/app.config";
+import {Injectable} from '@angular/core';
+import {BehaviorSubject, Observable, Subject} from "rxjs";
+import {HttpClient} from "@angular/common/http";
+import {AppConfig} from "../../config/app.config";
 
 @Injectable()
 export class AuthService {
@@ -29,11 +28,18 @@ export class AuthService {
   private userInfoUrl: string = AppConfig.settings.baseURL + '/user';
   private _logoutEndpoint: string = AppConfig.settings.authentication.logoutUri;
   private currentUser: any;
+  private domainPermissions: any[];
+  private applicationPermissions: any[];
+  private domainPermissionsSource = new BehaviorSubject(null);
+  private domainPermissionsObservable = this.domainPermissionsSource.asObservable();
+  private applicationPermissionsSource = new BehaviorSubject(null);
+  private applicationPermissionsObservable = this.applicationPermissionsSource.asObservable();
   private subject = new Subject();
   notifyObservable$ = this.subject.asObservable();
 
   constructor(private http: HttpClient) {
-    this.currentUser = sessionStorage.getItem('user');
+    this.domainPermissionsObservable.subscribe(permissions => this.domainPermissions = permissions);
+    this.applicationPermissionsObservable.subscribe(permissions => this.applicationPermissions = permissions);
   }
 
   handleAuthentication(): Observable<boolean> {
@@ -49,7 +55,7 @@ export class AuthService {
     return this._logoutEndpoint;
   }
 
-  userInfo() {
+  userInfo(): Observable<any> {
     return this.http.get<any>(this.userInfoUrl).pipe(map(user => {
       this.setUser(user);
       return user;
@@ -57,13 +63,11 @@ export class AuthService {
   }
 
   setUser(user: any) {
-    this.currentUser = user.preferred_username;
-    sessionStorage.setItem('user', this.currentUser);
+    this.currentUser = user;
   }
 
   logout(): Observable<boolean> {
     return Observable.create(observer => {
-      sessionStorage.clear();
       observer.next(true);
     });
   }
@@ -76,7 +80,34 @@ export class AuthService {
     return this.user() !== undefined;
   }
 
+  isAdmin(): boolean {
+    return this.isAuthenticated() && this.user().is_admin;
+  }
+
+  hasPermissions(permissions): boolean {
+    return this.isAuthenticated() &&
+      permissions.every(v => this.user().permissions.indexOf(v) >= 0 ||
+        (this.domainPermissions && this.domainPermissions.indexOf(v) >= 0) ||
+        (this.applicationPermissions && this.applicationPermissions.indexOf(v) >= 0));
+  }
+
   unauthorized() {
-    this.subject.next("Unauthorized");
+    this.subject.next('Unauthorized');
+  }
+
+  reloadDomainPermissions(permissions) {
+    this.domainPermissionsSource.next(permissions);
+  }
+
+  reloadApplicationPermissions(permissions) {
+    this.applicationPermissionsSource.next(permissions);
+  }
+
+  domainPermissionsLoaded(): boolean {
+    return this.domainPermissions != null;
+  }
+
+  applicationPermissionsLoaded(): boolean {
+    return this.applicationPermissions != null;
   }
 }

@@ -24,6 +24,7 @@ import { UserService } from "../../../../../services/user.service";
 import { COMMA, ENTER } from "@angular/cdk/keycodes";
 import * as _ from 'lodash';
 import { PlatformService } from "../../../../../services/platform.service";
+import {AuthService} from "../../../../../services/auth.service";
 
 @Component({
   selector: 'app-group-members',
@@ -36,6 +37,7 @@ export class GroupMembersComponent implements OnInit {
   group: any;
   members: any[];
   page: any = {};
+  editMode: boolean;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -43,6 +45,7 @@ export class GroupMembersComponent implements OnInit {
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
               private platformService: PlatformService,
+              private authService: AuthService,
               private dialog: MatDialog) {
     this.page.pageNumber = 0;
     this.page.size = 25;
@@ -52,9 +55,12 @@ export class GroupMembersComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.adminContext = true;
+      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_update']);
+    } else {
+      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_group_update']);
     }
     this.group = this.route.snapshot.parent.data['group'];
-    let pagedMembers = this.route.snapshot.data['members'];
+    const pagedMembers = this.route.snapshot.data['members'];
     this.page.totalElements = pagedMembers.totalCount;
     this.members = Object.assign([], pagedMembers.data);
   }

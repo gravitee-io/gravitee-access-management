@@ -40,7 +40,7 @@
         <ngx-datatable-column name="" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <mat-slide-toggle (change)="selectIdentityProvider($event, row.id)"
-                              [checked]="isIdentityProviderSelected(row.id)">
+                              [checked]="isIdentityProviderSelected(row.id)" [disabled]="readonly">
             </mat-slide-toggle>
           </ng-template>
         </ngx-datatable-column>
@@ -69,7 +69,7 @@
         <ngx-datatable-column name="" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <mat-slide-toggle (change)="selectIdentityProvider($event, row.id)"
-                              [checked]="isIdentityProviderSelected(row.id)">
+                              [checked]="isIdentityProviderSelected(row.id)" [disabled]="readonly">
             </mat-slide-toggle>
           </ng-template>
         </ngx-datatable-column>
@@ -82,7 +82,7 @@
                     [icon]="'people'"></app-emptystate>
   </div>
 
-  <div *ngIf="!loadIdentities && hasIdentityProviders() || hasSocialIdentityProviders()" fxLayout="row" style="margin-top: 20px;">
+  <div *ngIf="!loadIdentities && !readonly && (hasIdentityProviders() || hasSocialIdentityProviders())" fxLayout="row" style="margin-top: 20px;">
     <button mat-raised-button type="button" [disabled]="!formChanged" (click)="update()">SAVE</button>
   </div>
 

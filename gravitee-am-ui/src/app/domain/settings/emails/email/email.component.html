@@ -16,5 +16,8 @@
 
 -->
 <div class="domain-email-container">
-  <app-email></app-email>
+  <app-email [createMode]="createMode"
+             [editMode]="editMode"
+             [deleteMode]="deleteMode">
+  </app-email>
 </div>

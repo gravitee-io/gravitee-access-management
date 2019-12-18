@@ -18,6 +18,7 @@ import {DomainService} from "../../../services/domain.service";
 import {ActivatedRoute} from "@angular/router";
 import {SnackbarService} from "../../../services/snackbar.service";
 import {DialogService} from "../../../services/dialog.service";
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-domain-settings-memberships',
@@ -28,16 +29,23 @@ export class DomainSettingsMembershipsComponent implements OnInit {
   private domainId: string;
   domainRoleScope = 'DOMAIN';
   members: any;
+  createMode = false;
+  editMode = false;
+  deleteMode = false;
 
   constructor(private domainService: DomainService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
+              private authService: AuthService,
               private route: ActivatedRoute) {
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.members = this.route.snapshot.data['members'];
+    this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_member_create']);
+    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_member_update']);
+    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_member_delete']);
   }
 
   addUserMembership(membership) {

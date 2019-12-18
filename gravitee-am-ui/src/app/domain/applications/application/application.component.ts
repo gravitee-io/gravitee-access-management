@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
-import { BreadcrumbService } from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute} from "@angular/router";
+import {BreadcrumbService} from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import * as _ from 'lodash';
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-application',
@@ -35,7 +36,8 @@ export class ApplicationComponent implements OnInit {
   ];
 
   constructor(private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService) {
+              private breadcrumbService: BreadcrumbService,
+              private authService: AuthService) {
   }
 
   ngOnInit() {
@@ -45,6 +47,19 @@ export class ApplicationComponent implements OnInit {
     if (this.application.type === 'service') {
       _.remove(this.navLinks, { href: 'idp' });
       _.remove(this.navLinks, { href: 'design' });
+    }
+    if (!this.canDisplay(['application_identity_provider_read'])) {
+      _.remove(this.navLinks, { href: 'idp' });
+    }
+    if (!this.canDisplay(['application_email_template_read']) && !this.canDisplay(['application_form_read'])) {
+      _.remove(this.navLinks, { href: 'design' });
+    }
+    if (!this.canDisplay(['application_metadata_read'])
+            && !this.canDisplay(['application_oauth_read'])
+            && !this.canDisplay(['application_user_account_read'])
+            && !this.canDisplay(['application_certificate_read'])
+          ) {
+      _.remove(this.navLinks, { href: 'settings' });
     }
     this.initBreadcrumb();
   }
@@ -56,5 +71,9 @@ export class ApplicationComponent implements OnInit {
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/applications/'+this.application.id+'/design/forms', 'Forms');
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/applications/'+this.application.id+'/design/emails', 'Emails');
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/applications/'+this.application.id+'/advanced', 'Advanced');
+  }
+
+  private canDisplay(permissions): boolean {
+    return this.authService.isAdmin() || this.authService.hasPermissions(permissions);
   }
 }

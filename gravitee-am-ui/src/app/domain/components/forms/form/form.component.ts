@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild } from "@angular/core";
+import {AfterViewInit, Component, ElementRef, Inject, Input, OnInit, ViewChild} from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { AppConfig } from "../../../../../config/app.config";
@@ -35,18 +35,21 @@ export interface DialogData {
 export class FormComponent implements OnInit, AfterViewInit {
   private domainId: string;
   private appId: string;
-  private defaultFormContent: string = `// Custom form...`;
+  private defaultFormContent = `// Custom form...`;
   template: string;
   rawTemplate: string;
   form: any;
   formName: string;
   formContent: string = (' ' + this.defaultFormContent).slice(1);
   originalFormContent: string = (' ' + this.formContent).slice(1);
-  formFound: boolean = false;
-  formChanged: boolean = false;
+  formFound = false;
+  formChanged = false;
   config: any = { lineNumbers: true, readOnly: true};
   @ViewChild('editor') editor: any;
   @ViewChild('preview') preview: ElementRef;
+  @Input('createMode') createMode: boolean;
+  @Input('editMode') editMode: boolean;
+  @Input('deleteMode') deleteMode: boolean;
 
   constructor(private router: Router,
               private route: ActivatedRoute,
@@ -86,7 +89,7 @@ export class FormComponent implements OnInit, AfterViewInit {
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/forms/form*', this.template);
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/forms/form*', this.template);
   }
 
   isEnabled() {
@@ -122,10 +125,14 @@ export class FormComponent implements OnInit, AfterViewInit {
     this.preview.nativeElement.style.height = this.preview.nativeElement.contentWindow.document.body.scrollHeight + 'px';
   }
 
+  canEdit(): boolean {
+    return this.formFound ? this.editMode : this.createMode;
+  }
+
   create() {
     this.form['content'] = this.formContent;
     this.formService.create(this.domainId, this.appId, this.form).subscribe(data => {
-      this.snackbarService.open("Form created");
+      this.snackbarService.open('Form created');
       this.formFound = true;
       this.form = data;
       this.formChanged = false;
@@ -135,7 +142,7 @@ export class FormComponent implements OnInit, AfterViewInit {
   update() {
     this.form['content'] = this.formContent;
     this.formService.update(this.domainId, this.appId, this.form.id, this.form).subscribe(data => {
-      this.snackbarService.open("Form updated");
+      this.snackbarService.open('Form updated');
       this.formFound = true;
       this.form = data;
       this.formChanged = false;
@@ -149,7 +156,7 @@ export class FormComponent implements OnInit, AfterViewInit {
       .subscribe(res => {
         if (res) {
           this.formService.delete(this.domainId, this.appId, this.form.id).subscribe(response => {
-            this.snackbarService.open("Form deleted");
+            this.snackbarService.open('Form deleted');
             this.form = {};
             this.form.template = this.route.snapshot.queryParams['template'];
             this.formContent =  (' ' + this.defaultFormContent).slice(1);

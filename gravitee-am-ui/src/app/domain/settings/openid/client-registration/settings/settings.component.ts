@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import { DomainService } from "../../../../../services/domain.service";
-import { DialogService } from "../../../../../services/dialog.service";
-import { ActivatedRoute, Router } from "@angular/router";
-import { SnackbarService } from "../../../../../services/snackbar.service";
-import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { SidenavService } from "../../../../../components/sidenav/sidenav.service";
+import {ActivatedRoute, Router} from "@angular/router";
+import {DomainService} from "../../../../../services/domain.service";
+import {DialogService} from "../../../../../services/dialog.service";
+import {SnackbarService} from "../../../../../services/snackbar.service";
+import {SidenavService} from "../../../../../components/sidenav/sidenav.service";
+import {AuthService} from "../../../../../services/auth.service";
 
 @Component({
   selector: 'app-openid-client-registration-settings',
@@ -27,31 +27,36 @@ import { SidenavService } from "../../../../../components/sidenav/sidenav.servic
   styleUrls: ['./settings.component.scss']
 })
 export class ClientRegistrationSettingsComponent implements OnInit {
-
   formChanged = false;
   domain: any = {};
   clientDcrDisabled = false;
   disableToolTip = false;
   toolTipMessage = '';
+  readonly: boolean;
 
-  constructor(private domainService: DomainService, private dialogService: DialogService, private snackbarService: SnackbarService,
-              private router: Router, private route: ActivatedRoute, private breadcrumbService: BreadcrumbService, private sidenavService: SidenavService)
-  {}
+  constructor(private domainService: DomainService,
+              private dialogService: DialogService,
+              private snackbarService: SnackbarService,
+              private router: Router,
+              private route: ActivatedRoute,
+              private sidenavService: SidenavService,
+              private authService: AuthService) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
+    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['domain_dcr_create', 'domain_dcr_update']);
   }
 
   enableDynamicClientRegistration(event) {
     this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled = event.checked;
-    // If disabled, ensure to disable open dynamic client registration too and disable clients toogle too.
+    // If disabled, ensure to disable open dynamic client registration too and disable clients toggle too.
     if (!event.checked) {
       this.domain.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled = event.checked;
       this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled = event.checked;
 
       this.clientDcrDisabled = !event.checked;
       this.disableToolTip = event.checked;
-      this.toolTipMessage = "Disable until settings are saved and feature is enabled.";
+      this.toolTipMessage = 'Disable until settings are saved and feature is enabled.';
     }
     this.formChanged = true;
   }
@@ -99,7 +104,6 @@ export class ClientRegistrationSettingsComponent implements OnInit {
       this.domain = response;
       this.domainService.notify(this.domain);
       this.sidenavService.notify(this.domain);
-      this.breadcrumbService.addFriendlyNameForRoute('/domains/' + this.domain.id, this.domain.name);
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');
       this.formChanged = false;
     });

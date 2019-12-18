@@ -152,7 +152,7 @@ public class PermissionsFilter implements ContainerRequestFilter {
         RolePermission rolePermission= permission.value();
         RolePermissionAction[] acls = permission.acls();
 
-        return roles.stream().anyMatch(r -> rolePermission.getScope().getId() == r.getScope() &&
+        return roles.stream().anyMatch(r -> rolePermission.getScope().getId() == r.getScope() && r.getPermissions() != null &&
                 r.getPermissions().containsAll(Arrays.asList(acls).stream().map(acl -> rolePermission.getPermission().getMask() + "_" + acl.getMask()).collect(Collectors.toList())));
 
     }

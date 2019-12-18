@@ -33,7 +33,7 @@
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="providers-actions">
             <a mat-icon-button [routerLink]="[row.id]"><mat-icon>settings</mat-icon></a>
-            <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon>delete</mat-icon></button>
+            <button *hasPermission="['domain_identity_provider_delete']" mat-icon-button (click)="delete(row.id, $event)"><mat-icon>delete</mat-icon></button>
           </div>
         </ng-template>
       </ngx-datatable-column>
@@ -45,7 +45,7 @@
                   [subMessage]="'Start creating a provider'"
                   [icon]="'device_hub'"></app-emptystate>
 
-  <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div *hasPermission="['domain_identity_provider_create']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

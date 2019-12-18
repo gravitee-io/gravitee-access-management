@@ -1,7 +1,7 @@
-:host /deep/ .mat-drawer-inner-container {
-  overflow: initial;
-}
-
 mat-sidenav-content.gs-sidenav-content-min {
   margin-left: 60px !important;
+}
+
+:host /deep/ .mat-drawer-inner-container {
+  overflow: initial;
 }

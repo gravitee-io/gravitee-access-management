@@ -19,6 +19,7 @@ import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/co
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { DialogService } from "../../../../../services/dialog.service";
 import { GroupService } from "../../../../../services/group.service";
+import {AuthService} from "../../../../../services/auth.service";
 
 @Component({
   selector: 'app-group-settings',
@@ -30,18 +31,26 @@ export class GroupSettingsComponent implements OnInit {
   private domainId: string;
   private adminContext = false;
   group: any;
+  editMode: boolean;
+  deleteMode: boolean;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
               private breadcrumbService: BreadcrumbService,
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
-              private groupService: GroupService) { }
+              private groupService: GroupService,
+              private authService: AuthService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.adminContext = true;
+      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_update']);
+      this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_delete']);
+    } else {
+      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_group_update']);
+      this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_group_delete']);
     }
     this.group = this.route.snapshot.parent.data['group'];
     this.initBreadcrumb();

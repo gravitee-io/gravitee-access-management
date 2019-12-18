@@ -29,7 +29,7 @@
               <mat-checkbox name="grantTypes"
                             value="{{grantType.value}}"
                             [checked]="grantType.checked"
-                            (change)="selectGrantType($event)">
+                            (change)="selectGrantType($event)" [disabled]="readonly">
                 <span style="font-size: 14px;">{{grantType.name | titlecase}}</span>
               </mat-checkbox>
             </div>
@@ -55,14 +55,14 @@
               <div fxLayout="column" style="margin-bottom: 20px;">
                 <mat-slide-toggle
                   (change)="enhanceScopesWithUserPermissions($event)"
-                  [checked]="isScopesEnhanceWithUserPermissions()">
+                  [checked]="isScopesEnhanceWithUserPermissions()" [disabled]="readonly">
                   Enhance scopes
                 </mat-slide-toggle>
                 <mat-hint style="font-size: 75%;">Enhance client scopes with user permissions</mat-hint>
               </div>
             </div>
             <div fxLayout="column">
-              <application-scope [scopes]="scopes" (addScopeChange)="addScope($event)"></application-scope>
+              <application-scope *ngIf="!readonly" [scopes]="scopes" (addScopeChange)="addScope($event)"></application-scope>
               <ngx-datatable class="material"
                              [columnMode]="'flex'"
                              [headerHeight]="40"
@@ -94,7 +94,7 @@
                 </ngx-datatable-column>
                 <ngx-datatable-column name="" [flexGrow]="1">
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    <div fxLayout="row" class="application-scope-actions">
+                    <div fxLayout="row" class="application-scope-actions" *ngIf="!readonly">
                       <button mat-icon-button (click)="removeScope(row.key, $event)"><mat-icon>clear</mat-icon></button>
                     </div>
                   </ng-template>
@@ -114,17 +114,17 @@
             <div fxLayout="row" fxLayoutGap="10px">
               <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
                 <mat-icon matPrefix>timer</mat-icon>
-                <input matInput type="number" placeholder="Access token validity" name="accessTokenValidity" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.accessTokenValiditySeconds" />
+                <input matInput type="number" placeholder="Access token validity" name="accessTokenValidity" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.accessTokenValiditySeconds" [disabled]="readonly" />
                 <mat-hint>Expiration of the Access tokens (seconds).</mat-hint>
               </mat-form-field>
               <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
                 <mat-icon matPrefix>timer</mat-icon>
-                <input matInput type="number" placeholder="Refresh token validity" name="refreshTokenValidity" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.refreshTokenValiditySeconds" />
+                <input matInput type="number" placeholder="Refresh token validity" name="refreshTokenValidity" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.refreshTokenValiditySeconds" [disabled]="readonly" />
                 <mat-hint>Expiration of the Refresh tokens (seconds).</mat-hint>
               </mat-form-field>
               <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
                 <mat-icon matPrefix>timer</mat-icon>
-                <input matInput type="number" placeholder="ID token validity" name="idTokenValidity" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.idTokenValiditySeconds" />
+                <input matInput type="number" placeholder="ID token validity" name="idTokenValidity" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.idTokenValiditySeconds" [disabled]="readonly" />
                 <mat-hint>Expiration of the ID tokens (seconds).</mat-hint>
               </mat-form-field>
             </div>
@@ -141,8 +141,8 @@
             <mat-divider></mat-divider>
           </div>
           <div class="token-custom-claims">
-            <app-create-claim (addClaimChange)="addClaim($event)"></app-create-claim>
-            <p *ngIf="!claimsIsEmpty()"><small><i>Double click to edit and press enter to save changes</i></small></p>
+            <app-create-claim *ngIf="!readonly" (addClaimChange)="addClaim($event)"></app-create-claim>
+            <p *ngIf="!claimsIsEmpty() && !readonly"><small><i>Double click to edit and press enter to save changes</i></small></p>
             <ngx-datatable class="material"
                            [columnMode]="'flex'"
                            [headerHeight]="40"
@@ -196,7 +196,7 @@
               </ngx-datatable-column>
               <ngx-datatable-column name="" [flexGrow]="1">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  <div fxLayout="row" class="provider-claims-actions">
+                  <div fxLayout="row" class="provider-claims-actions" *ngIf="!readonly">
                     <button mat-icon-button (click)="deleteClaim(row.tokenType, row.claimName, $event)"><mat-icon>close</mat-icon></button>
                   </div>
                 </ng-template>

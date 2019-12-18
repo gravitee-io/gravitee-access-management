@@ -15,22 +15,26 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.manager.role.RoleManager;
+import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -40,7 +44,8 @@ import java.util.Map;
 @Path("/user")
 public class CurrentUserResource extends AbstractResource {
 
-    private Logger logger = LoggerFactory.getLogger(CurrentUserResource.class);
+    @Autowired
+    private RoleManager roleManager;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -49,22 +54,20 @@ public class CurrentUserResource extends AbstractResource {
             @ApiResponse(code = 200, message = "Current user successfully fetched", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void get(@Suspended final AsyncResponse response) {
-        Single<Map<String, Object>> currentUserSource = Single.create(emitter -> {
-            try {
-                if (isAuthenticated()) {
-                    emitter.onSuccess(getAuthenticatedUser().getAdditionalInformation());
-                } else {
-                    emitter.onError(new IllegalAccessException("Current user is not authenticated"));
-                }
-            } catch (Exception ex) {
-                logger.error("Failed to get user profile information", ex);
-                emitter.onError(ex);
-            }
-        });
+        final User authenticatedUser = getAuthenticatedUser();
 
-        currentUserSource.subscribe(
-                result -> response.resume(result),
-                error -> response.resume(error));
+        // prepare profile information with role permissions
+        Map<String, Object> profile = new HashMap<>(authenticatedUser.getAdditionalInformation());
+        profile.put("is_admin", roleManager.isAdminRoleGranted(authenticatedUser.getRoles()));
+        profile.put("permissions", roleManager
+                .findByIdIn(authenticatedUser.getRoles())
+                .stream()
+                .filter(role -> role.getScope() != null && role.getPermissions() != null)
+                .map(role -> role.getPermissions().stream().map(perm -> RoleScope.valueOf(role.getScope()).name().toLowerCase() + "_" + perm).collect(Collectors.toList()))
+                .flatMap(List::stream)
+                .collect(Collectors.toSet()));
+        profile.remove(CustomClaims.ROLES);
 
+        response.resume(profile);
     }
 }

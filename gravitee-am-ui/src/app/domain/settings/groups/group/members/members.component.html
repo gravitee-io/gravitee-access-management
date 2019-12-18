@@ -18,7 +18,9 @@
 <div class="members-container">
   <div fxLayout="row" fxLayoutAlign="center">
     <div fxFlex>This group has <b>{{members.length}}</b> members(s).</div>
-    <button style="height: 40px;" color="accent" mat-stroked-button (click)="add()">+ Add members</button>
+    <div style="height: 40px;">
+      <button *ngIf="editMode" color="accent" mat-stroked-button (click)="add()">+ Add members</button>
+    </div>
   </div>
   <mat-divider *ngIf="isEmpty" style="margin-bottom: 20px;"></mat-divider>
   <ngx-datatable *ngIf="!isEmpty" class="material"
@@ -62,7 +64,7 @@
     </ngx-datatable-column>
     <ngx-datatable-column name="Actions" [flexGrow]="1">
       <ng-template let-row="row" ngx-datatable-cell-template>
-        <div fxLayout="row" class="members-actions">
+        <div fxLayout="row" class="members-actions" *ngIf="editMode" >
           <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Remove member">highlight_off</mat-icon></button>
         </div>
       </ng-template>
@@ -72,5 +74,5 @@
 
 <app-emptystate *ngIf="isEmpty"
                 [message]="'Members will appear here'"
-                [subMessage]="'No data to display.'"
+                [subMessage]="'No data to display'"
                 [icon]="'people'"></app-emptystate>

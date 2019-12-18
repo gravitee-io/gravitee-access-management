@@ -18,6 +18,7 @@ import {SnackbarService} from "../../../../services/snackbar.service";
 import {ActivatedRoute} from "@angular/router";
 import {ProviderService} from "../../../../services/provider.service";
 import {ApplicationService} from "../../../../services/application.service";
+import {AuthService} from "../../../../services/auth.service";
 
 @Component({
   selector: 'app-idp',
@@ -40,21 +41,24 @@ export class ApplicationIdPComponent implements OnInit {
     'oauth2-generic-am-idp': 'cloud_queue',
     'github-am-idp': 'cloud_queue'
   };
-  loadIdentities: boolean = true;
+  loadIdentities = true;
   application: any;
   identityProviders: any[];
   socialIdentityProviders: any[];
-  formChanged: boolean = false;
+  formChanged = false;
+  readonly = false;
 
   constructor(private route: ActivatedRoute,
               private applicationService: ApplicationService,
               private snackbarService: SnackbarService,
-              private providerService: ProviderService) { }
+              private providerService: ProviderService,
+              private authService: AuthService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.application = this.route.snapshot.parent.data['application'];
     this.application.identities = this.application.identities || [];
+    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['application_identity_provider_update']);
     this.providerService.findByDomain(this.domainId).subscribe(data => {
       this.identityProviders = data.filter(idp => !idp.external);
       this.socialIdentityProviders = data.filter(idp => idp.external);
@@ -66,7 +70,7 @@ export class ApplicationIdPComponent implements OnInit {
     this.applicationService.patch(this.domainId, this.application.id, { 'identities': this.application.identities}).subscribe(data => {
       this.application = data;
       this.formChanged = false;
-      this.snackbarService.open("Application updated");
+      this.snackbarService.open('Application updated');
     });
   }
 

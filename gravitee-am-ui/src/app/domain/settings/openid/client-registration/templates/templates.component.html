@@ -18,44 +18,46 @@
 <div class="domain-client-registration-templates-container">
   <div class="domain-client-registration-templates-content" *ngIf="dcrIsEnabled && templateIsEnabled">
     <div class="templates-container" fxLayout="column" fxFlex="70">
-      <mat-form-field>
-        <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter">
-      </mat-form-field>
+      <div class="gs-form-section">
+        <mat-form-field>
+          <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter">
+        </mat-form-field>
 
-      <table mat-table [dataSource]="apps" matSort matSortActive="template" matSortDirection="desc" class="mat-elevation-z8">
-        <!-- ID Column -->
-        <ng-container matColumnDef="id">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Id </th>
-          <td mat-cell *matCellDef="let client"> {{client.id}} </td>
-        </ng-container>
+        <table mat-table [dataSource]="apps" matSort matSortActive="template" matSortDirection="desc" class="mat-elevation-z8">
+          <!-- ID Column -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Id </th>
+            <td mat-cell *matCellDef="let client"> {{client.id}} </td>
+          </ng-container>
 
-        <!-- Client ID Column -->
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Application name </th>
-          <td mat-cell *matCellDef="let client"> {{client.name}} </td>
-        </ng-container>
+          <!-- Client ID Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Application name </th>
+            <td mat-cell *matCellDef="let client"> {{client.name}} </td>
+          </ng-container>
 
-        <!-- Name Column -->
-        <ng-container matColumnDef="clientId">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> OAuth 2.0 Client ID </th>
-          <td mat-cell *matCellDef="let client"> {{client.clientId}} </td>
-        </ng-container>
+          <!-- Name Column -->
+          <ng-container matColumnDef="clientId">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> OAuth 2.0 Client ID </th>
+            <td mat-cell *matCellDef="let client"> {{client.clientId}} </td>
+          </ng-container>
 
-        <!-- Description Column -->
-        <ng-container matColumnDef="template">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Is Template </th>
-          <td mat-cell *matCellDef="let client">
-            <mat-slide-toggle matTooltip="{{client.template ? 'Disable template ?' : 'Enable template ?'}}"
-                              (change)="$event ? applyChange(client, $event) : null"
-                              [checked]="client.template">
-            </mat-slide-toggle>
-          </td>
-        </ng-container>
+          <!-- Description Column -->
+          <ng-container matColumnDef="template">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Is Template </th>
+            <td mat-cell *matCellDef="let client">
+              <mat-slide-toggle matTooltip="{{client.template ? 'Disable template ?' : 'Enable template ?'}}"
+                                (change)="$event ? applyChange(client, $event) : null"
+                                [checked]="client.template" [disabled]="readonly">
+              </mat-slide-toggle>
+            </td>
+          </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
-      <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+        <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
+      </div>
     </div>
 
     <div class="domain-client-registration-templates-description" fxFlex>

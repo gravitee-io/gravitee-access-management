@@ -14,9 +14,6 @@
   .role-content {
     table {
       background: transparent;
-      .mat-table {
-        display: block;
-      }
       .mat-row,
       .mat-header-row {
         display: flex;
@@ -33,15 +30,6 @@
         &.center {
           text-align: center;
         }
-      }
-    }
-    form {
-      padding: 20px;
-      background: #fafafa;
-      border-radius: 2px;
-      border: 1px solid rgb(226, 229, 231);
-      .role-form-actions {
-        margin-top: 20px;
       }
     }
     .role-delete-zone {

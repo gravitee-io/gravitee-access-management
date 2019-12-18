@@ -4,20 +4,9 @@
     font-weight: 400;
   }
   .domain-client-registration-default-scope-content {
-    form {
-      padding: 20px;
-      background: #fafafa;
-      border-radius: 2px;
-      border: 1px solid rgb(226, 229, 231);
-
-      ngx-datatable {
-        background: transparent;
-        box-shadow: none;
-      }
-
-      .domain-client-registration-default-scope-form-actions {
-        margin-top: 20px;
-      }
+    ngx-datatable {
+      background: transparent;
+      box-shadow: none;
     }
     .domain-client-registration-default-scope-description {
       margin-left: 20px;

@@ -27,6 +27,9 @@ import * as _ from 'lodash';
 export class MembershipsComponent implements OnInit, OnChanges {
   @Input('roleScope') roleScope: any;
   @Input('members') members: any;
+  @Input('createMode') createMode: boolean;
+  @Input('editMode') editMode: boolean;
+  @Input('deleteMode') deleteMode: boolean;
   @Output() userMembershipAdded = new EventEmitter<any>();
   @Output() groupMembershipAdded = new EventEmitter<any>();
   @Output() membershipDeleted = new EventEmitter<any>();
@@ -37,6 +40,7 @@ export class MembershipsComponent implements OnInit, OnChanges {
   roles: any[];
   userCtrl = new FormControl();
   filteredUsers: any[];
+  filteredGroups: any[];
   selectedUser: any;
   selectedGroup: any;
   selectedUserRole: any;
@@ -49,7 +53,7 @@ export class MembershipsComponent implements OnInit, OnChanges {
       .subscribe(searchTerm => {
         if (searchTerm && typeof searchTerm === 'string') {
           this.platformService.searchUsers(searchTerm + '*', 0, 30).subscribe(response => {
-            this.filteredUsers = response.data;
+            this.filteredUsers = response.data.filter(user => _.map(this.userMembers, 'memberId').indexOf(user.id) === -1);
           });
         }
       });
@@ -86,6 +90,7 @@ export class MembershipsComponent implements OnInit, OnChanges {
     this.selectedUser = null;
     this.selectedUserRole = null;
     this.userCtrl.reset();
+    this.filteredUsers = [];
   }
 
   addGroupMembership(event) {
@@ -140,6 +145,9 @@ export class MembershipsComponent implements OnInit, OnChanges {
       m.roleName = (metadata['roles'][m.role]) ? metadata['roles'][m.role].name : 'Unknown role';
       return m;
     });
+    if (this.groups) {
+      this.filterGroups();
+    }
   }
 
   private loadRoles() {
@@ -151,6 +159,11 @@ export class MembershipsComponent implements OnInit, OnChanges {
   private loadGroups() {
     this.platformService.groups().subscribe(response => {
       this.groups = response.data;
+      this.filterGroups();
     });
+  }
+
+  private filterGroups() {
+    this.filteredGroups = this.groups.filter(group => _.map(this.groupMembers, 'memberId').indexOf(group.id) === -1);
   }
 }

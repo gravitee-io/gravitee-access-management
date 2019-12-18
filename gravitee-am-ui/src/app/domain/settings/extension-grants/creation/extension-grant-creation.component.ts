@@ -13,17 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, ViewChild } from '@angular/core';
-import { MatStepper } from "@angular/material";
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {MatStepper} from '@angular/material';
+import {ActivatedRoute, Router} from '@angular/router';
+import {ExtensionGrantService} from '../../../../services/extension-grant.service';
+import {SnackbarService} from '../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-extension-grant-creation',
   templateUrl: './extension-grant-creation.component.html',
   styleUrls: ['./extension-grant-creation.component.scss']
 })
-export class ExtensionGrantCreationComponent {
-  public extensionGrant: any = {};
+export class ExtensionGrantCreationComponent implements OnInit {
+  private domainId: string;
+  extensionGrant: any = {};
+  configurationIsValid = false;
   @ViewChild ('stepper') stepper: MatStepper;
 
-  constructor() { }
+  constructor(private extensionGrantService: ExtensionGrantService,
+              private snackbarService: SnackbarService,
+              private router: Router,
+              private route: ActivatedRoute) { }
+
+  ngOnInit(): void {
+    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+  }
+
+  create() {
+    this.extensionGrant.configuration = JSON.stringify(this.extensionGrant.configuration);
+    this.extensionGrantService.create(this.domainId, this.extensionGrant).subscribe(data => {
+      this.snackbarService.open('Extension grant ' + data.name + ' created');
+      // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
+      this.router.navigateByUrl('/dummy', { skipLocationChange: true })
+        .then(() => this.router.navigate(['/domains', this.domainId, 'settings', 'extensionGrants', data.id]));
+    });
+  }
+
+  stepperValid() {
+    return this.extensionGrant &&
+      this.extensionGrant.name &&
+      this.extensionGrant.grantType &&
+      this.configurationIsValid;
+  }
+
 }

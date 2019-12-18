@@ -16,9 +16,9 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.model.ExtensionGrantListItem;
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
-import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
@@ -62,18 +62,16 @@ public class ExtensionGrantsResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered extension grants for a security domain")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered extension grants for a security domain", response = ExtensionGrant.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List registered extension grants for a security domain", response = ExtensionGrantListItem.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_EXTENSION_GRANT, acls = RolePermissionAction.READ)
-    })
     public void list(@PathParam("domain") String domain,
                      @Suspended final AsyncResponse response) {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapSingle(irrelevant -> extensionGrantService.findByDomain(domain)
                             .map(extensionGrants -> {
-                                List<ExtensionGrant> sortedExtensionGrants = extensionGrants.stream()
+                                List<ExtensionGrantListItem> sortedExtensionGrants = extensionGrants.stream()
+                                        .map(extensionGrant -> new ExtensionGrantListItem(extensionGrant))
                                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                                         .collect(Collectors.toList());
                                 return Response.ok(sortedExtensionGrants).build();

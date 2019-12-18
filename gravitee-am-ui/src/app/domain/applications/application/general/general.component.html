@@ -22,7 +22,7 @@
         <div class="gs-form-section general-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Enter the application name" name="name" [(ngModel)]="application.name" required>
+            <input matInput type="text" placeholder="Enter the application name" name="name" [(ngModel)]="application.name" required [disabled]="!editMode">
             <mat-hint>The application's name</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
@@ -45,12 +45,12 @@
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Description</mat-label>
-            <textarea matInput type="text" placeholder="Enter the application description" name="description" [(ngModel)]="application.description"></textarea>
+            <textarea matInput type="text" placeholder="Enter the application description" name="description" [(ngModel)]="application.description" [disabled]="!editMode"></textarea>
             <mat-hint>The application's description</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Type</mat-label>
-            <mat-select placeholder="Change the application type" name="type" [(ngModel)]="application.type">
+            <mat-select placeholder="Change the application type" name="type" [(ngModel)]="application.type" [disabled]="!editMode">
               <mat-option *ngFor="let applicationType of applicationTypes" [value]="applicationType.type">{{ applicationType.name }}</mat-option>
             </mat-select>
             <mat-hint>The application's type</mat-hint>
@@ -64,7 +64,7 @@
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="column">
-            <div fxLayout="row" fxLayoutGap="10px">
+            <div fxLayout="row" fxLayoutGap="10px" *ngIf="editMode">
               <div fxFlex="90">
                 <mat-form-field appearance="outline" floatLabel="always">
                   <input matInput type="text" placeholder="Enter a redirect URI" name="redirectUri" [value]="redirectUri || ''" (input)='redirectUri = $event.target.value'>
@@ -86,9 +86,9 @@
                   {{row.value}}
                 </ng-template>
               </ngx-datatable-column>
-              <ngx-datatable-column name="" [flexGrow]="1">
+              <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['application_settings_update']">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  <div fxLayout="row">
+                  <div fxLayout="row" *ngIf="editMode">
                     <button mat-icon-button (click)="deleteRedirectUris(row.value, $event)"><mat-icon>close</mat-icon></button>
                   </div>
                 </ng-template>
@@ -105,26 +105,26 @@
           <div fxLayout="column">
             <mat-slide-toggle
               (change)="enableAutoApprove($event)"
-              [checked]="this.applicationAdvancedSettings.skipConsent">
+              [checked]="this.applicationAdvancedSettings.skipConsent" [disabled]="!editMode">
               Skip user approval
             </mat-slide-toggle>
             <mat-hint style="font-size: 75%;">Generally used for internal trusted service applications.</mat-hint>
           </div>
         </div>
 
-        <div fxLayout="row">
+        <div fxLayout="row" *ngIf="editMode">
           <button mat-raised-button [disabled]="(!applicationForm.valid || applicationForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
-      <div class="application-settings-delete-zone" fxLayout="column">
+      <div class="application-settings-delete-zone" fxLayout="column" *ngIf="deleteMode || renewSecretMode">
         <mat-list>
-          <mat-list-item>
+          <mat-list-item *ngIf="renewSecretMode">
             <h3 matLine>Renew secret</h3>
             <p matLine>All applications using this OAuth 2.0 client secret will need to be updated to be able to request for tokens and access protected resources.</p>
             <button mat-stroked-button color="warn" (click)="renewClientSecret($event)">RENEW</button>
           </mat-list-item>
-          <mat-divider></mat-divider>
-          <mat-list-item>
+          <mat-divider *ngIf="renewSecretMode && deleteMode"></mat-divider>
+          <mat-list-item *ngIf="deleteMode">
             <h3 matLine>Delete application</h3>
             <p matLine>Application will be deleted, it will no longer be use for authentication and request for tokens.</p>
             <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>

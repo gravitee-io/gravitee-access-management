@@ -18,6 +18,7 @@ import {ActivatedRoute} from "@angular/router";
 import {ApplicationService} from "../../../../../services/application.service";
 import {DialogService} from "../../../../../services/dialog.service";
 import {SnackbarService} from "../../../../../services/snackbar.service";
+import {AuthService} from "../../../../../services/auth.service";
 
 @Component({
   selector: 'app-application-memberships',
@@ -29,10 +30,14 @@ export class ApplicationMembershipsComponent implements OnInit {
   private application: any;
   applicationRoleScope = 'APPLICATION';
   members: any;
+  createMode = false;
+  editMode = false;
+  deleteMode = false;
 
   constructor(private applicationService: ApplicationService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
+              private authService: AuthService,
               private route: ActivatedRoute) {
   }
 
@@ -40,6 +45,9 @@ export class ApplicationMembershipsComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.application = this.route.snapshot.parent.parent.data['application'];
     this.members = this.route.snapshot.data['members'];
+    this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_member_create']);
+    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_member_update']);
+    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_member_delete']);
   }
 
 

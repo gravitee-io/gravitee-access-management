@@ -110,6 +110,17 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
+    public Maybe<Membership> findByReferenceAndMember(String referenceId, String memberId) {
+        LOGGER.debug("Find memberships by reference id {} and member id {}", referenceId, memberId);
+        return membershipRepository.findByReferenceAndMember(referenceId, memberId)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find memberships by reference id {} and member id {}", referenceId, memberId, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find memberships by reference id %s and member id %s", referenceId, memberId), ex));
+                });
+    }
+
+    @Override
     public Single<Membership> addOrUpdate(Membership membership, User principal) {
         LOGGER.debug("Add or update membership {}", membership);
 

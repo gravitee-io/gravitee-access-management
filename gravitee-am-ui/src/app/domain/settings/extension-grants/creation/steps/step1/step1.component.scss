@@ -1,8 +1,11 @@
 .token-granter-creation-step1-container {
-  small {
-    color: rgba(0, 0, 0, .87);
+  p.extension-grant-creation-description {
+    text-align: center;
+    background: #e3e3e3;
+    padding: 20px;
+    font-size: 14px;
+    margin: 0;
   }
-
   .token-granter-creation-step1-content {
     margin-top: 10px;
 

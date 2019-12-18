@@ -4,19 +4,10 @@
     font-weight: 400;
   }
   .domain-client-registration-settings-content {
-    form {
-      padding: 20px;
-      background: #fafafa;
-      border-radius: 2px;
-      border: 1px solid rgb(226, 229, 231);
-      .domain-client-registration-settings-state {
-        margin-bottom: 30px;
-        mat-hint {
-          font-size: 75%;
-        }
-      }
-      .domain-client-registration-settings-form-actions {
-        margin-top: 20px;
+    .domain-client-registration-settings-state {
+      margin-bottom: 20px;
+      mat-hint {
+        font-size: 75%;
       }
     }
     .domain-client-registration-settings-description {

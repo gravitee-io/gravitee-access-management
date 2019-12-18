@@ -16,5 +16,8 @@
 
 -->
 <div class="domain-form-container">
-  <app-form></app-form>
+  <app-form [createMode]="createMode"
+            [editMode]="editMode"
+            [deleteMode]="deleteMode">
+  </app-form>
 </div>

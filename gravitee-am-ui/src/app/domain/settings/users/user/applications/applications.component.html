@@ -20,7 +20,7 @@
       <div fxLayout="row" *ngIf="!isEmpty">
         <div fxFlex>You have interacted with <b>{{appConsents.length}}</b> application(s) to access to your account.</div>
         <div>
-          <button *ngIf="canRevokeAllAccess()" style="height: 40px;" mat-stroked-button color="warn" (click)="revokeAll($event)">Revoke all</button>
+          <button *ngIf="canRevokeAllAccess() && canRevoke" style="height: 40px;" mat-stroked-button color="warn" (click)="revokeAll($event)">Revoke all</button>
         </div>
       </div>
       <ngx-datatable *ngIf="!isEmpty" class="material"
@@ -52,7 +52,7 @@
           <ng-template let-row="row" ngx-datatable-cell-template>
             <div fxLayout="row" class="forms-actions">
               <a mat-icon-button [routerLink]="[row.clientId]"><mat-icon matTooltip="More info">more_horiz</mat-icon></a>
-              <button *ngIf="canRevokeAccessForClient(row.clientId)" mat-icon-button (click)="revoke($event, row)"><mat-icon style="color: #f44336;" matTooltip="Revoke application">highlight_off</mat-icon></button>
+              <button *ngIf="canRevokeAccessForClient(row.clientId) && canRevoke" mat-icon-button (click)="revoke($event, row)"><mat-icon style="color: #f44336;" matTooltip="Revoke application">highlight_off</mat-icon></button>
             </div>
           </ng-template>
         </ngx-datatable-column>

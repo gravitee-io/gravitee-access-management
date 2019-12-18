@@ -20,6 +20,7 @@ import {BreadcrumbService} from "../../../../../libraries/ng2-breadcrumb/compone
 import {TagService} from "../../../../services/tag.service";
 import {NgForm} from "@angular/forms";
 import {DialogService} from "../../../../services/dialog.service";
+import {AuthService} from "../../../../services/auth.service";
 
 @Component({
   selector: 'app-tag',
@@ -29,16 +30,19 @@ import {DialogService} from "../../../../services/dialog.service";
 export class TagComponent implements OnInit {
   tag: any;
   @ViewChild('tagForm') public tagForm: NgForm;
+  readonly: boolean;
 
   constructor(private tagService: TagService,
               private snackbarService: SnackbarService,
               private route: ActivatedRoute,
               private router: Router,
               private breadcrumbService: BreadcrumbService,
-              private dialogService: DialogService) { }
+              private dialogService: DialogService,
+              private authService: AuthService) { }
 
   ngOnInit() {
     this.tag = this.route.snapshot.data['tag'];
+    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['management_tag_update']);
     this.initBreadcrumb();
   }
 
@@ -47,7 +51,7 @@ export class TagComponent implements OnInit {
       this.tag = data;
       this.initBreadcrumb();
       this.tagForm.reset(Object.assign({}, this.tag));
-      this.snackbarService.open("Sharding tag updated");
+      this.snackbarService.open('Sharding tag updated');
     });
   }
 
@@ -58,7 +62,7 @@ export class TagComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.tagService.delete(this.tag.id).subscribe(response => {
-            this.snackbarService.open("Sharding tag deleted");
+            this.snackbarService.open('Sharding tag deleted');
             this.router.navigate(['/settings', 'management', 'tags']);
           });
         }
@@ -66,6 +70,6 @@ export class TagComponent implements OnInit {
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/tags/'+this.tag.id+'$', this.tag.name);
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/tags/' + this.tag.id + '$', this.tag.name);
   }
 }

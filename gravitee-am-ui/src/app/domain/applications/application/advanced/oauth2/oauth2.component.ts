@@ -22,6 +22,7 @@ import {ApplicationService} from "../../../../../services/application.service";
 import {SnackbarService} from "../../../../../services/snackbar.service";
 import {NgForm} from "@angular/forms";
 import {MatDialogRef} from "@angular/material/dialog";
+import {AuthService} from "../../../../../services/auth.service";
 
 @Component({
   selector: 'app-application-oauth2',
@@ -33,13 +34,13 @@ export class ApplicationOAuth2Component implements OnInit {
   @ViewChild('clientOAuth2Form') form: any;
   private domainId: string;
   application: any;
-  formChanged: boolean = false;
+  formChanged = false;
   grantTypes: any[] = [
-    { name:'AUTHORIZATION CODE', value:'authorization_code', checked:false },
-    { name:'IMPLICIT', value:'implicit', checked:false },
-    { name:'REFRESH TOKEN', value:'refresh_token', checked:false },
-    { name:'PASSWORD', value:'password', checked:false },
-    { name:'CLIENT CREDENTIALS', value:'client_credentials', checked:false }
+    { name: 'AUTHORIZATION CODE', value: 'authorization_code', checked: false },
+    { name: 'IMPLICIT', value: 'implicit', checked: false },
+    { name: 'REFRESH TOKEN', value: 'refresh_token', checked: false },
+    { name: 'PASSWORD', value: 'password', checked: false },
+    { name: 'CLIENT CREDENTIALS', value: 'client_credentials', checked: false }
   ];
   customGrantTypes: any[];
   selectedScopes: any[];
@@ -47,10 +48,12 @@ export class ApplicationOAuth2Component implements OnInit {
   scopes: any[] = [];
   editing: any = {};
   applicationOauthSettings: any = {};
+  readonly = false;
 
   constructor(private route: ActivatedRoute,
               private applicationService: ApplicationService,
               private snackbarService: SnackbarService,
+              private authService: AuthService,
               public dialog: MatDialog) { }
 
   ngOnInit() {
@@ -58,6 +61,7 @@ export class ApplicationOAuth2Component implements OnInit {
     this.application = this.route.snapshot.parent.parent.data['application'];
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'];
     this.scopes = this.route.snapshot.data['scopes'];
+    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['application_oauth2_update']);
     this.initSettings();
   }
 

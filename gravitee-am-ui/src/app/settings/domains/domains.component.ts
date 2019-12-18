@@ -33,11 +33,7 @@ export class DomainsComponent implements OnInit {
     this.domains = this.route.snapshot.data['domains'];
   }
 
-  searchDomains(value) {
-    console.log(value);
-  }
-
   get isEmpty() {
-    return !this.domains || this.domains.length == 0;
+    return !this.domains || this.domains.length === 0;
   }
 }

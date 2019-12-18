@@ -19,22 +19,22 @@
   <div class="domain-client-registration-allowed-scope-content" *ngIf="dcrIsEnabled">
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="patch()" #allowedScopeForm="ngForm" fxLayout="column">
-
-        <div class="domain-client-registration-allowed-scope-state" fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableAllowedScopesFilter($event)"
-            [checked]="isAllowedScopesEnabled">
-            Enable scopes restriction on client registration
-          </mat-slide-toggle>
+        <div class="gs-form-section">
+          <div class="domain-client-registration-allowed-scope-state" fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableAllowedScopesFilter($event)"
+              [checked]="isAllowedScopesEnabled" [disabled]="readonly">
+              Enable scopes restriction on client registration
+            </mat-slide-toggle>
+          </div>
+          <scope-selection
+            [initialSelectedScopes]="initialSelectedScopes"
+            [readonly]="readonly"
+            (onScopeSelection)="onChange($event)"
+            *ngIf="isAllowedScopesEnabled">
+          </scope-selection>
         </div>
-
-        <scope-selection
-          [initialSelectedScopes]="initialSelectedScopes"
-          (onScopeSelection)="onChange($event)"
-          *ngIf="isAllowedScopesEnabled">
-        </scope-selection>
-
-        <div class="domain-client-registration-allowed-scope-form-actions">
+        <div *ngIf="!readonly">
           <button mat-raised-button [disabled]="(!allowedScopeForm.valid || allowedScopeForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>

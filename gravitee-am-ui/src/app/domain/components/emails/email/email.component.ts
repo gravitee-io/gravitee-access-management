@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild } from "@angular/core";
+import {AfterViewInit, Component, ElementRef, Inject, Input, OnInit, ViewChild} from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { DialogService } from "../../../../services/dialog.service";
@@ -34,19 +34,22 @@ export interface DialogData {
 export class EmailComponent implements OnInit, AfterViewInit {
   private domainId: string;
   private appId: string;
-  private defaultEmailContent: string = `// Custom email...`;
+  private defaultEmailContent = `// Custom email...`;
   template: string;
   rawTemplate: string;
   email: any;
   emailName: string;
   emailContent: string = (' ' + this.defaultEmailContent).slice(1);
   originalEmailContent: string = (' ' + this.emailContent).slice(1);
-  emailFound: boolean = false;
-  formChanged: boolean = false;
+  emailFound = false;
+  formChanged = false;
   config: any = { lineNumbers: true, readOnly: true};
   @ViewChild('editor') editor: any;
   @ViewChild('preview') preview: ElementRef;
   @ViewChild('emailForm') public emailForm: NgForm;
+  @Input('createMode') createMode: boolean;
+  @Input('editMode') editMode: boolean;
+  @Input('deleteMode') deleteMode: boolean;
 
   constructor(private router: Router,
               private route: ActivatedRoute,
@@ -111,10 +114,14 @@ export class EmailComponent implements OnInit, AfterViewInit {
     this.preview.nativeElement.style.height = this.preview.nativeElement.contentWindow.document.body.scrollHeight + 'px';
   }
 
+  canEdit(): boolean {
+    return this.emailFound ? this.editMode : this.createMode;
+  }
+
   create() {
     this.email['content'] = this.emailContent;
     this.emailService.create(this.domainId, this.appId, this.email).subscribe(data => {
-      this.snackbarService.open("Email created");
+      this.snackbarService.open('Email created');
       this.emailFound = true;
       this.email = data;
       this.formChanged = false;
@@ -125,7 +132,7 @@ export class EmailComponent implements OnInit, AfterViewInit {
   update() {
     this.email['content'] = this.emailContent;
     this.emailService.update(this.domainId, this.appId, this.email.id, this.email).subscribe(data => {
-      this.snackbarService.open("Email updated");
+      this.snackbarService.open('Email updated');
       this.emailFound = true;
       this.email = data;
       this.formChanged = false;
@@ -140,7 +147,7 @@ export class EmailComponent implements OnInit, AfterViewInit {
       .subscribe(res => {
         if (res) {
           this.emailService.delete(this.domainId, this.appId, this.email.id).subscribe(response => {
-            this.snackbarService.open("Email deleted");
+            this.snackbarService.open('Email deleted');
             this.email = {};
             this.email.template = this.route.snapshot.queryParams['template'];
             this.email.expiresAfter = 86400;

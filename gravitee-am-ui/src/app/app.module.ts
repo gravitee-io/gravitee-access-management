@@ -228,6 +228,10 @@ import { ManagementRoleComponent } from "./settings/management/roles/role/role.c
 import { MembershipsResolver } from "./resolvers/memberships.resolver";
 import { SettingsResolver } from "./resolvers/settings.resolver";
 import { MembershipsComponent } from "./domain/components/memberships/memberships.component";
+import { ApplicationPermissionsResolver } from "./resolvers/application-permissions.resolver";
+import { DomainPermissionsResolver } from "./resolvers/domain-permissions.resolver";
+import { AuthGuard } from "./guards/auth-guard.service";
+import { HasPermissionDirective } from "./directives/has-permission.directive";
 
 @NgModule({
   declarations: [
@@ -365,7 +369,8 @@ import { MembershipsComponent } from "./domain/components/memberships/membership
     ApplicationMembershipsComponent,
     ManagementRolesComponent,
     ManagementRoleComponent,
-    MembershipsComponent
+    MembershipsComponent,
+    HasPermissionDirective
   ],
   imports: [
     BrowserModule,
@@ -439,6 +444,9 @@ import { MembershipsComponent } from "./domain/components/memberships/membership
     ApplicationResolver,
     MembershipsResolver,
     SettingsResolver,
+    ApplicationPermissionsResolver,
+    DomainPermissionsResolver,
+    AuthGuard,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

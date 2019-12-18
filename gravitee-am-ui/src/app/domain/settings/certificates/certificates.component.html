@@ -34,7 +34,7 @@
           <div fxLayout="row" class="providers-actions">
             <button mat-icon-button (click)="publicKey(row.id, $event)"><mat-icon matTooltip="Get public key">vpn_key</mat-icon></button>
             <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="Settings">settings</mat-icon></a>
-            <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
+            <button *hasPermission="['domain_certificate_delete']" mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
           </div>
         </ng-template>
       </ngx-datatable-column>
@@ -46,7 +46,7 @@
                   [subMessage]="'Start creating a certificate'"
                   [icon]="'vpn_key'"></app-emptystate>
 
-  <div [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div *hasPermission="['domain_certificate_create']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

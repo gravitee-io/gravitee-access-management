@@ -19,6 +19,7 @@ import {SnackbarService} from "../../../../services/snackbar.service";
 import {ApplicationService} from "../../../../services/application.service";
 import {DialogService} from "../../../../services/dialog.service";
 import * as _ from 'lodash';
+import {AuthService} from "../../../../services/auth.service";
 
 @Component({
   selector: 'application-general',
@@ -34,7 +35,10 @@ export class ApplicationGeneralComponent implements OnInit {
   applicationAdvancedSettings: any = {};
   redirectUri: string;
   redirectUris: any[] = [];
-  formChanged: boolean = false;
+  formChanged = false;
+  editMode: boolean;
+  deleteMode: boolean;
+  renewSecretMode: boolean;
   applicationTypes: any[] = [
     {
       name: 'Web',
@@ -57,6 +61,7 @@ export class ApplicationGeneralComponent implements OnInit {
               private router: Router,
               private snackbarService: SnackbarService,
               private applicationService: ApplicationService,
+              private authService: AuthService,
               private dialogService: DialogService) {
   }
 
@@ -71,6 +76,9 @@ export class ApplicationGeneralComponent implements OnInit {
     this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) {
       return {value: item};
     });
+    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_settings_update']);
+    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_settings_delete']);
+    this.renewSecretMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_oauth2_update']);
   }
 
 

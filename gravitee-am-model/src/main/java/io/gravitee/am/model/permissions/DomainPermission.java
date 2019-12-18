@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
  */
 public enum DomainPermission implements Permission {
     SETTINGS("SETTINGS","settings"),
+    LOGIN_SETTINGS("LOGIN_SETTINGS","login_settings"),
     APPLICATION("APPLICATION","application"),
     FORM("FORM","form"),
     EMAIL_TEMPLATE("EMAIL_TEMPLATE","email_template"),

@@ -25,7 +25,7 @@
       <div>
         <mat-accordion [multi]="true">
           <div *ngFor="let extensionPoint of extensionPoints">
-            <button class="menu-button" mat-icon-button [matMenuTriggerFor]="menu">
+            <button class="menu-button" mat-icon-button [matMenuTriggerFor]="menu" *hasPermission="['domain_extension_point_create']">
               <mat-icon>add_circle_outline</mat-icon>
             </button>
             <mat-menu #menu="matMenu">
@@ -47,12 +47,12 @@
                   <div class="policy-actions">
                     <mat-slide-toggle matTooltip="{{policy.enabled ? 'Disable policy ?' : 'Enable policy ?'}}"
                       (change)="enablePolicy($event, policy)"
-                      [checked]="isPolicyEnabled(policy)">
+                      [checked]="isPolicyEnabled(policy)" [disabled]="readonly">
                     </mat-slide-toggle>
                     <button style="margin-left: 5px;" mat-icon-button matTooltip="Settings" (click)="loadPolicy($event, policy)">
                       <mat-icon>settings</mat-icon>
                     </button>
-                    <button mat-icon-button matTooltip="Delete" (click)="deletePolicy($event, policy)">
+                    <button mat-icon-button matTooltip="Delete" (click)="deletePolicy($event, policy)" *hasPermission="['domain_extension_point_delete']">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
@@ -68,7 +68,7 @@
     </mat-drawer>
     <mat-drawer-content>
       <div *ngIf="policy && !isLoading" fxLayout="column" fxFlex>
-        <div fxFlex fxLayoutAlign="end">
+        <div fxLayoutAlign="end">
           <button class="close-current-policy" mat-icon-button aria-label="Close policy management screen" (click)="clearPolicy()">
             <mat-icon>close</mat-icon>
           </button>
@@ -93,7 +93,7 @@
               </div>
             </mat-card-content>
           </mat-card>
-          <div class="form-actions" fxLayout="row" fxLayoutAlign="end end">
+          <div class="form-actions" fxLayout="row" fxLayoutAlign="end end" *hasPermission="['domain_extension_point_update']">
             <button mat-raised-button [disabled]="((!policyForm.valid || !configurationIsValid) || (policyForm.pristine && configurationPristine))" (click)="save()">SAVE</button>
           </div>
         </form>

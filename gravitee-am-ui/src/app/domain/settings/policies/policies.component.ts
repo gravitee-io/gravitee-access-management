@@ -22,6 +22,7 @@ import {PolicyService} from "../../../services/policy.service";
 import {CdkDragDrop, moveItemInArray} from "@angular/cdk/drag-drop";
 import {NgForm} from "@angular/forms";
 import {MatDialog, MatDialogRef} from "@angular/material";
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-domain-policies',
@@ -38,9 +39,10 @@ export class DomainSettingsPoliciesComponent implements OnInit {
   policySchema: any;
   policyConfiguration: any;
   updatePolicyConfiguration: any;
-  configurationIsValid: boolean = true;
-  configurationPristine: boolean = true;
+  configurationIsValid = true;
+  configurationPristine = true;
   selectedPolicyId: string;
+  readonly = false;
   extensionPoints: any = [
     {
       value: 'ROOT',
@@ -63,6 +65,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
               private policyService: PolicyService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
+              private authService: AuthService,
               private route: ActivatedRoute,
               public dialog: MatDialog) {}
 
@@ -70,6 +73,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.policies = this.route.snapshot.data['policies'] || {};
     this.platformService.policies().subscribe(data => this.policyPlugins = data);
+    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['domain_extension_point_update']);
   }
 
   addPolicy(extensionPoint, policyId) {
@@ -79,7 +83,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
     this.policy.extensionPoint = extensionPoint;
     this.policy.type = policyId;
     this.policy.enabled = true;
-    let policies = this.policies[extensionPoint];
+    const policies = this.policies[extensionPoint];
     this.policy.order = policies && policies.length > 0 ? policies[policies.length -1].order + 1 : 0;
     this.policyConfiguration = {};
     if (this.form) {
@@ -89,7 +93,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
   }
 
   loadPolicy(event, policy) {
-    event.preventDefault;
+    event.preventDefault();
     this.selectedPolicyId = null;
     this.isLoading = true;
     this.policy = Object.assign({}, policy)
@@ -113,7 +117,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
         this.policy = data;
         this.policyConfiguration = JSON.parse(this.policy.configuration);
         this.selectedPolicyId = this.policy.id;
-        this.snackbarService.open("Policy " + data.name + " updated");
+        this.snackbarService.open('Policy ' + data.name + ' updated');
       })
     } else {
       this.policyService.create(this.domainId, this.policy).subscribe(data => {
@@ -121,7 +125,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
         this.policy = data;
         this.policyConfiguration = JSON.parse(this.policy.configuration);
         this.selectedPolicyId = this.policy.id;
-        this.snackbarService.open("Policy " + data.name + " created");
+        this.snackbarService.open('Policy ' + data.name + ' created');
       });
     }
   }
@@ -137,7 +141,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
         policy.order = i;
       });
       this.policyService.updateAll(this.domainId, this.policies[extensionPoint]).subscribe(() => {
-        this.snackbarService.open("Policy's order changed");
+        this.snackbarService.open('Policy\'s order changed');
       });
     }
   }
@@ -145,7 +149,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
   enablePolicy(event, policy) {
     policy.enabled = event.checked;
     this.policyService.update(this.domainId, policy.id, policy).subscribe(data => {
-      this.snackbarService.open("Policy " + data.name + (policy.enabled ? ' enabled' : ' disabled'));
+      this.snackbarService.open('Policy ' + data.name + (policy.enabled ? ' enabled' : ' disabled'));
     });
   }
 
@@ -160,7 +164,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
               this.policy = null;
             }
             this.reloadPolicies();
-            this.snackbarService.open("Policy deleted");
+            this.snackbarService.open('Policy deleted');
           });
         }
       });
@@ -176,7 +180,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
   }
 
   noPolicies(extensionPoint) {
-    let policies = this.getPolicies(extensionPoint);
+    const policies = this.getPolicies(extensionPoint);
     return !policies || policies.length === 0;
   }
 

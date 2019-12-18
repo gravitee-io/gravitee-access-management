@@ -2,17 +2,12 @@
   h4 {
     margin: 0;
   }
-
-  small {
-    color: rgba(0,0,0,.87);
-  }
-
-  form {
-    margin-bottom: 10px;
-    text-align: left;
+  p.extension-grant-creation-description {
+    text-align: center;
+    background: #e3e3e3;
     padding: 20px;
-    border-radius: 2px;
-    border: 1px solid rgb(226, 229, 231);
+    font-size: 14px;
+    margin: 0;
   }
   .token-granter-contextual-help {
     text-align: left;

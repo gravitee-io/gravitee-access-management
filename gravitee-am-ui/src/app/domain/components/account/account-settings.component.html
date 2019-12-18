@@ -20,7 +20,7 @@
     <div fxLayout="column">
         <mat-slide-toggle
         (change)="enableInheritMode($event)"
-        [checked]="isInherited()">
+        [checked]="isInherited()" [disabled]="readonly">
         Inherit configuration
       </mat-slide-toggle>
       <mat-hint style="font-size: 75%;">Inherit User Accounts settings from the security domain.</mat-hint>
@@ -38,7 +38,7 @@
         <div fxLayout="column">
           <mat-slide-toggle
             (change)="enableBrutForceAuthenticationDetection($event)"
-            [checked]="isBrutForceAuthenticationEnabled()">
+            [checked]="isBrutForceAuthenticationEnabled()" [disabled]="readonly">
             Brute Force Detection
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">Prevent brute force authentication attempts.</mat-hint>
@@ -96,7 +96,7 @@
         <div fxLayout="column">
           <mat-slide-toggle
             (change)="enableCompleteRegistration($event)"
-            [checked]="isCompleteRegistrationEnabled()">
+            [checked]="isCompleteRegistrationEnabled()" [disabled]="readonly">
             Complete user registration (Reset Password)
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">If a user renewed his password without completing his registration, finalize the account. The default behavior is to display an error to the user.</mat-hint>
@@ -104,24 +104,24 @@
         <div fxLayout="column" style="margin-top: 10px;">
           <mat-slide-toggle
             (change)="enableAutoLoginAfterRegistration($event)"
-            [checked]="isAutoLoginAfterRegistrationEnabled()">
+            [checked]="isAutoLoginAfterRegistrationEnabled()" [disabled]="readonly">
             Auto login after user registration
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">Automatically login user after registration process.</mat-hint>
           <mat-form-field appearance="outline" floatLabel="always">
-            <input matInput placeholder="Registration redirect URI" name="autoLoginRegistration" [(ngModel)]="accountSettings.redirectUriAfterRegistration" (ngModelChange)="formChanged = true;">
+            <input matInput placeholder="Registration redirect URI" name="autoLoginRegistration" [(ngModel)]="accountSettings.redirectUriAfterRegistration" (ngModelChange)="formChanged = true;" [disabled]="readonly">
             <mat-hint>After complete its registration the user can be redirected to the specified URL. The default behavior is to display the registration confirmation page to the user.</mat-hint>
           </mat-form-field>
         </div>
         <div fxLayout="column" style="margin-top: 20px;">
           <mat-slide-toggle
             (change)="enableAutoLoginAfterResetPassword($event)"
-            [checked]="isAutoLoginAfterResetPasswordEnabled()">
+            [checked]="isAutoLoginAfterResetPasswordEnabled()" [disabled]="readonly">
             Auto login after reset password
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">Automatically login user after reset password process.</mat-hint>
           <mat-form-field appearance="outline" floatLabel="always">
-            <input matInput placeholder="Reset password redirect URI" name="autoLoginResetPassword" [(ngModel)]="accountSettings.redirectUriAfterResetPassword" (ngModelChange)="formChanged = true;">
+            <input matInput placeholder="Reset password redirect URI" name="autoLoginResetPassword" [(ngModel)]="accountSettings.redirectUriAfterResetPassword" (ngModelChange)="formChanged = true;" [disabled]="readonly">
             <mat-hint>After reset its password the user can be redirected to the specified URL. The default behavior is to display the reset password page to the user.</mat-hint>
           </mat-form-field>
         </div>
@@ -129,7 +129,7 @@
     </div>
   </div>
 
-  <div fxLayout="row">
+  <div fxLayout="row" *ngIf="!readonly">
     <button mat-raised-button [disabled]="(!formChanged || !formIsValid())" type="submit">SAVE</button>
   </div>
 </form>

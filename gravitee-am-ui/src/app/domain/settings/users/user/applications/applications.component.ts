@@ -19,6 +19,7 @@ import { SnackbarService } from "../../../../../services/snackbar.service";
 import { DialogService } from "../../../../../services/dialog.service";
 import { UserService } from "../../../../../services/user.service";
 import * as _ from 'lodash';
+import {AuthService} from "../../../../../services/auth.service";
 
 @Component({
   selector: 'app-user-applications',
@@ -31,12 +32,14 @@ export class UserApplicationsComponent implements OnInit {
   private consents: any[];
   private appConsentsGrouped: any = {};
   appConsents: any[];
+  canRevoke: boolean;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
-              private userService: UserService) {
+              private userService: UserService,
+              private authService: AuthService) {
   }
 
   ngOnInit() {
@@ -45,10 +48,11 @@ export class UserApplicationsComponent implements OnInit {
     this.consents = _.sortBy(this.route.snapshot.data['consents'], 'updatedAt').reverse();
     this.appConsentsGrouped  = _.groupBy(this.consents, 'clientId');
     this.appConsents = _.sortedUniqBy(this.consents, 'clientId');
+    this.canRevoke = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_update']);
   }
 
   get isEmpty() {
-    return !this.consents || this.consents.length == 0;
+    return !this.consents || this.consents.length === 0;
   }
 
   revoke(event, consent) {

@@ -19,6 +19,7 @@ import * as _ from 'lodash';
 import {DomainService} from '../../../../../services/domain.service';
 import {SnackbarService} from '../../../../../services/snackbar.service';
 import {Scope} from '../../../../components/scope-selection/scope-selection.component';
+import {AuthService} from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-openid-client-registration-allowed-scope',
@@ -31,12 +32,14 @@ export class ClientRegistrationAllowedScopeComponent implements OnInit {
   formChanged: boolean;
   dcrIsEnabled: boolean;
   isAllowedScopesEnabled: boolean;
-
   initialSelectedScopes: string[];
   selectedScopes: Scope[];
+  readonly: boolean;
 
-  constructor(private domainService: DomainService, private route: ActivatedRoute,
-              private snackbarService: SnackbarService) {
+  constructor(private domainService: DomainService,
+              private route: ActivatedRoute,
+              private snackbarService: SnackbarService,
+              private authService: AuthService) {
   }
 
   ngOnInit() {
@@ -44,6 +47,7 @@ export class ClientRegistrationAllowedScopeComponent implements OnInit {
     this.dcrIsEnabled = this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled;
     this.isAllowedScopesEnabled = this.domain.oidc.clientRegistrationSettings.isAllowedScopesEnabled;
     this.initialSelectedScopes = this.domain.oidc.clientRegistrationSettings.allowedScopes;
+    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['domain_dcr_create', 'domain_dcr_update']);
   }
 
   enableAllowedScopesFilter(event) {

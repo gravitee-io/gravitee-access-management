@@ -19,25 +19,37 @@
   <h1>General</h1>
   <div class="management-general-content">
     <div fxLayout="column" fxFlex="70">
-      <h2>Identity Providers</h2>
-      <small>Identity sources for authenticating and retrieving information about your users.</small>
       <form (ngSubmit)="update()" #managementForm="ngForm" fxLayout="column">
-        <h4>Identities</h4>
-        <mat-form-field>
-          <mat-select placeholder="Identity providers" multiple name="identities" [(ngModel)]="settings.identities">
-            <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <h4>Social</h4>
-        <mat-form-field>
-          <mat-select placeholder="Social providers" multiple name="oauth2Identities" [(ngModel)]="settings.socialIdentities">
-            <mat-option *ngFor="let identityProvider of oauth2IdentityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <div fxLayout="row" class="client-idp-form-actions">
-          <button mat-raised-button [disabled]="(!managementForm.valid || managementForm.pristine)" type="submit">UPDATE</button>
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>Identity Providers</h5>
+            <small>Identity sources for authenticating and retrieving information about your users.</small>
+            <mat-divider></mat-divider>
+          </div>
+          <div>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-select placeholder="Identity providers" multiple name="identities" [(ngModel)]="settings.identities" [disabled]="readonly">
+              <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          </div>
+        </div>
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>Social / Enterprise</h5>
+            <small>Social or external sources for authenticating and retrieving information about your users.</small>
+            <mat-divider></mat-divider>
+          </div>
+          <div>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-select placeholder="Social providers" multiple name="oauth2Identities" [(ngModel)]="settings.socialIdentities" [disabled]="readonly">
+                <mat-option *ngFor="let identityProvider of oauth2IdentityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+        <div *hasPermission="['management_settings_update']">
+          <button mat-raised-button [disabled]="(!managementForm.valid || managementForm.pristine)" type="submit">SAVE</button>
         </div>
       </form>
     </div>

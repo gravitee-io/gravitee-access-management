@@ -16,50 +16,96 @@
 
 -->
 <div class="token-granter-container">
+  <a [routerLink]="['..']" class="back-link"><small><< Back to extension grants</small></a>
   <h1>{{extensionGrant.name}}</h1>
   <div *ngIf="extensionGrantSchema && extensionGrantSchema.description" class="token-granter-contextual-help">
     <pre [innerHTML]="extensionGrantSchema?.description"></pre>
   </div>
-  <div class="token-granter-content">
-    <form #tokenGranterForm="ngForm" fxLayout="column" fxFlex="70">
-      <h4>General</h4>
-      <mat-form-field>
-        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="extensionGrant.name" required>
-      </mat-form-field>
-      <mat-form-field>
-        <input matInput type="text" placeholder="Grant type" name="grantType" [(ngModel)]="extensionGrant.grantType" [pattern]="rfc3986_absolute_URI" required disabled>
-        <mat-hint align="end">OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type" parameter of the token endpoint.</mat-hint>
-      </mat-form-field>
+  <div fxLayout="row">
+    <div class="token-granter-content" fxLayout="column" fxFlex="70">
+      <form #tokenGranterForm="ngForm">
+        <div class="gs-form-section">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Name</mat-label>
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="extensionGrant.name" required [readonly]="!editMode">
+            <mat-hint>Extension grant name</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Grant type</mat-label>
+            <input matInput type="text" placeholder="Grant type" name="grantType" [(ngModel)]="extensionGrant.grantType" [pattern]="rfc3986_absolute_URI" required disabled>
+            <mat-hint align="end">OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the "grant_type" parameter of the token endpoint.</mat-hint>
+          </mat-form-field>
+        </div>
 
-      <h4 style="margin: 10px 0 10px 0;">User creation</h4>
-      <mat-slide-toggle
-        (change)="enableCreateUser($event)"
-        [checked]="extensionGrant.createUser">
-      </mat-slide-toggle>
-      <mat-hint style="font-size: 75%;">Allow to store user information. Used for user account activity and OAuth 2.0 refresh token flow.</mat-hint>
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>User creation</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableCreateUser($event)"
+              [checked]="extensionGrant.createUser" [disabled]="!editMode">
+              Create user account
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%;">Used for user account activity and OAuth 2.0 refresh token flow.</mat-hint>
+          </div>
+        </div>
 
-      <h4 style="margin: 10px 0 10px 0;">Check user</h4>
-      <mat-slide-toggle
-        (change)="enableCheckUser($event)"
-        [checked]="extensionGrant.userExists">
-      </mat-slide-toggle>
-      <mat-hint style="font-size: 75%;">Check that the user is existing in the identity provider.</mat-hint>
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>Check user</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableCheckUser($event)"
+              [checked]="extensionGrant.userExists" [disabled]="!editMode">
+              User existence
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%;">Check that the user is existing in the identity provider.</mat-hint>
+          </div>
+        </div>
 
-      <h4 style="margin: 10px 0 20px 0;">Identity provider</h4>
-      <mat-form-field>
-        <mat-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider">
-          <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
-        </mat-select>
-        <mat-hint align="end" style="font-size: 75%;">Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
-      </mat-form-field>
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>Identity provider</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-select placeholder="Identity provider" name="identityProvider" [(ngModel)]="extensionGrant.identityProvider" [disabled]="!editMode">
+                <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
+              </mat-select>
+              <mat-hint>Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
 
-      <h4 style="margin: 10px 0 10px 0;">Configuration</h4>
-      <extension-grant-form *ngIf="extensionGrant" [extensionGrantConfiguration]="extensionGrantConfiguration" [extensionGrantSchema]="extensionGrantSchema" (configurationCompleted)="enableTokenGranterUpdate($event)"></extension-grant-form>
+        <div class="gs-form-section">
+          <div class="gs-form-section-title">
+            <h5>Configuration</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div>
+            <extension-grant-form *ngIf="extensionGrant" [extensionGrantConfiguration]="extensionGrantConfiguration" [extensionGrantSchema]="extensionGrantSchema" (configurationCompleted)="enableTokenGranterUpdate($event)"></extension-grant-form>
+          </div>
+        </div>
 
-      <div fxLayout="row" fxLayoutAlign="end end" class="token-granter-actions">
-        <button mat-raised-button [disabled]="(!tokenGranterForm.valid || tokenGranterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">UPDATE</button>
+        <div fxLayout="row" *ngIf="editMode">
+          <button mat-raised-button [disabled]="(!tokenGranterForm.valid || tokenGranterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">SAVE</button>
+        </div>
+      </form>
+
+      <div *hasPermission="['domain_extension_grant_delete']" class="token-granter-settings-delete-zone" fxLayout="column">
+        <p>This operation cannot be undone.</p>
+        Extension grant will be deleted, applications will not be able to use this extension grant anymore.
+        <div class="provider-settings-delete-button" fxLayout="row">
+          <span fxFlex></span>
+          <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+        </div>
       </div>
-    </form>
+    </div>
     <div class="token-granter-description" fxFlex>
       <h3>Manage extension grant</h3>
       <div class="token-granter-description-content">
