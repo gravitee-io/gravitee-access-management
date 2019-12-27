@@ -183,6 +183,9 @@
               <label>Hi <span th:text="${user.firstName} + ' ' + ${user.lastName}"></span></label>
               <p>Thanks for signing up, please complete the form to activate your account</p>
             </div>
+            <div th:if="${warning}">
+                <p>Invalid password value. It does not comply with the password policy.</p>
+            </div>
             <form th:action="@{confirmRegistration}" method="post">
               <input type="password" id="password" name="password" required/>
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
