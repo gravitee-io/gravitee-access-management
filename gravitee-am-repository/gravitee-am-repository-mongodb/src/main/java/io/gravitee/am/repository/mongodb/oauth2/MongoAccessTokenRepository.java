@@ -19,7 +19,6 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.AccessTokenMongo;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
@@ -56,16 +55,16 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessTokenCollection = mongoOperations.getCollection("access_tokens", AccessTokenMongo.class);
 
         // one field index
-        accessTokenCollection.createIndex(new Document(FIELD_TOKEN, 1)).subscribe(new LoggableIndexSubscriber());
-        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1)).subscribe(new LoggableIndexSubscriber());
-        accessTokenCollection.createIndex(new Document(FIELD_AUTHORIZATION_CODE, 1)).subscribe(new LoggableIndexSubscriber());
-        accessTokenCollection.createIndex(new Document(FIELD_SUBJECT, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(accessTokenCollection, new Document(FIELD_TOKEN, 1));
+        super.createIndex(accessTokenCollection, new Document(FIELD_CLIENT_ID, 1));
+        super.createIndex(accessTokenCollection, new Document(FIELD_AUTHORIZATION_CODE, 1));
+        super.createIndex(accessTokenCollection, new Document(FIELD_SUBJECT, 1));
 
         // two fields index
-        accessTokenCollection.createIndex(new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(accessTokenCollection, new Document(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1));
 
         // expire after index
-        accessTokenCollection.createIndex(new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(accessTokenCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
     }
 
     private Maybe<AccessToken> findById(String id) {

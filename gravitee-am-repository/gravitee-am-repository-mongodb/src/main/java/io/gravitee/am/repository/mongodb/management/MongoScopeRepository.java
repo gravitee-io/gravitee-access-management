@@ -19,7 +19,6 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.api.ScopeRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.ScopeMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -51,8 +50,8 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     @PostConstruct
     public void init() {
         scopesCollection = mongoOperations.getCollection("scopes", ScopeMongo.class);
-        scopesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
-        scopesCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_KEY, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(scopesCollection, new Document(FIELD_DOMAIN, 1));
+        super.createIndex(scopesCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_KEY, 1));
     }
 
     @Override

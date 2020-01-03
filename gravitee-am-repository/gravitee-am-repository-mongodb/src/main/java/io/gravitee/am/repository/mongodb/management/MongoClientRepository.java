@@ -26,7 +26,6 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.jose.*;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ClientRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ClientMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
@@ -69,12 +68,12 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     @PostConstruct
     public void init() {
         clientsCollection = mongoOperations.getCollection("clients", ClientMongo.class);
-        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1)).subscribe(new LoggableIndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1)).subscribe(new LoggableIndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_IDENTITIES, 1)).subscribe(new LoggableIndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_CERTIFICATE, 1)).subscribe(new LoggableIndexSubscriber());
-        clientsCollection.createIndex(new Document(FIELD_GRANT_TYPES, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(clientsCollection, new Document(FIELD_DOMAIN, 1));
+        super.createIndex(clientsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1));
+        super.createIndex(clientsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1));
+        super.createIndex(clientsCollection, new Document(FIELD_IDENTITIES, 1));
+        super.createIndex(clientsCollection, new Document(FIELD_CERTIFICATE, 1));
+        super.createIndex(clientsCollection, new Document(FIELD_GRANT_TYPES, 1));
     }
 
     @Override

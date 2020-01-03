@@ -19,7 +19,6 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.repository.management.api.CertificateRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.CertificateMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -51,7 +50,7 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
     @PostConstruct
     public void init() {
         certificatesCollection = mongoOperations.getCollection("certificates", CertificateMongo.class);
-        certificatesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(certificatesCollection, new Document(FIELD_DOMAIN, 1));
     }
 
     @Override

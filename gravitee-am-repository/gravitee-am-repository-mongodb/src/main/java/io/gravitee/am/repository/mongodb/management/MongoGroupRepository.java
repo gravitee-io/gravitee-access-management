@@ -21,7 +21,6 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.GroupRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.GroupMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -53,8 +52,8 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     @PostConstruct
     public void init() {
         groupsCollection = mongoOperations.getCollection("groups", GroupMongo.class);
-        groupsCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
-        groupsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(groupsCollection, new Document(FIELD_DOMAIN, 1));
+        super.createIndex(groupsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1));
     }
 
     @Override

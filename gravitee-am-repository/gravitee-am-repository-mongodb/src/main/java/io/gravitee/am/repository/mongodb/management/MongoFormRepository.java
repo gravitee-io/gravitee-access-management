@@ -19,14 +19,12 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.repository.management.api.FormRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.FormMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -51,9 +49,9 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     @PostConstruct
     public void init() {
         formsCollection = mongoOperations.getCollection("forms", FormMongo.class);
-        formsCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
-        formsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_TEMPLATE, 1)).subscribe(new LoggableIndexSubscriber());
-        formsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(formsCollection,new Document(FIELD_DOMAIN, 1));
+        super.createIndex(formsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_TEMPLATE, 1));
+        super.createIndex(formsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1));
     }
 
     @Override

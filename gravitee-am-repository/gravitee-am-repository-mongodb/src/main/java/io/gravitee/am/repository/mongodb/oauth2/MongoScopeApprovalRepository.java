@@ -19,7 +19,6 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.oauth2.ScopeApproval;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.ScopeApprovalMongo;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.reactivex.Completable;
@@ -59,11 +58,11 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     @PostConstruct
     public void init() {
         scopeApprovalsCollection = mongoOperations.getCollection("scope_approvals", ScopeApprovalMongo.class);
-        scopeApprovalsCollection.createIndex(new Document(FIELD_EXPIRES_AT, 1),  new IndexOptions().expireAfter(0l, TimeUnit.SECONDS)).subscribe(new LoggableIndexSubscriber());
-        scopeApprovalsCollection.createIndex(new Document(FIELD_TRANSACTION_ID, 1)).subscribe(new LoggableIndexSubscriber());
-        scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1)).subscribe(new LoggableIndexSubscriber());
-        scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1)).subscribe(new LoggableIndexSubscriber());
-        scopeApprovalsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(scopeApprovalsCollection, new Document(FIELD_EXPIRES_AT, 1),  new IndexOptions().expireAfter(0l, TimeUnit.SECONDS));
+        super.createIndex(scopeApprovalsCollection, new Document(FIELD_TRANSACTION_ID, 1));
+        super.createIndex(scopeApprovalsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1));
+        super.createIndex(scopeApprovalsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1));
+        super.createIndex(scopeApprovalsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1));
     }
 
     @Override
