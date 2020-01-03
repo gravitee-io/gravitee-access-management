@@ -24,7 +24,6 @@ import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
 import io.gravitee.am.repository.management.api.UserRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AddressMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AttributeMongo;
@@ -63,12 +62,12 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     @PostConstruct
     public void init() {
         usersCollection = mongoOperations.getCollection("users", UserMongo.class);
-        usersCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
-        usersCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_EMAIL, 1)).subscribe(new LoggableIndexSubscriber());
-        usersCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_USERNAME, 1)).subscribe(new LoggableIndexSubscriber());
-        usersCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_EXTERNAL_ID, 1)).subscribe(new LoggableIndexSubscriber());
-        usersCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1)).subscribe(new LoggableIndexSubscriber());
-        usersCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(usersCollection, new Document(FIELD_DOMAIN, 1));
+        super.createIndex(usersCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_EMAIL, 1));
+        super.createIndex(usersCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_USERNAME, 1));
+        super.createIndex(usersCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_EXTERNAL_ID, 1));
+        super.createIndex(usersCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1));
+        super.createIndex(usersCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1));
     }
 
     @Override

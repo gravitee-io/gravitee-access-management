@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.management;
+package io.gravitee.am.repository.mongodb.common;
 
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import io.reactivex.Single;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -26,16 +25,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public abstract class AbstractManagementMongoRepository extends AbstractMongoRepository {
+public abstract class AbstractMongoRepository {
 
-    private final Logger logger = LoggerFactory.getLogger(AbstractManagementMongoRepository.class);
+    private final Logger logger = LoggerFactory.getLogger(AbstractMongoRepository.class);
 
-    @Autowired
-    @Qualifier("managementMongoTemplate")
-    protected MongoDatabase mongoOperations;
+    public void createIndex(MongoCollection<?> collection, Document document) {
+
+       this.createIndex(collection, document, new IndexOptions());
+    }
+
+    public void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions) {
+
+        Single.fromPublisher(collection.createIndex(document, indexOptions))
+                .doOnSuccess(s -> logger.debug("Created an index named: {}", s))
+                .doOnError(throwable -> logger.error("Error occurs during creation of index",  throwable)).blockingGet();
+    }
 }

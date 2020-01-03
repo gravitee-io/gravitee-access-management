@@ -19,7 +19,6 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.IdentityProviderMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -48,7 +47,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     @PostConstruct
     public void init() {
         identitiesCollection = mongoOperations.getCollection("identities", IdentityProviderMongo.class);
-        identitiesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(identitiesCollection,new Document(FIELD_DOMAIN, 1));
     }
 
     @Override

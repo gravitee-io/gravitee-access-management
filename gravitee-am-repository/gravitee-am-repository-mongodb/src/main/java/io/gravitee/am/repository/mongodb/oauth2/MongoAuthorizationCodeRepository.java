@@ -18,7 +18,6 @@ package io.gravitee.am.repository.mongodb.oauth2;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.AuthorizationCodeMongo;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
@@ -52,9 +51,9 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
     @PostConstruct
     public void init() {
         authorizationCodeCollection = mongoOperations.getCollection("authorization_codes", AuthorizationCodeMongo.class);
-        authorizationCodeCollection.createIndex(new Document(FIELD_CODE, 1)).subscribe(new LoggableIndexSubscriber());
-        authorizationCodeCollection.createIndex(new Document(FIELD_TRANSACTION_ID, 1)).subscribe(new LoggableIndexSubscriber());
-        authorizationCodeCollection.createIndex(new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(authorizationCodeCollection, new Document(FIELD_CODE, 1));
+        super.createIndex(authorizationCodeCollection, new Document(FIELD_TRANSACTION_ID, 1));
+        super.createIndex(authorizationCodeCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS));
     }
 
     private Maybe<AuthorizationCode> findById(String id) {

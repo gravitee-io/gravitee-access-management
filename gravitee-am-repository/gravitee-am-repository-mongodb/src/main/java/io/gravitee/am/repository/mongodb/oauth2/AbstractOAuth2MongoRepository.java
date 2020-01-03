@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.oauth2;
 
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -23,7 +24,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AbstractOAuth2MongoRepository {
+public abstract class AbstractOAuth2MongoRepository extends AbstractMongoRepository {
 
     @Autowired
     @Qualifier("oauth2MongoTemplate")

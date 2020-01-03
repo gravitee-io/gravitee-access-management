@@ -19,7 +19,6 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.management.api.ReporterRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.ReporterMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -48,7 +47,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
     @PostConstruct
     public void init() {
         reportersCollection = mongoOperations.getCollection("reporters", ReporterMongo.class);
-        reportersCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(reportersCollection, new Document(FIELD_DOMAIN, 1));
     }
 
     @Override

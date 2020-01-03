@@ -22,7 +22,6 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.repository.management.api.LoginAttemptRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginAttemptMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -58,10 +57,10 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
     @PostConstruct
     public void init() {
         loginAttemptsCollection = mongoOperations.getCollection("login_attempts", LoginAttemptMongo.class);
-        loginAttemptsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_USERNAME, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(loginAttemptsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_USERNAME, 1));
 
         // expire after index
-        loginAttemptsCollection.createIndex(new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(loginAttemptsCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
     }
 
     @Override

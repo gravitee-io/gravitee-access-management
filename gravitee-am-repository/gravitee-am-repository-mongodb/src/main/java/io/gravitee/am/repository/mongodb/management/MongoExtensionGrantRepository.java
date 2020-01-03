@@ -19,7 +19,6 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.ExtensionGrantMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -50,8 +49,8 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
     @PostConstruct
     public void init() {
         extensionGrantsCollection = mongoOperations.getCollection("extension_grants", ExtensionGrantMongo.class);
-        extensionGrantsCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
-        extensionGrantsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(extensionGrantsCollection, new Document(FIELD_DOMAIN, 1));
+        super.createIndex(extensionGrantsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1));
     }
 
     @Override
