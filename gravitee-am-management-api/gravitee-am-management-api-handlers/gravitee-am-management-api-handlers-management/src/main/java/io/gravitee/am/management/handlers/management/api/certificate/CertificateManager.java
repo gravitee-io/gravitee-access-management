@@ -28,14 +28,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 // TODO : should be removed after refactoring display certificate public key feature
-public class CertificateManager implements InitializingBean  {
+public class CertificateManager implements InitializingBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CertificateManager.class);
+    static final int RETRY_DELAY = 5;
 
     @Autowired
     private CertificatePluginManager certificatePluginManager;
@@ -52,7 +55,11 @@ public class CertificateManager implements InitializingBean  {
     public void afterPropertiesSet() {
         LOGGER.info("Initializing certificate providers");
         Map<String, CertificateProvider> certificateProviders = new HashMap<>();
-        List<Certificate> certificates = certificateService.findAll().blockingGet();
+
+        List<Certificate> certificates = certificateService.findAll()
+                .retryWhen(tf -> tf.doOnNext(throwable -> LOGGER.error("Unable to find certificates. Retry in {} seconds...", RETRY_DELAY, throwable))
+                        .delay(RETRY_DELAY, SECONDS))
+                .blockingGet();
         certificates.forEach(certificate -> {
             LOGGER.info("\tInitializing certificate: {} [{}]", certificate.getName(), certificate.getType());
 
