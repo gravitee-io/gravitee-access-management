@@ -16,13 +16,18 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.common.event.Action;
+import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.common.event.Type;
+import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.membership.ReferenceType;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.permissions.RoleScope;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
@@ -104,6 +109,9 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private EventService eventService;
 
+    @Autowired
+    private MembershipService membershipService;
+
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("Find domain by ID: {}", id);
@@ -168,8 +176,29 @@ public class DomainServiceImpl implements DomainService {
                         return domainRepository.create(domain);
                     }
                 })
+                // create default system scopes
                 .flatMap(this::createSystemScopes)
+                // create default certificate
                 .flatMap(this::createDefaultCertificate)
+                // create owner
+                .flatMap(domain -> {
+                    if (principal == null) {
+                        return Single.just(domain);
+                    }
+                    return roleService.findSystemRole(SystemRole.PRIMARY_OWNER, RoleScope.DOMAIN)
+                            .switchIfEmpty(Single.error(new InvalidRoleException("Cannot assign owner to the domain, owner role does not exist")))
+                            .flatMap(role -> {
+                                Membership membership = new Membership();
+                                membership.setDomain(domain.getId());
+                                membership.setMemberId(principal.getId());
+                                membership.setMemberType(MemberType.USER);
+                                membership.setReferenceId(domain.getId());
+                                membership.setReferenceType(ReferenceType.DOMAIN);
+                                membership.setRole(role.getId());
+                                return membershipService.addOrUpdate(membership)
+                                        .map(__ -> domain);
+                            });
+                })
                 // create event for sync process
                 .flatMap(domain -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), domain.getId(), Action.CREATE));
@@ -391,8 +420,15 @@ public class DomainServiceImpl implements DomainService {
                             // delete policies
                             .andThen(policyService.findByDomain(domainId)
                                     .flatMapCompletable(policies -> {
-                                        List<Completable> deleteReportersCompletable = policies.stream().map(p -> policyService.delete(p.getId())).collect(Collectors.toList());
-                                        return Completable.concat(deleteReportersCompletable);
+                                        List<Completable> deletePoliciesCompletable = policies.stream().map(p -> policyService.delete(p.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deletePoliciesCompletable);
+                                    })
+                            )
+                            // delete memberships
+                            .andThen(membershipService.findByReference(domainId, ReferenceType.DOMAIN)
+                                    .flatMapCompletable(memberships -> {
+                                        List<Completable> deleteMembershipsCompletable = memberships.stream().map(m -> membershipService.delete(m.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteMembershipsCompletable);
                                     })
                             )
                             .andThen(domainRepository.delete(domainId))

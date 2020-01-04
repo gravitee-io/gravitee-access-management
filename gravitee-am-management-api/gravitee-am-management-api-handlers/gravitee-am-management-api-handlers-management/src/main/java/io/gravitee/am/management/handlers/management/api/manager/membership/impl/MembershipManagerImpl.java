@@ -42,6 +42,7 @@ public class MembershipManagerImpl implements MembershipManager, InitializingBea
 
     private static final Logger logger = LoggerFactory.getLogger(MembershipManagerImpl.class);
     private ConcurrentMap<String, Membership> memberships = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, List<Membership>> localMemberships = new ConcurrentHashMap<>();
 
     @Autowired
     private MembershipService membershipService;
@@ -77,9 +78,26 @@ public class MembershipManagerImpl implements MembershipManager, InitializingBea
 
     @Override
     public List<Membership> findByReference(String referenceId, ReferenceType referenceType) {
-        return memberships.values().stream()
+        List<Membership> membershipList = memberships.values().stream()
                 .filter(membership -> membership.getReferenceId().equals(referenceId) && membership.getReferenceType().equals(referenceType))
                 .collect(Collectors.toList());
+
+        // membership list can be empty if the resource (Domain or Application) has just been created
+        // and the propagation process has not been done yet, retry to be sure
+        if (membershipList == null || membershipList.isEmpty()) {
+            if (localMemberships.containsKey(referenceId + referenceType.name())) {
+                return localMemberships.get(referenceId + referenceType.name());
+            } else {
+                try {
+                    List<Membership> repoMemberships = membershipService.findByReference(referenceId, referenceType).blockingGet();
+                    localMemberships.put(referenceId + referenceType.name(), repoMemberships);
+                    return repoMemberships;
+                } catch (Exception ex) {
+                    logger.error("An error occurs while finding memberships by reference {} - {}", referenceId, referenceType, ex);
+                }
+            }
+        }
+        return membershipList;
     }
 
     private void updateMembership(String membershipId, MembershipEvent membershipEvent) {

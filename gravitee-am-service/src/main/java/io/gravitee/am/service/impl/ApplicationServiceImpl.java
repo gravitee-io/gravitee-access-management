@@ -25,11 +25,16 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.membership.ReferenceType;
+import io.gravitee.am.model.permissions.RoleScope;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
@@ -92,6 +97,12 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private IdentityProviderService identityProviderService;
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private MembershipService membershipService;
 
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
@@ -324,6 +335,13 @@ public class ApplicationServiceImpl implements ApplicationService {
                                         return Completable.concat(deleteFormsCompletable);
                                     })
                             )
+                            // delete memberships
+                            .andThen(membershipService.findByReference(application.getId(), ReferenceType.APPLICATION)
+                                    .flatMapCompletable(memberships -> {
+                                        List<Completable> deleteFormsCompletable = memberships.stream().map(m -> membershipService.delete(m.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteFormsCompletable);
+                                    })
+                            )
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_DELETED).application(application)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_DELETED).throwable(throwable)));
                 })
@@ -419,6 +437,25 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .andThen(validateApplicationMetadata(application))
                 // create the application
                 .flatMap(applicationRepository::create)
+                // create the owner
+                .flatMap(application1 -> {
+                    if (principal == null) {
+                        return Single.just(application1);
+                    }
+                    return roleService.findSystemRole(SystemRole.PRIMARY_OWNER, RoleScope.APPLICATION)
+                            .switchIfEmpty(Single.error(new InvalidRoleException("Cannot assign owner to the application, owner role does not exist")))
+                            .flatMap(role -> {
+                                Membership membership = new Membership();
+                                membership.setDomain(application1.getDomain());
+                                membership.setMemberId(principal.getId());
+                                membership.setMemberType(MemberType.USER);
+                                membership.setReferenceId(application1.getId());
+                                membership.setReferenceType(ReferenceType.APPLICATION);
+                                membership.setRole(role.getId());
+                                return membershipService.addOrUpdate(membership)
+                                        .map(__ -> domain);
+                            });
+                })
                 // create event for sync process
                 .flatMap(application1 -> {
                     Event event = new Event(Type.APPLICATION, new Payload(application.getId(), application.getDomain(), Action.CREATE));

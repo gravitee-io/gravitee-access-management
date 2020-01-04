@@ -87,6 +87,17 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    public Maybe<Role> findSystemRole(SystemRole systemRole, RoleScope roleScope) {
+        LOGGER.debug("Find system role : {} for the scope : {}", systemRole.name(), roleScope.name());
+        return roleRepository.findByDomainAndNameAndScope("admin", systemRole.name(), roleScope.getId())
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find system role : {} for the scope : {}", systemRole.name(), roleScope.name(), ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find system role : %s for the scope : %s", systemRole.name(), roleScope.name()), ex));
+                });
+    }
+
+    @Override
     public Single<Set<Role>> findByIdIn(List<String> ids) {
         LOGGER.debug("Find roles by ids: {}", ids);
         return roleRepository.findByIdIn(ids)

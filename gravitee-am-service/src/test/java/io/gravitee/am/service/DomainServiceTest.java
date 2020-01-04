@@ -15,9 +15,13 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.membership.ReferenceType;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.model.permissions.RoleScope;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
@@ -67,6 +71,7 @@ public class DomainServiceTest {
     private static final String EMAIL_ID = "id-email";
     private static final String REPORTER_ID = "id-reporter";
     private static final String POLICY_ID = "id-policy";
+    private static final String MEMBERSHIP_ID = "id-membership";
 
     @InjectMocks
     private DomainService domainService = new DomainServiceImpl();
@@ -106,6 +111,9 @@ public class DomainServiceTest {
 
     @Mock
     private Policy policy;
+
+    @Mock
+    private Membership membership;
 
     @Mock
     private DomainRepository domainRepository;
@@ -151,6 +159,9 @@ public class DomainServiceTest {
 
     @Mock
     private EventService eventService;
+
+    @Mock
+    private MembershipService membershipService;
 
     @Test
     public void shouldFindById() {
@@ -237,8 +248,10 @@ public class DomainServiceTest {
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
         when(certificateService.create(eq(domain.getId()))).thenReturn(Single.just(new Certificate()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(membershipService.addOrUpdate(any())).thenReturn(Single.just(new Membership()));
+        when(roleService.findSystemRole(SystemRole.PRIMARY_OWNER, RoleScope.DOMAIN)).thenReturn(Maybe.just(new Role()));
 
-        TestObserver testObserver = domainService.create(newDomain).test();
+        TestObserver testObserver = domainService.create(newDomain, new DefaultUser("username")).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -249,6 +262,7 @@ public class DomainServiceTest {
         verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(anyString(), any(NewSystemScope.class));
         verify(certificateService).create(eq(domain.getId()));
         verify(eventService).create(any());
+        verify(membershipService).addOrUpdate(any());
     }
 
     @Test
@@ -448,6 +462,9 @@ public class DomainServiceTest {
         when(policy.getId()).thenReturn(POLICY_ID);
         when(policyService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(policy)));
         when(policyService.delete(anyString())).thenReturn(Completable.complete());
+        when(membership.getId()).thenReturn(MEMBERSHIP_ID);
+        when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Single.just(Collections.singletonList(membership)));
+        when(membershipService.delete(anyString())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
@@ -468,6 +485,7 @@ public class DomainServiceTest {
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
         verify(reporterService, times(1)).delete(REPORTER_ID);
         verify(policyService, times(1)).delete(POLICY_ID);
+        verify(membershipService, times(1)).delete(MEMBERSHIP_ID);
         verify(eventService, times(1)).create(any());
     }
 
@@ -487,6 +505,7 @@ public class DomainServiceTest {
         when(emailTemplateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(policyService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
@@ -506,6 +525,7 @@ public class DomainServiceTest {
         verify(emailTemplateService, never()).delete(anyString());
         verify(reporterService, never()).delete(anyString());
         verify(policyService, never()).delete(anyString());
+        verify(membershipService, never()).delete(anyString());
         verify(eventService, times(1)).create(any());
     }
 

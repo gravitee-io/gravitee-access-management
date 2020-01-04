@@ -132,6 +132,10 @@ export class MembershipsComponent implements OnInit, OnChanges {
       });
   }
 
+  isPrimaryOwner(membership) {
+    return membership.roleName && 'PRIMARY_OWNER' === membership.roleName;
+  }
+
   private initMembers() {
     const memberships = this.members.memberships;
     const metadata = this.members.metadata;
