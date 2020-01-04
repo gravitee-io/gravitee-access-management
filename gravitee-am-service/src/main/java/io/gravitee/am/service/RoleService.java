@@ -38,6 +38,8 @@ public interface RoleService {
 
     Maybe<Role> findById(String id);
 
+    Maybe<Role> findSystemRole(SystemRole systemRole, RoleScope roleScope);
+
     Single<Set<Role>> findByIdIn(List<String> ids);
 
     Single<Role> createSystemRole(SystemRole systemRole, RoleScope roleScope, List<String> permissions, User principal);
