@@ -16,12 +16,16 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.membership.ReferenceType;
+import io.gravitee.am.model.permissions.RoleScope;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.service.exception.*;
@@ -46,7 +50,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -85,6 +88,12 @@ public class ApplicationServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private MembershipService membershipService;
+
+    @Mock
+    private RoleService roleService;
 
     private final static String DOMAIN = "domain1";
 
@@ -366,8 +375,10 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
             return mock;
         }).when(applicationTemplateManager).apply(any());
+        when(membershipService.addOrUpdate(any())).thenReturn(Single.just(new Membership()));
+        when(roleService.findSystemRole(SystemRole.PRIMARY_OWNER, RoleScope.APPLICATION)).thenReturn(Maybe.just(new Role()));
 
-        TestObserver testObserver = applicationService.create(DOMAIN, newClient).test();
+        TestObserver testObserver = applicationService.create(DOMAIN, newClient, new DefaultUser("username")).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -375,6 +386,7 @@ public class ApplicationServiceTest {
 
         verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
         verify(applicationRepository, times(1)).create(any(Application.class));
+        verify(membershipService).addOrUpdate(any());
     }
 
     @Test
@@ -777,28 +789,32 @@ public class ApplicationServiceTest {
         Application existingClient = Mockito.mock(Application.class);
         when(existingClient.getId()).thenReturn("my-client");
         when(existingClient.getDomain()).thenReturn("my-domain");
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(existingClient));
-        when(applicationRepository.delete("my-client")).thenReturn(Completable.complete());
+        when(applicationRepository.findById(existingClient.getId())).thenReturn(Maybe.just(existingClient));
+        when(applicationRepository.delete(existingClient.getId())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         Form form = new Form();
         form.setId("form-id");
-        when(formService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.singletonList(form)));
+        when(formService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.singletonList(form)));
         when(formService.delete(form.getId())).thenReturn(Completable.complete());
         Email email = new Email();
         email.setId("email-id");
-        when(emailTemplateService.findByDomainAndClient("my-domain", "my-client"))
-                .thenReturn(Single.just(Collections.singletonList(email)));
+        when(emailTemplateService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.singletonList(email)));
         when(emailTemplateService.delete(email.getId())).thenReturn(Completable.complete());
+        Membership membership = new Membership();
+        membership.setId("membership-id");
+        when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Single.just(Collections.singletonList(membership)));
+        when(membershipService.delete(anyString())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = applicationService.delete("my-client").test();
+        TestObserver testObserver = applicationService.delete(existingClient.getId()).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationRepository, times(1)).delete("my-client");
+        verify(applicationRepository, times(1)).delete(existingClient.getId());
         verify(formService, times(1)).delete(anyString());
         verify(emailTemplateService, times(1)).delete(anyString());
+        verify(membershipService, times(1)).delete(anyString());
     }
 
     @Test
@@ -806,21 +822,23 @@ public class ApplicationServiceTest {
         Application existingClient = Mockito.mock(Application.class);
         when(existingClient.getDomain()).thenReturn("my-domain");
         when(existingClient.getId()).thenReturn("my-client");
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(existingClient));
-        when(applicationRepository.delete("my-client")).thenReturn(Completable.complete());
+        when(applicationRepository.findById(existingClient.getId())).thenReturn(Maybe.just(existingClient));
+        when(applicationRepository.delete(existingClient.getId())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(formService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.emptyList()));
-        when(emailTemplateService.findByDomainAndClient("my-domain", "my-client")).thenReturn(Single.just(Collections.emptyList()));
+        when(formService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.emptyList()));
+        when(emailTemplateService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.emptyList()));
+        when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Single.just(Collections.emptyList()));
 
-        TestObserver testObserver = applicationService.delete("my-client").test();
+        TestObserver testObserver = applicationService.delete(existingClient.getId()).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationRepository, times(1)).delete("my-client");
+        verify(applicationRepository, times(1)).delete(existingClient.getId());
         verify(formService, never()).delete(anyString());
         verify(emailTemplateService, never()).delete(anyString());
+        verify(membershipService, never()).delete(anyString());
     }
 
     @Test
