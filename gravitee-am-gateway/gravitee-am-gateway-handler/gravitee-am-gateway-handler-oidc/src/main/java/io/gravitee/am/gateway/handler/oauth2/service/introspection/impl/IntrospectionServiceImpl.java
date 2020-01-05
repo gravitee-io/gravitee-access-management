@@ -43,7 +43,7 @@ public class IntrospectionServiceImpl implements IntrospectionService {
         return tokenService.introspect(introspectionRequest.getToken())
                 .flatMap(token -> {
                     AccessToken accessToken = (AccessToken) token;
-                    if (accessToken.getSubject() != null) {
+                    if (accessToken.getSubject() != null && !accessToken.getSubject().equals(accessToken.getClientId())) {
                         return userService
                                 .findById(accessToken.getSubject())
                                 .map(user -> convert(accessToken, user))
