@@ -19,7 +19,6 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
 import io.gravitee.am.gateway.handler.oauth2.service.pkce.PKCEUtils;
 import io.gravitee.am.gateway.handler.oidc.exception.ClaimsRequestSyntaxException;
@@ -62,9 +61,6 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
 
     @Override
     public void handle(RoutingContext context) {
-        // parse scope parameter
-        parseScopeParameter(context);
-
         // proceed prompt parameter
         parsePromptParameter(context);
 
@@ -78,14 +74,6 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
         parseClaimsParameter(context);
 
         context.next();
-    }
-
-    private void parseScopeParameter(RoutingContext context) {
-        // Check scope parameter
-        String scopes = context.request().params().get(io.gravitee.am.common.oauth2.Parameters.SCOPE);
-        if (scopes != null && scopes.isEmpty()) {
-            throw new InvalidScopeException("Invalid parameter: scope must not be empty");
-        }
     }
 
     private void parsePromptParameter(RoutingContext context) {

@@ -68,10 +68,8 @@ public final class TokenRequestFactory {
         // set OAuth 2.0 information
         tokenRequest.setClientId(request.params().get(Parameters.CLIENT_ID));
         tokenRequest.setGrantType(request.params().get(Parameters.GRANT_TYPE));
-        String scopes = request.params().get(Parameters.SCOPE);
-        if (scopes != null) {
-            tokenRequest.setScopes(new HashSet<>(Arrays.asList(scopes.split("\\s+"))));
-        }
+        String scope = request.params().get(Parameters.SCOPE);
+        tokenRequest.setScopes(scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
         tokenRequest.setAdditionalParameters(extractAdditionalParameters(request));
         return tokenRequest;
     }

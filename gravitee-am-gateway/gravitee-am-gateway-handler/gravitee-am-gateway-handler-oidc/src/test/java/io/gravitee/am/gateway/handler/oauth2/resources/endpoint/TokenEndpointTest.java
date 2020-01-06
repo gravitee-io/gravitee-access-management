@@ -73,10 +73,10 @@ public class TokenEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldNotInvokeTokenEndpoint_emptyScope() throws Exception {
+    public void shouldInvokeTokenEndpoint_emptyScope() throws Exception {
         testRequest(
                 HttpMethod.POST, "/oauth/token?grant_type=client_credentials&scope=",
-                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
+                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
     @Test

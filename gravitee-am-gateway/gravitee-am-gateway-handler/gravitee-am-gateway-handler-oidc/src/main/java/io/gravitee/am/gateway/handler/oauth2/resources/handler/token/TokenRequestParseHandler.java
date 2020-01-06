@@ -15,9 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.token;
 
-import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -43,9 +42,6 @@ public class TokenRequestParseHandler implements Handler<RoutingContext> {
         // proceed grant_type parameter
         parseGrantTypeParameter(context);
 
-        // proceed scope parameter
-        parseScopeParameter(context);
-
         context.next();
     }
 
@@ -67,14 +63,6 @@ public class TokenRequestParseHandler implements Handler<RoutingContext> {
 
         if (grantType == null) {
             throw new InvalidRequestException("Missing parameter: grant_type");
-        }
-    }
-
-    private void parseScopeParameter(RoutingContext context) {
-        // Check scope parameter
-        String scopes = context.request().params().get(Parameters.SCOPE);
-        if (scopes != null && scopes.isEmpty()) {
-            throw new InvalidScopeException("Invalid parameter: scope must not be empty");
         }
     }
 }
