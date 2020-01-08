@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.common.client;
 
 import io.gravitee.am.model.Client;
-import io.gravitee.common.service.Service;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -24,9 +23,10 @@ import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ClientSyncService extends Service {
+public interface ClientSyncService {
 
     Maybe<Client> findById(String id);
 

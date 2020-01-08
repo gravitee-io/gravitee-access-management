@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.gateway.reactor.spring;
 
+import io.gravitee.am.gateway.core.manager.ClientManager;
 import io.gravitee.am.gateway.handler.SecurityDomainRouterFactory;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
+import io.gravitee.am.gateway.reactor.impl.DefaultClientManager;
 import io.gravitee.am.gateway.reactor.impl.DefaultReactor;
 import io.gravitee.am.gateway.reactor.impl.DefaultSecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.reactor.impl.DefaultSecurityDomainManager;
@@ -57,4 +59,7 @@ public class ReactorConfiguration {
     public SecurityDomainManager securityDomainManager() {
         return new DefaultSecurityDomainManager();
     }
+
+    @Bean
+    public ClientManager clientManager() { return new DefaultClientManager(); }
 }
