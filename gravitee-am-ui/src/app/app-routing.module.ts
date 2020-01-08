@@ -40,7 +40,7 @@ import {DomainSettingsExtensionGrantsComponent} from "./domain/settings/extensio
 import {DomainSettingsAccountComponent} from "./domain/settings/account/account.component";
 import {DomainSettingsPoliciesComponent} from "./domain/settings/policies/policies.component";
 import {DomainSettingsMembershipsComponent} from "./domain/settings/memberships/memberships.component";
-import {DomainCreationComponent} from "./settings/domains/creation/domain-creation.component";
+import {DomainCreationComponent} from "./domain/creation/domain-creation.component";
 import {ProviderCreationComponent} from "./domain/settings/providers/creation/provider-creation.component";
 import {ProviderComponent} from "./domain/settings/providers/provider/provider.component";
 import {LogoutCallbackComponent} from "./logout/callback/callback.component";
@@ -65,7 +65,6 @@ import {ScopeResolver} from "./resolvers/scope.resolver";
 import {ScopesResolver} from "./resolvers/scopes.resolver";
 import {ScopeCreationComponent} from "./domain/settings/scopes/creation/scope-creation.component";
 import {ScopeComponent} from './domain/settings/scopes/scope/scope.component';
-import {DashboardComponent} from "./dashboard/dashboard.component";
 import {SettingsComponent} from "./settings/settings.component";
 import {DummyComponent} from "./components/dummy/dummy.component";
 import {UsersComponent} from "./domain/settings/users/users.component";
@@ -136,43 +135,9 @@ import {ManagementRoleComponent} from "./settings/management/roles/role/role.com
 import {MembershipsResolver} from "./resolvers/memberships.resolver";
 import {SettingsResolver} from "./resolvers/settings.resolver";
 import {AuthGuard} from "./guards/auth-guard.service";
+import {HomeComponent} from "./home/home.component";
 
 const routes: Routes = [
-  { path: 'dashboard',
-    component: DashboardComponent,
-    data: {
-      menu: {
-        label: 'Dashboard',
-        icon: 'dashboard',
-        firstLevel: true
-      }
-    }
-  },
-  { path: 'dashboard/applications',
-    component: ApplicationsComponent,
-    resolve: {
-      applications: ApplicationsResolver
-    },
-    data: {
-      menu: {
-        label: 'Applications',
-        icon: 'apps',
-        firstLevel: true
-      }
-    },
-  },
-  { path: 'dashboard/applications/new',
-    component: ApplicationCreationComponent,
-    resolve: {
-      domains: DomainsResolver
-    },
-    data: {
-      menu: {
-        displayFirstLevel: true,
-        activeParentPath: 'dashboard/applications'
-      }
-    }
-  },
   {
     path: 'settings', component: SettingsComponent,
     data: {
@@ -1198,7 +1163,17 @@ const routes: Routes = [
   { path: 'logout', component: LogoutComponent },
   { path: 'logout/callback', component: LogoutCallbackComponent },
   { path: 'dummy', component: DummyComponent },
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' }
+  { path: 'h', component: HomeComponent },
+  { path: 'h/domains/new',
+    component: DomainCreationComponent,
+    canActivate: [AuthGuard],
+    data: {
+      perms: {
+        only: ['management_domain_create']
+      }
+    },
+  },
+  { path: '', redirectTo: 'h', pathMatch: 'full'}
 ];
 
 @NgModule({

@@ -31,14 +31,13 @@ import { AuthGuard } from "../../guards/auth-guard.service";
 export class SidenavComponent implements OnInit, OnDestroy {
   title = AppConfig.settings.portalTitle;
   version = AppConfig.settings.version;
-  reducedMode: boolean = false;
+  reducedMode = false;
   paths: any[] = [];
   subPaths: any = {};
   currentSubPaths: any[] = [];
-  currentResource: any = {};
   subscription: Subscription;
-  displayFirstLevel: boolean = false;
-  displaySettingsLevel: boolean = false;
+  displayFirstLevel = false;
+  displaySettingsLevel = false;
 
   constructor(private router: Router,
               private currentRoute: ActivatedRoute,
@@ -56,9 +55,6 @@ export class SidenavComponent implements OnInit, OnDestroy {
       }
     }
     this.watchRoute();
-    this.subscription = this.sidenavService.notifyObservable$.subscribe(data => {
-      this.currentResource = data;
-    });
   }
 
   ngOnDestroy() {

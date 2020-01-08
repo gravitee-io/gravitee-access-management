@@ -17,17 +17,17 @@
 -->
 <mat-toolbar>
     <span class="fill-remaining-space"></span>
-    <button *ngIf="isAuthenticated()" mat-icon-button [matMenuTriggerFor]="userAccountMenu" (click)="listDomains()">
-      <mat-icon style="color: grey;">account_circle</mat-icon>
+    <span class="currentDomain">{{currentResource?.name | lowercase}}</span>
+    <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()">
+      <img [src]="avatarUrl(user)" alt="Photo of a {{user}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="30"/>
+      <mat-icon>keyboard_arrow_down</mat-icon>
     </button>
 </mat-toolbar>
 
 <mat-menu #userAccountMenu="matMenu" [overlapTrigger]="false">
   <div class="userAccount" fxLayout="column">
     <div class="userAccountProfile" fxLayout="row">
-      <div class="userAccountPicture">
-        <mat-icon>account_circle</mat-icon>
-      </div>
+      <img [src]="avatarUrl(user)" alt="Photo of a {{user}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="80"/>
       <div class="userAccountInfo" fxLayoutAlign="start center" style="margin: 20px;">
         <span>{{user}}</span>
       </div>
@@ -44,16 +44,10 @@
         </a>
       </mat-list>
     </div>
-    <div class="userAccountActions">
-      <a [routerLink]="['/settings']" mat-menu-item>
-        <mat-icon>settings</mat-icon>
-        <span>Global settings</span>
-      </a>
-    </div>
-    <div class="userAccountActions">
-      <a [routerLink]="['/logout']" mat-menu-item>
-        <mat-icon>exit_to_app</mat-icon>
-        <span>Sign out</span>
+    <div class="userAccountActions" *ngFor="let link of navLinks">
+      <a [routerLink]="link.href" mat-menu-item>
+        <mat-icon>{{link.icon}}</mat-icon>
+        <span>{{link.label}}</span>
       </a>
     </div>
   </div>

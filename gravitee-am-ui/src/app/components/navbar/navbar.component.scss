@@ -10,6 +10,19 @@ mat-toolbar {
   .fill-remaining-space {
     flex: 1 1 auto;
   }
+  .currentDomain {
+    font-size: 14px;
+    margin-right: 8px;
+  }
+  .userAccountMenu {
+    mat-icon {
+      color: grey;
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      line-height: 16px;
+    }
+  }
 }
 
 /deep/ .mat-toolbar-row {
@@ -26,14 +39,6 @@ mat-toolbar {
 
 .userAccount {
   width: 380px;
-  .userAccountPicture {
-    mat-icon {
-      font-size: 78px;
-      height: 78px;
-      width: 78px;
-      color: grey;
-    }
-  }
   .userAccountActions {
     border-top: 1px solid rgb(226, 229, 231);
   }

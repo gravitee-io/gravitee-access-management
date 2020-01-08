@@ -13,33 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { AuthService } from "../../services/auth.service";
-import { DomainService } from "../../services/domain.service";
-import { Router } from "@angular/router";
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Router} from "@angular/router";
+import {AuthService} from "../../services/auth.service";
+import {DomainService} from "../../services/domain.service";
+import {Subscription} from "rxjs";
+import {NavbarService} from "./navbar.service";
+import {SnackbarService} from "../../services/snackbar.service";
+import * as _ from 'lodash';
 
 @Component({
   selector: 'gs-navbar',
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss']
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
+  private subscription: Subscription;
   domains: any[];
+  currentResource: any = {};
+  navLinks: any = [
+    {'href': '/h/domains/new' , 'label': 'Create domain', 'icon': 'add'},
+    {'href': '/settings' , 'label': 'Global settings', 'icon': 'settings'},
+    {'href': '/logout' , 'label': 'Sign out', 'icon': 'exit_to_app'},
+  ];
 
-  constructor(private authService: AuthService, private domainService: DomainService, private router:Router) { }
+  constructor(private authService: AuthService,
+              private domainService: DomainService,
+              private navbarService: NavbarService,
+              private snackbarService: SnackbarService,
+              private router: Router) {
+    if (!this.authService.user()) {
+      this.authService.userInfo().subscribe(() => this.initNavLinks());
+    } else {
+      this.initNavLinks();
+    }
+  }
 
   ngOnInit() {
-    if (!this.authService.user()) {
-      this.authService.userInfo().subscribe();
-    }
+    this.subscription = this.navbarService.notifyObservable$.subscribe(data => {
+      this.currentResource = data;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 
   get user() {
     return this.authService.user() != null ? this.authService.user().preferred_username : null;
-  }
-
-  isAuthenticated() {
-    return this.authService.isAuthenticated();
   }
 
   listDomains() {
@@ -50,5 +71,22 @@ export class NavbarComponent implements OnInit {
     // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
     this.router.navigateByUrl('/dummy', { skipLocationChange: true })
       .then(() => this.router.navigate(routerLink));
+  }
+
+  avatarUrl(user) {
+    return user ? 'assets/material-letter-icons/' + user.charAt(0).toUpperCase() + '.svg' : '';
+  }
+
+  private initNavLinks() {
+    if (!this.canDisplay(['management_domain_create'])) {
+      _.remove(this.navLinks, { href: '/h/domains/new' });
+    }
+    if (!this.canDisplay(['management_settings_read'])) {
+      _.remove(this.navLinks, { href: '/settings' });
+    }
+  }
+
+  private canDisplay(permissions): boolean {
+    return this.authService.isAdmin() || this.authService.hasPermissions(permissions);
   }
 }

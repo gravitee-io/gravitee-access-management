@@ -28,10 +28,7 @@ import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.RoleAlreadyExistsException;
-import io.gravitee.am.service.exception.RoleNotFoundException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -150,6 +147,12 @@ public class RoleServiceImpl implements RoleService {
 
         return roleRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(id)))
+                .map(role -> {
+                    if (role.isSystem()) {
+                        throw new SystemRoleUpdateException(id);
+                    }
+                    return role;
+                })
                 .flatMapSingle(oldRole -> {
                     // check if role name is unique
                     return checkRoleUniqueness(updateRole.getName(), oldRole.getId(), domain)
@@ -185,6 +188,12 @@ public class RoleServiceImpl implements RoleService {
         LOGGER.debug("Delete role {}", roleId);
         return roleRepository.findById(roleId)
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(roleId)))
+                .map(role -> {
+                    if (role.isSystem()) {
+                        throw new SystemRoleDeleteException(roleId);
+                    }
+                    return role;
+                })
                 .flatMapCompletable(role -> roleRepository.delete(roleId)
                         .andThen(Completable.fromSingle(eventService.create(new Event(Type.ROLE, new Payload(role.getId(), role.getDomain(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).role(role)))

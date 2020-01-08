@@ -46,6 +46,7 @@ import "codemirror/addon/selection/mark-selection";
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { HomeComponent } from "./home/home.component";
 import { SidenavComponent } from './components/sidenav/sidenav.component';
 import { SidenavSettingsComponent } from "./components/sidenav-settings/sidenav-settings.component";
 import { LoginComponent } from './login/login.component';
@@ -54,11 +55,12 @@ import { DomainsComponent } from './settings/domains/domains.component';
 import { DomainService } from './services/domain.service';
 import { DomainComponent } from './domain/domain.component';
 import { SidenavService } from "./components/sidenav/sidenav.service";
+import { NavbarService } from "./components/navbar/navbar.service";
 import { ConfirmComponent } from './components/dialog/confirm/confirm.component';
 import { DialogService } from "./services/dialog.service";
 import { SnackbarService } from "./services/snackbar.service";
 import { EmptystateComponent } from './components/emptystate/emptystate.component';
-import { DomainCreationComponent } from './settings/domains/creation/domain-creation.component';
+import { DomainCreationComponent } from './domain/creation/domain-creation.component';
 import { ProviderCreationComponent } from './domain/settings/providers/creation/provider-creation.component';
 import { ProviderCreationStep1Component } from './domain/settings/providers/creation/steps/step1/step1.component';
 import { ProviderCreationStep2Component } from './domain/settings/providers/creation/steps/step2/step2.component';
@@ -120,8 +122,7 @@ import { ScopeResolver } from "./resolvers/scope.resolver";
 import { ScopeCreationComponent } from './domain/settings/scopes/creation/scope-creation.component';
 import { ScopeComponent } from './domain/settings/scopes/scope/scope.component';
 import { SnackbarComponent } from "./components/snackbar/snackbar.component";
-import { NavbarComponent } from './components/navbar/navbar.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
+import { NavbarComponent} from './components/navbar/navbar.component';
 import { DashboardService} from "./services/dashboard.service";
 import { WidgetApplicationsComponent } from './components/widget/applications/applications.component';
 import { WidgetTopApplicationsComponent } from './components/widget/top-applications/top-applications.component';
@@ -236,6 +237,7 @@ import { HasPermissionDirective } from "./directives/has-permission.directive";
 @NgModule({
   declarations: [
     AppComponent,
+    HomeComponent,
     SidenavComponent,
     SidenavSettingsComponent,
     LoginComponent,
@@ -295,7 +297,6 @@ import { HasPermissionDirective } from "./directives/has-permission.directive";
     ExtensionGrantFormComponent,
     SnackbarComponent,
     NavbarComponent,
-    DashboardComponent,
     WidgetApplicationsComponent,
     WidgetTopApplicationsComponent,
     WidgetTotalApplicationsComponent,
@@ -392,6 +393,7 @@ import { HasPermissionDirective } from "./directives/has-permission.directive";
     DomainService,
     ProviderService,
     SidenavService,
+    NavbarService,
     DialogService,
     SnackbarService,
     PlatformService,
