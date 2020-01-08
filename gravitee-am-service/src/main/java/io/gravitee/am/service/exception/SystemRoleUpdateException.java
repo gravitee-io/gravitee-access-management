@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+package io.gravitee.am.service.exception;
 
-@Component({
-  selector: 'app-dashboard',
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
-})
-export class DashboardComponent implements OnInit {
+import io.gravitee.common.http.HttpStatusCode;
 
-  constructor() { }
+/**
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author GraviteeSource Team
+ */
+public class SystemRoleUpdateException extends AbstractManagementException {
 
-  ngOnInit() {
-  }
+    private final String role;
 
+    public SystemRoleUpdateException(String role) {
+        this.role = role;
+    }
+
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.BAD_REQUEST_400;
+    }
+
+    @Override
+    public String getMessage() {
+        return "Role [" + role + "] is flag as system and cannot be updated.";
+    }
 }

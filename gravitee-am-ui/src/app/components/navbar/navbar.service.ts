@@ -17,13 +17,15 @@ import { Injectable } from '@angular/core';
 import { Subject } from "rxjs";
 
 @Injectable()
-export class SidenavService {
-  private resizeSidenav = new Subject<boolean>();
-  public resizeSidenavObservable = this.resizeSidenav.asObservable();
+export class NavbarService {
+  private currentResource = new Subject<any>();
+  public notifyObservable$ = this.currentResource.asObservable();
 
   constructor() { }
 
-  resize(reducedMode) {
-    this.resizeSidenav.next(reducedMode);
+  notify(data) {
+    if (data) {
+      this.currentResource.next(data);
+    }
   }
 }

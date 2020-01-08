@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { DomainService } from "../../../services/domain.service";
-import { SnackbarService } from "../../../services/snackbar.service";
+import { DomainService } from "../../services/domain.service";
+import { SnackbarService } from "../../services/snackbar.service";
 import { Router } from "@angular/router";
-import { BreadcrumbService } from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
+import { BreadcrumbService } from "../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 
 @Component({
   selector: 'app-creation',
@@ -26,16 +26,21 @@ import { BreadcrumbService } from "../../../../libraries/ng2-breadcrumb/componen
 })
 export class DomainCreationComponent implements OnInit {
   domain: any = {};
+  displayNavLink: boolean;
 
-  constructor(private domainService: DomainService, private snackbarService: SnackbarService, private router: Router, private breadcrumbService: BreadcrumbService) { }
+  constructor(private domainService: DomainService,
+              private snackbarService: SnackbarService,
+              private router: Router,
+              private breadcrumbService: BreadcrumbService) { }
 
   ngOnInit() {
     this.breadcrumbService.addFriendlyNameForRoute('/domains', 'Domains');
+    this.displayNavLink = !this.router.url.startsWith('/settings');
   }
 
   create() {
     this.domainService.create(this.domain).subscribe(data => {
-      this.snackbarService.open("Domain " + data.name + " created");
+      this.snackbarService.open('Domain ' + data.name + ' created');
       this.router.navigate(['/domains', data.id])
     });
   }

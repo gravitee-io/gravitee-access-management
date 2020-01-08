@@ -34,9 +34,10 @@ export class AuthGuard implements CanActivate {
       return true;
     }
     // check if we need to load some data
+    const requiredPerms = route.data.perms.only;
     const userResult: Observable<any> = !this.authService.user() ? this.authService.userInfo() : of(this.authService.user());
     let resourceResult: Observable<any> = of();
-    if (!state.url.startsWith('/settings')) {
+    if (!requiredPerms[0].startsWith('management')) {
       // check if the authenticated user can navigate to the next route (domain settings or application settings)
       const domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
       const appId = route.parent.paramMap.get('appId') ? route.parent.paramMap.get('appId') : route.parent.parent.paramMap.get('appId');
@@ -46,7 +47,6 @@ export class AuthGuard implements CanActivate {
       }
     }
     // check permissions
-    const requiredPerms = route.data.perms.only;
     return concat(userResult, resourceResult).pipe(
       map(() =>  this.isAuthorized(requiredPerms)),
       catchError((err) => {

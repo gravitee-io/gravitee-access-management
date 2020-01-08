@@ -13,28 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBed, inject } from '@angular/core/testing';
 
-import { DashboardComponent } from './dashboard.component';
+import { NavbarService } from './navbar.service';
 
-describe('DashboardComponent', () => {
-  let component: DashboardComponent;
-  let fixture: ComponentFixture<DashboardComponent>;
-
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      declarations: [ DashboardComponent ]
-    })
-    .compileComponents();
-  }));
-
+describe('NavbarService', () => {
   beforeEach(() => {
-    fixture = TestBed.createComponent(DashboardComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    TestBed.configureTestingModule({
+      providers: [NavbarService]
+    });
   });
 
-  it('should be created', () => {
-    expect(component).toBeTruthy();
-  });
+  it('should ...', inject([NavbarService], (service: NavbarService) => {
+    expect(service).toBeTruthy();
+  }));
 });

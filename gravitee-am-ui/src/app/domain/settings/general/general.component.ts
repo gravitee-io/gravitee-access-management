@@ -20,9 +20,9 @@ import {DomainService} from "../../../services/domain.service";
 import {DialogService} from "../../../services/dialog.service";
 import {SnackbarService} from "../../../services/snackbar.service";
 import {BreadcrumbService} from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import {SidenavService} from "../../../components/sidenav/sidenav.service";
 import {AuthService} from "../../../services/auth.service";
 import * as _ from "lodash";
+import {NavbarService} from "../../../components/navbar/navbar.service";
 
 export interface Tag {
   id: string;
@@ -48,8 +48,8 @@ export class DomainSettingsGeneralComponent implements OnInit {
               private router: Router,
               private route: ActivatedRoute,
               private breadcrumbService: BreadcrumbService,
-              private sidenavService: SidenavService,
-              private authService: AuthService) {
+              private authService: AuthService,
+              private navbarService: NavbarService) {
   }
 
   ngOnInit() {
@@ -100,7 +100,6 @@ export class DomainSettingsGeneralComponent implements OnInit {
     this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe(response => {
       this.domain = response;
       this.domainService.notify(this.domain);
-      this.sidenavService.notify(this.domain);
       this.breadcrumbService.addFriendlyNameForRoute('/domains/' + this.domain.id, this.domain.name);
       this.formChanged = false;
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');
@@ -115,6 +114,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
         if (res) {
           this.domainService.delete(this.domain.id).subscribe(response => {
             this.snackbarService.open('Domain ' + this.domain.name + ' deleted');
+            this.navbarService.notify({});
             this.router.navigate(['']);
           })
         }

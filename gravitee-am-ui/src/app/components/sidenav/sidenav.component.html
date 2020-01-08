@@ -39,10 +39,6 @@
       </mat-list-item>
     </div>
 
-    <mat-list-item *ngIf="!reducedMode && !displaySettingsLevel && currentSubPaths && currentSubPaths.length > 0">
-      <h4>{{currentResource?.name}}</h4>
-    </mat-list-item>
-
     <mat-list-item *ngFor="let subPath of currentSubPaths">
       <a [routerLink]="subPath.fullPath" title="{{subPath.data.menu.label}}"
          routerLinkActive="sidenav-active">

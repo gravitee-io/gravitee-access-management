@@ -1,19 +1,20 @@
 .new-domain-container {
   padding: 50px 70px 20px 50px;
+  a.back-link {
+    color: #006CAB;
+    text-decoration: none;
+    &:hover {
+      color: #2196f3;
+    }
+    mat-icon {
+      vertical-align: middle;
+      margin-top: -2px;
+    }
+  }
   h1 {
     font-weight: 400;
   }
   .new-domain-content {
-    padding: 50px 0 20px;
-    form {
-      padding: 20px;
-      background: #fafafa;
-      border-radius: 2px;
-      border: 1px solid rgb(226, 229, 231);
-      .domain-general-form-actions {
-        margin-top: 20px;
-      }
-    }
     .new-domain-description {
       margin-left: 20px;
       h3 {

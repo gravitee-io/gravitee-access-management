@@ -19,9 +19,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
-import io.gravitee.am.service.exception.RoleAlreadyExistsException;
-import io.gravitee.am.service.exception.RoleNotFoundException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.RoleServiceImpl;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
@@ -264,6 +262,24 @@ public class RoleServiceTest {
     }
 
     @Test
+    public void shouldNotUpdate_systemRole() {
+        UpdateRole updateRole = Mockito.mock(UpdateRole.class);
+        Role role = Mockito.mock(Role.class);
+        when(role.isSystem()).thenReturn(true);
+        when(roleRepository.findById("my-role")).thenReturn(Maybe.just(role));
+
+        TestObserver testObserver = roleService.update(DOMAIN,"my-role", updateRole).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(SystemRoleUpdateException.class);
+
+        verify(roleRepository, times(1)).findById("my-role");
+        verify(roleRepository, never()).findByDomain(DOMAIN);
+        verify(roleRepository, never()).update(any(Role.class));
+    }
+
+    @Test
     public void shouldDelete_notExistingRole() {
         when(roleRepository.findById("my-role")).thenReturn(Maybe.empty());
 
@@ -284,6 +300,21 @@ public class RoleServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldNotDelete_systemRole() {
+        Role role = Mockito.mock(Role.class);
+        when(role.isSystem()).thenReturn(true);
+        when(roleRepository.findById("my-role")).thenReturn(Maybe.just(role));
+
+        TestObserver testObserver = roleService.delete( "my-role").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(SystemRoleDeleteException.class);
+
+        verify(roleRepository, never()).delete("my-role");
     }
 
     @Test

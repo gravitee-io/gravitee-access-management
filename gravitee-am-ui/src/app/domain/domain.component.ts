@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
-import { SidenavService } from "../components/sidenav/sidenav.service";
-import { BreadcrumbService } from "../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { DomainService } from "../services/domain.service";
-import { SnackbarService } from "../services/snackbar.service";
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute} from "@angular/router";
+import {SidenavService} from "../components/sidenav/sidenav.service";
+import {BreadcrumbService} from "../../libraries/ng2-breadcrumb/components/breadcrumbService";
+import {DomainService} from "../services/domain.service";
+import {NavbarService} from "../components/navbar/navbar.service";
+import {SnackbarService} from "../services/snackbar.service";
 
 @Component({
   selector: 'app-domain',
@@ -30,8 +31,9 @@ export class DomainComponent implements OnInit {
 
   constructor(private route: ActivatedRoute,
               private sidenavService: SidenavService,
-              private snackbarService: SnackbarService,
+              private navbarService: NavbarService,
               private breadcrumbService: BreadcrumbService,
+              private snackbarService: SnackbarService,
               private domainService: DomainService) {
   }
 
@@ -39,25 +41,25 @@ export class DomainComponent implements OnInit {
     this.domain = this.route.snapshot.data['domain'];
     this.domainService.domainUpdated$.subscribe(domain => this.domain = domain);
     setTimeout(() => {
-      this.sidenavService.notify(this.domain);
+      this.navbarService.notify(this.domain);
     });
     this.initBreadcrumb();
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRoute('/domains/'+this.domain.id, this.domain.name);
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domain.id+'/settings/(providers|certificates|roles)/.*', ' ');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domain.id+'/settings/(providers|certificates|roles)/new$', 'new');
+    this.breadcrumbService.addFriendlyNameForRoute('/domains/' + this.domain.id, this.domain.name);
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domain.id + '/settings/(providers|certificates|roles)/.*', ' ');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domain.id + '/settings/(providers|certificates|roles)/new$', 'new');
     this.breadcrumbService.hideRoute('/domains');
-    this.breadcrumbService.hideRouteRegex('/domains/'+this.domain.id+'/settings/providers/.*/settings$');
-    this.breadcrumbService.hideRouteRegex('/domains/'+this.domain.id+'/clients/.*/settings$');
+    this.breadcrumbService.hideRouteRegex('/domains/' + this.domain.id + '/settings/providers/.*/settings$');
+    this.breadcrumbService.hideRouteRegex('/domains/' + this.domain.id + '/clients/.*/settings$');
   }
 
   enable() {
     this.domain.enabled = true;
     this.domainService.enable(this.domain.id, this.domain).subscribe(response => {
       this.domain = response;
-      this.snackbarService.open("Domain " + this.domain.name + " enabled");
+      this.snackbarService.open('Domain ' + this.domain.name + ' enabled');
     });
   }
 

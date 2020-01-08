@@ -18,7 +18,6 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {DomainService} from "../../../../../services/domain.service";
 import {DialogService} from "../../../../../services/dialog.service";
 import {SnackbarService} from "../../../../../services/snackbar.service";
-import {SidenavService} from "../../../../../components/sidenav/sidenav.service";
 import {AuthService} from "../../../../../services/auth.service";
 
 @Component({
@@ -39,7 +38,6 @@ export class ClientRegistrationSettingsComponent implements OnInit {
               private snackbarService: SnackbarService,
               private router: Router,
               private route: ActivatedRoute,
-              private sidenavService: SidenavService,
               private authService: AuthService) {}
 
   ngOnInit() {
@@ -103,7 +101,6 @@ export class ClientRegistrationSettingsComponent implements OnInit {
     this.domainService.patchOpenidDCRSettings(this.domain.id, this.domain).subscribe(response => {
       this.domain = response;
       this.domainService.notify(this.domain);
-      this.sidenavService.notify(this.domain);
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');
       this.formChanged = false;
     });

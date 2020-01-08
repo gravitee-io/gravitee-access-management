@@ -79,7 +79,7 @@
           </div>
         </div>
 
-        <div fxLayout="row" class="role-form-actions" *hasPermission="['management_role_update']">
+        <div fxLayout="row" *ngIf="!readonly">
           <button mat-raised-button [disabled]="(!roleForm.valid || roleForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
