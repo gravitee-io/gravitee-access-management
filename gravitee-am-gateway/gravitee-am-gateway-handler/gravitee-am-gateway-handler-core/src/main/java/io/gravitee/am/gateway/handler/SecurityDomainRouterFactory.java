@@ -93,7 +93,6 @@ public class SecurityDomainRouterFactory {
     private void startComponents(ApplicationContext applicationContext) {
         // register components that require event listener feature
         List<Class<? extends LifecycleComponent>> components = new ArrayList<>();
-        components.add(ClientSyncService.class);
         components.add(CertificateManager.class);
         components.add(IdentityProviderManager.class);
         components.add(FormManager.class);
