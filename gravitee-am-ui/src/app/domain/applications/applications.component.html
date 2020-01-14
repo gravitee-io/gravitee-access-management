@@ -57,7 +57,7 @@
   <app-emptystate *ngIf="isEmpty"
                   [message]="'Applications will appear here'"
                   [subMessage]="'No data to display'"
-                  [icon]="'apps'"></app-emptystate>
+                  [icon]="'devices'"></app-emptystate>
 
   <div *hasPermission="['domain_application_create']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="this.newApplicationRouterLink">

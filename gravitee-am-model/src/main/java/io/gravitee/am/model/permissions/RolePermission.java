@@ -51,6 +51,7 @@ public enum RolePermission {
     DOMAIN_DCR(RoleScope.DOMAIN, DomainPermission.DCR),
     DOMAIN_REPORTER(RoleScope.DOMAIN, DomainPermission.REPORTER),
     DOMAIN_MEMBER(RoleScope.DOMAIN, DomainPermission.MEMBER),
+    DOMAIN_ANALYTICS(RoleScope.DOMAIN, DomainPermission.ANALYTICS),
 
     APPLICATION_SETTINGS(RoleScope.APPLICATION, ApplicationPermission.SETTINGS),
     APPLICATION_IDENTITY_PROVIDER(RoleScope.APPLICATION, ApplicationPermission.IDENTITY_PROVIDER),

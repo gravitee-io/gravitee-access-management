@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {SidenavService} from "../components/sidenav/sidenav.service";
 import {BreadcrumbService} from "../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import {DomainService} from "../services/domain.service";
 import {NavbarService} from "../components/navbar/navbar.service";
 import {SnackbarService} from "../services/snackbar.service";
+import {AuthService} from "../services/auth.service";
 
 @Component({
   selector: 'app-domain',
@@ -30,11 +31,13 @@ export class DomainComponent implements OnInit {
   domain: any = {};
 
   constructor(private route: ActivatedRoute,
+              private router: Router,
               private sidenavService: SidenavService,
               private navbarService: NavbarService,
               private breadcrumbService: BreadcrumbService,
               private snackbarService: SnackbarService,
-              private domainService: DomainService) {
+              private domainService: DomainService,
+              private authService: AuthService) {
   }
 
   ngOnInit() {
@@ -44,6 +47,16 @@ export class DomainComponent implements OnInit {
       this.navbarService.notify(this.domain);
     });
     this.initBreadcrumb();
+    // redirect user according to its permissions
+    if (this.router.url.indexOf('applications') === -1 && this.router.url.indexOf('settings') === -1) {
+      if (this.canNavigate(['domain_analytics_read'])) {
+        this.router.navigate(['/domains', this.domain.id, 'dashboard']);
+      } else {
+        this.router.navigate(['/domains', this.domain.id, 'applications']);
+      }
+    } else {
+      this.router.navigateByUrl(this.router.url);
+    }
   }
 
   initBreadcrumb() {
@@ -63,5 +76,8 @@ export class DomainComponent implements OnInit {
     });
   }
 
+  private canNavigate(permissions): boolean {
+    return this.authService.isAdmin() || this.authService.hasPermissions(permissions);
+  }
 }
 

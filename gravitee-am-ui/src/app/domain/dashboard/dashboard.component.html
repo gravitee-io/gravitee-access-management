@@ -18,16 +18,9 @@
 <div class="domain-overview-container">
   <h1>Dashboard</h1>
   <div class="domain-overview-content" fxLayout="row">
-    <section fxFlex="70">
-      <div fxLayout="row" fxLayoutGap="30px" class="main-widgets">
-        <widget-total-applications [domainId]="domain.id"></widget-total-applications>
-        <widget-total-tokens [domainId]="domain.id"></widget-total-tokens>
-      </div>
-      <div fxLayout="row">
-        <widget-applications [domainId]="domain.id"></widget-applications>
-        <widget-top-applications [domainId]="domain.id"></widget-top-applications>
-      </div>
-    </section>
+    <div fxFlex="75" class="gs-form-section">
+      <gv-dashboard [dashboard]="dashboard"></gv-dashboard>
+    </div>
     <div class="domain-overview-description" fxFlex>
       <h3>Activities</h3>
       <div class="domain-overview-description-content">
@@ -36,15 +29,10 @@
         </p>
       </div>
       <div class="dashboard-description-actions" *hasPermission="['domain_application_create']">
-        <mat-list>
-          <h3 matSubheader>Shortcuts</h3>
-          <a mat-button [routerLink]="['/domains', domain.id, 'applications', 'new']">
-            <mat-list-item>
-              <mat-icon mat-list-icon>playlist_add</mat-icon>
-              <h4 matLine>Create application</h4>
-            </mat-list-item>
-          </a>
-        </mat-list>
+        <a mat-raised-button color="accent" [routerLink]="['/domains', domain.id, 'applications', 'new']">
+          <mat-icon>add</mat-icon>
+          <span style="margin-left: 5px;">Create application</span>
+        </a>
       </div>
     </div>
   </div>

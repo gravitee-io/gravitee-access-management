@@ -1,0 +1,20 @@
+ngx-datatable {
+  box-shadow: none !important;
+}
+
+:host /deep/ {
+  a {
+    color: #006CAB;
+    text-decoration: none;
+    &:hover {
+      color: #2196f3;
+    }
+  }
+  .ngx-datatable.material .datatable-footer .datatable-pager {
+    ul li:not(:last-child):after {
+      content: none;
+    }
+  }
+}
+
+

@@ -98,7 +98,6 @@ import {EmailResolver} from "./resolvers/email.resolver";
 import {ConsentsResolver} from "./resolvers/consents.resolver";
 import {AuditResolver} from "./resolvers/audit.resolver";
 import {AuditsComponent} from "./domain/settings/audits/audits.component";
-import {AuditsResolver} from "./resolvers/audits.resolver";
 import {AuditComponent} from "./domain/settings/audits/audit/audit.component";
 import {AuditsSettingsComponent} from "./domain/settings/audits/settings/settings.component";
 import {ReportersResolver} from "./resolvers/reporters.resolver";
@@ -262,9 +261,6 @@ const routes: Routes = [
           { path: 'audits',
             component: AuditsComponent,
             canActivate: [AuthGuard],
-            resolve: {
-              audits: AuditsResolver,
-            },
             data: {
               menu: {
                 label: 'Audit Log',
@@ -483,13 +479,17 @@ const routes: Routes = [
       }
     },
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: '', component: DomainComponent },
       { path: 'dashboard',
         component: DomainDashboardComponent,
+        canActivate: [AuthGuard],
         data: {
           menu: {
             label: 'Dashboard',
-            icon: 'dashboard',
+            icon: 'bar_chart',
+          },
+          perms: {
+            only: ['domain_analytics_read']
           }
         }
       },
@@ -501,7 +501,7 @@ const routes: Routes = [
         data: {
           menu: {
             label: 'Applications',
-            icon: 'apps',
+            icon: 'devices',
           }
         }
       },
@@ -823,9 +823,6 @@ const routes: Routes = [
           { path: 'audits',
             component: AuditsComponent,
             canActivate: [AuthGuard],
-            resolve: {
-              audits: AuditsResolver,
-            },
             data: {
               menu: {
                 label: 'Audit Log',

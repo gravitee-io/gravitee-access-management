@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.AuditService;
 import io.gravitee.am.model.common.Page;
@@ -27,6 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,6 +49,16 @@ public class AuditServiceImpl implements AuditService {
             return getReporter(domain).search(criteria, page, size);
         } catch (Exception ex) {
             logger.error("An error occurs during audits search for domain: {}", domain, ex);
+            return Single.error(ex);
+        }
+    }
+
+    @Override
+    public Single<Map<Object, Object>> aggregate(String domain, AuditReportableCriteria criteria, Type analyticsType) {
+        try {
+            return getReporter(domain).aggregate(criteria, analyticsType);
+        } catch (Exception ex) {
+            logger.error("An error occurs during audits aggregation for domain: {}", domain, ex);
             return Single.error(ex);
         }
     }

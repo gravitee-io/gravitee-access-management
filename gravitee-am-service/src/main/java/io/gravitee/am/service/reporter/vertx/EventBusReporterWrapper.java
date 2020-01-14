@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.reporter.vertx;
 
+import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.reporter.api.provider.ReportableCriteria;
@@ -28,6 +29,9 @@ import io.vertx.reactivex.core.eventbus.Message;
 import io.vertx.reactivex.core.eventbus.MessageConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -59,6 +63,11 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
     @Override
     public Single<Page> search(ReportableCriteria criteria, int page, int size) {
         return reporter.search(criteria, page, size);
+    }
+
+    @Override
+    public Single<Map<Object, Object>> aggregate(ReportableCriteria criteria, Type analyticsType) {
+        return reporter.aggregate(criteria, analyticsType);
     }
 
     @Override

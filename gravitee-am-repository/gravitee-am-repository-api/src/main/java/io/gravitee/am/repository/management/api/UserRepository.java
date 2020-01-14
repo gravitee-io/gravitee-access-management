@@ -16,12 +16,14 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -45,4 +47,8 @@ public interface UserRepository extends CrudRepository<User, String> {
     Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source);
 
     Single<List<User>> findByIdIn(List<String> ids);
+
+    Single<Long> countByDomain(String domain);
+
+    Single<Map<Object, Object>> statistics(AnalyticsQuery query);
 }

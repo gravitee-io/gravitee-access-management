@@ -16,10 +16,14 @@
 package io.gravitee.am.reporter.mongodb.audit;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.analytics.Type;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
@@ -40,16 +44,16 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.processors.PublishProcessor;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -84,42 +88,29 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
 
     @Override
     public Single<Page<Audit>> search(AuditReportableCriteria criteria, int page, int size) {
-        List<Bson> filters = new ArrayList<>();
-
-        // event types
-        if (criteria.types() != null && !criteria.types().isEmpty()) {
-            filters.add(in(FIELD_TYPE, criteria.types()));
-        }
-
-        // event status
-        if (criteria.status() != null && !criteria.status().isEmpty()) {
-            filters.add(eq(FIELD_STATUS, criteria.status()));
-        }
-
-        // event user
-        if (criteria.user() != null && !criteria.user().isEmpty()) {
-            filters.add(or(eq(FIELD_ACTOR, criteria.user()), eq(FIELD_TARGET, criteria.user())));
-        }
-
-        // time range
-        if (criteria.from() != 0 && criteria.to() != 0) {
-            filters.add(and(gte(FIELD_TIMESTAMP, new Date(criteria.from())), lte(FIELD_TIMESTAMP, new Date(criteria.to()))));
-        } else {
-            if (criteria.from() != 0) {
-                filters.add(gte(FIELD_TIMESTAMP, new Date(criteria.from())));
-            }
-            if (criteria.to() != 0) {
-                filters.add(lte(FIELD_TIMESTAMP, new Date(criteria.to())));
-            }
-        }
-
         // build query
-        Bson query = (filters.isEmpty()) ? new BasicDBObject() : and(filters);
+        Bson query = query(criteria);
 
         // run search query
         Single<Long> countOperation = Observable.fromPublisher(reportableCollection.countDocuments(query)).first(0l);
         Single<List<Audit>> auditsOperation = Observable.fromPublisher(reportableCollection.find(query).sort(new BasicDBObject(FIELD_TIMESTAMP, -1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
         return Single.zip(countOperation, auditsOperation, (count, audits) -> new Page<>(audits, page, count));
+    }
+
+    @Override
+    public Single<Map<Object, Object>> aggregate(AuditReportableCriteria criteria, Type analyticsType) {
+        // build query
+        Bson query = query(criteria);
+        switch (analyticsType) {
+            case DATE_HISTO:
+                return executeHistogram(criteria, query);
+            case GROUP_BY:
+                return executeGroupBy(criteria, query);
+            case COUNT:
+                return executeCount(query);
+            default:
+                return Single.error(new IllegalArgumentException("Analytics [" + analyticsType + "] cannot be calculated"));
+        }
     }
 
     @Override
@@ -168,12 +159,103 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         }
     }
 
+    private Single<Map<Object, Object>> executeHistogram(AuditReportableCriteria criteria, Bson query) {
+        // NOTE : MongoDB does not return count : 0 if there is no matching document in the given time range, we need to add it by hand
+        Map<Long, Long> intervals = intervals(criteria);
+        String fieldSuccess = (criteria.types().get(0) + "_" + Status.SUCCESS).toLowerCase();
+        String fieldFailure = (criteria.types().get(0) + "_" + Status.FAILURE).toLowerCase();
+        return Observable.fromPublisher(reportableCollection.aggregate(Arrays.asList(
+                Aggregates.match(query),
+                Aggregates.group(
+                        new BasicDBObject("_id",
+                                new BasicDBObject("$subtract",
+                                        Arrays.asList(
+                                                new BasicDBObject("$subtract", Arrays.asList("$timestamp", new Date(0))),
+                                                new BasicDBObject("$mod", Arrays.asList(new BasicDBObject("$subtract", Arrays.asList("$timestamp", new Date(0))), criteria.interval()))
+                                        ))),
+                        Accumulators.sum(fieldSuccess, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.SUCCESS)), 1, 0))),
+                        Accumulators.sum(fieldFailure, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.FAILURE)), 1, 0)))))))
+                .toList()
+                .map(docs -> {
+                    Map<Long, Long> successResult = new HashMap<>();
+                    Map<Long, Long> failureResult = new HashMap<>();
+                    docs.forEach(document -> {
+                        Long timestamp = ((Number) ((Document) document.get("_id")).get("_id")).longValue();
+                        Long successAttempts = ((Number) document.get(fieldSuccess)).longValue();
+                        Long failureAttempts = ((Number) document.get(fieldFailure)).longValue();
+                        successResult.put(timestamp, successAttempts);
+                        failureResult.put(timestamp, failureAttempts);
+                    });
+                    // complete result with remaining intervals
+                    intervals.forEach((k, v) -> {
+                        successResult.putIfAbsent(k, v);
+                        failureResult.putIfAbsent(k, v);
+                    });
+                    List<Long> successData = successResult.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(e -> e.getValue()).collect(Collectors.toList());
+                    List<Long> failureData = failureResult.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(e -> e.getValue()).collect(Collectors.toList());
+                    Map<Object, Object> result = new HashMap<>();
+                    result.put(fieldSuccess, successData);
+                    result.put(fieldFailure, failureData);
+                    return result;
+                });
+    }
+
+    private Single<Map<Object, Object>> executeGroupBy(AuditReportableCriteria criteria, Bson query) {
+        return Observable.fromPublisher(reportableCollection.aggregate(
+                Arrays.asList(
+                        Aggregates.match(query),
+                        Aggregates.group(new BasicDBObject("_id", "$" + criteria.field()), Accumulators.sum("count", 1)),
+                        Aggregates.limit(criteria.size() != null ? criteria.size() : 50))
+                ))
+                .toList()
+                .map(docs -> docs.stream().collect(Collectors.toMap(d -> ((Document) d.get("_id")).get("_id"), d -> d.get("count"))));
+    }
+
+    private Single<Map<Object, Object>> executeCount(Bson query) {
+        return Observable.fromPublisher(reportableCollection.countDocuments(query)).first(0l).map(data ->  Collections.singletonMap("data", data));
+    }
+
     private Flowable bulk(List<Audit> audits) {
         if (audits == null || audits.isEmpty()) {
             return Flowable.empty();
         }
 
         return Flowable.fromPublisher(reportableCollection.bulkWrite(this.convert(audits)));
+    }
+
+    private Bson query(AuditReportableCriteria criteria) {
+        List<Bson> filters = new ArrayList<>();
+
+        // event types
+        if (criteria.types() != null && !criteria.types().isEmpty()) {
+            filters.add(in(FIELD_TYPE, criteria.types()));
+        }
+
+        // event status
+        if (criteria.status() != null && !criteria.status().isEmpty()) {
+            filters.add(eq(FIELD_STATUS, criteria.status()));
+        }
+
+        // event user
+        if (criteria.user() != null && !criteria.user().isEmpty()) {
+            filters.add(or(eq(FIELD_ACTOR, criteria.user()), eq(FIELD_TARGET, criteria.user())));
+        }
+
+        // time range
+        if (criteria.from() != 0 && criteria.to() != 0) {
+            filters.add(new Document(FIELD_TIMESTAMP, new Document("$gte", new Date(criteria.from())).append("$lte", new Date(criteria.to()))));
+        } else {
+            if (criteria.from() != 0) {
+                filters.add(gte(FIELD_TIMESTAMP, new Date(criteria.from())));
+            }
+            if (criteria.to() != 0) {
+                filters.add(lte(FIELD_TIMESTAMP, new Date(criteria.to())));
+            }
+        }
+
+        // build query
+        Bson query = (filters.isEmpty()) ? new BasicDBObject() : and(filters);
+        return query;
     }
 
     private List<WriteModel<AuditMongo>> convert(List<Audit> audits) {
@@ -289,5 +371,31 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         }
 
         return audit;
+    }
+
+    private Map<Long, Long> intervals(AuditReportableCriteria criteria) {
+        ChronoUnit unit = convert(criteria.interval());
+        Instant startDate = Instant.ofEpochMilli(criteria.from()).truncatedTo(unit);
+        Instant endDate = Instant.ofEpochMilli(criteria.to()).truncatedTo(unit);
+
+        Map<Long, Long> intervals = new HashMap<>();
+        intervals.put(startDate.toEpochMilli(), 0l);
+        while(startDate.isBefore(endDate)) {
+            startDate = startDate.plus(criteria.interval(), ChronoUnit.MILLIS);
+            intervals.put(startDate.toEpochMilli(), 0l);
+        }
+        return intervals;
+    }
+
+    private ChronoUnit convert(long millisecondsInterval) {
+        if (millisecondsInterval >= 0 && millisecondsInterval < 60 * 1000) {
+            return ChronoUnit.SECONDS;
+        } else if (millisecondsInterval >= 60 * 1000 && millisecondsInterval < 60 * 60 * 1000) {
+            return ChronoUnit.MINUTES;
+        } else if (millisecondsInterval >= 60 * 60 * 1000 && millisecondsInterval < 24 * 60 * 60 * 1000) {
+            return ChronoUnit.HOURS;
+        } else {
+            return ChronoUnit.DAYS;
+        }
     }
 }

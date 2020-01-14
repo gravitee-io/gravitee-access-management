@@ -42,7 +42,8 @@ public enum DomainPermission implements Permission {
     EXTENSION_GRANT("EXTENSION_GRANT","extension_grant"),
     DCR("DCR","dcr"),
     REPORTER("REPORTER", "reporter"),
-    MEMBER("MEMBER", "member");
+    MEMBER("MEMBER", "member"),
+    ANALYTICS("ANALYTICS", "analytics");
 
     String name;
     String mask;

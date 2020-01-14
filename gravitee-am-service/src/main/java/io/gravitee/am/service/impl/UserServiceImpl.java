@@ -15,13 +15,14 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.common.event.Type;
 import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.EventService;
@@ -355,6 +356,36 @@ public class UserServiceImpl implements UserService {
                     LOGGER.error("An error occurs while trying to delete user: {}", userId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete user: %s", userId), ex));
+                });
+    }
+
+    @Override
+    public Single<Long> countByDomain(String domain) {
+        LOGGER.debug("Count user by domain {}", domain);
+
+        return userRepository.countByDomain(domain)
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to count users by domain: {}", domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while count users to delete user: %s", domain), ex));
+                });
+    }
+
+    @Override
+    public Single<Map<Object, Object>> statistics(AnalyticsQuery query) {
+        LOGGER.debug("Get user collection analytics {}", query);
+
+        return userRepository.statistics(query)
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to get users analytics : {}", query, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while count users analytics : %s", query), ex));
                 });
     }
 }

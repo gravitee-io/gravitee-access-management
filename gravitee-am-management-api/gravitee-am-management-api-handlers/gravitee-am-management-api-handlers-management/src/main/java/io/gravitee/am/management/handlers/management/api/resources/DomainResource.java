@@ -243,4 +243,9 @@ public class DomainResource extends AbstractResource {
     public MembersResource getMembersResource() {
         return resourceContext.getResource(MembersResource.class);
     }
+
+    @Path("analytics")
+    public AnalyticsResource getAnalyticsResource() {
+        return resourceContext.getResource(AnalyticsResource.class);
+    }
 }

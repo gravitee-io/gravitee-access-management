@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
@@ -24,6 +25,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -62,6 +64,10 @@ public interface UserService {
     Single<User> enhance(User user);
 
     Completable delete(String userId);
+
+    Single<Long> countByDomain(String domain);
+
+    Single<Map<Object, Object>> statistics(AnalyticsQuery query);
 
     default Single<List<User>> findByDomainAndEmail(String domain, String email) {
         return findByDomainAndEmail(domain, email, true);
