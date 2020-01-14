@@ -16,6 +16,7 @@
 package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.reactivex.Completable;
@@ -24,6 +25,7 @@ import io.reactivex.Single;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -91,5 +93,15 @@ public class UserRepositoryProxy extends AbstractProxy<UserRepository> implement
     @Override
     public Completable delete(String id) {
         return target.delete(id);
+    }
+
+    @Override
+    public Single<Long> countByDomain(String domain) {
+        return target.countByDomain(domain);
+    }
+
+    @Override
+    public Single<Map<Object, Object>> statistics(AnalyticsQuery query) {
+        return target.statistics(query);
     }
 }

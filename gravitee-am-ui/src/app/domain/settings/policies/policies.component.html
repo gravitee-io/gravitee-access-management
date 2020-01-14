@@ -98,12 +98,7 @@
           </div>
         </form>
       </div>
-
-      <div *ngIf="isLoading" fxFlex fxLayout="column" fxLayoutAlign="center center">
-        <div class="policy-loader"><div></div><div></div><div></div></div>
-        <span style="color: grey;">Loading the <small>{{policy.type}}</small> for <small>{{policy.extensionPoint.toUpperCase()}}</small> extension point ...</span>
-      </div>
-
+      <div *ngIf="isLoading" fxLayoutAlign="center center" fxFlex><gv-loader></gv-loader></div>
       <div *ngIf="!policy" fxFlex>
         <app-emptystate
                       [message]="'Extension Point Management'"

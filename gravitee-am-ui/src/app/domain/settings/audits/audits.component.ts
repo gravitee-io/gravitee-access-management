@@ -29,6 +29,9 @@ import * as _ from 'lodash';
   styleUrls: ['./audits.component.scss']
 })
 export class AuditsComponent implements OnInit {
+  private startDateChanged = false;
+  private endDateChanged = false;
+  private adminContext = false;
   @ViewChild('auditsTable') table: any;
   userCtrl = new FormControl();
   audits: any[];
@@ -40,13 +43,11 @@ export class AuditsComponent implements OnInit {
   eventStatus: string;
   startDate: any;
   endDate: any;
-  displayReset: boolean = false;
+  displayReset = false;
   expanded: any = {};
-  config: any = {lineWrapping:true, lineNumbers: true, readOnly: true, mode: 'application/json'};
+  loadingIndicator: boolean;
+  config: any = {lineWrapping: true, lineNumbers: true, readOnly: true, mode: 'application/json'};
   filteredUsers: any[];
-  private startDateChanged: boolean = false;
-  private endDateChanged: boolean = false;
-  private adminContext = false;
   selectedUser: any;
   selectedTimeRange = '1d';
   timeRanges: any[] = [
@@ -109,13 +110,10 @@ export class AuditsComponent implements OnInit {
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.adminContext = true;
     }
-
-    this.pagedAudits = this.route.snapshot.data['audits'];
-    this.audits = this.pagedAudits.data;
-    this.page.totalElements = this.pagedAudits.totalCount;
-
     // load event types
     this.platformService.auditEventTypes().subscribe(data => this.eventTypes = data);
+    // load audits
+    this.search();
   }
 
   get isEmpty() {
@@ -230,10 +228,12 @@ export class AuditsComponent implements OnInit {
     let from = this.startDateChanged ? moment(this.startDate).valueOf() : moment().subtract(selectedTimeRange.value, selectedTimeRange.unit);
     let to = this.endDateChanged ? moment(this.endDate).valueOf() : moment().valueOf();
     let user = this.selectedUser || (this.userCtrl.value ? (typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username) : null);
+    this.loadingIndicator = true;
     this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, user, from, to, this.adminContext).subscribe(pagedAudits => {
       this.page.totalElements = pagedAudits.totalCount;
       this.audits = pagedAudits.data;
       this.selectedUser = null;
+      this.loadingIndicator = false;
     });
   }
 

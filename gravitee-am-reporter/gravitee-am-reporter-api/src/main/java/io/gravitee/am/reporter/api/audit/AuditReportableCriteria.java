@@ -27,14 +27,20 @@ public class AuditReportableCriteria implements ReportableCriteria {
 
     private long from;
     private long to;
+    private long interval;
+    private Integer size;
     private List<String> types;
+    private String field;
     private String status;
     private String user;
 
     private AuditReportableCriteria(Builder builder) {
         this.from = builder.from;
         this.to = builder.to;
+        this.interval = builder.interval;
+        this.size = builder.size;
         this.types = builder.types;
+        this.field = builder.field;
         this.status = builder.status;
         this.user = builder.user;
     }
@@ -49,8 +55,20 @@ public class AuditReportableCriteria implements ReportableCriteria {
         return to;
     }
 
+    public long interval() {
+        return interval;
+    }
+
+    public Integer size() {
+        return size;
+    }
+
     public List<String> types() {
         return types;
+    }
+
+    public String field() {
+        return field;
     }
 
     public String status() {
@@ -64,7 +82,10 @@ public class AuditReportableCriteria implements ReportableCriteria {
     public static class Builder {
         private long from;
         private long to;
+        private long interval;
+        private Integer size;
         private List<String> types;
+        private String field;
         private String status;
         private String user;
 
@@ -78,8 +99,23 @@ public class AuditReportableCriteria implements ReportableCriteria {
             return this;
         }
 
+        public Builder interval(long interval) {
+            this.interval = interval;
+            return this;
+        }
+
+        public Builder size(Integer size) {
+            this.size = size;
+            return this;
+        }
+
         public Builder types(List<String> types) {
             this.types = types;
+            return this;
+        }
+
+        public Builder field(String field) {
+            this.field = field;
             return this;
         }
 

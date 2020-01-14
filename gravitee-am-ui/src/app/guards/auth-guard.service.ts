@@ -15,7 +15,7 @@
  */
 import {Injectable} from '@angular/core';
 import {ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot} from '@angular/router';
-import {concat, Observable, of} from 'rxjs';
+import {combineLatest, Observable, of} from 'rxjs';
 import {catchError, map} from 'rxjs/operators';
 import {AuthService} from './../services/auth.service';
 import {DomainService} from '../services/domain.service';
@@ -36,7 +36,7 @@ export class AuthGuard implements CanActivate {
     // check if we need to load some data
     const requiredPerms = route.data.perms.only;
     const userResult: Observable<any> = !this.authService.user() ? this.authService.userInfo() : of(this.authService.user());
-    let resourceResult: Observable<any> = of();
+    let resourceResult: Observable<any> = of([]);
     if (!requiredPerms[0].startsWith('management')) {
       // check if the authenticated user can navigate to the next route (domain settings or application settings)
       const domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
@@ -47,7 +47,7 @@ export class AuthGuard implements CanActivate {
       }
     }
     // check permissions
-    return concat(userResult, resourceResult).pipe(
+    return combineLatest([userResult, resourceResult]).pipe(
       map(() =>  this.isAuthorized(requiredPerms)),
       catchError((err) => {
         return of(false);

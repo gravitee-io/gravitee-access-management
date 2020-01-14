@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.reporter.api.provider;
 
+import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.Reportable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -27,6 +30,8 @@ import io.reactivex.Single;
 public interface Reporter<R extends Reportable, C extends ReportableCriteria> extends io.gravitee.reporter.api.Reporter {
 
     Single<Page<R>> search(C criteria, int page, int size);
+
+    Single<Map<Object, Object>> aggregate(C criteria, Type analyticsType);
 
     Maybe<R> findById(String id);
 }

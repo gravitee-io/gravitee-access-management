@@ -34,11 +34,11 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { CodemirrorModule } from 'ng2-codemirror';
 import { MaterialDesignFrameworkModule } from "angular7-json-schema-form";
+import { HighchartsChartModule } from "highcharts-angular";
 import 'hammerjs';
 import 'codemirror';
 import "codemirror/mode/htmlmixed/htmlmixed";
@@ -124,10 +124,6 @@ import { ScopeComponent } from './domain/settings/scopes/scope/scope.component';
 import { SnackbarComponent } from "./components/snackbar/snackbar.component";
 import { NavbarComponent} from './components/navbar/navbar.component';
 import { DashboardService} from "./services/dashboard.service";
-import { WidgetApplicationsComponent } from './components/widget/applications/applications.component';
-import { WidgetTopApplicationsComponent } from './components/widget/top-applications/top-applications.component';
-import { WidgetTotalApplicationsComponent } from './components/widget/total-applications/total-applications.component';
-import { WidgetTotalTokensComponent } from './components/widget/total-tokens/total-tokens.component';
 import { SettingsComponent } from './settings/settings.component';
 import { HumanDatePipe } from './pipes/human-date.pipe';
 import { MapToIterablePipe } from './pipes/map-to-iterable.pipe';
@@ -233,6 +229,15 @@ import { ApplicationPermissionsResolver } from "./resolvers/application-permissi
 import { DomainPermissionsResolver } from "./resolvers/domain-permissions.resolver";
 import { AuthGuard } from "./guards/auth-guard.service";
 import { HasPermissionDirective } from "./directives/has-permission.directive";
+import { AnalyticsService } from "./services/analytics.service";
+import { DashboardComponent } from "./domain/components/dashboard/dashboard.component";
+import { WidgetComponent } from "./components/widget/widget.component";
+import { WidgetChartLineComponent } from "./components/widget/chart-line/widget-chart-line.component";
+import { WidgetChartPieComponent } from "./components/widget/chart-pie/widget-chart-pie.component";
+import { WidgetChartGaugeComponent } from "./components/widget/chart-gauge/widget-chart-gauge.component";
+import { WidgetDataTableComponent } from "./components/widget/data-table/widget-data-table.component";
+import { WidgetCountComponent } from './components/widget/count/widget-count.component';
+import { LoaderComponent } from "./components/loader/loader.component";
 
 @NgModule({
   declarations: [
@@ -297,10 +302,6 @@ import { HasPermissionDirective } from "./directives/has-permission.directive";
     ExtensionGrantFormComponent,
     SnackbarComponent,
     NavbarComponent,
-    WidgetApplicationsComponent,
-    WidgetTopApplicationsComponent,
-    WidgetTotalApplicationsComponent,
-    WidgetTotalTokensComponent,
     SettingsComponent,
     HumanDatePipe,
     MapToIterablePipe,
@@ -371,7 +372,15 @@ import { HasPermissionDirective } from "./directives/has-permission.directive";
     ManagementRolesComponent,
     ManagementRoleComponent,
     MembershipsComponent,
-    HasPermissionDirective
+    HasPermissionDirective,
+    DashboardComponent,
+    WidgetComponent,
+    WidgetChartLineComponent,
+    WidgetChartPieComponent,
+    WidgetChartGaugeComponent,
+    WidgetDataTableComponent,
+    WidgetCountComponent,
+    LoaderComponent
   ],
   imports: [
     BrowserModule,
@@ -387,7 +396,8 @@ import { HasPermissionDirective } from "./directives/has-permission.directive";
     MaterialDesignFrameworkModule,
     CodemirrorModule,
     Ng2BreadcrumbModule.forRoot(),
-    ClipboardModule
+    ClipboardModule,
+    HighchartsChartModule
   ],
   providers: [
     DomainService,
@@ -449,6 +459,7 @@ import { HasPermissionDirective } from "./directives/has-permission.directive";
     ApplicationPermissionsResolver,
     DomainPermissionsResolver,
     AuthGuard,
+    AnalyticsService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

@@ -16,9 +16,13 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
@@ -37,6 +41,8 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -56,6 +62,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     private static final String FIELD_SOURCE = "source";
     private static final String FIELD_EMAIL = "email";
     private static final String FIELD_EXTERNAL_ID = "externalId";
+    private static final String FIELD_PRE_REGISTRATION = "preRegistration";
 
     private MongoCollection<UserMongo> usersCollection;
 
@@ -171,6 +178,68 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(usersCollection.deleteOne(eq(FIELD_ID, id)));
+    }
+
+    @Override
+    public Single<Long> countByDomain(String domain) {
+        return Observable.fromPublisher(usersCollection.countDocuments(eq(FIELD_DOMAIN, domain))).first(0l);
+    }
+
+    @Override
+    public Single<Map<Object, Object>> statistics(AnalyticsQuery query) {
+        switch (query.getField()) {
+            case Field.USER_STATUS:
+                return usersStatusRepartition(query);
+            case Field.USER_REGISTRATION:
+                return registrationsStatusRepartition(query);
+        }
+
+        return Single.just(Collections.emptyMap());
+    }
+
+    private Single<Map<Object, Object>> usersStatusRepartition(AnalyticsQuery query) {
+        return Observable.fromPublisher(usersCollection.aggregate(
+                Arrays.asList(
+                        Aggregates.match(eq(FIELD_DOMAIN, query.getDomain())),
+                        Aggregates.group(
+                                new BasicDBObject("_id", query.getField()),
+                                Accumulators.sum("total", 1),
+                                Accumulators.sum("disabled", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$enabled", false)), 1, 0))),
+                                Accumulators.sum("locked", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$accountNonLocked", false)), 1, 0))),
+                                Accumulators.sum("inactive", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$lte", Arrays.asList("$loggedAt", new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli()))), 1, 0)))
+                        )
+                )))
+                .map(doc -> {
+                    Long nonActiveUsers = ((Number) doc.get("disabled")).longValue() + ((Number) doc.get("locked")).longValue() + ((Number) doc.get("inactive")).longValue();
+                    Long activeUsers = ((Number) doc.get("total")).longValue() - nonActiveUsers;
+                    Map<Object, Object> users = new HashMap<>();
+                    users.put("active", activeUsers);
+                    users.putAll(doc.entrySet()
+                            .stream()
+                            .filter(e -> !"_id".equals(e.getKey()) && !"total".equals(e.getKey()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                    return users;
+                })
+                .first(Collections.emptyMap());
+    }
+
+    private Single<Map<Object, Object>> registrationsStatusRepartition(AnalyticsQuery query) {
+        return Observable.fromPublisher(usersCollection.aggregate(
+                Arrays.asList(
+                        Aggregates.match(new Document(FIELD_DOMAIN, query.getDomain()).append(FIELD_PRE_REGISTRATION, true)),
+                        Aggregates.group(new BasicDBObject("_id", query.getField()),
+                                Accumulators.sum("total", 1),
+                                Accumulators.sum("completed", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$registrationCompleted", true)), 1, 0))))
+                )))
+                .map(doc -> {
+                    Map<Object, Object> registrations = new HashMap<>();
+                    registrations.putAll(doc.entrySet()
+                            .stream()
+                            .filter(e -> !"_id".equals(e.getKey()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                    return registrations;
+                })
+                .first(Collections.emptyMap());
     }
 
     private User convert(UserMongo userMongo) {

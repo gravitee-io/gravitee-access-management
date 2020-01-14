@@ -92,6 +92,7 @@
                    [rowHeight]="50"
                    [messages]="{emptyMessage: 'There is no audit to display.', totalMessage: 'total'}"
                    [rows]='audits'
+                   [loadingIndicator]="loadingIndicator"
                    [externalPaging]="true"
                    [count]="page.totalElements"
                    [offset]="page.pageNumber"
