@@ -54,21 +54,26 @@ public class IntrospectionServiceImpl implements IntrospectionService {
                         return Single.just(convert(accessToken, null));
                     }
                 })
-                .onErrorResumeNext(Single.just(new IntrospectionResponse()));
+                .onErrorResumeNext(Single.just(new IntrospectionResponse(false)));
     }
 
     private IntrospectionResponse convert(AccessToken accessToken, User user) {
         IntrospectionResponse introspectionResponse = new IntrospectionResponse();
         introspectionResponse.setActive(true);
-        introspectionResponse.setScope(accessToken.getScope());
         introspectionResponse.setClientId(accessToken.getClientId());
+        introspectionResponse.setExp(accessToken.getExpireAt().getTime() / 1000);
+        introspectionResponse.setIat(accessToken.getCreatedAt().getTime() / 1000);
+        introspectionResponse.setTokenType(accessToken.getTokenType());
+        introspectionResponse.setSub(accessToken.getSubject());
         if (user != null) {
             introspectionResponse.setUsername(user.getUsername());
         }
-        introspectionResponse.setExpireAt(accessToken.getExpireAt().getTime() / 1000);
-        introspectionResponse.setIssueAt(accessToken.getCreatedAt().getTime() / 1000);
-        introspectionResponse.setTokenType(accessToken.getTokenType());
-        introspectionResponse.setSubject(accessToken.getSubject());
+        if (accessToken.getScope() != null && !accessToken.getScope().isEmpty()) {
+            introspectionResponse.setScope(accessToken.getScope());
+        }
+        if (accessToken.getAdditionalInformation() != null && !accessToken.getAdditionalInformation().isEmpty()) {
+            accessToken.getAdditionalInformation().forEach((k, v) -> introspectionResponse.putIfAbsent(k, v));
+        }
         return introspectionResponse;
     }
 }
