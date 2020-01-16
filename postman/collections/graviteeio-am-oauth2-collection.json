@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "347299de-fa89-4397-a0af-5a9d9810f669",
+		"_postman_id": "515b70a3-72f7-4755-beb4-b57503039e3e",
 		"name": "Gravitee.io - AM - Oauth2",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -12995,6 +12995,191 @@
 										"management",
 										"domains",
 										"{{crossDomain}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Case - Custom claims",
+					"item": [
+						{
+							"name": "Configure client 1 - custom claims access token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 5000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"tokenCustomClaims\" : [\n  \t{\n  \t\t\"tokenType\": \"ACCESS_TOKEN\",\n  \t\t\"claimName\": \"custom-claim\",\n  \t\t\"claimValue\": \"test\"\n  \t}\n  ]\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{client1}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"{{domain}}",
+										"clients",
+										"{{client1}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Generate token - client 1",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "660c6db8-4bea-464f-aa77-26dbf6af12d8",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has an access_token\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('access_token');",
+											"    pm.expect(body).to.have.property('token_type');",
+											"    pm.expect(body.token_type).to.eql('bearer');",
+											"    pm.expect(body).to.have.property('expires_in');",
+											"    pm.expect(body).to.have.property('refresh_token');",
+											"    pm.expect(body).to.have.property('scope');",
+											"    pm.expect(body.scope).to.eql('openid');",
+											"    ",
+											"    pm.environment.set('access_token', body.access_token);",
+											"});",
+											"",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Basic bXktY2xpZW50Om15LWNsaWVudC1zZWNyZXQ="
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "user",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "openid",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{tokenEndpoint}}",
+									"host": [
+										"{{tokenEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Introspect Token - client 1",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "660c6db8-4bea-464f-aa77-26dbf6af12d8",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Is token active with custom claims\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('active');",
+											"    pm.expect(body.active).to.eql(true);",
+											"    pm.expect(body.client_id).to.eql(\"my-client\");",
+											"    pm.expect(body.username).to.eql(\"user\");",
+											"    pm.expect(body.token_type).to.eql(\"bearer\");",
+											"    pm.expect(body).to.have.property('custom-claim');",
+											"    pm.expect(body['custom-claim']).to.eql(\"test\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Basic bXktY2xpZW50Om15LWNsaWVudC1zZWNyZXQ="
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "token",
+											"value": "{{access_token}}",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{introspectionEndpoint}}",
+									"host": [
+										"{{introspectionEndpoint}}"
 									]
 								}
 							},
