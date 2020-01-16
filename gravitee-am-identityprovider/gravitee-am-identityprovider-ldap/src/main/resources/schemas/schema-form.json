@@ -35,6 +35,11 @@
       "title": "User search base",
       "description": "If user-search-base isn't supplied, the search will be performed from the root."
     },
+    "fetchGroups": {
+      "type": "boolean",
+      "default": true,
+      "title": "Fetch user groups ?"
+    },
     "groupSearchBase" : {
       "type" : "string",
       "default": "ou=applications",

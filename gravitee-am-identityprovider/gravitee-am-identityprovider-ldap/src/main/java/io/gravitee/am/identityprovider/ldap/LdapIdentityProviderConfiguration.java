@@ -35,6 +35,8 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     private String userSearchFilter;
 
+    private boolean fetchGroups = true;
+
     private String groupSearchBase = "";
 
     private String groupSearchFilter = "(uniqueMember={0})";
@@ -101,6 +103,14 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     public void setUserSearchFilter(String userSearchFilter) {
         this.userSearchFilter = userSearchFilter;
+    }
+
+    public boolean isFetchGroups() {
+        return fetchGroups;
+    }
+
+    public void setFetchGroups(boolean fetchGroups) {
+        this.fetchGroups = fetchGroups;
     }
 
     public String getGroupSearchBase() {
