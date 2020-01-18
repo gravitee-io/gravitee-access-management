@@ -20,7 +20,6 @@ import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.RefreshTokenMongo;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
@@ -51,9 +50,9 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     @PostConstruct
     public void init() {
         refreshTokenCollection = mongoOperations.getCollection("refresh_tokens", RefreshTokenMongo.class);
-        refreshTokenCollection.createIndex(new Document(FIELD_TOKEN, 1)).subscribe(new LoggableIndexSubscriber());
-        refreshTokenCollection.createIndex(new Document(FIELD_SUBJECT, 1)).subscribe(new LoggableIndexSubscriber());
-        refreshTokenCollection.createIndex(new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(refreshTokenCollection, new Document(FIELD_TOKEN, 1));
+        super.createIndex(refreshTokenCollection, new Document(FIELD_SUBJECT, 1));
+        super.createIndex(refreshTokenCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
     }
 
     private Maybe<RefreshToken> findById(String id) {

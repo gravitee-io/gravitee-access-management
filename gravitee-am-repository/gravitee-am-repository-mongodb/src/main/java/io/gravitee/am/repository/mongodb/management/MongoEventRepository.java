@@ -22,7 +22,6 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.repository.management.api.EventRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.EventMongo;
 import io.reactivex.*;
 import org.bson.Document;
@@ -51,7 +50,7 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
     @PostConstruct
     public void init() {
         eventsCollection = mongoOperations.getCollection("events", EventMongo.class);
-        eventsCollection.createIndex(new Document(FIELD_UPDATED_AT, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(eventsCollection, new Document(FIELD_UPDATED_AT, 1));
     }
 
     @Override

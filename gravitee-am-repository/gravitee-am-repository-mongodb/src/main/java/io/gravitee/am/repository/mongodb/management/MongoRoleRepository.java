@@ -19,7 +19,6 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.RoleRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -51,8 +50,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     @PostConstruct
     public void init() {
         rolesCollection = mongoOperations.getCollection("roles", RoleMongo.class);
-        rolesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
-        rolesCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1).append(FIELD_SCOPE, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(rolesCollection, new Document(FIELD_DOMAIN, 1));
+        super.createIndex(rolesCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1).append(FIELD_SCOPE, 1));
     }
 
     @Override

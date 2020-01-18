@@ -89,7 +89,7 @@ public class UsersResource extends AbstractResource {
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapSingle(irrelevant -> {
                     if (query != null) {
-                        return userService.search(domain, query, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+                        return userService.search(domain, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
                     } else {
                         return userService.findByDomain(domain, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
                     }

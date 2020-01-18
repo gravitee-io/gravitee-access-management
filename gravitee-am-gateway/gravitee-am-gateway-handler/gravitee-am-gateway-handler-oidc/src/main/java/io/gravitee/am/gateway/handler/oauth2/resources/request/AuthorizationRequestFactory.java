@@ -70,7 +70,7 @@ public final class AuthorizationRequestFactory {
         authorizationRequest.setResponseType(request.params().get(Parameters.RESPONSE_TYPE));
         authorizationRequest.setRedirectUri(request.params().get(Parameters.REDIRECT_URI));
         String scope = request.params().get(Parameters.SCOPE);
-        authorizationRequest.setScopes(scope != null ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
+        authorizationRequest.setScopes(scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
         authorizationRequest.setState(request.params().get(Parameters.STATE));
         authorizationRequest.setAdditionalParameters(extractAdditionalParameters(request));
 

@@ -21,7 +21,6 @@ import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.membership.ReferenceType;
 import io.gravitee.am.repository.management.api.MembershipRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.MembershipMongo;
 import io.reactivex.*;
 import org.bson.Document;
@@ -50,8 +49,8 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
     @PostConstruct
     public void init() {
         membershipsCollection = mongoOperations.getCollection("memberships", MembershipMongo.class);
-        membershipsCollection.createIndex(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1)).subscribe(new LoggableIndexSubscriber());
-        membershipsCollection.createIndex(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_MEMBER_ID, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(membershipsCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1));
+        super.createIndex(membershipsCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_MEMBER_ID, 1));
     }
 
     @Override

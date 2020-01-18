@@ -57,9 +57,11 @@ public class DomainBasedAuthenticationProvider implements AuthenticationProvider
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         WebAuthenticationDetails webAuthenticationDetails = (WebAuthenticationDetails) authentication.getDetails();
         Map<String, String> details = new HashMap();
-        details.put(Claims.ip_address, webAuthenticationDetails.getRemoteAddress());
-        details.put(Claims.user_agent, webAuthenticationDetails.getUserAgent());
         details.put(Claims.domain, domain.getId());
+        if (webAuthenticationDetails != null) {
+            details.put(Claims.ip_address, webAuthenticationDetails.getRemoteAddress());
+            details.put(Claims.user_agent, webAuthenticationDetails.getUserAgent());
+        }
         Set<String> identities = domain.getIdentities();
         Iterator<String> iter = identities.iterator();
         io.gravitee.am.identityprovider.api.User user = null;
@@ -76,7 +78,8 @@ public class DomainBasedAuthenticationProvider implements AuthenticationProvider
                     identityProviderManager.get(provider);
 
             if (authenticationProvider == null) {
-                throw new BadCredentialsException("Unable to load authentication provider " + provider + ", an error occurred during the initialization stage");
+                lastException = new BadCredentialsException("Unable to load authentication provider " + provider + ", an error occurred during the initialization stage");
+                continue;
             }
 
             try {

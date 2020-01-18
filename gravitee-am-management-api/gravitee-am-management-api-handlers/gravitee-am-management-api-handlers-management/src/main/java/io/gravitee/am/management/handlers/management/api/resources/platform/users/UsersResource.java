@@ -89,7 +89,7 @@ public class UsersResource extends AbstractResource {
                 .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
                 .flatMapSingle(masterDomain -> {
                     if (query != null) {
-                        return userService.search(masterDomain.getId(), query, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+                        return userService.search(masterDomain.getId(), query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
                     } else {
                         return userService.findByDomain(masterDomain.getId(), page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
                     }

@@ -19,7 +19,6 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.repository.management.api.EmailRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.EmailMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -50,9 +49,9 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
     @PostConstruct
     public void init() {
         emailsCollection = mongoOperations.getCollection("emails", EmailMongo.class);
-        emailsCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
-        emailsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_TEMPLATE, 1)).subscribe(new LoggableIndexSubscriber());
-        emailsCollection.createIndex(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(emailsCollection, new Document(FIELD_DOMAIN, 1));
+        super.createIndex(emailsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_TEMPLATE, 1));
+        super.createIndex(emailsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1));
     }
 
     @Override

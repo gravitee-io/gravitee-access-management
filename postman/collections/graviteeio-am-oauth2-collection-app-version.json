@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "5658fbfe-972f-42d2-b246-024a9c57f261",
+		"_postman_id": "9790f65f-4495-4049-886e-6c89affabfb0",
 		"name": "Gravitee.io - AM - Oauth2 - app version",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -1077,14 +1077,8 @@
 									"script": {
 										"id": "1ae3c79d-d2e7-49ab-bd20-70629648df50",
 										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
-											"",
-											"pm.test(\"Invalid scope\", function () {",
-											"    pm.response.to.be.header('Content-Type', 'application/json');",
-											"    var body = pm.response.json();",
-											"    pm.expect(body.error).to.eql('invalid_scope');",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
 											"});"
 										],
 										"type": "text/javascript"
@@ -1925,14 +1919,8 @@
 									"script": {
 										"id": "e9d398f2-b014-4b0a-9c2d-e116fc99298d",
 										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
-											"",
-											"pm.test(\"Invalid grant\", function () {",
-											"    pm.response.to.be.header('Content-Type', 'application/json');",
-											"    var body = pm.response.json();",
-											"    pm.expect(body.error).to.eql('invalid_scope');",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
 											"});"
 										],
 										"type": "text/javascript"

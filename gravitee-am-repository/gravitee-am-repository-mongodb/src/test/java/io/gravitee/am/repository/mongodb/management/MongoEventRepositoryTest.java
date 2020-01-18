@@ -19,12 +19,15 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.EventRepository;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.schedulers.Schedulers;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

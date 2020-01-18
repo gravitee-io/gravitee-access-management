@@ -20,7 +20,6 @@ import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Policy;
 import io.gravitee.am.repository.management.api.PolicyRepository;
-import io.gravitee.am.repository.mongodb.common.LoggableIndexSubscriber;
 import io.gravitee.am.repository.mongodb.management.internal.model.PolicyMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -49,7 +48,7 @@ public class MongoPolicyRepository extends AbstractManagementMongoRepository imp
     @PostConstruct
     public void init() {
         policiesCollection = mongoOperations.getCollection("policies", PolicyMongo.class);
-        policiesCollection.createIndex(new Document(FIELD_DOMAIN, 1)).subscribe(new LoggableIndexSubscriber());
+        super.createIndex(policiesCollection, new Document(FIELD_DOMAIN, 1));
     }
 
     @Override

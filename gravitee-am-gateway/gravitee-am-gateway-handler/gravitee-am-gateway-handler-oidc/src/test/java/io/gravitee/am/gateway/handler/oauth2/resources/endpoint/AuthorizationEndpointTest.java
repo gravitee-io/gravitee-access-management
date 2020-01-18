@@ -157,13 +157,28 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldNotInvokeAuthorizationEndpoint_emptyScope() throws Exception {
+    public void shouldInvokeAuthorizationEndpoint_emptyScope() throws Exception {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(ResponseType.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        AuthorizationResponse authorizationResponse = new AuthorizationCodeResponse();
+        authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
+        ((AuthorizationCodeResponse) authorizationResponse).setCode("test-code");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User())));
+            routingContext.next();
+        });
+
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(CLIENT_CONTEXT_KEY, client);
@@ -176,7 +191,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://localhost:9999/callback?error=invalid_scope&error_description=Invalid+parameter%253A+scope+must+not+be+empty", location);
+                    assertEquals("http://localhost:9999/callback?code=test-code", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

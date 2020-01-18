@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -148,7 +149,7 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         userRepository.create(user2).blockingGet();
 
         // fetch user
-        TestObserver<Page<User>> testObserver = userRepository.search(domain, "testUsername", 10).test();
+        TestObserver<Page<User>> testObserver = userRepository.search(domain, "testUsername", 0, 10).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -173,12 +174,53 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         userRepository.create(user2).blockingGet();
 
         // fetch user
-        TestObserver<Page<User>> testObserver = userRepository.search(domain, "testUsername*", 10).test();
+        TestObserver<Page<User>> testObserver = userRepository.search(domain, "testUsername*", 0, 10).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(users -> users.getData().size() == 2);
+    }
+    
+    @Test
+    public void testSearch_paged() {
+        final String domain = "domain";
+        // create user
+        User user1 = new User();
+        user1.setDomain(domain);
+        user1.setUsername("testUsername1");
+        userRepository.create(user1).blockingGet();
+
+        User user2 = new User();
+        user2.setDomain(domain);
+        user2.setUsername("testUsername2");
+        userRepository.create(user2).blockingGet();
+        
+        User user3 = new User();
+        user3.setDomain(domain);
+        user3.setUsername("testUsername3");
+        userRepository.create(user3).blockingGet();
+
+        // fetch user (page 0)
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(domain, "testUsername*", 0, 2).test();
+        testObserverP0.awaitTerminalEvent();
+        
+        testObserverP0.assertComplete();
+        testObserverP0.assertNoErrors();
+        testObserverP0.assertValue(users -> users.getData().size() == 2);
+        testObserverP0.assertValue(users -> {
+        	Iterator<User> it = users.getData().iterator();
+        	return it.next().getUsername().equals(user1.getUsername()) && it.next().getUsername().equals(user2.getUsername());
+        });
+        
+        // fetch user (page 1)
+        TestObserver<Page<User>> testObserverP1 = userRepository.search(domain, "testUsername*", 1, 2).test();
+        testObserverP1.awaitTerminalEvent();
+        
+        testObserverP1.assertComplete();
+        testObserverP1.assertNoErrors();
+        testObserverP1.assertValue(users -> users.getData().size() == 1);
+        testObserverP1.assertValue(users -> users.getData().iterator().next().getUsername().equals(user3.getUsername()));
     }
 
 }
