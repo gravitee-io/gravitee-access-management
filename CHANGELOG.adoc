@@ -1,5 +1,29 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/198?closed=1[AM - 2.10.5 (2020-01-08)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [oauth2] introspection endpoint must not search for a user if token was created via the client_credentials flow  https://github.com/gravitee-io/issues/issues/3068[#3068]
+
+*_Management_*
+
+- Login process must loop through all identity providers https://github.com/gravitee-io/issues/issues/3008[#3008]
+- [gateway] First start fail with official docker-compose https://github.com/gravitee-io/issues/issues/3064[#3064]
+
+*_Management-api_*
+
+- Pagination of results in users search endpoint of management API not working. https://github.com/gravitee-io/issues/issues/2994[#2994]
+
+=== Improvements
+
+*_Gateway_*
+
+- [oauth2] Migration issue with scope AM v1 to v2 https://github.com/gravitee-io/issues/issues/3059[#3059]
+
+
 == https://github.com/gravitee-io/issues/milestone/193?closed=1[AM - 2.10.4 (2019-12-06)]
 
 === Bug fixes
