@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "515b70a3-72f7-4755-beb4-b57503039e3e",
+		"_postman_id": "62564bb7-a5e6-4a4f-b20e-82502c464f17",
 		"name": "Gravitee.io - AM - Oauth2",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -12366,6 +12366,7 @@
 											"    pm.expect(body.client_id).to.eql(\"my-client\");",
 											"    pm.expect(body.username).to.eql(\"user\");",
 											"    pm.expect(body.token_type).to.eql(\"bearer\");",
+											"    pm.expect(body).to.not.have.property('aud');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -12497,6 +12498,7 @@
 											"    pm.expect(body.client_id).to.eql(\"my-client2\");",
 											"    pm.expect(body.username).to.eql(\"user\");",
 											"    pm.expect(body.token_type).to.eql(\"bearer\");",
+											"    pm.expect(body).to.not.have.property('aud');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -12860,6 +12862,7 @@
 											"    pm.expect(body.active).to.eql(true);",
 											"    pm.expect(body.client_id).to.eql(\"my-cross-client\");",
 											"    pm.expect(body.token_type).to.eql(\"bearer\");",
+											"    pm.expect(body).to.not.have.property('aud');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -12921,6 +12924,7 @@
 											"    pm.expect(body.active).to.eql(true);",
 											"    pm.expect(body.client_id).to.eql(\"my-cross-client\");",
 											"    pm.expect(body.token_type).to.eql(\"bearer\");",
+											"    pm.expect(body).to.not.have.property('aud');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -13152,6 +13156,7 @@
 											"    pm.expect(body.token_type).to.eql(\"bearer\");",
 											"    pm.expect(body).to.have.property('custom-claim');",
 											"    pm.expect(body['custom-claim']).to.eql(\"test\");",
+											"    pm.expect(body).to.not.have.property('aud');",
 											"});"
 										],
 										"type": "text/javascript"

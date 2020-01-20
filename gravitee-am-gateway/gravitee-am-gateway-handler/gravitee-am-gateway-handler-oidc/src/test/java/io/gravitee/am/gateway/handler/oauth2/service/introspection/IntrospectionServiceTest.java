@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.introspection;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.impl.IntrospectionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
@@ -103,5 +104,25 @@ public class IntrospectionServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(introspectionResponse -> introspectionResponse.get("custom-claim").equals("test"));
+    }
+
+    @Test
+    public void shouldNotReturnAudClaim() {
+        final String token = "token";
+        AccessToken accessToken = new AccessToken(token);
+        accessToken.setSubject("client-id");
+        accessToken.setClientId("client-id");
+        accessToken.setCreatedAt(new Date());
+        accessToken.setExpireAt(new Date());
+        accessToken.setAdditionalInformation(Collections.singletonMap(Claims.aud, "test-aud"));
+        when(tokenService.introspect(token)).thenReturn(Single.just(accessToken));
+
+        IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
+        TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
+
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(introspectionResponse -> !introspectionResponse.containsKey(Claims.aud));
     }
 }
