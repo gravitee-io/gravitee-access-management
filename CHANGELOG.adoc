@@ -1,5 +1,25 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/200?closed=1[AM - 2.10.6 (2020-01-20)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [oauth2] Introspection - synchronize clients across domains https://github.com/gravitee-io/issues/issues/3076[#3076]
+- [oauth2] Introspection endpoint response should contain the custom claims https://github.com/gravitee-io/issues/issues/3094[#3094]
+
+=== Improvements
+
+*_Gateway_*
+
+- Registration confirmation template password validation https://github.com/gravitee-io/issues/issues/3057[#3057]
+
+*_Identity-provider_*
+
+- [ldap] add an option to not fetch LDAP groups https://github.com/gravitee-io/issues/issues/3083[#3083]
+
+
 == https://github.com/gravitee-io/issues/milestone/198?closed=1[AM - 2.10.5 (2020-01-08)]
 
 === Bug fixes
