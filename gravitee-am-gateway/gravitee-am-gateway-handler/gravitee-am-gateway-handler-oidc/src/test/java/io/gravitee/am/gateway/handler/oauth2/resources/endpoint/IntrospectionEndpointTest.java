@@ -16,13 +16,11 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint;
 
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
-import io.gravitee.am.gateway.handler.oauth2.resources.auth.user.Client;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection.IntrospectionEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.ext.auth.User;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -65,7 +63,7 @@ public class IntrospectionEndpointTest extends RxWebTestBase {
         client.setClientId("my-client-id");
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new User(new Client(client)));
+            routingContext.put("client", client);
             routingContext.next();
         });
 

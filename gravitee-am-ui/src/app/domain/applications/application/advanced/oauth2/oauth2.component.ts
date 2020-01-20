@@ -35,6 +35,12 @@ export class ApplicationOAuth2Component implements OnInit {
   private domainId: string;
   application: any;
   formChanged = false;
+  tokenEndpointAuthMethods: any[] = [
+    { name : 'client_secret_basic', value: 'client_secret_basic'},
+    { name : 'client_secret_post', value: 'client_secret_post'},
+    { name : 'private_key_jwt', value: 'private_key_jwt'},
+    { name : 'none', value: 'none'}
+  ];
   grantTypes: any[] = [
     { name: 'AUTHORIZATION CODE', value: 'authorization_code', checked: false },
     { name: 'IMPLICIT', value: 'implicit', checked: false },
@@ -73,7 +79,6 @@ export class ApplicationOAuth2Component implements OnInit {
     delete this.applicationOauthSettings.clientSecret;
     delete this.applicationOauthSettings.clientType;
     delete this.applicationOauthSettings.applicationType;
-    delete this.applicationOauthSettings.tokenEndpointAuthMethod;
     this.cleanCustomClaims();
     this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : this.applicationOauthSettings}}).subscribe(data => {
       this.application = data;
@@ -91,10 +96,24 @@ export class ApplicationOAuth2Component implements OnInit {
     this.selectedScopeApprovals = this.applicationOauthSettings.scopeApprovals || {};
     this.applicationOauthSettings.scopes =  this.applicationOauthSettings.scopes || [];
     this.applicationOauthSettings.tokenCustomClaims = this.applicationOauthSettings.tokenCustomClaims || [];
+    this.initTokenEndpointAuthMethods();
     this.initGrantTypes();
     this.initCustomGrantTypes();
     this.initScopes();
     this.initCustomClaims();
+  }
+
+  initTokenEndpointAuthMethods() {
+    // disabled none (public client) for service application
+    if (this.application.type === 'service') {
+      const updatedAuthMethods =  _.map(this.tokenEndpointAuthMethods, item => {
+          if (item.value === 'none') {
+            item.disabled = true;
+          }
+          return item;
+        });
+      this.tokenEndpointAuthMethods = updatedAuthMethods;
+    }
   }
 
   initGrantTypes() {
@@ -104,7 +123,7 @@ export class ApplicationOAuth2Component implements OnInit {
   }
 
   initCustomGrantTypes() {
-    let oldestExtensionGrant = _.minBy(this.customGrantTypes, 'createdAt');
+    const oldestExtensionGrant = _.minBy(this.customGrantTypes, 'createdAt');
     this.customGrantTypes.forEach(customGrantType => {
       customGrantType.value = customGrantType.grantType + '~' + customGrantType.id;
       customGrantType.checked = _.some(this.applicationOauthSettings.grantTypes, authorizedGrantType => {
@@ -192,7 +211,7 @@ export class ApplicationOAuth2Component implements OnInit {
   }
 
   getScopeApproval(scopeKey) {
-    let scopeApproval = this.selectedScopeApprovals[scopeKey];
+    const scopeApproval = this.selectedScopeApprovals[scopeKey];
     return this.getScopeExpiry(scopeApproval);
   }
 

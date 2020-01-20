@@ -37,6 +37,8 @@ import io.gravitee.common.http.HttpStatusCode;
  */
 public class InvalidClientException extends OAuth2Exception {
 
+    private String authenticateHeader;
+
     public InvalidClientException() {
     }
 
@@ -44,8 +46,18 @@ public class InvalidClientException extends OAuth2Exception {
         super(message);
     }
 
+    public InvalidClientException(String message, String authenticateHeader) {
+        this(message);
+        this.authenticateHeader = authenticateHeader;
+    }
+
     public InvalidClientException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public InvalidClientException(String message, Throwable cause, String authenticateHeader) {
+        this(message, cause);
+        this.authenticateHeader = authenticateHeader;
     }
 
     @Override
@@ -58,4 +70,7 @@ public class InvalidClientException extends OAuth2Exception {
         return HttpStatusCode.UNAUTHORIZED_401;
     }
 
+    public String getAuthenticateHeader() {
+        return authenticateHeader;
+    }
 }
