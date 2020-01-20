@@ -127,7 +127,9 @@ public class LdapAuthenticationProviderConfiguration {
             searchExecutor.setBaseDn(userSearchBase + LDAP_SEPARATOR + searchExecutor.getBaseDn());
         }
         searchExecutor.setSearchFilter(new SearchFilter(configuration.getUserSearchFilter()));
-        searchExecutor.setSearchEntryHandlers(groupSearchEntryHandler());
+        if (configuration.isFetchGroups()) {
+            searchExecutor.setSearchEntryHandlers(groupSearchEntryHandler());
+        }
         return searchExecutor;
     }
 
@@ -151,7 +153,9 @@ public class LdapAuthenticationProviderConfiguration {
 
 
         PooledSearchEntryResolver pooledSearchEntryResolver = new PooledSearchEntryResolver(searchPooledConnectionFactory());
-        pooledSearchEntryResolver.setSearchEntryHandlers(groupSearchEntryHandler());
+        if (configuration.isFetchGroups()) {
+            pooledSearchEntryResolver.setSearchEntryHandlers(groupSearchEntryHandler());
+        }
 
         Authenticator auth = new Authenticator(dnResolver, authHandler);
         auth.setEntryResolver(pooledSearchEntryResolver);

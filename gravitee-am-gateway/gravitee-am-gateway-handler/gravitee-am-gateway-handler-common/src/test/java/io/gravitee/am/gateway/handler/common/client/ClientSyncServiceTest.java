@@ -15,17 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.common.client;
 
-import io.gravitee.am.common.event.ApplicationEvent;
+import io.gravitee.am.gateway.core.manager.ClientManager;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.common.event.Action;
-import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.ClientService;
-import io.gravitee.common.event.Event;
-import io.gravitee.common.event.EventListener;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.gravitee.am.model.Domain;
 import io.reactivex.observers.TestObserver;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -34,16 +27,16 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.beans.factory.InitializingBean;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
@@ -58,7 +51,7 @@ public class ClientSyncServiceTest {
     private Domain domain;
 
     @Mock
-    private ClientService clientService;
+    private ClientManager clientManager;
 
     @BeforeClass
     public static void initializeClients() {
@@ -107,14 +100,14 @@ public class ClientSyncServiceTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         when(domain.getId()).thenReturn("domainA");
-        when(clientService.findAll()).thenReturn(Single.just(clientSet));
-        ((InitializingBean)this.clientSyncService).afterPropertiesSet();
+        when(clientManager.clients()).thenReturn(clientSet);
     }
 
     @Test
     public void findById_clientFound() {
+        when(clientManager.get("aa")).thenReturn(clientSet.stream().filter(c -> c.getId().equals("aa")).findFirst().get());
         TestObserver<Client> test = clientSyncService.findById("aa").test();
         test.assertComplete().assertNoErrors();
         test.assertValue(client -> client.getClientId().equals("domainAClientA"));
@@ -122,7 +115,6 @@ public class ClientSyncServiceTest {
 
     @Test
     public void findById_clientNotFound() {
-        when(domain.getId()).thenReturn("domainB");
         TestObserver<Client> test = clientSyncService.findById("aa").test();
         test.assertComplete().assertNoErrors().assertNoValues();
     }
@@ -169,9 +161,9 @@ public class ClientSyncServiceTest {
         template.setClientId("template");
         template.setTemplate(true);
 
+        doNothing().when(clientManager).deploy(template);
         clientSyncService.addDynamicClientRegistred(template);
-        TestObserver test = clientSyncService.findByClientId("template").test();
-        test.assertComplete().assertNoErrors().assertNoValues();
+        verify(clientManager, times(1)).deploy(template);
     }
 
     @Test
@@ -180,130 +172,8 @@ public class ClientSyncServiceTest {
         client.setDomain("domainA");
         client.setId("aa");
 
+        doNothing().when(clientManager).undeploy(client.getId());
         clientSyncService.removeDynamicClientRegistred(client);
-        TestObserver test = clientSyncService.findByClientId("domainAClientA").test();
-        test.assertComplete().assertNoErrors().assertNoValues();
-    }
-
-    @Test
-    public void onEvent_deploy() {
-        Client client = new Client();
-        client.setId("ad");
-        client.setDomain("domainA");
-        client.setClientId("domainAClientD");
-        when(clientService.findById("ad")).thenReturn(Maybe.just(client));
-
-        ((EventListener<ApplicationEvent, Payload>)clientSyncService).onEvent(new Event<ApplicationEvent, Payload>() {
-            @Override
-            public Payload content() {
-                return new Payload("ad","domainA", Action.CREATE);
-            }
-
-            @Override
-            public ApplicationEvent type() {
-                return ApplicationEvent.DEPLOY;
-            }
-        });
-
-        TestObserver<Client> test = clientSyncService.findById("ad").test();
-        test.assertComplete().assertNoErrors();
-        test.assertValue(c -> c.getClientId().equals("domainAClientD"));
-    }
-
-    @Test
-    public void onEvent_update() {
-        Client client = new Client();
-        client.setId("aa");
-        client.setDomain("domainA");
-        client.setClientId("domainAClientA");
-        client.setClientName("updatedClient");
-        when(clientService.findById("aa")).thenReturn(Maybe.just(client));
-
-        ((EventListener<ApplicationEvent, Payload>)clientSyncService).onEvent(new Event<ApplicationEvent, Payload>() {
-            @Override
-            public Payload content() {
-                return new Payload("aa","domainA", Action.UPDATE);
-            }
-
-            @Override
-            public ApplicationEvent type() {
-                return ApplicationEvent.UPDATE;
-            }
-        });
-
-        TestObserver<Client> test = clientSyncService.findById("aa").test();
-        test.assertComplete().assertNoErrors();
-        test.assertValue(c -> c.getClientName().equals("updatedClient"));
-    }
-
-    @Test
-    public void onEvent_update_template() {
-        Client existingClient = new Client();
-        existingClient.setId("aa");
-        existingClient.setDomain("domainA");
-        existingClient.setClientId("domainAClientA");
-        existingClient.setTemplate(true);
-        when(clientService.findById("aa")).thenReturn(Maybe.just(existingClient));
-
-        ((EventListener<ApplicationEvent, Payload>)clientSyncService).onEvent(new Event<ApplicationEvent, Payload>() {
-            @Override
-            public Payload content() {
-                return new Payload("aa","domainA", Action.UPDATE);
-            }
-
-            @Override
-            public ApplicationEvent type() {
-                return ApplicationEvent.UPDATE;
-            }
-        });
-
-        TestObserver<Client> test = clientSyncService.findById("aa").test();
-        test.assertComplete().assertNoErrors();
-        test.assertNoValues();
-
-        TestObserver<List<Client>> test2 = clientSyncService.findTemplates().test();
-        test2.assertComplete().assertNoErrors();
-        test2.assertValue(templates -> templates!=null && templates.size()==3);
-    }
-
-
-    @Test
-    public void onEvent_delete() {
-        ((EventListener<ApplicationEvent, Payload>)clientSyncService).onEvent(new Event<ApplicationEvent, Payload>() {
-            @Override
-            public Payload content() {
-                return new Payload("aa","domainA", Action.DELETE);
-            }
-
-            @Override
-            public ApplicationEvent type() {
-                return ApplicationEvent.UNDEPLOY;
-            }
-        });
-
-        TestObserver<Client> test = clientSyncService.findById("aa").test();
-        test.assertComplete().assertNoErrors().assertNoValues();
-    }
-
-    @Test
-    public void onEvent_delete_template() {
-        ((EventListener<ApplicationEvent, Payload>)clientSyncService).onEvent(new Event<ApplicationEvent, Payload>() {
-            @Override
-            public Payload content() {
-                return new Payload("ac","domainA", Action.DELETE);
-            }
-
-            @Override
-            public ApplicationEvent type() {
-                return ApplicationEvent.UNDEPLOY;
-            }
-        });
-
-        TestObserver<Client> test = clientSyncService.findById("ac").test();
-        test.assertComplete().assertNoErrors().assertNoValues();
-
-        TestObserver<List<Client>> test2 = clientSyncService.findTemplates().test();
-        test2.assertComplete().assertNoErrors();
-        test2.assertValue(templates -> templates!=null && templates.size()==1 && templates.get(0).getId().equals("ab"));
+        verify(clientManager, times(1)).undeploy(client.getId());
     }
 }

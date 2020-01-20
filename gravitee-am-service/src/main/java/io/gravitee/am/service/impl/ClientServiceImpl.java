@@ -26,7 +26,6 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.ClientRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
@@ -62,15 +61,12 @@ public class ClientServiceImpl implements ClientService {
     @Autowired
     private ApplicationService applicationService;
 
-    @Autowired
-    private ClientRepository clientRepository;
-
     @Override
     public Maybe<Client> findById(String id) {
         LOGGER.debug("Find client by ID: {}", id);
         return applicationService.findById(id)
                 .map(application -> {
-                    Client client = convert(application);
+                    Client client = Application.convert(application);
                     // Send an empty array in case of no grant types
                     if (client.getAuthorizedGrantTypes() == null) {
                         client.setAuthorizedGrantTypes(Collections.emptyList());
@@ -83,7 +79,7 @@ public class ClientServiceImpl implements ClientService {
     public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
         LOGGER.debug("Find client by domain: {} and client id: {}", domain, clientId);
         return applicationService.findByDomainAndClientId(domain, clientId)
-                .map(this::convert)
+                .map(Application::convert)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find client by domain: {} and client id: {}", domain, clientId, ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -97,7 +93,7 @@ public class ClientServiceImpl implements ClientService {
         return applicationService.findByDomain(domain)
                 .map(pagedApplications -> pagedApplications
                         .stream()
-                        .map(this::convert)
+                        .map(Application::convert)
                         .collect(Collectors.toSet()));
     }
 
@@ -107,7 +103,7 @@ public class ClientServiceImpl implements ClientService {
         return applicationService.search(domain, query, 0, Integer.MAX_VALUE)
                 .map(pagedApplications -> pagedApplications.getData()
                         .stream()
-                        .map(this::convert)
+                        .map(Application::convert)
                         .collect(Collectors.toSet()));
     }
 
@@ -118,7 +114,7 @@ public class ClientServiceImpl implements ClientService {
                 .map(pagedApplications -> {
                     List<Client> clients = pagedApplications.getData()
                             .stream()
-                            .map(this::convert)
+                            .map(Application::convert)
                             .collect(Collectors.toList());
                     return new Page<>(clients, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount());
                 })
@@ -135,7 +131,7 @@ public class ClientServiceImpl implements ClientService {
         return applicationService.findAll()
                 .map(pagedApplications -> pagedApplications
                         .stream()
-                        .map(this::convert)
+                        .map(Application::convert)
                         .collect(Collectors.toSet()))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find clients", ex);
@@ -150,7 +146,7 @@ public class ClientServiceImpl implements ClientService {
                 .map(pagedApplications -> {
                     List<Client> clients = pagedApplications.getData()
                             .stream()
-                            .map(this::convert)
+                            .map(Application::convert)
                             .collect(Collectors.toList());
                     return new Page<>(clients, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount());
                 })
@@ -169,7 +165,7 @@ public class ClientServiceImpl implements ClientService {
                             .stream()
                             .map(topApplication -> {
                                 TopClient topClient = new TopClient();
-                                topClient.setClient(convert(topApplication.getApplication()));
+                                topClient.setClient(Application.convert(topApplication.getApplication()));
                                 topClient.setAccessTokens(topApplication.getAccessTokens());
                                 return topClient;
                             })
@@ -190,7 +186,7 @@ public class ClientServiceImpl implements ClientService {
                             .stream()
                             .map(topApplication -> {
                                 TopClient topClient = new TopClient();
-                                topClient.setClient(convert(topApplication.getApplication()));
+                                topClient.setClient(Application.convert(topApplication.getApplication()));
                                 topClient.setAccessTokens(topApplication.getAccessTokens());
                                 return topClient;
                             })
@@ -278,7 +274,7 @@ public class ClientServiceImpl implements ClientService {
         client.setUpdatedAt(client.getCreatedAt());
 
         return applicationService.create(convert(client))
-                .map(this::convert);
+                .map(Application::convert);
     }
 
     @Override
@@ -290,7 +286,7 @@ public class ClientServiceImpl implements ClientService {
         }
 
         return applicationService.update(convert(client))
-                .map(this::convert);
+                .map(Application::convert);
     }
 
     @Override
@@ -311,82 +307,7 @@ public class ClientServiceImpl implements ClientService {
     public Single<Client> renewClientSecret(String domain, String id, User principal) {
         LOGGER.debug("Renew client secret for client {} in domain {}", id, domain);
         return applicationService.renewClientSecret(domain, id, principal)
-                .map(this::convert);
-    }
-
-    private Client convert(Application application) {
-        Client client = new Client();
-        client.setId(application.getId());
-        client.setDomain(application.getDomain());
-        client.setEnabled(application.isEnabled());
-        client.setTemplate(application.isTemplate());
-        client.setCertificate(application.getCertificate());
-        client.setIdentities(application.getIdentities());
-        client.setMetadata(application.getMetadata());
-        client.setCreatedAt(application.getCreatedAt());
-        client.setUpdatedAt(application.getUpdatedAt());
-
-        if (application.getSettings() != null) {
-            ApplicationSettings applicationSettings = application.getSettings();
-            client.setAccountSettings(applicationSettings.getAccount());
-
-            if (applicationSettings.getOauth() != null) {
-                ApplicationOAuthSettings oAuthSettings = applicationSettings.getOauth();
-                client.setClientId(oAuthSettings.getClientId());
-                client.setClientSecret(oAuthSettings.getClientSecret());
-                client.setRedirectUris(oAuthSettings.getRedirectUris());
-                client.setAuthorizedGrantTypes(oAuthSettings.getGrantTypes());
-                client.setResponseTypes(oAuthSettings.getResponseTypes());
-                client.setApplicationType(oAuthSettings.getApplicationType());
-                client.setContacts(oAuthSettings.getContacts());
-                client.setClientName(oAuthSettings.getClientName());
-                client.setLogoUri(oAuthSettings.getLogoUri());
-                client.setClientUri(oAuthSettings.getClientUri());
-                client.setPolicyUri(oAuthSettings.getPolicyUri());
-                client.setTosUri(oAuthSettings.getTosUri());
-                client.setJwksUri(oAuthSettings.getJwksUri());
-                client.setJwks(oAuthSettings.getJwks());
-                client.setSectorIdentifierUri(oAuthSettings.getSectorIdentifierUri());
-                client.setSubjectType(oAuthSettings.getSubjectType());
-                client.setIdTokenSignedResponseAlg(oAuthSettings.getIdTokenSignedResponseAlg());
-                client.setIdTokenEncryptedResponseAlg(oAuthSettings.getIdTokenEncryptedResponseAlg());
-                client.setIdTokenEncryptedResponseEnc(oAuthSettings.getIdTokenEncryptedResponseEnc());
-                client.setUserinfoSignedResponseAlg(oAuthSettings.getUserinfoSignedResponseAlg());
-                client.setUserinfoEncryptedResponseAlg(oAuthSettings.getUserinfoEncryptedResponseAlg());
-                client.setUserinfoEncryptedResponseEnc(oAuthSettings.getUserinfoEncryptedResponseEnc());
-                client.setRequestObjectSigningAlg(oAuthSettings.getRequestObjectSigningAlg());
-                client.setRequestObjectEncryptionAlg(oAuthSettings.getRequestObjectEncryptionAlg());
-                client.setRequestObjectEncryptionEnc(oAuthSettings.getRequestObjectEncryptionEnc());
-                client.setTokenEndpointAuthMethod(oAuthSettings.getTokenEndpointAuthMethod());
-                client.setTokenEndpointAuthSigningAlg(oAuthSettings.getTokenEndpointAuthSigningAlg());
-                client.setDefaultMaxAge(oAuthSettings.getDefaultMaxAge());
-                client.setRequireAuthTime(oAuthSettings.getRequireAuthTime());
-                client.setDefaultACRvalues(oAuthSettings.getDefaultACRvalues());
-                client.setInitiateLoginUri(oAuthSettings.getInitiateLoginUri());
-                client.setRequestUris(oAuthSettings.getRequestUris());
-                client.setScopes(oAuthSettings.getScopes());
-                client.setSoftwareId(oAuthSettings.getSoftwareId());
-                client.setSoftwareVersion(oAuthSettings.getSoftwareVersion());
-                client.setSoftwareStatement(oAuthSettings.getSoftwareStatement());
-                client.setRegistrationAccessToken(oAuthSettings.getRegistrationAccessToken());
-                client.setRegistrationClientUri(oAuthSettings.getRegistrationClientUri());
-                client.setClientIdIssuedAt(oAuthSettings.getClientIdIssuedAt());
-                client.setClientSecretExpiresAt(oAuthSettings.getClientSecretExpiresAt());
-                client.setAccessTokenValiditySeconds(oAuthSettings.getAccessTokenValiditySeconds());
-                client.setRefreshTokenValiditySeconds(oAuthSettings.getRefreshTokenValiditySeconds());
-                client.setIdTokenValiditySeconds(oAuthSettings.getIdTokenValiditySeconds());
-                client.setEnhanceScopesWithUserPermissions(oAuthSettings.isEnhanceScopesWithUserPermissions());
-                client.setScopeApprovals(oAuthSettings.getScopeApprovals());
-                client.setTokenCustomClaims(oAuthSettings.getTokenCustomClaims());
-            }
-
-            if (applicationSettings.getAdvanced() != null) {
-                ApplicationAdvancedSettings advancedSettings = applicationSettings.getAdvanced();
-                client.setAutoApproveScopes(advancedSettings.isSkipConsent() ? Collections.singletonList("true") : null);
-            }
-        }
-
-        return client;
+                .map(Application::convert);
     }
 
     private Application convert(Client client) {

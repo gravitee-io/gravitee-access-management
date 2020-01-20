@@ -29,6 +29,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Collections;
+import java.util.Date;
+
 import static org.mockito.Mockito.*;
 
 /**
@@ -80,5 +83,25 @@ public class IntrospectionServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(userService, never()).findById(anyString());
+    }
+
+    @Test
+    public void shouldReturnCustomClaims() {
+        final String token = "token";
+        AccessToken accessToken = new AccessToken(token);
+        accessToken.setSubject("client-id");
+        accessToken.setClientId("client-id");
+        accessToken.setCreatedAt(new Date());
+        accessToken.setExpireAt(new Date());
+        accessToken.setAdditionalInformation(Collections.singletonMap("custom-claim", "test"));
+        when(tokenService.introspect(token)).thenReturn(Single.just(accessToken));
+
+        IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
+        TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
+
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(introspectionResponse -> introspectionResponse.get("custom-claim").equals("test"));
     }
 }

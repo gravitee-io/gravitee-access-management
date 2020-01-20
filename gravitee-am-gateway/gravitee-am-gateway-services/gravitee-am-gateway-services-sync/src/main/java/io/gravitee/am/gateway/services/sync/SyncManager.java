@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.gateway.services.sync;
 
-import io.gravitee.am.gateway.reactor.SecurityDomainManager;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.common.event.Action;
+import io.gravitee.am.gateway.core.manager.ClientManager;
+import io.gravitee.am.gateway.reactor.SecurityDomainManager;
+import io.gravitee.am.gateway.reactor.impl.DefaultClientManager;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.common.event.Type;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
@@ -55,6 +59,9 @@ public class SyncManager implements InitializingBean {
     private SecurityDomainManager securityDomainManager;
 
     @Autowired
+    private ClientManager clientManager;
+
+    @Autowired
     private Environment environment;
 
     @Autowired
@@ -62,6 +69,9 @@ public class SyncManager implements InitializingBean {
 
     @Autowired
     private EventRepository eventRepository;
+
+    @Autowired
+    private ApplicationRepository applicationRepository;
 
     private Optional<List<String>> shardingTags;
 
@@ -82,6 +92,7 @@ public class SyncManager implements InitializingBean {
             if (lastRefreshAt == -1) {
                 logger.debug("Initial synchronization");
                 deployDomains();
+                deployClients();
             } else {
                 // search for events and compute them
                 logger.debug("Events synchronization");
@@ -107,6 +118,7 @@ public class SyncManager implements InitializingBean {
     }
 
     private void deployDomains() {
+        logger.info("Starting security domains initialization ...");
         Set<Domain> domains = domainRepository.findAll()
                 // remove master domains and disabled domains
                 .map(registeredDomains -> {
@@ -127,18 +139,30 @@ public class SyncManager implements InitializingBean {
                         securityDomainManager.deploy(domain);
                     }
                 });
+        logger.info("Security domains initialization done");
+    }
+
+    private void deployClients() {
+        logger.info("Starting clients initialization ...");
+        List<Application> applications = applicationRepository.findAll().blockingGet();
+        if (applications != null) {
+            ((DefaultClientManager) clientManager).init(applications.stream().map(Application::convert).collect(Collectors.toList()));
+        }
+        logger.info("Clients initialization done");
     }
 
     private void computeEvents(Collection<Event> events) {
         events.forEach(event -> {
             logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
-            // security domain events (domain has been created, updated or deleted)
-            if (Type.DOMAIN.equals(event.getType())) {
-                synchronizeDomain(event);
-            } else {
-                // other events (inner domain events such as client events, template events and so one ...)
-                // just propagate the event
-                eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
+            switch(event.getType()) {
+                case DOMAIN:
+                    synchronizeDomain(event);
+                    break;
+                case APPLICATION:
+                    synchronizeApplication(event);
+                    break;
+                default:
+                    eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
             }
         });
     }
@@ -172,6 +196,31 @@ public class SyncManager implements InitializingBean {
                 break;
             case DELETE:
                 securityDomainManager.undeploy(domainId);
+                break;
+        }
+    }
+
+    private void synchronizeApplication(Event event) {
+        final String applicationId = event.getPayload().getId();
+        final Action action = event.getPayload().getAction();
+        switch (action) {
+            case CREATE:
+            case UPDATE:
+                Application application = applicationRepository.findById(applicationId).blockingGet();
+                if (application != null) {
+                    // Get deployed client
+                    Client client = Application.convert(application);
+                    Client deployedClient = clientManager.get(application.getId());
+                    // client is not yet deployed, so let's do it !
+                    if (deployedClient == null) {
+                        clientManager.deploy(client);
+                    } else if (deployedClient.getUpdatedAt().before(application.getUpdatedAt())) {
+                        clientManager.update(client);
+                    }
+                }
+                break;
+            case DELETE:
+                clientManager.undeploy(applicationId);
                 break;
         }
     }

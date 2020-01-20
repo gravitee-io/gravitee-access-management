@@ -25,6 +25,9 @@
                 <label>Hi <span th:text="${user.firstName} + ' ' + ${user.lastName}"></span></label>
                 <p>Thanks for signing up, please complete the form to activate your account</p>
             </div>
+            <div th:if="${warning}" class="registration-confirmation-error-info">
+                <p>Invalid password value. It does not comply with the password policy.</p>
+            </div>
             <form role="form" th:action="@{confirmRegistration}" method="post" style="display: flex; flex-direction: column; margin-top: 30px;">
                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: 100%; display: flex;">
                     <input class="mdl-textfield__input" type="password" id="password" name="password"/>

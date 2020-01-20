@@ -15,12 +15,16 @@
  */
 package io.gravitee.am.gateway.services.sync;
 
-import io.gravitee.am.gateway.reactor.SecurityDomainManager;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
+import io.gravitee.am.gateway.reactor.SecurityDomainManager;
+import io.gravitee.am.gateway.reactor.impl.DefaultClientManager;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.common.event.Type;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
@@ -68,6 +72,12 @@ public class SyncManagerTest {
 
     @Mock
     private EventRepository eventRepository;
+
+    @Mock
+    private ApplicationRepository applicationRepository;
+
+    @Mock
+    private DefaultClientManager clientManager;
 
     @Before
     public void before() throws Exception {
@@ -142,6 +152,8 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setEnabled(true);
         when(domainRepository.findAll()).thenReturn(Single.just(new HashSet<>(Arrays.asList(domain))));
+        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        doNothing().when(clientManager).init(anyCollection());
 
         syncManager.refresh();
 
@@ -165,6 +177,8 @@ public class SyncManagerTest {
         domain.setEnabled(true);
         domain.setUpdatedAt(new Date(System.currentTimeMillis() - 60 * 1000));
         when(domainRepository.findAll()).thenReturn(Single.just(new HashSet<>(Arrays.asList(domain))));
+        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        doNothing().when(clientManager).init(anyCollection());
 
         syncManager.refresh();
 
@@ -190,13 +204,14 @@ public class SyncManagerTest {
 
     @Test
     public void shouldPropagateEvents() {
-        // first sync for domains only
         when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        doNothing().when(clientManager).init(anyCollection());
         syncManager.refresh();
 
         Event event = new Event();
-        event.setType(Type.CLIENT);
-        event.setPayload(new Payload("client-1", "domain-1", Action.UPDATE));
+        event.setType(Type.IDENTITY_PROVIDER);
+        event.setPayload(new Payload("idp-1", "domain-1", Action.UPDATE));
 
         when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Single.just(Collections.singletonList(event)));
 
@@ -206,6 +221,27 @@ public class SyncManagerTest {
         verify(securityDomainManager, never()).deploy(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
+    }
+
+    @Test
+    public void shouldDeployApplication() {
+        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        when(applicationRepository.findById("client-1")).thenReturn(Maybe.just(new Application()));
+        doNothing().when(clientManager).init(anyCollection());
+        syncManager.refresh();
+
+        Event event = new Event();
+        event.setType(Type.APPLICATION);
+        event.setPayload(new Payload("client-1", "domain-1", Action.CREATE));
+
+        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Single.just(Collections.singletonList(event)));
+
+        syncManager.refresh();
+
+        verify(clientManager, times(1)).deploy(any(Client.class));
+        verify(clientManager, never()).update(any(Client.class));
+        verify(clientManager, never()).undeploy(any(String.class));
     }
 
     @Test

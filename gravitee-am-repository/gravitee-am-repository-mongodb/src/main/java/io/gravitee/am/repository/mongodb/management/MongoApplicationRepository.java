@@ -40,10 +40,7 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -74,6 +71,11 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         super.createIndex(applicationsCollection, new Document(FIELD_IDENTITIES, 1));
         super.createIndex(applicationsCollection, new Document(FIELD_CERTIFICATE, 1));
         super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1));
+    }
+
+    @Override
+    public Single<List<Application>> findAll() {
+        return Observable.fromPublisher(applicationsCollection.find()).map(this::convert).collect(ArrayList::new, List::add);
     }
 
     @Override

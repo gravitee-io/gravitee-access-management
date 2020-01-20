@@ -135,7 +135,6 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
     private void stopComponents() {
         List<Class<? extends LifecycleComponent>> components = new ArrayList<>();
-        components.add(ClientSyncService.class);
         components.add(CertificateManager.class);
         components.add(IdentityProviderManager.class);
         components.add(FormManager.class);

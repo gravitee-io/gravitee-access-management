@@ -23,6 +23,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -31,6 +32,11 @@ import java.util.Set;
  */
 @Component
 public class ApplicationRepositoryProxy extends AbstractProxy<ApplicationRepository> implements ApplicationRepository {
+
+    @Override
+    public Single<List<Application>> findAll() {
+        return target.findAll();
+    }
 
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
