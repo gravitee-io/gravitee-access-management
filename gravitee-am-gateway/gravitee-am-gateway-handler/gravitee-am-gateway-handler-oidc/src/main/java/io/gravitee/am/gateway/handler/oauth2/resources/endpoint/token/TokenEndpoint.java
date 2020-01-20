@@ -16,15 +16,14 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
-import io.gravitee.am.gateway.handler.oauth2.resources.auth.user.Client;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
-import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
@@ -38,7 +37,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public class TokenEndpoint implements Handler<RoutingContext> {
-
+    private static final String CLIENT_CONTEXT_KEY = "client";
     private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
     private TokenGranter tokenGranter;
 
@@ -50,15 +49,14 @@ public class TokenEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        TokenRequest tokenRequest = tokenRequestFactory.create(context.request());
-
-        User authenticatedUser = context.user();
-        if (authenticatedUser == null || ! (authenticatedUser.getDelegate() instanceof Client)) {
+        // Confidential clients or other clients issued client credentials MUST
+        // authenticate with the authorization server when making requests to the token endpoint.
+        Client client = context.get(CLIENT_CONTEXT_KEY);
+        if (client == null) {
             throw new InvalidClientException();
         }
 
-        final io.gravitee.am.model.oidc.Client client = ((Client) authenticatedUser.getDelegate()).getClient();
-
+        TokenRequest tokenRequest = tokenRequestFactory.create(context.request());
         // Check that authenticated user is matching the client_id
         // client_id is not required in the token request since the client can be authenticated via a Basic Authentication
         if (tokenRequest.getClientId() != null) {

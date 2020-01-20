@@ -16,17 +16,16 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedTokenType;
-import io.gravitee.am.gateway.handler.oauth2.resources.auth.user.Client;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
-import io.gravitee.am.common.oauth2.TokenTypeHint;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
-import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
@@ -38,19 +37,26 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public class IntrospectionEndpoint implements Handler<RoutingContext> {
-
+    private final static String CONTEXT_CLIENT_KEY = "client";
     private final static String TOKEN_PARAM = "token";
     private final static String TOKEN_TYPE_HINT_PARAM = "token_type_hint";
 
     private IntrospectionService introspectionService;
+
+    public IntrospectionEndpoint() {
+    }
+
+    public IntrospectionEndpoint(IntrospectionService introspectionService) {
+        this.introspectionService = introspectionService;
+    }
 
     @Override
     public void handle(RoutingContext context) {
         // If the protected resource uses OAuth 2.0 client credentials to
         // authenticate to the introspection endpoint and its credentials are
         // invalid, the authorization server responds with an HTTP 401
-        User authenticatedUser = context.user();
-        if (authenticatedUser == null || ! (authenticatedUser.getDelegate() instanceof Client)) {
+        Client client = context.get(CONTEXT_CLIENT_KEY);
+        if (client == null) {
             throw new InvalidClientException();
         }
 

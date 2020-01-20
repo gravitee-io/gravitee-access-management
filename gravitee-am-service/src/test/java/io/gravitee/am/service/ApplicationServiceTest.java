@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -409,6 +410,7 @@ public class ApplicationServiceTest {
         NewApplication newClient = Mockito.mock(NewApplication.class);
         when(newClient.getName()).thenReturn("my-client");
         when(newClient.getRedirectUris()).thenReturn(null);
+        when(newClient.getType()).thenReturn(ApplicationType.SERVICE);
         doAnswer(invocation -> {
             Application mock = invocation.getArgument(0);
             mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
@@ -1018,6 +1020,31 @@ public class ApplicationServiceTest {
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setRedirectUris(Arrays.asList("https://callback"));
+        oAuthSettings.setScopes(Collections.emptyList());
+        settings.setOauth(oAuthSettings);
+        client.setSettings(settings);
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertNotComplete();
+
+        verify(applicationRepository, times(1)).findById(anyString());
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidClientMetadataException_invalidTokenEndpointAuthMethod() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+
+        Application client = new Application();
+        client.setType(ApplicationType.SERVICE);
+        client.setDomain(DOMAIN);
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
         oAuthSettings.setScopes(Collections.emptyList());
         settings.setOauth(oAuthSettings);
         client.setSettings(settings);

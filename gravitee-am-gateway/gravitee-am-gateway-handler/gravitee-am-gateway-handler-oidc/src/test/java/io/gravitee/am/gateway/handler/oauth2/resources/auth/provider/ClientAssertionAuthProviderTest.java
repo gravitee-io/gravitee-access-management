@@ -15,11 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
-import io.vertx.core.json.JsonObject;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,14 +43,14 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class ClientAssertionAuthenticationProviderTest {
+public class ClientAssertionAuthProviderTest {
 
     private final static String CLIENT_ID = "my-client";
 
-    private ClientAssertionAuthenticationProvider authProvider = new ClientAssertionAuthenticationProvider();
-
     @Mock
     private ClientAssertionService clientAssertionService;
+
+    private ClientAssertionAuthProvider authProvider = new ClientAssertionAuthProvider();
 
     @Before
     public void init() {
@@ -60,18 +61,17 @@ public class ClientAssertionAuthenticationProviderTest {
     @Test
     public void authorized_client() throws Exception {
         Client client = mock(Client.class);
-        when(client.getClientId()).thenReturn(CLIENT_ID);
+        HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
+        when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION_TYPE)).thenReturn("unknown");
+        when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION)).thenReturn("dummy");
 
         when(clientAssertionService.assertClient(any(),any(),any())).thenReturn(Maybe.just(client));
-        JsonObject credentials = new JsonObject();
-        credentials.put("client_assertion_type", "unknown");
-        credentials.put("client_assertion", "dummy");
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.authenticate(credentials, userAsyncResult -> {
+        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertNotNull(userAsyncResult.result());
+            Assert.assertNotNull(clientAsyncResult);
+            Assert.assertNotNull(clientAsyncResult.result());
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
@@ -80,14 +80,15 @@ public class ClientAssertionAuthenticationProviderTest {
 
     @Test
     public void unauthorized_invalidClient_assertion_type() throws Exception {
+        Client client = mock(Client.class);
+        HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
+        when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION_TYPE)).thenReturn("unknown");
+        when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION)).thenReturn("dummy");
+
         when(clientAssertionService.assertClient(any(),any(),any())).thenReturn(Maybe.error(new InvalidClientException("Unknown or unsupported assertion_type")));
 
-        JsonObject credentials = new JsonObject();
-        credentials.put("client_assertion_type", "unknown");
-        credentials.put("client_assertion", "dummy");
-
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.authenticate(credentials, clientAsyncResult -> {
+        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
             latch.countDown();
             Assert.assertNotNull(clientAsyncResult);
             Assert.assertTrue(clientAsyncResult.failed());
@@ -99,19 +100,18 @@ public class ClientAssertionAuthenticationProviderTest {
 
     @Test
     public void unauthorized_invalidClient_clientDoesNotMatch() throws Exception {
-
         Client client = Mockito.mock(Client.class);
         when(client.getClientId()).thenReturn(CLIENT_ID);
         when(clientAssertionService.assertClient(any(),any(),any())).thenReturn(Maybe.just(client));
 
-        JsonObject credentials = new JsonObject();
-        credentials.put("client_assertion_type", "unknown");
-        credentials.put("client_assertion", "dummy");
-        credentials.put("client_id", "notMatching");
+        HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
+        when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION_TYPE)).thenReturn("unknown");
+        when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION)).thenReturn("dummy");
+        when(httpServerRequest.getParam(Parameters.CLIENT_ID)).thenReturn("notMatching");
 
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.authenticate(credentials, clientAsyncResult -> {
+        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
             latch.countDown();
             Assert.assertNotNull(clientAsyncResult);
             Assert.assertTrue(clientAsyncResult.failed());

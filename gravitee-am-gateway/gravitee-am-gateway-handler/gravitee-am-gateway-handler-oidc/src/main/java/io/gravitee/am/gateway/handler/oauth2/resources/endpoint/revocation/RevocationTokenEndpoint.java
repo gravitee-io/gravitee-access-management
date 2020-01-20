@@ -15,19 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation;
 
-
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
-import io.gravitee.am.gateway.handler.oauth2.resources.auth.user.Client;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
-import io.gravitee.am.common.oauth2.TokenTypeHint;
+import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * OAuth 2.0 Token Revocation
@@ -42,6 +39,7 @@ public class RevocationTokenEndpoint implements Handler<RoutingContext> {
     private final static Logger logger = LoggerFactory.getLogger(RevocationTokenEndpoint.class);
     private final static String TOKEN_PARAM = "token";
     private final static String TOKEN_TYPE_HINT_PARAM = "token_type_hint";
+    private static final String CLIENT_CONTEXT_KEY = "client";
     private RevocationTokenService revocationTokenService;
 
     public RevocationTokenEndpoint() {
@@ -53,21 +51,18 @@ public class RevocationTokenEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-
         // The authorization server first validates the client credentials (in
         // case of a confidential client) and then verifies whether the token
         // was issued to the client making the revocation request.  If this
         // validation fails, the request is refused and the client is informed
         // of the error by the authorization server as described below.
-        User authenticatedUser = context.user();
-        if (authenticatedUser == null || ! (authenticatedUser.getDelegate() instanceof Client)) {
-            throw new InvalidClientException("Invalid client");
+        Client client = context.get(CLIENT_CONTEXT_KEY);
+        if (client == null) {
+            throw new InvalidClientException();
         }
 
-        Client client = (Client) authenticatedUser.getDelegate();
-
         revocationTokenService
-                .revoke(createRequest(context), client.getClient())
+                .revoke(createRequest(context), client)
                 .subscribe(() -> context.response().setStatusCode(200).end(), error -> context.fail(error));
 
     }

@@ -54,6 +54,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<String> requestObjectSigningAlg;
     private Optional<String> requestObjectEncryptionAlg;
     private Optional<String> requestObjectEncryptionEnc;
+    private Optional<String> tokenEndpointAuthMethod;
     private Optional<String> tokenEndpointAuthSigningAlg;
     private Optional<Integer> defaultMaxAge;
     private Optional<Boolean> requireAuthTime;
@@ -259,6 +260,14 @@ public class PatchApplicationOAuthSettings {
         this.requestObjectEncryptionEnc = requestObjectEncryptionEnc;
     }
 
+    public Optional<String> getTokenEndpointAuthMethod() {
+        return tokenEndpointAuthMethod;
+    }
+
+    public void setTokenEndpointAuthMethod(Optional<String> tokenEndpointAuthMethod) {
+        this.tokenEndpointAuthMethod = tokenEndpointAuthMethod;
+    }
+
     public Optional<String> getTokenEndpointAuthSigningAlg() {
         return tokenEndpointAuthSigningAlg;
     }
@@ -448,6 +457,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setRequestObjectSigningAlg, this.getRequestObjectSigningAlg());
         SetterUtils.safeSet(toPatch::setRequestObjectEncryptionAlg, this.getRequestObjectEncryptionAlg());
         SetterUtils.safeSet(toPatch::setRequestObjectEncryptionEnc, this.getRequestObjectEncryptionEnc());
+        SetterUtils.set(toPatch::setTokenEndpointAuthMethod, this.getTokenEndpointAuthMethod());
         SetterUtils.safeSet(toPatch::setTokenEndpointAuthSigningAlg, this.getTokenEndpointAuthSigningAlg());
         SetterUtils.safeSet(toPatch::setDefaultMaxAge, this.getDefaultMaxAge());
         SetterUtils.safeSet(toPatch::setRequireAuthTime, this.getRequireAuthTime(), boolean.class);

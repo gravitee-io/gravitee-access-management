@@ -22,12 +22,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAssertionAuthHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientBasicAuthHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientCredentialsAuthHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.impl.ClientChainAuthHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAssertionAuthenticationProvider;
-import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAuthenticationProvider;
+import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationFailureEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.approval.UserApprovalEndpoint;
@@ -57,7 +52,6 @@ import io.gravitee.common.http.MediaType;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.auth.AuthProvider;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -162,13 +156,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         final Router oauth2Router = Router.router(vertx);
 
         // client auth handler
-        final AuthProvider clientAuthProvider = new ClientAuthenticationProvider(clientSyncService);
-        final AuthProvider clientAssertionAuthProvider = new ClientAssertionAuthenticationProvider(clientAssertionService);
-
-        final AuthHandler clientAuthHandler = ChainAuthHandler.newInstance(new ClientChainAuthHandler())
-                .append(ClientCredentialsAuthHandler.create(clientAuthProvider))
-                .append(ClientAssertionAuthHandler.create(clientAssertionAuthProvider))
-                .append(ClientBasicAuthHandler.create(clientAuthProvider));
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService);
 
         // Bind OAuth2 endpoints
         // Authorization endpoint
@@ -187,9 +175,8 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         Handler<RoutingContext> tokenEndpoint = new TokenEndpoint(tokenGranter);
         Handler<RoutingContext> tokenRequestParseHandler = new TokenRequestParseHandler();
 
-        // Check_token is provided only for backward compatibility and must be remove in the future
-        Handler<RoutingContext> introspectionEndpoint = new IntrospectionEndpoint();
-        ((IntrospectionEndpoint) introspectionEndpoint).setIntrospectionService(introspectionService);
+        // Introspection endpoint
+        Handler<RoutingContext> introspectionEndpoint = new IntrospectionEndpoint(introspectionService);
 
         // Revocation token endpoint
         Handler<RoutingContext> revocationTokenEndpoint = new RevocationTokenEndpoint(revocationTokenService);

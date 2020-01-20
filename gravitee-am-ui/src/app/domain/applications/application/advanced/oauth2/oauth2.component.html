@@ -46,6 +46,25 @@
 
         <div class="gv-form-section">
           <div class="gv-form-section-title">
+            <h5>Public / Confidential</h5>
+            <small>Clients capability of maintaining the confidentiality of their credentials.</small>
+            <small>Native application or a web browser-based application are incapable of secure their credentials and should set Token Endpoint Auth Method to "none".</small>
+            <mat-divider></mat-divider>
+          </div>
+          <div>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Type</mat-label>
+              <mat-select placeholder="Change the token auth method" name="tokenAuthMethod" [(ngModel)]="applicationOauthSettings.tokenEndpointAuthMethod" (ngModelChange)="modelChanged($event)" [disabled]="readonly">
+                <mat-option><em>Based on incoming request</em></mat-option>
+                <mat-option *ngFor="let tokenEndpointAuthMethod of tokenEndpointAuthMethods" [value]="tokenEndpointAuthMethod.value" [disabled]="tokenEndpointAuthMethod.disabled">{{ tokenEndpointAuthMethod.name }}</mat-option>
+              </mat-select>
+              <mat-hint>Requested Client Authentication method for the Token, Introspection and Revoke endpoints.</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
             <h5>Scopes</h5>
             <small>You can add default scopes to the tokens to control application's access to protected resources/APIs.</small>
             <mat-divider></mat-divider>

@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
@@ -29,6 +30,7 @@ import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -206,11 +208,12 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setType(newApplication.getType());
         application.setDomain(domain);
 
-        // set OAuth 2.0 settings
+        // apply default oauth 2.0 settings
         ApplicationSettings applicationSettings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setClientId(newApplication.getClientId());
         oAuthSettings.setClientSecret(newApplication.getClientSecret());
+        oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         oAuthSettings.setRedirectUris(newApplication.getRedirectUris());
         applicationSettings.setOauth(oAuthSettings);
         application.setSettings(applicationSettings);
@@ -552,7 +555,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         return GrantTypeUtils.validateGrantTypes(application)
                 .flatMap(this::validateRedirectUris)
-                .flatMap(this::validateScopes);
+                .flatMap(this::validateScopes)
+                .flatMap(this::validateTokenEndpointAuthMethod);
     }
 
     private Single<Application> validateRedirectUris(Application application) {
@@ -626,5 +630,13 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                     return Single.just(application);
                 });
+    }
+
+    private Single<Application> validateTokenEndpointAuthMethod(Application application) {
+        String tokenEndpointAuthMethod = application.getSettings().getOauth().getTokenEndpointAuthMethod();
+        if (ApplicationType.SERVICE.equals(application.getType()) && (tokenEndpointAuthMethod != null && ClientAuthenticationMethod.NONE.equals(tokenEndpointAuthMethod))) {
+            return Single.error(new InvalidClientMetadataException("Invalid token_endpoint_auth_method for service application"));
+        }
+        return Single.just(application);
     }
 }

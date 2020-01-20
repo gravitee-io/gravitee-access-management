@@ -17,17 +17,16 @@ package io.gravitee.am.gateway.handler.oauth2.resources.endpoint;
 
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
-import io.gravitee.am.gateway.handler.oauth2.resources.auth.user.Client;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Completable;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,7 +36,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -75,7 +73,7 @@ public class RevocationTokenEndpointTest extends RxWebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new Client(new io.gravitee.am.model.oidc.Client())));
+                routingContext.put("client", new Client());
                 routingContext.next();
             }
         });
@@ -91,7 +89,7 @@ public class RevocationTokenEndpointTest extends RxWebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new Client(new io.gravitee.am.model.oidc.Client())));
+                routingContext.put("client", new Client());
                 routingContext.next();
             }
         });
@@ -109,7 +107,7 @@ public class RevocationTokenEndpointTest extends RxWebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new Client(new io.gravitee.am.model.oidc.Client())));
+                routingContext.put("client", new Client());
                 routingContext.next();
             }
         });
@@ -128,7 +126,7 @@ public class RevocationTokenEndpointTest extends RxWebTestBase {
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
             public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new Client(new io.gravitee.am.model.oidc.Client())));
+                routingContext.put("client", new Client());
                 routingContext.next();
             }
         });

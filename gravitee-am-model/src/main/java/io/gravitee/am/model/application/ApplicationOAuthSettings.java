@@ -15,9 +15,6 @@
  */
 package io.gravitee.am.model.application;
 
-import io.gravitee.am.common.oauth2.GrantType;
-import io.gravitee.am.common.oauth2.ResponseType;
-import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.oidc.JWKSet;
 
@@ -32,8 +29,6 @@ import java.util.*;
  */
 public class ApplicationOAuthSettings {
 
-    private final static List<String> DEFAULT_GRANT_TYPES =  Arrays.asList(GrantType.AUTHORIZATION_CODE);
-    private final static List<String> DEFAULT_RESPONSE_TYPES = Arrays.asList(ResponseType.CODE);
     private final static int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
     private final static int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
     private final static int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
@@ -149,9 +144,8 @@ public class ApplicationOAuthSettings {
     private String requestObjectEncryptionEnc;
     /**
      * Requested Client Authentication method for the Token Endpoint.
-     * If omitted, the default is client_secret_basic
      */
-    private String tokenEndpointAuthMethod = ClientAuthenticationMethod.CLIENT_SECRET_BASIC;
+    private String tokenEndpointAuthMethod;
     /**
      * [JWS] alg algorithm [JWA] that MUST be used for signing the JWT [JWT] used to authenticate the Client at the Token Endpoint for the private_key_jwt and client_secret_jwt authentication methods.
      */
