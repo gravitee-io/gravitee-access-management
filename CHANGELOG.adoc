@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/204?closed=1[AM - 2.10.7 (2020-01-21)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [oauth2] remove "aud" claim in the Introspection Endpoint https://github.com/gravitee-io/issues/issues/3111[#3111]
+
+
 == https://github.com/gravitee-io/issues/milestone/200?closed=1[AM - 2.10.6 (2020-01-20)]
 
 === Bug fixes
