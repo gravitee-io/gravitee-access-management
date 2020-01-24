@@ -13,16 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.jwt;
+package io.gravitee.am.gateway.certificate;
 
-import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.model.Certificate;
+
+import java.util.Collection;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface JWTBuilder {
+public interface CertificateProviderManager {
 
-    String sign(JWT payload);
+    void create(Certificate certificate);
 
+    void update(Certificate certificate);
+
+    void delete(String certificateId);
+
+    CertificateProvider get(String certificateId);
+
+    Collection<CertificateProvider> certificateProviders();
+
+    CertificateProvider create(io.gravitee.am.certificate.api.CertificateProvider certificateProvider);
 }

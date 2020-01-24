@@ -25,9 +25,7 @@ import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationServiceImpl;
 import io.gravitee.am.gateway.handler.common.authentication.listener.AuthenticationEventListener;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
-import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateProviderManagerImpl;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwe.JWEService;
@@ -113,11 +111,6 @@ public class CommonConfiguration {
     @Bean
     public CertificateManager certificateManager() {
         return new CertificateManagerImpl();
-    }
-
-    @Bean
-    public CertificateProviderManager certificateProviderManager() {
-        return new CertificateProviderManagerImpl();
     }
 
     @Bean

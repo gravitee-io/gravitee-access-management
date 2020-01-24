@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.jwt;
+package io.gravitee.am.gateway.certificate.jwt;
 
 import io.gravitee.am.common.jwt.JWT;
 
@@ -21,8 +21,8 @@ import io.gravitee.am.common.jwt.JWT;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface JWTParser {
+public interface JWTBuilder {
 
-    JWT parse(String payload);
+    String sign(JWT payload);
 
 }

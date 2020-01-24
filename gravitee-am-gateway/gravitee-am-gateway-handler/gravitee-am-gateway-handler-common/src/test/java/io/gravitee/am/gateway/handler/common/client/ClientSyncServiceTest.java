@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.client;
 
-import io.gravitee.am.gateway.core.manager.ClientManager;
+import io.gravitee.am.gateway.core.manager.EntityManager;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
@@ -51,7 +51,7 @@ public class ClientSyncServiceTest {
     private Domain domain;
 
     @Mock
-    private ClientManager clientManager;
+    private EntityManager<Client> clientManager;
 
     @BeforeClass
     public static void initializeClients() {
@@ -102,7 +102,7 @@ public class ClientSyncServiceTest {
     @Before
     public void setUp() {
         when(domain.getId()).thenReturn("domainA");
-        when(clientManager.clients()).thenReturn(clientSet);
+        when(clientManager.entities()).thenReturn(clientSet);
     }
 
     @Test

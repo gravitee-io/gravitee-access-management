@@ -15,33 +15,17 @@
  */
 package io.gravitee.am.gateway.handler.common.certificate.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.DefaultKey;
-import io.gravitee.am.common.event.CertificateEvent;
-import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.gateway.certificate.CertificateProvider;
+import io.gravitee.am.gateway.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.certificate.CertificateProvider;
-import io.gravitee.am.gateway.handler.common.certificate.CertificateProviderManager;
-import io.gravitee.am.gateway.handler.common.jwt.impl.JJWTBuilder;
-import io.gravitee.am.gateway.handler.common.jwt.impl.JJWTParser;
-import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.jose.JWK;
-import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
-import io.gravitee.am.repository.management.api.CertificateRepository;
-import io.gravitee.common.event.Event;
-import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.JacksonDeserializer;
-import io.jsonwebtoken.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,17 +34,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.security.Key;
-import java.security.KeyPair;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateManagerImpl extends AbstractService implements CertificateManager, InitializingBean, EventListener<CertificateEvent, Payload> {
+public class CertificateManagerImpl extends AbstractService implements CertificateManager, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(CertificateManagerImpl.class);
     private static final String defaultDigestAlgorithm = "SHA-256";
@@ -75,21 +58,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     private Domain domain;
 
     @Autowired
-    private CertificateRepository certificateRepository;
-
-    @Autowired
-    private CertificatePluginManager certificatePluginManager;
-
-    @Autowired
-    private EventManager eventManager;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
     private CertificateProviderManager certificateProviderManager;
-
-    private ConcurrentMap<String, Map<String, CertificateProvider>> domainsCertificateProviders = new ConcurrentHashMap<>();
 
     private CertificateProvider defaultCertificateProvider;
 
@@ -97,7 +66,20 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     @Override
     public Maybe<CertificateProvider> get(String id) {
-        return id == null ? Maybe.empty() : findByDomainAndId(domain.getId(), id);
+        if (id == null) {
+            return Maybe.empty();
+        }
+        CertificateProvider certificateProvider = certificateProviderManager.get(id);
+        return certificateProvider != null ? Maybe.just(certificateProvider) : Maybe.empty();
+    }
+
+    @Override
+    public io.gravitee.am.certificate.api.CertificateProvider getCertificate(String id) {
+        CertificateProvider certificateProvider = certificateProviderManager.get(id);
+        if (certificateProvider != null && domain.getId().equals(certificateProvider.getDomain())) {
+            return certificateProvider.getProvider();
+        }
+        return null;
     }
 
     @Override
@@ -120,27 +102,11 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     }
 
     @Override
-    public Maybe<CertificateProvider> findByDomainAndId(String domain, String id) {
-        if (domainsCertificateProviders.containsKey(domain)) {
-            return id == null ? Maybe.empty() : Observable.fromIterable(domainsCertificateProviders.get(domain).entrySet())
-                    .filter(certificateProviderEntry -> certificateProviderEntry.getKey().equals(id))
-                    .firstElement()
-                    .map(Map.Entry::getValue);
-        }
-        return Maybe.empty();
-    }
-
-    @Override
     public Collection<CertificateProvider> providers() {
-        if (!domainsCertificateProviders.containsKey(domain.getId())) {
-            return Collections.emptyList();
-        }
-
-        return domainsCertificateProviders
-                .get(domain.getId())
-                .entrySet()
+        return certificateProviderManager
+                .certificateProviders()
                 .stream()
-                .map(p -> p.getValue())
+                .filter(c -> domain.getId().equals(c.getDomain()))
                 .collect(Collectors.toList());
     }
 
@@ -161,92 +127,6 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
         logger.info("Initializing none algorithm certificate provider for domain {}", domain.getName());
         initNoneAlgorithmCertificateProvider();
-
-        logger.info("Initializing certificates for domain {}", domain.getName());
-        try {
-            Set<Certificate> certificates = certificateRepository.findAll().blockingGet();
-
-            certificates.forEach(certificate -> {
-                if (certificate.getDomain().equals(domain.getId())) {
-                    logger.info("Initializing certificate: {} [{}]", certificate.getName(), certificate.getType());
-                }
-                updateCertificateProvider(certificate);
-            });
-            logger.info("Certificates loaded for domain {}", domain.getName());
-        } catch (Exception ex) {
-            logger.error("Unable to initialize certificates for domain {}", domain.getName(), ex);
-        }
-    }
-
-    @Override
-    protected void doStart() throws Exception {
-        super.doStart();
-
-        logger.info("Register event listener for certificate events for domain {}", domain.getName());
-        eventManager.subscribeForEvents(this, CertificateEvent.class, domain.getId());
-    }
-
-    @Override
-    protected void doStop() throws Exception {
-        super.doStop();
-
-        logger.info("Dispose event listener for certificate events for domain {}", domain.getName());
-        eventManager.unsubscribeForEvents(this, CertificateEvent.class, domain.getId());
-    }
-
-    @Override
-    public void onEvent(Event<CertificateEvent, Payload> event) {
-        switch (event.type()) {
-            case DEPLOY:
-            case UPDATE:
-                updateCertificate(event.content().getId(), event.type());
-                break;
-            case UNDEPLOY:
-                removeCertificate(event.content().getId(), event.content().getDomain());
-                break;
-        }
-    }
-
-    private void updateCertificate(String certificateId, CertificateEvent certificateEvent) {
-        final String eventType = certificateEvent.toString().toLowerCase();
-        logger.info("Domain {} has received {} certificate event for {}", domain.getName(), eventType, certificateId);
-        certificateRepository.findById(certificateId)
-                .subscribe(
-                        certificate -> {
-                            updateCertificateProvider(certificate);
-                            logger.info("Certificate {} {}d for domain {}", certificateId, eventType, domain.getName());
-                        },
-                        error -> logger.error("Unable to {} certificate for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No certificate found with id {}", certificateId));
-    }
-
-    private void removeCertificate(String certificateId, String domainId) {
-        logger.info("Domain {} has received certificate event, delete certificate {}", domain.getName(), certificateId);
-        ((CertificateProviderManagerImpl) certificateProviderManager).removeCertificate(certificateId);
-        if (domainsCertificateProviders.containsKey(domainId)) {
-            domainsCertificateProviders.get(domainId).remove(certificateId);
-        }
-    }
-
-    private void updateCertificateProvider(Certificate certificate) {
-        // create underline provider
-        io.gravitee.am.certificate.api.CertificateProvider provider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
-        if (domain.getId().equals(certificate.getDomain())) {
-            ((CertificateProviderManagerImpl) certificateProviderManager).addCertificate(certificate.getId(), provider);
-        }
-
-        // create certificate provider
-        CertificateProvider certificateProvider = create(provider);
-
-        // add certificate provider to its domain
-        Map<String, CertificateProvider> existingDomainCertificateProviders = domainsCertificateProviders.get(certificate.getDomain());
-        if (existingDomainCertificateProviders != null) {
-            Map<String, CertificateProvider> updateCertificateProviders = new HashMap<>(existingDomainCertificateProviders);
-            updateCertificateProviders.put(certificate.getId(), certificateProvider);
-            domainsCertificateProviders.put(certificate.getDomain(), updateCertificateProviders);
-        } else {
-            domainsCertificateProviders.put(certificate.getDomain(), Collections.singletonMap(certificate.getId(), certificateProvider));
-        }
     }
 
     private void initDefaultCertificateProvider() {
@@ -299,26 +179,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                 return certificateMetadata;
             }
         };
-
-        defaultCertificateProvider = create(defaultProvider);
-    }
-
-    private CertificateProvider create(io.gravitee.am.certificate.api.CertificateProvider provider) {
-        // create certificate provider
-        CertificateProvider certificateProvider = new CertificateProvider(provider);
-
-        // create parser and builder (default to jjwt)
-        io.gravitee.am.certificate.api.Key providerKey = provider.key().blockingGet();
-        Key signingKey = providerKey.getValue() instanceof KeyPair ? ((KeyPair) providerKey.getValue()).getPrivate() : (Key) providerKey.getValue();
-        Key verifyingKey = providerKey.getValue() instanceof KeyPair ? ((KeyPair) providerKey.getValue()).getPublic() : (Key) providerKey.getValue();
-
-        io.jsonwebtoken.JwtParser jjwtParser = Jwts.parser().deserializeJsonWith(new JacksonDeserializer(objectMapper)).setSigningKey(verifyingKey);
-        io.jsonwebtoken. JwtBuilder jjwtBuilder = Jwts.builder().serializeToJsonWith(new JacksonSerializer(objectMapper)).signWith(signingKey).setHeaderParam(JwsHeader.KEY_ID, providerKey.getKeyId());
-
-        certificateProvider.setJwtParser(new JJWTParser(jjwtParser));
-        certificateProvider.setJwtBuilder(new JJWTBuilder(jjwtBuilder));
-
-        return certificateProvider;
+        this.defaultCertificateProvider = certificateProviderManager.create(defaultProvider);
     }
 
     private void initNoneAlgorithmCertificateProvider() {
@@ -352,9 +213,6 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                 return certificateMetadata;
             }
         };
-
-        this.noneAlgorithmCertificateProvider = new CertificateProvider(noneProvider);
-        this.noneAlgorithmCertificateProvider.setJwtParser(new JJWTParser(Jwts.parser().deserializeJsonWith(new JacksonDeserializer(objectMapper))));
-        this.noneAlgorithmCertificateProvider.setJwtBuilder(new JJWTBuilder(Jwts.builder().serializeToJsonWith(new JacksonSerializer(objectMapper))));
+        this.noneAlgorithmCertificateProvider = certificateProviderManager.create(noneProvider);
     }
 }

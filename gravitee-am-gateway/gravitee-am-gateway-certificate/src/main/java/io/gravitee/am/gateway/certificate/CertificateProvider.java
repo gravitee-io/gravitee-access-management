@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.certificate;
+package io.gravitee.am.gateway.certificate;
 
-
-import io.gravitee.am.gateway.handler.common.jwt.JWTBuilder;
-import io.gravitee.am.gateway.handler.common.jwt.JWTParser;
+import io.gravitee.am.gateway.certificate.jwt.JWTBuilder;
+import io.gravitee.am.gateway.certificate.jwt.JWTParser;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class CertificateProvider {
-
     private io.gravitee.am.certificate.api.CertificateProvider provider;
+    private String domain;
     private JWTParser jwtParser;
     private JWTBuilder jwtBuilder;
 
@@ -39,6 +38,14 @@ public class CertificateProvider {
 
     public void setProvider(io.gravitee.am.certificate.api.CertificateProvider provider) {
         this.provider = provider;
+    }
+
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
     }
 
     public JWTParser getJwtParser() {
