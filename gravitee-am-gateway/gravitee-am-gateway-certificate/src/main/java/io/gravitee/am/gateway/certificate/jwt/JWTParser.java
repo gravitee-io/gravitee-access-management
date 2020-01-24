@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.certificate;
+package io.gravitee.am.gateway.certificate.jwt;
 
-import io.gravitee.am.certificate.api.CertificateManager;
+import io.gravitee.am.common.jwt.JWT;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateProviderManager extends CertificateManager {
+public interface JWTParser {
+
+    JWT parse(String payload);
+
 }

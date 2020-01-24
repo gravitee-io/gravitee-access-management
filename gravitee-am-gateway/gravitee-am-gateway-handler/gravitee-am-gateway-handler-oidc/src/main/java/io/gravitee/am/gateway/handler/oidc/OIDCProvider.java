@@ -27,7 +27,6 @@ import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantManager;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
-import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oidc.resources.endpoint.*;
 import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientAccessHandler;
 import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientAccessTokenHandler;

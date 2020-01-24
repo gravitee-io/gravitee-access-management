@@ -39,5 +39,6 @@
         <module>gravitee-am-gateway-repository</module>
         <module>gravitee-am-gateway-reactor</module>
         <module>gravitee-am-gateway-policy</module>
+        <module>gravitee-am-gateway-certificate</module>
     </modules>
 </project>

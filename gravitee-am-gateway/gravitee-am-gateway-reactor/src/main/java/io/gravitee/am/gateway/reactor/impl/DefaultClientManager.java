@@ -15,14 +15,12 @@
  */
 package io.gravitee.am.gateway.reactor.impl;
 
-import io.gravitee.am.gateway.core.manager.ClientManager;
+import io.gravitee.am.gateway.core.manager.EntityManager;
 import io.gravitee.am.model.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -30,7 +28,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DefaultClientManager implements ClientManager {
+public class DefaultClientManager implements EntityManager<Client> {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultClientManager.class);
     private final ConcurrentMap<String, Client> clients = new ConcurrentHashMap<>();
@@ -54,7 +52,7 @@ public class DefaultClientManager implements ClientManager {
     }
 
     @Override
-    public Collection<Client> clients() {
+    public Collection<Client> entities() {
         return clients.values();
     }
 

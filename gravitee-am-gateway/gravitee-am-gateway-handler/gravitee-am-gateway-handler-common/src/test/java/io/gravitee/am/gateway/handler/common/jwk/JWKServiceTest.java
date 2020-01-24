@@ -571,7 +571,7 @@ public class JWKServiceTest {
         CertificateProvider certificateProvider = mock(CertificateProvider.class);
         when(certificateProvider.keys()).thenReturn(Flowable.just(key));
 
-        when(certificateManager.providers()).thenReturn(Collections.singletonList(new io.gravitee.am.gateway.handler.common.certificate.CertificateProvider(certificateProvider)));
+        when(certificateManager.providers()).thenReturn(Collections.singletonList(new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider)));
 
         TestObserver<JWKSet> testObserver = jwkService.getKeys().test();
 
@@ -603,9 +603,9 @@ public class JWKServiceTest {
         CertificateProvider certificateProvider2 = mock(CertificateProvider.class);
         when(certificateProvider2.keys()).thenReturn(Flowable.just(key2));
 
-        List<io.gravitee.am.gateway.handler.common.certificate.CertificateProvider> certificateProviders = new ArrayList<>();
-        certificateProviders.add(new io.gravitee.am.gateway.handler.common.certificate.CertificateProvider(certificateProvider));
-        certificateProviders.add(new io.gravitee.am.gateway.handler.common.certificate.CertificateProvider(certificateProvider2));
+        List<io.gravitee.am.gateway.certificate.CertificateProvider> certificateProviders = new ArrayList<>();
+        certificateProviders.add(new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider));
+        certificateProviders.add(new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider2));
 
         when(certificateManager.providers()).thenReturn(certificateProviders);
 

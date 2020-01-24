@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.certificate;
+package io.gravitee.am.gateway.certificate.jwt.impl;
 
-import io.gravitee.am.gateway.certificate.CertificateProvider;
-import io.reactivex.Maybe;
-
-import java.util.Collection;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.certificate.jwt.JWTBuilder;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateManager extends io.gravitee.am.certificate.api.CertificateManager {
+public class JJWTBuilder implements JWTBuilder {
 
-    Maybe<CertificateProvider> get(String id);
+    private io.jsonwebtoken.JwtBuilder jwtBuilder;
 
-    Maybe<CertificateProvider> findByAlgorithm(String algorithm);
+    public JJWTBuilder(io.jsonwebtoken.JwtBuilder jwtBuilder) {
+        this.jwtBuilder = jwtBuilder;
+    }
 
-    Collection<CertificateProvider> providers();
-
-    CertificateProvider defaultCertificateProvider();
-
-    CertificateProvider noneAlgorithmCertificateProvider();
+    @Override
+    public String sign(JWT payload) {
+        return jwtBuilder.setClaims(payload).compact();
+    }
 }

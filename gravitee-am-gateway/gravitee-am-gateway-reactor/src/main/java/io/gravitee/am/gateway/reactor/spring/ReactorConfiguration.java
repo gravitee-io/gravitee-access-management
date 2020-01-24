@@ -15,7 +15,8 @@
  */
 package io.gravitee.am.gateway.reactor.spring;
 
-import io.gravitee.am.gateway.core.manager.ClientManager;
+import io.gravitee.am.gateway.certificate.spring.CertificateConfiguration;
+import io.gravitee.am.gateway.core.manager.EntityManager;
 import io.gravitee.am.gateway.handler.SecurityDomainRouterFactory;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
@@ -27,12 +28,14 @@ import io.gravitee.am.gateway.reactor.impl.DefaultSecurityDomainManager;
 import io.gravitee.am.gateway.reactor.impl.transaction.TransactionProcessorFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
+@Import(CertificateConfiguration.class)
 public class ReactorConfiguration {
 
     @Bean
@@ -61,5 +64,5 @@ public class ReactorConfiguration {
     }
 
     @Bean
-    public ClientManager clientManager() { return new DefaultClientManager(); }
+    public EntityManager clientManager() { return new DefaultClientManager(); }
 }

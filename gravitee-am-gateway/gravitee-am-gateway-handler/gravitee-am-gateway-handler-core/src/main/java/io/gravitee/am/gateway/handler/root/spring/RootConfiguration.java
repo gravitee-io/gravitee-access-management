@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.root.spring;
 
+import io.gravitee.am.gateway.certificate.jwt.JWTBuilder;
+import io.gravitee.am.gateway.certificate.jwt.JWTParser;
+import io.gravitee.am.gateway.certificate.jwt.impl.JJWTBuilder;
+import io.gravitee.am.gateway.certificate.jwt.impl.JJWTParser;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.am.gateway.handler.common.jwt.JWTBuilder;
-import io.gravitee.am.gateway.handler.common.jwt.JWTParser;
-import io.gravitee.am.gateway.handler.common.jwt.impl.JJWTBuilder;
-import io.gravitee.am.gateway.handler.common.jwt.impl.JJWTParser;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
