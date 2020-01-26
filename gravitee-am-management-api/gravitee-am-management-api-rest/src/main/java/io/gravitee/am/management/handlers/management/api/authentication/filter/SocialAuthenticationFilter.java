@@ -62,7 +62,7 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
     private static final String SOURCE = "source";
     private static final String PROVIDER_PARAMETER = "provider";
     private static final String SAVED_REQUEST = "GRAVITEEIO_AM_SAVED_REQUEST";
-    private static final String errorPage = "/access/error";
+    private static final String errorPage = "/auth/access/error";
     private static final String REDIRECT_URI = "redirect_uri";
 
     private AuthenticationEventPublisher authenticationEventPublisher;
