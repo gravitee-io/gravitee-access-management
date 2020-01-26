@@ -41,6 +41,8 @@ public class OAuth2GenericIdentityProviderConfiguration implements IdentityProvi
     private KeyResolver publicKeyResolver;
     private String resolverParameter;
     private boolean encodeRedirectUri;
+    private Integer connectTimeout = 10000;
+    private Integer maxPoolSize = 200;
 
     public String getClientId() {
         return clientId;
@@ -148,5 +150,21 @@ public class OAuth2GenericIdentityProviderConfiguration implements IdentityProvi
 
     public void setEncodeRedirectUri(boolean encodeRedirectUri) {
         this.encodeRedirectUri = encodeRedirectUri;
+    }
+
+    public Integer getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(Integer connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public Integer getMaxPoolSize() {
+        return maxPoolSize;
+    }
+
+    public void setMaxPoolSize(Integer maxPoolSize) {
+        this.maxPoolSize = maxPoolSize;
     }
 }
