@@ -83,10 +83,10 @@ public class VertxHttpServerFactory implements FactoryBean<HttpServer> {
                     options.setKeyStoreOptions(new JksOptions()
                             .setPath(httpServerConfiguration.getKeyStorePath())
                             .setPassword(httpServerConfiguration.getKeyStorePassword()));
-                } else if (httpServerConfiguration.getTrustStoreType().equalsIgnoreCase(CERTIFICATE_FORMAT_PEM)) {
+                } else if (httpServerConfiguration.getKeyStoreType().equalsIgnoreCase(CERTIFICATE_FORMAT_PEM)) {
                     options.setPemKeyCertOptions(new PemKeyCertOptions()
                             .addCertPath(httpServerConfiguration.getKeyStorePath()));
-                } else if (httpServerConfiguration.getTrustStoreType().equalsIgnoreCase(CERTIFICATE_FORMAT_PKCS12)) {
+                } else if (httpServerConfiguration.getKeyStoreType().equalsIgnoreCase(CERTIFICATE_FORMAT_PKCS12)) {
                     options.setPfxKeyCertOptions(new PfxOptions()
                             .setPath(httpServerConfiguration.getKeyStorePath())
                             .setPassword(httpServerConfiguration.getKeyStorePassword()));
