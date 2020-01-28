@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from "@angular/router";
 
 @Component({
@@ -21,7 +21,7 @@ import {ActivatedRoute} from "@angular/router";
   templateUrl: './forms.component.html',
   styleUrls: ['./forms.component.scss']
 })
-export class DomainSettingsFormsComponent {
+export class DomainSettingsFormsComponent implements OnInit {
   forms: any[];
   domain: any;
 
@@ -74,6 +74,20 @@ export class DomainSettingsFormsComponent {
         'description': 'User consent to acknowledge and accept data access',
         'template': 'OAUTH2_USER_CONSENT',
         'icon': 'playlist_add_check',
+        'enabled': true
+      },
+      {
+        'name': 'MFA Enroll',
+        'description': 'Multi-factor authentication settings page',
+        'template': 'MFA_ENROLL',
+        'icon': 'rotate_right',
+        'enabled': true
+      },
+      {
+        'name': 'MFA Challenge',
+        'description': 'Multi-factor authentication verify page',
+        'template': 'MFA_CHALLENGE',
+        'icon': 'check_circle_outline',
         'enabled': true
       },
       {

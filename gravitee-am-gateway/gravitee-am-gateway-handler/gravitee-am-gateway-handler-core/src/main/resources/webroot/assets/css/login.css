@@ -1,13 +1,12 @@
 .mdl-layout.mdl-js-layout {
     display: block;
-    background-color: #2d323e;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color: #f7f7f7;
     color: #333;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .login-container {
-    max-width: 360px;
+    max-width: 480px;
     margin: auto;
     padding: 8% 0 0;
 }
@@ -15,41 +14,51 @@
 .login-form {
     background: #FFFFFF;
     padding: 45px;
-    box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24);
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
+}
+
+.login-form form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 30px;
 }
 
 .login-form-title {
-    text-align:center;
+    display: flex;
+    flex-direction: column;
 }
 
 .login-form-title > label {
     font-size: 28px;
     font-weight: 400;
-    margin: 0 auto;
+    margin-bottom: 5px;
 }
 
-.mdl-textfield__label.mdl-required:after {
-    content: ' *';
-    visibility: visible;
-    position: initial;
-    background-color: transparent;
+.login-form-title > span {
+    color: grey;
 }
 
-.mdl-textfield.is-invalid .mdl-textfield__label:after {
-    background-color: transparent;
+.login-form-actions {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
 }
 
-.mdl-textfield__icon {
-    width: 32px;
-    text-align: center;
-    position: absolute;
-    color: #555;
-    line-height: 1.5;
+.login-form-content .input-textfield {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
 }
 
-.mdl-textfield__icon ~ * {
-    margin-left: 32px;
-    width: calc(100% - 48px);
+.login-form-content .input-textfield:last-child {
+    margin-bottom: 20px;
+}
+
+.login-form-content .input-textfield input {
+    border: 1px solid #e1e4e8;
+    padding: 10px;
+    font-size: 12px;
 }
 
 .login-error-info {
@@ -80,11 +89,16 @@ a, a:hover, a:focus {
 
 .social-login-buttons a {
     margin-bottom: 10px;
+    width: 100%;
+}
+
+.mdl-social-button {
+    display: flex;
+    justify-content: center;
 }
 
 .mdl-button {
-    width: 100%;
-    padding: 0;
+    min-width: 100px;
 }
 
 .signup-or-separator {

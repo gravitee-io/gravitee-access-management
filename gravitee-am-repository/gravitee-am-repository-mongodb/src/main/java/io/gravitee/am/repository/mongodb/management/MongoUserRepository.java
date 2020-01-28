@@ -278,6 +278,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         user.setEntitlements(userMongo.getEntitlements());
         user.setAddresses(toModelAddresses(userMongo.getAddresses()));
         user.setX509Certificates(toModelCertificates(userMongo.getX509Certificates()));
+        user.setFactors(userMongo.getFactors());
         user.setAdditionalInformation(userMongo.getAdditionalInformation());
         user.setCreatedAt(userMongo.getCreatedAt());
         user.setUpdatedAt(userMongo.getUpdatedAt());
@@ -320,6 +321,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         userMongo.setEntitlements(user.getEntitlements());
         userMongo.setAddresses(toMongoAddresses(user.getAddresses()));
         userMongo.setX509Certificates(toMongoCertificates(user.getX509Certificates()));
+        userMongo.setFactors(user.getFactors());
         userMongo.setAdditionalInformation(user.getAdditionalInformation() != null ? new Document(user.getAdditionalInformation()) : new Document());
         userMongo.setCreatedAt(user.getCreatedAt());
         userMongo.setUpdatedAt(user.getUpdatedAt());

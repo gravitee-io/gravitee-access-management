@@ -42,6 +42,8 @@ public interface ApplicationRepository extends CrudRepository<Application, Strin
 
     Single<Set<Application>> findByIdentityProvider(String identityProvider);
 
+    Single<Set<Application>> findByFactor(String factor);
+
     Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant);
 
     Single<Long> count();

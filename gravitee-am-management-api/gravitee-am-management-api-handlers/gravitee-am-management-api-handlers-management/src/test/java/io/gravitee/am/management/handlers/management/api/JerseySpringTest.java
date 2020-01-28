@@ -148,6 +148,9 @@ public abstract class JerseySpringTest {
     @Autowired
     protected MembershipManager membershipManager;
 
+    @Autowired
+    protected FactorService factorService;
+
     @Before
     public void init() {
         when(roleManager.isAdminRoleGranted(any())).thenReturn(true);
@@ -299,6 +302,11 @@ public abstract class JerseySpringTest {
         @Bean
         public MembershipManager membershipManager() {
             return mock(MembershipManager.class);
+        }
+
+        @Bean
+        public FactorService factorService() {
+            return mock(FactorService.class);
         }
     }
 

@@ -248,4 +248,11 @@ public class DomainResource extends AbstractResource {
     public AnalyticsResource getAnalyticsResource() {
         return resourceContext.getResource(AnalyticsResource.class);
     }
+
+    @Path("factors")
+    public FactorsResource getFactorsResource() {
+        return resourceContext.getResource(FactorsResource.class);
+    }
+
+
 }

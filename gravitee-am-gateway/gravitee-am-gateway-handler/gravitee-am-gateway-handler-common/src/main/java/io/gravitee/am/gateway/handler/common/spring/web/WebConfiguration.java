@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.spring.web;
 
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.*;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.AuthenticationFlowHandlerImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.PolicyChainHandlerImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,5 +50,10 @@ public class WebConfiguration {
     @Bean
     public PolicyChainHandler policyChainHandler() {
         return new PolicyChainHandlerImpl();
+    }
+
+    @Bean
+    public AuthenticationFlowHandler authenticationFlowHandler() {
+        return new AuthenticationFlowHandlerImpl();
     }
 }

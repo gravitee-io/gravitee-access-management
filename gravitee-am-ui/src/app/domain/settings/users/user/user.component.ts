@@ -49,6 +49,7 @@ export class UserComponent implements OnInit {
     this.navLinks.push({'href': 'profile' , 'label': 'Profile'});
     if (!this.adminContext) {
       this.navLinks.push({'href': 'applications' , 'label': 'Authorized Apps'});
+      this.navLinks.push({'href': 'factors' , 'label': 'Multi-Factor Authentication'});
     }
     this.navLinks.push({'href': 'roles' , 'label': 'Roles'});
   }

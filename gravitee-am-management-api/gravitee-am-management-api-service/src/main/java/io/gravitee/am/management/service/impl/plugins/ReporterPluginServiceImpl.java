@@ -44,7 +44,7 @@ public class ReporterPluginServiceImpl implements ReporterPluginService {
 
     @Override
     public Single<List<ReporterPlugin>> findAll() {
-        LOGGER.debug("List all identity provider plugins");
+        LOGGER.debug("List all reporter plugins");
         return Observable.fromIterable(reporterPluginManager.getAll())
                 .map(this::convert)
                 .toList();

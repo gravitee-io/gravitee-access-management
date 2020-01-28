@@ -62,6 +62,10 @@ public class Application implements Resource {
      */
     private Set<String> identities;
     /**
+     * Factors used for authentication
+     */
+    private Set<String> factors;
+    /**
      * Certificate use to sign the tokens
      */
     private String certificate;
@@ -94,6 +98,7 @@ public class Application implements Resource {
         this.enabled = other.enabled;
         this.template = other.template;
         this.identities = other.identities;
+        this.factors = other.factors;
         this.certificate = other.certificate;
         this.metadata = other.metadata != null ? new HashMap<>(other.metadata) : null;
         this.settings = other.settings != null ? new ApplicationSettings(other.settings) : null;
@@ -165,6 +170,14 @@ public class Application implements Resource {
         this.identities = identities;
     }
 
+    public Set<String> getFactors() {
+        return factors;
+    }
+
+    public void setFactors(Set<String> factors) {
+        this.factors = factors;
+    }
+
     public String getCertificate() {
         return certificate;
     }
@@ -213,6 +226,7 @@ public class Application implements Resource {
         client.setTemplate(application.isTemplate());
         client.setCertificate(application.getCertificate());
         client.setIdentities(application.getIdentities());
+        client.setFactors(application.getFactors());
         client.setMetadata(application.getMetadata());
         client.setCreatedAt(application.getCreatedAt());
         client.setUpdatedAt(application.getUpdatedAt());

@@ -112,6 +112,9 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private MembershipService membershipService;
 
+    @Autowired
+    private FactorService factorService;
+
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("Find domain by ID: {}", id);
@@ -429,6 +432,13 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(memberships -> {
                                         List<Completable> deleteMembershipsCompletable = memberships.stream().map(m -> membershipService.delete(m.getId())).collect(Collectors.toList());
                                         return Completable.concat(deleteMembershipsCompletable);
+                                    })
+                            )
+                            // delete factors
+                            .andThen(factorService.findByDomain(domainId)
+                                    .flatMapCompletable(factors -> {
+                                        List<Completable> deleteFactorsCompletable = factors.stream().map(f -> factorService.delete(domainId, f.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteFactorsCompletable);
                                     })
                             )
                             .andThen(domainRepository.delete(domainId))

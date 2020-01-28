@@ -18,9 +18,8 @@ package io.gravitee.am.gateway.handler.oauth2;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.RedirectAuthHandler;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAssertionAuthHandler;
@@ -116,9 +115,6 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     private ThymeleafTemplateEngine thymeleafTemplateEngine;
 
     @Autowired
-    private UserAuthProvider userAuthProvider;
-
-    @Autowired
     private SessionHandler sessionHandler;
 
     @Autowired
@@ -138,6 +134,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
     @Autowired
     private CorsHandler corsHandler;
+
+    @Autowired
+    private AuthenticationFlowHandler authenticationFlowHandler;
 
     @Override
     protected void doStart() throws Exception {
@@ -171,11 +170,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .append(ClientAssertionAuthHandler.create(clientAssertionAuthProvider))
                 .append(ClientBasicAuthHandler.create(clientAuthProvider));
 
-        // user auth handler
-        final AuthHandler userAuthHandler = RedirectAuthHandler.create(userAuthProvider, domain);
-
         // Bind OAuth2 endpoints
-
         // Authorization endpoint
         Handler<RoutingContext> authorizationRequestParseRequiredParametersHandler = new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService);
         Handler<RoutingContext> authorizationRequestParseClientHandler = new AuthorizationRequestParseClientHandler(domain, clientSyncService);
@@ -213,11 +208,10 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(authorizationRequestParseRequiredParametersHandler)
                 .handler(authorizationRequestParseClientHandler)
                 .handler(authorizationRequestParseParametersHandler)
-                .handler(userAuthHandler)
+                .handler(authenticationFlowHandler.create())
                 .handler(authorizeEndpoint)
                 .failureHandler(authorizeFailureEndpoint);
         oauth2Router.route(HttpMethod.POST, "/authorize")
-                .handler(userAuthHandler)
                 .handler(userApprovalRequestParseHandler)
                 .handler(userApprovalProcessHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
@@ -243,7 +237,6 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(clientAuthHandler)
                 .handler(revocationTokenEndpoint);
         oauth2Router.route(HttpMethod.GET, "/confirm_access")
-                .handler(userAuthHandler)
                 .handler(userApprovalRequestParseHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
                 .handler(userApprovalEndpoint)

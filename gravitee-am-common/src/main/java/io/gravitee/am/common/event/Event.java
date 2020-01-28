@@ -66,6 +66,9 @@ public abstract class Event {
             case MEMBERSHIP:
                 event1 =  MembershipEvent.actionOf(action);
                 break;
+            case FACTOR:
+                event1 =  FactorEvent.actionOf(action);
+                break;
         }
 
         return event1;

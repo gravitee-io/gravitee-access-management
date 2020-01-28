@@ -80,6 +80,20 @@ export class ApplicationFormsComponent {
         'enabled': this.applicationSettingsValid()
       },
       {
+        'name': 'MFA Enroll',
+        'description': 'Multi-factor authentication settings page',
+        'template': 'MFA_ENROLL',
+        'icon': 'rotate_right',
+        'enabled': this.applicationSettingsValid()
+      },
+      {
+        'name': 'MFA Challenge',
+        'description': 'Multi-factor authentication verify page',
+        'template': 'MFA_CHALLENGE',
+        'icon': 'check_circle_outline',
+        'enabled': this.applicationSettingsValid()
+      },
+      {
         'name': 'Error',
         'description': 'Error page to display a message describing the problem',
         'template': 'ERROR',

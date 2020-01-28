@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AddressMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AttributeMongo;
@@ -64,6 +65,8 @@ public class UserMongo extends Auditable {
     private List<String> entitlements;
     private List<AddressMongo> addresses;
     private List<CertificateMongo> x509Certificates;
+    private boolean twoFactorAuthenticationEnabled;
+    private List<EnrolledFactor> factors;
     private List<String> roles;
     /**
      * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
@@ -324,6 +327,22 @@ public class UserMongo extends Auditable {
 
     public void setX509Certificates(List<CertificateMongo> x509Certificates) {
         this.x509Certificates = x509Certificates;
+    }
+
+    public boolean isTwoFactorAuthenticationEnabled() {
+        return twoFactorAuthenticationEnabled;
+    }
+
+    public void setTwoFactorAuthenticationEnabled(boolean twoFactorAuthenticationEnabled) {
+        this.twoFactorAuthenticationEnabled = twoFactorAuthenticationEnabled;
+    }
+
+    public List<EnrolledFactor> getFactors() {
+        return factors;
+    }
+
+    public void setFactors(List<EnrolledFactor> factors) {
+        this.factors = factors;
     }
 
     public List<String> getRoles() {

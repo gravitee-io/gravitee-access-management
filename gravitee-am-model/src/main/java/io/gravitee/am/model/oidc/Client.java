@@ -157,6 +157,8 @@ public class Client implements Cloneable, Resource {
 
     private String certificate;
 
+    private Set<String> factors;
+
     private boolean enhanceScopesWithUserPermissions;
 
     private Map<String, Integer> scopeApprovals;
@@ -222,6 +224,7 @@ public class Client implements Cloneable, Resource {
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.identities = other.identities != null ? new HashSet<>(other.identities) : null;
+        this.factors = other.factors != null ? new HashSet<>(other.factors) : null;
         this.certificate = other.certificate;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
         this.scopeApprovals = other.scopeApprovals != null ? new HashMap<>(other.scopeApprovals) : null;
@@ -626,6 +629,14 @@ public class Client implements Cloneable, Resource {
         this.identities = identities;
     }
 
+    public Set<String> getFactors() {
+        return factors;
+    }
+
+    public void setFactors(Set<String> factors) {
+        this.factors = factors;
+    }
+
     public int getIdTokenValiditySeconds() {
         return idTokenValiditySeconds;
     }
@@ -717,6 +728,7 @@ public class Client implements Cloneable, Resource {
         clone.setScopeApprovals(this.getScopeApprovals()!=null?new HashMap<>(this.getScopeApprovals()):null);
         clone.setAutoApproveScopes(this.getAutoApproveScopes()!=null?new ArrayList<>(this.getAutoApproveScopes()):null);
         clone.setIdentities(this.getIdentities()!=null?new HashSet<>(this.getIdentities()):null);
+        clone.setFactors(this.getFactors()!=null?new HashSet<>(this.getFactors()):null);
         clone.setJwks(this.getJwks()!=null?this.getJwks().clone():null);
 
         return clone;

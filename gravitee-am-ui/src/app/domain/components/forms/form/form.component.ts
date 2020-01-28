@@ -129,6 +129,14 @@ export class FormComponent implements OnInit, AfterViewInit {
     return this.formFound ? this.editMode : this.createMode;
   }
 
+  save() {
+    if (!this.formFound) {
+      this.create();
+    } else {
+      this.update();
+    }
+  }
+
   create() {
     this.form['content'] = this.formContent;
     this.formService.create(this.domainId, this.appId, this.form).subscribe(data => {

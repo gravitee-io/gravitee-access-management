@@ -157,6 +157,16 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public Single<Set<Application>> findByFactor(String factor) {
+        LOGGER.debug("Find applications by factor : {}", factor);
+        return applicationRepository.findByFactor(factor)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find applications by factor", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find applications by factor", ex));
+                });
+    }
+
+    @Override
     public Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
         LOGGER.debug("Find applications by domain {} and extension grant : {}", domain, extensionGrant);
         return applicationRepository.findByDomainAndExtensionGrant(domain, extensionGrant)

@@ -31,6 +31,8 @@ public enum Template {
     FORGOT_PASSWORD("forgot_password"),
     RESET_PASSWORD("reset_password"),
     OAUTH2_USER_CONSENT("oauth2_user_consent"),
+    MFA_ENROLL("mfa_enroll"),
+    MFA_CHALLENGE("mfa_challenge"),
     ERROR("error");
 
     private final String template;

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MFA Challenge</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{../assets/material/material.blue_grey-blue.min.css}">
+    <link rel="stylesheet" th:href="@{../assets/material/material.icons.css}">
+    <link rel="stylesheet" th:href="@{../assets/font-awesome/css/font-awesome.min.css}">
+    <link rel="stylesheet" th:href="@{../assets/css/mfa_challenge.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="@{../assets/ico/favicon.ico}">
+</head>
+
+<body>
+    <div class="mdl-layout mdl-js-layout">
+        <div class="mfa-challenge-container">
+            <div class="mfa-challenge-form">
+                <div class="mfa-challenge-form-title">
+                    <label>Multi-Factor Auth Verification</label>
+                </div>
+                <form role="form" th:action="${action}" method="post">
+                    <div>
+                        <ul class="mdl-list">
+                            <li class="mdl-list__item mdl-list__item--three-line">
+                                <span class="mdl-list__item-primary-content">
+                                    <i class="material-icons mdl-list__item-avatar">important_devices</i>
+                                    <span>Enter code</span>
+                                    <span class="mdl-list__item-text-body">
+                                        Please type in the code displayed on your multi-factor authenticator app from your device.
+                                    </span>
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="mdl-textfield mdl-js-textfield">
+                        <input class="mdl-textfield__input" type="text" id="code" name="code" placeholder="Code" required/>
+                        <label class="mdl-textfield__label mdl-required" for="code">Code</label>
+                    </div>
+
+                    <div th:if="${error}" class="mfa-challenge-error-info">
+                        <span>
+                            <span class="error">mfa_challenge_failed</span>
+                             <small class="error_description">Invalid code</small>
+                        </span>
+                    </div>
+                    <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
+                    <div class="mfa-challenge-form-actions">
+                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Verify</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!--[if lt IE 10]>
+    <script th:src="@{assets/js/placeholder.js}"></script>
+    <![endif]-->
+    <script th:src="@{../assets/material/material.min.js}"></script>
+    <script th:src="@{../assets/js/jquery-1.11.1.min.js}"></script>
+    <script>
+        $(".mdl-textfield__input").focus(function (){
+            if( !this.value ){
+                $(this).prop('required', true);
+                $(this).parent().addClass('is-invalid');
+            }
+        });
+        $(".mdl-button[type='submit']").click(function (event){
+            $(this).siblings(".mdl-textfield").addClass('is-invalid');
+            $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
+        });
+    </script>
+</body>
+</html>

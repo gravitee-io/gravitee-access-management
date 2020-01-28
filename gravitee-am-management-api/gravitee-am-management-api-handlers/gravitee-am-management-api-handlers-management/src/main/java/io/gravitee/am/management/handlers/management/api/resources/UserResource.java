@@ -266,6 +266,11 @@ public class UserResource extends AbstractResource {
         return resourceContext.getResource(UserRolesResource.class);
     }
 
+    @Path("factors")
+    public UserFactorsResource getUserFactorsResource() {
+        return resourceContext.getResource(UserFactorsResource.class);
+    }
+
     private Maybe<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {
         if (userEntity.getSource() != null) {
             return identityProviderService.findById(userEntity.getSource())
