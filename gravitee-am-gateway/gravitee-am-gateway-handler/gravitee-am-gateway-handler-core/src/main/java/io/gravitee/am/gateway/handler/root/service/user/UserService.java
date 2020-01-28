@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.service.user;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Completable;
@@ -39,6 +40,8 @@ public interface UserService {
     Single<ResetPasswordResponse> resetPassword(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 
     Completable forgotPassword(String email, Client client, io.gravitee.am.identityprovider.api.User principal);
+
+    Single<User> addFactor(String userId, EnrolledFactor enrolledFactor);
 
     default Single<RegistrationResponse> register(Client client, User user) {
         return register(client, user, null);

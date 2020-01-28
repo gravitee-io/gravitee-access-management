@@ -162,6 +162,14 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.factor</groupId>
+            <artifactId>gravitee-am-factor-otp</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.gateway.handler</groupId>
             <artifactId>gravitee-am-gateway-handler-oidc</artifactId>
             <version>${project.version}</version>
@@ -321,6 +329,14 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.reporter</groupId>
                                     <artifactId>gravitee-am-reporter-mongodb</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- Factors -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.factor</groupId>
+                                    <artifactId>gravitee-am-factor-otp</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

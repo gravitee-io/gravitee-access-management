@@ -33,11 +33,12 @@ import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordRespons
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
@@ -53,10 +54,7 @@ import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -316,6 +314,22 @@ public class UserServiceImpl implements UserService {
                 })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
                 .toCompletable();
+    }
+
+    @Override
+    public Single<User> addFactor(String userId, EnrolledFactor enrolledFactor) {
+        return userService.findById(userId)
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                .flatMapSingle(user -> {
+                    List<EnrolledFactor> enrolledFactors = user.getFactors();
+                    if (enrolledFactors == null || enrolledFactors.isEmpty()) {
+                        enrolledFactors = Collections.singletonList(enrolledFactor);
+                    } else {
+                        enrolledFactors.add(enrolledFactor);
+                    }
+                    user.setFactors(enrolledFactors);
+                    return userService.update(user);
+                });
     }
 
     private void completeForgotPassword(User user, Client client) {

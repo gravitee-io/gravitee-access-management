@@ -35,6 +35,7 @@ public class PatchApplication {
     private Optional<Boolean> enabled;
     private Optional<Boolean> template;
     private Optional<Set<String>> identities;
+    private Optional<Set<String>> factors;
     private Optional<String> certificate;
     private Optional<Map<String, Object>> metadata;
     private Optional<PatchApplicationSettings> settings;
@@ -87,6 +88,14 @@ public class PatchApplication {
         this.identities = identities;
     }
 
+    public Optional<Set<String>> getFactors() {
+        return factors;
+    }
+
+    public void setFactors(Optional<Set<String>> factors) {
+        this.factors = factors;
+    }
+
     public Optional<String> getCertificate() {
         return certificate;
     }
@@ -121,6 +130,7 @@ public class PatchApplication {
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setTemplate, this.getTemplate(), boolean.class);
         SetterUtils.safeSet(toPatch::setIdentities, this.getIdentities());
+        SetterUtils.safeSet(toPatch::setFactors, this.getFactors());
         SetterUtils.safeSet(toPatch::setCertificate, this.getCertificate());
         SetterUtils.safeSet(toPatch::setMetadata, this.getMetadata());
         if (this.getSettings() != null && this.getSettings().isPresent()) {

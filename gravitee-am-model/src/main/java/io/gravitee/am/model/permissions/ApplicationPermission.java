@@ -32,7 +32,8 @@ public enum ApplicationPermission implements Permission {
     OAUTH2("OAUTH2", "oauth2"),
     USER_ACCOUNT("USER_ACCOUNT", "user_account"),
     CERTIFICATE("CERTIFICATE", "certificate"),
-    MEMBER("MEMBER", "member");
+    MEMBER("MEMBER", "member"),
+    FACTOR("FACTOR", "factor");
 
     String name;
     String mask;

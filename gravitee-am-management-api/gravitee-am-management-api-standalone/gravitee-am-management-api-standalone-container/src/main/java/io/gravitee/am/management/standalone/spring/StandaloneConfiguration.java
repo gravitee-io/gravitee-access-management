@@ -23,6 +23,7 @@ import io.gravitee.am.management.service.spring.ServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
 import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
+import io.gravitee.am.plugins.factor.spring.FactorConfiguration;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicyConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
@@ -56,7 +57,8 @@ import org.springframework.context.annotation.Import;
         ReporterConfiguration.class,
         PolicyConfiguration.class,
         CoreConfiguration.class,
-        AlertPluginConfiguration.class
+        AlertPluginConfiguration.class,
+        FactorConfiguration.class
 })
 public class StandaloneConfiguration {
 

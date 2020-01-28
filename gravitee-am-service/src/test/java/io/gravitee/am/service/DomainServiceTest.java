@@ -72,6 +72,7 @@ public class DomainServiceTest {
     private static final String REPORTER_ID = "id-reporter";
     private static final String POLICY_ID = "id-policy";
     private static final String MEMBERSHIP_ID = "id-membership";
+    private static final String FACTOR_ID = "id-factor";
 
     @InjectMocks
     private DomainService domainService = new DomainServiceImpl();
@@ -114,6 +115,9 @@ public class DomainServiceTest {
 
     @Mock
     private Membership membership;
+
+    @Mock
+    private Factor factor;
 
     @Mock
     private DomainRepository domainRepository;
@@ -162,6 +166,9 @@ public class DomainServiceTest {
 
     @Mock
     private MembershipService membershipService;
+
+    @Mock
+    private FactorService factorService;
 
     @Test
     public void shouldFindById() {
@@ -465,6 +472,9 @@ public class DomainServiceTest {
         when(membership.getId()).thenReturn(MEMBERSHIP_ID);
         when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Single.just(Collections.singletonList(membership)));
         when(membershipService.delete(anyString())).thenReturn(Completable.complete());
+        when(factor.getId()).thenReturn(FACTOR_ID);
+        when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(factor)));
+        when(factorService.delete(DOMAIN_ID, FACTOR_ID)).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
@@ -486,6 +496,7 @@ public class DomainServiceTest {
         verify(reporterService, times(1)).delete(REPORTER_ID);
         verify(policyService, times(1)).delete(POLICY_ID);
         verify(membershipService, times(1)).delete(MEMBERSHIP_ID);
+        verify(factorService, times(1)).delete(DOMAIN_ID, FACTOR_ID);
         verify(eventService, times(1)).create(any());
     }
 
@@ -506,6 +517,7 @@ public class DomainServiceTest {
         when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(policyService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
+        when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
@@ -526,6 +538,7 @@ public class DomainServiceTest {
         verify(reporterService, never()).delete(anyString());
         verify(policyService, never()).delete(anyString());
         verify(membershipService, never()).delete(anyString());
+        verify(factorService, never()).delete(anyString(), anyString());
         verify(eventService, times(1)).create(any());
     }
 

@@ -45,6 +45,8 @@ public interface ApplicationService {
 
     Single<Set<Application>> findByIdentityProvider(String identityProvider);
 
+    Single<Set<Application>> findByFactor(String factor);
+
     Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant);
 
     Maybe<Application> findById(String id);

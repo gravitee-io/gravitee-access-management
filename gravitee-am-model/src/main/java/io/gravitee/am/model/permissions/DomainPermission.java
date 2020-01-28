@@ -43,7 +43,9 @@ public enum DomainPermission implements Permission {
     DCR("DCR","dcr"),
     REPORTER("REPORTER", "reporter"),
     MEMBER("MEMBER", "member"),
-    ANALYTICS("ANALYTICS", "analytics");
+    ANALYTICS("ANALYTICS", "analytics"),
+    FACTOR("FACTOR", "factor");
+
 
     String name;
     String mask;

@@ -41,6 +41,8 @@ export class ApplicationAdvancedComponent implements OnInit {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'account']);
     } else if (this.canNavigate(['application_certificate_read'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'certificates']);
+    } else if (this.canNavigate(['application_factor_read'])) {
+      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'factors']);
     }
   }
 

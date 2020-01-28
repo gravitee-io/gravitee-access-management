@@ -35,5 +35,6 @@ public enum Type {
     POLICY,
     USER,
     MEMBERSHIP,
-    GROUP
+    GROUP,
+    FACTOR
 }

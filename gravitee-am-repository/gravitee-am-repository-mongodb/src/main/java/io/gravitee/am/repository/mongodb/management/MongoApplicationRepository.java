@@ -58,6 +58,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     private static final String FIELD_CLIENT_ID = "settings.oauth.clientId";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_IDENTITIES = "identities";
+    private static final String FIELD_FACTORS = "factors";
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_GRANT_TYPES= "settings.oauth.grantTypes";
     private MongoCollection<ApplicationMongo> applicationsCollection;
@@ -124,6 +125,11 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
+    public Single<Set<Application>> findByFactor(String factor) {
+        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_FACTORS, factor))).map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
     public Maybe<Application> findById(String id) {
         return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
     }
@@ -176,6 +182,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationMongo.setEnabled(other.isEnabled());
         applicationMongo.setTemplate(other.isTemplate());
         applicationMongo.setIdentities(other.getIdentities());
+        applicationMongo.setFactors(other.getFactors());
         applicationMongo.setCertificate(other.getCertificate());
         applicationMongo.setMetadata(other.getMetadata() != null ? new Document(other.getMetadata()) : null);
         applicationMongo.setSettings(convert(other.getSettings()));
@@ -195,6 +202,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         application.setEnabled(other.isEnabled());
         application.setTemplate(other.isTemplate());
         application.setIdentities(other.getIdentities());
+        application.setFactors(other.getFactors());
         application.setCertificate(other.getCertificate());
         application.setMetadata(other.getMetadata());
         application.setSettings(convert(other.getSettings()));

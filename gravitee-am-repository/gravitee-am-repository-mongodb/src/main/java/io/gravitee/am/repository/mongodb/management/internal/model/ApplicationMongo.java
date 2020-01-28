@@ -34,6 +34,7 @@ public class ApplicationMongo extends Auditable {
     private boolean enabled = true;
     private boolean template;
     private Set<String> identities;
+    private Set<String> factors;
     private String certificate;
     private Document metadata;
     private ApplicationSettingsMongo settings;
@@ -100,6 +101,14 @@ public class ApplicationMongo extends Auditable {
 
     public void setIdentities(Set<String> identities) {
         this.identities = identities;
+    }
+
+    public Set<String> getFactors() {
+        return factors;
+    }
+
+    public void setFactors(Set<String> factors) {
+        this.factors = factors;
     }
 
     public String getCertificate() {

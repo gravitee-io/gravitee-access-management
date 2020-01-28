@@ -1,0 +1,39 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:factor:otp:OTPFactorConfiguration",
+  "properties" : {
+    "factorType": {
+      "title": "Factor Type",
+      "description": "Type of the factor",
+      "default": "TOTP",
+      "readOnly": true
+    },
+    "issuer": {
+      "title": "Issuer",
+      "description": "Entity issuing user accounts, it will be displayed to the user 2FA app.",
+      "type" : "string",
+      "default": "Gravitee.io"
+    },
+    "algorithm": {
+      "title": "Algorithm",
+      "description": "Algorithm used to generate TOTP (SHA1)",
+      "type" : "string",
+      "default": "HmacSHA1",
+      "readonly": true
+    },
+    "timeStep": {
+      "title": "Time-step",
+      "description": "Time-step for the time-based one-time password generator (30 seconds)",
+      "type" : "string",
+      "default": "30",
+      "readonly": true
+    },
+    "returnDigits": {
+      "title": "Number of digits",
+      "description": "Number of digits the user needs to enter (6 digits)",
+      "type" : "string",
+      "default": "6",
+      "readonly": true
+    }
+  }
+}

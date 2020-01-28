@@ -46,7 +46,7 @@
 
     <properties>
         <gravitee-common.version>1.15.0</gravitee-common.version>
-        <gravitee-plugin.version>1.10.0</gravitee-plugin.version>
+        <gravitee-plugin.version>1.12.0-SNAPSHOT</gravitee-plugin.version>
         <gravitee-node.version>1.6.0</gravitee-node.version>
         <gravitee-reporter.version>1.13.0</gravitee-reporter.version>
         <gravitee-gateway-api.version>1.16.1</gravitee-gateway-api.version>
@@ -78,6 +78,7 @@
         <module>gravitee-am-certificate</module>
         <module>gravitee-am-extensiongrant</module>
         <module>gravitee-am-reporter</module>
+        <module>gravitee-am-factor</module>
         <module>gravitee-am-plugins-handlers</module>
         <module>gravitee-am-gateway</module>
         <module>gravitee-am-management-api</module>

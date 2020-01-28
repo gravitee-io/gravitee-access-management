@@ -56,7 +56,8 @@
             <mat-hint>The application's type</mat-hint>
           </mat-form-field>
         </div>
-        <div class="gs-form-section">
+
+        <div *ngIf="displaySection()" class="gs-form-section">
           <div class="gs-form-section-title">
             <h5>Redirect URIs</h5>
             <small>List of allowed URLs where the user will be redirected after successfully login to your application.
@@ -81,7 +82,7 @@
                            [rowHeight]="50"
                            [messages]="{emptyMessage:'There is no redirect URIs'}"
                            [rows]="redirectUris">
-              <ngx-datatable-column name="Redirect URIs" [flexGrow]="2">
+              <ngx-datatable-column name="Redirect URIs" [flexGrow]="4">
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   {{row.value}}
                 </ng-template>
@@ -97,7 +98,7 @@
           </div>
         </div>
 
-        <div class="gs-form-section">
+        <div *ngIf="displaySection()" class="gs-form-section">
           <div class="gs-form-section-title">
             <h5>Consent</h5>
             <mat-divider></mat-divider>

@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
+import io.gravitee.am.gateway.handler.factor.FactorManager;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
@@ -30,6 +31,8 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginCallbac
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginSSOPOSTEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ResetPasswordEndpoint;
@@ -120,6 +123,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private PolicyChainHandler policyChainHandler;
 
+    @Autowired
+    private FactorManager factorManager;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -182,6 +188,14 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(loginCallbackParseHandler)
                 .handler(loginSSOPOSTEndpoint)
                 .failureHandler(loginCallbackFailureHandler);
+
+        // MFA route
+        rootRouter.route("/mfa/enroll")
+                .handler(clientRequestParseHandler)
+                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine));
+        rootRouter.route("/mfa/challenge")
+                .handler(clientRequestParseHandler)
+                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine));
 
         // logout route
         rootRouter.route("/logout").handler(new LogoutEndpoint(domain, tokenService, auditService));
@@ -255,6 +269,14 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(sessionHandler);
         router
                 .route("/login/SSO/POST")
+                .handler(cookieHandler)
+                .handler(sessionHandler);
+
+        // MFA endpoint
+        router.route("/mfa/enroll")
+                .handler(cookieHandler)
+                .handler(sessionHandler);
+        router.route("/mfa/challenge")
                 .handler(cookieHandler)
                 .handler(sessionHandler);
 

@@ -20,6 +20,8 @@ import io.gravitee.am.gateway.handler.email.EmailManager;
 import io.gravitee.am.gateway.handler.email.EmailService;
 import io.gravitee.am.gateway.handler.email.impl.EmailManagerImpl;
 import io.gravitee.am.gateway.handler.email.impl.EmailServiceImpl;
+import io.gravitee.am.gateway.handler.factor.FactorManager;
+import io.gravitee.am.gateway.handler.factor.impl.FactorManagerImpl;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.form.impl.FormManagerImpl;
 import io.gravitee.am.gateway.handler.root.spring.RootConfiguration;
@@ -66,6 +68,11 @@ public class HandlerConfiguration {
     @Bean
     public EmailManager emailManager() {
         return new EmailManagerImpl();
+    }
+
+    @Bean
+    public FactorManager factorManager() {
+        return new FactorManagerImpl();
     }
 
     @Bean

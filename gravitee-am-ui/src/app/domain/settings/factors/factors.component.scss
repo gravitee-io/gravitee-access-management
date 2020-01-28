@@ -1,0 +1,57 @@
+.factors-container {
+  padding: 20px 70px 20px 50px;
+  h1 {
+    font-weight: 400;
+  }
+  .factors-content {
+    ngx-datatable {
+      font-size: 14px;
+      box-shadow: none;
+      .factor-header {
+        margin: 5px;
+        align-items: center;
+        .factor-icon {
+          margin: 0 12px 0 0;
+        }
+        .factor-information {
+          h3 {
+            font-size: 14px;
+            font-weight: normal;
+            margin: 0;
+          }
+          small {
+            color: rgba(0,0,0,.54);
+          }
+        }
+      }
+    }
+    .factors-actions {
+      margin-left: -10px;
+
+      button, a {
+        top: -9px;
+        color: grey;
+      }
+    }
+  }
+}
+
+.add-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
+
+.add-button-center {
+  text-align: center;
+}
+
+:host {
+  /deep/ .ngx-datatable.material .datatable-footer {
+    display: none;
+  }
+
+  /deep/ .factor-name-cell {
+    padding: 0 !important;
+  }
+}

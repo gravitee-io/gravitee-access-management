@@ -57,8 +57,19 @@ export class AuthGuard implements CanActivate {
   }
 
   canDisplay(route: ActivatedRouteSnapshot, path): boolean {
+    // if no data configuration, continue
+    if (!path.data) {
+      return true;
+    }
+    // if resource (application) should not display a settings page, continue
+    if (path.data.types && path.data.types.only && path.data.types.only.length > 0) {
+      const app = route.parent.data['application'];
+      if (app && path.data.types.only.indexOf(app.type) === -1) {
+        return false;
+      }
+    }
     // if no permission required, continue
-    if (!path.data || !path.data.perms || !path.data.perms.only) {
+    if (!path.data.perms || !path.data.perms.only) {
       return true;
     }
     // check if the authenticated user can display UI items

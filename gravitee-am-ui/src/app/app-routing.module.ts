@@ -77,6 +77,7 @@ import {UserApplicationsComponent} from "./domain/settings/users/user/applicatio
 import {UserApplicationComponent} from "./domain/settings/users/user/applications/application/application.component";
 import {UserRolesComponent} from "./domain/settings/users/user/roles/roles.component";
 import {UserRolesResolver} from "./resolvers/user-roles.resolver";
+import {UserFactorsComponent} from "./domain/settings/users/user/factors/factors.component";
 import {ExtensionGrantCreationComponent} from "./domain/settings/extension-grants/creation/extension-grant-creation.component";
 import {ExtensionGrantComponent} from "./domain/settings/extension-grants/extension-grant/extension-grant.component";
 import {ExtensionGrantsResolver} from "./resolvers/extension-grants.resolver";
@@ -129,12 +130,19 @@ import {ApplicationOAuth2Component} from "./domain/applications/application/adva
 import {ApplicationCertificatesComponent} from "./domain/applications/application/advanced/certificates/certificates.component";
 import {ApplicationMetadataComponent} from "./domain/applications/application/advanced/metadata/metadata.component";
 import {ApplicationMembershipsComponent} from "./domain/applications/application/advanced/memberships/memberships.component";
+import {ApplicationFactorsComponent} from "./domain/applications/application/advanced/factors/factors.component";
 import {ManagementRolesComponent} from "./settings/management/roles/roles.component";
 import {ManagementRoleComponent} from "./settings/management/roles/role/role.component";
 import {MembershipsResolver} from "./resolvers/memberships.resolver";
 import {SettingsResolver} from "./resolvers/settings.resolver";
 import {AuthGuard} from "./guards/auth-guard.service";
 import {HomeComponent} from "./home/home.component";
+import {DomainSettingsFactorsComponent} from "./domain/settings/factors/factors.component";
+import {FactorsResolver} from "./resolvers/factors.resolver";
+import {FactorCreationComponent} from "./domain/settings/factors/creation/factor-creation.component";
+import {FactorComponent} from "./domain/settings/factors/factor/factor.component";
+import {FactorResolver} from "./resolvers/factor.resolver";
+import {EnrolledFactorsResolver} from "./resolvers/enrolled-factors.resolver";
 
 const routes: Routes = [
   {
@@ -634,6 +642,22 @@ const routes: Routes = [
                   }
                 }
               },
+              { path: 'factors',
+                component: ApplicationFactorsComponent,
+                canActivate: [AuthGuard],
+                data: {
+                  menu: {
+                    label: 'Multifactor Auth',
+                    section: 'Security'
+                  },
+                  perms: {
+                    only: ['application_factor_read']
+                  },
+                  types: {
+                    only: ['WEB', 'NATIVE', 'BROWSER']
+                  }
+                }
+              },
               { path: 'account',
                 component: ApplicationAccountSettingsComponent,
                 canActivate: [AuthGuard],
@@ -644,6 +668,9 @@ const routes: Routes = [
                   },
                   perms: {
                     only: ['application_user_account_read']
+                  },
+                  types: {
+                    only: ['WEB', 'NATIVE', 'BROWSER']
                   }
                 }
               },
@@ -820,6 +847,44 @@ const routes: Routes = [
               { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver } }
             ]
           },
+          { path: 'factors',
+            component: DomainSettingsFactorsComponent,
+            canActivate: [AuthGuard],
+            resolve: {
+              factors: FactorsResolver,
+            },
+            data: {
+              menu: {
+                label: 'Multifactor Auth',
+                section: 'Security'
+              },
+              perms: {
+                only: ['domain_factor_read']
+              }
+            }
+          },
+          { path: 'factors/new',
+            component: FactorCreationComponent,
+            canActivate: [AuthGuard],
+            data: {
+              perms: {
+                only: ['domain_factor_create']
+              }
+            }
+          },
+          {
+            path: 'factors/:factorId',
+            component: FactorComponent,
+            canActivate: [AuthGuard],
+            resolve: {
+              factor: FactorResolver,
+            },
+            data: {
+              perms: {
+                only: ['domain_factor_read']
+              }
+            }
+          },
           { path: 'audits',
             component: AuditsComponent,
             canActivate: [AuthGuard],
@@ -947,6 +1012,7 @@ const routes: Routes = [
               { path: 'profile', component: UserProfileComponent },
               { path: 'applications', component: UserApplicationsComponent, resolve: {consents: ConsentsResolver}},
               { path: 'applications/:clientId', component: UserApplicationComponent, resolve: {consents: ConsentsResolver}},
+              { path: 'factors', component: UserFactorsComponent, resolve: {factors: EnrolledFactorsResolver}},
               { path: 'roles', component: UserRolesComponent, resolve: { roles : UserRolesResolver}}
             ]
           },

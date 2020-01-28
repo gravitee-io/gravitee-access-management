@@ -33,7 +33,7 @@ export class SidenavSettingsComponent implements OnInit {
               private authGuard: AuthGuard) { }
 
   ngOnInit() {
-    const currentSnapshot = this.currentRoute.root.firstChild.snapshot;
+    const currentSnapshot = this.currentRoute.snapshot;
     this.router.config.filter(r => r.path ===  this.filterLvl1).forEach(r => {
       r.children.filter(r => r.path === this.filterLvl2).forEach(r => {
         if (this.filterLvl3) {

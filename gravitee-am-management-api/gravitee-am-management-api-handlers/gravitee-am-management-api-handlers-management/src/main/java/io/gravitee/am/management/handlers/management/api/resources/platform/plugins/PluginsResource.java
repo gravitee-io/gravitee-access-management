@@ -55,4 +55,9 @@ public class PluginsResource {
     public PoliciesPluginResource getPoliciesPlugins() {
         return resourceContext.getResource(PoliciesPluginResource.class);
     }
+
+    @Path("factors")
+    public FactorsPluginResource getFactorsPlugins() {
+        return resourceContext.getResource(FactorsPluginResource.class);
+    }
 }

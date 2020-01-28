@@ -17,6 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Completable;
@@ -55,6 +56,8 @@ public interface UserService {
 
     Single<User> revokeRoles(String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
 
+    Single<User> enrollFactors(String userId, List<EnrolledFactor> factors, io.gravitee.am.identityprovider.api.User principal);
+
     default Single<User> create(String domain, NewUser newUser) {
         return create(domain, newUser, null);
     }
@@ -89,6 +92,10 @@ public interface UserService {
 
     default Single<User> revokeRoles(String userId, List<String> roles) {
         return revokeRoles(userId, roles, null);
+    }
+
+    default Single<User> enrollFactors(String userId, List<EnrolledFactor> factors) {
+        return enrollFactors(userId, factors, null);
     }
 
 }

@@ -225,4 +225,12 @@ export class PlatformService {
   forms(template): Observable<any>  {
     return this.http.get<any>(this.platformURL + 'forms?template=' + template);
   }
+
+  factors(): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'plugins/factors');
+  }
+
+  factorSchema(id): Observable<any> {
+    return this.http.get<any>(this.platformURL + 'plugins/factors/' + id + '/schema');
+  }
 }

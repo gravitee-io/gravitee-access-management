@@ -96,6 +96,7 @@ import { DomainSettingsEmailComponent } from "./domain/settings/emails/email/ema
 import { DomainSettingsAccountComponent } from "./domain/settings/account/account.component";
 import { DomainSettingsPoliciesComponent, PoliciesInfoDialog } from "./domain/settings/policies/policies.component";
 import { DomainSettingsMembershipsComponent } from "./domain/settings/memberships/memberships.component";
+import { DomainSettingsFactorsComponent } from "./domain/settings/factors/factors.component";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
 import { ProviderResolver } from "./resolvers/provider.resolver";
 import { ProviderSettingsComponent } from './domain/settings/providers/provider/settings/settings.component';
@@ -136,6 +137,7 @@ import { UserProfileComponent } from './domain/settings/users/user/profile/profi
 import { UserApplicationsComponent } from './domain/settings/users/user/applications/applications.component';
 import { UserApplicationComponent } from './domain/settings/users/user/applications/application/application.component';
 import { AddUserRolesComponent, UserRolesComponent } from './domain/settings/users/user/roles/roles.component';
+import { UserFactorsComponent} from "./domain/settings/users/user/factors/factors.component";
 import { UserService} from "./services/user.service";
 import { UsersResolver } from "./resolvers/users.resolver";
 import { UserResolver } from "./resolvers/user.resolver";
@@ -220,6 +222,7 @@ import { ApplicationScopeComponent } from "./domain/applications/application/adv
 import { ApplicationCertificatesComponent } from "./domain/applications/application/advanced/certificates/certificates.component";
 import { ApplicationMetadataComponent } from "./domain/applications/application/advanced/metadata/metadata.component";
 import { ApplicationMembershipsComponent } from "./domain/applications/application/advanced/memberships/memberships.component";
+import { ApplicationFactorsComponent } from "./domain/applications/application/advanced/factors/factors.component";
 import { ManagementRolesComponent } from "./settings/management/roles/roles.component";
 import { ManagementRoleComponent } from "./settings/management/roles/role/role.component";
 import { MembershipsResolver } from "./resolvers/memberships.resolver";
@@ -238,6 +241,15 @@ import { WidgetChartGaugeComponent } from "./components/widget/chart-gauge/widge
 import { WidgetDataTableComponent } from "./components/widget/data-table/widget-data-table.component";
 import { WidgetCountComponent } from './components/widget/count/widget-count.component';
 import { LoaderComponent } from "./components/loader/loader.component";
+import { FactorsResolver} from "./resolvers/factors.resolver";
+import { FactorService } from "./services/factor.service";
+import { FactorComponent } from "./domain/settings/factors/factor/factor.component";
+import { FactorCreationComponent } from "./domain/settings/factors/creation/factor-creation.component";
+import { FactorCreationStep1Component } from "./domain/settings/factors/creation/steps/step1/step1.component";
+import { FactorCreationStep2Component } from "./domain/settings/factors/creation/steps/step2/step2.component";
+import { FactorFormComponent } from "./domain/settings/factors/factor/form/form.component";
+import { FactorResolver } from "./resolvers/factor.resolver";
+import { EnrolledFactorsResolver } from "./resolvers/enrolled-factors.resolver";
 
 @NgModule({
   declarations: [
@@ -270,6 +282,7 @@ import { LoaderComponent } from "./components/loader/loader.component";
     DomainSettingsAccountComponent,
     DomainSettingsPoliciesComponent,
     DomainSettingsMembershipsComponent,
+    DomainSettingsFactorsComponent,
     ConfirmComponent,
     EmptystateComponent,
     DomainCreationComponent,
@@ -300,6 +313,11 @@ import { LoaderComponent } from "./components/loader/loader.component";
     ExtensionGrantCreationStep1Component,
     ExtensionGrantCreationStep2Component,
     ExtensionGrantFormComponent,
+    FactorComponent,
+    FactorCreationComponent,
+    FactorCreationStep1Component,
+    FactorCreationStep2Component,
+    FactorFormComponent,
     SnackbarComponent,
     NavbarComponent,
     SettingsComponent,
@@ -314,6 +332,7 @@ import { LoaderComponent } from "./components/loader/loader.component";
     UserApplicationsComponent,
     UserApplicationComponent,
     UserRolesComponent,
+    UserFactorsComponent,
     AddUserRolesComponent,
     ScopeCreationComponent,
     ScopeComponent,
@@ -369,6 +388,7 @@ import { LoaderComponent } from "./components/loader/loader.component";
     ApplicationCertificatesComponent,
     ApplicationMetadataComponent,
     ApplicationMembershipsComponent,
+    ApplicationFactorsComponent,
     ManagementRolesComponent,
     ManagementRoleComponent,
     MembershipsComponent,
@@ -458,6 +478,10 @@ import { LoaderComponent } from "./components/loader/loader.component";
     SettingsResolver,
     ApplicationPermissionsResolver,
     DomainPermissionsResolver,
+    FactorService,
+    FactorsResolver,
+    FactorResolver,
+    EnrolledFactorsResolver,
     AuthGuard,
     AnalyticsService,
     {

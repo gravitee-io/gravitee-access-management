@@ -18,8 +18,8 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {SnackbarService} from "../../../../services/snackbar.service";
 import {ApplicationService} from "../../../../services/application.service";
 import {DialogService} from "../../../../services/dialog.service";
-import * as _ from 'lodash';
 import {AuthService} from "../../../../services/auth.service";
+import * as _ from 'lodash';
 
 @Component({
   selector: 'application-general',
@@ -39,6 +39,7 @@ export class ApplicationGeneralComponent implements OnInit {
   editMode: boolean;
   deleteMode: boolean;
   renewSecretMode: boolean;
+  factors: any[];
   applicationTypes: any[] = [
     {
       name: 'Web',
@@ -73,6 +74,7 @@ export class ApplicationGeneralComponent implements OnInit {
     this.applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
     this.applicationAdvancedSettings = this.application.settings == null ? {} : this.application.settings.advanced || {};
     this.applicationOAuthSettings.redirectUris = this.applicationOAuthSettings.redirectUris || [];
+    this.application.factors = this.application.factors || [];
     this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) {
       return {value: item};
     });
@@ -83,18 +85,19 @@ export class ApplicationGeneralComponent implements OnInit {
 
 
   update() {
-    let data: any = {};
+    const data: any = {};
     data.name = this.application.name;
     data.description = this.application.description;
     data.settings = {};
     data.settings.oauth = { 'redirectUris' : _.map(this.redirectUris, 'value') };
     data.settings.advanced = { 'skipConsent' : this.applicationAdvancedSettings.skipConsent };
-    this.applicationService.patch(this.domainId, this.application.id, data).subscribe(data => {
-      this.application = data;
+    data.factors = this.application.factors;
+    this.applicationService.patch(this.domainId, this.application.id, data).subscribe(response => {
+      this.application = response;
       this.application.type = this.application.type.toUpperCase();
       this.form.reset(this.application);
       this.formChanged = false;
-      this.snackbarService.open("Application updated");
+      this.snackbarService.open('Application updated');
     });
   }
 
@@ -105,7 +108,7 @@ export class ApplicationGeneralComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.applicationService.delete(this.domainId, this.application.id).subscribe(response => {
-            this.snackbarService.open("Application deleted");
+            this.snackbarService.open('Application deleted');
             this.router.navigate(['/domains', this.domainId, 'applications']);
           });
         }
@@ -120,7 +123,7 @@ export class ApplicationGeneralComponent implements OnInit {
         if (res) {
           this.applicationService.renewClientSecret(this.domainId, this.application.id).subscribe(data => {
             this.application = data;
-            this.snackbarService.open("Client secret updated");
+            this.snackbarService.open('Client secret updated');
           });
         }
       });
@@ -158,5 +161,9 @@ export class ApplicationGeneralComponent implements OnInit {
 
   valueCopied(message: string) {
     this.snackbarService.open(message);
+  }
+
+  displaySection(): boolean {
+    return this.application.type !== 'SERVICE';
   }
 }

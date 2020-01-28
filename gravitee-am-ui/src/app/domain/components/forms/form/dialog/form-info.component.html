@@ -273,6 +273,84 @@
         </html>
       ]]>
     </pre>
+    <pre *ngIf="data.rawTemplate === 'MFA_ENROLL'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>MFA Enroll</title>
+        </head>
+        <body>
+            <form role="form" th:action="${action}" method="post" th:each="factor : ${factors}">
+                <div th:if="${factor.factorType == 'TOTP'}" >
+                    <div>
+                        <ul>
+                            <li>
+                                <span>1. Download a mobile app</span>
+                                <span>Download and install a two-factor authenticator application like <i>FreeOTP</i> or <i>Google Authenticator</i>.</span>
+                            </li>
+                            <li>
+                                <span>2. Configure the app</span>
+                                <span>Open the application and scan the barcode. A one-time password code will be displayed to the screen.</span>
+                            </li>
+                            <li>
+                                <span>3. Finish set up</span>
+                                <span>Go to the next step and enter the code provided by the application.</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <img th:src="${factor.enrollment.barcode}" width="200" />
+                    </div>
+                    <input type="hidden" th:name="sharedSecret" th:value="${factor.enrollment.key}" />
+                </div>
+                <input type="hidden" th:name="factorId" th:value="${factor.id}" />
+                <div>
+                    <button type="submit" name="user_mfa_enrollment" value="false">Skip for now</button>
+                    <button type="submit" name="user_mfa_enrollment" value="true">Next</button>
+                </div>
+            </form>
+        </body>
+        </html>
+      ]]>
+    </pre>
+    <pre *ngIf="data.rawTemplate === 'MFA_CHALLENGE'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>MFA Challenge</title>
+        </head>
+        <body>
+            <form role="form" th:action="${action}" method="post">
+                <div>
+                    <ul>
+                        <li>
+                            <span>
+                                <span>Enter code</span>
+                                <span>Please type in the code displayed on your multi-factor authenticator app from your device.</span>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <input type="text" id="code" name="code" placeholder="Code" required/>
+                    <label for="code">Code</label>
+                </div>
+
+                <div th:if="${error}">
+                    <span>
+                        <span>mfa_challenge_failed</span>
+                         <small>Invalid code</small>
+                    </span>
+                </div>
+                <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
+                <button type="submit">Verify</button>
+            </form>
+        </body>
+        </html>
+      ]]>
+    </pre>
   </mat-dialog-content>
   <mat-dialog-actions>
     <span fxFlex></span>

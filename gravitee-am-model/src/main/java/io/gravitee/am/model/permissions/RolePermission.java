@@ -52,6 +52,7 @@ public enum RolePermission {
     DOMAIN_REPORTER(RoleScope.DOMAIN, DomainPermission.REPORTER),
     DOMAIN_MEMBER(RoleScope.DOMAIN, DomainPermission.MEMBER),
     DOMAIN_ANALYTICS(RoleScope.DOMAIN, DomainPermission.ANALYTICS),
+    DOMAIN_FACTOR(RoleScope.DOMAIN, DomainPermission.FACTOR),
 
     APPLICATION_SETTINGS(RoleScope.APPLICATION, ApplicationPermission.SETTINGS),
     APPLICATION_IDENTITY_PROVIDER(RoleScope.APPLICATION, ApplicationPermission.IDENTITY_PROVIDER),
@@ -61,7 +62,8 @@ public enum RolePermission {
     APPLICATION_OAUTH2(RoleScope.APPLICATION, ApplicationPermission.METADATA),
     APPLICATION_USER_ACCOUNT(RoleScope.APPLICATION, ApplicationPermission.USER_ACCOUNT),
     APPLICATION_CERTIFICATE(RoleScope.APPLICATION, ApplicationPermission.CERTIFICATE),
-    APPLICATION_MEMBER(RoleScope.APPLICATION, ApplicationPermission.MEMBER);
+    APPLICATION_MEMBER(RoleScope.APPLICATION, ApplicationPermission.MEMBER),
+    APPLICATION_FACTOR(RoleScope.APPLICATION, ApplicationPermission.FACTOR);
 
     RoleScope scope;
     Permission permission;

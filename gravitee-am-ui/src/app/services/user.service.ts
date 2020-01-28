@@ -109,4 +109,12 @@ export class UserService {
     }
     return this.http.post<any>(this.usersURL + domainId + "/users/" + userId + "/roles", roles);
   }
+
+  factors(domainId, userId): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/factors');
+  }
+
+  removeFactor(domainId, userId, factorId): Observable<any> {
+    return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/factors/' + factorId);
+  }
 }

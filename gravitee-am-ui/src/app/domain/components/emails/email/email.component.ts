@@ -118,6 +118,14 @@ export class EmailComponent implements OnInit, AfterViewInit {
     return this.emailFound ? this.editMode : this.createMode;
   }
 
+  save() {
+    if (!this.emailFound) {
+      this.create();
+    } else {
+      this.update();
+    }
+  }
+
   create() {
     this.email['content'] = this.emailContent;
     this.emailService.create(this.domainId, this.appId, this.email).subscribe(data => {

@@ -18,7 +18,9 @@
 <div class="application-form-container" fxFlex="70">
   <a [routerLink]="['..']"><small><< Back to forms</small></a>
   <div class="application-form-content">
-    <app-form></app-form>
+    <app-form [createMode]="createMode"
+              [editMode]="editMode"
+              [deleteMode]="deleteMode"></app-form>
   </div>
 </div>
 <div class="application-form-description" fxFlex>

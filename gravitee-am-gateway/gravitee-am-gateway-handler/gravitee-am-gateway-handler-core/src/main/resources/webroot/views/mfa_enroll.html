@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MFA Enroll</title>
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{../assets/material/material.blue_grey-blue.min.css}">
+    <link rel="stylesheet" th:href="@{../assets/material/material.icons.css}">
+    <link rel="stylesheet" th:href="@{../assets/font-awesome/css/font-awesome.min.css}">
+    <link rel="stylesheet" th:href="@{../assets/css/mfa_enroll.css}">
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="@{../assets/ico/favicon.ico}">
+</head>
+<body>
+<div class="mdl-layout mdl-js-layout">
+    <div class="mfa-enroll-container">
+        <div class="mfa-enroll-form">
+            <div class="mfa-enroll-form-title">
+                <label>Multi-Factor Auth Setup</label>
+            </div>
+            <form role="form" th:action="${action}" method="post" th:each="factor : ${factors}">
+                <div th:if="${factor.factorType == 'TOTP'}" class="mfa-enroll-form-description">
+                    <div>
+                        <ul class="mdl-list">
+                            <li class="mdl-list__item mdl-list__item--three-line">
+                                <span class="mdl-list__item-primary-content">
+                                    <i class="material-icons mdl-list__item-avatar">cloud_download</i>
+                                    <span>1. Download a mobile app</span>
+                                    <span class="mdl-list__item-text-body">
+                                        Download and install a two-factor authenticator application like <i>FreeOTP</i> or <i>Google Authenticator</i>.
+                                    </span>
+                                </span>
+                            </li>
+                            <li class="mdl-list__item mdl-list__item--three-line">
+                                <span class="mdl-list__item-primary-content">
+                                  <i class="material-icons  mdl-list__item-avatar">settings</i>
+                                  <span>2. Configure the app</span>
+                                  <span class="mdl-list__item-text-body">
+                                      Open the application and scan the barcode. A one-time password code will be displayed to the screen.
+                                  </span>
+                                </span>
+                            </li>
+                            <li class="mdl-list__item mdl-list__item--three-line">
+                                <span class="mdl-list__item-primary-content">
+                                    <i class="material-icons  mdl-list__item-avatar">rotate_right</i>
+                                    <span>3. Finish set up</span>
+                                    <span class="mdl-list__item-text-body">
+                                        Go to the next step and enter the code provided by the application.
+                                    </span>
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <img th:src="${factor.enrollment.barcode}" width="200" />
+                    </div>
+                    <input type="hidden" th:name="sharedSecret" th:value="${factor.enrollment.key}" />
+                </div>
+                <input type="hidden" th:name="factorId" th:value="${factor.id}" />
+                <div class="mfa-enroll-form-actions">
+                    <button type="submit" name="user_mfa_enrollment" value="false" class="button--skipped">Skip for now</button>
+                    <span style="flex: 1 1 0%;"></span>
+                    <button type="submit" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!--[if lt IE 10]>
+<script th:src="@{assets/js/placeholder.js}"></script>
+<![endif]-->
+<script th:src="@{../assets/material/material.min.js}"></script>
+<script th:src="@{../assets/js/jquery-1.11.1.min.js}"></script>
+<script>
+    $(".mdl-textfield__input").focus(function() {
+        if (!this.value) {
+            $(this).prop('required', true);
+            $(this).parent().addClass('is-invalid');
+        }
+    });
+    $(".mdl-button[type='submit']").click(function(event) {
+        $(this).siblings(".mdl-textfield").addClass('is-invalid');
+        $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
+    });
+</script>
+</body>
+</html>

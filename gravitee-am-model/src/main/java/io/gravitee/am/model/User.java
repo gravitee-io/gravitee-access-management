@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
@@ -97,6 +98,8 @@ public class User {
 
     private long loginsCount;
 
+    private List<EnrolledFactor> factors;
+
     private Map<String, Object> additionalInformation;
 
     private Date loggedAt;
@@ -143,6 +146,7 @@ public class User {
         this.source = other.source;
         this.client = other.client;
         this.loginsCount = other.loginsCount;
+        this.factors = other.factors != null ? new ArrayList<>(other.factors) : null;
         this.additionalInformation = other.additionalInformation != null ? new HashMap<>(other.additionalInformation) : null;
         this.loggedAt = other.loggedAt;
         this.createdAt = other.createdAt;
@@ -423,6 +427,14 @@ public class User {
 
     public void setLoginsCount(long loginsCount) {
         this.loginsCount = loginsCount;
+    }
+
+    public List<EnrolledFactor> getFactors() {
+        return factors;
+    }
+
+    public void setFactors(List<EnrolledFactor> factors) {
+        this.factors = factors;
     }
 
     public Date getLoggedAt() {

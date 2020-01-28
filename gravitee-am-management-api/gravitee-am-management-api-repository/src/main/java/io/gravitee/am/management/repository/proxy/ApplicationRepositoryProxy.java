@@ -64,6 +64,11 @@ public class ApplicationRepositoryProxy extends AbstractProxy<ApplicationReposit
     }
 
     @Override
+    public Single<Set<Application>> findByFactor(String factor) {
+        return target.findByFactor(factor);
+    }
+
+    @Override
     public Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
         return target.findByDomainAndExtensionGrant(domain, extensionGrant);
     }

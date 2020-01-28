@@ -30,6 +30,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
@@ -366,6 +367,19 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<User> revokeRoles(String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal) {
         return assignRoles0(userId, roles, principal, true);
+    }
+
+    @Override
+    public Single<User> enrollFactors(String userId, List<EnrolledFactor> factors, io.gravitee.am.identityprovider.api.User principal) {
+        return userService.findById(userId)
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                .flatMapSingle(oldUser -> {
+                    User userToUpdate = new User(oldUser);
+                    userToUpdate.setFactors(factors);
+                    return userService.update(userToUpdate)
+                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(oldUser)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)));
+                });
     }
 
     private Single<User> assignRoles0(String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal, boolean revoke) {
