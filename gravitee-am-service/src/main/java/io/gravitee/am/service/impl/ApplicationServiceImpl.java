@@ -207,13 +207,14 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setType(newApplication.getType());
         application.setDomain(domain);
 
-        if (newApplication.getRedirectUris() != null) {
-            ApplicationSettings applicationSettings = new ApplicationSettings();
-            ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
-            oAuthSettings.setRedirectUris(newApplication.getRedirectUris());
-            applicationSettings.setOauth(oAuthSettings);
-            application.setSettings(applicationSettings);
-        }
+        // set OAuth 2.0 settings
+        ApplicationSettings applicationSettings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setClientId(newApplication.getClientId());
+        oAuthSettings.setClientSecret(newApplication.getClientSecret());
+        oAuthSettings.setRedirectUris(newApplication.getRedirectUris());
+        applicationSettings.setOauth(oAuthSettings);
+        application.setSettings(applicationSettings);
 
         // apply templating
         applicationTemplateManager.apply(application);

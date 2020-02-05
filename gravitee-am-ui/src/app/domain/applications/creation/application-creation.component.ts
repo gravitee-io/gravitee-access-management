@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ViewChild} from '@angular/core';
-import {MatStepper} from "@angular/material";
-import {ApplicationService} from "../../../services/application.service";
-import {SnackbarService} from "../../../services/snackbar.service";
-import {ActivatedRoute, Router} from "@angular/router";
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {MatStepper} from '@angular/material';
+import {ActivatedRoute, Router} from '@angular/router';
+import {ApplicationService} from '../../../services/application.service';
+import {SnackbarService} from '../../../services/snackbar.service';
 
 @Component({
   selector: 'app-creation',
   templateUrl: './application-creation.component.html',
   styleUrls: ['./application-creation.component.scss']
 })
-export class ApplicationCreationComponent {
+export class ApplicationCreationComponent implements OnInit {
   public application: any = {};
   private domainId: string;
   @ViewChild ('stepper') stepper: MatStepper;
@@ -40,14 +40,16 @@ export class ApplicationCreationComponent {
   }
 
   create() {
-    let app: any = {};
+    const app: any = {};
     app.name = this.application.name;
     app.type = this.application.type;
     app.description = this.application.description;
+    app.clientId = this.application.clientId;
+    app.clientSecret = this.application.clientSecret;
     app.redirectUris = this.application.redirectUri ? [this.application.redirectUri] : null;
 
     this.applicationService.create(this.application.domain, app).subscribe(data => {
-      this.snackbarService.open("Application " + data.name + " created");
+      this.snackbarService.open('Application ' + data.name + ' created');
       // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
       this.router.navigateByUrl('/dummy', { skipLocationChange: true })
         .then(() => this.router.navigate(['/domains', this.application.domain, 'applications', data.id]));
