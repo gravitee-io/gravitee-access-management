@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, ViewChild } from '@angular/core';
-import { MatStepper } from "@angular/material";
+import {Component, ViewChild} from '@angular/core';
+import {MatStepper} from '@angular/material';
+import {Router} from '@angular/router';
+import {CertificateService} from '../../../../services/certificate.service';
+import {SnackbarService} from '../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-certificate-creation',
@@ -23,7 +26,23 @@ import { MatStepper } from "@angular/material";
 })
 export class CertificateCreationComponent {
   public certificate: any = {};
+  private domainId: string;
+  configurationIsValid = false;
   @ViewChild ('stepper') stepper: MatStepper;
 
-  constructor() { }
+  constructor(private certificateService: CertificateService,
+              private snackbarService: SnackbarService,
+              private router: Router) { }
+
+  create() {
+    this.certificate.configuration = JSON.stringify(this.certificate.configuration);
+    this.certificateService.create(this.domainId, this.certificate).subscribe(data => {
+      this.snackbarService.open('Certificate ' + data.name + ' created');
+      this.router.navigate(['/domains', this.domainId, 'settings', 'certificates', data.id]);
+    });
+  }
+
+  stepperValid() {
+    return this.certificate && this.certificate.name && this.configurationIsValid;
+  }
 }

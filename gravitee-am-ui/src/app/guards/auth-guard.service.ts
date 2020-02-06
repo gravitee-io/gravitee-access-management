@@ -64,7 +64,7 @@ export class AuthGuard implements CanActivate {
     // if resource (application) should not display a settings page, continue
     if (path.data.types && path.data.types.only && path.data.types.only.length > 0) {
       const app = route.parent.data['application'];
-      if (app && path.data.types.only.indexOf(app.type) === -1) {
+      if (app && path.data.types.only.indexOf(app.type.toUpperCase()) === -1) {
         return false;
       }
     }

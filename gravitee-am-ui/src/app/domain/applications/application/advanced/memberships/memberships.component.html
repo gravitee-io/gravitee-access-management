@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="application-memberships-container">
+<div>
   <div fxLayout="row">
     <div fxFlex="70">
       <app-memberships [members]="members"
@@ -28,9 +28,9 @@
                        (membershipDeleted)="delete($event)"
                        (membershipUpdated)="update($event)"></app-memberships>
     </div>
-    <div class="application-memberships-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Application access</h3>
-      <div class="application-memberships-description-content">
+      <div class="gv-page-description-content">
         <p>
           Grant access to this application by adding users and groups.
         </p>

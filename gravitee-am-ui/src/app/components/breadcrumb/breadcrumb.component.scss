@@ -1,20 +1,19 @@
-/deep/ ul {
+:host /deep/ ul {
   display: flex;
   list-style-type: none;
   padding-left: 20px;
   li {
     &:not(:last-child):after {
-      content: '/';
+      content: '>';
       margin-left: 5px;
-      margin-right: 10px;
+      margin-right: 5px;
+      font-weight: 500;
     }
 
     a {
       color: #006CAB;
       cursor: pointer;
-
       &:hover {
-        color: #2196f3;
         text-decoration: underline;
       }
     }

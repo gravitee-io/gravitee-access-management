@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<div class="domain-client-registration-templates-container">
-  <div class="domain-client-registration-templates-content" *ngIf="dcrIsEnabled && templateIsEnabled">
-    <div class="templates-container" fxLayout="column" fxFlex="70">
-      <div class="gs-form-section">
+<div>
+  <div *ngIf="dcrIsEnabled && templateIsEnabled">
+    <div fxLayout="column" fxFlex="70">
+      <div class="gv-form-section" fxLayout="column">
         <mat-form-field>
           <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter">
         </mat-form-field>
 
-        <table mat-table [dataSource]="apps" matSort matSortActive="template" matSortDirection="desc" class="mat-elevation-z8">
+        <table mat-table [dataSource]="apps" matSort matSortActive="template" matSortDirection="desc">
           <!-- ID Column -->
           <ng-container matColumnDef="id">
             <th mat-header-cell *matHeaderCellDef mat-sort-header> Id </th>
@@ -60,9 +60,9 @@
       </div>
     </div>
 
-    <div class="domain-client-registration-templates-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Application templates</h3>
-      <div class="domain-client-registration-templates-description-content">
+      <div class="gv-page-description-content">
         <p>
           This section is used to define some applications as a template when registering new app through the dynamic client registration endpoint.
           And thus, they will no longer be able to be used for authentication purpose.

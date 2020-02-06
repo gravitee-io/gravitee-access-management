@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute} from '@angular/router';
+import * as _ from 'lodash';
 
 @Component({
   selector: 'application-creation-step2',
@@ -26,6 +27,23 @@ export class ApplicationCreationStep2Component implements OnInit {
   @ViewChild('appForm') form: any;
   domains: any[];
   domainId: string;
+  applicationTypes: any[] = [
+    {
+      icon: 'language',
+      type: 'WEB'
+    },
+    {
+      icon: 'web',
+      type: 'BROWSER',
+    },
+    {
+      icon: 'devices_other',
+      type: 'NATIVE',
+    },
+    {
+      icon: 'storage',
+      type: 'SERVICE',
+    }];
 
   constructor(private route: ActivatedRoute) { }
 
@@ -34,8 +52,8 @@ export class ApplicationCreationStep2Component implements OnInit {
     this.domains = this.route.snapshot.data['domains'];
   }
 
-  logoUrl(app) {
-    return 'assets/application-type-icons/' + app.type.toLowerCase() + '.png';
+  icon(app) {
+    return _.find(this.applicationTypes, function (a) { return a.type === app.type }).icon;
   }
 
   displayRedirectUri(): boolean {

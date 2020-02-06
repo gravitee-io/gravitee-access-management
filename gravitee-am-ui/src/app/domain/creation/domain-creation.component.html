@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div class="new-domain-container">
-  <a *ngIf="displayNavLink" [routerLink]="['']" class="back-link"><small><< <mat-icon>home</mat-icon></small></a>
+<div class="gv-page-container">
+  <a *ngIf="displayNavLink" [routerLink]="['']" class="gv-back-link"><small><< <mat-icon>home</mat-icon></small></a>
   <h1>New domain</h1>
-  <div class="new-domain-content">
+  <div class="gv-page-content">
     <form (ngSubmit)="create()" #domainForm="ngForm" fxLayout="column" fxFlex="70">
-      <div class="gs-form-section">
+      <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required>
           <mat-hint>A name for your security domain. The security domain's name is used to generate the security domain's path. The security domain's path will be used as a context path for the API operations.</mat-hint>
@@ -35,9 +35,9 @@
         <a mat-stroked-button [routerLink]="['']">CANCEL</a>
       </div>
     </form>
-    <div class="new-domain-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Security domain ?</h3>
-      <div class="new-domain-description-content">
+      <div class="gv-page-description-content">
         <p>
           Security domain will let you create clients, register users and manage identity providers to provide centralize authentication, authorization and user management.
         </p>

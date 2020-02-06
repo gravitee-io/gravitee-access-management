@@ -21,7 +21,7 @@
   <div class="scope-content">
     <div fxLayout="column" fxFlex="70">
       <form (keydown.enter)="false" (ngSubmit)="update()" #scopeForm="ngForm" fxLayout="column">
-        <div class="gs-form-section">
+        <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Key</mat-label>
             <input matInput type="text" placeholder="Key" name="key" [(ngModel)]="scope.key" disabled>
@@ -47,8 +47,8 @@
           </div>
         </div>
 
-        <div class="gs-form-section">
-          <div class="gs-form-section-title">
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
             <h5>User consent</h5>
             <small>Expiry/lapsing period for consent after which the user would need to confirm that scope.</small>
             <mat-divider></mat-divider>
@@ -60,12 +60,14 @@
               <span *ngIf="!scope.expiresIn" style="color: grey; font-style: italic;">No time set</span>
               <span *ngIf="scope.expiresIn">{{ getScopeExpiry() }} <button *ngIf="editMode" mat-icon-button (click)="clearExpiry()" matTooltip="Clear expiry period"><mat-icon>clear</mat-icon></button></span>
             </p>
-            <div fxLayout="row" *ngIf="editMode">
-              <mat-form-field fxFlex style="margin-right: 20px;">
+            <div fxLayout="row" *ngIf="editMode" fxLayoutGap="20px">
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>Duration time</mat-label>
                 <input matInput type="number" placeholder="Duration time" name="expiresIn" min="0" [min]="0" [(ngModel)]="expiresIn">
                 <mat-hint>The duration for the user consent.</mat-hint>
               </mat-form-field>
-              <mat-form-field fxFlex style="margin-right: 20px;">
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>Unit time</mat-label>
                 <mat-select placeholder="Unit time" name="unitTime" [(ngModel)]="unitTime">
                   <mat-option value="seconds">SECONDS</mat-option>
                   <mat-option value="minutes">MINUTES</mat-option>

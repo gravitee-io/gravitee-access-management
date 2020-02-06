@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div *ngIf="group" class="group-container">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to groups</small></a>
+<div *ngIf="group" class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to groups</small></a>
   <h1>{{group.name}}</h1>
-  <nav mat-tab-nav-bar>
+  <nav mat-tab-nav-bar color="accent">
     <a mat-tab-link
        *ngFor="let link of navLinks"
        [routerLink]="link.href"

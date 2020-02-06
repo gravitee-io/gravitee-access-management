@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div class="user-application-container" fxFlex="70">
-  <a [routerLink]="['..']"><small><< Back to authorized apps</small></a>
-  <div class="user-application-content">
+<div fxFlex="70">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to authorized apps</small></a>
+  <div>
     <div fxLayout="row" style="align-items: center;">
       <h1>{{clientId}}</h1>
       <div fxFlex fxLayoutAlign="end">
@@ -56,17 +56,17 @@
       </ngx-datatable-column>
       <ngx-datatable-column [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="user-application-actions">
-            <button *ngIf="row.status === 'approved' && canRevoke" mat-icon-button (click)="revokeConsent($event, row);"><mat-icon matTooltip="Revoke access">highlight_off</mat-icon></button>
+          <div fxLayout="row" class="gv-table-cell-actions">
+            <button *ngIf="row.status === 'approved' && canRevoke" mat-icon-button (click)="revokeConsent($event, row);"><mat-icon matTooltip="Revoke access" style="color: #f44336;">highlight_off</mat-icon></button>
           </div>
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>
   </div>
 </div>
-<div class="user-application-description" fxFlex>
+<div class="gv-page-description" fxFlex>
   <h3>Authorized application</h3>
-  <div class="user-application-description-content">
+  <div class="gv-page-description-content">
     <p>
       Application act on behalf the user to access data based on the permissions the user grant them.
     </p>

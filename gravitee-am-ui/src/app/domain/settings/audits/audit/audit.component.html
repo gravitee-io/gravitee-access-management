@@ -15,42 +15,61 @@
     limitations under the License.
 
 -->
-<div class="audit-container">
+<div class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to Audit Log</small></a>
   <h1>Audit log detail</h1>
-  <a [routerLink]="['..']"><small><< Back to Audit Log</small></a>
   <div class="audit-content" fxLayout="row">
     <form fxLayout="column" fxFlex="70">
-      <mat-chip-list #chipList style="position: absolute; margin-top: -35px; margin-left: -10px;">
-        <mat-chip [color]="audit.outcome?.status === 'SUCCESS'? 'accent':'warn'" selected>
-          {{audit.outcome?.status}}
-        </mat-chip>
-      </mat-chip-list>
-      <mat-form-field *ngIf="audit.timestamp">
-        <input matInput placeholder="Timestamp" disabled [value]="audit.timestamp | date: 'dd/MM/yyyy HH:mm:ss.sss'">
-      </mat-form-field>
-      <mat-form-field *ngIf="audit.type">
-        <input matInput placeholder="Event Type" disabled [value]="audit.type">
-      </mat-form-field>
-      <mat-form-field *ngIf="audit.actor?.displayName">
-        <input matInput placeholder="Actor" disabled [value]="audit.actor?.displayName">
-      </mat-form-field>
-      <mat-form-field *ngIf="audit.accessPoint?.alternativeId">
-        <input matInput placeholder="Client" disabled [value]="audit.accessPoint?.alternativeId">
-      </mat-form-field>
-      <mat-form-field *ngIf="audit.accessPoint?.ipAddress">
-        <input matInput placeholder="IP Address" disabled [value]="audit.accessPoint?.ipAddress">
-      </mat-form-field>
-      <mat-form-field *ngIf="audit.accessPoint?.ipAddress">
-        <input matInput placeholder="User Agent" disabled [value]="audit.accessPoint?.userAgent">
-      </mat-form-field>
-      <div *ngIf="audit.outcome?.message" class="audit-message-zone" fxLayout="column">
-        <div style="margin-bottom: 20px;"><strong>Details</strong></div>
-        <codemirror [value]="auditDetails()" [config]="config"></codemirror>
+      <div class="gv-form-section">
+        <mat-chip-list #chipList style="position: absolute; margin-top: -35px; margin-left: -10px;">
+          <mat-chip [color]="audit.outcome?.status === 'SUCCESS'? 'accent':'warn'" selected>
+            {{audit.outcome?.status}}
+          </mat-chip>
+        </mat-chip-list>
+        <mat-form-field *ngIf="audit.timestamp" appearance="outline" floatLabel="always">
+          <mat-label>Timestamp</mat-label>
+          <input matInput placeholder="Timestamp" disabled [value]="audit.timestamp | date: 'dd/MM/yyyy HH:mm:ss.sss'">
+          <mat-hint>Time of the event</mat-hint>
+        </mat-form-field>
+        <mat-form-field *ngIf="audit.type" appearance="outline" floatLabel="always">
+          <mat-label>Event Type</mat-label>
+          <input matInput placeholder="Event Type" disabled [value]="audit.type">
+          <mat-hint>Event type</mat-hint>
+        </mat-form-field>
+        <mat-form-field *ngIf="audit.actor?.displayName" appearance="outline" floatLabel="always">
+          <mat-label>Actor</mat-label>
+          <input matInput placeholder="Actor" disabled [value]="audit.actor?.displayName">
+          <mat-hint>Who triggered the event</mat-hint>
+        </mat-form-field>
+        <mat-form-field *ngIf="audit.accessPoint?.alternativeId" appearance="outline" floatLabel="always">
+          <mat-label>Application</mat-label>
+          <input matInput placeholder="Application" disabled [value]="audit.accessPoint?.alternativeId">
+          <mat-hint>Which application triggered the event</mat-hint>
+        </mat-form-field>
+        <mat-form-field *ngIf="audit.accessPoint?.ipAddress" appearance="outline" floatLabel="always">
+          <mat-label>IP Address</mat-label>
+          <input matInput placeholder="IP Address" disabled [value]="audit.accessPoint?.ipAddress">
+          <mat-hint>Remote IP Address</mat-hint>
+        </mat-form-field>
+        <mat-form-field *ngIf="audit.accessPoint?.ipAddress" appearance="outline" floatLabel="always">
+          <mat-label>User Agent</mat-label>
+          <input matInput placeholder="User Agent" disabled [value]="audit.accessPoint?.userAgent">
+          <mat-hint>Remote Client User Agent</mat-hint>
+        </mat-form-field>
+      </div>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Details</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <codemirror [value]="auditDetails()" [config]="config"></codemirror>
+        </div>
       </div>
     </form>
-    <div class="audit-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Log details</h3>
-      <div class="audit-description-content">
+      <div class="gv-page-description-content">
         <p>View the detailed properties of the audit log event record.</p>
       </div>
     </div>

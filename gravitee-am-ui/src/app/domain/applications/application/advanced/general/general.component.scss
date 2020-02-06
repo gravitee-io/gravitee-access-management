@@ -1,0 +1,22 @@
+.application-settings-delete-zone {
+  color: #f44336;
+  font-size: 75%;
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 2px;
+  border: 1px solid #e2e5e7;
+  mat-list-item {
+    h3 {
+      color: #f44336;
+    }
+    p {
+      white-space: normal;
+      font-size: 75%;
+      color: grey;
+    }
+  }
+}
+
+:host /deep/ .ngx-datatable.material .datatable-footer {
+  display: none;
+}

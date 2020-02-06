@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div class="scim-container">
+<div class="gv-page-container">
   <h1>SCIM</h1>
-  <div class="scim-content">
+  <div>
     <div fxFlex="70">
       <form (ngSubmit)="save()">
-        <div class="gs-form-section" fxLayout="column">
+        <div class="gv-form-section" fxLayout="column">
           <mat-slide-toggle
             (change)="enableSCIM($event)"
             [checked]="isSCIMEnabled()" [disabled]="!editMode">
@@ -34,9 +34,9 @@
         </div>
       </form>
     </div>
-    <div class="scim-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>SCIM ?</h3>
-      <div class="scim-description-content">
+      <div class="gv-page-description-content">
         <p>SCIM is an open standard to enable automated user and group provisioning.</p>
       </div>
     </div>

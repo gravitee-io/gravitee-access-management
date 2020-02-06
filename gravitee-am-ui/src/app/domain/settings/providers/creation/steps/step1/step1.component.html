@@ -15,13 +15,12 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="provider-creation-step1-container">
-  <small>
-    Choose how your users will connect to the Access Management server.
+<div fxLayout="column">
+  <p class="gv-plugin-creation-description">
+    Choose how your users will connect to the authorization server.
     That could be an Active Directory or a corporate authentication service.
-  </small>
-
-  <div fxLayout="row" fxLayoutWrap class="provider-creation-step1-content">
+  </p>
+  <div fxLayout="row wrap" fxFlex fxLayoutGap="10px">
     <mat-card *ngFor="let provider of providers" fxFlex="30">
       <mat-card-header fxLayoutAlign="end end" fxLayout="row">
         <mat-radio-group [(ngModel)]="selectedProviderTypeId" (ngModelChange)="selectProviderType(false)">
@@ -29,14 +28,14 @@
         </mat-radio-group>
       </mat-card-header>
       <mat-card-content>
-        {{provider.name}}
+        {{displayName(provider)}}
       </mat-card-content>
     </mat-card>
   </div>
 
   <div *ngIf="socialProviders">
     <h4>Social</h4>
-    <div fxLayout="row" fxLayoutWrap class="provider-creation-step1-content">
+    <div fxLayout="row" fxLayoutWrap fxLayoutGap="10px">
       <mat-card *ngFor="let provider of socialProviders" fxFlex="30">
         <mat-card-header fxLayoutAlign="end end" fxLayout="row">
           <mat-radio-group [(ngModel)]="selectedProviderTypeId" (ngModelChange)="selectProviderType(true)">
@@ -44,7 +43,7 @@
           </mat-radio-group>
         </mat-card-header>
         <mat-card-content>
-          {{provider.name}}
+          {{displayName(provider)}}
         </mat-card-content>
       </mat-card>
     </div>

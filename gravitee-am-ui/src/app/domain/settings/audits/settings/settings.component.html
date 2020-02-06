@@ -15,12 +15,11 @@
     limitations under the License.
 
 -->
-<div class="audits-settings-container" fxLayout="column">
+<div class="gv-page-container" fxLayout="column">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to Audit Log</small></a>
   <h1>Audit settings</h1>
-  <a [routerLink]="['..']"><small><< Back to Audit Log</small></a>
-
   <div fxLayout="row">
-    <div class="audits-settings-content" fxFlex="70">
+    <div fxFlex="70">
       <ngx-datatable *ngIf="!isEmpty" class="material"
                      [columnMode]="'flex'"
                      [headerHeight]="40"
@@ -48,7 +47,7 @@
         </ngx-datatable-column>
         <ngx-datatable-column [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <div fxLayout="row" class="forms-actions">
+            <div fxLayout="row" class="gv-table-cell-actions">
               <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="Settings">settings</mat-icon></a>
             </div>
           </ng-template>
@@ -59,9 +58,9 @@
                       [message]="'Audit Reporters will appear here'"
                       [icon]="'list'"></app-emptystate>
     </div>
-    <div class="audits-settings-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Audit reporters</h3>
-      <div class="audits-settings-description-content">
+      <div class="gv-page-description-content">
         <p>
           Reporters are used by the platform to report many types of event (e.g Audit logs).
         </p>

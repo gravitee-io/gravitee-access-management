@@ -1,42 +1,20 @@
-.members-container {
-  h1 {
-    font-weight: 400;
-  }
-  ngx-datatable {
-    font-size: 14px;
-    box-shadow: none;
-    .user-header {
-      margin: 10px;
-      align-items: center;
-      .user-avatar {
-        width: 40px;
-        height: 40px;
-        margin: 0 12px 0 0;
-        img {
-          border-radius: 50%;
-        }
-      }
-      .user-information {
-        small {
-          color: rgba(0,0,0,.54);
-        }
+ngx-datatable {
+  .user-header {
+    margin: 10px;
+    align-items: center;
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      margin: 0 12px 0 0;
+      img {
+        border-radius: 50%;
       }
     }
-  }
-  button, a {
-    top: -11px;
-  }
-}
-
-.members-actions {
-  button, a {
-    color: grey;
-  }
-}
-
-/deep/ .ngx-datatable.material .datatable-footer .datatable-pager {
-  ul li:not(:last-child):after {
-    content: none;
+    .user-information {
+      small {
+        color: rgba(0,0,0,.54);
+      }
+    }
   }
 }
 

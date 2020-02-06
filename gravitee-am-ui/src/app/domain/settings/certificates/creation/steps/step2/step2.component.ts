@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input } from '@angular/core';
-import { Router, ActivatedRoute } from "@angular/router";
-import { PlatformService } from "../../../../../../services/platform.service";
-import { CertificateService } from "../../../../../../services/certificate.service";
-import { SnackbarService } from "../../../../../../services/snackbar.service";
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {PlatformService} from '../../../../../../services/platform.service';
 
 @Component({
   selector: 'certificate-creation-step2',
@@ -26,37 +23,20 @@ import { SnackbarService } from "../../../../../../services/snackbar.service";
 })
 export class CertificateCreationStep2Component implements OnInit {
   @Input('certificate') certificate: any;
+  @Input('configurationIsValid') configurationIsValid: boolean;
+  @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   configuration: any;
-  configurationIsValid: boolean = false;
   certificateSchema: any = {};
-  private domainId: string;
 
-  constructor(private platformService: PlatformService, private certificateService: CertificateService,
-              private snackbarService: SnackbarService, private router: Router, private route: ActivatedRoute) { }
+  constructor(private platformService: PlatformService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.platformService.certificateSchema(this.certificate.type).subscribe(data => this.certificateSchema = data);
   }
 
   enableCertificateCreation(configurationWrapper) {
     this.configurationIsValid = configurationWrapper.isValid;
+    this.configurationIsValidChange.emit(this.configurationIsValid);
     this.certificate.configuration = configurationWrapper.configuration;
-  }
-
-  create() {
-    this.certificate.configuration = JSON.stringify(this.certificate.configuration);
-    this.certificateService.create(this.domainId, this.certificate).subscribe(data => {
-      this.snackbarService.open("Certificate " + data.name + " created");
-      this.router.navigate(['/domains', this.domainId, 'settings', 'certificates', data.id]);
-    });
-  }
-
-  get isValid() {
-    if (this.certificate.name && this.configurationIsValid) {
-      return true;
-    } else {
-      return false;
-    }
   }
 }

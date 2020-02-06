@@ -115,9 +115,9 @@ import {ApplicationsComponent} from "./domain/applications/applications.componen
 import {ApplicationsResolver} from "./resolvers/applications.resolver";
 import {ApplicationCreationComponent} from "./domain/applications/creation/application-creation.component";
 import {ApplicationComponent} from "./domain/applications/application/application.component";
+import {ApplicationOverviewComponent} from "./domain/applications/application/overview/overview.component";
 import {ApplicationResolver} from "./resolvers/application.resolver";
 import {ApplicationPermissionsResolver} from "./resolvers/application-permissions.resolver";
-import {ApplicationGeneralComponent} from "./domain/applications/application/general/general.component";
 import {ApplicationIdPComponent} from "./domain/applications/application/idp/idp.component";
 import {ApplicationDesignComponent} from "./domain/applications/application/design/design.component";
 import {ApplicationFormsComponent} from "./domain/applications/application/design/forms/forms.component";
@@ -125,6 +125,7 @@ import {ApplicationFormComponent} from "./domain/applications/application/design
 import {ApplicationEmailsComponent} from "./domain/applications/application/design/emails/emails.component";
 import {ApplicationEmailComponent} from "./domain/applications/application/design/emails/email/email.component";
 import {ApplicationAdvancedComponent} from "./domain/applications/application/advanced/advanced.component";
+import {ApplicationGeneralComponent} from "./domain/applications/application/advanced/general/general.component";
 import {ApplicationAccountSettingsComponent} from "./domain/applications/application/advanced/account/account.component";
 import {ApplicationOAuth2Component} from "./domain/applications/application/advanced/oauth2/oauth2.component";
 import {ApplicationCertificatesComponent} from "./domain/applications/application/advanced/certificates/certificates.component";
@@ -163,7 +164,7 @@ const routes: Routes = [
         data: {
           menu: {
             label: 'Domains',
-            icon: 'view_module'
+            icon: 'developer_board'
           }
         }
       },
@@ -532,8 +533,8 @@ const routes: Routes = [
           permissions: ApplicationPermissionsResolver
         },
         children: [
-          { path: '', redirectTo: 'general', pathMatch: 'full' },
-          { path: 'general', component: ApplicationGeneralComponent, resolve: { domain: DomainResolver } },
+          { path: '', redirectTo: 'overview', pathMatch: 'full' },
+          { path: 'overview', component: ApplicationOverviewComponent, resolve: { domain: DomainResolver } },
           { path: 'idp',
             component: ApplicationIdPComponent,
             canActivate: [AuthGuard],
@@ -599,6 +600,22 @@ const routes: Routes = [
           { path: 'settings',
             component: ApplicationAdvancedComponent,
             children: [
+              { path: 'general',
+                component: ApplicationGeneralComponent,
+                canActivate: [AuthGuard],
+                resolve: {
+                  domain: DomainResolver
+                },
+                data: {
+                  menu: {
+                    label: 'General',
+                    section: 'Settings'
+                  },
+                  perms: {
+                    only: ['application_settings_read']
+                  }
+                }
+              },
               { path: 'metadata',
                 component: ApplicationMetadataComponent,
                 canActivate: [AuthGuard],

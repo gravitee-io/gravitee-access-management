@@ -1,29 +1,25 @@
-.token-granters-container {
-  padding: 20px 70px 20px 50px;
-  h1 {
-    font-weight: 400;
-  }
-  ngx-datatable {
-    font-size: 14px;
-    box-shadow: none;
+ngx-datatable {
+  .extension-grant-header {
+    margin: 5px;
+    align-items: center;
+    .extension-grant-icon {
+      margin: 0 12px 0 0;
+    }
+    .extension-grant-information {
+      h3 {
+        font-size: 14px;
+        font-weight: normal;
+        margin: 0;
+      }
+      small {
+        color: rgba(0,0,0,.54);
+      }
+    }
   }
 }
 
-.token-granters-actions {
-  margin-left: -10px;
-
-  button, a {
-    top: -9px;
-    color: grey;
+:host {
+  /deep/ .extension-grant-name-cell {
+    padding: 0 !important;
   }
-}
-
-.add-button {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-}
-
-.add-button-center {
-  text-align: center;
 }

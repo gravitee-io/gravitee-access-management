@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<div class="new-token-granter-container" fxLayout="column">
+<div class="gv-page-container" fxLayout="column">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to extension grants</small></a>
   <h1>New extension grant</h1>
   <div fxLayout="row">
     <mat-horizontal-stepper linear labelPosition="bottom" fxFlex="70" #stepper="matHorizontalStepper">
@@ -28,7 +29,7 @@
           <small>Extension grant type</small>
         </ng-template>
         <extension-grant-creation-step1 [extensionGrant]="extensionGrant"></extension-grant-creation-step1>
-        <div fxLayout="row" fxLayoutAlign="end end">
+        <div fxLayout="row" fxLayoutAlign="end end" class="stepper-button-zone">
           <button mat-raised-button color="accent" matStepperNext type="button"[disabled]="!extensionGrant.type">Next</button>
         </div>
       </mat-step>
@@ -38,16 +39,16 @@
           <small>Extension grant configuration</small>
         </ng-template>
           <extension-grant-creation-step2 *ngIf="stepper.selectedIndex == 1" [extensionGrant]="extensionGrant" [(configurationIsValid)]="configurationIsValid"></extension-grant-creation-step2>
-        <div class="extension-grant-creation-stepper-button-zone">
+        <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>
           <button mat-raised-button color="accent" (click)="create()" [disabled]="!stepperValid()">Create</button>
         </div>
       </mat-step>
     </mat-horizontal-stepper>
-    <div class="new-extension-grant-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Extension Grant ?</h3>
-      <div class="new-extension-grant-description-content">
+      <div class="gv-page-description-content">
         <p>OAuth 2.0 Extension grant act as an extensibility mechanism to request for tokens.</p>
       </div>
     </div>

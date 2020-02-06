@@ -1,21 +1,6 @@
-.token-granter-creation-step1-container {
-  p.extension-grant-creation-description {
-    text-align: center;
-    background: #e3e3e3;
-    padding: 20px;
-    font-size: 14px;
-    margin: 0;
-  }
-  .token-granter-creation-step1-content {
-    margin-top: 10px;
-
-    mat-card {
-      margin: 10px;
-
-      mat-card-content {
-        text-align: center;
-        margin-top: 10px;
-      }
-    }
-  }
+mat-card {
+  margin-top: 10px;
+}
+mat-card-content {
+  text-align: center;
 }

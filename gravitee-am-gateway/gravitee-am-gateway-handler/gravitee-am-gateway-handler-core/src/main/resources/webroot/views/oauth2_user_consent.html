@@ -21,32 +21,34 @@
 <div class="mdl-layout mdl-js-layout">
     <div class="access-confirmation-container">
         <div class="access-confirmation-content">
-            <div class="access-confirmation-content-header">
-                <h3><span style="font-weight: bold" th:text="${client.clientId}"></span> is requesting permissions to access your account</h3>
+            <div class="access-confirmation-title">
+                <label>Permissions requested</label>
+                <span><span style="font-weight: bold" th:text="${client.clientName}"></span> is requesting permissions to access your account</span>
             </div>
-            <div class="access-confirmation-content-body">
-                <form role="form" th:id="confirmationForm" th:action="@{authorize}" method="post">
-                    <div class="permissions">
-                        <h3 class="permissions-header">Review permissions</h3>
-                        <div class="permission" th:each="scope : ${scopes}">
-                            <div class="permission-logo">
-                                <i class="fa lock"></i>
-                            </div>
-                            <div class="permission-info">
-                                <h3><span th:text="(${scope.name}) ? ${scope.name} : ${scope.key}"></span> (<span th:text="${scope.key}"></span>)</h3>
-                                <p th:text="${scope.description}"></p>
-                                <input type="hidden" th:name="'scope.'+${scope.key}" value="true"/>
-                            </div>
+            <form role="form" th:id="confirmationForm" th:action="@{authorize}" method="post">
+                <div class="permissions">
+                    <p>This app would like to :</p>
+                    <div class="permission" th:each="scope : ${scopes}">
+                        <div class="permission-logo">
+                            <i class="fa fa-check"></i>
+                        </div>
+                        <div class="permission-info">
+                            <h3><span th:text="(${scope.name}) ? ${scope.name} : ${scope.key}"></span> (<span th:text="${scope.key}"></span>)</h3>
+                            <p th:text="${scope.description}"></p>
+                            <input type="hidden" th:name="'scope.'+${scope.key}" value="true"/>
                         </div>
                     </div>
-
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <div class="access-confirmation-form-actions">
-                        <button type="submit" name="user_oauth_approval" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary" style="margin-right: 10px;">Authorize</button>
-                        <button type="submit" name="user_oauth_approval" value="false" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">Deny</button>
+                    <div class="permissions-disclaimer">
+                        <small>By accepting these permissions, you allow this application to use your data in accordance to their terms of service and privacy policies.</small>
                     </div>
-                </form>
-            </div>
+                </div>
+
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="access-confirmation-form-actions">
+                    <button type="submit" name="user_oauth_approval" value="false" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" style="margin-right: 10px;">Cancel</button>
+                    <button type="submit" name="user_oauth_approval" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Accept</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

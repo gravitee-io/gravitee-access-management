@@ -21,7 +21,7 @@
     <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter">
   </mat-form-field>
 
-  <table mat-table [dataSource]="scopes" matSort matSortActive="select" matSortDirection="asc" class="mat-elevation-z8">
+  <table mat-table [dataSource]="scopes" matSort matSortActive="select" matSortDirection="asc">
 
     <!-- Checkbox Column -->
     <ng-container matColumnDef="select">

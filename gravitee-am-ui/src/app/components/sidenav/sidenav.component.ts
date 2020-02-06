@@ -24,7 +24,7 @@ import * as _ from 'lodash';
 import { AuthGuard } from "../../guards/auth-guard.service";
 
 @Component({
-  selector: 'gs-sidenav',
+  selector: 'gv-sidenav',
   templateUrl: './sidenav.component.html',
   styleUrls: ['./sidenav.component.scss']
 })

@@ -22,9 +22,13 @@ import { PlatformService } from "../../../../../../services/platform.service";
   styleUrls: ['./step1.component.scss']
 })
 export class CertificateCreationStep1Component implements OnInit {
+  private certificateTypes: any = {
+    'javakeystore-am-certificate' : 'Java Keystore (.jks)',
+    'pkcs12-am-certificate' : 'PKCS#12 (.p12)'
+  };
   @Input() certificate: any;
   certificates: any[];
-  selectedCertificateTypeId : string;
+  selectedCertificateTypeId: string;
 
   constructor(private platformService: PlatformService) {
   }
@@ -35,5 +39,12 @@ export class CertificateCreationStep1Component implements OnInit {
 
   selectCertificateType() {
     this.certificate.type = this.selectedCertificateTypeId;
+  }
+
+  displayName(certificate) {
+    if (this.certificateTypes[certificate.id]) {
+      return this.certificateTypes[certificate.id];
+    }
+    return certificate.name;
   }
 }

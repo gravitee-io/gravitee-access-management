@@ -15,79 +15,91 @@
     limitations under the License.
 
 -->
-<div class="new-user-container">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to users</small></a>
+<div class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to users</small></a>
   <h1>New User</h1>
   <div class="new-user-content">
     <form (ngSubmit)="create()" #userForm="ngForm" fxLayout="column" fxFlex="70">
-      <div fxLayout="row">
-        <mat-form-field style="margin-right: 20px;">
-          <input matInput type="text" placeholder="First name" #firstName="ngModel" name="firstName" [(ngModel)]="user.firstName" required>
-          <mat-hint>The first name of the User.</mat-hint>
-          <mat-error *ngIf="firstName.errors?.required">Enter first name</mat-error>
-        </mat-form-field>
-        <mat-form-field>
-          <input matInput type="text" placeholder="Last name" #lastName="ngModel" name="lastName" [(ngModel)]="user.lastName" required>
-          <mat-hint>The last name of the User.</mat-hint>
-          <mat-error *ngIf="lastName.errors?.required">Enter last name</mat-error>
-        </mat-form-field>
-      </div>
-      <div fxLayout="row">
-        <mat-form-field>
-          <input matInput type="text" placeholder="Email" #email="ngModel" name="email" [(ngModel)]="user.email" [email]="user.email !== ''" (input)="onEmailChange($event.target.value)" required>
-          <mat-hint>Email address for the User.</mat-hint>
-          <mat-error *ngIf="email.errors?.required">Enter email</mat-error>
-          <mat-error *ngIf="user.email && email.errors?.email">Not a valid email</mat-error>
-        </mat-form-field>
-      </div>
-      <div fxLayout="row">
-        <mat-form-field style="margin-right: 20px;">
-          <input matInput placeholder="Username" #username="ngModel" name="username" [(ngModel)]="user.username" [disabled]="useEmailAsUsername" required>
-          <mat-hint>Username for the User.</mat-hint>
-          <mat-error *ngIf="username.errors?.required">Enter username</mat-error>
-        </mat-form-field>
-        <mat-checkbox [checked]="useEmailAsUsername" (change)="toggleUseEmailAsUsername($event)" [disabled]="email.invalid" style="margin-top: 20px;"><mat-hint style="font-size: 75%;">Use email as username</mat-hint></mat-checkbox>
-      </div>
-      <div fxLayout="column">
-        <mat-slide-toggle (change)="preRegistration = !preRegistration">Enable pre-registration</mat-slide-toggle>
-        <mat-hint style="font-size: 75%;">The user will receive an email to complete his profile and activate account.</mat-hint>
-      </div>
-      <div *ngIf="!preRegistration" [@fadeInOut]>
+      <div class="gv-form-section">
         <div fxLayout="row">
-          <mat-form-field>
-            <input matInput placeholder="Password" #password="ngModel" name="password" [type]="hidePassword ? 'password' : 'text'" [(ngModel)]="user.password" [required]="!preRegistration">
-            <mat-icon matSuffix (click)="hidePassword = !hidePassword">{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-            <mat-hint>Password for the User.</mat-hint>
-            <mat-error *ngIf="password.errors?.required">Enter password</mat-error>
+          <mat-form-field appearance="outline" floatLabel="always" style="margin-right: 20px;">
+            <mat-label>First name</mat-label>
+            <input matInput type="text" placeholder="First name" #firstName="ngModel" name="firstName" [(ngModel)]="user.firstName" required>
+            <mat-hint>The first name of the User.</mat-hint>
+            <mat-error *ngIf="firstName.errors?.required">Enter first name</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Last name</mat-label>
+            <input matInput type="text" placeholder="Last name" #lastName="ngModel" name="lastName" [(ngModel)]="user.lastName" required>
+            <mat-hint>The last name of the User.</mat-hint>
+            <mat-error *ngIf="lastName.errors?.required">Enter last name</mat-error>
+          </mat-form-field>
+        </div>
+        <div fxLayout="row">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Email</mat-label>
+            <input matInput type="text" placeholder="Email" #email="ngModel" name="email" [(ngModel)]="user.email" [email]="user.email !== ''" (input)="onEmailChange($event.target.value)" required>
+            <mat-hint>Email address for the User.</mat-hint>
+            <mat-error *ngIf="email.errors?.required">Enter email</mat-error>
+            <mat-error *ngIf="user.email && email.errors?.email">Not a valid email</mat-error>
+          </mat-form-field>
+        </div>
+        <div fxLayout="row">
+          <mat-form-field appearance="outline" floatLabel="always" style="margin-right: 20px;">
+            <mat-label>Username</mat-label>
+            <input matInput placeholder="Username" #username="ngModel" name="username" [(ngModel)]="user.username" [disabled]="useEmailAsUsername" required>
+            <mat-hint>Username for the User.</mat-hint>
+            <mat-error *ngIf="username.errors?.required">Enter username</mat-error>
+          </mat-form-field>
+          <mat-checkbox [checked]="useEmailAsUsername" (change)="toggleUseEmailAsUsername($event)" [disabled]="email.invalid" style="margin-top: 20px;"><mat-hint style="font-size: 75%;">Use email as username</mat-hint></mat-checkbox>
+        </div>
+        <div fxLayout="column">
+          <mat-slide-toggle (change)="preRegistration = !preRegistration">Enable pre-registration</mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">The user will receive an email to complete his profile and activate account.</mat-hint>
+        </div>
+        <div *ngIf="!preRegistration" [@fadeInOut]>
+          <div fxLayout="row">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <input matInput placeholder="Password" #password="ngModel" name="password" [type]="hidePassword ? 'password' : 'text'" [(ngModel)]="user.password" [required]="!preRegistration">
+              <mat-icon matSuffix (click)="hidePassword = !hidePassword">{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+              <mat-hint>Password for the User.</mat-hint>
+              <mat-error *ngIf="password.errors?.required">Enter password</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+        <div>
+          <app-select-applications (onSelectApp)="onAppSelectionChanged($event)" (onRemoveApp)="onAppDeleted($event)"></app-select-applications>
+        </div>
+        <div>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-select placeholder="Identity provider" [(ngModel)]="user.source" name="source">
+              <mat-option>None</mat-option>
+              <mat-option *ngFor="let userProvider of userProviders" [value]="userProvider.id">{{userProvider.name}}</mat-option>
+            </mat-select>
+            <mat-hint>Assign user to an identity provider. The user will be stored in the selected identity provider instead of the default one.</mat-hint>
           </mat-form-field>
         </div>
       </div>
-      <div>
-        <app-select-applications (onSelectApp)="onAppSelectionChanged($event)" (onRemoveApp)="onAppDeleted($event)"></app-select-applications>
+
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Additional information</h5>
+          <small>Custom information about the user. These details will be available in the user's profile.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <a (click)="addDynamicComponent()">(+) add user attribute</a>
+          <template #dynamic></template>
+        </div>
       </div>
-      <div>
-        <mat-form-field>
-          <mat-select placeholder="Identity provider" [(ngModel)]="user.source" name="source">
-            <mat-option>None</mat-option>
-            <mat-option *ngFor="let userProvider of userProviders" [value]="userProvider.id">{{userProvider.name}}</mat-option>
-          </mat-select>
-          <mat-hint>Assign user to an identity provider. The user will be stored in the selected identity provider instead of the default one.</mat-hint>
-        </mat-form-field>
-      </div>
-      <div fxLayout="column" class="additional-information">
-        <h4>Additional information</h4>
-        <span>Custom information about the user. These details will be available in the user's profile.</span>
-        <a (click)="addDynamicComponent()">(+) add user attribute</a>
-        <template #dynamic></template>
-      </div>
-      <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;">
+      <div fxLayout="row" fxLayoutAlign="end">
         <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
         <button mat-raised-button [disabled]="!userForm.valid || userForm.pristine" type="submit">CREATE</button>
       </div>
     </form>
-    <div class="new-user-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>User creation ?</h3>
-      <div class="new-user-description-content">
+      <div class="gv-page-description-content">
         <p>
           User will be able to access and sign-in to clients registered to that domain.
         </p>

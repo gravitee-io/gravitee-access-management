@@ -15,15 +15,17 @@
     limitations under the License.
 
 -->
-<div class="application-email-container" fxFlex="70">
-  <a [routerLink]="['..']"><small><< Back to emails</small></a>
-  <div class="application-email-content">
-    <app-email></app-email>
+<div fxFlex="70" class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to emails</small></a>
+  <div>
+    <app-email [createMode]="createMode"
+               [editMode]="editMode"
+               [deleteMode]="deleteMode"></app-email>
   </div>
 </div>
-<div class="application-email-description" fxFlex>
+<div class="gv-page-description" fxFlex>
   <h3>Application's email template</h3>
-  <div class="application-email-description-content">
+  <div class="gv-page-description-content">
     <p>
       You can customize the <b>From</b> Address, the <b>Subject</b>, and the <b>Content</b> for each email template.
     </p>

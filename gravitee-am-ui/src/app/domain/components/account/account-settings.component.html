@@ -16,7 +16,7 @@
 
 -->
 <form (ngSubmit)="save()" fxLayout="column" #accountForm="ngForm">
-  <div *ngIf="inheritMode" fxLayout="column" class="gs-form-section">
+  <div *ngIf="inheritMode" fxLayout="column" class="gv-form-section">
     <div fxLayout="column">
         <mat-slide-toggle
         (change)="enableInheritMode($event)"
@@ -29,8 +29,8 @@
 
   <div *ngIf="!inheritMode || !accountSettings.inherited">
 
-    <div class="gs-form-section">
-      <div class="gs-form-section-title">
+    <div class="gv-form-section">
+      <div class="gv-form-section-title">
         <h5>Security</h5>
         <mat-divider></mat-divider>
       </div>
@@ -86,8 +86,8 @@
       </div>
     </div>
 
-    <div class="gs-form-section">
-      <div class="gs-form-section-title">
+    <div class="gv-form-section">
+      <div class="gv-form-section-title">
         <h5>Management</h5>
         <mat-divider></mat-divider>
       </div>

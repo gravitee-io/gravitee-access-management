@@ -15,28 +15,31 @@
     limitations under the License.
 
 -->
-<div class="token-granters-container">
+<div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Extension grants</h1>
-  <div class="token-granters-content" *ngIf="!isEmpty">
-    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]="extensionGrants">
-      <ngx-datatable-column name="Name" [flexGrow]="1">
+  <div *ngIf="!isEmpty">
+    <ngx-datatable class="material"
+                   [columnMode]="'flex'"
+                   [headerHeight]="40"
+                   [footerHeight]="40"
+                   [rowHeight]="50"
+                   [rows]="extensionGrants">
+      <ngx-datatable-column name="Extension grants" [flexGrow]="4" [cellClass]="'extension-grant-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.name}}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Grant Type" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.grantType}}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Type" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.type}}
+          <div class="extension-grant-header" fxLayout="row">
+            <div class="extension-grant-icon">
+              <mat-icon>extension</mat-icon>
+            </div>
+            <div class="extension-grant-information" fxLayout="column">
+              <h3>{{row.name}}</h3>
+              <small>{{displayType(row.type)}}</small>
+            </div>
+          </div>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Actions" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="token-granters-actions">
+          <div fxLayout="row" class="gv-table-cell-actions">
             <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="Settings">settings</mat-icon></a>
             <button *hasPermission="['domain_extension_grant_delete']" mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
           </div>
@@ -48,9 +51,9 @@
   <app-emptystate *ngIf="isEmpty"
                   [message]="'Extension Grants will appear here'"
                   [subMessage]="'No data to display'"
-                  [icon]="'vpn_key'"></app-emptystate>
+                  [icon]="'extension'"></app-emptystate>
 
-  <div *hasPermission="['domain_extension_grant_create']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div *hasPermission="['domain_extension_grant_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

@@ -29,6 +29,20 @@ import {PlatformService} from "../../../services/platform.service";
 export class DomainSettingsProvidersComponent implements OnInit {
   private providers: any[];
   private adminContext = false;
+  private identityProviderTypes: any = {
+    'ldap-am-idp' : 'LDAP / AD',
+    'mongo-am-idp' : 'MongoDB',
+    'inline-am-idp': 'Inline',
+    'oauth2-generic-am-idp': 'OpenID Connect',
+    'github-am-idp': 'GitHub'
+  };
+  private identityProviderIcons: any = {
+    'ldap-am-idp' : 'device_hub',
+    'mongo-am-idp' : 'storage',
+    'inline-am-idp': 'insert_drive_file',
+    'oauth2-generic-am-idp': 'cloud_queue',
+    'github-am-idp': 'cloud_queue'
+  };
   domainId: string;
 
   constructor(private providerService: ProviderService,
@@ -57,6 +71,20 @@ export class DomainSettingsProvidersComponent implements OnInit {
 
   get isEmpty() {
     return !this.providers || this.providers.length === 0;
+  }
+
+  getIdentityProviderTypeIcon(type) {
+    if (this.identityProviderIcons[type]) {
+      return this.identityProviderIcons[type];
+    }
+    return 'storage';
+  }
+
+  displayType(type) {
+    if (this.identityProviderTypes[type]) {
+      return this.identityProviderTypes[type];
+    }
+    return 'Custom';
   }
 
   delete(id, event) {

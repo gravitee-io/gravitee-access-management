@@ -208,7 +208,8 @@ import { ApplicationCreationComponent } from "./domain/applications/creation/app
 import { ApplicationCreationStep1Component } from "./domain/applications/creation/steps/step1/step1.component";
 import { ApplicationCreationStep2Component } from "./domain/applications/creation/steps/step2/step2.component";
 import { ApplicationComponent } from "./domain/applications/application/application.component";
-import { ApplicationGeneralComponent } from "./domain/applications/application/general/general.component";
+import { ApplicationOverviewComponent } from "./domain/applications/application/overview/overview.component";
+import { ApplicationGeneralComponent } from "./domain/applications/application/advanced/general/general.component";
 import { ApplicationIdPComponent } from "./domain/applications/application/idp/idp.component";
 import { ApplicationDesignComponent } from "./domain/applications/application/design/design.component";
 import { ApplicationFormsComponent } from "./domain/applications/application/design/forms/forms.component";
@@ -250,6 +251,7 @@ import { FactorCreationStep2Component } from "./domain/settings/factors/creation
 import { FactorFormComponent } from "./domain/settings/factors/factor/form/form.component";
 import { FactorResolver } from "./resolvers/factor.resolver";
 import { EnrolledFactorsResolver } from "./resolvers/enrolled-factors.resolver";
+import {IdenticonHashDirective} from "./directives/identicon-hash.directive";
 
 @NgModule({
   declarations: [
@@ -374,6 +376,7 @@ import { EnrolledFactorsResolver } from "./resolvers/enrolled-factors.resolver";
     ApplicationCreationStep1Component,
     ApplicationCreationStep2Component,
     ApplicationComponent,
+    ApplicationOverviewComponent,
     ApplicationGeneralComponent,
     ApplicationIdPComponent,
     ApplicationDesignComponent,
@@ -393,6 +396,7 @@ import { EnrolledFactorsResolver } from "./resolvers/enrolled-factors.resolver";
     ManagementRoleComponent,
     MembershipsComponent,
     HasPermissionDirective,
+    IdenticonHashDirective,
     DashboardComponent,
     WidgetComponent,
     WidgetChartLineComponent,

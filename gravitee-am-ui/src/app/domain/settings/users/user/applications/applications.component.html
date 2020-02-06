@@ -40,7 +40,7 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Application" [flexGrow]="2">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.clientId}}
+            {{row.clientEntity.name}}
           </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Last interaction" [flexGrow]="1">
@@ -50,7 +50,7 @@
         </ngx-datatable-column>
         <ngx-datatable-column [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <div fxLayout="row" class="forms-actions">
+            <div fxLayout="row" class="gv-table-cell-actions">
               <a mat-icon-button [routerLink]="[row.clientId]"><mat-icon matTooltip="More info">more_horiz</mat-icon></a>
               <button *ngIf="canRevokeAccessForClient(row.clientId) && canRevoke" mat-icon-button (click)="revoke($event, row)"><mat-icon style="color: #f44336;" matTooltip="Revoke application">highlight_off</mat-icon></button>
             </div>
@@ -63,9 +63,9 @@
                       [subMessage]="'You have no applications authorized to access your account.'"
                       [icon]="'apps'"></app-emptystate>
     </div>
-    <div class="user-applications-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Authorized applications</h3>
-      <div class="user-applications-description-content">
+      <div class="gv-page-description-content">
         <p>
           Applications act on behalf the user to access data based on the permissions the user grant them.
         </p>

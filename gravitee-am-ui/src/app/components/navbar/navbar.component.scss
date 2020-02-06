@@ -1,18 +1,26 @@
 mat-toolbar {
   position: fixed;
   background-color: #fff;
-  border-bottom: 1px solid rgb(226, 229, 231);
   padding: 0 16px 0 7px;
   height: 60px;
   min-height: 60px;
   max-height: 60px;
   left: 0;
+  font-size: 16px;
+  font-weight: normal;
+  .gv-breadcrumb {
+    margin-left: 200px;
+  }
+  .gv-breadcrumb-min {
+    margin-left: 60px;
+  }
   .fill-remaining-space {
     flex: 1 1 auto;
   }
   .currentDomain {
     font-size: 14px;
     margin-right: 8px;
+    font-weight: 500;
   }
   .userAccountMenu {
     mat-icon {

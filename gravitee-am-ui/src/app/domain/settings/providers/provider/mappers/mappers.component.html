@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div class="provider-mappers-container">
-  <div class="provider-mappers-content" fxLayout="column" fxFlex="70">
-    <small style="margin-top: 10px;" *ngIf="!isEmpty" class="note"><i>Double click to edit and press enter to save changes</i></small>
+<div>
+  <div fxLayout="column" fxFlex="70">
+    <small style="margin-top: 10px;" *ngIf="!isEmpty"><i>Double click to edit and press enter to save changes</i></small>
     <ngx-datatable *ngIf="!isEmpty" [columnMode]="'flex'" class="material" [headerHeight]="40" [footerHeight]="40" [rowHeight]="55" [rows]='mappers'>
       <ngx-datatable-column name="User profile attributes" [flexGrow]="1">
         <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
@@ -47,7 +47,7 @@
       </ngx-datatable-column>
       <ngx-datatable-column name="Actions" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="provider-mappers-actions" *hasPermission="['domain_identity_provider_update']">
+          <div fxLayout="row" class="gv-table-cell-actions" *hasPermission="['domain_identity_provider_update']">
             <button mat-icon-button (click)="delete(row.key, $event)"><mat-icon>delete</mat-icon></button>
           </div>
         </ng-template>
@@ -59,16 +59,16 @@
                     [subMessage]="'Start creating a mapper'"
                     [icon]="'compare_arrows'"></app-emptystate>
 
-    <div *hasPermission="['domain_identity_provider_update']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+    <div *hasPermission="['domain_identity_provider_update']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
       <button mat-fab color="accent" (click)="add()">
         <mat-icon>add</mat-icon>
       </button>
     </div>
   </div>
 
-  <div class="provider-mappers-description" fxFlex>
+  <div class="gv-page-description" fxFlex>
     <h3>User mappers</h3>
-    <div class="provider-mappers-description-content">
+    <div class="gv-page-description-content">
       <p>
         Attributes mapping let you bind user profile attributes with your identity provider attributes.
       </p>

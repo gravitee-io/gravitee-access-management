@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<div class="new-factor-container" fxLayout="column">
+<div class="gv-page-container" fxLayout="column">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to factors</small></a>
   <h1>New factor</h1>
   <div fxLayout="row">
     <mat-horizontal-stepper linear labelPosition="bottom" fxFlex="70" #stepper="matHorizontalStepper">
@@ -28,7 +29,7 @@
           <small>Factor type</small>
         </ng-template>
         <factor-creation-step1 [factor]="factor"></factor-creation-step1>
-        <div fxLayout="row" fxLayoutAlign="end end">
+        <div fxLayout="row" fxLayoutAlign="end end" class="stepper-button-zone">
           <button mat-raised-button color="accent" matStepperNext type="button"[disabled]="!factor.type">Next</button>
         </div>
       </mat-step>
@@ -38,16 +39,16 @@
           <small>Factor configuration</small>
         </ng-template>
           <factor-creation-step2 *ngIf="stepper.selectedIndex == 1" [factor]="factor" [(configurationIsValid)]="configurationIsValid"></factor-creation-step2>
-        <div class="factor-creation-stepper-button-zone">
+        <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>
           <button mat-raised-button color="accent" (click)="create()" [disabled]="!stepperValid()">Create</button>
         </div>
       </mat-step>
     </mat-horizontal-stepper>
-    <div class="new-factor-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Multi-Factor Authentication ?</h3>
-      <div class="new-factor-description-content">
+      <div class="gv-page-description-content">
         <p>Multi-factor Authentication is an additional step during the login flow in order to enforce access control.</p>
       </div>
     </div>

@@ -31,7 +31,9 @@ export class ApplicationAdvancedComponent implements OnInit {
   ngOnInit(): void {
     const domainId = this.route.snapshot.parent.parent.params['domainId'];
     const appId = this.route.snapshot.parent.params['appId'];
-    if (this.canNavigate(['application_metadata_read'])) {
+    if (this.canNavigate(['application_settings_read'])) {
+      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'general']);
+    } else if (this.canNavigate(['application_metadata_read'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'metadata']);
     } else if (this.canNavigate(['application_oauth_read'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'oauth2']);

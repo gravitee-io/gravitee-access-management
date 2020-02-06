@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div class="oauth2-container" fxLayout="column">
+<div fxLayout="column">
   <div fxLayout="row">
-    <div class="oauth2-content" fxLayout="column" fxFlex="70">
+    <div fxLayout="column" fxFlex="70">
       <form #clientOAuth2Form="ngForm" (keydown.enter)="false" (ngSubmit)="update()" fxLayout="column">
-        <div class="gs-form-section">
-          <div class="gs-form-section-title">
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
             <h5>Grant flows</h5>
             <mat-divider></mat-divider>
           </div>
@@ -44,8 +44,8 @@
           </div>
         </div>
 
-        <div class="gs-form-section">
-          <div class="gs-form-section-title">
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
             <h5>Scopes</h5>
             <small>You can add default scopes to the tokens to control application's access to protected resources/APIs.</small>
             <mat-divider></mat-divider>
@@ -104,8 +104,8 @@
           </div>
         </div>
 
-        <div class="gs-form-section">
-          <div class="gs-form-section-title">
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
             <h5>Tokens</h5>
             <mat-divider></mat-divider>
           </div>
@@ -131,8 +131,8 @@
           </div>
         </div>
 
-        <div class="gs-form-section">
-          <div class="gs-form-section-title">
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
             <div fxLayout="row" style="align-items: center;">
               <h5 style="margin: 0;">Custom claims</h5>
               <button mat-icon-button (click)="openDialog($event)"><mat-icon>info_outline</mat-icon></button>
@@ -210,9 +210,9 @@
         </div>
       </form>
     </div>
-    <div class="oauth2-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>OAuth 2.0 / OpenID Connect</h3>
-      <div class="oauth2-description-content">
+      <div class="gv-page-description-content">
         <h4>Grant types</h4>
         <p>
           To authenticate an user, the application must first decide which oauth2 flow must be used. Oauth2 flows are enabled on the client through the grant_type.

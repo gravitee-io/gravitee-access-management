@@ -15,14 +15,14 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="provider-creation-step2-container">
-  <p class="application-creation-description">
+<div fxLayout="column">
+  <p class="gv-plugin-creation-description">
     Configure your application.
   </p>
-  <div class="provider-creation-step2-content">
+  <div>
     <form class="provider-creation-step2-form" fxLayout="column">
-      <div class="gs-form-section">
-        <div class="gs-form-section-title">
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <h5>Application Settings</h5>
           <mat-divider></mat-divider>
         </div>
@@ -46,9 +46,9 @@
               <mat-hint>The application's description</mat-hint>
             </mat-form-field>
           </div>
-          <div fxFlex fxLayout="column" fxLayoutAlign="center center">
+          <div fxFlex fxLayout="column" fxLayoutAlign="center center" style="text-align: center;">
             <mat-hint style="font-size: 75%;">Application's type: {{application.type}}</mat-hint>
-            <img [src]="logoUrl(application)" alt="Logo of the application" (error)="appLogo.src = 'assets/default-app-type.png'" #appLogo width="180" style="border-radius: 25px;"/>
+            <i class="material-icons">{{icon(application)}}</i>
           </div>
         </div>
         <div *ngIf="displayRedirectUri()" style="margin-top: 20px; max-width: 70%;">
@@ -61,8 +61,8 @@
           </mat-form-field>
         </div>
       </div>
-      <div class="gs-form-section">
-        <div class="gs-form-section-title">
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <h5>OAuth 2.0 Settings (Optional)</h5>
           <mat-divider></mat-divider>
         </div>

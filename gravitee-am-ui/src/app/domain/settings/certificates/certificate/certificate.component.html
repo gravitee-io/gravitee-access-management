@@ -15,38 +15,46 @@
     limitations under the License.
 
 -->
-<div class="certificate-container">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to certificates</small></a>
+<div class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to certificates</small></a>
   <h1>{{certificate.name}}</h1>
   <div fxLayout="row">
-    <div class="certificate-content" fxLayout="column" fxFlex="70">
+    <div fxLayout="column" fxFlex="70">
       <form #certificateForm="ngForm">
-        <h4>General</h4>
-        <mat-form-field>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
-        </mat-form-field>
-
-        <h4>Configuration</h4>
-        <certificate-form *ngIf="certificate" [certificateConfiguration]="certificateConfiguration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateUpdate($event)"></certificate-form>
-
-        <div *hasPermission="['domain_certificate_update']" fxLayout="row" fxLayoutAlign="end end" class="certificate-actions">
-          <button mat-raised-button [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
+        <div class="gv-form-section">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Name</mat-label>
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
+            <mat-hint>Certificate name</mat-hint>
+          </mat-form-field>
+        </div>
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
+            <h5>Configuration</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div>
+            <certificate-form *ngIf="certificate" [certificateConfiguration]="certificateConfiguration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateUpdate($event)"></certificate-form>
+          </div>
+        </div>
+        <div *hasPermission="['domain_certificate_update']" fxLayout="row" class="certificate-actions">
+          <button mat-raised-button [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">SAVE</button>
         </div>
       </form>
 
-      <div *hasPermission="['domain_certificate_delete']" class="certificate-delete-zone" fxLayout="column">
+      <div *hasPermission="['domain_certificate_delete']" class="gv-page-delete-zone" fxLayout="column">
         <p>This operation cannot be undone.</p>
         Certificate will be deleted, clients will not be able to use this certificate to sign tokens.
-        <div class="certificate-delete-button" fxLayout="row">
+        <div class="gv-page-delete-button" fxLayout="row">
           <span fxFlex></span>
           <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
         </div>
       </div>
     </div>
 
-    <div class="certificate-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Manage certificate</h3>
-      <div class="certificate-description-content">
+      <div class="gv-page-description-content">
         <p>
           Configure your certificate to ensure data integrity.
         </p>

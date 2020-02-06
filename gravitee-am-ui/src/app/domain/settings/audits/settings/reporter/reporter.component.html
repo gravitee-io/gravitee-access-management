@@ -15,32 +15,41 @@
     limitations under the License.
 
 -->
-<div class="reporter-container">
+<div class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to reporters</small></a>
   <h1>{{reporter.name}}</h1>
-  <a [routerLink]="['..']"><small><< Back to reporters</small></a>
   <div class="reporter-content">
     <form #reporterForm="ngForm" fxLayout="column" fxFlex="70">
-      <div fxFlex fxLayoutAlign="end">
-        <mat-slide-toggle matTooltip="{{reporter.enabled ? 'Disable reporter ?' : 'Enable reporter ?'}}"
-                          (change)="enableReporter($event)"
-                          [checked]="reporter.enabled"></mat-slide-toggle>
+      <div class="gv-form-section" fxLayout="column">
+        <div fxFlex fxLayoutAlign="end">
+          <mat-slide-toggle matTooltip="{{reporter.enabled ? 'Disable reporter ?' : 'Enable reporter ?'}}"
+                            (change)="enableReporter($event)"
+                            [checked]="reporter.enabled"></mat-slide-toggle>
+        </div>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Name</mat-label>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="reporter.name" required>
+          <mat-hint>A name for your reporter.</mat-hint>
+        </mat-form-field>
       </div>
-      <h4 style="margin-top: 0px;">General</h4>
-      <mat-form-field>
-        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="reporter.name" required>
-        <mat-hint>A name for your reporter.</mat-hint>
-      </mat-form-field>
 
-      <h4 style="margin-top: 10px;">Configuration</h4>
-      <reporter-form *ngIf="reporter" [reporterConfiguration]="reporterConfiguration" [reporterSchema]="reporterSchema" (configurationCompleted)="enableReporterUpdate($event)"></reporter-form>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Configuration</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <reporter-form *ngIf="reporter" [reporterConfiguration]="reporterConfiguration" [reporterSchema]="reporterSchema" (configurationCompleted)="enableReporterUpdate($event)"></reporter-form>
+        </div>
+      </div>
 
-      <div fxLayout="row" fxLayoutAlign="end end" class="update-reporter">
-        <button mat-raised-button [disabled]="(!reporterForm.valid || reporterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">UPDATE</button>
+      <div fxLayout="row">
+        <button mat-raised-button [disabled]="(!reporterForm.valid || reporterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">SAVE</button>
       </div>
     </form>
-    <div class="reporter-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Reporter</h3>
-      <div class="reporter-description-content">
+      <div class="gv-page-description-content">
         <p>
           A reporter is used by the platform to report many types of event (e.g Audit logs).
         </p>

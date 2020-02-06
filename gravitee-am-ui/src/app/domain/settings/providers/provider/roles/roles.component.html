@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<div class="provider-roles-container">
-  <div class="provider-roles-content" fxLayout="column" fxFlex="70">
+<div>
+  <div fxLayout="column" fxFlex="70">
     <mat-list *ngIf="!isEmpty">
       <span *ngFor="let role of providerRoles">
         <h3 matSubheader>{{getRole(role)}}</h3>
@@ -34,15 +34,15 @@
                     [subMessage]="'Start adding users to roles'"
                     [icon]="'supervisor_account'"></app-emptystate>
 
-    <div *hasPermission="['domain_identity_provider_update']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+    <div *hasPermission="['domain_identity_provider_update']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
       <button mat-fab color="accent" (click)="add()">
         <mat-icon>add</mat-icon>
       </button>
     </div>
   </div>
-  <div class="provider-roles-description" fxFlex>
+  <div class="gv-page-description" fxFlex>
     <h3>Role mappers</h3>
-    <div class="provider-roles-description-content">
+    <div class="gv-page-description-content">
       <p>
         Role mappers let you set roles and permissions for your users.
       </p>
@@ -56,7 +56,7 @@
         To specify users and groups roles, you can use the following syntax <code>attributeName=attributeValue</code>
         and choose the corresponding roles.
       </small>
-      <small class="provider-roles-example">
+      <small>
         For example :
         <pre fxLayout="column">
         <code>- uid=sampleuser => ROLE_USER</code>

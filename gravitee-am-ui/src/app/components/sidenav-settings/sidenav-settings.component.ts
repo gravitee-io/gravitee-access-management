@@ -18,7 +18,7 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {AuthGuard} from "../../guards/auth-guard.service";
 
 @Component({
-  selector: 'gs-sidenav-settings',
+  selector: 'gv-sidenav-settings',
   templateUrl: './sidenav-settings.component.html',
     styleUrls: ['./sidenav-settings.component.scss']
 })
