@@ -22,6 +22,9 @@ import { PlatformService } from "../../../../../../services/platform.service";
   styleUrls: ['./step1.component.scss']
 })
 export class FactorCreationStep1Component implements OnInit {
+  private factorTypes: any = {
+    'otp-am-factor' : 'Generic OTP Factor'
+  };
   @Input() factor: any;
   factors: any[];
   selectedFactorTypeId: string;
@@ -35,5 +38,12 @@ export class FactorCreationStep1Component implements OnInit {
 
   selectFactorType() {
     this.factor.type = this.selectedFactorTypeId;
+  }
+
+  displayName(factor) {
+    if (this.factorTypes[factor.id]) {
+      return this.factorTypes[factor.id];
+    }
+    return factor.name;
   }
 }

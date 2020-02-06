@@ -15,38 +15,40 @@
     limitations under the License.
 
 -->
-<div class="new-role-container">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to roles</small></a>
+<div class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to roles</small></a>
   <h1>New Role</h1>
-  <div class="new-role-content">
+  <div>
     <form (ngSubmit)="create()" #roleForm="ngForm" fxLayout="column" fxFlex="70">
-      <mat-form-field *ngIf="adminContext" appearance="outline" floatLabel="always">
-        <mat-label>Scope</mat-label>
-        <mat-select placeholder="Scope" [(ngModel)]="role.scope" name="scope" required>
-          <mat-option *ngFor="let roleScope of roleScopes" [value]="roleScope">{{ roleScope }}</mat-option>
-        </mat-select>
-        <mat-hint>A scope for your role.</mat-hint>
-      </mat-form-field>
+      <div class="gv-form-section">
+        <mat-form-field *ngIf="adminContext" appearance="outline" floatLabel="always">
+          <mat-label>Scope</mat-label>
+          <mat-select placeholder="Scope" [(ngModel)]="role.scope" name="scope" required>
+            <mat-option *ngFor="let roleScope of roleScopes" [value]="roleScope">{{ roleScope }}</mat-option>
+          </mat-select>
+          <mat-hint>A scope for your role.</mat-hint>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline" floatLabel="always">
-        <mat-label>Name</mat-label>
-        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required>
-        <mat-hint>A name for your role.</mat-hint>
-      </mat-form-field>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Name</mat-label>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required>
+          <mat-hint>A name for your role.</mat-hint>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline" floatLabel="always">
-        <mat-label>Description</mat-label>
-        <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description">
-        <mat-hint>A description for your role.</mat-hint>
-      </mat-form-field>
-      <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;">
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Description</mat-label>
+          <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description">
+          <mat-hint>A description for your role.</mat-hint>
+        </mat-form-field>
+      </div>
+      <div fxLayout="row" fxLayoutAlign="end">
         <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
         <button mat-raised-button [disabled]="!roleForm.valid || roleForm.pristine" type="submit">CREATE</button>
       </div>
     </form>
-    <div class="new-role-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Role ?</h3>
-      <div class="new-role-description-content">
+      <div class="gv-page-description-content">
         <p>
           Role determines how users can access protected resources.
           <span *ngIf="!adminContext">Each role has a set of permissions to limit user actions.</span>

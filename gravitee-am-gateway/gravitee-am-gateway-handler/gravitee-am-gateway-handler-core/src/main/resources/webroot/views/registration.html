@@ -20,47 +20,50 @@
 <body>
 <div class="mdl-layout mdl-js-layout">
     <div class="register-container">
-        <div th:if="${error == null && success == null}" class="register-form">
+        <div class="register-form" th:if="${error == null && success == null}">
             <div class="register-form-title">
-                <label>Create your account</label>
+                <label>Sign up</label>
+                <span>Please fill in this form to create your account</span>
             </div>
-            <div th:if="${warning}" class="register-error-info">
+            <div class="register-error-info" th:if="${warning}">
                 <p style="margin: 0;" th:text="${warning == 'invalid_password_value'} ? 'Invalid password value. It does not comply with the password policy.' : 'An account already exists with this username.'"></p>
             </div>
-            <form role="form" th:action="@{register}" method="post" style="display: flex; flex-direction: column; margin-top: 30px;">
-                <div style="display: flex; flex-direction: row">
-                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="margin-right: 20px;">
-                        <input class="mdl-textfield__input" type="text" id="firstName" name="firstName"/>
-                        <label class="mdl-textfield__label mdl-required" for="firstName">First name</label>
+            <form role="form" th:action="@{register}" method="post">
+                <div class="register-form-content">
+                    <div style="display: flex; flex-direction: row">
+                        <div class="input-textfield" style="margin-right: 20px;">
+                            <label for="firstName">First name</label>
+                            <input type="text" id="firstName" name="firstName" required/>
+                        </div>
+                        <div class="input-textfield">
+                            <label for="lastName">Last name</label>
+                            <input type="text" id="lastName" name="lastName" required/>
+                        </div>
                     </div>
-                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                        <input class="mdl-textfield__input" type="text" id="lastName" name="lastName"/>
-                        <label class="mdl-textfield__label mdl-required" for="lastName">Last name</label>
-                    </div>
-                </div>
 
-                <div style="display: flex; flex-direction: column">
-                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                        <input class="mdl-textfield__input" type="text" id="username" name="username"/>
-                        <label class="mdl-textfield__label mdl-required" for="username">Username</label>
+                    <div style="display: flex; flex-direction: column">
+                        <div class="input-textfield">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" required/>
+                        </div>
+                        <div class="input-textfield">
+                            <label for="email">Email address</label>
+                            <input type="email" id="email" name="email" required/>
+                        </div>
                     </div>
-                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                        <input class="mdl-textfield__input" type="email" id="email" name="email"/>
-                        <label class="mdl-textfield__label mdl-required" for="email">Email address</label>
-                    </div>
-                </div>
 
-                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="display: flex;">
-                    <input class="mdl-textfield__input" type="password" id="password" name="password"/>
-                    <label class="mdl-textfield__label mdl-required" for="password">Password</label>
-                    <i id="changePasswordVisibility" class="mdl-textfield__icon material-icons">visibility</i>
+                    <div class="input-textfield">
+                        <label for="password">Password</label>
+                        <i id="changePasswordVisibility" class="mdl-textfield__icon material-icons" style="position: absolute; margin-top: 27px; margin-left: 5px;">visibility</i>
+                        <input type="password" id="password" name="password" required style="padding-left: 30px;"/>
+                    </div>
                 </div>
 
                 <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
                 <div style="display: flex; flex-direction: row;">
                     <a th:href="@{login(client_id=${param.client_id})}"><< Back to login</a>
-                    <span style="display: flex; flex:1"></span>
-                    <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary">Register</button>
+                    <span style="display: flex; flex: 1;"></span>
+                    <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Create account</button>
                 </div>
             </form>
         </div>

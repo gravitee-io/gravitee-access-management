@@ -1,46 +1,22 @@
-.domain-applications-container {
-  padding: 20px 70px 20px 50px;
-  h1 {
-    font-weight: 400;
-  }
-  .domain-applications-content {
-    ngx-datatable {
-      font-size: 14px;
-      box-shadow: none;
-      .app-header {
-        margin: 5px;
-        align-items: center;
-        .app-logo {
-          width: 40px;
-          height: 40px;
-          margin: 0 12px 0 0;
-          img {
-            border-radius: 25%;
-          }
+.gv-page-content {
+  ngx-datatable {
+    .app-header {
+      margin: 5px;
+      align-items: center;
+      .app-logo {
+        width: 40px;
+        height: 40px;
+        margin: 0 12px 0 0;
+        img {
+          border-radius: 25%;
         }
-        .app-information {
-          small {
-            color: rgba(0,0,0,.54);
-          }
+      }
+      .app-information {
+        small {
+          color: rgba(0,0,0,.54);
         }
       }
     }
-  }
-}
-
-.add-button {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-}
-
-.add-button-center {
-  text-align: center;
-}
-
-:host /deep/ .ngx-datatable.material .datatable-footer .datatable-pager {
-  ul li:not(:last-child):after {
-    content: none;
   }
 }
 

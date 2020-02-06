@@ -15,23 +15,31 @@
     limitations under the License.
 
 -->
-<div class="certificates-container">
+<div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Certificates</h1>
-  <div class="certificates-content" *ngIf="!isEmpty">
-    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]='certificates'>
-      <ngx-datatable-column name="Name" [flexGrow]="1">
+  <div *ngIf="!isEmpty">
+    <ngx-datatable class="material"
+                   [columnMode]="'flex'"
+                   [headerHeight]="40"
+                   [footerHeight]="40"
+                   [rowHeight]="50"
+                   [rows]='certificates'>
+      <ngx-datatable-column name="Certificates" [flexGrow]="4" [cellClass]="'certificate-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.name}}
+          <div class="certificate-header" fxLayout="row">
+            <div class="certificate-icon">
+              <mat-icon>{{getCertificateTypeIcon(row.type)}}</mat-icon>
+            </div>
+            <div class="certificate-information" fxLayout="column">
+              <h3>{{row.name}}</h3>
+              <small>{{displayType(row.type)}}</small>
+            </div>
+          </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Type" [flexGrow]="1">
+      <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.type}}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Actions" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="providers-actions">
+          <div fxLayout="row" class="gv-table-cell-actions">
             <button mat-icon-button (click)="publicKey(row.id, $event)"><mat-icon matTooltip="Get public key">vpn_key</mat-icon></button>
             <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="Settings">settings</mat-icon></a>
             <button *hasPermission="['domain_certificate_delete']" mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
@@ -46,7 +54,7 @@
                   [subMessage]="'Start creating a certificate'"
                   [icon]="'vpn_key'"></app-emptystate>
 
-  <div *hasPermission="['domain_certificate_create']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div *hasPermission="['domain_certificate_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

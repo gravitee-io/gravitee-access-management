@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
-import {PlatformService} from "../../../../../../services/platform.service";
-import {ProviderService} from "../../../../../../services/provider.service";
-import {SnackbarService} from "../../../../../../services/snackbar.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import {AppConfig} from "../../../../../../../config/app.config";
-import * as _ from "lodash";
+import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
+import {PlatformService} from '../../../../../../services/platform.service';
+import * as _ from 'lodash';
 
 @Component({
   selector: 'provider-creation-step2',
@@ -28,22 +25,17 @@ import * as _ from "lodash";
 })
 export class ProviderCreationStep2Component implements OnInit, OnChanges {
   @Input('provider') provider: any;
+  @Input('configurationIsValid') configurationIsValid: boolean;
+  @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   configuration: any;
-  configurationIsValid: boolean = false;
   providerSchema: any = {};
-  private domainId: string;
-  private adminContext: boolean;
   private certificates: any[];
 
-  constructor(private platformService: PlatformService, private providerService: ProviderService,
-              private snackbarService: SnackbarService, private router: Router, private route: ActivatedRoute) { }
+  constructor(private platformService: PlatformService,
+              private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.certificates = this.route.snapshot.data['certificates'];
-    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
-    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -53,7 +45,7 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
         // enhance schema information
         if (this.providerSchema.properties.graviteeCertificate && this.certificates && this.certificates.length > 0) {
           this.providerSchema.properties.graviteeCertificate.enum = _.flatMap(this.certificates, 'id');
-          this.providerSchema.properties.graviteeCertificate['x-schema-form'] = { "type" : "select" };
+          this.providerSchema.properties.graviteeCertificate['x-schema-form'] = { 'type' : 'select' };
           this.providerSchema.properties.graviteeCertificate['x-schema-form'].titleMap = this.certificates.reduce(function(map, obj) {
             map[obj.id] = obj.name;
             return map;
@@ -65,26 +57,7 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
 
   enableProviderCreation(configurationWrapper) {
     this.configurationIsValid = configurationWrapper.isValid;
+    this.configurationIsValidChange.emit(this.configurationIsValid);
     this.provider.configuration = configurationWrapper.configuration;
-  }
-
-  create() {
-    this.provider.configuration = JSON.stringify(this.provider.configuration);
-    this.providerService.create(this.domainId, this.provider, this.adminContext).subscribe(data => {
-      this.snackbarService.open('Provider ' + data.name + ' created');
-      if (this.adminContext) {
-        this.router.navigate(['/settings', 'management', 'providers', data.id]);
-      } else {
-        this.router.navigate(['/domains', this.domainId, 'settings', 'providers', data.id]);
-      }
-    })
-  }
-
-  get isValid() {
-    if (this.provider.name && this.configurationIsValid) {
-      return true;
-    } else {
-      return false;
-    }
   }
 }

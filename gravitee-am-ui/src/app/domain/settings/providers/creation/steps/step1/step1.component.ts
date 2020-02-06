@@ -22,10 +22,17 @@ import { PlatformService } from "../../../../../../services/platform.service";
   styleUrls: ['./step1.component.scss']
 })
 export class ProviderCreationStep1Component implements OnInit {
+  private identityProviderTypes: any = {
+    'ldap-am-idp' : 'Generic LDAP / AD',
+    'mongo-am-idp' : 'MongoDB',
+    'inline-am-idp': 'Inline',
+    'oauth2-generic-am-idp': 'OpenID Connect',
+    'github-am-idp': 'GitHub'
+  };
   @Input() provider;
   providers: any[];
   socialProviders: any[];
-  selectedProviderTypeId : string;
+  selectedProviderTypeId: string;
 
   constructor(private platformService: PlatformService) {
   }
@@ -38,5 +45,12 @@ export class ProviderCreationStep1Component implements OnInit {
   selectProviderType(isExternal: boolean) {
     this.provider.external = isExternal;
     this.provider.type = this.selectedProviderTypeId;
+  }
+
+  displayName(idp) {
+    if (this.identityProviderTypes[idp.id]) {
+      return this.identityProviderTypes[idp.id];
+    }
+    return idp.name;
   }
 }

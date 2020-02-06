@@ -40,6 +40,7 @@ export class DomainSettingsOpenidClientRegistrationComponent implements OnInit {
   }
 
   initBreadcrumb() {
+    this.breadcrumbService.addFriendlyNameForRoute('/domains/' + this.domainId + '/settings/openid/clientRegistration', 'dcr');
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/openid/clientRegistration/settings', 'settings');
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/openid/clientRegistration/default-scope', 'default scopes');
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/openid/clientRegistration/allowed-scope', 'allowed scopes');

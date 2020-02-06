@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { CertificateService } from "../../../services/certificate.service";
-import { DialogService } from "app/services/dialog.service";
-import { SnackbarService } from "../../../services/snackbar.service";
+import { CertificateService } from '../../../services/certificate.service';
+import { DialogService } from 'app/services/dialog.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 
 @Component({
   selector: 'app-certificates',
@@ -26,6 +26,14 @@ import { SnackbarService } from "../../../services/snackbar.service";
   styleUrls: ['./certificates.component.scss']
 })
 export class DomainSettingsCertificatesComponent implements OnInit {
+  private certificateTypes: any = {
+    'javakeystore-am-certificate' : 'Java Keystore (.jks)',
+    'pkcs12-am-certificate' : 'PKCS#12 (.p12)'
+  };
+  private certificateIcons: any = {
+    'javakeystore-am-certificate' : 'security',
+    'pkcs12-am-certificate' : 'security'
+  };
   certificates: any[];
   domainId: string;
 
@@ -38,7 +46,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   }
 
   get isEmpty() {
-    return !this.certificates || this.certificates.length == 0;
+    return !this.certificates || this.certificates.length === 0;
   }
 
   loadCertificates() {
@@ -54,6 +62,20 @@ export class DomainSettingsCertificatesComponent implements OnInit {
     });
   }
 
+  getCertificateTypeIcon(type) {
+    if (this.certificateIcons[type]) {
+      return this.certificateIcons[type];
+    }
+    return 'security';
+  }
+
+  displayType(type) {
+    if (this.certificateTypes[type]) {
+      return this.certificateTypes[type];
+    }
+    return type;
+  }
+
   delete(id, event) {
     event.preventDefault();
     this.dialogService
@@ -61,7 +83,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.certificateService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open("Certificate deleted");
+            this.snackbarService.open('Certificate deleted');
             this.loadCertificates();
           });
         }
@@ -69,7 +91,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   }
 
   openPublicKeyInfo(publicKey, error) {
-    let dialogRef = this.dialog.open(CertitificatePublicKeyDialog);
+    const dialogRef = this.dialog.open(CertitificatePublicKeyDialog);
     dialogRef.componentInstance.title = 'Public certificate key';
     dialogRef.componentInstance.message = publicKey;
     dialogRef.componentInstance.error = error;
@@ -89,6 +111,6 @@ export class CertitificatePublicKeyDialog {
   constructor(public dialogRef: MatDialogRef<CertitificatePublicKeyDialog>, private snackbarService: SnackbarService) {}
 
   keyCopied() {
-    this.snackbarService.open("Key copied to the clipboard");
+    this.snackbarService.open('Key copied to the clipboard');
   }
 }

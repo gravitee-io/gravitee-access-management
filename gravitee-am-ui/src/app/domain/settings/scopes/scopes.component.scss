@@ -1,34 +1,30 @@
-.scopes-container {
-  padding: 20px 70px 20px 50px;
-  h1 {
-    font-weight: 400;
-  }
-  ngx-datatable {
-    font-size: 14px;
-    box-shadow: none;
-  }
+ngx-datatable {
+  .scope-header {
+    margin: 5px;
+    align-items: center;
+    .scope-icon {
+      margin: 0 12px 0 0;
+    }
+    .scope-information {
+      h3 {
+        font-size: 14px;
+        font-weight: normal;
+        margin: 0;
+      }
 
-  .badge {
-    margin-left: 5px;
-    padding: 3px 6px;
-  }
-}
-
-.scopes-actions {
-  margin-left: -10px;
-
-  button, a {
-    top: -9px;
-    color: grey;
+      small {
+        color: rgba(0,0,0,.54);
+      }
+    }
   }
 }
 
-.add-button {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-}
-
-.add-button-center {
-  text-align: center;
+:host {
+  /deep/ .scope-name-cell {
+    padding: 0 !important;
+  }
+  /deep/ .mat-chip-list-wrapper .mat-standard-chip, .mat-chip-list-wrapper input.mat-input-element {
+    margin: 2px 0px 0px 10px;
+    min-height: 24px;
+  }
 }

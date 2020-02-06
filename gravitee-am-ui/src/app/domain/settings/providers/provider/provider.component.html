@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div *ngIf="provider" class="provider-container">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to identity providers</small></a>
+<div *ngIf="provider" class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to identity providers</small></a>
   <h1>{{provider.name}}</h1>
-  <nav mat-tab-nav-bar>
+  <nav mat-tab-nav-bar color="accent">
     <a mat-tab-link
        *ngFor="let link of navLinks"
        [routerLink]="link.href"
@@ -27,7 +27,7 @@
       {{link.label}}
     </a>
   </nav>
-  <div class="provider-content">
+  <div class="gv-page-content">
     <router-outlet></router-outlet>
   </div>
 </div>

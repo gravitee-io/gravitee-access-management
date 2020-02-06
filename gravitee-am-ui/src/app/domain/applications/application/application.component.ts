@@ -29,7 +29,7 @@ export class ApplicationComponent implements OnInit {
   application: any;
   logoUrl: string;
   navLinks: any = [
-    {'href': 'general' , 'label': 'General', 'icon': 'more_vert'},
+    {'href': 'overview' , 'label': 'Overview', 'icon': 'more_vert'},
     {'href': 'idp' , 'label': 'Identity Providers', 'icon': 'swap_horiz'},
     {'href': 'design' , 'label': 'Design', 'icon': 'palette'},
     {'href': 'settings', 'label': 'Settings', 'icon': 'settings'}
@@ -61,16 +61,16 @@ export class ApplicationComponent implements OnInit {
           ) {
       _.remove(this.navLinks, { href: 'settings' });
     }
-    this.initBreadcrumb();
+    setTimeout(() => this.initBreadcrumb());
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/applications/'+this.application.id+'$', this.application.name);
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/applications/'+this.application.id+'/idp$', 'IdP');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/applications/'+this.application.id+'/design', 'Design');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/applications/'+this.application.id+'/design/forms', 'Forms');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/applications/'+this.application.id+'/design/emails', 'Emails');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/applications/'+this.application.id+'/advanced', 'Advanced');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.application.id + '$', this.application.name);
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.application.id + '/idp$', 'IdP');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.application.id + '/design', 'Design');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.application.id + '/design/forms', 'Forms');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.application.id + '/design/emails', 'Emails');
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.application.id + '/advanced', 'Advanced');
   }
 
   private canDisplay(permissions): boolean {

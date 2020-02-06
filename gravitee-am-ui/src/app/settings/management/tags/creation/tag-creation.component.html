@@ -15,28 +15,32 @@
     limitations under the License.
 
 -->
-<div class="new-tag-container">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to sharding tags</small></a>
+<div class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to sharding tags</small></a>
   <h1>New Sharding Tag</h1>
-  <div class="new-tag-content">
+  <div>
     <form (ngSubmit)="create()" #tagForm="ngForm" fxLayout="column" fxFlex="70">
-      <mat-form-field>
-        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="tag.name" required>
-        <mat-hint>A name for the sharding tag.</mat-hint>
-      </mat-form-field>
+      <div class="gv-form-section">
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Name</mat-label>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="tag.name" required>
+          <mat-hint>A name for the sharding tag.</mat-hint>
+        </mat-form-field>
 
-      <mat-form-field fxFlex>
-        <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="tag.description">
-        <mat-hint>A description for the sharding tag.</mat-hint>
-      </mat-form-field>
-      <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;">
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Description</mat-label>
+          <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="tag.description">
+          <mat-hint>A description for the sharding tag.</mat-hint>
+        </mat-form-field>
+      </div>
+      <div fxLayout="row" fxLayoutAlign="end">
         <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
         <button mat-raised-button [disabled]="!tagForm.valid || tagForm.pristine" type="submit">CREATE</button>
       </div>
     </form>
-    <div class="new-tag-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Sharding Tag ?</h3>
-      <div class="new-tag-description-content">
+      <div class="gv-page-description-content">
         <p>
           A sharding-tag determines how security domain will be deployed across multiple AM Gateway.
         </p>

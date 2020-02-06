@@ -15,22 +15,28 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="provider-creation-step2-container">
-  <small>
+<div fxLayout="column">
+  <p class="gv-plugin-creation-description">
     Configure your identity provider.
-  </small>
-  <div class="provider-creation-step2-content">
-    <form class="provider-creation-step2-form" fxLayout="column">
-      <h4>General</h4>
-      <mat-form-field>
-        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
-      </mat-form-field>
+  </p>
+  <div>
+    <form fxLayout="column">
+      <div class="gv-form-section">
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Name</mat-label>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
+          <mat-hint>Identity provider name</mat-hint>
+        </mat-form-field>
+      </div>
 
-      <h4>Configuration</h4>
-      <provider-form [providerConfiguration]="configuration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderCreation($event)"></provider-form>
-
-      <div fxLayout="row" fxLayoutAlign="end end" class="next-button">
-        <button mat-raised-button [disabled]="!isValid" (click)="create()">CREATE</button>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Configuration</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <provider-form [providerConfiguration]="configuration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderCreation($event)"></provider-form>
+        </div>
       </div>
     </form>
   </div>

@@ -15,18 +15,19 @@
     limitations under the License.
 
 -->
-<div class="domain-general-container">
+<div class="gv-page-container">
   <h1>General</h1>
-  <div class="domain-general-content">
+  <div class="gv-page-content">
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column">
-        <div class="gs-form-section">
-          <div class="domain-enable-state" fxLayout="column">
+        <div class="gv-form-section">
+          <div fxLayout="column" style="margin-bottom: 10px;">
             <mat-slide-toggle
               (change)="enableDomain($event)"
               [checked]="domain.enabled" [disabled]="readonly">
+              Enable domain
             </mat-slide-toggle>
-            <mat-hint>Enable domain to handle incoming clients requests.</mat-hint>
+            <mat-hint style="font-size: 75%;">Enable domain to handle incoming authentication and authorization requests.</mat-hint>
           </div>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
@@ -45,8 +46,8 @@
           </mat-form-field>
         </div>
 
-        <div class="gs-form-section">
-          <div class="gs-form-section-title">
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
             <h5>Deployment</h5>
             <mat-divider></mat-divider>
           </div>
@@ -83,19 +84,19 @@
           <button mat-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
-      <div *hasPermission="['domain_settings_delete']" class="domain-general-delete-zone" fxLayout="column">
+      <div *hasPermission="['domain_settings_delete']" class="gv-page-delete-zone" fxLayout="column">
         <p>This operation cannot be undone.</p>
         Domain will be deleted included all related data such as clients, identity providers, certificates and roles.
         Current domain's users will no longer have access to the platform to log in and access protected resources.
-        <div class="domain-general-delete-button" fxLayout="row">
+        <div class="gv-page-delete-button" fxLayout="row">
           <span fxFlex></span>
           <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
         </div>
       </div>
     </div>
-    <div class="domain-general-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Manage security domain</h3>
-      <div class="domain-general-description-content">
+      <div class="gv-page-description-content">
         <p>
           Configure your security domain's name, path and description.
         </p>

@@ -1,10 +1,11 @@
-$bgColor: #383C48;
+$bgColor: #383B48;
 $fontColor: #fff;
-$bgSettingsColor: #f5f5f5;
-$fontSettingsColor: #383C48;
+$bgSettingsColor: #fafafa;
+$fontSettingsColor: #637282;
 $sidenavWidth: 200px;
 $sidenavMinWidth: 60px;
-$sidenavItemLeftWidth: 15px;
+$sidenavItemLeftWidth: 25px;
+$sidenavReducedItemLeftWidth: 15px;
 $sidenavItemBorderSize: 4px;
 $sidenavFooterHeight: 100px;
 $sidenavHeaderHeight: 64px;
@@ -15,14 +16,15 @@ $sidenavHeaderHeight: 64px;
   max-width: $width;
 }
 
-/deep/ .mat-toolbar {
-  padding: 0 16px 0 7px;
+:host {
+  /deep/ .mat-toolbar {
+    padding: 0 16px 0 7px;
+  }
 }
-
 .navigation-header {
   background-color: $bgColor;
-  height: 60px;
-  min-height: 60px;
+  height: 100px;
+  min-height: 100px;
   .logo-image {
     display: block;
     width: 48px;
@@ -58,13 +60,20 @@ $sidenavHeaderHeight: 64px;
 
 .gs-sidenav {
   @include min-max-width($sidenavWidth);
+  img.logo-image {
+    margin-left: 15px;
+  }
   background-color: $bgColor;
 }
 .gs-sidenav-min {
   @include min-max-width($sidenavMinWidth);
+  img.logo-image {
+    margin-left: 0px;
+  }
   .sidenav-list {
     a {
       width: 74%;
+      padding: 7px 0 8px $sidenavReducedItemLeftWidth;
     }
   }
 }
@@ -75,8 +84,10 @@ $sidenavHeaderHeight: 64px;
   }
   a {
     color: $fontSettingsColor !important;
-    &.sidenav-active {
-      border-left: $sidenavItemBorderSize solid $fontSettingsColor !important;
+  }
+  .sidenav-footer {
+    mat-icon {
+      color: $fontSettingsColor;
     }
   }
 }
@@ -84,46 +95,24 @@ $sidenavHeaderHeight: 64px;
 .sidenav-list {
   overflow-y: auto;
   height: calc(100vh - #{$sidenavFooterHeight} - #{$sidenavHeaderHeight});
-
   mat-list-item {
     min-height: 40px;
     margin-left: -16px;
     margin-bottom: -6px;
   }
-
-  ng-mat-icon {
-    fill: $fontColor;
-  }
-
   a {
     color: $fontColor;
     position: absolute;
     text-decoration: none;
     width: 92%;
     padding: 7px 0 8px $sidenavItemLeftWidth;
-
     &:hover, &.sidenav-active {
       font-weight: bold;
-    }
-
-    &.sidenav-active {
-      border-left: $sidenavItemBorderSize solid $fontColor;
-      padding-left: calc(#{$sidenavItemLeftWidth} - #{$sidenavItemBorderSize});
+      .mat-icon {
+        font-weight: bold;
+      }
     }
   }
-
-  h4 {
-    text-transform: uppercase;
-    color: #6B7682;
-    font-weight: 400;
-    letter-spacing: .5px;
-    padding: 15px 0 8px $sidenavItemLeftWidth;
-  }
-
-  hr {
-    width: 90%;
-  }
-
   span {
     font-size: 14px;
     margin-left: 4px;
@@ -133,40 +122,14 @@ $sidenavHeaderHeight: 64px;
 .sidenav-footer {
   height: $sidenavFooterHeight;
   width: 100%;
-
   mat-icon {
     color: $fontColor;
   }
-
-  a {
-    color: $fontColor;
-    text-decoration: none;
-  }
-
-  hr {
-    width: 90%;
-  }
-
-  .mat-icon-button.sidenav-toggle {
-    position: absolute;
-    bottom: 50px;
-    right: -8px;
-    width: 18px;
-    height: 18px;
-    min-height: 18px;
-    line-height: 18px;
-  }
-
-  mat-icon.sidenav-toggle-icon {
-    position: absolute;
-    top: -2px;
-    right: -3px;
-    font-weight: bold;
-    font-size: 16px;
-  }
-
   mat-list-item:last-child {
     margin-top: -20px;
+  }
+  .mat-icon-button {
+    flex-shrink: inherit;
   }
 }
 
@@ -174,8 +137,3 @@ a > mat-icon {
   vertical-align: middle;
 }
 
-.username {
-  width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}

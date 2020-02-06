@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="users-container" fxLayout="column">
+<div class="gv-page-container" fxLayout="column">
   <h1 *ngIf="!isEmpty">Users</h1>
 
   <div *ngIf="!isEmpty" class="users-search">
@@ -68,7 +68,7 @@
       </ngx-datatable-column>
       <ngx-datatable-column name="Actions" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="users-actions">
+          <div fxLayout="row" class="gv-table-cell-actions">
             <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="More info">more_horiz</mat-icon></a>
           </div>
         </ng-template>
@@ -81,7 +81,7 @@
                   [subMessage]="'No data to display'"
                   [icon]="'person'"></app-emptystate>
 
-  <div *ngIf="createMode" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div *ngIf="createMode" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

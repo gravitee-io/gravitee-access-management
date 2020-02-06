@@ -16,7 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 
 @Component({
-  selector: 'gs-breadcrumb',
+  selector: 'gv-breadcrumb',
   templateUrl: './breadcrumb.component.html',
   styleUrls: ['./breadcrumb.component.scss']
 })

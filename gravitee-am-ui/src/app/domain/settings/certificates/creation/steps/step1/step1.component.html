@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="certificate-creation-step1-container">
-  <small>
+<div fxLayout="column">
+  <p class="gv-plugin-creation-description">
     Choose your cryptographic algorithms to sign the data (JWT tokens).
-  </small>
+  </p>
 
-  <div fxLayout="row" fxLayoutWrap class="certificate-creation-step1-content">
+  <div fxLayout="row wrap" fxLayoutGap="10px">
     <mat-card *ngFor="let certificate of certificates" fxFlex="30">
       <mat-card-header fxLayoutAlign="end end" fxLayout="row">
         <mat-radio-group [(ngModel)]="selectedCertificateTypeId" (ngModelChange)="selectCertificateType()">
@@ -28,7 +28,7 @@
         </mat-radio-group>
       </mat-card-header>
       <mat-card-content>
-        {{certificate.name}}
+        {{displayName(certificate)}}
       </mat-card-content>
     </mat-card>
   </div>

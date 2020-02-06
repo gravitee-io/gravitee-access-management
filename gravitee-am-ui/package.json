@@ -34,6 +34,7 @@
     "hammerjs": "^2.0.8",
     "highcharts": "^8.0.0",
     "highcharts-angular": "^2.4.0",
+    "jdenticon": "^2.2.0",
     "lodash": "^4.17.13",
     "lodash-es": "^4.17.14",
     "moment": "^2.24.0",

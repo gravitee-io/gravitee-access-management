@@ -22,6 +22,9 @@ import {ActivatedRoute} from '@angular/router';
   styleUrls: ['./factors.component.scss']
 })
 export class DomainSettingsFactorsComponent implements OnInit {
+  private factorTypes: any = {
+    'otp-am-factor' : 'Generic OTP Factor'
+  };
   factors: any[];
   domainId: any;
 
@@ -35,5 +38,12 @@ export class DomainSettingsFactorsComponent implements OnInit {
 
   isEmpty() {
     return !this.factors || this.factors.length === 0;
+  }
+
+  displayType(type) {
+    if (this.factorTypes[type]) {
+      return this.factorTypes[type];
+    }
+    return type;
   }
 }

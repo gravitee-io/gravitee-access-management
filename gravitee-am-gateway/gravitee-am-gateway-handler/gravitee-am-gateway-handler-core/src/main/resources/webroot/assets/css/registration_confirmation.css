@@ -2,7 +2,7 @@
     display: block;
     background-color: #f7f7f7;
     color: #333;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .registration-confirmation-container {
@@ -17,14 +17,49 @@
     box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
 }
 
+.registration-confirmation-form form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 30px
+}
+
 .registration-confirmation-form-title {
-    text-align:center;
+    display: flex;
+    flex-direction: column;
 }
 
 .registration-confirmation-form-title > label {
     font-size: 28px;
     font-weight: 400;
-    margin: 0 auto;
+    margin-bottom: 5px;
+}
+
+.registration-confirmation-form-title > span {
+    color: grey;
+}
+
+.registration-confirmation-form-content .input-textfield {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.registration-confirmation-form-content .input-textfield:last-child {
+    margin-bottom: 20px;
+}
+
+.registration-confirmation-form-content .input-textfield input {
+    border: 1px solid #e1e4e8;
+    padding: 10px;
+    font-size: 12px;
+}
+
+.registration-confirmation-form-actions {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
 }
 
 .registration-confirmation-error-info {
@@ -36,30 +71,6 @@
 .registration-confirmation-error-info .error {
     color: orange;
     font-weight: bold;
-}
-
-.mdl-textfield__label.mdl-required:after {
-    content: ' *';
-    visibility: visible;
-    position: initial;
-    background-color: transparent;
-}
-
-.mdl-textfield.is-invalid .mdl-textfield__label:after {
-    background-color: transparent;
-}
-
-.mdl-textfield__icon {
-    width: 32px;
-    text-align: center;
-    color: #555;
-    line-height: 1.5;
-    cursor: pointer;
-}
-
-.mdl-textfield__icon ~ * {
-    margin-left: 32px;
-    width: calc(100% - 48px);
 }
 
 .error {

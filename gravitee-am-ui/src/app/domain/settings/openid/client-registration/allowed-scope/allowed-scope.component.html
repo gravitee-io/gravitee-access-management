@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div class="domain-client-registration-allowed-scope-container">
-  <div class="domain-client-registration-allowed-scope-content" *ngIf="dcrIsEnabled">
+<div>
+  <div *ngIf="dcrIsEnabled">
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="patch()" #allowedScopeForm="ngForm" fxLayout="column">
-        <div class="gs-form-section">
-          <div class="domain-client-registration-allowed-scope-state" fxLayout="column">
+        <div class="gv-form-section">
+          <div fxLayout="column">
             <mat-slide-toggle
               (change)="enableAllowedScopesFilter($event)"
               [checked]="isAllowedScopesEnabled" [disabled]="readonly">
@@ -39,9 +39,9 @@
         </div>
       </form>
     </div>
-    <div class="domain-client-registration-allowed-scope-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Allowed scopes</h3>
-      <div class="domain-client-registration-allowed-scope-description-content">
+      <div class="gv-page-description-content">
         <p>
           This section is used to define which scopes can be selected by third parties when they register a client through the Openid Connect Dynamic Client Registration endpoint.
         </p>

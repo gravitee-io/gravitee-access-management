@@ -1,29 +1,23 @@
-.certificates-container {
-  padding: 20px 70px 20px 50px;
-  h1 {
-    font-weight: 400;
+.certificate-header {
+  margin: 5px;
+  align-items: center;
+  .certificate-icon {
+    margin: 0 12px 0 0;
   }
-  ngx-datatable {
-    font-size: 14px;
-    box-shadow: none;
-  }
-}
-
-.providers-actions {
-  margin-left: -10px;
-
-  button, a {
-    top: -9px;
-    color: grey;
+  .certificate-information {
+    h3 {
+      font-size: 14px;
+      font-weight: normal;
+      margin: 0;
+    }
+    small {
+      color: rgba(0,0,0,.54);
+    }
   }
 }
 
-.add-button {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-}
-
-.add-button-center {
-  text-align: center;
+:host {
+  /deep/ .certificate-name-cell {
+    padding: 0 !important;
+  }
 }

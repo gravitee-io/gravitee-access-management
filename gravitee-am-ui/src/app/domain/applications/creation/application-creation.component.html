@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div class="new-application-container" fxLayout="column">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to applications</small></a>
+<div class="gv-page-container" fxLayout="column">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to applications</small></a>
   <h1>New application</h1>
-  <div fxLayout="row">
+  <div class="gv-page-content" fxLayout="row">
     <mat-horizontal-stepper linear labelPosition="bottom" fxFlex="70" #stepper="matHorizontalStepper">
       <ng-template matStepperIcon="edit">
         <mat-icon>check</mat-icon>
@@ -29,7 +29,7 @@
           <small>Application type</small>
         </ng-template>
         <application-creation-step1 [application]="application"></application-creation-step1>
-        <div fxLayout="row" fxLayoutAlign="end end" class="application-creation-stepper-button-zone">
+        <div fxLayout="row" fxLayoutAlign="end end" class="stepper-button-zone">
           <button mat-raised-button color="accent" matStepperNext type="button"[disabled]="!application.type">Next</button>
         </div>
       </mat-step>
@@ -39,16 +39,16 @@
           <small>Application configuration</small>
         </ng-template>
         <application-creation-step2 *ngIf="stepper.selectedIndex == 1" [application]="application"></application-creation-step2>
-        <div class="application-creation-stepper-button-zone">
+        <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>
           <button mat-raised-button color="accent" (click)="create()" [disabled]="!stepperValid()">Create</button>
         </div>
       </mat-step>
     </mat-horizontal-stepper>
-    <div class="new-application-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Application ?</h3>
-      <div class="new-application-description-content">
+      <div class="gv-page-description-content">
         <p>Applications are used by users to log in and access protected resources.</p>
         <p>Applications can be mobile native applications, frontend applications, web applications or backend applications.</p>
       </div>

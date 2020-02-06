@@ -21,14 +21,17 @@ import {Subscription} from "rxjs";
 import {NavbarService} from "./navbar.service";
 import {SnackbarService} from "../../services/snackbar.service";
 import * as _ from 'lodash';
+import {SidenavService} from "../sidenav/sidenav.service";
 
 @Component({
-  selector: 'gs-navbar',
+  selector: 'gv-navbar',
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-  private subscription: Subscription;
+  private navbarSubscription: Subscription;
+  private sidenavSubscription: Subscription;
+  reducedMode = false;
   domains: any[];
   currentResource: any = {};
   navLinks: any = [
@@ -41,6 +44,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
               private domainService: DomainService,
               private navbarService: NavbarService,
               private snackbarService: SnackbarService,
+              private sidenavService: SidenavService,
               private router: Router) {
     if (!this.authService.user()) {
       this.authService.userInfo().subscribe(() => this.initNavLinks());
@@ -50,13 +54,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.subscription = this.navbarService.notifyObservable$.subscribe(data => {
-      this.currentResource = data;
-    });
+    this.navbarSubscription = this.navbarService.notifyObservable$.subscribe(data => this.currentResource = data);
+    this.sidenavSubscription = this.sidenavService.resizeSidenavObservable.subscribe(reducedMode => this.reducedMode = reducedMode);
   }
 
   ngOnDestroy(): void {
-    this.subscription.unsubscribe();
+    this.navbarSubscription.unsubscribe();
+    this.sidenavSubscription.unsubscribe();
   }
 
   get user() {

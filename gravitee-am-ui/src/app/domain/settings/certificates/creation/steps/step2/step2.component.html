@@ -15,23 +15,29 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="certificate-creation-step2-container">
-  <small>
+<div fxLayout="column">
+  <p class="gv-plugin-creation-description">
     Configure your certificate.
-  </small>
+  </p>
 
   <div class="certificate-creation-step2-content">
     <form class="certificate-creation-step2-form" fxLayout="column">
-      <h4>General</h4>
-      <mat-form-field>
-        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
-      </mat-form-field>
+      <div class="gv-form-section">
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Name</mat-label>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
+          <mat-hint>Certificate name</mat-hint>
+        </mat-form-field>
+      </div>
 
-      <h4>Configuration</h4>
-      <certificate-form [certificateConfiguration]="configuration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateCreation($event)"></certificate-form>
-
-      <div fxLayout="row" fxLayoutAlign="end end" class="next-button">
-        <button mat-raised-button [disabled]="!isValid" (click)="create()">CREATE</button>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Configuration</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <certificate-form [certificateConfiguration]="configuration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateCreation($event)"></certificate-form>
+        </div>
       </div>
     </form>
   </div>

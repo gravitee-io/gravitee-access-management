@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
-import { DialogService } from "app/services/dialog.service";
-import { SnackbarService }  from "../../../services/snackbar.service";
-import { ExtensionGrantService } from "../../../services/extension-grant.service";
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
+import {DialogService} from 'app/services/dialog.service';
+import {SnackbarService} from '../../../services/snackbar.service';
+import {ExtensionGrantService} from '../../../services/extension-grant.service';
+import {BreadcrumbService} from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 
 @Component({
   selector: 'app-extension-grants',
@@ -25,23 +26,37 @@ import { ExtensionGrantService } from "../../../services/extension-grant.service
   styleUrls: ['./extension-grants.component.scss']
 })
 export class DomainSettingsExtensionGrantsComponent implements OnInit {
+  private extensionGrantTypes: any = {
+    'jwtbearer-am-extension-grant' : 'Extension Grant JWT Bearer'
+  };
   extensionGrants: any[];
   domainId: string;
 
-  constructor(private extensionGrantService: ExtensionGrantService, private dialogService: DialogService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute) { }
+  constructor(private extensionGrantService: ExtensionGrantService,
+              private dialogService: DialogService,
+              private snackbarService: SnackbarService,
+              private breadcrumbService: BreadcrumbService,
+              private route: ActivatedRoute) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.extensionGrants = this.route.snapshot.data['extensionGrants'];
+    this.initBreadcrumb();
   }
 
   get isEmpty() {
-    return !this.extensionGrants || this.extensionGrants.length == 0;
+    return !this.extensionGrants || this.extensionGrants.length === 0;
   }
 
   loadTokenGranters() {
     this.extensionGrantService.findByDomain(this.domainId).subscribe(response => this.extensionGrants = response);
+  }
+
+  displayType(type) {
+    if (this.extensionGrantTypes[type]) {
+      return this.extensionGrantTypes[type];
+    }
+    return type;
   }
 
   delete(id, event) {
@@ -51,10 +66,14 @@ export class DomainSettingsExtensionGrantsComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.extensionGrantService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open("Extension Grant deleted");
+            this.snackbarService.open('Extension Grant deleted');
             this.loadTokenGranters();
           });
         }
       });
+  }
+
+  private initBreadcrumb() {
+    this.breadcrumbService.addFriendlyNameForRoute('/domains/' + this.domainId + '/settings/extensionGrants', 'extension grants');
   }
 }

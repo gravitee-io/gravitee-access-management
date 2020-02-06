@@ -15,20 +15,20 @@
     limitations under the License.
 
 -->
-<div class="domain-overview-container">
+<div class="gv-page-container">
   <h1>Dashboard</h1>
-  <div class="domain-overview-content" fxLayout="row">
-    <div fxFlex="75" class="gs-form-section">
+  <div class="gv-page-content" fxLayout="row">
+    <div fxFlex="75" class="gv-form-section">
       <gv-dashboard [dashboard]="dashboard"></gv-dashboard>
     </div>
-    <div class="domain-overview-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Activities</h3>
-      <div class="domain-overview-description-content">
+      <div class="gv-page-description-content">
         <p>
           Retrieve all activities and usage statistics of the domain.
         </p>
       </div>
-      <div class="dashboard-description-actions" *hasPermission="['domain_application_create']">
+      <div *hasPermission="['domain_application_create']">
         <a mat-raised-button color="accent" [routerLink]="['/domains', domain.id, 'applications', 'new']">
           <mat-icon>add</mat-icon>
           <span style="margin-left: 5px;">Create application</span>

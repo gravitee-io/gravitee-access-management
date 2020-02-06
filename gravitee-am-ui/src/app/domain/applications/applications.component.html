@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div class="domain-applications-container">
+<div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Applications</h1>
-  <div class="domain-applications-content" *ngIf="!isEmpty">
+  <div class="gv-page-content" *ngIf="!isEmpty">
     <ngx-datatable class="material"
                    [columnMode]="'flex'"
                    [headerHeight]="40"
@@ -37,7 +37,7 @@
                  matBadgeSize="small"
                  [ngClass]="(row.enabled && !row.template) ? 'app-enabled': (!row.enabled ? 'app-disabled' : row.template ? 'app-is-template' : '')"
                  [matTooltip]="(row.enabled && !row.template) ? 'App enabled': (!row.enabled ? 'App disabled' : row.template ? 'Application is set as a template' : '')">
-              <img [src]="logoUrl(row)" alt="Logo of a {{row.name}}" (error)="appLogo.src = 'assets/default-app-type.png'" #appLogo width="40"/>
+              <svg width="40" height="40" [identiconHash]="row.name"></svg>
             </div>
             <div class="app-information" fxLayout="column">
               <a [routerLink]="['/domains', row.domain, 'applications', row.id]">{{row.name}}</a>
@@ -59,7 +59,7 @@
                   [subMessage]="'No data to display'"
                   [icon]="'devices'"></app-emptystate>
 
-  <div *hasPermission="['domain_application_create']" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div *hasPermission="['domain_application_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="this.newApplicationRouterLink">
       <mat-icon>add</mat-icon>
     </a>

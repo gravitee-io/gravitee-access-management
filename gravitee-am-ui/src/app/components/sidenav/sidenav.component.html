@@ -16,13 +16,10 @@
 
 -->
 <div class="gs-sidenav" fxLayout="column" fxFlex [ngClass]="{'gs-sidenav-min': reducedMode, 'gs-sidenav-settings': displaySettingsLevel}">
-  <mat-toolbar class="navigation-header md-whiteframe-1dp" fxLayout="row" fxLayoutAlign="space-between center">
-    <a [routerLink]="['']" style="text-decoration: none;" matTooltip="Go to AM homepage" [matTooltipPosition]="'right'">
+  <mat-toolbar class="navigation-header" fxLayout="row" fxLayoutAlign="space-between center">
+    <a [routerLink]="['']" style="text-decoration: none;" [matTooltip]="title + ' / ' + version" [matTooltipPosition]="'right'">
     <div fxLayout="row" fxLayoutAlign="center center">
         <img class="logo-image" [ngClass]="{'reduce-mode': reducedMode}" src="assets/GRAVITEE_LOGO1-01.png"/>
-        <div *ngIf="!reducedMode" fxLayout="column" class="logo-text">
-          <span>{{title}}<small>{{version}}</small></span>
-        </div>
     </div>
     </a>
   </mat-toolbar>
@@ -50,9 +47,9 @@
 
   <mat-list class="sidenav-footer">
     <mat-list-item>
-      <button mat-icon-button mat-mini-fab class="sidenav-toggle" (click)="resize()">
-        <mat-icon *ngIf="reducedMode" class="sidenav-toggle-icon">keyboard_arrow_right</mat-icon>
-        <mat-icon *ngIf="!reducedMode" class="sidenav-toggle-icon">keyboard_arrow_left</mat-icon>
+      <button mat-icon-button (click)="resize()">
+        <mat-icon *ngIf="reducedMode" class="sidenav-toggle-icon">menu</mat-icon>
+        <mat-icon *ngIf="!reducedMode" class="sidenav-toggle-icon">menu_open</mat-icon>
       </button>
     </mat-list-item>
   </mat-list>

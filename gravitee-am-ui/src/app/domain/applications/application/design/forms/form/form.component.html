@@ -15,17 +15,17 @@
     limitations under the License.
 
 -->
-<div class="application-form-container" fxFlex="70">
-  <a [routerLink]="['..']"><small><< Back to forms</small></a>
-  <div class="application-form-content">
+<div fxFlex="70" class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to forms</small></a>
+  <div>
     <app-form [createMode]="createMode"
               [editMode]="editMode"
               [deleteMode]="deleteMode"></app-form>
   </div>
 </div>
-<div class="application-form-description" fxFlex>
+<div class="gv-page-description" fxFlex>
   <h3>Application's form template</h3>
-  <div class="application-form-description-content">
+  <div class="gv-page-description-content">
     <p>
       You can customize the whole page's content from the editor for each form template.
     </p>

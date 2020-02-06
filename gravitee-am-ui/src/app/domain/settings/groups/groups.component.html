@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div class="groups-container">
+<div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Groups</h1>
-  <div class="groups-content" *ngIf="!isEmpty">
+  <div *ngIf="!isEmpty">
     <ngx-datatable class="material"
                    [columnMode]="'flex'"
                    [headerHeight]="40"
@@ -29,19 +29,22 @@
                    [offset]="page.pageNumber"
                    [limit]="page.size"
                    (page)='setPage($event)'>
-      <ngx-datatable-column name="Name" [flexGrow]="2">
+      <ngx-datatable-column name="Groups" [flexGrow]="4" [cellClass]="'group-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.name}}
+          <div class="group-header" fxLayout="row">
+            <div class="group-icon">
+              <mat-icon>group</mat-icon>
+            </div>
+            <div class="group-information" fxLayout="column">
+              <h3>{{row.name}}</h3>
+              <small>{{row.description}}</small>
+            </div>
+          </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Description" [flexGrow]="4">
+      <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.description}}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Actions" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="groups-actions">
+          <div fxLayout="row" class="gv-table-cell-actions">
             <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="Settings">settings</mat-icon></a>
             <button *ngIf="deleteMode" mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
           </div>
@@ -55,7 +58,7 @@
                   [subMessage]="'No data to display'"
                   [icon]="'people'"></app-emptystate>
 
-  <div *ngIf="createMode" [ngClass]="{'add-button': !isEmpty, 'add-button-center': isEmpty}">
+  <div *ngIf="createMode" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

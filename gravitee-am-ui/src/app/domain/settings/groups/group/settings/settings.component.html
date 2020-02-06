@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div class="group-settings-container">
+<div>
   <div fxFlex="70">
     <form (ngSubmit)="update()" fxLayout="column" #groupForm="ngForm">
-      <div class="gs-form-section">
+      <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
           <input matInput type="text" placeholder="Group name" #name="ngModel" name="name" [(ngModel)]="group.name" required [readonly]="!editMode">
@@ -35,18 +35,18 @@
         <button mat-raised-button [disabled]="!groupForm.valid || groupForm.pristine" type="submit">SAVE</button>
       </div>
     </form>
-    <div class="group-settings-delete-zone" fxLayout="column" *ngIf="deleteMode">
+    <div class="gv-page-delete-zone" fxLayout="column" *ngIf="deleteMode">
       <p>This operation cannot be undone.</p>
       Group will be deleted and members will be removed from this group.
-      <div class="group-settings-delete-button" fxLayout="row">
+      <div class="gv-page-delete-button" fxLayout="row">
         <span fxFlex></span>
         <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
       </div>
     </div>
   </div>
-  <div class="group-description" fxFlex>
+  <div class="gv-page-description" fxFlex>
     <h3>Group activities</h3>
-    <div class="group-description-content">
+    <div class="gv-page-description-content">
       <mat-list>
         <mat-list-item>
           <mat-icon mat-list-icon>alarm_on</mat-icon>

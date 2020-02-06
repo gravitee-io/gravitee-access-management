@@ -15,8 +15,9 @@
     limitations under the License.
 
 -->
-<mat-form-field>
-  <input matInput placeholder="Application" [matAutocomplete]="auto" [formControl]="appCtrl"/>
+<mat-form-field appearance="outline" floatLabel="always">
+  <mat-label>Application</mat-label>
+  <input matInput placeholder="Search for an application ..." [matAutocomplete]="auto" [formControl]="appCtrl"/>
   <button mat-icon-button matSuffix aria-label="Clear" (click)="removeApp($event)"><mat-icon *ngIf="selectedApp">clear</mat-icon></button>
   <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onAppSelectionChanged($event)" [displayWith]="displayFn">
     <mat-option *ngFor="let app of filteredApps" [value]="app">

@@ -28,11 +28,11 @@
                 <form role="form" th:action="@{login}" method="post">
                     <div class="login-form-content">
                         <div class="input-textfield">
-                            <label class="w3-text-blue">Username</label>
+                            <label for="username">Username</label>
                             <input type="text" id="username" name="username" autofocus="autofocus" required />
                         </div>
                         <div class="input-textfield">
-                            <label class="w3-text-blue">Password</label>
+                            <label for="password">Password</label>
                             <input type="password" id="password" name="password" required />
                         </div>
                         <div th:if="${param.error}" class="login-error-info">

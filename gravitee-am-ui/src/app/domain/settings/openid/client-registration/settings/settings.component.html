@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div class="domain-client-registration-settings-container">
-  <div class="domain-client-registration-settings-content">
+<div>
+  <div>
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="patch()" #domainForm="ngForm" fxLayout="column">
-        <div class="gs-form-section">
+        <div class="gv-form-section">
           <div class="domain-client-registration-settings-state" fxLayout="column">
             <mat-slide-toggle
               (change)="enableDynamicClientRegistration($event)"
@@ -86,9 +86,9 @@
       </form>
     </div>
 
-    <div class="domain-client-registration-settings-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Client Registration</h3>
-      <div class="domain-client-registration-settings-description-content">
+      <div class="gv-page-description-content">
         <p>
           This section is used to define business rules regarding client (application) creation within the domain.
         </p>

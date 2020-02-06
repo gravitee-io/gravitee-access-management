@@ -1,59 +1,25 @@
-.oauth2-container {
-  margin-left: 20px;
-  .oauth2-content {
-    form {
-      ngx-datatable {
-        background: transparent;
-        box-shadow: none;
-        font-size: 14px;
-        button {
-          top: -7px;
-          color: grey;
-        }
-      }
-      .application-form-actions {
-        margin-top: 20px;
-      }
-      .oauth2-grant-type {
-        border: 1px solid rgba(0, 0, 0, 0.12);
-        padding: 0 15px;
-        line-height: 34px;
-        margin: 5px;
-        background: #fff;
-        border-radius: 4px;
-      }
-      .application-scopes {
-        a {
-          cursor: pointer;
-          font-size: 75%;
-          color: #2196f3;
-        }
-      }
-      .type-section {
-        width: 50%;
-      }
-      .type-selection {
-        display: inline-flex;
-        width: 100%;
-      }
+form {
+  .oauth2-grant-type {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    padding: 0 15px;
+    line-height: 34px;
+    margin: 5px;
+    background: #fff;
+    border-radius: 4px;
+  }
+  .application-scopes {
+    a {
+      cursor: pointer;
+      font-size: 75%;
+      color: #2196f3;
     }
   }
-  .oauth2-description {
-    margin-left: 20px;
-    h3 {
-      font-weight: 400;
-    }
-    .oauth2-description-content {
-      border-top: 1px solid rgb(226, 229, 231);
-      p {
-        margin-top: 20px;
-        font-size: 14px;
-      }
-      small {
-        font-size: 12px;
-        color: rgba(0, 0, 0, 0.38);
-      }
-    }
+  .type-section {
+    width: 50%;
+  }
+  .type-selection {
+    display: inline-flex;
+    width: 100%;
   }
 }
 

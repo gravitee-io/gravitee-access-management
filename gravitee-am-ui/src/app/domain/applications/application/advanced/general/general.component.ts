@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {SnackbarService} from "../../../../services/snackbar.service";
-import {ApplicationService} from "../../../../services/application.service";
-import {DialogService} from "../../../../services/dialog.service";
-import {AuthService} from "../../../../services/auth.service";
+import {ActivatedRoute, Router} from '@angular/router';
+import {SnackbarService} from '../../../../../services/snackbar.service';
+import {ApplicationService} from '../../../../../services/application.service';
+import {DialogService} from '../../../../../services/dialog.service';
+import {AuthService} from '../../../../../services/auth.service';
 import * as _ from 'lodash';
 
 @Component({
@@ -39,7 +39,7 @@ export class ApplicationGeneralComponent implements OnInit {
   editMode: boolean;
   deleteMode: boolean;
   renewSecretMode: boolean;
-  factors: any[];
+  applicationType: string;
   applicationTypes: any[] = [
     {
       name: 'Web',
@@ -69,8 +69,8 @@ export class ApplicationGeneralComponent implements OnInit {
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
     this.domainId = this.domain.id;
-    this.application = this.route.snapshot.parent.data['application'];
-    this.application.type = this.application.type.toUpperCase();
+    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.applicationType = this.application.type.toUpperCase();
     this.applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
     this.applicationAdvancedSettings = this.application.settings == null ? {} : this.application.settings.advanced || {};
     this.applicationOAuthSettings.redirectUris = this.applicationOAuthSettings.redirectUris || [];
@@ -87,11 +87,11 @@ export class ApplicationGeneralComponent implements OnInit {
   update() {
     const data: any = {};
     data.name = this.application.name;
+    data.type = this.applicationType;
     data.description = this.application.description;
     data.settings = {};
     data.settings.oauth = { 'redirectUris' : _.map(this.redirectUris, 'value') };
     data.settings.advanced = { 'skipConsent' : this.applicationAdvancedSettings.skipConsent };
-    data.factors = this.application.factors;
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(response => {
       this.application = response;
       this.application.type = this.application.type.toUpperCase();

@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="factor-creation-step1-container">
-  <p class="factor-creation-description">
+<div fxLayout="column">
+  <p class="gv-plugin-creation-description">
     Choose multi-factor auth to add extra check during the authentication process.
   </p>
-  <div fxLayout="row" fxLayoutWrap class="factor-creation-step1-content">
+  <div fxLayout="row wrap" fxLayoutGap="10px">
     <mat-card *ngFor="let factor of factors" fxFlex="30">
       <mat-card-header fxLayoutAlign="end end" fxLayout="row">
         <mat-radio-group [(ngModel)]="selectedFactorTypeId" (ngModelChange)="selectFactorType()">
@@ -27,7 +27,7 @@
         </mat-radio-group>
       </mat-card-header>
       <mat-card-content>
-        {{factor.name}}
+        {{displayName(factor)}}
       </mat-card-content>
     </mat-card>
   </div>

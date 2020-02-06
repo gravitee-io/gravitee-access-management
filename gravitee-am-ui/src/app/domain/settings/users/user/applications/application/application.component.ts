@@ -44,8 +44,8 @@ export class UserApplicationComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.userId = this.route.snapshot.parent.params['userId'];
-    this.clientId = this.route.snapshot.params['clientId'];
     this.consents = this.route.snapshot.data['consents'];
+    this.clientId = this.consents[0] ? this.consents[0].clientEntity.name : this.route.snapshot.params['clientId'];
     this.canRevoke = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_update']);
   }
 
@@ -56,7 +56,7 @@ export class UserApplicationComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.userService.revokeConsents(this.domainId, this.userId, this.clientId).subscribe(response => {
-            this.snackbarService.open('Access for application '+ this.clientId + ' revoked');
+            this.snackbarService.open('Access for application ' + this.clientId + ' revoked');
             this.router.navigate(['/domains', this.domainId, 'settings', 'users', this.userId, 'applications']);
           });
         }
@@ -70,7 +70,7 @@ export class UserApplicationComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.userService.revokeConsent(this.domainId, this.userId, consent.id).subscribe(response => {
-            this.snackbarService.open('Permission '+ consent.scopeEntity.name + ' revoked');
+            this.snackbarService.open('Permission ' + consent.scopeEntity.name + ' revoked');
             if (this.consents.length === 1) {
               this.router.navigate(['/domains', this.domainId, 'settings', 'users', this.userId, 'applications']);
             } else {

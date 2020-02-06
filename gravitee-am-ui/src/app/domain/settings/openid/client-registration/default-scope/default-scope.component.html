@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div class="domain-client-registration-default-scope-container">
-  <div class="domain-client-registration-default-scope-content" *ngIf="dcrIsEnabled">
+<div>
+  <div *ngIf="dcrIsEnabled">
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="patch()" #defaultScopeForm="ngForm" fxLayout="column">
-        <div class="gs-form-section">
+        <div class="gv-form-section">
           <scope-selection
             [initialSelectedScopes]="initialSelectedScopes"
             [readonly]="readonly"
@@ -31,9 +31,9 @@
         </div>
       </form>
     </div>
-    <div class="domain-client-registration-default-scope-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Default scopes</h3>
-      <div class="domain-client-registration-default-scope-description-content">
+      <div class="gv-page-description-content">
         <p>
           This section is used to define some default scope to be automatically added when a client is created through the Openid Connect Dynamic Client Registration endpoint, without any requested scopes.
         </p>

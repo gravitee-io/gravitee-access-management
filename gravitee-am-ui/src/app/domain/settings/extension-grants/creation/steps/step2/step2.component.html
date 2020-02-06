@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="token-granter-creation-step2-container">
-  <p class="extension-grant-creation-description">
+<div fxLayout="column">
+  <p class="gv-plugin-creation-description">
     Configure your extension grant.
   </p>
   <div *ngIf="extensionGrantSchema && extensionGrantSchema.description" class="token-granter-contextual-help">
@@ -24,7 +24,7 @@
   </div>
   <div class="token-granter-creation-step2-content">
     <form class="token-granter-creation-step2-form" fxLayout="column">
-      <div class="gs-form-section">
+      <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
           <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="extensionGrant.name" required>
@@ -37,8 +37,8 @@
         </mat-form-field>
       </div>
 
-      <div class="gs-form-section">
-        <div class="gs-form-section-title">
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <h5>Configuration</h5>
           <mat-divider></mat-divider>
         </div>

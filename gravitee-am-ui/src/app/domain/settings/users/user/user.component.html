@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<div class="user-container">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to users</small></a>
+<div class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to users</small></a>
   <div class="user-header" fxLayout="row">
     <div class="user-avatar">
       <img [src]="avatarUrl" alt="Photo of a {{user.username}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="80"/>
@@ -26,7 +26,7 @@
       <span class="user-username">{{user.username}}</span>
     </div>
   </div>
-  <nav mat-tab-nav-bar>
+  <nav mat-tab-nav-bar color="accent">
     <a mat-tab-link
        *ngFor="let link of navLinks"
        [routerLink]="link.href"

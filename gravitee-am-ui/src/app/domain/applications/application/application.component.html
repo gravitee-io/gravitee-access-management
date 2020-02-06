@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<div class="application-container">
+<div class="gv-page-container">
   <mat-card class="application-banner" *ngIf="application.template">
     <mat-icon>warning</mat-icon>
     <p class="application-banner-text">Application is set as a template, thus it can not be used for authentication purpose.</p>
   </mat-card>
-  <a [routerLink]="['..']" class="back-link"><small><< Back to applications</small></a>
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to applications</small></a>
   <div class="app-header" fxLayout="row">
     <div class="app-logo">
-      <img [src]="logoUrl" alt="Logo of a {{application.name}}" (error)="appLogo.src = 'assets/default-app-type.png'" #appLogo width="80"/>
+      <svg width="80" height="80" [identiconHash]="application.name"></svg>
     </div>
     <div class="app-information" fxLayout="column">
       <span class="app-name">{{application.name}}</span>

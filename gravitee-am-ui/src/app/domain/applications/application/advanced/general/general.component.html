@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div class="application-settings-container">
-  <div class="application-settings-content">
+<div>
+  <div>
     <div fxFlex="70">
       <form (ngSubmit)="update()" fxLayout="column" #applicationForm="ngForm">
-        <div class="gs-form-section general-section">
+        <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
             <input matInput type="text" placeholder="Enter the application name" name="name" [(ngModel)]="application.name" required [disabled]="!editMode">
@@ -50,15 +50,15 @@
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Type</mat-label>
-            <mat-select placeholder="Change the application type" name="type" [(ngModel)]="application.type" [disabled]="!editMode">
+            <mat-select placeholder="Change the application type" name="type" [(ngModel)]="applicationType" [disabled]="!editMode">
               <mat-option *ngFor="let applicationType of applicationTypes" [value]="applicationType.type">{{ applicationType.name }}</mat-option>
             </mat-select>
             <mat-hint>The application's type</mat-hint>
           </mat-form-field>
         </div>
 
-        <div *ngIf="displaySection()" class="gs-form-section">
-          <div class="gs-form-section-title">
+        <div *ngIf="displaySection()" class="gv-form-section">
+          <div class="gv-form-section-title">
             <h5>Redirect URIs</h5>
             <small>List of allowed URLs where the user will be redirected after successfully login to your application.
               It prevents some vulnerabilities like being redirected to unsafe websites.</small>
@@ -89,7 +89,7 @@
               </ngx-datatable-column>
               <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['application_settings_update']">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  <div fxLayout="row" *ngIf="editMode">
+                  <div fxLayout="row" *ngIf="editMode" class="gv-table-cell-actions">
                     <button mat-icon-button (click)="deleteRedirectUris(row.value, $event)"><mat-icon>close</mat-icon></button>
                   </div>
                 </ng-template>
@@ -98,8 +98,8 @@
           </div>
         </div>
 
-        <div *ngIf="displaySection()" class="gs-form-section">
-          <div class="gs-form-section-title">
+        <div *ngIf="displaySection()" class="gv-form-section">
+          <div class="gv-form-section-title">
             <h5>Consent</h5>
             <mat-divider></mat-divider>
           </div>
@@ -133,9 +133,9 @@
         </mat-list>
       </div>
     </div>
-    <div class="application-settings-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Manage application</h3>
-      <div class="application-settings-description-content">
+      <div class="gv-page-description-content">
         <p>
           Configure your application's settings to interact with the authorization server to request for access tokens and gain access to protected resources.
         </p>

@@ -15,13 +15,13 @@
     limitations under the License.
 
 -->
-<div class="role-container">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to roles</small></a>
+<div class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to roles</small></a>
   <h1>{{role.name}}</h1>
   <div fxLayout="row">
-    <div class="role-content" fxLayout="column" fxFlex="70">
+    <div fxLayout="column" fxFlex="70">
       <form (keydown.enter)="false" (ngSubmit)="update()" #roleForm="ngForm" fxLayout="column">
-        <div class="gs-form-section">
+        <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
             <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required [readonly]="!editMode">
@@ -35,8 +35,8 @@
           </mat-form-field>
         </div>
 
-        <div class="gs-form-section">
-          <div class="gs-form-section-title">
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
             <h5>Permissions</h5>
             <mat-divider></mat-divider>
           </div>
@@ -67,22 +67,22 @@
           </mat-form-field>
         </div>
 
-        <div fxLayout="row" class="role-form-actions" *hasPermission="['domain_role_update']">
+        <div fxLayout="row" *hasPermission="['domain_role_update']">
           <button mat-raised-button [disabled]="(!roleForm.valid || roleForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
-      <div class="role-delete-zone" fxLayout="column" *hasPermission="['domain_role_delete']">
+      <div class="gv-page-delete-zone" fxLayout="column" *hasPermission="['domain_role_delete']">
         <p>This operation cannot be undone.</p>
         Role will be deleted, users and groups will not be able to use this role's permissions.
-        <div class="role-delete-button" fxLayout="row">
+        <div class="gv-page-delete-button" fxLayout="row">
           <span fxFlex></span>
           <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
         </div>
       </div>
     </div>
-    <div class="role-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Manage role</h3>
-      <div class="role-description-content">
+      <div class="gv-page-description-content">
         <p>
           Configure your role's name, description and permissions. Permissions can be used to configure access scopes to grant specific access to a your APIs.
         </p>

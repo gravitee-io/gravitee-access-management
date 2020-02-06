@@ -15,28 +15,36 @@
     limitations under the License.
 
 -->
-<div class="provider-settings-container" fxLayout="column">
+<div fxLayout="column">
   <div *ngIf="providerSchema && providerSchema.description" class="provider-settings-contextual-help">
     <pre [innerHTML]="providerSchema?.description"></pre>
   </div>
   <div fxLayout="row">
-    <div class="provider-settings-content" fxLayout="column" fxFlex="70">
+    <div fxLayout="column" fxFlex="70">
       <form #providerForm="ngForm">
-        <h4 style="margin-top: 0px;">General</h4>
-        <mat-form-field>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
-          <mat-hint>A name for your identity provider.</mat-hint>
-        </mat-form-field>
+        <div class="gv-form-section">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Name</mat-label>
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
+            <mat-hint>Identity provider name</mat-hint>
+          </mat-form-field>
+        </div>
 
-        <h4 style="margin-top: 10px;">Configuration</h4>
-        <provider-form *ngIf="provider" [providerConfiguration]="providerConfiguration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderUpdate($event)"></provider-form>
-
-        <div *hasPermission="['domain_identity_provider_update']" fxLayout="row" fxLayoutAlign="end end" class="update-provider">
-          <button mat-raised-button [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">UPDATE</button>
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
+            <h5>Configuration</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div>
+            <provider-form *ngIf="provider" [providerConfiguration]="providerConfiguration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderUpdate($event)"></provider-form>
+          </div>
+        </div>
+        <div *hasPermission="['domain_identity_provider_update']" fxLayout="row">
+          <button mat-raised-button [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">SAVE</button>
         </div>
       </form>
 
-      <div *hasPermission="['domain_identity_provider_delete']" class="provider-settings-delete-zone" fxLayout="column">
+      <div *hasPermission="['domain_identity_provider_delete']" class="gv-page-delete-zone" fxLayout="column">
         <p>This operation cannot be undone.</p>
         Identity provider will be deleted, clients will not be able to use this identity provider to authenticate users.
         <div class="provider-settings-delete-button" fxLayout="row">
@@ -45,9 +53,9 @@
         </div>
       </div>
     </div>
-    <div class="provider-settings-description" fxFlex="30">
+    <div class="gv-page-description" fxFlex="30">
       <h3>Manage identity provider</h3>
-      <div class="provider-settings-description-content">
+      <div class="gv-page-description-content">
         <p>
           Register your users to interact with the access management server.
         </p>

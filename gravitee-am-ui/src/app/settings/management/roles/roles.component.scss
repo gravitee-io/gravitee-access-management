@@ -1,48 +1,21 @@
-.roles-container {
-  padding: 20px 70px 20px 50px;
-  h1 {
-    font-weight: 400;
-  }
-  ngx-datatable {
-    font-size: 14px;
-    box-shadow: none;
-    .role-header {
-      margin: 5px;
-      align-items: center;
-      .role-icon {
-        margin: 0 12px 0 0;
+ngx-datatable {
+  .role-header {
+    margin: 5px;
+    align-items: center;
+    .role-icon {
+      margin: 0 12px 0 0;
+    }
+    .role-information {
+      h3 {
+        font-size: 14px;
+        font-weight: normal;
+        margin: 0;
       }
-      .role-information {
-        h3 {
-          font-size: 14px;
-          font-weight: normal;
-          margin: 0;
-        }
-        small {
-          color: rgba(0,0,0,.54);
-        }
+      small {
+        color: rgba(0,0,0,.54);
       }
     }
   }
-}
-
-.roles-actions {
-  margin-left: -10px;
-
-  button, a {
-    top: -9px;
-    color: grey;
-  }
-}
-
-.add-button {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-}
-
-.add-button-center {
-  text-align: center;
 }
 
 :host /deep/ {

@@ -83,7 +83,7 @@ export class ExtensionGrantComponent implements OnInit {
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/extensionGrants/'+this.extensionGrant.id+'$', this.extensionGrant.name);
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/extensionGrants/' + this.extensionGrant.id + '$', this.extensionGrant.name);
   }
 
   enableCreateUser(event) {

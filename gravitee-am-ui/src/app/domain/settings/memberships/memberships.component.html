@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div class="memberships-container">
+<div class="gv-page-container">
   <h1>User and group access</h1>
-  <div fxLayout="row">
+  <div class="gv-page-content" fxLayout="row">
     <div fxFlex="70">
       <app-memberships [members]="members"
                        [roleScope]="domainRoleScope"
@@ -29,9 +29,9 @@
                        (membershipDeleted)="delete($event)"
                        (membershipUpdated)="update($event)"></app-memberships>
     </div>
-    <div class="memberships-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Security domain access</h3>
-      <div class="memberships-description-content">
+      <div class="gv-page-description-content">
         <p>
           Grant access to this security domain by adding users and groups.
         </p>

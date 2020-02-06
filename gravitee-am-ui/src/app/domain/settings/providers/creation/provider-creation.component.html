@@ -15,48 +15,42 @@
     limitations under the License.
 
 -->
-<div class="new-provider-container" fxLayout="column">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to identity providers</small></a>
+<div class="gv-page-container" fxLayout="column">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to identity providers</small></a>
   <h1>New provider</h1>
-  <div fxLayout="row">
-    <mat-horizontal-stepper linear fxFlex="70" #stepper="matHorizontalStepper">
-      <mat-step label="Identity Provider type" [completed]="provider.type">
+  <div class="gv-page-content" fxLayout="row">
+    <mat-horizontal-stepper linear labelPosition="bottom" fxFlex="70" #stepper="matHorizontalStepper">
+      <ng-template matStepperIcon="edit">
+        <mat-icon>check</mat-icon>
+      </ng-template>
+      <mat-step>
+        <ng-template matStepLabel>
+          <h5>Platform</h5>
+          <small>Identity Provider type</small>
+        </ng-template>
         <provider-creation-step1 [provider]="provider"></provider-creation-step1>
-        <div fxLayout="row" fxLayoutAlign="end end">
-          <button mat-button matStepperNext type="button"[disabled]="!provider.type">NEXT</button>
+        <div class="stepper-button-zone" fxLayout="row" fxLayoutAlign="end end">
+          <button mat-raised-button color="accent" matStepperNext type="button"[disabled]="!provider.type">Next</button>
         </div>
       </mat-step>
-      <mat-step label="Identity Provider configuration">
-        <provider-creation-step2 *ngIf="stepper.selectedIndex == 1" [provider]="provider"></provider-creation-step2>
-        <div>
-          <button mat-button matStepperPrevious type="button">BACK</button>
+      <mat-step>
+        <ng-template matStepLabel>
+          <h5>Settings</h5>
+          <small>Identity Provider configuration</small>
+        </ng-template>
+        <provider-creation-step2 *ngIf="stepper.selectedIndex == 1" [provider]="provider" [(configurationIsValid)]="configurationIsValid"></provider-creation-step2>
+        <div class="stepper-button-zone">
+          <button mat-raised-button matStepperPrevious type="button">Back</button>
+          <span fxFlex></span>
+          <button mat-raised-button color="accent" (click)="create()" [disabled]="!stepperValid()">Create</button>
         </div>
       </mat-step>
     </mat-horizontal-stepper>
-    <div fxFlex fxLayout="column" class="new-provider-steps-info">
-      <div class="new-provider-steps-info-header">
-        <h4>Create your provider</h4>
-        <mat-divider></mat-divider>
+    <div class="gv-page-description" fxFlex>
+      <h3>Identity Provider ?</h3>
+      <div class="gv-page-description-content">
+        <p>Identity providers offer user authentication as a service.</p>
       </div>
-      <mat-vertical-stepper>
-        <mat-step [editable]="false">
-          <ng-template matStepLabel>
-            <h5>
-              <span *ngIf="stepper.selectedIndex == 0; else step1Completed;">General</span>
-              <ng-template #step1Completed>
-                <span class="provider-selected">{{provider.type}}</span>
-              </ng-template>
-            </h5>
-            <small>Identity provider type</small>
-          </ng-template>
-        </mat-step>
-        <mat-step *ngIf="stepper.selectedIndex == 1" [editable]="false">
-          <ng-template matStepLabel>
-            <h5>Configuration</h5>
-            <small>Identity provider configuration</small>
-          </ng-template>
-        </mat-step>
-      </mat-vertical-stepper>
     </div>
   </div>
 </div>

@@ -1,18 +1,6 @@
-.provider-creation-step1-container {
-  small {
-    color: rgba(0, 0, 0, .87);
-  }
-
-  .provider-creation-step1-content {
-    margin-top: 10px;
-
-    mat-card {
-      margin: 10px;
-
-      mat-card-content {
-        text-align: center;
-        margin-top: 10px;
-      }
-    }
-  }
+mat-card {
+  margin-top: 10px;
+}
+mat-card-content {
+  text-align: center;
 }

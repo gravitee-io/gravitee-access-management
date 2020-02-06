@@ -15,13 +15,13 @@
     limitations under the License.
 
 -->
-<div class="tag-container">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to sharding tags</small></a>
+<div class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to sharding tags</small></a>
   <h1>{{tag.name}}</h1>
   <div fxLayout="row">
-    <div class="tag-content" fxLayout="column" fxFlex="70">
+    <div fxLayout="column" fxFlex="70">
       <form (keydown.enter)="false" (ngSubmit)="update()" #tagForm="ngForm" fxLayout="column">
-        <div class="gs-form-section">
+        <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>ID</mat-label>
             <input matInput type="text" placeholder="ID" name="id" [(ngModel)]="tag.id" required disabled>
@@ -41,23 +41,23 @@
           </mat-form-field>
         </div>
 
-        <div fxLayout="row" class="tag-form-actions" *hasPermission="['management_tag_update']">
+        <div fxLayout="row" *hasPermission="['management_tag_update']">
           <button mat-raised-button [disabled]="(!tagForm.valid || tagForm.pristine)" type="submit">SAVE</button>
         </div>
       </form>
 
-      <div class="tag-delete-zone" fxLayout="column" *hasPermission="['management_tag_delete']">
+      <div class="gv-page-delete-zone" fxLayout="column" *hasPermission="['management_tag_delete']">
         <p>This operation cannot be undone.</p>
         Sharding tag will be deleted and will not be used for gateway deployment.
-        <div class="tag-delete-button" fxLayout="row">
+        <div class="gv-page-delete-button" fxLayout="row">
           <span fxFlex></span>
           <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
         </div>
       </div>
     </div>
-    <div class="tag-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Manage sharding tag</h3>
-      <div class="tag-description-content">
+      <div class="gv-page-description-content">
         <p>
           A sharding-tag determines how security domain will be deployed across multiple AM Gateway.
         </p>

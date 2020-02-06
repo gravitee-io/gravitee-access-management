@@ -13,17 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ViewChild} from '@angular/core';
-import {MatStepper} from "@angular/material";
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {MatStepper} from '@angular/material';
+import {ActivatedRoute, Router} from '@angular/router';
+import {ProviderService} from '../../../../services/provider.service';
+import {SnackbarService} from '../../../../services/snackbar.service';
 
 @Component({
-  selector: 'app-creation',
+  selector: 'app-idp-creation',
   templateUrl: './provider-creation.component.html',
   styleUrls: ['./provider-creation.component.scss']
 })
-export class ProviderCreationComponent {
+export class ProviderCreationComponent implements OnInit {
   public provider: any = {};
+  private domainId: string;
+  private adminContext: boolean;
+  configurationIsValid = false;
   @ViewChild ('stepper') stepper: MatStepper;
 
-  constructor() { }
+  constructor(private providerService: ProviderService,
+              private snackbarService: SnackbarService,
+              private router: Router,
+              private route: ActivatedRoute) { }
+
+  ngOnInit(): void {
+    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.adminContext = true;
+    }
+  }
+
+  create() {
+    this.provider.configuration = JSON.stringify(this.provider.configuration);
+    this.providerService.create(this.domainId, this.provider, this.adminContext).subscribe(data => {
+      this.snackbarService.open('Provider ' + data.name + ' created');
+      if (this.adminContext) {
+        this.router.navigate(['/settings', 'management', 'providers', data.id]);
+      } else {
+        this.router.navigate(['/domains', this.domainId, 'settings', 'providers', data.id]);
+      }
+    });
+  }
+
+  stepperValid() {
+    return this.provider && this.provider.name && this.configurationIsValid;
+  }
 }

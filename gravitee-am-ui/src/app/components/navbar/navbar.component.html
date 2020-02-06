@@ -16,6 +16,9 @@
 
 -->
 <mat-toolbar>
+    <div class="gv-breadcrumb" [ngClass]="{'gv-breadcrumb-min': reducedMode}">
+      <gv-breadcrumb *ngIf="!router.url.startsWith('/h')"></gv-breadcrumb>
+    </div>
     <span class="fill-remaining-space"></span>
     <span class="currentDomain">{{currentResource?.name | lowercase}}</span>
     <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()">

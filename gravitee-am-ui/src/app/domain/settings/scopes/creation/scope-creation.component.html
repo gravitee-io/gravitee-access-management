@@ -15,70 +15,81 @@
     limitations under the License.
 
 -->
-<div class="new-scope-container">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to scopes</small></a>
+<div class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to scopes</small></a>
   <h1>New Scope</h1>
   <div class="new-scope-content">
     <form (ngSubmit)="create()" #scopeForm="ngForm" fxLayout="column" fxFlex="70">
-      <mat-form-field>
-        <input matInput type="text" placeholder="Key" name="key" [(ngModel)]="scope.key" required>
-        <mat-hint>A key for your scope.</mat-hint>
-      </mat-form-field>
-
-      <mat-form-field>
-        <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="scope.name" required>
-        <mat-hint>A name for your scope.</mat-hint>
-      </mat-form-field>
-
-      <mat-form-field fxFlex>
-        <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="scope.description" required>
-        <mat-hint>A description for your scope.</mat-hint>
-      </mat-form-field>
-
-      <div fxLayout="column" class="user-consent-zone">
-        <h4>User consent</h4>
-        <small>Expiry/lapsing period for consent after which the user would need to confirm that scope.</small>
-        <p fxLayout="row" style="align-items: center; font-size: 90%;">
-          <mat-icon mat-list-icon>alarm</mat-icon>
-          <span>Current period :&nbsp;</span>
-          <span *ngIf="!scope.expiresIn" style="color: grey; font-style: italic;">No time set</span>
-          <span *ngIf="scope.expiresIn">{{ getScopeExpiry() }}</span>
-        </p>
-        <div fxLayout="row">
-          <mat-form-field fxFlex style="margin-right: 20px;">
-            <input matInput type="number" placeholder="Duration time" name="expiresIn" min="0" [min]="0" [(ngModel)]="expiresIn">
-            <mat-hint>The duration for the user consent.</mat-hint>
-          </mat-form-field>
-          <mat-form-field fxFlex style="margin-right: 20px;">
-            <mat-select placeholder="Unit time" name="unitTime" [(ngModel)]="unitTime">
-              <mat-option value="seconds">SECONDS</mat-option>
-              <mat-option value="minutes">MINUTES</mat-option>
-              <mat-option value="hours">HOURS</mat-option>
-              <mat-option value="days">DAYS</mat-option>
-              <mat-option value="weeks">WEEKS</mat-option>
-              <mat-option value="months">MONTHS</mat-option>
-              <mat-option value="years">YEARS</mat-option>
-            </mat-select>
-            <mat-hint>Unit time for the user consent duration.</mat-hint>
-          </mat-form-field>
+      <div class="gv-form-section">
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Key</mat-label>
+          <input matInput type="text" placeholder="Key" name="key" [(ngModel)]="scope.key" required>
+          <mat-hint>A key for your scope.</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Name</mat-label>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="scope.name" required>
+          <mat-hint>A name for your scope.</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Description</mat-label>
+          <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="scope.description" required>
+          <mat-hint>A description for your scope.</mat-hint>
+        </mat-form-field>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableScopeDiscovery($event)"
+            [checked]="isDiscovery()">
+            Display scope into openid discovery endpoint
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Enable scope to be displayed into the openid discovery endpoint under <i>:domain/oidc/.well-known/openid-configuration</i></mat-hint>
         </div>
       </div>
 
-      <mat-slide-toggle
-        (change)="enableScopeDiscovery($event)"
-        [checked]="isDiscovery()">
-        Display scope into openid discovery endpoint
-      </mat-slide-toggle>
-      <mat-hint style="font-size: 75%;">Enable scope to be displayed into the openid discovery endpoint under <i>:domain/oidc/.well-known/openid-configuration</i></mat-hint>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>User consent</h5>
+          <small>Expiry/lapsing period for consent after which the user would need to confirm that scope.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <p fxLayout="row" style="align-items: center; font-size: 90%;">
+            <mat-icon mat-list-icon>alarm</mat-icon>
+            <span>Current period :&nbsp;</span>
+            <span *ngIf="!scope.expiresIn" style="color: grey; font-style: italic;">No time set</span>
+            <span *ngIf="scope.expiresIn">{{ getScopeExpiry() }}</span>
+          </p>
+          <div fxLayout="row" fxLayoutGap="20px">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Duration time</mat-label>
+              <input matInput type="number" placeholder="Duration time" name="expiresIn" min="0" [min]="0" [(ngModel)]="expiresIn">
+              <mat-hint>The duration for the user consent.</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Unit time</mat-label>
+              <mat-select placeholder="Unit time" name="unitTime" [(ngModel)]="unitTime">
+                <mat-option value="seconds">SECONDS</mat-option>
+                <mat-option value="minutes">MINUTES</mat-option>
+                <mat-option value="hours">HOURS</mat-option>
+                <mat-option value="days">DAYS</mat-option>
+                <mat-option value="weeks">WEEKS</mat-option>
+                <mat-option value="months">MONTHS</mat-option>
+                <mat-option value="years">YEARS</mat-option>
+              </mat-select>
+              <mat-hint>Unit time for the user consent duration.</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
 
-      <div fxLayout="row" fxLayoutAlign="end" style="margin-top: 50px;">
+      <div fxLayout="row" fxLayoutAlign="end">
         <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
         <button mat-raised-button [disabled]="(!scopeForm.valid || scopeForm.pristine) || formIsInvalid()" type="submit">CREATE</button>
       </div>
     </form>
-    <div class="new-scope-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Scope ?</h3>
-      <div class="new-scope-description-content">
+      <div class="gv-page-description-content">
         <p>
           Scopes provide a way to limit the amount of access to a resource.
         </p>

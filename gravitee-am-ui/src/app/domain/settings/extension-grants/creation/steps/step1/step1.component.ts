@@ -22,9 +22,12 @@ import { PlatformService } from "../../../../../../services/platform.service";
   styleUrls: ['./step1.component.scss']
 })
 export class ExtensionGrantCreationStep1Component implements OnInit {
+  private extensionGrantTypes: any = {
+    'jwtbearer-am-extension-grant' : 'Extension Grant JWT Bearer'
+  };
   @Input() extensionGrant: any;
   extensionGrants: any[];
-  selectedExtensionGrantTypeId : string;
+  selectedExtensionGrantTypeId: string;
 
   constructor(private platformService: PlatformService) {
   }
@@ -35,5 +38,12 @@ export class ExtensionGrantCreationStep1Component implements OnInit {
 
   selectExtensionGrantType() {
     this.extensionGrant.type = this.selectedExtensionGrantTypeId;
+  }
+
+  displayName(extensionGrant) {
+    if (this.extensionGrantTypes[extensionGrant.id]) {
+      return this.extensionGrantTypes[extensionGrant.id];
+    }
+    return extensionGrant.name;
   }
 }

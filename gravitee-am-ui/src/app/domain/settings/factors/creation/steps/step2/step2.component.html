@@ -15,13 +15,13 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="factor-creation-step2-container">
-  <p class="factor-creation-description">
+<div fxLayout="column">
+  <p class="gv-plugin-creation-description">
     Configure your multi-factor authentication.
   </p>
-  <div class="factor-creation-step2-content">
-    <form class="factor-creation-step2-form" fxLayout="column">
-      <div class="gs-form-section">
+  <div>
+    <form fxLayout="column">
+      <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
           <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="factor.name" required>
@@ -34,8 +34,8 @@
         </mat-form-field>
       </div>
 
-      <div class="gs-form-section">
-        <div class="gs-form-section-title">
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <h5>Configuration</h5>
           <mat-divider></mat-divider>
         </div>

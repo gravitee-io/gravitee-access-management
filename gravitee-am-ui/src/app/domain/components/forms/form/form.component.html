@@ -20,7 +20,7 @@
     <h1>{{formName}}</h1>
     <button mat-icon-button (click)="openDialog()"><mat-icon>info_outline</mat-icon></button>
   </div>
-  <div class="gs-form-section">
+  <div class="gv-form-section">
     <div fxLayout="column">
         <mat-slide-toggle matTooltip="{{isEnabled() ? 'Disable custom form ?' : 'Enable custom form ?'}}"
                           [matTooltipPosition]="'after'"
@@ -32,7 +32,7 @@
     </div>
   </div>
 
-  <div class="gs-form-section">
+  <div class="gv-form-section">
     <mat-tab-group (selectedTabChange)="onTabSelectedChanged($event);">
       <mat-tab label="Html" [disabled]="!isEnabled() || !canEdit()">
         <div style="position:relative;">

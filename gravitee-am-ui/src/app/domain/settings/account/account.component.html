@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div class="domain-account-container">
+<div class="gv-page-container">
   <h1>User Accounts</h1>
-  <div class="domain-account-content">
+  <div>
     <div fxFlex="70">
       <app-account-settings [accountSettings]="accountSettings"
                             [inheritMode]="false"
@@ -25,9 +25,9 @@
                             (onSavedAccountSettings)="updateAccountSettings($event)">
       </app-account-settings>
     </div>
-    <div class="domain-account-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>User Accounts settings</h3>
-      <div class="domain-account-description-content">
+      <div class="gv-page-description-content">
         <p>Security and settings about user accounts.</p>
       </div>
     </div>

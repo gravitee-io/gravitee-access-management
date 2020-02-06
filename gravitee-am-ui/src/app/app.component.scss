@@ -2,6 +2,11 @@ mat-sidenav-content.gs-sidenav-content-min {
   margin-left: 60px !important;
 }
 
-:host /deep/ .mat-drawer-inner-container {
-  overflow: initial;
+:host {
+  /deep/ .mat-drawer-inner-container {
+    overflow: initial;
+  }
+  /deep/ .mat-drawer-side.main-sidenav {
+    border-right: none;
+  }
 }
