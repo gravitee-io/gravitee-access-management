@@ -239,4 +239,13 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <!-- Allow oss snapshot without requiring the developer to add it into it's own maven settings.xml -->
+    <repositories>
+        <repository>
+            <id>snapshots-repo</id>
+            <name>snapshots repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+    </repositories>
 </project>
