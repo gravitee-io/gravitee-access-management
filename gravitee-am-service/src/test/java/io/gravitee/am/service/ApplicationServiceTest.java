@@ -409,6 +409,13 @@ public class ApplicationServiceTest {
         NewApplication newClient = Mockito.mock(NewApplication.class);
         when(newClient.getName()).thenReturn("my-client");
         when(newClient.getRedirectUris()).thenReturn(null);
+        doAnswer(invocation -> {
+            Application mock = invocation.getArgument(0);
+            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
+            return mock;
+        }).when(applicationTemplateManager).apply(any());
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
         when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
         when(applicationRepository.create(any(Application.class))).thenReturn(Single.error(TechnicalException::new));
 
