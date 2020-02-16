@@ -28,6 +28,10 @@ import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
+import io.gravitee.am.gateway.handler.common.email.EmailManager;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
+import io.gravitee.am.gateway.handler.common.email.impl.EmailManagerImpl;
+import io.gravitee.am.gateway.handler.common.email.impl.EmailServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
@@ -64,7 +68,7 @@ import org.springframework.core.env.Environment;
  * @author GraviteeSource Team
  */
 @Configuration
-@Import({WebConfiguration.class, PolicyConfiguration.class, ContextConfiguration.class})
+@Import({WebConfiguration.class, FreemarkerConfiguration.class, PolicyConfiguration.class, ContextConfiguration.class})
 public class CommonConfiguration {
 
     @Autowired
@@ -163,5 +167,15 @@ public class CommonConfiguration {
     public UserManager userManager() {
         UserStore userStore = new InMemoryUserStore(vertx, environment.getProperty("http.cookie.session.timeout", Long.class, io.vertx.reactivex.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT));
         return new UserManagerImpl(userStore);
+    }
+
+    @Bean
+    public EmailService emailService() {
+        return new EmailServiceImpl();
+    }
+
+    @Bean
+    public EmailManager emailManager() {
+        return new EmailManagerImpl();
     }
 }

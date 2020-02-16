@@ -17,17 +17,17 @@ package io.gravitee.am.gateway.handler.common.auth.user.impl;
 
 import io.gravitee.am.common.exception.authentication.*;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
-import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.common.event.EventManager;
@@ -183,7 +183,13 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
             if (userAuthentication.getLastException() == null) {
                 return loginAttemptService.loginSucceeded(criteria);
             } else if (userAuthentication.getLastException() instanceof BadCredentialsException){
-                return loginAttemptService.loginFailed(criteria, accountSettings);
+                return loginAttemptService.loginFailed(criteria, accountSettings)
+                        .flatMapCompletable(loginAttempt -> {
+                            if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
+                                return userAuthenticationService.lockAccount(criteria, accountSettings, client);
+                            }
+                            return Completable.complete();
+                        });
             }
         }
         return Completable.complete();

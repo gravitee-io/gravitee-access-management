@@ -13,15 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.spring;
+package io.gravitee.am.service.spring.email;
 
-import freemarker.cache.*;
-import freemarker.core.HTMLOutputFormat;
-import freemarker.core.TemplateClassResolver;
-import freemarker.core.TemplateConfiguration;
 import io.gravitee.common.util.EnvironmentUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,8 +24,6 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -42,12 +34,8 @@ import java.util.Properties;
 @Configuration
 public class EmailConfiguration {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmailConfiguration.class);
-
     private final static String EMAIL_PROPERTIES_PREFIX = "email.properties";
     private final static String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
-
-    private final static String HTML_TEMPLATE_EXTENSION = "html";
 
     @Value("${email.host}")
     private String host;
@@ -63,9 +51,6 @@ public class EmailConfiguration {
 
     @Value("${email.protocol:smtp}")
     private String protocol;
-
-    @Value("${templates.path:${gravitee.home}/templates}")
-    private String templatesPath;
 
     @Autowired
     private ConfigurableEnvironment environment;
@@ -95,31 +80,4 @@ public class EmailConfiguration {
 
         return properties;
     }
-
-    @Bean
-    public freemarker.template.Configuration getConfiguration() {
-        final freemarker.template.Configuration configuration =
-                new freemarker.template.Configuration(freemarker.template.Configuration.VERSION_2_3_22);
-        configuration.setLocalizedLookup(false);
-        configuration.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
-        TemplateConfiguration tcHTML = new TemplateConfiguration();
-        tcHTML.setOutputFormat(HTMLOutputFormat.INSTANCE);
-
-        configuration.setTemplateConfigurations(
-                new ConditionalTemplateConfigurationFactory(new FileExtensionMatcher(HTML_TEMPLATE_EXTENSION), tcHTML));
-
-        try {
-            TemplateLoader[] templateLoaders = { overrideTemplateLoader(), new FileTemplateLoader(new File(templatesPath)) };
-            configuration.setTemplateLoader(new MultiTemplateLoader(templateLoaders));
-        } catch (final IOException e) {
-            LOGGER.warn("Error occurred while trying to read email templates", e);
-        }
-        return configuration;
-    }
-
-    @Bean
-    public StringTemplateLoader overrideTemplateLoader() {
-        return new StringTemplateLoader();
-    }
-
 }

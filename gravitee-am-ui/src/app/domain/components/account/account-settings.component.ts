@@ -135,6 +135,15 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     return this.accountSettings && this.accountSettings.autoLoginAfterResetPassword;
   }
 
+  enableSendRecoverAccountEmail(event) {
+    this.accountSettings.sendRecoverAccountEmail = event.checked;
+    this.formChanged = true;
+  }
+
+  isSendRecoverAccountEmailEnabled() {
+    return this.accountSettings && this.accountSettings.sendRecoverAccountEmail;
+  }
+
   updateModel() {
     this.formChanged = true;
   }
@@ -174,8 +183,12 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
   private getHumanizeDuration(value) {
     const humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
-    const humanizeDateValue = (humanizeDate[0] === 'a' || humanizeDate[0] === 'an') ? 1 : humanizeDate[0];
-    const humanizeDateUnit = humanizeDate[1].endsWith('s') ? humanizeDate[1] : humanizeDate[1] + 's';
+    const humanizeDateValue = (humanizeDate.length === 2)
+      ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an') ? 1 : humanizeDate[0]
+      : value;
+    const humanizeDateUnit = (humanizeDate.length === 2)
+      ? humanizeDate[1].endsWith('s') ? humanizeDate[1] : humanizeDate[1] + 's'
+      : humanizeDate[2].endsWith('s') ? humanizeDate[2] : humanizeDate[2] + 's';
     return new Array(humanizeDateValue, humanizeDateUnit);
   }
 

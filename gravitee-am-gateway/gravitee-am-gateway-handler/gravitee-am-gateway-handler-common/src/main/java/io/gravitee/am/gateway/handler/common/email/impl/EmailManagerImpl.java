@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.email.impl;
+package io.gravitee.am.gateway.handler.common.email.impl;
 
-import freemarker.cache.TemplateLoader;
+import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
 import io.gravitee.am.common.event.EmailEvent;
 import io.gravitee.am.common.event.EventManager;
-import io.gravitee.am.gateway.handler.email.EmailManager;
-import io.gravitee.am.gateway.handler.vertx.view.freemarker.DomainBasedEmailTemplateLoader;
+import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.ReferenceType;
@@ -67,7 +66,7 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
     private Configuration configuration;
 
     @Autowired
-    private TemplateLoader templateLoader;
+    private StringTemplateLoader templateLoader;
 
     @Value("${email.subject:[Gravitee.io] %s}")
     private String subject;
@@ -78,7 +77,7 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
     @Override
     public void afterPropertiesSet() {
         logger.info("Initializing emails for domain {}", domain.getName());
-        emailRepository.findByDomain(domain.getId())
+        emailRepository.findAll(ReferenceType.DOMAIN, domain.getId())
                 .subscribe(
                         emails -> {
                             updateEmails(emails);
@@ -170,7 +169,7 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
         Email deletedEmail = emails.remove(emailId);
         if (deletedEmail != null) {
             emailTemplates.remove(getTemplateName(deletedEmail));
-            ((DomainBasedEmailTemplateLoader) templateLoader).removeTemplate(getTemplateName(deletedEmail) + TEMPLATE_SUFFIX);
+            templateLoader.removeTemplate(getTemplateName(deletedEmail) + TEMPLATE_SUFFIX);
         }
     }
 
@@ -188,7 +187,7 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
     }
 
     private void reloadTemplate(String templateName, String content) {
-        ((DomainBasedEmailTemplateLoader) templateLoader).putTemplate(templateName, content, System.currentTimeMillis());
+        templateLoader.putTemplate(templateName, content, System.currentTimeMillis());
         configuration.clearTemplateCache();
     }
 

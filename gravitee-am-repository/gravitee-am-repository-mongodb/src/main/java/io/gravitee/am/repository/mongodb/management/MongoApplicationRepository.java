@@ -385,6 +385,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         accountSettings.setDynamicUserRegistration(accountSettingsMongo.isDynamicUserRegistration());
         accountSettings.setAutoLoginAfterResetPassword(accountSettingsMongo.isAutoLoginAfterResetPassword());
         accountSettings.setRedirectUriAfterResetPassword(accountSettingsMongo.getRedirectUriAfterResetPassword());
+        accountSettings.setSendRecoverAccountEmail(accountSettingsMongo.isSendRecoverAccountEmail());
         return accountSettings;
     }
 
@@ -406,6 +407,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         accountSettingsMongo.setDynamicUserRegistration(accountSettings.isDynamicUserRegistration());
         accountSettingsMongo.setAutoLoginAfterResetPassword(accountSettings.isAutoLoginAfterResetPassword());
         accountSettingsMongo.setRedirectUriAfterResetPassword(accountSettings.getRedirectUriAfterResetPassword());
+        accountSettingsMongo.setSendRecoverAccountEmail(accountSettings.isSendRecoverAccountEmail());
         return accountSettingsMongo;
     }
 

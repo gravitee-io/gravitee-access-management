@@ -16,7 +16,6 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.LoginAttempt;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.repository.management.api.LoginAttemptRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
@@ -30,8 +29,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,12 +43,6 @@ public class LoginAttemptServiceTest {
 
     @Mock
     private LoginAttemptRepository loginAttemptRepository;
-
-    @Mock
-    private UserService userService;
-
-    @Mock
-    private AuditService auditService;
 
     @Test
     public void shouldCreateUser_accountLockFirstConnection() {
@@ -71,14 +63,10 @@ public class LoginAttemptServiceTest {
 
         when(loginAttemptRepository.findByCriteria(loginAttemptCriteria)).thenReturn(Maybe.just(loginAttempt));
         when(loginAttemptRepository.update(loginAttempt)).thenReturn(Single.just(loginAttempt));
-        when(userService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
-        when(userService.create(any())).thenReturn(Single.just(new User()));
 
         TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings).test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
-
-        verify(userService, times(1)).create(any());
     }
 
     @Test
@@ -100,14 +88,9 @@ public class LoginAttemptServiceTest {
 
         when(loginAttemptRepository.findByCriteria(loginAttemptCriteria)).thenReturn(Maybe.just(loginAttempt));
         when(loginAttemptRepository.update(loginAttempt)).thenReturn(Single.just(loginAttempt));
-        when(userService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.just(new User()));
-        when(userService.update(any())).thenReturn(Single.just(new User()));
 
         TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings).test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
-
-        verify(userService, never()).create(any());
-        verify(userService, times(1)).update(any());
     }
 }

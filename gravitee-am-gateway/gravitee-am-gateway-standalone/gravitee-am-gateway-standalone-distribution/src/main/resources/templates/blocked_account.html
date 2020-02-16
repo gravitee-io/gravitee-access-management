@@ -1,0 +1,16 @@
+<html>
+<body style="text-align: center;">
+<header>
+	<#include "header.html" />
+</header>
+<div style="margin-top: 50px; color: #424e5a;">
+	<p>Your account has been blocked due to some unusual sign-in activity.</p>
+	<p><a href="${url}">Click here</a> to unblock it.</p>
+	<small>Please contact your administrator for assistance if you believe that you received this message in error.</small>
+	<small>
+		This link will expire in <#if expireAfterSeconds gte 3600>${expireAfterSeconds / 3600} hour(s)<#else>${expireAfterSeconds / 60} minutes(s)</#if>.
+		After that, you must submit a new request to your Administrators to resend a new recover account email.
+	</small>
+</div>
+</body>
+</html>

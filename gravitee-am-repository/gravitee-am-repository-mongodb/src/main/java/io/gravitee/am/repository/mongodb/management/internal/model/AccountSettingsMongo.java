@@ -28,6 +28,7 @@ public class AccountSettingsMongo {
     private Integer maxLoginAttempts;
     private Integer loginAttemptsResetTime;
     private Integer accountBlockedDuration;
+    private boolean sendRecoverAccountEmail;
     private boolean completeRegistrationWhenResetPassword;
     private boolean autoLoginAfterRegistration;
     private String redirectUriAfterRegistration;
@@ -74,6 +75,14 @@ public class AccountSettingsMongo {
 
     public void setAccountBlockedDuration(Integer accountBlockedDuration) {
         this.accountBlockedDuration = accountBlockedDuration;
+    }
+
+    public boolean isSendRecoverAccountEmail() {
+        return sendRecoverAccountEmail;
+    }
+
+    public void setSendRecoverAccountEmail(boolean sendRecoverAccountEmail) {
+        this.sendRecoverAccountEmail = sendRecoverAccountEmail;
     }
 
     public boolean isCompleteRegistrationWhenResetPassword() {
@@ -146,6 +155,7 @@ public class AccountSettingsMongo {
         accountSettings.setDefaultIdentityProviderForRegistration(getDefaultIdentityProviderForRegistration());
         accountSettings.setAutoLoginAfterResetPassword(isAutoLoginAfterResetPassword());
         accountSettings.setRedirectUriAfterResetPassword(getRedirectUriAfterResetPassword());
+        accountSettings.setSendRecoverAccountEmail(isSendRecoverAccountEmail());
         return accountSettings;
     }
 
@@ -166,6 +176,7 @@ public class AccountSettingsMongo {
         accountSettingsMongo.setDefaultIdentityProviderForRegistration(accountSettings.getDefaultIdentityProviderForRegistration());
         accountSettingsMongo.setAutoLoginAfterResetPassword(accountSettings.isAutoLoginAfterResetPassword());
         accountSettingsMongo.setRedirectUriAfterResetPassword(accountSettings.getRedirectUriAfterResetPassword());
+        accountSettingsMongo.setSendRecoverAccountEmail(accountSettings.isSendRecoverAccountEmail());
         return accountSettingsMongo;
     }
 }

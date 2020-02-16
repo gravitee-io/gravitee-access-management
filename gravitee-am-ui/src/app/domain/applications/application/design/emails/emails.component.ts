@@ -49,6 +49,13 @@ export class ApplicationEmailsComponent {
         'template': 'RESET_PASSWORD',
         'icon': 'lock_open',
         'enabled': this.applicationSettingsValid() && this.allowResetPassword()
+      },
+      {
+        'name': 'Blocked account',
+        'description': 'Recover account after it has been blocked',
+        'template': 'BLOCKED_ACCOUNT',
+        'icon': 'person_add_disabled',
+        'enabled': this.applicationSettingsValid()
       }
     ]
   }

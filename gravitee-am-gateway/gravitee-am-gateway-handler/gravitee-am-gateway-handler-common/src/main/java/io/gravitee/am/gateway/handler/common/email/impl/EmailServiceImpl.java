@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl;
+package io.gravitee.am.gateway.handler.common.email.impl;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -22,17 +22,18 @@ import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.gateway.handler.common.email.EmailManager;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.jwt.JWTBuilder;
-import io.gravitee.am.management.service.EmailManager;
-import io.gravitee.am.management.service.EmailService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.io.StringReader;
 import java.util.Date;
@@ -45,22 +46,25 @@ import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processT
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Component("managementEmailService")
 public class EmailServiceImpl implements EmailService {
-
-    private static final String ADMIN_CLIENT = "admin";
 
     @Value("${email.enabled:false}")
     private boolean enabled;
 
-    @Value("${user.registration.email.subject:New user registration}")
-    private String registrationSubject;
-
-    @Value("${user.registration.token.expire-after:86400}")
-    private Integer registrationExpireAfter;
-
     @Value("${gateway.url:http://localhost:8092}")
     private String gatewayUrl;
+
+    @Value("${user.resetPassword.email.subject:Please reset your password}")
+    private String resetPasswordSubject;
+
+    @Value("${user.resetPassword.token.expire-after:86400}")
+    private Integer resetPasswordExpireAfter;
+
+    @Value("${user.blockedAccount.email.subject:Account has been locked}")
+    private String blockedAccountSubject;
+
+    @Value("${user.blockedAccount.token.expire-after:86400}")
+    private Integer blockedAccountExpireAfter;
 
     @Autowired
     private EmailManager emailManager;
@@ -72,6 +76,9 @@ public class EmailServiceImpl implements EmailService {
     private Configuration freemarkerConfiguration;
 
     @Autowired
+    private Domain domain;
+
+    @Autowired
     private AuditService auditService;
 
     @Autowired
@@ -79,39 +86,38 @@ public class EmailServiceImpl implements EmailService {
     private JWTBuilder jwtBuilder;
 
     @Override
-    public void send(io.gravitee.am.model.Template template, User user) {
+    public void send(io.gravitee.am.model.Template template, User user, Client client) {
         if (enabled) {
             // get raw email template
-            io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, user);
+            io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, client);
             // prepare email
-            Email email = prepareEmail(template, emailTemplate, user);
+            Email email = prepareEmail(template, emailTemplate, user, client);
             // send email
-            sendEmail(email, user);
+            sendEmail(email, user, client);
+
         }
     }
 
-    private void sendEmail(Email email, User user) {
-        if (enabled) {
-            try {
-                final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
-                final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
-                // compute email subject
-                final String subject = processTemplateIntoString(plainTextTemplate, email.getParams());
-                // compute email content
-                final String content = processTemplateIntoString(template, email.getParams());
-                final Email emailToSend = new Email(email);
-                emailToSend.setSubject(subject);
-                emailToSend.setContent(content);
-                emailService.send(emailToSend);
-                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(user.getReferenceId()).client(ADMIN_CLIENT).email(email).user(user));
-            } catch (final Exception ex) {
-                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(user.getReferenceId()).client(ADMIN_CLIENT).email(email).throwable(ex));
-            }
+    private void sendEmail(Email email, User user, Client client) {
+        try {
+            final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
+            final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
+            // compute email subject
+            final String subject = processTemplateIntoString(plainTextTemplate, email.getParams());
+            // compute email content
+            final String content = processTemplateIntoString(template, email.getParams());
+            final Email emailToSend = new Email(email);
+            emailToSend.setSubject(subject);
+            emailToSend.setContent(content);
+            emailService.send(emailToSend);
+            auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).client(client).email(email).user(user));
+        } catch (final Exception ex) {
+            auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).client(client).email(email).throwable(ex));
         }
     }
 
-    private Email prepareEmail(io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user) {
-        Map<String, Object> params = prepareEmailParams(user, emailTemplate.getExpiresAfter(), template.redirectUri());
+    private Email prepareEmail(io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user, Client client) {
+        Map<String, Object> params = prepareEmailParams(user, client, emailTemplate.getExpiresAfter(), template.redirectUri());
         Email email = new EmailBuilder()
                 .to(user.getEmail())
                 .from(emailTemplate.getFrom())
@@ -123,15 +129,13 @@ public class EmailServiceImpl implements EmailService {
         return email;
     }
 
-    private Map<String, Object> prepareEmailParams(User user, Integer expiresAfter, String redirectUri) {
+    private Map<String, Object> prepareEmailParams(User user, Client client, Integer expiresAfter, String redirectUri) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
         claims.put(Claims.iat, new Date().getTime() / 1000);
         claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expiresAfter * 1000)).getTime() / 1000);
         claims.put(Claims.sub, user.getId());
-        if (user.getClient() != null) {
-            claims.put(Claims.aud, user.getClient());
-        }
+        claims.put(Claims.aud, client.getId());
         claims.put(StandardClaims.EMAIL, user.getEmail());
         claims.put(StandardClaims.GIVEN_NAME, user.getFirstName());
         claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
@@ -154,21 +158,20 @@ public class EmailServiceImpl implements EmailService {
         return params;
     }
 
-    private io.gravitee.am.model.Email getEmailTemplate(io.gravitee.am.model.Template template, User user) {
-        return emailManager.getEmail(getTemplateName(template, user), getDefaultSubject(template), getDefaultExpireAt(template));
+    private io.gravitee.am.model.Email getEmailTemplate(io.gravitee.am.model.Template template, Client client) {
+        return emailManager.getEmail(getTemplateName(template, client), getDefaultSubject(template), getDefaultExpireAt(template));
     }
 
-    private String getTemplateName(io.gravitee.am.model.Template template, User user) {
-        return template.template()
-                + EmailManager.TEMPLATE_NAME_SEPARATOR
-                + user.getReferenceType() + user.getReferenceId()
-                + ((user.getClient() != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR + user.getClient() : "");
+    private String getTemplateName(io.gravitee.am.model.Template template, Client client) {
+        return template.template() + ((client != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR +  client.getId() : "");
     }
 
     private String getDefaultSubject(io.gravitee.am.model.Template template) {
         switch (template) {
-            case REGISTRATION_CONFIRMATION:
-                return registrationSubject;
+            case RESET_PASSWORD:
+                return resetPasswordSubject;
+            case BLOCKED_ACCOUNT:
+                return blockedAccountSubject;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }
@@ -176,8 +179,10 @@ public class EmailServiceImpl implements EmailService {
 
     private Integer getDefaultExpireAt(io.gravitee.am.model.Template template) {
         switch (template) {
-            case REGISTRATION_CONFIRMATION:
-                return registrationExpireAfter;
+            case RESET_PASSWORD:
+                return resetPasswordExpireAfter;
+            case BLOCKED_ACCOUNT:
+                return blockedAccountExpireAfter;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }

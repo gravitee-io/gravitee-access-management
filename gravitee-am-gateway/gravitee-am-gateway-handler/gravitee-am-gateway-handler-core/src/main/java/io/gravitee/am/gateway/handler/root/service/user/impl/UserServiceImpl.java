@@ -16,23 +16,17 @@
 package io.gravitee.am.gateway.handler.root.service.user.impl;
 
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.email.Email;
-import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
-import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.jwt.JWTBuilder;
-import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.email.EmailManager;
-import io.gravitee.am.gateway.handler.email.EmailService;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
@@ -57,7 +51,6 @@ import io.reactivex.MaybeSource;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.*;
 
@@ -69,21 +62,8 @@ public class UserServiceImpl implements UserService {
 
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
 
-    @Value("${gateway.url:http://localhost:8092}")
-    private String gatewayUrl;
-
-    @Value("${user.resetPassword.email.subject:Please reset your password}")
-    private String resetPasswordSubject;
-
-    @Value("${user.resetPassword.token.expire-after:86400}")
-    private Integer expireAfter;
-
     @Autowired
     private io.gravitee.am.gateway.handler.common.user.UserService userService;
-
-    @Autowired
-    @Qualifier("managementJwtBuilder")
-    private JWTBuilder jwtBuilder;
 
     @Autowired
     @Qualifier("managementJwtParser")
@@ -97,9 +77,6 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
-
-    @Autowired
-    private EmailManager emailManager;
 
     @Autowired
     private ClientSyncService clientSyncService;
@@ -166,13 +143,7 @@ public class UserServiceImpl implements UserService {
                         .doOnSuccess(registrationResponse -> {
                             // reload principal
                             final User user1 = registrationResponse.getUser();
-                            io.gravitee.am.identityprovider.api.User principal1 = new DefaultUser(user1.getUsername());
-                            ((DefaultUser) principal1).setId(user1.getId());
-                            ((DefaultUser) principal1).setAdditionalInformation(principal.getAdditionalInformation());
-                            principal1.getAdditionalInformation()
-                                    .put(StandardClaims.NAME,
-                                            user1.getDisplayName() != null ? user1.getDisplayName() :
-                                                    (user1.getFirstName() != null ? user1.getFirstName() + (user1.getLastName() != null ? " " + user1.getLastName() : "") : user1.getUsername()));
+                            io.gravitee.am.identityprovider.api.User principal1 = reloadPrincipal(principal, user1);
                             auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal1).type(EventType.USER_REGISTERED));
                         })
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_REGISTERED).throwable(throwable)))
@@ -259,6 +230,9 @@ public class UserServiceImpl implements UserService {
                         user.setRegistrationCompleted(true);
                         user.setEnabled(true);
                     }
+                    user.setAccountNonLocked(true);
+                    user.setAccountLockedAt(null);
+                    user.setAccountLockedUntil(null);
                     user.setPassword(null);
                     user.setExternalId(idpUser.getId());
                     user.setUpdatedAt(new Date());
@@ -313,16 +287,10 @@ public class UserServiceImpl implements UserService {
                     }
                     return user;
                 })
-                .doOnSuccess(user -> new Thread(() -> completeForgotPassword(user, client)).start())
+                .doOnSuccess(user -> new Thread(() -> emailService.send(Template.RESET_PASSWORD, user, client)).start())
                 .doOnSuccess(user1 -> {
                     // reload principal
-                    io.gravitee.am.identityprovider.api.User principal1 = new DefaultUser(user1.getUsername());
-                    ((DefaultUser) principal1).setId(user1.getId());
-                    ((DefaultUser) principal1).setAdditionalInformation(principal != null && principal.getAdditionalInformation() != null ? new HashMap<>(principal.getAdditionalInformation()) : new HashMap<>());
-                    principal1.getAdditionalInformation()
-                            .put(StandardClaims.NAME,
-                                    user1.getDisplayName() != null ? user1.getDisplayName() :
-                                            (user1.getFirstName() != null ? user1.getFirstName() + (user1.getLastName() != null ? " " + user1.getLastName() : "") : user1.getUsername()));
+                    io.gravitee.am.identityprovider.api.User principal1 = reloadPrincipal(principal, user1);
                     auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal1).type(EventType.FORGOT_PASSWORD_REQUESTED));
                 })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
@@ -345,59 +313,6 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
-    private void completeForgotPassword(User user, Client client) {
-        io.gravitee.am.model.Email email = emailManager.getEmail(getTemplateName(client), resetPasswordSubject, expireAfter);
-        Email email1 = convert(user, client, email, "/resetPassword", "resetPasswordUrl");
-        emailService.send(email1, user, client);
-    }
-
-    private Email convert(User user, Client client, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {
-        Map<String, Object> params = prepareEmail(user, client, email.getExpiresAfter(), redirectUri, redirectUriName);
-        Email email1 = new EmailBuilder()
-                .to(user.getEmail())
-                .from(email.getFrom())
-                .fromName(email.getFromName())
-                .subject(email.getSubject())
-                .template(email.getTemplate())
-                .params(params)
-                .build();
-        return email1;
-    }
-
-    private Map<String, Object> prepareEmail(User user, Client client, int expiresAfter, String redirectUri, String redirectUriName) {
-        // generate a JWT to store user's information and for security purpose
-        final Map<String, Object> claims = new HashMap<>();
-        claims.put(Claims.iat, new Date().getTime() / 1000);
-        claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expiresAfter * 1000)).getTime() / 1000);
-        claims.put(Claims.sub, user.getId());
-        claims.put(Claims.aud, client.getId());
-        claims.put(StandardClaims.EMAIL, user.getEmail());
-        claims.put(StandardClaims.GIVEN_NAME, user.getFirstName());
-        claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
-
-        String token = jwtBuilder.sign(new JWT(claims));
-
-        String entryPoint = gatewayUrl;
-        if (entryPoint != null && entryPoint.endsWith("/")) {
-            entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
-        }
-
-        String redirectUrl = entryPoint + "/" + user.getReferenceId() + redirectUri + "?token=" + token;
-
-        Map<String, Object> params = new HashMap<>();
-        params.put("user", user);
-        params.put(redirectUriName, redirectUrl);
-        params.put("token", token);
-        params.put("expireAfterSeconds", expiresAfter);
-
-        return params;
-    }
-
-    private String getTemplateName(Client client) {
-        return Template.RESET_PASSWORD.template()
-                + ((client != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR +  client.getId() : "");
-    }
-
     private MaybeSource<Optional<Client>> clientSource(String audience) {
         if (audience == null) {
             return Maybe.just(Optional.empty());
@@ -411,6 +326,17 @@ public class UserServiceImpl implements UserService {
     private boolean forceUserRegistration(Domain domain, Client client) {
         AccountSettings accountSettings = getAccountSettings(domain, client);
         return accountSettings != null && accountSettings.isCompleteRegistrationWhenResetPassword();
+    }
+
+    private io.gravitee.am.identityprovider.api.User reloadPrincipal(io.gravitee.am.identityprovider.api.User principal, User user) {
+        io.gravitee.am.identityprovider.api.User principal1 = new DefaultUser(user.getUsername());
+        ((DefaultUser) principal1).setId(user.getId());
+        ((DefaultUser) principal1).setAdditionalInformation(principal != null && principal.getAdditionalInformation() != null ? new HashMap<>(principal.getAdditionalInformation()) : new HashMap<>());
+        principal1.getAdditionalInformation()
+                .put(StandardClaims.NAME,
+                        user.getDisplayName() != null ? user.getDisplayName() :
+                                (user.getFirstName() != null ? user.getFirstName() + (user.getLastName() != null ? " " + user.getLastName() : "") : user.getUsername()));
+        return principal1;
     }
 
     private AccountSettings getAccountSettings(Domain domain, Client client) {

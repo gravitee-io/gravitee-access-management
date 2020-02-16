@@ -30,18 +30,26 @@ public class AccountSettings {
      * Enable/Disable authentication brut force attempts detection feature
      */
     private boolean loginAttemptsDetectionEnabled;
+
     /**
      * Max login failures after which the account will be blocked
      */
     private Integer maxLoginAttempts;
+
     /**
      * Amount of time after which the user login attempts will be erased if max attempts has not been reached
      */
     private Integer loginAttemptsResetTime;
+
     /**
      * Amount of time while the user will be blocked
      */
     private Integer accountBlockedDuration;
+
+    /**
+     * Enable/Disable email notification for blocked account
+     */
+    private boolean sendRecoverAccountEmail;
 
     /**
      * Complete user registration when the user renewed his password
@@ -87,6 +95,7 @@ public class AccountSettings {
         this.maxLoginAttempts = other.maxLoginAttempts;
         this.loginAttemptsResetTime = other.loginAttemptsResetTime;
         this.accountBlockedDuration = other.accountBlockedDuration;
+        this.sendRecoverAccountEmail = other.sendRecoverAccountEmail;
         this.completeRegistrationWhenResetPassword = other.completeRegistrationWhenResetPassword;
         this.autoLoginAfterRegistration = other.autoLoginAfterRegistration;
         this.redirectUriAfterRegistration = other.redirectUriAfterRegistration;
@@ -133,6 +142,14 @@ public class AccountSettings {
 
     public void setAccountBlockedDuration(Integer accountBlockedDuration) {
         this.accountBlockedDuration = accountBlockedDuration;
+    }
+
+    public boolean isSendRecoverAccountEmail() {
+        return sendRecoverAccountEmail;
+    }
+
+    public void setSendRecoverAccountEmail(boolean sendRecoverAccountEmail) {
+        this.sendRecoverAccountEmail = sendRecoverAccountEmail;
     }
 
     public boolean isCompleteRegistrationWhenResetPassword() {

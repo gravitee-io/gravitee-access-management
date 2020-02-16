@@ -177,6 +177,11 @@ user:
       #subject: Please reset your password
     token:
       #expire-after: 86400 # the end of validity of the token in seconds for reset password email (default 86400 = a day)
+  blockedAccount:
+      email:
+      #subject: Account has been locked
+      token:
+      #expire-after: 86400 # the end of validity of the token in seconds for blocked account email (default 86400 = a day)
 
 handlers:
   request:

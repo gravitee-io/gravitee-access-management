@@ -30,7 +30,7 @@
           <div>
             <h3>Hi ${user.firstName} ${user.lastName},</h3>
             <p>You have requested to reset your password.</p>
-            <p><a href="${resetPasswordUrl}">Click here</a> to change it.</p>
+            <p><a href="${url}">Click here</a> to change it.</p>
             <small>
               This link will expire in <#if expireAfterSeconds gte 3600>${expireAfterSeconds / 3600} hour(s)<#else>${expireAfterSeconds / 60} minutes(s)</#if>.
               After that, you must submit a new request to ask for a new password.
@@ -51,10 +51,31 @@
           <div>
             <h3>Hi ${user.firstName} ${user.lastName},</h3>
             <p>You have been successfully registered.</p>
-            <p><a href="${registrationUrl}">Click here</a> to confirm your registration.</p>
+            <p><a href="${url}">Click here</a> to confirm your registration.</p>
             <small>
               This link will expire in <#if expireAfterSeconds gte 3600>${expireAfterSeconds / 3600} hour(s)<#else>${expireAfterSeconds / 60} minutes(s)</#if>.
               After that, you must submit a new request to your Administrators to resend a new account activation email.
+            </small>
+          </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
+    <pre *ngIf="data.rawTemplate === 'BLOCKED_ACCOUNT'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html>
+         <head>
+          <title>Recover your account</title>
+        </head>
+        <body>
+          <div>
+            <p>Your account has been blocked due to some unusual sign-in activity.</p>
+            <p><a href="${url}">Click here</a> to unblock it.</p>
+            <small>Please contact your administrator for assistance if you believe that you received this message in error.</small>
+            <small>
+              This link will expire in <#if expireAfterSeconds gte 3600>${expireAfterSeconds / 3600} hour(s)<#else>${expireAfterSeconds / 60} minutes(s)</#if>.
+              After that, you must submit a new request to your Administrators to resend a new recover account email.
             </small>
           </div>
         </body>

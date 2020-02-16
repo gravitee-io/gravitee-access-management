@@ -15,7 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.email;
 
-import io.gravitee.am.gateway.handler.email.impl.EmailManagerImpl;
+import io.gravitee.am.gateway.handler.common.email.EmailManager;
+import io.gravitee.am.gateway.handler.common.email.impl.EmailManagerImpl;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;

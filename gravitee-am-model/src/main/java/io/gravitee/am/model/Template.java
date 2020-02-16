@@ -25,25 +25,32 @@ import java.util.stream.Collectors;
  */
 public enum Template {
 
-    LOGIN("login"),
-    REGISTRATION("registration"),
-    REGISTRATION_CONFIRMATION("registration_confirmation"),
-    FORGOT_PASSWORD("forgot_password"),
-    RESET_PASSWORD("reset_password"),
-    OAUTH2_USER_CONSENT("oauth2_user_consent"),
-    MFA_ENROLL("mfa_enroll"),
-    MFA_CHALLENGE("mfa_challenge"),
-    COMPLETE_PROFILE("complete_profile"),
-    ERROR("error");
+    LOGIN("login", "/login"),
+    REGISTRATION("registration", "/register"),
+    REGISTRATION_CONFIRMATION("registration_confirmation", "/confirmRegistration"),
+    FORGOT_PASSWORD("forgot_password", "/forgotPassword"),
+    RESET_PASSWORD("reset_password", "/resetPassword"),
+    OAUTH2_USER_CONSENT("oauth2_user_consent", "/oauth/confirm_access"),
+    MFA_ENROLL("mfa_enroll", "/mfa/enroll"),
+    MFA_CHALLENGE("mfa_challenge", "/mfa/challenge"),
+    BLOCKED_ACCOUNT("blocked_account", "/resetPassword"),
+    COMPLETE_PROFILE("complete_profile", "/completeProfile"),
+    ERROR("error", "/error");
 
     private final String template;
+    private final String redirectUri;
 
-    Template(String template) {
+    Template(String template, String redirectUri) {
         this.template = template;
+        this.redirectUri = redirectUri;
     }
 
     public String template() {
         return template;
+    }
+
+    public String redirectUri() {
+        return redirectUri;
     }
 
     public static Template parse(String toParse) {
