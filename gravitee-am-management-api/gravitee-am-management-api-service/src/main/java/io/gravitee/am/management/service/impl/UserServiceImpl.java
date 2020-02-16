@@ -16,15 +16,12 @@
 package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.email.Email;
-import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.UserService;
@@ -59,9 +56,6 @@ public class UserServiceImpl implements UserService {
 
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
 
-    @Value("${user.registration.email.subject:New user registration}")
-    private String registrationSubject;
-
     @Value("${user.registration.token.expire-after:86400}")
     private Integer expireAfter;
 
@@ -80,9 +74,6 @@ public class UserServiceImpl implements UserService {
     @Autowired
     @Qualifier("managementJwtBuilder")
     private JWTBuilder jwtBuilder;
-
-    @Autowired
-    private EmailManager emailManager;
 
     @Autowired
     private AuditService auditService;
@@ -121,7 +112,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<User> findById(ReferenceType referenceType, String referenceId, String id) {
-
         return userService.findById(referenceType, referenceId, id);
     }
 
@@ -221,7 +211,7 @@ public class UserServiceImpl implements UserService {
                                                                         // in pre registration mode an email will be sent to the user to complete his account
                                                                         AccountSettings accountSettings = getAccountSettings(domain1, client);
                                                                         if (newUser.isPreRegistration() && accountSettings != null && !accountSettings.isDynamicUserRegistration()) {
-                                                                            new Thread(() -> completeUserRegistration(user)).start();
+                                                                            new Thread(() -> emailService.send(Template.REGISTRATION_CONFIRMATION, user)).start();
                                                                         }
                                                                     })
                                                                     .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
@@ -395,7 +385,7 @@ public class UserServiceImpl implements UserService {
                     }
                     return user;
                 })
-                .doOnSuccess(user -> new Thread(() -> completeUserRegistration(user)).start())
+                .doOnSuccess(user -> new Thread(() -> emailService.send(Template.REGISTRATION_CONFIRMATION, user)).start())
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).user(user1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).throwable(throwable)))
                 .toCompletable();
@@ -497,39 +487,6 @@ public class UserServiceImpl implements UserService {
                 }).toCompletable();
     }
 
-    private void completeUserRegistration(User user) {
-        final String templateName = getTemplateName(user);
-        io.gravitee.am.model.Email email = emailManager.getEmail(templateName, registrationSubject, expireAfter);
-        Email email1 = buildEmail(user, email, "/confirmRegistration", "registrationUrl");
-        emailService.send(email1, user);
-    }
-
-    private Email buildEmail(User user, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {
-        Map<String, Object> params = prepareEmail(user, email.getExpiresAfter(), redirectUri, redirectUriName);
-        Email email1 = new EmailBuilder()
-                .to(user.getEmail())
-                .from(email.getFrom())
-                .fromName(email.getFromName())
-                .subject(email.getSubject())
-                .template(email.getTemplate())
-                .params(params)
-                .build();
-        return email1;
-    }
-
-    private Map<String, Object> prepareEmail(User user, int expiresAfter, String redirectUri, String redirectUriName) {
-        final String token = getUserRegistrationToken(user);
-        final String redirectUrl = getUserRegistrationUri(user.getReferenceId(), redirectUri) + "?token=" + token;
-
-        Map<String, Object> params = new HashMap<>();
-        params.put("user", user);
-        params.put(redirectUriName, redirectUrl);
-        params.put("token", token);
-        params.put("expireAfterSeconds", expiresAfter);
-
-        return params;
-    }
-
     private String getUserRegistrationUri(String domain, String redirectUri) {
         String entryPoint = gatewayUrl;
         if (entryPoint != null && entryPoint.endsWith("/")) {
@@ -553,13 +510,6 @@ public class UserServiceImpl implements UserService {
         claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
 
         return jwtBuilder.sign(new JWT(claims));
-    }
-
-    private String getTemplateName(User user) {
-        return Template.REGISTRATION_CONFIRMATION.template()
-                + EmailManager.TEMPLATE_NAME_SEPARATOR
-                + user.getReferenceType() + user.getReferenceId()
-                + ((user.getClient() != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR + user.getClient() : "");
     }
 
     private AccountSettings getAccountSettings(Domain domain, Application application) {

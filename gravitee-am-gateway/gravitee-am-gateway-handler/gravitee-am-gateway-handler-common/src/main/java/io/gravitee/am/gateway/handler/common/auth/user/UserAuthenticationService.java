@@ -16,6 +16,10 @@
 package io.gravitee.am.gateway.handler.common.auth.user;
 
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -42,6 +46,15 @@ public interface UserAuthenticationService {
      * @return Pre-authenticated user
      */
     Maybe<User> loadPreAuthenticatedUser(String subject);
+
+    /**
+     * Lock user account if login max attempts has been reached
+     *
+     * @param criteria login attempt criteria
+     * @param accountSettings account settings
+     * @return
+     */
+    Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client);
 
     default Single<User> connect(io.gravitee.am.identityprovider.api.User principal) {
         return connect(principal, true);

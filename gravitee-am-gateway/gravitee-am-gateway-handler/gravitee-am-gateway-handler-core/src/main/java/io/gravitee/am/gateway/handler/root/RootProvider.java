@@ -226,7 +226,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(new RegisterConfirmationSubmissionEndpoint(userService));
 
-        // mount forgot/reset password pages only if the option is enabled
+        // mount forgot password pages only if the option is enabled
         if (domain.getLoginSettings() != null && domain.getLoginSettings().isForgotPasswordEnabled()) {
             rootRouter.route(HttpMethod.GET, "/forgotPassword")
                     .handler(clientRequestParseHandler)
@@ -235,16 +235,18 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                     .handler(new ForgotPasswordSubmissionRequestParseHandler())
                     .handler(clientRequestParseHandler)
                     .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));
-            rootRouter.route(HttpMethod.GET, "/resetPassword")
-                    .handler(new ResetPasswordRequestParseHandler(userService))
-                    .handler(clientRequestParseHandlerOptional)
-                    .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine));
-            rootRouter.route(HttpMethod.POST, "/resetPassword")
-                    .handler(new ResetPasswordSubmissionRequestParseHandler())
-                    .handler(userTokenRequestParseHandler)
-                    .handler(passwordPolicyRequestParseHandler)
-                    .handler(new ResetPasswordSubmissionEndpoint(userService));
         }
+
+        // keep mounting reset password pages for the account locked feature
+        rootRouter.route(HttpMethod.GET, "/resetPassword")
+                .handler(new ResetPasswordRequestParseHandler(userService))
+                .handler(clientRequestParseHandlerOptional)
+                .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine));
+        rootRouter.route(HttpMethod.POST, "/resetPassword")
+                .handler(new ResetPasswordSubmissionRequestParseHandler())
+                .handler(userTokenRequestParseHandler)
+                .handler(passwordPolicyRequestParseHandler)
+                .handler(new ResetPasswordSubmissionEndpoint(userService));
 
         // error handler
         errorHandler(rootRouter);

@@ -17,9 +17,11 @@ package io.gravitee.am.service.spring;
 
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.am.service.authentication.crypto.password.RegexPasswordValidator;
+import io.gravitee.am.service.spring.email.EmailConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -27,6 +29,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ComponentScan("io.gravitee.am.service")
+@Import(EmailConfiguration.class)
 public class ServiceConfiguration {
 
     @Bean

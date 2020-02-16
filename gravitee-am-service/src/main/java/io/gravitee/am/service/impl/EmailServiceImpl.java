@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.email.impl;
+package io.gravitee.am.service.impl;
 
-import freemarker.template.Configuration;
-import freemarker.template.Template;
 import io.gravitee.am.common.email.Email;
-import io.gravitee.am.gateway.handler.email.EmailService;
-import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.User;
-import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EmailService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -36,21 +28,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Component;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Component
 public class EmailServiceImpl implements EmailService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailServiceImpl.class);
@@ -58,54 +49,34 @@ public class EmailServiceImpl implements EmailService {
     @Value("${templates.path:${gravitee.home}/templates}")
     private String templatesPath;
 
-    @Value("${email.enabled:false}")
-    private boolean enabled;
-
     @Autowired
     private JavaMailSender mailSender;
 
-    @Autowired
-    private Configuration freemarkerConfiguration;
-
-    @Autowired
-    private Domain domain;
-
-    @Autowired
-    private AuditService auditService;
-
     @Override
-    public void send(Email email, User user, Client client) {
-        if (enabled) {
-            try {
-                final MimeMessageHelper mailMessage = new MimeMessageHelper(mailSender.createMimeMessage(), true, StandardCharsets.UTF_8.name());
-                final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
-                final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
+    public void send(Email email) {
+        try {
+            final MimeMessageHelper mailMessage = new MimeMessageHelper(mailSender.createMimeMessage(), true, StandardCharsets.UTF_8.name());
+            final String subject = email.getSubject();
+            final String content = email.getContent();
+            final String from = email.getFrom();
+            final String[] to = email.getTo();
 
-                // compute email subject
-                final String subject = processTemplateIntoString(plainTextTemplate, email.getParams());
-                // compute email content
-                final String content = processTemplateIntoString(template, email.getParams());
-                final String from = email.getFrom();
-
-                String fromName = email.getFromName();
-                if (fromName == null || fromName.isEmpty()) {
-                    mailMessage.setFrom(from);
-                } else {
-                    mailMessage.setFrom(from, fromName);
-                }
-
-                mailMessage.setTo(email.getTo());
-                mailMessage.setSubject(subject);
-
-                final String html = addResourcesInMessage(mailMessage, content);
-                LOGGER.debug("Sending an email to: {}\nSubject: {}\nMessage: {}", email.getTo(), email.getSubject(), html);
-                mailSender.send(mailMessage.getMimeMessage());
-                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).client(client).email(email).user(user));
-            } catch (final Exception ex) {
-                LOGGER.error("Error while sending email", ex);
-                new TechnicalManagementException("Error while sending email", ex);
-                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).client(client).email(email).throwable(ex));
+            String fromName = email.getFromName();
+            if (fromName == null || fromName.isEmpty()) {
+                mailMessage.setFrom(from);
+            } else {
+                mailMessage.setFrom(from, fromName);
             }
+
+            mailMessage.setTo(to);
+            mailMessage.setSubject(subject);
+
+            final String html = addResourcesInMessage(mailMessage, content);
+            LOGGER.debug("Sending an email to: {}\nSubject: {}\nMessage: {}", email.getTo(), email.getSubject(), html);
+            mailSender.send(mailMessage.getMimeMessage());
+        } catch (final Exception ex) {
+            LOGGER.error("Error while sending email", ex);
+            throw new TechnicalManagementException("Error while sending email", ex);
         }
     }
 

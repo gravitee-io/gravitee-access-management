@@ -30,7 +30,21 @@ public class Email {
     private String[] bcc;
     private String subject;
     private String template;
+    private String content;
     private Map<String, Object> params = new HashMap<>();
+
+    public Email() {}
+
+    public Email(Email other) {
+        this.from = other.from;
+        this.fromName = other.fromName;
+        this.to = other.to;
+        this.bcc = other.bcc;
+        this.subject = other.subject;
+        this.template = other.template;
+        this.content = other.content;
+        this.params = other.params != null ? new HashMap<>(other.params) : null;
+    }
 
     public String getFrom() {
         return from;
@@ -78,6 +92,14 @@ public class Email {
 
     public void setTemplate(String template) {
         this.template = template;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public Map<String, Object> getParams() {

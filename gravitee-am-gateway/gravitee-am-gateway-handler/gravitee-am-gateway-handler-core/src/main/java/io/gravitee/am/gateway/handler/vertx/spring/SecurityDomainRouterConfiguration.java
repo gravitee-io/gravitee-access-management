@@ -15,9 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.vertx.spring;
 
+import io.gravitee.am.gateway.handler.common.spring.FreemarkerConfiguration;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
-import io.gravitee.am.gateway.handler.vertx.email.EmailConfiguration;
-import io.gravitee.am.gateway.handler.vertx.view.freemarker.FreeMarkerConfiguration;
 import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.ThymeleafConfiguration;
 import io.gravitee.am.service.spring.ServiceConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -31,9 +30,8 @@ import org.springframework.context.annotation.Import;
  */
 @Import({
         ThymeleafConfiguration.class,
-        FreeMarkerConfiguration.class,
-        EmailConfiguration.class,
-        ServiceConfiguration.class
+        ServiceConfiguration.class,
+        FreemarkerConfiguration.class
 })
 @Configuration
 public class SecurityDomainRouterConfiguration {

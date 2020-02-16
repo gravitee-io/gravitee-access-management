@@ -20,6 +20,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -29,7 +30,7 @@ public interface LoginAttemptService {
 
     Completable loginSucceeded(LoginAttemptCriteria criteria);
 
-    Completable loginFailed(LoginAttemptCriteria criteria, AccountSettings accountSettings);
+    Single<LoginAttempt> loginFailed(LoginAttemptCriteria criteria, AccountSettings accountSettings);
 
     Completable reset(LoginAttemptCriteria criteria);
 

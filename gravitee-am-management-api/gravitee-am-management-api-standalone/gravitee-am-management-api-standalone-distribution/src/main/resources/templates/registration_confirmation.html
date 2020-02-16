@@ -6,7 +6,7 @@
 <div style="margin-top: 50px; color: #424e5a;">
 	<h3>Hi ${user.firstName} ${user.lastName},</h3>
 	<p>You have been successfully registered.</p>
-	<p><a href="${registrationUrl}">Click here</a> to confirm your registration.</p>
+	<p><a href="${url}">Click here</a> to confirm your registration.</p>
 	<small>
         This link will expire in <#if expireAfterSeconds gte 3600>${expireAfterSeconds / 3600} hour(s)<#else>${expireAfterSeconds / 60} minutes(s)</#if>.
         After that, you must submit a new request to your Administrators to resend a new account activation email.

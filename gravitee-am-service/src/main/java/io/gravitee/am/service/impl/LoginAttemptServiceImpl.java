@@ -15,23 +15,15 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.LoginAttempt;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.LoginAttemptRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.LoginAttemptNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -57,14 +49,8 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     @Autowired
     private LoginAttemptRepository loginAttemptRepository;
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private AuditService auditService;
-
     @Override
-    public Completable loginFailed(LoginAttemptCriteria criteria, AccountSettings accountSettings) {
+    public Single<LoginAttempt> loginFailed(LoginAttemptCriteria criteria, AccountSettings accountSettings) {
         LOGGER.debug("Add login attempt for {}", criteria);
         return loginAttemptRepository.findByCriteria(criteria)
                 .map(Optional::of)
@@ -96,19 +82,12 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                         return loginAttemptRepository.create(loginAttempt);
                     }
                 })
-                // update user status if max attempts has been reached
-                .flatMapCompletable(loginAttempt -> {
-                    if (loginAttempt.getAttempts() >= accountSettings.getMaxLoginAttempts()) {
-                        return lockAccount(criteria, accountSettings);
-                    }
-                    return Completable.complete();
-                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
-                        return Completable.error(ex);
+                        return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to add a login attempt", ex);
-                    return Completable.error(new TechnicalManagementException("An error occurs while trying to add a login attempt", ex));
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to add a login attempt", ex));
                 });
     }
 
@@ -150,34 +129,5 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to fin login attempt by id: %s", id), ex));
                 });
-    }
-
-    private Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings) {
-        return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider())
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(criteria.username())))
-                .flatMapSingle(user -> {
-                    user.setAccountNonLocked(false);
-                    user.setAccountLockedAt(new Date());
-                    user.setAccountLockedUntil(new Date(System.currentTimeMillis() + (accountSettings.getAccountBlockedDuration() * 1000)));
-                    return userService.update(user);
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof UserNotFoundException) {
-                        final User newUser = new User();
-                        newUser.setUsername(criteria.username());
-                        newUser.setReferenceType(ReferenceType.DOMAIN);
-                        newUser.setReferenceId(criteria.domain());
-                        newUser.setClient(criteria.client());
-                        newUser.setSource(criteria.identityProvider());
-                        newUser.setLoginsCount(0l);
-                        newUser.setAccountNonLocked(false);
-                        newUser.setAccountLockedAt(new Date());
-                        newUser.setAccountLockedUntil(new Date(System.currentTimeMillis() + (accountSettings.getAccountBlockedDuration() * 1000)));
-                        return userService.create(newUser);
-                    }
-                    return Single.error(ex);
-                })
-                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_LOCKED).domain(criteria.domain()).client(criteria.client()).principal(null).user(user)))
-                .toCompletable();
     }
 }

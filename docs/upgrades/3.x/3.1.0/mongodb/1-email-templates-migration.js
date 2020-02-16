@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.email;
-
-import io.gravitee.am.model.Email;
-import io.gravitee.common.service.Service;
-
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface EmailManager extends Service {
-
-    String TEMPLATE_NAME_SEPARATOR = "|";
-
-    Email getEmail(String template, String defaultSubject, int defaultExpiresAfter);
-}
+// Migrate emails content
+db.getCollection("emails")
+    .find({})
+    .forEach(function (email) {
+        var content = '';
+        if (email.template === "registration_confirmation") {
+            content = email.content.replace("${registrationUrl}","${url}");
+        } else if (email.template === "reset_password") {
+            content = email.content.replace("${resetPasswordUrl}","${url}");
+        }
+        db.getCollection("emails").update({_id: email._id}, { "$set": { "content" : content } });
+    });

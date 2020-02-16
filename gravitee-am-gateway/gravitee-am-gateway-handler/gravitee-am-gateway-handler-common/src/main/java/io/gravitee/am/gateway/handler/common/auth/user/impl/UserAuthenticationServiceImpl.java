@@ -15,18 +15,27 @@
  */
 package io.gravitee.am.gateway.handler.common.auth.user.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -55,6 +64,12 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    private AuditService auditService;
+
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
@@ -86,6 +101,43 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                         })
                         // no user has been found in the identity provider, just enhance user information
                         .switchIfEmpty(Maybe.defer(() -> userService.enhance(user).toMaybe())));
+    }
+
+    @Override
+    public Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client) {
+        return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider())
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(criteria.username())))
+                .flatMapSingle(user -> {
+                    user.setAccountNonLocked(false);
+                    user.setAccountLockedAt(new Date());
+                    user.setAccountLockedUntil(new Date(System.currentTimeMillis() + (accountSettings.getAccountBlockedDuration() * 1000)));
+                    return userService.update(user);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof UserNotFoundException) {
+                        final User newUser = new User();
+                        newUser.setUsername(criteria.username());
+                        newUser.setReferenceType(ReferenceType.DOMAIN);
+                        newUser.setReferenceId(criteria.domain());
+                        newUser.setClient(criteria.client());
+                        newUser.setSource(criteria.identityProvider());
+                        newUser.setLoginsCount(0l);
+                        newUser.setAccountNonLocked(false);
+                        newUser.setAccountLockedAt(new Date());
+                        newUser.setAccountLockedUntil(new Date(System.currentTimeMillis() + (accountSettings.getAccountBlockedDuration() * 1000)));
+                        return userService.create(newUser);
+                    }
+                    return Single.error(ex);
+                })
+                .flatMap(user -> {
+                    // send an email if option is enabled
+                    if (user.getEmail() != null && accountSettings.isSendRecoverAccountEmail()) {
+                        new Thread(() -> emailService.send(Template.BLOCKED_ACCOUNT, user, client)).start();
+                    }
+                    return Single.just(user);
+                })
+                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_LOCKED).domain(criteria.domain()).client(criteria.client()).principal(null).user(user)))
+                .toCompletable();
     }
 
     private Single<User> saveOrUpdate(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {

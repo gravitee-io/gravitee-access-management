@@ -16,10 +16,6 @@
 package io.gravitee.am.gateway.handler.spring;
 
 import io.gravitee.am.gateway.handler.common.spring.CommonConfiguration;
-import io.gravitee.am.gateway.handler.email.EmailManager;
-import io.gravitee.am.gateway.handler.email.EmailService;
-import io.gravitee.am.gateway.handler.email.impl.EmailManagerImpl;
-import io.gravitee.am.gateway.handler.email.impl.EmailServiceImpl;
 import io.gravitee.am.gateway.handler.factor.FactorManager;
 import io.gravitee.am.gateway.handler.factor.impl.FactorManagerImpl;
 import io.gravitee.am.gateway.handler.form.FormManager;
@@ -51,11 +47,6 @@ public class HandlerConfiguration {
     private Vertx vertx;
 
     @Bean
-    public EmailService emailService() {
-        return new EmailServiceImpl();
-    }
-
-    @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
@@ -63,11 +54,6 @@ public class HandlerConfiguration {
     @Bean
     public FormManager pageManager() {
         return new FormManagerImpl();
-    }
-
-    @Bean
-    public EmailManager emailManager() {
-        return new EmailManagerImpl();
     }
 
     @Bean

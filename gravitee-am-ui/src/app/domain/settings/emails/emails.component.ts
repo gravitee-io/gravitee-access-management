@@ -47,6 +47,13 @@ export class DomainSettingsEmailsComponent {
         'template': 'RESET_PASSWORD',
         'icon': 'lock_open',
         'enabled': this.allowResetPassword()
+      },
+      {
+        'name': 'Blocked account',
+        'description': 'Recover account after it has been blocked',
+        'template': 'BLOCKED_ACCOUNT',
+        'icon': 'person_add_disabled',
+        'enabled': true
       }
     ]
   }

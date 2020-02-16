@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.management.service;
 
-import io.gravitee.am.common.email.Email;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 
 /**
@@ -24,5 +24,5 @@ import io.gravitee.am.model.User;
  */
 public interface EmailService {
 
-    void send(Email email, User user);
+    void send(Template template, User user);
 }

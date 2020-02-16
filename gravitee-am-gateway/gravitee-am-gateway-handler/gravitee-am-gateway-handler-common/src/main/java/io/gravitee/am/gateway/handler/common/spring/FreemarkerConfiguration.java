@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.view.freemarker;
+package io.gravitee.am.gateway.handler.common.spring;
 
 import freemarker.cache.FileTemplateLoader;
 import freemarker.cache.MultiTemplateLoader;
+import freemarker.cache.StringTemplateLoader;
 import freemarker.cache.TemplateLoader;
 import freemarker.core.HTMLOutputFormat;
 import freemarker.core.TemplateClassResolver;
@@ -34,9 +35,9 @@ import java.io.IOException;
  * @author GraviteeSource Team
  */
 @Configuration
-public class FreeMarkerConfiguration {
+public class FreemarkerConfiguration {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FreeMarkerConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FreemarkerConfiguration.class);
 
     @Value("${templates.path:${gravitee.home}/templates}")
     private String templatesPath;
@@ -59,6 +60,6 @@ public class FreeMarkerConfiguration {
 
     @Bean
     public TemplateLoader overrideTemplateLoader() {
-        return new DomainBasedEmailTemplateLoader();
+        return new StringTemplateLoader();
     }
 }

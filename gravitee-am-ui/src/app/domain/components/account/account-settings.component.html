@@ -142,6 +142,14 @@
             <mat-hint>After reset its password the user can be redirected to the specified URL. The default behavior is to display the reset password page to the user.</mat-hint>
           </mat-form-field>
         </div>
+        <div fxLayout="column" style="margin-top: 10px;">
+          <mat-slide-toggle
+            (change)="enableSendRecoverAccountEmail($event)"
+            [checked]="isSendRecoverAccountEmailEnabled()" [disabled]="readonly">
+            Send account recovery email
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Send an email if user account has been blocked.</mat-hint>
+        </div>
       </div>
     </div>
   </div>

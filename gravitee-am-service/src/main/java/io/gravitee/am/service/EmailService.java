@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.view.freemarker;
+package io.gravitee.am.service;
 
-import freemarker.cache.StringTemplateLoader;
+import io.gravitee.am.common.email.Email;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DomainBasedEmailTemplateLoader extends StringTemplateLoader {
+public interface EmailService {
+
+    void send(Email email);
 }
