@@ -45,7 +45,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
               private navbarService: NavbarService,
               private snackbarService: SnackbarService,
               private sidenavService: SidenavService,
-              private router: Router) {
+              public router: Router) {
     if (!this.authService.user()) {
       this.authService.userInfo().subscribe(() => this.initNavLinks());
     } else {
