@@ -40,7 +40,7 @@ public class AccessTokenRepositoryProxy extends AbstractProxy<AccessTokenReposit
     }
 
     @Override
-    public Flowable bulkWrite(List<AccessToken> accessTokens) {
+    public Completable bulkWrite(List<AccessToken> accessTokens) {
         return target.bulkWrite(accessTokens);
     }
 

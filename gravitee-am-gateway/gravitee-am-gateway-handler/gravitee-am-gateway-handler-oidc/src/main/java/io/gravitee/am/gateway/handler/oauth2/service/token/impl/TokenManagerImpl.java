@@ -16,18 +16,17 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
+import io.gravitee.am.gateway.handler.oauth2.service.token.indexer.AccessTokenBulkProcessor;
+import io.gravitee.am.gateway.handler.oauth2.service.token.indexer.RefreshTokenBulkProcessor;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.Flowable;
 import io.reactivex.processors.PublishProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.reactivex.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,7 +35,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class TokenManagerImpl extends AbstractService implements TokenManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(TokenManagerImpl.class);
     private static final Integer bulkActions = 1000;
     private static final Long flushInterval = 1l;
 
@@ -56,25 +54,27 @@ public class TokenManagerImpl extends AbstractService implements TokenManager {
 
         // init bulk processors
         bulkProcessorAccessToken
+                .onBackpressureBuffer()
+                .observeOn(Schedulers.io())
                 .buffer(
                         flushInterval,
                         TimeUnit.SECONDS,
                         bulkActions
                 )
-                .flatMap(this::bulkAccessTokens)
-                .doOnError(throwable -> logger.error("An error occurs while store access tokens into MongoDB", throwable))
-                .subscribe();
+                .filter(accessTokens -> accessTokens != null && !accessTokens.isEmpty())
+                .subscribe(new AccessTokenBulkProcessor(accessTokenRepository));
 
         // init bulk processors
         bulkProcessorRefreshToken
+                .onBackpressureBuffer()
+                .observeOn(Schedulers.io())
                 .buffer(
                         flushInterval,
                         TimeUnit.SECONDS,
                         bulkActions
                 )
-                .flatMap(this::bulkRefreshTokens)
-                .doOnError(throwable -> logger.error("An error occurs while store refresh tokens into MongoDB", throwable))
-                .subscribe();
+                .filter(refreshTokens -> refreshTokens != null && !refreshTokens.isEmpty())
+                .subscribe(new RefreshTokenBulkProcessor(refreshTokenRepository));
     }
 
     @Override
@@ -87,21 +87,5 @@ public class TokenManagerImpl extends AbstractService implements TokenManager {
     public void storeRefreshToken(RefreshToken refreshToken) {
         bulkProcessorRefreshToken
                 .onNext(refreshToken);
-    }
-
-    private Flowable bulkAccessTokens(List<AccessToken> accessTokens) {
-        if (accessTokens == null || accessTokens.isEmpty()) {
-            return Flowable.empty();
-        }
-
-        return Flowable.fromPublisher(accessTokenRepository.bulkWrite(accessTokens));
-    }
-
-    private Flowable bulkRefreshTokens(List<RefreshToken> refreshTokens) {
-        if (refreshTokens == null || refreshTokens.isEmpty()) {
-            return Flowable.empty();
-        }
-
-        return Flowable.fromPublisher(refreshTokenRepository.bulkWrite(refreshTokens));
     }
 }
