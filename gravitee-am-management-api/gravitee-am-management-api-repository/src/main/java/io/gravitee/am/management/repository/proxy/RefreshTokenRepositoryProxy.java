@@ -18,7 +18,6 @@ package io.gravitee.am.management.repository.proxy;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.Completable;
-import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.stereotype.Component;
@@ -43,7 +42,7 @@ public class RefreshTokenRepositoryProxy extends AbstractProxy<RefreshTokenRepos
     }
 
     @Override
-    public Flowable bulkWrite(List<RefreshToken> refreshTokens) {
+    public Completable bulkWrite(List<RefreshToken> refreshTokens) {
         return target.bulkWrite(refreshTokens);
     }
 

@@ -52,7 +52,7 @@ public interface AccessTokenRepository {
      * @param accessTokens access token to store
      * @return acknowledge of the operation
      */
-    Flowable bulkWrite(List<AccessToken> accessTokens);
+    Completable bulkWrite(List<AccessToken> accessTokens);
 
     /**
      * Retrieve access tokens stored against the provided client id.
