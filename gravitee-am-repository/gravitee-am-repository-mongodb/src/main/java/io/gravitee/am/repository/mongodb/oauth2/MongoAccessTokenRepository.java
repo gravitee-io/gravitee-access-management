@@ -90,8 +90,8 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     }
 
     @Override
-    public Flowable bulkWrite(List<AccessToken> accessTokens) {
-        return Flowable.fromPublisher(accessTokenCollection.bulkWrite(convert(accessTokens)));
+    public Completable bulkWrite(List<AccessToken> accessTokens) {
+        return Completable.fromPublisher(accessTokenCollection.bulkWrite(convert(accessTokens)));
     }
 
     @Override

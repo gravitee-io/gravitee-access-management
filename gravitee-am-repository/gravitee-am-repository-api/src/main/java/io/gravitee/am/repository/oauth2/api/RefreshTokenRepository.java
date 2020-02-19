@@ -17,7 +17,6 @@ package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.Completable;
-import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -33,7 +32,7 @@ public interface RefreshTokenRepository {
 
     Single<RefreshToken> create(RefreshToken refreshToken);
 
-    Flowable bulkWrite(List<RefreshToken> refreshTokens);
+    Completable bulkWrite(List<RefreshToken> refreshTokens);
 
     Completable delete(String token);
 
