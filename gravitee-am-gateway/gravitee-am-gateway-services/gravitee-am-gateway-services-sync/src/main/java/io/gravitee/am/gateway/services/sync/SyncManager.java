@@ -16,14 +16,17 @@
 package io.gravitee.am.gateway.services.sync;
 
 import io.gravitee.am.common.event.Action;
-import io.gravitee.am.gateway.core.manager.ClientManager;
+import io.gravitee.am.gateway.certificate.DefaultCertificateManager;
+import io.gravitee.am.gateway.core.manager.EntityManager;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.gateway.reactor.impl.DefaultClientManager;
+import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
+import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
@@ -59,7 +62,10 @@ public class SyncManager implements InitializingBean {
     private SecurityDomainManager securityDomainManager;
 
     @Autowired
-    private ClientManager clientManager;
+    private EntityManager<Client> clientManager;
+
+    @Autowired
+    private EntityManager<Certificate> certificateManager;
 
     @Autowired
     private Environment environment;
@@ -72,6 +78,9 @@ public class SyncManager implements InitializingBean {
 
     @Autowired
     private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private CertificateRepository certificateRepository;
 
     private Optional<List<String>> shardingTags;
 
@@ -93,6 +102,7 @@ public class SyncManager implements InitializingBean {
                 logger.debug("Initial synchronization");
                 deployDomains();
                 deployClients();
+                deployCertificates();
             } else {
                 // search for events and compute them
                 logger.debug("Events synchronization");
@@ -151,6 +161,13 @@ public class SyncManager implements InitializingBean {
         logger.info("Clients initialization done");
     }
 
+    private void deployCertificates() {
+        logger.info("Starting certificates initialization ...");
+        Set<Certificate> certificates = certificateRepository.findAll().blockingGet();
+        ((DefaultCertificateManager) certificateManager).init(certificates);
+        logger.info("Certificates initialization done");
+    }
+
     private void computeEvents(Collection<Event> events) {
         events.forEach(event -> {
             logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
@@ -160,6 +177,9 @@ public class SyncManager implements InitializingBean {
                     break;
                 case APPLICATION:
                     synchronizeApplication(event);
+                    break;
+                case CERTIFICATE:
+                    synchronizeCertificate(event);
                     break;
                 default:
                     eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
@@ -221,6 +241,30 @@ public class SyncManager implements InitializingBean {
                 break;
             case DELETE:
                 clientManager.undeploy(applicationId);
+                break;
+        }
+    }
+
+    private void synchronizeCertificate(Event event) {
+        final String certificateId = event.getPayload().getId();
+        final Action action = event.getPayload().getAction();
+        switch (action) {
+            case CREATE:
+            case UPDATE:
+                Certificate certificate = certificateRepository.findById(certificateId).blockingGet();
+                if (certificate != null) {
+                    // Get deployed certificate
+                    Certificate deployedCertificate = certificateManager.get(certificate.getId());
+                    // certificate is not yet deployed, so let's do it !
+                    if (deployedCertificate == null) {
+                        certificateManager.deploy(certificate);
+                    } else if (deployedCertificate.getUpdatedAt().before(certificate.getUpdatedAt())) {
+                        certificateManager.update(certificate);
+                    }
+                }
+                break;
+            case DELETE:
+                certificateManager.undeploy(certificateId);
                 break;
         }
     }

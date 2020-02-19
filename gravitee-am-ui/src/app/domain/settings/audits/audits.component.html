@@ -120,9 +120,9 @@
           </a>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Date" [flexGrow]="1">
+      <ngx-datatable-column name="Date" [flexGrow]="2">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.timestamp | humanDate}}
+          {{row.timestamp | date:'medium'}}
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Event" [flexGrow]="2">

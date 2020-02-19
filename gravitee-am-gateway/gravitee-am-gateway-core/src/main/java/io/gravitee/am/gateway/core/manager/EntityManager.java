@@ -15,45 +15,43 @@
  */
 package io.gravitee.am.gateway.core.manager;
 
-import io.gravitee.am.model.oidc.Client;
-
 import java.util.Collection;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ClientManager {
+public interface EntityManager<T> {
 
     /**
-     * Deploy a client
-     * @param client client to deploy.
+     * Deploy an entity
+     * @param entity entity to deploy.
      */
-    void deploy(Client client);
+    void deploy(T entity);
 
     /**
-     * Update a client already registered.
-     * @param client client to update.
+     * Update a entity already registered.
+     * @param entity entity to update.
      */
-    void update(Client client);
+    void update(T entity);
 
     /**
-     * Undeploy a client
-     * @param clientId The ID of the client to undeploy.
+     * Undeploy a entity
+     * @param entityId The ID of the entity to undeploy.
      */
-    void undeploy(String clientId);
+    void undeploy(String entityId);
 
     /**
-     * Returns a collection of deployed {@link Client}s.
-     * @return A collection of deployed  {@link Client}s.
+     * Returns a collection of deployed {@link T}s.
+     * @return A collection of deployed  {@link T}s.
      */
-    Collection<Client> clients();
+    Collection<T> entities();
 
     /**
-     * Retrieve a deployed {@link Client} using its ID.
-     * @param clientId The ID of the deployed client.
-     * @return A deployed {@link Client}
+     * Retrieve a deployed {@link T} using its ID.
+     * @param entityId The ID of the deployed entity.
+     * @return A deployed {@link T}
      */
-    Client get(String clientId);
+    T get(String entityId);
 
 }

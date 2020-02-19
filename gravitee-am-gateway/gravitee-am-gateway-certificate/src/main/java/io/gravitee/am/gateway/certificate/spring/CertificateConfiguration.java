@@ -13,25 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.jwt.impl;
+package io.gravitee.am.gateway.certificate.spring;
 
-import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.jwt.JWTBuilder;
+import io.gravitee.am.gateway.certificate.CertificateProviderManager;
+import io.gravitee.am.gateway.certificate.DefaultCertificateManager;
+import io.gravitee.am.gateway.certificate.impl.CertificateProviderManagerImpl;
+import io.gravitee.am.gateway.core.manager.EntityManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class JJWTBuilder implements JWTBuilder {
+@Configuration
+public class CertificateConfiguration {
 
-    private io.jsonwebtoken.JwtBuilder jwtBuilder;
-
-    public JJWTBuilder(io.jsonwebtoken.JwtBuilder jwtBuilder) {
-        this.jwtBuilder = jwtBuilder;
+    @Bean
+    public CertificateProviderManager certificateProviderManager() {
+        return new CertificateProviderManagerImpl();
     }
 
-    @Override
-    public String sign(JWT payload) {
-        return jwtBuilder.setClaims(payload).compact();
+    @Bean
+    public EntityManager certificateManager() {
+        return new DefaultCertificateManager();
     }
 }

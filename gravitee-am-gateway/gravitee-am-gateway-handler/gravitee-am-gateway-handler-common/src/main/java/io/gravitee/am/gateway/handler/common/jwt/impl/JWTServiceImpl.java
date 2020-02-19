@@ -16,10 +16,10 @@
 package io.gravitee.am.gateway.handler.common.jwt.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
@@ -74,8 +74,7 @@ public class JWTServiceImpl implements JWTService {
 
     @Override
     public Single<JWT> decodeAndVerify(String jwt, Client client) {
-        // use findByDomainAndId method because introspect token can be use across domains
-        return certificateManager.findByDomainAndId(client.getDomain(), client.getCertificate())
+        return certificateManager.get(client.getCertificate())
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
                 .flatMapSingle(certificateProvider -> decode(certificateProvider, jwt))
                 .map(claims -> new JWT(claims));

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "0e27bf3f-78d4-48f4-bb97-ab8f17b567d4",
+		"_postman_id": "d9eeb317-99f5-4298-9493-87706a25ca51",
 		"name": "Gravitee.io - AM - Oauth2 - app version",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -12918,6 +12918,286 @@
 											"    pm.expect(body.active).to.eql(true);",
 											"    pm.expect(body.client_id).to.eql(pm.environment.get('crossClientClientId'));",
 											"    pm.expect(body.token_type).to.eql(\"bearer\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{clientSecret1}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{clientId1}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "token",
+											"value": "{{access_token}}",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{introspectionEndpoint}}",
+									"host": [
+										"{{introspectionEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get default certificate - cross domain",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"var jsonData = pm.response.json();",
+											"pm.environment.set('crossCertificate', jsonData[0].id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{management_url}}/management/domains/{{crossDomain}}/certificates",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"{{crossDomain}}",
+										"certificates"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Configure cross application - default certificate",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 5000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"certificate\": \"{{crossCertificate}}\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/domains/{{crossDomain}}/applications/{{crossClient}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"domains",
+										"{{crossDomain}}",
+										"applications",
+										"{{crossClient}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Generate token - application cross domain",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "660c6db8-4bea-464f-aa77-26dbf6af12d8",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has an access_token\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('access_token');",
+											"    pm.expect(body).to.have.property('token_type');",
+											"    pm.expect(body.token_type).to.eql('bearer');",
+											"    pm.expect(body).to.have.property('expires_in');",
+											"    ",
+											"    pm.environment.set('access_token', body.access_token);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{crossClientClientSecret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{crossClientClientId}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{crossDomainTokenEndpoint}}",
+									"host": [
+										"{{crossDomainTokenEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Introspect Token - application cross domain",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "660c6db8-4bea-464f-aa77-26dbf6af12d8",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Is token active\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('active');",
+											"    pm.expect(body.active).to.eql(true);",
+											"    pm.expect(body.client_id).to.eql(pm.environment.get('crossClientClientId'));",
+											"    pm.expect(body.token_type).to.eql(\"bearer\");",
+											"    pm.expect(body).to.not.have.property('aud');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "username",
+											"value": "{{crossClientClientId}}",
+											"type": "string"
+										},
+										{
+											"key": "password",
+											"value": "{{crossClientClientSecret}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "token",
+											"value": "{{access_token}}",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{crossDomainIntrospectionEndpoint}}",
+									"host": [
+										"{{crossDomainIntrospectionEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Introspect Token - application cross - first domain",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "660c6db8-4bea-464f-aa77-26dbf6af12d8",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Is token active\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('active');",
+											"    pm.expect(body.active).to.eql(true);",
+											"    pm.expect(body.client_id).to.eql(pm.environment.get('crossClientClientId'));",
+											"    pm.expect(body.token_type).to.eql(\"bearer\");",
+											"    pm.expect(body).to.not.have.property('aud');",
 											"});"
 										],
 										"type": "text/javascript"

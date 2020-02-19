@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.jwt;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.certificate.jwt.JWTBuilder;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.model.oidc.Client;
@@ -55,14 +56,14 @@ public class JWTServiceTest {
         when(defaultJWTBuilder.sign(any())).thenReturn("token_default");
         when(noneAlgBuilder.sign(any())).thenReturn("not_signed_jwt");
 
-        io.gravitee.am.gateway.handler.common.certificate.CertificateProvider rs256CertProvider =
-                mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
-        io.gravitee.am.gateway.handler.common.certificate.CertificateProvider rs512CertProvider =
-                mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
-        io.gravitee.am.gateway.handler.common.certificate.CertificateProvider defaultCertProvider =
-                mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
-        io.gravitee.am.gateway.handler.common.certificate.CertificateProvider noneAlgCertProvider =
-                mock(io.gravitee.am.gateway.handler.common.certificate.CertificateProvider.class);
+        io.gravitee.am.gateway.certificate.CertificateProvider rs256CertProvider =
+                mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+        io.gravitee.am.gateway.certificate.CertificateProvider rs512CertProvider =
+                mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider =
+                mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+        io.gravitee.am.gateway.certificate.CertificateProvider noneAlgCertProvider =
+                mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
         when(rs256CertProvider.getJwtBuilder()).thenReturn(rs256JWTBuilder);
         when(rs512CertProvider.getJwtBuilder()).thenReturn(rs512JWTBuilder);
         when(defaultCertProvider.getJwtBuilder()).thenReturn(defaultJWTBuilder);

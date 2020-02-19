@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.client.impl;
 
-import io.gravitee.am.gateway.core.manager.ClientManager;
+import io.gravitee.am.gateway.core.manager.EntityManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
@@ -39,7 +39,7 @@ public class ClientSyncServiceImpl implements ClientSyncService {
     private Domain domain;
 
     @Autowired
-    private ClientManager clientManager;
+    private EntityManager<Client> clientManager;
 
     @Override
     public Maybe<Client> findById(String id) {
@@ -54,7 +54,7 @@ public class ClientSyncServiceImpl implements ClientSyncService {
 
     @Override
     public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
-        final Optional<Client> optClient = clientManager.clients()
+        final Optional<Client> optClient = clientManager.entities()
                 .stream()
                 .filter(client -> !client.isTemplate() && client.getDomain().equals(domain) && client.getClientId().equals(clientId))
                 .findFirst();
@@ -63,7 +63,7 @@ public class ClientSyncServiceImpl implements ClientSyncService {
 
     @Override
     public Single<List<Client>> findTemplates() {
-        final List<Client> templates = clientManager.clients()
+        final List<Client> templates = clientManager.entities()
                 .stream()
                 .filter(client -> client.isTemplate() && client.getDomain().equals(domain.getId()))
                 .collect(Collectors.toList());

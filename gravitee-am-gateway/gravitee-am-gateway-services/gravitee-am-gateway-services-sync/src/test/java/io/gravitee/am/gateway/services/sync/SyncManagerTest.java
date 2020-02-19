@@ -17,14 +17,17 @@ package io.gravitee.am.gateway.services.sync;
 
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.gateway.certificate.DefaultCertificateManager;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.gateway.reactor.impl.DefaultClientManager;
+import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
+import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
@@ -77,7 +80,13 @@ public class SyncManagerTest {
     private ApplicationRepository applicationRepository;
 
     @Mock
+    private CertificateRepository certificateRepository;
+
+    @Mock
     private DefaultClientManager clientManager;
+
+    @Mock
+    private DefaultCertificateManager certificateManager;
 
     @Before
     public void before() throws Exception {
@@ -86,6 +95,8 @@ public class SyncManagerTest {
 
     @Test
     public void init_test_empty_domains() {
+        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
 
         syncManager.refresh();
@@ -100,6 +111,8 @@ public class SyncManagerTest {
         final Domain domain = new Domain();
         domain.setId("domain-1");
         domain.setEnabled(true);
+        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         when(domainRepository.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
 
         syncManager.refresh();
@@ -117,6 +130,8 @@ public class SyncManagerTest {
         final Domain domain2 = new Domain();
         domain2.setId("domain-2");
         domain2.setEnabled(true);
+        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         when(domainRepository.findAll()).thenReturn(Single.just(new HashSet<>(Arrays.asList(domain, domain2))));
 
         syncManager.refresh();
@@ -137,6 +152,8 @@ public class SyncManagerTest {
         final Domain domain3 = new Domain();
         domain3.setId("domain-3");
         domain3.setEnabled(false);
+        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         when(domainRepository.findAll()).thenReturn(Single.just(new HashSet<>(Arrays.asList(domain, domain2, domain3))));
 
         syncManager.refresh();
@@ -153,6 +170,7 @@ public class SyncManagerTest {
         domain.setEnabled(true);
         when(domainRepository.findAll()).thenReturn(Single.just(new HashSet<>(Arrays.asList(domain))));
         when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         doNothing().when(clientManager).init(anyCollection());
 
         syncManager.refresh();
@@ -178,6 +196,7 @@ public class SyncManagerTest {
         domain.setUpdatedAt(new Date(System.currentTimeMillis() - 60 * 1000));
         when(domainRepository.findAll()).thenReturn(Single.just(new HashSet<>(Arrays.asList(domain))));
         when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         doNothing().when(clientManager).init(anyCollection());
 
         syncManager.refresh();
@@ -206,6 +225,7 @@ public class SyncManagerTest {
     public void shouldPropagateEvents() {
         when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         doNothing().when(clientManager).init(anyCollection());
         syncManager.refresh();
 
@@ -227,6 +247,7 @@ public class SyncManagerTest {
     public void shouldDeployApplication() {
         when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         when(applicationRepository.findById("client-1")).thenReturn(Maybe.just(new Application()));
         doNothing().when(clientManager).init(anyCollection());
         syncManager.refresh();
@@ -242,6 +263,28 @@ public class SyncManagerTest {
         verify(clientManager, times(1)).deploy(any(Client.class));
         verify(clientManager, never()).update(any(Client.class));
         verify(clientManager, never()).undeploy(any(String.class));
+    }
+
+    @Test
+    public void shouldDeployCertificate() {
+        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(certificateRepository.findById("certificate-1")).thenReturn(Maybe.just(new Certificate()));
+        doNothing().when(certificateManager).init(anyCollection());
+        syncManager.refresh();
+
+        Event event = new Event();
+        event.setType(Type.CERTIFICATE);
+        event.setPayload(new Payload("certificate-1", "domain-1", Action.CREATE));
+
+        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Single.just(Collections.singletonList(event)));
+
+        syncManager.refresh();
+
+        verify(certificateManager, times(1)).deploy(any(Certificate.class));
+        verify(certificateManager, never()).update(any(Certificate.class));
+        verify(certificateManager, never()).undeploy(any(String.class));
     }
 
     @Test
@@ -293,6 +336,8 @@ public class SyncManagerTest {
         domain.setEnabled(true);
         domain.setTags(new HashSet<>(Arrays.asList(domainTags)));
 
+        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         when(domainRepository.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
 
         syncManager.refresh();

@@ -98,6 +98,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.gateway</groupId>
+            <artifactId>gravitee-am-gateway-certificate</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Vert.x -->
         <dependency>
             <groupId>io.vertx</groupId>
@@ -150,23 +156,6 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-        </dependency>
-
-        <!-- JJwt -->
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>${jjwt.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>${jjwt.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>${jjwt.version}</version>
         </dependency>
 
         <!-- Nimbus jose+jwt -->

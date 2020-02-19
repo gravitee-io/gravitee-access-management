@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.auth.idp.impl;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.common.certificate.CertificateProviderManager;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
@@ -61,7 +61,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     private EventManager eventManager;
 
     @Autowired
-    private CertificateProviderManager certificateProviderManager;
+    private CertificateManager certificateManager;
 
     private ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
     private ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
@@ -156,7 +156,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
             // create and start the new provider
             AuthenticationProvider authenticationProvider =
                     identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
-                            identityProvider.getMappers(), identityProvider.getRoleMapper(), certificateProviderManager);
+                            identityProvider.getMappers(), identityProvider.getRoleMapper(), certificateManager);
             if (authenticationProvider != null) {
                 // start the authentication provider
                 authenticationProvider.start();
