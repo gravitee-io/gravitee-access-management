@@ -1,5 +1,20 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/209?closed=1[AM - 2.10.9 (2020-02-19)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [oauth2] bulk tokens processors are not working after a MongoDB error https://github.com/gravitee-io/issues/issues/3237[#3237]
+
+=== Improvements
+
+*_Repository_*
+
+- [mongodb] Upgrade MongoDB Driver https://github.com/gravitee-io/issues/issues/3240[#3240]
+
+
 == https://github.com/gravitee-io/issues/milestone/206?closed=1[AM - 2.10.8 (2020-02-03)]
 
 === Bug fixes
