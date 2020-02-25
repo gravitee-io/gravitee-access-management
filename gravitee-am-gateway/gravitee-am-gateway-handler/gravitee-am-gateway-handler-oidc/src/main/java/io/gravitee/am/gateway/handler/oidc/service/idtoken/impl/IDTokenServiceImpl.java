@@ -23,7 +23,7 @@ import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.idtoken.IDToken;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.jwe.JWEService;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.context.provider.ClientProperties;

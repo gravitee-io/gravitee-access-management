@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.root;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;

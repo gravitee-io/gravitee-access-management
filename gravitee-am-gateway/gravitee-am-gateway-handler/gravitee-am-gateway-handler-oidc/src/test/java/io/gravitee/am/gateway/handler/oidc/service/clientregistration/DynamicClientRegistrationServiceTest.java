@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.jwk.JWKService;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;

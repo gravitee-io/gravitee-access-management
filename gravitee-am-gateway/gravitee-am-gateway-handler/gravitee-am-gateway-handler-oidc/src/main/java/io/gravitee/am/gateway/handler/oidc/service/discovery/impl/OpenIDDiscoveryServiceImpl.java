@@ -19,7 +19,7 @@ import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oidc.ClaimType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.Scope;
-import io.gravitee.am.gateway.handler.common.jwa.utils.JWAlgorithmUtils;
+import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;

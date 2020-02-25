@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.granter;
 
 import io.gravitee.am.common.oauth2.GrantType;
-import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.client.ClientCredentialsTokenGranter;

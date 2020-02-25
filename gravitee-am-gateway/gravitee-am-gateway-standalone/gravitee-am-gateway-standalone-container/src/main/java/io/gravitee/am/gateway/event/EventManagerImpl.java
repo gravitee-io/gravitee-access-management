@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.event;
 import com.google.common.collect.Lists;
 import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.common.event.EventManager;
-import io.gravitee.am.gateway.handler.common.authentication.AuthenticationDetails;
+import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.common.event.Event;

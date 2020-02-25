@@ -20,7 +20,7 @@ import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.jwe.JWEService;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;

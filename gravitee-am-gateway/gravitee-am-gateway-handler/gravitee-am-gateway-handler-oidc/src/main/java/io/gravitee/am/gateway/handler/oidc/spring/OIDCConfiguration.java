@@ -25,6 +25,12 @@ import io.gravitee.am.gateway.handler.oidc.service.flow.CompositeFlow;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.impl.IDTokenServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.impl.JWEServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.impl.JWKServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
+import io.gravitee.am.gateway.handler.oidc.service.jws.impl.JWSServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -55,5 +61,20 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     @Bean
     public IDTokenService idTokenService() {
         return new IDTokenServiceImpl();
+    }
+
+    @Bean
+    public JWEService jweService() {
+        return new JWEServiceImpl();
+    }
+
+    @Bean
+    public JWKService jwkService() {
+        return new JWKServiceImpl();
+    }
+
+    @Bean
+    public JWSService jwsService() {
+        return new JWSServiceImpl();
     }
 }

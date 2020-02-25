@@ -16,7 +16,8 @@
 package io.gravitee.am.gateway.handler.common.auth;
 
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
-import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationServiceImpl;
+import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationServiceImpl;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;

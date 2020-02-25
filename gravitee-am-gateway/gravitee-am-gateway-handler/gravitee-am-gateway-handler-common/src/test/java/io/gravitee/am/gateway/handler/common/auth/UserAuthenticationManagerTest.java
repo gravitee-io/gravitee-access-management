@@ -16,8 +16,9 @@
 package io.gravitee.am.gateway.handler.common.auth;
 
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationManagerImpl;
-import io.gravitee.am.gateway.handler.common.authentication.event.AuthenticationEvent;
+import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
-import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;

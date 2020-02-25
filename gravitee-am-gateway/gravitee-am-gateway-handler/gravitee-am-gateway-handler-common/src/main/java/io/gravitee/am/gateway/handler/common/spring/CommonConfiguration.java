@@ -17,23 +17,17 @@ package io.gravitee.am.gateway.handler.common.spring;
 
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.audit.impl.AuditReporterManagerImpl;
-import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.impl.IdentityProviderManagerImpl;
-import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationManagerImpl;
-import io.gravitee.am.gateway.handler.common.auth.impl.UserAuthenticationServiceImpl;
-import io.gravitee.am.gateway.handler.common.authentication.listener.AuthenticationEventListener;
+import io.gravitee.am.gateway.handler.common.auth.listener.AuthenticationEventListener;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
+import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationServiceImpl;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
-import io.gravitee.am.gateway.handler.common.jwe.JWEService;
-import io.gravitee.am.gateway.handler.common.jwe.impl.JWEServiceImpl;
-import io.gravitee.am.gateway.handler.common.jwk.JWKService;
-import io.gravitee.am.gateway.handler.common.jwk.impl.JWKServiceImpl;
-import io.gravitee.am.gateway.handler.common.jws.JWSService;
-import io.gravitee.am.gateway.handler.common.jws.impl.JWSServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
@@ -114,23 +108,8 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public JWEService jweService() {
-        return new JWEServiceImpl();
-    }
-
-    @Bean
     public JWTService jwtService() {
         return new JWTServiceImpl();
-    }
-
-    @Bean
-    public JWKService jwkService() {
-        return new JWKServiceImpl();
-    }
-
-    @Bean
-    public JWSService jwsService() {
-        return new JWSServiceImpl();
     }
 
     @Bean

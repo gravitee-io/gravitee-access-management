@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
-import io.gravitee.am.gateway.handler.common.jwk.JWKService;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.model.jose.JWK;

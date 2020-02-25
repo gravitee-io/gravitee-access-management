@@ -20,7 +20,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.gateway.handler.common.jwe.JWEService;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;

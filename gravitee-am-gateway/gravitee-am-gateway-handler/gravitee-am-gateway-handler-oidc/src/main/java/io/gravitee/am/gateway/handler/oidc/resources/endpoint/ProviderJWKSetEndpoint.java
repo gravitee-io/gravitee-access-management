@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
-import io.gravitee.am.gateway.handler.common.jwk.JWKService;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.converter.JWKConverter;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;

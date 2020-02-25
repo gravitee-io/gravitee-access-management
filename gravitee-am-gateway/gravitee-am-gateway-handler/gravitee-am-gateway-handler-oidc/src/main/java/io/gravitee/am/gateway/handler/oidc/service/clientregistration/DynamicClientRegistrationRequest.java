@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import io.gravitee.am.gateway.handler.common.jwk.converter.JWKSetDeserializer;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.converter.JWKSetDeserializer;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.vertx;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.common.authentication.listener.AuthenticationEventListener;
+import io.gravitee.am.gateway.handler.common.auth.listener.AuthenticationEventListener;
 import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
 import io.gravitee.am.gateway.handler.common.user.UserManager;
 import io.gravitee.am.gateway.handler.email.EmailManager;
