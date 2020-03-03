@@ -91,7 +91,7 @@ public class UserResource extends AbstractResource {
                 .flatMap(masterDomain -> userService.findById(user)
                         .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
                         .map(user1 -> {
-                            if (!user1.getDomain().equalsIgnoreCase(masterDomain.getId())) {
+                            if (!user1.getReferenceId().equalsIgnoreCase(masterDomain.getId())) {
                                 throw new BadRequestException("User does not belong to domain");
                             }
                             return new UserEntity(user1);
@@ -268,7 +268,7 @@ public class UserResource extends AbstractResource {
     private Maybe<UserEntity> enhanceClient(UserEntity userEntity) {
         if (userEntity.getClient() != null) {
             return applicationService.findById(userEntity.getClient())
-                    .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(userEntity.getDomain(), userEntity.getClient())))
+                    .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(userEntity.getReferenceId(), userEntity.getClient())))
                     .map(application -> {
                         userEntity.setApplicationEntity(new ApplicationEntity(application));
                         return userEntity;

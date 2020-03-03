@@ -33,8 +33,8 @@ public class RoleAuditBuilder extends ManagementAuditBuilder<RoleAuditBuilder> {
         if (EventType.ROLE_CREATED.equals(getType()) || EventType.ROLE_UPDATED.equals(getType())) {
             setNewValue(role);
         }
-        domain(role.getDomain());
-        setTarget(role.getId(), EntityType.ROLE, null, role.getName(), role.getDomain());
+        domain(role.getReferenceId());
+        setTarget(role.getId(), EntityType.ROLE, null, role.getName(), role.getReferenceId());
         return this;
     }
 }

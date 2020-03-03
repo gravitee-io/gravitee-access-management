@@ -17,6 +17,7 @@ package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.user.UserReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.reactivex.observers.TestObserver;
@@ -46,11 +47,11 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         // create user
         User user = new User();
         user.setUsername("testsUsername");
-        user.setDomain("testDomain");
+        user.setReferenceId("testDomain");
         userRepository.create(user).blockingGet();
 
         // fetch users
-        TestObserver<Set<User>> testObserver = userRepository.findByDomain("testDomain").test();
+        TestObserver<Set<User>> testObserver = userRepository.findByReference("testDomain", UserReferenceType.DOMAIN).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -139,17 +140,17 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         final String domain = "domain";
         // create user
         User user = new User();
-        user.setDomain(domain);
+        user.setReferenceId(domain);
         user.setUsername("testUsername");
         userRepository.create(user).blockingGet();
 
         User user2 = new User();
-        user2.setDomain(domain);
+        user2.setReferenceId(domain);
         user2.setUsername("testUsername2");
         userRepository.create(user2).blockingGet();
 
         // fetch user
-        TestObserver<Page<User>> testObserver = userRepository.search(domain, "testUsername", 0, 10).test();
+        TestObserver<Page<User>> testObserver = userRepository.search(domain, UserReferenceType.DOMAIN, "testUsername", 0, 10).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -164,17 +165,17 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         final String domain = "domain";
         // create user
         User user = new User();
-        user.setDomain(domain);
+        user.setReferenceId(domain);
         user.setUsername("testUsername");
         userRepository.create(user).blockingGet();
 
         User user2 = new User();
-        user2.setDomain(domain);
+        user2.setReferenceId(domain);
         user2.setUsername("testUsername2");
         userRepository.create(user2).blockingGet();
 
         // fetch user
-        TestObserver<Page<User>> testObserver = userRepository.search(domain, "testUsername*", 0, 10).test();
+        TestObserver<Page<User>> testObserver = userRepository.search(domain, UserReferenceType.DOMAIN, "testUsername*", 0, 10).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -187,22 +188,22 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         final String domain = "domain";
         // create user
         User user1 = new User();
-        user1.setDomain(domain);
+        user1.setReferenceId(domain);
         user1.setUsername("testUsername1");
         userRepository.create(user1).blockingGet();
 
         User user2 = new User();
-        user2.setDomain(domain);
+        user2.setReferenceId(domain);
         user2.setUsername("testUsername2");
         userRepository.create(user2).blockingGet();
         
         User user3 = new User();
-        user3.setDomain(domain);
+        user3.setReferenceId(domain);
         user3.setUsername("testUsername3");
         userRepository.create(user3).blockingGet();
 
         // fetch user (page 0)
-        TestObserver<Page<User>> testObserverP0 = userRepository.search(domain, "testUsername*", 0, 2).test();
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(domain, UserReferenceType.DOMAIN, "testUsername*", 0, 2).test();
         testObserverP0.awaitTerminalEvent();
         
         testObserverP0.assertComplete();
@@ -214,7 +215,7 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         });
         
         // fetch user (page 1)
-        TestObserver<Page<User>> testObserverP1 = userRepository.search(domain, "testUsername*", 1, 2).test();
+        TestObserver<Page<User>> testObserverP1 = userRepository.search(domain, UserReferenceType.DOMAIN, "testUsername*", 1, 2).test();
         testObserverP1.awaitTerminalEvent();
         
         testObserverP1.assertComplete();

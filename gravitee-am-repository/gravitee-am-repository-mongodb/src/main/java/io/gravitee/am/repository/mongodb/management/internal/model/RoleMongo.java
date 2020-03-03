@@ -33,7 +33,9 @@ public class RoleMongo extends Auditable {
 
     private String description;
 
-    private String domain;
+    private String referenceId;
+
+    private String referenceType;
 
     private Integer scope;
 
@@ -65,12 +67,20 @@ public class RoleMongo extends Auditable {
         this.description = description;
     }
 
-    public String getDomain() {
-        return domain;
+    public String getReferenceId() {
+        return referenceId;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
+    }
+
+    public String getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(String referenceType) {
+        this.referenceType = referenceType;
     }
 
     public Integer getScope() {

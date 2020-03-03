@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.idp.IdentityProviderReferenceType;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.IdentityProviderMongo;
 import io.reactivex.Completable;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.*;
 
+import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
 /**
@@ -41,13 +43,14 @@ import static com.mongodb.client.model.Filters.eq;
 public class MongoIdentityProviderRepository extends AbstractManagementMongoRepository implements IdentityProviderRepository {
 
     private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
+    private static final String FIELD_REFERENCE_ID = "referenceId";
+    private static final String FIELD_REFERENCE_TYPE = "referenceType";
     private MongoCollection<IdentityProviderMongo> identitiesCollection;
 
     @PostConstruct
     public void init() {
         identitiesCollection = mongoOperations.getCollection("identities", IdentityProviderMongo.class);
-        super.createIndex(identitiesCollection,new Document(FIELD_DOMAIN, 1));
+        super.createIndex(identitiesCollection,new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1));
     }
 
     @Override
@@ -56,8 +59,8 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     }
 
     @Override
-    public Single<Set<IdentityProvider>> findByDomain(String domain) {
-        return Observable.fromPublisher(identitiesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
+    public Single<Set<IdentityProvider>> findByReference(String referenceId, IdentityProviderReferenceType referenceType) {
+        return Observable.fromPublisher(identitiesCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
@@ -106,7 +109,8 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
             identityProvider.setRoleMapper(roleMapper);
         }
 
-        identityProvider.setDomain(identityProviderMongo.getDomain());
+        identityProvider.setReferenceId(identityProviderMongo.getReferenceId());
+        identityProvider.setReferenceType(IdentityProviderReferenceType.valueOf(identityProviderMongo.getReferenceType()));
         identityProvider.setExternal(identityProviderMongo.isExternal());
         identityProvider.setCreatedAt(identityProviderMongo.getCreatedAt());
         identityProvider.setUpdatedAt(identityProviderMongo.getUpdatedAt());
@@ -125,7 +129,8 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProviderMongo.setConfiguration(identityProvider.getConfiguration());
         identityProviderMongo.setMappers(identityProvider.getMappers() != null ? new Document((Map) identityProvider.getMappers()) : new Document());
         identityProviderMongo.setRoleMapper(identityProvider.getRoleMapper() != null ? convert(identityProvider.getRoleMapper()) : new Document());
-        identityProviderMongo.setDomain(identityProvider.getDomain());
+        identityProviderMongo.setReferenceId(identityProvider.getReferenceId());
+        identityProviderMongo.setReferenceType(identityProvider.getReferenceType().name());
         identityProviderMongo.setExternal(identityProvider.isExternal());
         identityProviderMongo.setCreatedAt(identityProvider.getCreatedAt());
         identityProviderMongo.setUpdatedAt(identityProvider.getUpdatedAt());

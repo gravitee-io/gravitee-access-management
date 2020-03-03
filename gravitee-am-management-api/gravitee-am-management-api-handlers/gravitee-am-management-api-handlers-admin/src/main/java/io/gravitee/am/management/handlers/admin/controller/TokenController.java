@@ -63,7 +63,7 @@ public class TokenController {
         final User principal = (User) authentication.getPrincipal();
         ((DefaultUser) principal).setId(endUser.getId());
         principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
-        principal.getAdditionalInformation().put(Claims.domain, endUser.getDomain());
+        principal.getAdditionalInformation().put(Claims.domain, endUser.getReferenceId());
         Set<String> roles = endUser.getRoles() != null ? new HashSet<>(endUser.getRoles()) : new HashSet<>();
         if (principal.getRoles() != null) {
             roles.addAll(principal.getRoles());

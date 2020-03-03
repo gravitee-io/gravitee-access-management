@@ -43,7 +43,7 @@ public class IdentityProviderResourceTest extends JerseySpringTest {
         final IdentityProvider mockIdentityProvider = new IdentityProvider();
         mockIdentityProvider.setId(identityProviderId);
         mockIdentityProvider.setName("identityProvider-name");
-        mockIdentityProvider.setDomain(domainId);
+        mockIdentityProvider.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockIdentityProvider)).when(identityProviderService).findById(identityProviderId);
@@ -52,7 +52,7 @@ public class IdentityProviderResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final IdentityProvider identityProvider = response.readEntity(IdentityProvider.class);
-        assertEquals(domainId, identityProvider.getDomain());
+        assertEquals(domainId, identityProvider.getReferenceId());
         assertEquals(identityProviderId, identityProvider.getId());
     }
 
@@ -93,7 +93,7 @@ public class IdentityProviderResourceTest extends JerseySpringTest {
         final IdentityProvider mockIdentityProvider = new IdentityProvider();
         mockIdentityProvider.setId(identityProviderId);
         mockIdentityProvider.setName("identityProvider-name");
-        mockIdentityProvider.setDomain("wrong-domain");
+        mockIdentityProvider.setReferenceId("wrong-domain");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockIdentityProvider)).when(identityProviderService).findById(identityProviderId);

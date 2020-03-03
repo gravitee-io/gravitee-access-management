@@ -24,6 +24,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.permissions.*;
+import io.gravitee.am.model.role.RoleReferenceType;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -65,7 +66,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Single<Set<Role>> findByDomain(String domain) {
         LOGGER.debug("Find roles by domain: {}", domain);
-        return roleRepository.findByDomain(domain)
+        return roleRepository.findByReference(domain, RoleReferenceType.DOMAIN)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find roles by domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find roles by domain", ex));
@@ -86,7 +87,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Maybe<Role> findSystemRole(SystemRole systemRole, RoleScope roleScope) {
         LOGGER.debug("Find system role : {} for the scope : {}", systemRole.name(), roleScope.name());
-        return roleRepository.findByDomainAndNameAndScope("admin", systemRole.name(), roleScope.getId())
+        return roleRepository.findByReferenceAndNameAndScope("admin", RoleReferenceType.DOMAIN, systemRole.name(), roleScope.getId())
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find system role : {} for the scope : {}", systemRole.name(), roleScope.name(), ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -116,7 +117,7 @@ public class RoleServiceImpl implements RoleService {
                 .flatMap(__ -> {
                     Role role = new Role();
                     role.setId(roleId);
-                    role.setDomain(domain);
+                    role.setReferenceId(domain);
                     role.setName(newRole.getName());
                     role.setDescription(newRole.getDescription());
                     role.setScope(newRole.getScope() != null ? newRole.getScope().getId() : null);
@@ -126,7 +127,7 @@ public class RoleServiceImpl implements RoleService {
                 })
                 // create event for sync process
                 .flatMap(role -> {
-                    Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(role));
                 })
                 .onErrorResumeNext(ex -> {
@@ -165,7 +166,7 @@ public class RoleServiceImpl implements RoleService {
                                 return roleRepository.update(roleToUpdate)
                                         // create event for sync process
                                         .flatMap(role -> {
-                                            Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getDomain(), Action.UPDATE));
+                                            Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceId(), Action.UPDATE));
                                             return eventService.create(event).flatMap(__ -> Single.just(role));
                                         })
                                         .doOnSuccess(role -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_UPDATED).oldValue(oldRole).role(role)))
@@ -195,7 +196,7 @@ public class RoleServiceImpl implements RoleService {
                     return role;
                 })
                 .flatMapCompletable(role -> roleRepository.delete(roleId)
-                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.ROLE, new Payload(role.getId(), role.getDomain(), Action.DELETE)))))
+                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceId(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).role(role)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).throwable(throwable)))
                 )
@@ -215,7 +216,7 @@ public class RoleServiceImpl implements RoleService {
         Role role = initSystemRole(systemRole.name(), roleScope.getId(), permissions);
         return roleRepository.create(role)
                 .flatMap(role1 -> {
-                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(role1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -243,7 +244,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private Completable upsert(Role role) {
-        return roleRepository.findByDomainAndNameAndScope(role.getDomain(), role.getName(), role.getScope())
+        return roleRepository.findByReferenceAndNameAndScope(role.getReferenceId(), role.getReferenceType(), role.getName(), role.getScope())
                 .map(Optional::ofNullable)
                 .defaultIfEmpty(Optional.empty())
                 .flatMapCompletable(optRole -> {
@@ -253,7 +254,7 @@ public class RoleServiceImpl implements RoleService {
                         role.setUpdatedAt(role.getCreatedAt());
                         return roleRepository.create(role)
                                 .flatMap(role1 -> {
-                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getDomain(), Action.CREATE));
+                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceId(), Action.CREATE));
                                     return eventService.create(event).flatMap(__ -> Single.just(role1));
                                 })
                                 .onErrorResumeNext(ex -> {
@@ -280,7 +281,7 @@ public class RoleServiceImpl implements RoleService {
                         role.setUpdatedAt(new Date());
                         return roleRepository.update(role)
                                 .flatMap(role1 -> {
-                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getDomain(), Action.UPDATE));
+                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceId(), Action.UPDATE));
                                     return eventService.create(event).flatMap(__ -> Single.just(role1));
                                 })
                                 .onErrorResumeNext(ex -> {
@@ -301,7 +302,7 @@ public class RoleServiceImpl implements RoleService {
     private Role initSystemRole(String roleName, int roleScope, List<String> permissions) {
         Role role = new Role();
         role.setSystem(true);
-        role.setDomain("admin");
+        role.setReferenceId("admin");
         role.setName(roleName);
         role.setDescription("System Role. Created by Gravitee.io");
         role.setScope(roleScope);
@@ -313,7 +314,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private Single<Set<Role>> checkRoleUniqueness(String roleName, String roleId, String domain) {
-        return roleRepository.findByDomain(domain)
+        return roleRepository.findByReference(domain, RoleReferenceType.DOMAIN)
                 .flatMap(roles -> {
                     if (roles.stream()
                             .filter(role -> !role.getId().equals(roleId))

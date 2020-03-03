@@ -46,7 +46,7 @@ public class AuthenticationAuditBuilder extends AuditBuilder<AuthenticationAudit
     }
 
     public AuthenticationAuditBuilder user(User user) {
-        setActor(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getDomain());
+        setActor(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceId());
         return this;
     }
 

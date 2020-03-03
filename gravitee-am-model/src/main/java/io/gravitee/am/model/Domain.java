@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.domain.DomainReferenceType;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
@@ -84,6 +85,10 @@ public class Domain implements Resource {
 
     private Set<String> tags;
 
+    private String referenceId;
+
+    private DomainReferenceType referenceType;
+    
     public Domain() {
     }
 
@@ -103,6 +108,8 @@ public class Domain implements Resource {
         this.scim = other.scim;
         this.accountSettings = other.accountSettings;
         this.tags = other.tags;
+        this.referenceId = other.referenceId;
+        this.referenceType = other.referenceType;
     }
 
     public String getId() {
@@ -223,6 +230,22 @@ public class Domain implements Resource {
 
     public void setTags(Set<String> tags) {
         this.tags = tags;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
+    }
+
+    public DomainReferenceType getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(DomainReferenceType referenceType) {
+        this.referenceType = referenceType;
     }
 
     public boolean isDynamicClientRegistrationEnabled() {

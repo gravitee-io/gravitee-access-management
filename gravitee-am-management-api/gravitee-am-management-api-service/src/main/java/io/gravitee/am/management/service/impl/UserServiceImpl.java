@@ -309,7 +309,7 @@ public class UserServiceImpl implements UserService {
                 // reset login attempts in case of reset password action
                 ).flatMapCompletable(user -> {
                     LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
-                            .domain(user.getDomain())
+                            .domain(user.getReferenceId())
                             .client(user.getClient())
                             .username(user.getUsername())
                             .build();
@@ -347,7 +347,7 @@ public class UserServiceImpl implements UserService {
                     user.setAccountLockedUntil(null);
                     // reset login attempts and update user
                     LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
-                            .domain(user.getDomain())
+                            .domain(user.getReferenceId())
                             .client(user.getClient())
                             .username(user.getUsername())
                             .build();
@@ -468,7 +468,7 @@ public class UserServiceImpl implements UserService {
             entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
         }
 
-        String redirectUrl = entryPoint + "/" + user.getDomain() + redirectUri + "?token=" + token;
+        String redirectUrl = entryPoint + "/" + user.getReferenceId() + redirectUri + "?token=" + token;
 
         Map<String, Object> params = new HashMap<>();
         params.put("user", user);
@@ -482,7 +482,7 @@ public class UserServiceImpl implements UserService {
     private String getTemplateName(User user) {
         return Template.REGISTRATION_CONFIRMATION.template()
                 + EmailManager.TEMPLATE_NAME_SEPARATOR
-                + user.getDomain()
+                + user.getReferenceId()
                 + ((user.getClient() != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR +  user.getClient() : "");
     }
 

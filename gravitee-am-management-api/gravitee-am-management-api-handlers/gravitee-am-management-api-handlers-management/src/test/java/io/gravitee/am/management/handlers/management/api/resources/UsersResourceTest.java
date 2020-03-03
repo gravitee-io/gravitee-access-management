@@ -53,12 +53,12 @@ public class UsersResourceTest extends JerseySpringTest {
         final User mockUser = new User();
         mockUser.setId("user-id-1");
         mockUser.setUsername("username-1");
-        mockUser.setDomain(domainId);
+        mockUser.setReferenceId(domainId);
 
         final User mockUser2 = new User();
         mockUser2.setId("domain-id-2");
         mockUser2.setUsername("username-2");
-        mockUser2.setDomain(domainId);
+        mockUser2.setReferenceId(domainId);
 
         final Set<User> users = new HashSet(Arrays.asList(mockUser, mockUser2));
         final Page<User> pagedUsers = new Page<>(users, 0, 2);

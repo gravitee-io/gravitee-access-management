@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.role.RoleReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.reactivex.observers.TestObserver;
@@ -43,11 +44,11 @@ public class MongoRoleRepositoryTest extends AbstractManagementRepositoryTest {
         // create role
         Role role = new Role();
         role.setName("testName");
-        role.setDomain("testDomain");
+        role.setReferenceId("testDomain");
         roleRepository.create(role).blockingGet();
 
         // fetch roles
-        TestObserver<Set<Role>> testObserver = roleRepository.findByDomain("testDomain").test();
+        TestObserver<Set<Role>> testObserver = roleRepository.findByReference("testDomain", RoleReferenceType.DOMAIN).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

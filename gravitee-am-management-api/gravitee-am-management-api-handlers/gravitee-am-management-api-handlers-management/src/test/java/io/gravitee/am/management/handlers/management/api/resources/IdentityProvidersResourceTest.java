@@ -51,12 +51,12 @@ public class IdentityProvidersResourceTest extends JerseySpringTest {
         final IdentityProvider mockIdentityProvider = new IdentityProvider();
         mockIdentityProvider.setId("identityProvider-1-id");
         mockIdentityProvider.setName("identityProvider-1-name");
-        mockIdentityProvider.setDomain(domainId);
+        mockIdentityProvider.setReferenceId(domainId);
 
         final IdentityProvider mockIdentityProvider2 = new IdentityProvider();
         mockIdentityProvider2.setId("identityProvider-2-id");
         mockIdentityProvider2.setName("identityProvider-2-name");
-        mockIdentityProvider2.setDomain(domainId);
+        mockIdentityProvider2.setReferenceId(domainId);
 
         final List<IdentityProvider> identityProviders = Arrays.asList(mockIdentityProvider, mockIdentityProvider2);
 

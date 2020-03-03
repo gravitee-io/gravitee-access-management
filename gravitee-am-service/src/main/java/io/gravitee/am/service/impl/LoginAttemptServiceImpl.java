@@ -162,7 +162,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                     if (ex instanceof UserNotFoundException) {
                         final User newUser = new User();
                         newUser.setUsername(criteria.username());
-                        newUser.setDomain(criteria.domain());
+                        newUser.setReferenceId(criteria.domain());
                         newUser.setClient(criteria.client());
                         newUser.setSource(criteria.identityProvider());
                         newUser.setLoginsCount(0l);

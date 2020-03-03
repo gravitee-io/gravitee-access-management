@@ -71,7 +71,7 @@ public class LoginAttemptServiceTest {
 
         when(loginAttemptRepository.findByCriteria(loginAttemptCriteria)).thenReturn(Maybe.just(loginAttempt));
         when(loginAttemptRepository.update(loginAttempt)).thenReturn(Single.just(loginAttempt));
-        when(userService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userService.findByReferenceAndUsernameAndSource(anyString(), any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(userService.create(any())).thenReturn(Single.just(new User()));
 
         TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings).test();
@@ -100,7 +100,7 @@ public class LoginAttemptServiceTest {
 
         when(loginAttemptRepository.findByCriteria(loginAttemptCriteria)).thenReturn(Maybe.just(loginAttempt));
         when(loginAttemptRepository.update(loginAttempt)).thenReturn(Single.just(loginAttempt));
-        when(userService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.just(new User()));
+        when(userService.findByReferenceAndUsernameAndSource(anyString(), any(), anyString(), anyString())).thenReturn(Maybe.just(new User()));
         when(userService.update(any())).thenReturn(Single.just(new User()));
 
         TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings).test();

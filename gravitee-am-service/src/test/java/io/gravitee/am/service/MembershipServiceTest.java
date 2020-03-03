@@ -102,18 +102,18 @@ public class MembershipServiceTest {
         when(membership.getRole()).thenReturn("role-id");
 
         User user = Mockito.mock(User.class);
-        when(user.getDomain()).thenReturn("master-domain");
+        when(user.getReferenceId()).thenReturn("master-domain");
 
         Role role = Mockito.mock(Role.class);
         when(role.getId()).thenReturn("role-id");
-        when(role.getDomain()).thenReturn("master-domain");
+        when(role.getReferenceId()).thenReturn("master-domain");
         when(role.getScope()).thenReturn(RoleScope.DOMAIN.getId());
 
         Domain domain = Mockito.mock(Domain.class);
         when(domain.isMaster()).thenReturn(true);
 
         when(userService.findById(membership.getMemberId())).thenReturn(Maybe.just(user));
-        when(domainService.findById(user.getDomain())).thenReturn(Maybe.just(domain));
+        when(domainService.findById(user.getReferenceId())).thenReturn(Maybe.just(domain));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())).thenReturn(Maybe.empty());
         when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
@@ -140,7 +140,7 @@ public class MembershipServiceTest {
 
         Role role = Mockito.mock(Role.class);
         when(role.getId()).thenReturn("role-id");
-        when(role.getDomain()).thenReturn("master-domain");
+        when(role.getReferenceId()).thenReturn("master-domain");
         when(role.getScope()).thenReturn(RoleScope.DOMAIN.getId());
 
         Domain domain = Mockito.mock(Domain.class);
@@ -220,7 +220,7 @@ public class MembershipServiceTest {
         when(membership.getRole()).thenReturn("role-id");
 
         User user = Mockito.mock(User.class);
-        when(user.getDomain()).thenReturn("master-domain");
+        when(user.getReferenceId()).thenReturn("master-domain");
 
         Role role = Mockito.mock(Role.class);
         when(role.getId()).thenReturn("role-id");
@@ -229,7 +229,7 @@ public class MembershipServiceTest {
         when(domain.isMaster()).thenReturn(true);
 
         when(userService.findById(membership.getMemberId())).thenReturn(Maybe.just(user));
-        when(domainService.findById(user.getDomain())).thenReturn(Maybe.just(domain));
+        when(domainService.findById(user.getReferenceId())).thenReturn(Maybe.just(domain));
         when(roleService.findById(role.getId())).thenReturn(Maybe.empty());
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())).thenReturn(Maybe.empty());
 
@@ -252,18 +252,18 @@ public class MembershipServiceTest {
         when(membership.getRole()).thenReturn("role-id");
 
         User user = Mockito.mock(User.class);
-        when(user.getDomain()).thenReturn("master-domain");
+        when(user.getReferenceId()).thenReturn("master-domain");
 
         Role role = Mockito.mock(Role.class);
         when(role.getId()).thenReturn("role-id");
-        when(role.getDomain()).thenReturn("master-domain");
+        when(role.getReferenceId()).thenReturn("master-domain");
         when(role.getScope()).thenReturn(RoleScope.APPLICATION.getId());
 
         Domain domain = Mockito.mock(Domain.class);
         when(domain.isMaster()).thenReturn(true);
 
         when(userService.findById(membership.getMemberId())).thenReturn(Maybe.just(user));
-        when(domainService.findById(user.getDomain())).thenReturn(Maybe.just(domain));
+        when(domainService.findById(user.getReferenceId())).thenReturn(Maybe.just(domain));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())).thenReturn(Maybe.empty());
 

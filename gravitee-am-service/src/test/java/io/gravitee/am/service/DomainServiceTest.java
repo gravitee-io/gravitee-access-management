@@ -22,6 +22,7 @@ import io.gravitee.am.model.membership.ReferenceType;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.model.permissions.SystemRole;
+import io.gravitee.am.model.user.UserReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
@@ -449,7 +450,7 @@ public class DomainServiceTest {
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(role)));
         when(roleService.delete(anyString())).thenReturn(Completable.complete());
         when(user.getId()).thenReturn(USER_ID);
-        when(userService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(user)));
+        when(userService.findByReference(DOMAIN_ID, UserReferenceType.DOMAIN)).thenReturn(Single.just(Collections.singleton(user)));
         when(userService.delete(anyString())).thenReturn(Completable.complete());
         when(scope.getId()).thenReturn(SCOPE_ID);
         when(scopeService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(scope)));
@@ -509,7 +510,7 @@ public class DomainServiceTest {
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
-        when(userService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
+        when(userService.findByReference(DOMAIN_ID, UserReferenceType.DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
         when(scopeService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));

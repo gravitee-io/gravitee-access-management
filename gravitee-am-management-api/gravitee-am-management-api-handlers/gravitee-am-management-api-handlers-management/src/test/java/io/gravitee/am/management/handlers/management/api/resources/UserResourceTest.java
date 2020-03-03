@@ -49,7 +49,7 @@ public class UserResourceTest extends JerseySpringTest {
         final User mockUser = new User();
         mockUser.setId(userId);
         mockUser.setUsername("user-username");
-        mockUser.setDomain(domainId);
+        mockUser.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockUser)).when(userService).findById(userId);
@@ -58,7 +58,7 @@ public class UserResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final User user = response.readEntity(User.class);
-        assertEquals(domainId, user.getDomain());
+        assertEquals(domainId, user.getReferenceId());
         assertEquals("user-username", user.getUsername());
     }
 
@@ -109,7 +109,7 @@ public class UserResourceTest extends JerseySpringTest {
         final User mockUser = new User();
         mockUser.setId(userId);
         mockUser.setUsername("user-username");
-        mockUser.setDomain(domainId);
+        mockUser.setReferenceId(domainId);
 
         PasswordValue passwordValue = new PasswordValue();
         passwordValue.setPassword("password");

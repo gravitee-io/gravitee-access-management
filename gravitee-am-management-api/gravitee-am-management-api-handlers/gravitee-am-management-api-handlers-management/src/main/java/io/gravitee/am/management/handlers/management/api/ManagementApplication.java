@@ -15,12 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api;
 
+import io.gravitee.am.management.handlers.management.api.filter.*;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.handlers.management.api.provider.*;
-import io.gravitee.am.management.handlers.management.api.resources.CurrentUserResource;
-import io.gravitee.am.management.handlers.management.api.resources.DomainsResource;
-import io.gravitee.am.management.handlers.management.api.resources.dashboard.DashboardResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.PlatformResource;
+import io.gravitee.am.management.handlers.management.api.resources.OrganizationsResource;
 import io.gravitee.common.util.Version;
 import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.jaxrs.listing.ApiListingResource;
@@ -44,10 +42,7 @@ public class ManagementApplication extends ResourceConfig {
         beanConfig.setBasePath("/management");
         beanConfig.setScan(true);
 
-        register(DomainsResource.class);
-        register(PlatformResource.class);
-        register(DashboardResource.class);
-        register(CurrentUserResource.class);
+        register(OrganizationsResource.class);
 
         register(ObjectMapperResolver.class);
         register(ManagementExceptionMapper.class);
@@ -60,6 +55,9 @@ public class ManagementApplication extends ResourceConfig {
         register(JsonMappingExceptionMapper.class);
         register(WebApplicationExceptionMapper.class);
 
+        register(GraviteeContextRequestFilter.class);
+        register(GraviteeContextResponseFilter.class);
+        
         register(UriBuilderRequestFilter.class);
         register(PermissionsFilter.class);
         register(ByteArrayOutputStreamWriter.class);

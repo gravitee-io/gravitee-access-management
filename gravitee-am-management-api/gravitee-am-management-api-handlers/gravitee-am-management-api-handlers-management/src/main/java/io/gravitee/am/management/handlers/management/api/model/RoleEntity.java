@@ -42,7 +42,7 @@ public class RoleEntity {
         this.id = other.getId();
         this.name = other.getName();
         this.description = other.getDescription();
-        this.domain = other.getDomain();
+        this.domain = other.getReferenceId();
         this.scope = convert(other.getScope());
         this.permissions = other.getPermissions();
         this.system = other.isSystem();

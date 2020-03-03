@@ -162,7 +162,7 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
         final User principal = (User) authentication.getPrincipal();
         ((DefaultUser) principal).setId(endUser.getId());
         principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
-        principal.getAdditionalInformation().put(Claims.domain, endUser.getDomain());
+        principal.getAdditionalInformation().put(Claims.domain, endUser.getReferenceId());
         return jwtGenerator.generateCookie(principal);
     }
 

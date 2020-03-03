@@ -20,6 +20,7 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
+import io.gravitee.am.model.user.UserReferenceType;
 
 import java.util.*;
 
@@ -90,8 +91,10 @@ public class User {
 
     private boolean registrationCompleted;
 
-    private String domain;
+    private String referenceId;
 
+    private UserReferenceType referenceType;
+    
     private String source;
 
     private String client;
@@ -142,7 +145,8 @@ public class User {
         this.internal = other.internal;
         this.preRegistration = other.preRegistration;
         this.registrationCompleted = other.registrationCompleted;
-        this.domain = other.domain;
+        this.referenceId = other.referenceId;
+        this.referenceType = other.referenceType;
         this.source = other.source;
         this.client = other.client;
         this.loginsCount = other.loginsCount;
@@ -397,12 +401,20 @@ public class User {
         this.registrationCompleted = registrationCompleted;
     }
 
-    public String getDomain() {
-        return domain;
+    public String getReferenceId() {
+        return referenceId;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
+    }
+
+    public UserReferenceType getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(UserReferenceType referenceType) {
+        this.referenceType = referenceType;
     }
 
     public String getSource() {

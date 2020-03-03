@@ -41,7 +41,7 @@ public class EmailAuditBuilder extends AuditBuilder<EmailAuditBuilder> {
     }
 
     public EmailAuditBuilder user(User user) {
-        setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getDomain());
+        setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceId());
         return this;
     }
 }

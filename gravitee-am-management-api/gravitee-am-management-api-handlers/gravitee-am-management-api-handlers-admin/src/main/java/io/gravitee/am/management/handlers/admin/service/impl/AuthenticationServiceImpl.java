@@ -94,7 +94,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         newUser.setUsername(principal.getUsername());
                         newUser.setSource(details.get(SOURCE));
                         newUser.setClient(CLIENT_ID);
-                        newUser.setDomain(domain.getId());
+                        newUser.setReferenceId(domain.getId());
                         newUser.setLoggedAt(new Date());
                         newUser.setLoginsCount(1l);
                         newUser.setRoles(principal.getRoles());

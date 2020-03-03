@@ -42,7 +42,7 @@ public class IdentityProviderListItem {
 
     public IdentityProviderListItem(IdentityProvider identityProvider) {
         id = identityProvider.getId();
-        domain = identityProvider.getDomain();
+        domain = identityProvider.getReferenceId();
         name = identityProvider.getName();
         type = identityProvider.getType();
         createdAt = identityProvider.getCreatedAt();

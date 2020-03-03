@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.user.UserReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -94,7 +95,7 @@ public class UserServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(userRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(new User())));
+        when(userRepository.findByReference(DOMAIN, UserReferenceType.DOMAIN)).thenReturn(Single.just(Collections.singleton(new User())));
         TestObserver<Set<User>> testObserver = userService.findByDomain(DOMAIN).test();
         testObserver.awaitTerminalEvent();
 

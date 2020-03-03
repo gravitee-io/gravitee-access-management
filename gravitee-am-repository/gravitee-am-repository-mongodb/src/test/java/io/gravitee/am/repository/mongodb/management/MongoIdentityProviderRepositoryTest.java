@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.idp.IdentityProviderReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.reactivex.observers.TestObserver;
@@ -44,11 +45,11 @@ public class MongoIdentityProviderRepositoryTest extends AbstractManagementRepos
         // create idp
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setName("testName");
-        identityProvider.setDomain("testDomain");
+        identityProvider.setReferenceId("testDomain");
         identityProviderRepository.create(identityProvider).blockingGet();
 
         // fetch idps
-        TestObserver<Set<IdentityProvider>> testObserver = identityProviderRepository.findByDomain("testDomain").test();
+        TestObserver<Set<IdentityProvider>> testObserver = identityProviderRepository.findByReference("testDomain", IdentityProviderReferenceType.DOMAIN).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.role.RoleReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.service.exception.*;
@@ -98,7 +99,7 @@ public class RoleServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(roleRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(new Role())));
+        when(roleRepository.findByReference(DOMAIN, RoleReferenceType.DOMAIN)).thenReturn(Single.just(Collections.singleton(new Role())));
         TestObserver<Set<Role>> testObserver = roleService.findByDomain(DOMAIN).test();
         testObserver.awaitTerminalEvent();
 
@@ -109,7 +110,7 @@ public class RoleServiceTest {
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(roleRepository.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+        when(roleRepository.findByReference(DOMAIN, RoleReferenceType.DOMAIN)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
         roleService.findByDomain(DOMAIN).subscribe(testObserver);
@@ -143,7 +144,7 @@ public class RoleServiceTest {
     @Test
     public void shouldCreate() {
         NewRole newRole = Mockito.mock(NewRole.class);
-        when(roleRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
+        when(roleRepository.findByReference(DOMAIN, RoleReferenceType.DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
         when(roleRepository.create(any(Role.class))).thenReturn(Single.just(new Role()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -153,14 +154,14 @@ public class RoleServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(roleRepository, times(1)).findByDomain(DOMAIN);
+        verify(roleRepository, times(1)).findByReference(DOMAIN, RoleReferenceType.DOMAIN);
         verify(roleRepository, times(1)).create(any(Role.class));
     }
 
     @Test
     public void shouldCreate_technicalException() {
         NewRole newRole = Mockito.mock(NewRole.class);
-        when(roleRepository.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+        when(roleRepository.findByReference(DOMAIN, RoleReferenceType.DOMAIN)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
         roleService.create(DOMAIN, newRole).subscribe(testObserver);
@@ -180,7 +181,7 @@ public class RoleServiceTest {
         role.setId("existing-role-id");
         role.setName("existing-role-name");
 
-        when(roleRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(role)));
+        when(roleRepository.findByReference(DOMAIN, RoleReferenceType.DOMAIN)).thenReturn(Single.just(Collections.singleton(role)));
 
         TestObserver testObserver = new TestObserver();
         roleService.create(DOMAIN, newRole).subscribe(testObserver);
@@ -195,7 +196,7 @@ public class RoleServiceTest {
     public void shouldUpdate() {
         UpdateRole updateRole = Mockito.mock(UpdateRole.class);
         when(roleRepository.findById("my-role")).thenReturn(Maybe.just(new Role()));
-        when(roleRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
+        when(roleRepository.findByReference(DOMAIN, RoleReferenceType.DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
         when(roleRepository.update(any(Role.class))).thenReturn(Single.just(new Role()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -206,7 +207,7 @@ public class RoleServiceTest {
         testObserver.assertNoErrors();
 
         verify(roleRepository, times(1)).findById("my-role");
-        verify(roleRepository, times(1)).findByDomain(DOMAIN);
+        verify(roleRepository, times(1)).findByReference(DOMAIN, RoleReferenceType.DOMAIN);
         verify(roleRepository, times(1)).update(any(Role.class));
     }
 
@@ -221,7 +222,7 @@ public class RoleServiceTest {
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
-        verify(roleRepository, never()).findByDomain(DOMAIN);
+        verify(roleRepository, never()).findByReference(DOMAIN, RoleReferenceType.DOMAIN);
         verify(roleRepository, never()).update(any(Role.class));
     }
 
@@ -235,7 +236,7 @@ public class RoleServiceTest {
         role.setName("existing-role-name");
 
         when(roleRepository.findById("my-role")).thenReturn(Maybe.just(new Role()));
-        when(roleRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(role)));
+        when(roleRepository.findByReference(DOMAIN, RoleReferenceType.DOMAIN)).thenReturn(Single.just(Collections.singleton(role)));
 
         TestObserver testObserver = new TestObserver();
         roleService.update(DOMAIN, "my-role", updateRole).subscribe(testObserver);
@@ -257,7 +258,7 @@ public class RoleServiceTest {
         testObserver.assertError(RoleNotFoundException.class);
         testObserver.assertNotComplete();
 
-        verify(roleRepository, never()).findByDomain(DOMAIN);
+        verify(roleRepository, never()).findByReference(DOMAIN, RoleReferenceType.DOMAIN);
         verify(roleRepository, never()).create(any(Role.class));
     }
 
@@ -275,7 +276,7 @@ public class RoleServiceTest {
         testObserver.assertError(SystemRoleUpdateException.class);
 
         verify(roleRepository, times(1)).findById("my-role");
-        verify(roleRepository, never()).findByDomain(DOMAIN);
+        verify(roleRepository, never()).findByReference(DOMAIN, RoleReferenceType.DOMAIN);
         verify(roleRepository, never()).update(any(Role.class));
     }
 

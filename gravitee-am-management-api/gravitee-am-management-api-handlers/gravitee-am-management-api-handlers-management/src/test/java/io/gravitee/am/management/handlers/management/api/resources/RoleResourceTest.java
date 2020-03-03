@@ -43,7 +43,7 @@ public class RoleResourceTest extends JerseySpringTest {
         final Role mockRole = new Role();
         mockRole.setId(roleId);
         mockRole.setName("role-name");
-        mockRole.setDomain(domainId);
+        mockRole.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockRole)).when(roleService).findById(roleId);
@@ -52,7 +52,7 @@ public class RoleResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Role role = response.readEntity(Role.class);
-        assertEquals(domainId, role.getDomain());
+        assertEquals(domainId, role.getReferenceId());
         assertEquals(roleId, role.getId());
     }
 
@@ -93,7 +93,7 @@ public class RoleResourceTest extends JerseySpringTest {
         final Role mockRole = new Role();
         mockRole.setId(roleId);
         mockRole.setName("role-name");
-        mockRole.setDomain("wrong-domain");
+        mockRole.setReferenceId("wrong-domain");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockRole)).when(roleService).findById(roleId);

@@ -15,11 +15,14 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.role.RoleReferenceType;
+
 import java.util.Date;
 import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Florent CHAMFROY (forent.chamfroy at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class Role {
@@ -27,7 +30,8 @@ public class Role {
     private String id;
     private String name;
     private String description;
-    private String domain;
+    private String referenceId;
+    private RoleReferenceType referenceType;
     private Integer scope;
     private boolean system;
     private List<String> permissions;
@@ -41,7 +45,8 @@ public class Role {
         this.id = other.id;
         this.name = other.name;
         this.description = other.description;
-        this.domain = other.domain;
+        this.referenceId = other.referenceId;
+        this.referenceType = other.referenceType;
         this.scope = other.scope;
         this.permissions = other.permissions;
         this.system = other.system;
@@ -73,12 +78,20 @@ public class Role {
         this.description = description;
     }
 
-    public String getDomain() {
-        return domain;
+    public String getReferenceId() {
+        return referenceId;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
+    }
+
+    public RoleReferenceType getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(RoleReferenceType referenceType) {
+        this.referenceType = referenceType;
     }
 
     public Integer getScope() {

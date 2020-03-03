@@ -36,7 +36,6 @@ import javax.ws.rs.core.Context;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Path("/platform")
 public class PlatformResource {
 
     @Context

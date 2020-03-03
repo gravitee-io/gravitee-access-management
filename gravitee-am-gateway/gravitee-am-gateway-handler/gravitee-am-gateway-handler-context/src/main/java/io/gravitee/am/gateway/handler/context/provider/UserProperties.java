@@ -46,7 +46,7 @@ public class UserProperties {
     public UserProperties(User user) {
         this.id = user.getId();
         this.externalId = user.getExternalId();
-        this.domain = user.getDomain();
+        this.domain = user.getReferenceId();
         this.username = user.getUsername();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();

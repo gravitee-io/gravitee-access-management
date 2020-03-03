@@ -136,7 +136,7 @@ public class UserServiceImpl implements UserService {
                             // set source
                             user.setSource(source);
                             // set domain
-                            user.setDomain(domain.getId());
+                            user.setReferenceId(domain.getId());
                             // internal user
                             user.setInternal(true);
                             // additional information
@@ -267,7 +267,7 @@ public class UserServiceImpl implements UserService {
                 // reset login attempts in case of reset password action
                 .flatMap(user1 -> {
                     LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
-                            .domain(user1.getDomain())
+                            .domain(user1.getReferenceId())
                             .client(user1.getClient())
                             .username(user1.getUsername())
                             .build();
@@ -369,7 +369,7 @@ public class UserServiceImpl implements UserService {
             entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
         }
 
-        String redirectUrl = entryPoint + "/" + user.getDomain() + redirectUri + "?token=" + token;
+        String redirectUrl = entryPoint + "/" + user.getReferenceId() + redirectUri + "?token=" + token;
 
         Map<String, Object> params = new HashMap<>();
         params.put("user", user);

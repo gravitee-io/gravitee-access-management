@@ -35,8 +35,8 @@ public class UserAuditBuilder extends ManagementAuditBuilder<UserAuditBuilder> {
                 || EventType.USER_ROLES_ASSIGNED.equals(getType())) {
             setNewValue(user);
         }
-        domain(user.getDomain());
-        setTarget(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getDomain());
+        domain(user.getReferenceId());
+        setTarget(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceId());
         return this;
     }
 

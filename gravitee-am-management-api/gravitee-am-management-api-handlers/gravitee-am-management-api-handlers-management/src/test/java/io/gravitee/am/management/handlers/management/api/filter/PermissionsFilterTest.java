@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.provider;
+package io.gravitee.am.management.handlers.management.api.filter;
 
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.filter.PermissionsFilter;
 import io.gravitee.am.management.handlers.management.api.manager.group.GroupManager;
 import io.gravitee.am.management.handlers.management.api.manager.membership.MembershipManager;
 import io.gravitee.am.management.handlers.management.api.manager.role.RoleManager;

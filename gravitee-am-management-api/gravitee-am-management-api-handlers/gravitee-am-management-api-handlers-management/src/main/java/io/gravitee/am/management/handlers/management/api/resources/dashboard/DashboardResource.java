@@ -25,7 +25,6 @@ import javax.ws.rs.core.Context;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Path("/dashboard")
 @Api(tags = {"dashboard"})
 public class DashboardResource {
 

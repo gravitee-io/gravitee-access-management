@@ -76,7 +76,7 @@ public class RoleResource extends AbstractResource {
                 .flatMap(irrelevant -> roleService.findById(role))
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(role)))
                 .map(role1 -> {
-                    if (!role1.getDomain().equalsIgnoreCase(domain)) {
+                    if (!role1.getReferenceId().equalsIgnoreCase(domain)) {
                         throw new BadRequestException("Role does not belong to domain");
                     }
                     return Response.ok(role1).build();

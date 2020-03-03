@@ -246,7 +246,7 @@ public class MembershipServiceImpl implements MembershipService {
         if (MemberType.USER.equals(membership.getMemberType())) {
             return userService.findById(membership.getMemberId())
                     .switchIfEmpty(Maybe.error(new UserNotFoundException(membership.getMemberId())))
-                    .flatMap(user -> domainService.findById(user.getDomain()))
+                    .flatMap(user -> domainService.findById(user.getReferenceId()))
                     .switchIfEmpty(Maybe.error(new InvalidUserException("Invalid user domain")))
                     .map(domain -> {
                         if (!domain.isMaster()) {
@@ -278,7 +278,7 @@ public class MembershipServiceImpl implements MembershipService {
     private Completable checkRole(String role, ReferenceType referenceType) {
         return roleService.findById(role)
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(role)))
-                .flatMap(role1 -> domainService.findById(role1.getDomain())
+                .flatMap(role1 -> domainService.findById(role1.getReferenceId())
                         .switchIfEmpty(Maybe.error(new InvalidRoleException("Invalid role domain")))
                         .map(domain -> {
                             if (!domain.isMaster()) {

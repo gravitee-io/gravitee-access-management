@@ -19,6 +19,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.idp.IdentityProviderReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
@@ -101,7 +102,7 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(identityProviderRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(new IdentityProvider())));
+        when(identityProviderRepository.findByReference(DOMAIN, IdentityProviderReferenceType.DOMAIN)).thenReturn(Single.just(Collections.singleton(new IdentityProvider())));
         TestObserver<List<IdentityProvider>> testObserver = identityProviderService.findByDomain(DOMAIN).test();
         testObserver.awaitTerminalEvent();
 
@@ -112,7 +113,7 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(identityProviderRepository.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+        when(identityProviderRepository.findByReference(DOMAIN, IdentityProviderReferenceType.DOMAIN)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
         identityProviderService.findByDomain(DOMAIN).subscribe(testObserver);

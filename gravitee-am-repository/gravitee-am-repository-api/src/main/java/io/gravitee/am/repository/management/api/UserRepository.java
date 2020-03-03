@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.user.UserReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -32,23 +33,23 @@ import java.util.Set;
  */
 public interface UserRepository extends CrudRepository<User, String> {
 
-    Single<Set<User>> findByDomain(String domain);
+    Single<Set<User>> findByReference(String referenceId, UserReferenceType referenceType);
 
-    Single<Page<User>> findByDomain(String domain, int page, int size);
+    Single<Page<User>> findByReference(String referenceId, UserReferenceType referenceType, int page, int size);
 
-    Single<Page<User>> search(String domain, String query, int page, int size);
+    Single<Page<User>> search(String referenceId, UserReferenceType referenceType, String query, int page, int size);
 
-    Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict);
+    Single<List<User>> findByReferenceAndEmail(String referenceId, UserReferenceType referenceType, String email, boolean strict);
 
-    Maybe<User> findByUsernameAndDomain(String domain, String username);
+    Maybe<User> findByUsernameAndReference(String referenceId, UserReferenceType referenceType, String username);
 
-    Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
+    Maybe<User> findByReferenceAndUsernameAndSource(String referenceId, UserReferenceType referenceType, String username, String source);
 
-    Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source);
+    Maybe<User> findByReferenceAndExternalIdAndSource(String referenceId, UserReferenceType referenceType, String externalId, String source);
 
     Single<List<User>> findByIdIn(List<String> ids);
 
-    Single<Long> countByDomain(String domain);
+    Single<Long> countByReference(String referenceId, UserReferenceType referenceType);
 
     Single<Map<Object, Object>> statistics(AnalyticsQuery query);
 }

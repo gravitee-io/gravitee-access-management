@@ -82,7 +82,7 @@ public class IdentityProviderResource extends AbstractResource {
                 .flatMap(irrelevant -> identityProviderService.findById(identityProvider))
                 .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identityProvider)))
                 .map(identityProvider1 -> {
-                    if (!identityProvider1.getDomain().equalsIgnoreCase(domain)) {
+                    if (!identityProvider1.getReferenceId().equalsIgnoreCase(domain)) {
                         throw new BadRequestException("Identity provider does not belong to domain");
                     }
                     return Response.ok(identityProvider1).build();

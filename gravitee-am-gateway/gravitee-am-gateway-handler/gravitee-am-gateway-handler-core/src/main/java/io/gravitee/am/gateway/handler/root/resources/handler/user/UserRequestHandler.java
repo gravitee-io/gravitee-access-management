@@ -64,7 +64,7 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
             // add ip address and user agent
             additionalInformation.put(Claims.ip_address, remoteAddress(routingContext.request()));
             additionalInformation.put(Claims.user_agent, userAgent(routingContext.request()));
-            additionalInformation.put(Claims.domain, user.getDomain());
+            additionalInformation.put(Claims.domain, user.getReferenceId());
             ((DefaultUser) authenticatedUser).setAdditionalInformation(additionalInformation);
             return authenticatedUser;
         }

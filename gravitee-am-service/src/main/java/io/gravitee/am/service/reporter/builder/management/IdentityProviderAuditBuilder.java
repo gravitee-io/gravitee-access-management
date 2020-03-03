@@ -33,8 +33,8 @@ public class IdentityProviderAuditBuilder extends ManagementAuditBuilder<Identit
         if (EventType.IDENTITY_PROVIDER_CREATED.equals(getType()) || EventType.IDENTITY_PROVIDER_UPDATED.equals(getType())) {
             setNewValue(identityProvider);
         }
-        domain(identityProvider.getDomain());
-        setTarget(identityProvider.getId(), EntityType.IDENTITY_PROVIDER, null, identityProvider.getName(), identityProvider.getDomain());
+        domain(identityProvider.getReferenceId());
+        setTarget(identityProvider.getId(), EntityType.IDENTITY_PROVIDER, null, identityProvider.getName(), identityProvider.getReferenceId());
         return this;
     }
 }

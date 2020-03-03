@@ -16,8 +16,8 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.role.RoleReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -30,9 +30,9 @@ import java.util.Set;
  */
 public interface RoleRepository extends CrudRepository<Role, String> {
 
-    Single<Set<Role>> findByDomain(String domain);
+    Single<Set<Role>> findByReference(String referenceId, RoleReferenceType referenceType);
 
     Single<Set<Role>> findByIdIn(List<String> ids);
 
-    Maybe<Role> findByDomainAndNameAndScope(String domain, String name, int scope);
+    Maybe<Role> findByReferenceAndNameAndScope(String referenceId, RoleReferenceType referenceType, String name, int scope);
 }

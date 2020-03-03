@@ -22,6 +22,7 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.idp.IdentityProviderReferenceType;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.ApplicationService;
@@ -98,7 +99,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     @Override
     public Single<List<IdentityProvider>> findByDomain(String domain) {
         LOGGER.debug("Find identity providers by domain: {}", domain);
-        return identityProviderRepository.findByDomain(domain)
+        return identityProviderRepository.findByReference(domain, IdentityProviderReferenceType.DOMAIN)
                 .map(identityProviders -> (List<IdentityProvider>) new ArrayList<>(identityProviders))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find identity providers by domain", ex);
@@ -112,7 +113,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId(newIdentityProvider.getId() == null ? RandomString.generate() : newIdentityProvider.getId());
-        identityProvider.setDomain(domain);
+        identityProvider.setReferenceId(domain);
         identityProvider.setName(newIdentityProvider.getName());
         identityProvider.setType(newIdentityProvider.getType());
         identityProvider.setConfiguration(newIdentityProvider.getConfiguration());
@@ -123,7 +124,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         return identityProviderRepository.create(identityProvider)
                 .flatMap(identityProvider1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -151,7 +152,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     return identityProviderRepository.update(identityToUpdate)
                             .flatMap(identityProvider1 -> {
                                 // create event for sync process
-                                Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getDomain(), Action.UPDATE));
+                                Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                             })
                             .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(oldIdentity).identityProvider(identityProvider1)))

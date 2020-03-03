@@ -128,7 +128,7 @@ public class UserServiceImpl implements UserService {
                     io.gravitee.am.model.User userModel = convert(user);
                     // set technical ID
                     userModel.setId(RandomString.generate());
-                    userModel.setDomain(domain.getId());
+                    userModel.setReferenceId(domain.getId());
                     userModel.setSource(source);
                     userModel.setInternal(true);
                     userModel.setCreatedAt(new Date());
@@ -182,7 +182,7 @@ public class UserServiceImpl implements UserService {
                                 userToUpdate.setId(existingUser.getId());
                                 userToUpdate.setExternalId(existingUser.getExternalId());
                                 userToUpdate.setUsername(existingUser.getUsername());
-                                userToUpdate.setDomain(existingUser.getDomain());
+                                userToUpdate.setReferenceId(existingUser.getReferenceId());
                                 userToUpdate.setSource(existingUser.getSource());
                                 userToUpdate.setCreatedAt(existingUser.getCreatedAt());
                                 userToUpdate.setUpdatedAt(new Date());

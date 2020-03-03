@@ -24,6 +24,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.permissions.RoleScope;
+import io.gravitee.am.model.user.UserReferenceType;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.GroupService;
@@ -71,7 +72,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<Set<User>> findByDomain(String domain) {
         LOGGER.debug("Find users by domain: {}", domain);
-        return userRepository.findByDomain(domain)
+        return userRepository.findByReference(domain, UserReferenceType.DOMAIN)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find users by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s", domain), ex));
@@ -81,7 +82,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<Page<User>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("Find users by domain: {}", domain);
-        return userRepository.findByDomain(domain, page, size)
+        return userRepository.findByReference(domain, UserReferenceType.DOMAIN, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find users by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s", domain), ex));
@@ -91,7 +92,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<Page<User>> search(String domain, String query, int page, int size) {
         LOGGER.debug("Search users for domain {} with query {}", domain, query);
-        return userRepository.search(domain, query, page, size)
+        return userRepository.search(domain, UserReferenceType.DOMAIN, query, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to search users for domain {} and query {}", domain, query, ex);
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for domain %s and query %s", domain, query), ex));
@@ -112,7 +113,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
         LOGGER.debug("Find users by domain : {} and email: {}", domain, email);
-        return userRepository.findByDomainAndEmail(domain, email, strict)
+        return userRepository.findByReferenceAndEmail(domain, UserReferenceType.DOMAIN, email, strict)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find users by domain : {} and email : {} ", domain, email, ex);
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s and email %s", domain, email), ex));
@@ -134,7 +135,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Maybe<User> findByDomainAndUsername(String domain, String username) {
         LOGGER.debug("Find user by username and domain: {} {}", username, domain);
-        return userRepository.findByUsernameAndDomain(domain, username)
+        return userRepository.findByUsernameAndReference(domain, UserReferenceType.DOMAIN, username)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a user using its ID: {} for the domain {}", username, domain, ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -145,7 +146,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
         LOGGER.debug("Find user by domain, username and source: {} {}", domain, username, source);
-        return userRepository.findByDomainAndUsernameAndSource(domain, username, source)
+        return userRepository.findByReferenceAndUsernameAndSource(domain, UserReferenceType.DOMAIN, username, source)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a user using its username: {} for the domain and source {}", username, domain, source, ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -156,7 +157,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source) {
         LOGGER.debug("Find user by domain, externalId and source: {} {}", domain, externalId, source);
-        return userRepository.findByDomainAndExternalIdAndSource(domain, externalId, source)
+        return userRepository.findByReferenceAndExternalIdAndSource(domain, UserReferenceType.DOMAIN, externalId, source)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a user using its externalId: {} for the domain and source {}", externalId, domain, source, ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -168,7 +169,7 @@ public class UserServiceImpl implements UserService {
     public Single<User> create(String domain, NewUser newUser) {
         LOGGER.debug("Create a new user {} for domain {}", newUser, domain);
 
-        return userRepository.findByDomainAndUsernameAndSource(domain, newUser.getUsername(), newUser.getSource())
+        return userRepository.findByReferenceAndUsernameAndSource(domain, UserReferenceType.DOMAIN, newUser.getUsername(), newUser.getSource())
                 .isEmpty()
                 .flatMap(isEmpty -> {
                     if (!isEmpty) {
@@ -179,7 +180,7 @@ public class UserServiceImpl implements UserService {
                         User user = new User();
                         user.setId(userId);
                         user.setExternalId(newUser.getExternalId());
-                        user.setDomain(domain);
+                        user.setReferenceId(domain);
                         user.setClient(newUser.getClient());
                         user.setUsername(newUser.getUsername());
                         user.setFirstName(newUser.getFirstName());
@@ -200,7 +201,7 @@ public class UserServiceImpl implements UserService {
                 })
                 .flatMap(user -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user));
                 })
                 .onErrorResumeNext(ex -> {
@@ -221,7 +222,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.create(user)
                 .flatMap(user1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -254,7 +255,7 @@ public class UserServiceImpl implements UserService {
                 })
                 .flatMap(user -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getDomain(), Action.UPDATE));
+                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceId(), Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user));
                 })
                 .onErrorResumeNext(ex -> {
@@ -275,7 +276,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.update(user)
                 .flatMap(user1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getDomain(), Action.UPDATE));
+                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceId(), Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -345,7 +346,7 @@ public class UserServiceImpl implements UserService {
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> {
                         // create event for sync process
-                        Event event = new Event(Type.USER, new Payload(user.getId(), user.getDomain(), Action.DELETE));
+                        Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceId(), Action.DELETE));
                         return userRepository.delete(userId).andThen(eventService.create(event)).toCompletable();
                 })
                 .onErrorResumeNext(ex -> {
@@ -363,7 +364,7 @@ public class UserServiceImpl implements UserService {
     public Single<Long> countByDomain(String domain) {
         LOGGER.debug("Count user by domain {}", domain);
 
-        return userRepository.countByDomain(domain)
+        return userRepository.countByReference(domain, UserReferenceType.DOMAIN)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);

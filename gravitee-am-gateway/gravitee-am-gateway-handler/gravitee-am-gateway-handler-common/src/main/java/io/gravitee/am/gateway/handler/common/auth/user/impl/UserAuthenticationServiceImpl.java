@@ -153,7 +153,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         // set external id
         newUser.setExternalId(principal.getId());
         newUser.setUsername(principal.getUsername());
-        newUser.setDomain(domain.getId());
+        newUser.setReferenceId(domain.getId());
         if (afterAuthentication) {
             newUser.setLoggedAt(new Date());
             newUser.setLoginsCount(1L);

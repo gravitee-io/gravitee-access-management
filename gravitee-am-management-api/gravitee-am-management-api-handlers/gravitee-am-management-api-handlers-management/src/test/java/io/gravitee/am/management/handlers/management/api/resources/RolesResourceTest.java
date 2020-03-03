@@ -53,12 +53,12 @@ public class RolesResourceTest extends JerseySpringTest {
         final Role mockRole = new Role();
         mockRole.setId("role-1-id");
         mockRole.setName("role-1-name");
-        mockRole.setDomain(domainId);
+        mockRole.setReferenceId(domainId);
 
         final Role mockRole2 = new Role();
         mockRole2.setId("role-2-id");
         mockRole2.setName("role-2-name");
-        mockRole2.setDomain(domainId);
+        mockRole2.setReferenceId(domainId);
 
         final Set<Role> roles = new HashSet<>(Arrays.asList(mockRole, mockRole2));
 

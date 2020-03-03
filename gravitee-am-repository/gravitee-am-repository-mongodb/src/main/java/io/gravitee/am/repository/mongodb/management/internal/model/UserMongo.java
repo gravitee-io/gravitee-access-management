@@ -53,7 +53,8 @@ public class UserMongo extends Auditable {
     private boolean internal;
     private boolean preRegistration;
     private boolean registrationCompleted;
-    private String domain;
+    private String referenceId;
+    private String referenceType;
     private String source;
     private String client;
     private long loginsCount;
@@ -233,12 +234,20 @@ public class UserMongo extends Auditable {
         this.registrationCompleted = registrationCompleted;
     }
 
-    public String getDomain() {
-        return domain;
+    public String getReferenceId() {
+        return referenceId;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
+    }
+
+    public String getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(String referenceType) {
+        this.referenceType = referenceType;
     }
 
     public String getSource() {

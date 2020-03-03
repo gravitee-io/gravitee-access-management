@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.role.RoleReferenceType;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
 import io.reactivex.Completable;
@@ -42,7 +43,8 @@ import static com.mongodb.client.model.Filters.*;
 public class MongoRoleRepository extends AbstractManagementMongoRepository implements RoleRepository {
 
     private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
+    private static final String FIELD_REFERENCE_ID = "referenceId";
+    private static final String FIELD_REFERENCE_TYPE = "referenceType";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_SCOPE = "scope";
     private MongoCollection<RoleMongo> rolesCollection;
@@ -50,13 +52,13 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     @PostConstruct
     public void init() {
         rolesCollection = mongoOperations.getCollection("roles", RoleMongo.class);
-        super.createIndex(rolesCollection, new Document(FIELD_DOMAIN, 1));
-        super.createIndex(rolesCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1).append(FIELD_SCOPE, 1));
+        super.createIndex(rolesCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1));
+        super.createIndex(rolesCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1).append(FIELD_NAME, 1).append(FIELD_SCOPE, 1));
     }
 
     @Override
-    public Single<Set<Role>> findByDomain(String domain) {
-        return Observable.fromPublisher(rolesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
+    public Single<Set<Role>> findByReference(String referenceId, RoleReferenceType referenceType) {
+        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
@@ -88,8 +90,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Maybe<Role> findByDomainAndNameAndScope(String domain, String name, int scope) {
-        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_NAME, name), eq(FIELD_SCOPE, scope))).first()).firstElement().map(this::convert);
+    public Maybe<Role> findByReferenceAndNameAndScope(String referenceId, RoleReferenceType referenceType, String name, int scope) {
+        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_NAME, name), eq(FIELD_SCOPE, scope))).first()).firstElement().map(this::convert);
     }
 
     private Role convert(RoleMongo roleMongo) {
@@ -101,7 +103,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         role.setId(roleMongo.getId());
         role.setName(roleMongo.getName());
         role.setDescription(roleMongo.getDescription());
-        role.setDomain(roleMongo.getDomain());
+        role.setReferenceId(roleMongo.getReferenceId());
+        role.setReferenceType(RoleReferenceType.valueOf(roleMongo.getReferenceType()));
         role.setScope(roleMongo.getScope());
         role.setSystem(roleMongo.isSystem());
         role.setPermissions(roleMongo.getPermissions());
@@ -119,7 +122,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         roleMongo.setId(role.getId());
         roleMongo.setName(role.getName());
         roleMongo.setDescription(role.getDescription());
-        roleMongo.setDomain(role.getDomain());
+        roleMongo.setReferenceId(role.getReferenceId());
+        roleMongo.setReferenceType(role.getReferenceType().name());
         roleMongo.setScope(role.getScope());
         roleMongo.setSystem(role.isSystem());
         roleMongo.setPermissions(role.getPermissions());

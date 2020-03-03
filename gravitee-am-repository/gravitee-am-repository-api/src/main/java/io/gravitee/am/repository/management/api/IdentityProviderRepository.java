@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.idp.IdentityProviderReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Single;
 
@@ -29,5 +30,5 @@ public interface IdentityProviderRepository extends CrudRepository<IdentityProvi
 
     Single<Set<IdentityProvider>> findAll();
 
-    Single<Set<IdentityProvider>> findByDomain(String domain);
+    Single<Set<IdentityProvider>> findByReference(String referenceId, IdentityProviderReferenceType referenceType);
 }

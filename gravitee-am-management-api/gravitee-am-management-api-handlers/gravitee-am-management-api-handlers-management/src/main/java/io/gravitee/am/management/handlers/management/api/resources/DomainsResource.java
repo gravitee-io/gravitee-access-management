@@ -48,7 +48,6 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Path("/domains")
 @Api(tags = {"domain"})
 public class DomainsResource extends AbstractResource {
 
