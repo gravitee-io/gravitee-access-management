@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Form;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -30,10 +31,11 @@ public interface FormRepository extends CrudRepository<Form, String> {
 
     Single<List<Form>> findByDomain(String domain);
 
-    Single<List<Form>> findByDomainAndClient(String domain, String client);
+    Single<List<Form>> findByClient(ReferenceType referenceType, String referenceId, String client);
 
-    Maybe<Form> findByDomainAndTemplate(String domain, String template);
+    Maybe<Form> findByTemplate(ReferenceType referenceType, String referenceId, String template);
 
-    Maybe<Form> findByDomainAndClientAndTemplate(String domain, String client, String template);
+    Maybe<Form> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template);
 
+    Maybe<Form> findById(ReferenceType referenceType, String referenceId, String id);
 }

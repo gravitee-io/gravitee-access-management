@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import org.junit.Test;
@@ -43,7 +44,8 @@ public class IdentityProviderResourceTest extends JerseySpringTest {
         final IdentityProvider mockIdentityProvider = new IdentityProvider();
         mockIdentityProvider.setId(identityProviderId);
         mockIdentityProvider.setName("identityProvider-name");
-        mockIdentityProvider.setDomain(domainId);
+        mockIdentityProvider.setReferenceType(ReferenceType.DOMAIN);
+        mockIdentityProvider.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockIdentityProvider)).when(identityProviderService).findById(identityProviderId);
@@ -51,8 +53,8 @@ public class IdentityProviderResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("identities").path(identityProviderId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final IdentityProvider identityProvider = response.readEntity(IdentityProvider.class);
-        assertEquals(domainId, identityProvider.getDomain());
+        final IdentityProvider identityProvider = readEntity(response, IdentityProvider.class);
+        assertEquals(domainId, identityProvider.getReferenceId());
         assertEquals(identityProviderId, identityProvider.getId());
     }
 
@@ -93,7 +95,8 @@ public class IdentityProviderResourceTest extends JerseySpringTest {
         final IdentityProvider mockIdentityProvider = new IdentityProvider();
         mockIdentityProvider.setId(identityProviderId);
         mockIdentityProvider.setName("identityProvider-name");
-        mockIdentityProvider.setDomain("wrong-domain");
+        mockIdentityProvider.setReferenceType(ReferenceType.DOMAIN);
+        mockIdentityProvider.setReferenceId("wrong-domain");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockIdentityProvider)).when(identityProviderService).findById(identityProviderId);

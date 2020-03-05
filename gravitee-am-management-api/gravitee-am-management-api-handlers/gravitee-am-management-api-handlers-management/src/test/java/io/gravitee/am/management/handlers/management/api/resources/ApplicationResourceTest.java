@@ -55,7 +55,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("applications").path(clientId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Application application = response.readEntity(Application.class);
+        final Application application = readEntity(response, Application.class);
         assertEquals(domainId, application.getDomain());
         assertEquals(clientId, application.getId());
     }

@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.impl;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.NewIdentityProvider;
@@ -86,15 +87,22 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager {
     }
 
     @Override
-    public Single<IdentityProvider> create(String domain) {
+    public Single<IdentityProvider> create(ReferenceType referenceType, String referenceId) {
         NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
-        newIdentityProvider.setId(DEFAULT_IDP_PREFIX + domain);
+
+        String lowerCaseId = referenceId.toLowerCase();
+        newIdentityProvider.setId(DEFAULT_IDP_PREFIX + lowerCaseId);
         newIdentityProvider.setName(DEFAULT_IDP_NAME);
         newIdentityProvider.setType(DEFAULT_IDP_TYPE);
-        newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\""+ mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + domain + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
+        newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + lowerCaseId + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
 
-        return identityProviderService.create(domain, newIdentityProvider)
+        return identityProviderService.create(referenceType, referenceId, newIdentityProvider, null)
                 .flatMap(identityProvider -> reloadUserProvider(identityProvider));
+    }
+
+    @Override
+    public Single<IdentityProvider> create(String domain) {
+        return create(ReferenceType.DOMAIN, domain);
     }
 
     @Override

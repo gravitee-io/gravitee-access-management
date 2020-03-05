@@ -24,6 +24,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
@@ -48,6 +49,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.*;
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -57,7 +59,6 @@ import static com.mongodb.client.model.Filters.*;
 public class MongoUserRepository extends AbstractManagementMongoRepository implements UserRepository {
 
     private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_SOURCE = "source";
     private static final String FIELD_EMAIL = "email";
@@ -69,28 +70,34 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     @PostConstruct
     public void init() {
         usersCollection = mongoOperations.getCollection("users", UserMongo.class);
-        super.createIndex(usersCollection, new Document(FIELD_DOMAIN, 1));
-        super.createIndex(usersCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_EMAIL, 1));
-        super.createIndex(usersCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_USERNAME, 1));
-        super.createIndex(usersCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_EXTERNAL_ID, 1));
-        super.createIndex(usersCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1));
-        super.createIndex(usersCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1));
+
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EMAIL, 1));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1));
     }
 
     @Override
     public Single<Set<User>> findByDomain(String domain) {
-        return Observable.fromPublisher(usersCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain)))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Single<Page<User>> findByDomain(String domain, int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(eq(FIELD_DOMAIN, domain))).first(0l);
-        Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(eq(FIELD_DOMAIN, domain)).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+    public Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
+        Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).first(0l);
+        Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
         return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, page, count));
     }
 
     @Override
-    public Single<Page<User>> search(String domain, String query, int page, int size) {
+    public Single<Page<User>> findByDomain(String domain, int page, int size) {
+       return findAll(DOMAIN, domain, page, size);
+    }
+
+    @Override
+    public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
         // currently search on username field
         Bson searchQuery = new BasicDBObject(FIELD_USERNAME, query);
         // if query contains wildcard, use the regex query
@@ -101,7 +108,8 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         }
 
         Bson mongoQuery = and(
-                eq(FIELD_DOMAIN, domain),
+                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                eq(FIELD_REFERENCE_ID, referenceId),
                 searchQuery);
 
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery)).first(0l);
@@ -110,10 +118,17 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
+    public Single<Page<User>> search(String domain, String query, int page, int size) {
+
+        return search(DOMAIN, domain, query, page, size);
+    }
+
+    @Override
     public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
         BasicDBObject emailQuery = new BasicDBObject(FIELD_EMAIL, (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE));
         Bson mongoQuery = and(
-                eq(FIELD_DOMAIN, domain),
+                eq(FIELD_REFERENCE_TYPE, DOMAIN.name()),
+                eq(FIELD_REFERENCE_ID, domain),
                 emailQuery);
 
         return Observable.fromPublisher(usersCollection.find(mongoQuery)).map(this::convert).collect(ArrayList::new, List::add);
@@ -123,7 +138,18 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     public Maybe<User> findByUsernameAndDomain(String domain, String username) {
         return Observable.fromPublisher(
                 usersCollection
-                        .find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USERNAME, username)))
+                        .find(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_USERNAME, username)))
+                        .limit(1)
+                        .first())
+                .firstElement()
+                .map(this::convert);
+    }
+
+    @Override
+    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
+        return Observable.fromPublisher(
+                usersCollection
+                        .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source)))
                         .limit(1)
                         .first())
                 .firstElement()
@@ -132,20 +158,14 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
-        return Observable.fromPublisher(
-                usersCollection
-                        .find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source)))
-                        .limit(1)
-                        .first())
-                .firstElement()
-                .map(this::convert);
+        return findByUsernameAndSource(DOMAIN, domain, username, source);
     }
 
     @Override
-    public Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source) {
+    public Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source) {
         return Observable.fromPublisher(
                 usersCollection
-                        .find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_EXTERNAL_ID, externalId), eq(FIELD_SOURCE, source)))
+                        .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_EXTERNAL_ID, externalId), eq(FIELD_SOURCE, source)))
                         .limit(1)
                         .first())
                 .firstElement()
@@ -155,6 +175,11 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     @Override
     public Single<List<User>> findByIdIn(List<String> ids) {
         return Observable.fromPublisher(usersCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(ArrayList::new, List::add);
+    }
+
+    @Override
+    public Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId) {
+        return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, userId))).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -182,7 +207,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Single<Long> countByDomain(String domain) {
-        return Observable.fromPublisher(usersCollection.countDocuments(eq(FIELD_DOMAIN, domain))).first(0l);
+        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain)))).first(0l);
     }
 
     @Override
@@ -200,7 +225,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     private Single<Map<Object, Object>> usersStatusRepartition(AnalyticsQuery query) {
         return Observable.fromPublisher(usersCollection.aggregate(
                 Arrays.asList(
-                        Aggregates.match(eq(FIELD_DOMAIN, query.getDomain())),
+                        Aggregates.match(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, query.getDomain()))),
                         Aggregates.group(
                                 new BasicDBObject("_id", query.getField()),
                                 Accumulators.sum("total", 1),
@@ -226,7 +251,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     private Single<Map<Object, Object>> registrationsStatusRepartition(AnalyticsQuery query) {
         return Observable.fromPublisher(usersCollection.aggregate(
                 Arrays.asList(
-                        Aggregates.match(new Document(FIELD_DOMAIN, query.getDomain()).append(FIELD_PRE_REGISTRATION, true)),
+                        Aggregates.match(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, query.getDomain()), eq(FIELD_PRE_REGISTRATION, true))),
                         Aggregates.group(new BasicDBObject("_id", query.getField()),
                                 Accumulators.sum("total", 1),
                                 Accumulators.sum("completed", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$registrationCompleted", true)), 1, 0))))
@@ -265,7 +290,8 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         user.setInternal(userMongo.isInternal());
         user.setPreRegistration(userMongo.isPreRegistration());
         user.setRegistrationCompleted(userMongo.isRegistrationCompleted());
-        user.setDomain(userMongo.getDomain());
+        user.setReferenceType(ReferenceType.valueOf(userMongo.getReferenceType()));
+        user.setReferenceId(userMongo.getReferenceId());
         user.setSource(userMongo.getSource());
         user.setClient(userMongo.getClient());
         user.setLoginsCount(userMongo.getLoginsCount());
@@ -308,7 +334,8 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         userMongo.setInternal(user.isInternal());
         userMongo.setPreRegistration(user.isPreRegistration());
         userMongo.setRegistrationCompleted(user.isRegistrationCompleted());
-        userMongo.setDomain(user.getDomain());
+        userMongo.setReferenceType(user.getReferenceType().name());
+        userMongo.setReferenceId(user.getReferenceId());
         userMongo.setSource(user.getSource());
         userMongo.setClient(user.getClient());
         userMongo.setLoginsCount(user.getLoginsCount());

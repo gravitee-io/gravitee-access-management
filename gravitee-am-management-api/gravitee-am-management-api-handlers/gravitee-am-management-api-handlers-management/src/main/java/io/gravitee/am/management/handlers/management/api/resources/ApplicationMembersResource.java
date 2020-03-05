@@ -21,7 +21,7 @@ import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.membership.ReferenceType;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.model.permissions.RoleScope;
@@ -47,7 +47,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -124,7 +123,8 @@ public class ApplicationMembersResource extends AbstractResource {
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMap(__ -> applicationService.findById(application))
                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                .flatMapSingle(__ -> membershipService.addOrUpdate(membership, authenticatedUser))
+                // FIXME: propagate organizationId.
+                .flatMapSingle(__ -> membershipService.addOrUpdate("DEFAULT", membership, authenticatedUser))
                 .map(membership1 -> Response
                         .created(URI.create("/domains/" + domain + "/applications/" + application + "/members/" + membership1.getId()))
                         .entity(membership1)

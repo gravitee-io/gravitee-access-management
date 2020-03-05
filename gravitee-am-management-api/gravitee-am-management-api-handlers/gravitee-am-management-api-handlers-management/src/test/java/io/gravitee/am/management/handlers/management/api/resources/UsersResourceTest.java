@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
@@ -53,12 +54,14 @@ public class UsersResourceTest extends JerseySpringTest {
         final User mockUser = new User();
         mockUser.setId("user-id-1");
         mockUser.setUsername("username-1");
-        mockUser.setDomain(domainId);
+        mockUser.setReferenceType(ReferenceType.DOMAIN);
+        mockUser.setReferenceId(domainId);
 
         final User mockUser2 = new User();
         mockUser2.setId("domain-id-2");
         mockUser2.setUsername("username-2");
-        mockUser2.setDomain(domainId);
+        mockUser2.setReferenceType(ReferenceType.DOMAIN);
+        mockUser2.setReferenceId(domainId);
 
         final Set<User> users = new HashSet(Arrays.asList(mockUser, mockUser2));
         final Page<User> pagedUsers = new Page<>(users, 0, 2);

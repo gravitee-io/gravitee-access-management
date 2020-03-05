@@ -46,7 +46,8 @@ public class UserEntity extends User {
         setInternal(user.isInternal());
         setPreRegistration(user.isPreRegistration());
         setRegistrationCompleted(user.isRegistrationCompleted());
-        setDomain(user.getDomain());
+        setReferenceType(user.getReferenceType());
+        setReferenceId(user.getReferenceId());
         setSource(user.getSource());
         setClient(user.getClient());
         setLoginsCount(user.getLoginsCount());

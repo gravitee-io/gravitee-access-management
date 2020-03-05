@@ -20,14 +20,13 @@ import io.gravitee.am.management.handlers.management.api.model.AuditParam;
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.AuditService;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -74,6 +73,8 @@ public class AuditsResource {
     public void list(@BeanParam AuditParam param,
                      @Suspended final AsyncResponse response) {
 
+        String organizationId = "DEFAULT";
+
         AuditReportableCriteria.Builder queryBuilder = new AuditReportableCriteria.Builder()
                 .from(param.getFrom())
                 .to(param.getTo())
@@ -84,13 +85,9 @@ public class AuditsResource {
             queryBuilder.types(Collections.singletonList(param.getType()));
         }
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> auditService.search(masterDomain.getId(), queryBuilder.build(), param.getPage(), param.getSize())
-                .map(pagedAudits -> Response.ok(pagedAudits).build()))
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        auditService.search(ReferenceType.ORGANIZATION, organizationId, queryBuilder.build(), param.getPage(), param.getSize())
+                .map(pagedAudits -> Response.ok(pagedAudits).build())
+                .subscribe(response::resume, response::resume);
     }
 
     @GET
@@ -99,10 +96,7 @@ public class AuditsResource {
     @ApiOperation(value = "List platform audit event types")
     public void list(@Suspended final AsyncResponse response) {
         Single.just(EventType.types())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error)
-                );
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{audit}")

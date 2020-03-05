@@ -34,6 +34,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 
@@ -60,7 +61,7 @@ public class DomainsResourceTest extends JerseySpringTest {
         final Response response = target("domains").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final List<Domain> responseEntity = response.readEntity(List.class);
+        final List<Domain> responseEntity = readEntity(response, List.class);
         assertTrue(responseEntity.size() == 2);
     }
 
@@ -81,7 +82,7 @@ public class DomainsResourceTest extends JerseySpringTest {
         domain.setId("domain-id");
         domain.setName("domain-name");
 
-        doReturn(Single.just(domain)).when(domainService).create(any(), any());
+        doReturn(Single.just(domain)).when(domainService).create(eq("DEFAULT"), eq("DEFAULT"), any(), any());
         doReturn(Single.just(new IdentityProvider())).when(identityProviderManager).create(domain.getId());
         doReturn(Single.just(new Reporter())).when(reporterService).createDefault(domain.getId());
 

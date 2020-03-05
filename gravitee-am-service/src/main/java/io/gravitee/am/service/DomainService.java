@@ -42,7 +42,7 @@ public interface DomainService {
 
     Single<Set<Domain>> findByIdIn(Collection<String> ids);
 
-    Single<Domain> create(NewDomain domain, User principal);
+    Single<Domain> create(String organizationId, String environmentId, NewDomain domain, User principal);
 
     Single<Domain> update(String domainId, UpdateDomain domain, User principal);
 
@@ -56,8 +56,8 @@ public interface DomainService {
 
     Completable delete(String domain, User principal);
 
-    default Single<Domain> create(NewDomain domain) {
-        return create(domain, null);
+    default Single<Domain> create(String organizationId, String environmentId, NewDomain domain) {
+        return create(organizationId, environmentId, domain, null);
     }
 
     default Single<Domain> update(String domainId, UpdateDomain domain) {

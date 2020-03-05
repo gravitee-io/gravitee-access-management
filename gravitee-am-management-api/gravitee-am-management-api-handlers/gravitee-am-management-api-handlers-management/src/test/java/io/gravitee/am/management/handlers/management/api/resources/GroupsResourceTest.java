@@ -52,11 +52,11 @@ public class GroupsResourceTest extends JerseySpringTest {
 
         final Group mockGroup = new Group();
         mockGroup.setId("group-id-1");
-        mockGroup.setDomain(domainId);
+        mockGroup.setReferenceId(domainId);
 
         final Group mockGroup2 = new Group();
         mockGroup2.setId("group-id-2");
-        mockGroup2.setDomain(domainId);
+        mockGroup2.setReferenceId(domainId);
 
         final List<Group> groups = Arrays.asList(mockGroup, mockGroup2);
         final Page<User> pagedUsers = new Page(groups, 0, 2);
@@ -74,7 +74,7 @@ public class GroupsResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Map entity = response.readEntity(Map.class);
+        final Map entity = readEntity(response, Map.class);
         assertTrue(((List)entity.get("data")).size() == 2);
     }
 

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.context.provider;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +47,11 @@ public class UserProperties {
     public UserProperties(User user) {
         this.id = user.getId();
         this.externalId = user.getExternalId();
-        this.domain = user.getDomain();
+
+        if(user.getReferenceType() == ReferenceType.DOMAIN) {
+            this.domain = user.getReferenceId();
+        }
+
         this.username = user.getUsername();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();

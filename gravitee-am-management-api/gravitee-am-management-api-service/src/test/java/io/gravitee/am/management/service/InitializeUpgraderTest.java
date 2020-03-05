@@ -16,20 +16,13 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.management.service.impl.upgrades.InitializeUpgrader;
-import io.gravitee.am.model.Role;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.permissions.ManagementPermission;
 import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.model.permissions.SystemRole;
-import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.model.NewDomain;
-import io.gravitee.am.service.model.NewIdentityProvider;
-import io.gravitee.am.service.model.UpdateDomain;
+import io.gravitee.am.service.*;
+import io.gravitee.am.service.model.*;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -51,6 +44,8 @@ public class InitializeUpgraderTest {
 
     private final static String ADMIN_DOMAIN = "admin";
     private final static String ADMIN_CLIENT_ID = "admin";
+    public static final String ORGANIZATION_ID = "DEFAULT";
+    public static final String ENVIRONMENT_ID = "DEFAULT";
 
     @InjectMocks
     private InitializeUpgrader initializeUpgrader = new InitializeUpgrader();
@@ -67,28 +62,36 @@ public class InitializeUpgraderTest {
     @Mock
     private RoleService roleService;
 
+    @Mock
+    private OrganizationService organizationService;
+
     @Test
     public void shouldCreateAdminDomain() {
-        final Domain adminDomain = new Domain();
+        Domain adminDomain = new Domain();
         adminDomain.setId(ADMIN_DOMAIN);
         adminDomain.setName("ADMIN");
+
+        IdentityProvider idp = new IdentityProvider();
+        idp.setId("test");
 
         final Role adminRole = new Role();
         adminRole.setId("role-id");
 
+        when(domainService.create(eq(ORGANIZATION_ID), eq(ENVIRONMENT_ID), any(NewDomain.class))).thenReturn(Single.just(adminDomain));
         when(domainService.findById(ADMIN_DOMAIN)).thenReturn(Maybe.empty());
-        when(identityProviderService.create(eq(ADMIN_DOMAIN), any(NewIdentityProvider.class))).thenReturn(Single.just(new IdentityProvider()));
-        when(identityProviderService.update(any(), any(), any())).thenReturn(Single.just(new IdentityProvider()));
-        when(roleService.createSystemRole(SystemRole.ADMIN, RoleScope.MANAGEMENT, ManagementPermission.permissions())).thenReturn(Single.just(adminRole));
-        when(domainService.create(any(NewDomain.class))).thenReturn(Single.just(adminDomain));
-        when(domainService.update(eq(ADMIN_DOMAIN), any(UpdateDomain.class))).thenReturn(Single.just(adminDomain));
-        when(domainService.setMasterDomain(ADMIN_DOMAIN, true)).thenReturn(Single.just(adminDomain));
+        when(roleService.createSystemRole(SystemRole.ADMIN, RoleScope.MANAGEMENT, ManagementPermission.permissions())).thenReturn(Single.just(new Role()));
+        when(identityProviderService.create(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(NewIdentityProvider.class), isNull())).thenReturn(Single.just(idp));
+        when(identityProviderService.update(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), eq(idp.getId()), any(UpdateIdentityProvider.class), isNull())).thenReturn(Single.just(new IdentityProvider()));
+        when(domainService.update(eq(adminDomain.getId()), any(UpdateDomain.class))).thenReturn(Single.just(adminDomain));
+        when(domainService.setMasterDomain(eq(adminDomain.getId()), eq(true))).thenReturn(Single.just(adminDomain));
+        when(organizationService.update(eq(ORGANIZATION_ID), any(PatchOrganization.class), isNull())).thenReturn(Single.just(new Organization()));
 
         initializeUpgrader.upgrade();
 
+        // Ultimately, admin domain will not be created anymore (replaces by default organization).
         verify(domainService, times(1)).findById(ADMIN_DOMAIN);
-        verify(identityProviderService, times(1)).create(eq(ADMIN_DOMAIN), any(NewIdentityProvider.class));
-        verify(domainService, times(1)).create(any(NewDomain.class));
+        verify(identityProviderService, times(1)).create(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(NewIdentityProvider.class), isNull());
+        verify(domainService, times(1)).create(eq(ORGANIZATION_ID), eq(ENVIRONMENT_ID), any(NewDomain.class));
         verify(domainService, times(1)).update(eq(ADMIN_DOMAIN), any(UpdateDomain.class));
         verify(domainService, times(1)).setMasterDomain(ADMIN_DOMAIN, true);
         verify(clientService, never()).findByDomainAndClientId(ADMIN_DOMAIN, ADMIN_CLIENT_ID);
@@ -118,7 +121,7 @@ public class InitializeUpgraderTest {
         verify(clientService, times(1)).delete(ADMIN_CLIENT_ID);
 
         verify(identityProviderService, never()).create(eq(ADMIN_DOMAIN), any(NewIdentityProvider.class));
-        verify(domainService, never()).create(any(NewDomain.class));
+        verify(domainService, never()).create(anyString(), anyString(), any(NewDomain.class));
         verify(domainService, never()).setMasterDomain(ADMIN_DOMAIN, true);
     }
 
@@ -144,7 +147,7 @@ public class InitializeUpgraderTest {
         verify(domainService, never()).update(eq(ADMIN_DOMAIN), any(UpdateDomain.class));
         verify(clientService, never()).delete(ADMIN_CLIENT_ID);
         verify(identityProviderService, never()).create(eq(ADMIN_DOMAIN), any(NewIdentityProvider.class));
-        verify(domainService, never()).create(any(NewDomain.class));
+        verify(domainService, never()).create(anyString(), anyString(), any(NewDomain.class));
         verify(domainService, never()).setMasterDomain(ADMIN_DOMAIN, true);
     }
 
@@ -172,7 +175,7 @@ public class InitializeUpgraderTest {
         verify(domainService, never()).update(eq(ADMIN_DOMAIN), any(UpdateDomain.class));
         verify(clientService, never()).delete(ADMIN_CLIENT_ID);
         verify(identityProviderService, never()).create(eq(ADMIN_DOMAIN), any(NewIdentityProvider.class));
-        verify(domainService, never()).create(any(NewDomain.class));
+        verify(domainService, never()).create(anyString(), anyString(), any(NewDomain.class));
     }
 
 

@@ -19,6 +19,8 @@ import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Organization;
+import io.gravitee.am.service.OrganizationService;
 import io.gravitee.common.http.HttpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.savedrequest.SavedRequest;
@@ -50,6 +52,9 @@ public class LoginController {
     private Domain domain;
 
     @Autowired
+    private OrganizationService organizationService;
+
+    @Autowired
     private IdentityProviderManager identityProviderManager;
 
     @RequestMapping(value = "/login")
@@ -57,8 +62,10 @@ public class LoginController {
         Map<String, Object> params = new HashMap<>();
         params.put("domain", domain);
 
+        String organizationId = "DEFAULT";
+
         // fetch domain social identity providers
-        List<IdentityProvider> socialProviders = domain.getIdentities()
+        List<IdentityProvider> socialProviders = organizationService.findById(organizationId).map(Organization::getIdentities).blockingGet()
                 .stream()
                 .map(identity -> identityProviderManager.getIdentityProvider(identity))
                 .filter(IdentityProvider::isExternal)
@@ -68,7 +75,7 @@ public class LoginController {
         if (socialProviders != null && !socialProviders.isEmpty()) {
             Set<IdentityProvider> enhancedSocialProviders = socialProviders.stream().map(identityProvider -> {
                 String identityProviderType = identityProvider.getType();
-                Optional<String> identityProviderSocialType = socialProviderTypes.stream().filter(socialProviderType-> identityProviderType.toLowerCase().contains(socialProviderType)).findFirst();
+                Optional<String> identityProviderSocialType = socialProviderTypes.stream().filter(socialProviderType -> identityProviderType.toLowerCase().contains(socialProviderType)).findFirst();
                 if (identityProviderSocialType.isPresent()) {
                     identityProvider.setType(identityProviderSocialType.get());
                 }
@@ -116,7 +123,7 @@ public class LoginController {
         if (host != null && !host.isEmpty()) {
             if (host.contains(":")) {
                 // Forwarded host contains both host and port
-                String [] parts = host.split(":");
+                String[] parts = host.split(":");
                 builder.host(parts[0]);
                 builder.port(parts[1]);
             } else {

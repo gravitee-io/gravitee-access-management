@@ -89,7 +89,7 @@ public class TagServiceTest {
         when(tagRepository.findById("my-tag")).thenReturn(Maybe.empty());
         when(tagRepository.create(any(Tag.class))).thenReturn(Single.just(new Tag()));
 
-        TestObserver testObserver = tagService.create(newTag, null).test();
+        TestObserver testObserver = tagService.create(newTag, "DEFAULT", null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -106,7 +106,7 @@ public class TagServiceTest {
         when(tagRepository.findById("my-tag")).thenReturn(Maybe.just(new Tag()));
 
         TestObserver<Tag> testObserver = new TestObserver<>();
-        tagService.create(newTag, null).subscribe(testObserver);
+        tagService.create(newTag, "DEFAULT", null).subscribe(testObserver);
 
         testObserver.assertError(TagAlreadyExistsException.class);
         testObserver.assertNotComplete();
@@ -122,7 +122,7 @@ public class TagServiceTest {
         when(tagRepository.findById("my-tag")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        tagService.create(newTag, null).subscribe(testObserver);
+        tagService.create(newTag, "DEFAULT", null).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();

@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Group;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
@@ -65,9 +66,7 @@ public class GroupRoleResource extends AbstractResource {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(endUser -> groupService.revokeRoles(group, Collections.singletonList(role), authenticatedUser))
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .flatMapSingle(domain1 -> groupService.revokeRoles(ReferenceType.DOMAIN, domain, group, Collections.singletonList(role), authenticatedUser))
+                .subscribe(response::resume, response::resume);
     }
 }

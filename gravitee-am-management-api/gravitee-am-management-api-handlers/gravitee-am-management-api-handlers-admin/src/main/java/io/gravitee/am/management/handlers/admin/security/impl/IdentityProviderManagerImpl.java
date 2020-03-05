@@ -21,6 +21,7 @@ import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.common.event.Event;
@@ -75,17 +76,18 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
 
         logger.info("Initializing identity providers for domain {}", domain.getName());
         try {
-            List<IdentityProvider> identityProviders = identityProviderService.findByDomain(domain.getId()).blockingGet();
+            // FIXME: how to manage all organizations ?
+            List<IdentityProvider> identityProviders = identityProviderService.findAll(ReferenceType.ORGANIZATION, "DEFAULT").blockingGet();
             identityProviders.forEach(identityProvider -> updateAuthenticationProvider(identityProvider));
-            logger.info("Identity providers loaded for domain {}", domain.getName());
+            logger.info("Identity providers loaded for organization {}", "DEFAULT");
         } catch (Exception e) {
-            logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);
+            logger.error("Unable to initialize identity providers for organization {}", "DEFAULT", e);
         }
     }
 
     @Override
     public void onEvent(Event<IdentityProviderEvent, Payload> event) {
-        if (domain.getId().equals(event.content().getDomain())) {
+        if (event.content().getDomain() == null) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:

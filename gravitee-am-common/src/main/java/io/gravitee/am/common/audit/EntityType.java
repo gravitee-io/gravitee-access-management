@@ -39,4 +39,5 @@ public interface EntityType {
     String POLICY = "POLICY";
     String MEMBERSHIP = "MEMBERSHIP";
     String FACTOR = "FACTOR";
+    String ORGANIZATION = "ORGANIZATION";
 }

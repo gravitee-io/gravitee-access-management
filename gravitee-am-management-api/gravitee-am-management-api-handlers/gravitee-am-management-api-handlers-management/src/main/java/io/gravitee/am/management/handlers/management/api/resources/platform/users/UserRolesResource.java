@@ -21,14 +21,11 @@ import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
-import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -55,9 +52,6 @@ public class UserRolesResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private UserService userService;
 
     @Autowired
@@ -74,19 +68,17 @@ public class UserRolesResource extends AbstractResource {
     })
     public void list(@PathParam("user") String user,
                      @Suspended final AsyncResponse response) {
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMap(__ -> userService.findById(user))
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
-                .flatMapSingle(endUser -> {
+
+        String organizationId = "DEFAULT";
+
+        userService.findById(ReferenceType.ORGANIZATION, organizationId, user)
+                .flatMap(endUser -> {
                     if (endUser.getRoles() == null || endUser.getRoles().isEmpty()) {
                         return Single.just(Collections.emptyList());
                     }
                     return roleService.findByIdIn(endUser.getRoles());
                 })
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
@@ -104,12 +96,10 @@ public class UserRolesResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(__ -> userService.assignRoles(user, roles, authenticatedUser))
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        userService.assignRoles(ReferenceType.ORGANIZATION, organizationId, user, roles, authenticatedUser)
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{role}")

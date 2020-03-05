@@ -23,6 +23,7 @@ import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.ApplicationService;
@@ -92,7 +93,8 @@ public class UserResource extends AbstractResource {
                 .flatMap(irrelevant -> userService.findById(user))
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
                 .flatMap(user1 -> {
-                    if (!user1.getDomain().equalsIgnoreCase(domain)) {
+                    if (user1.getReferenceType() == ReferenceType.DOMAIN
+                            && !user1.getReferenceId().equalsIgnoreCase(domain)) {
                         throw new BadRequestException("User does not belong to domain");
                     }
                     return Maybe.just(new UserEntity(user1));
@@ -124,7 +126,7 @@ public class UserResource extends AbstractResource {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> userService.update(domain, user, updateUser, authenticatedUser))
+                .flatMapSingle(irrelevant -> userService.update(ReferenceType.DOMAIN, domain, user, updateUser, authenticatedUser))
                 .map(user1 -> Response.ok(user1).build())
                 .subscribe(
                         result -> response.resume(result),
@@ -151,7 +153,7 @@ public class UserResource extends AbstractResource {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> userService.updateStatus(domain, user, status.isEnabled(), authenticatedUser))
+                .flatMapSingle(irrelevant -> userService.updateStatus(ReferenceType.DOMAIN, domain, user, status.isEnabled(), authenticatedUser))
                 .map(user1 -> Response.ok(user1).build())
                 .subscribe(
                         result -> response.resume(result),
@@ -173,10 +175,8 @@ public class UserResource extends AbstractResource {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(irrelevant -> userService.delete(user, authenticatedUser))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+                .flatMapCompletable(irrelevant -> userService.delete(ReferenceType.DOMAIN, domain, user, authenticatedUser))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
     @POST
@@ -202,7 +202,7 @@ public class UserResource extends AbstractResource {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(user1 -> userService.resetPassword(domain, user, password.getPassword(), authenticatedUser))
+                .flatMapCompletable(user1 -> userService.resetPassword(ReferenceType.DOMAIN, domain, user, password.getPassword(), authenticatedUser))
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
@@ -225,7 +225,7 @@ public class UserResource extends AbstractResource {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(irrelevant -> userService.sendRegistrationConfirmation(user, authenticatedUser))
+                .flatMapCompletable(irrelevant -> userService.sendRegistrationConfirmation(ReferenceType.DOMAIN, domain, user, authenticatedUser))
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
@@ -243,13 +243,13 @@ public class UserResource extends AbstractResource {
             @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.UPDATE)
     })
     public void unlockUser(@PathParam("domain") String domain,
-                                             @PathParam("user") String user,
-                                             @Suspended final AsyncResponse response) {
+                           @PathParam("user") String user,
+                           @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(irrelevant -> userService.unlock(user, authenticatedUser))
+                .flatMapCompletable(irrelevant -> userService.unlock(ReferenceType.DOMAIN, domain, user, authenticatedUser))
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));
@@ -286,7 +286,7 @@ public class UserResource extends AbstractResource {
     private Maybe<UserEntity> enhanceClient(UserEntity userEntity) {
         if (userEntity.getClient() != null) {
             return applicationService.findById(userEntity.getClient())
-                    .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(userEntity.getDomain(), userEntity.getClient())))
+                    .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(userEntity.getReferenceId(), userEntity.getClient())))
                     .map(application -> {
                         userEntity.setApplicationEntity(new ApplicationEntity(application));
                         return userEntity;

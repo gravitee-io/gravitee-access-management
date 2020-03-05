@@ -103,7 +103,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"oidc-core\", \n\t\"description\": \"test openid connect core specifications\"\n}"
+							"raw": "{\n\t\"name\": \"oidc-core-app-version\", \n\t\"description\": \"test openid connect core specifications\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/",

@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.*;
@@ -128,7 +129,8 @@ public class UserServiceImpl implements UserService {
                     io.gravitee.am.model.User userModel = convert(user);
                     // set technical ID
                     userModel.setId(RandomString.generate());
-                    userModel.setDomain(domain.getId());
+                    userModel.setReferenceType(ReferenceType.DOMAIN);
+                    userModel.setReferenceId(domain.getId());
                     userModel.setSource(source);
                     userModel.setInternal(true);
                     userModel.setCreatedAt(new Date());
@@ -182,7 +184,8 @@ public class UserServiceImpl implements UserService {
                                 userToUpdate.setId(existingUser.getId());
                                 userToUpdate.setExternalId(existingUser.getExternalId());
                                 userToUpdate.setUsername(existingUser.getUsername());
-                                userToUpdate.setDomain(existingUser.getDomain());
+                                userToUpdate.setReferenceType(existingUser.getReferenceType());
+                                userToUpdate.setReferenceId(existingUser.getReferenceId());
                                 userToUpdate.setSource(existingUser.getSource());
                                 userToUpdate.setCreatedAt(existingUser.getCreatedAt());
                                 userToUpdate.setUpdatedAt(new Date());

@@ -44,7 +44,7 @@ public class DashboardTokensResourceTest extends JerseySpringTest {
                 .request()
                 .get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        final TotalToken responseEntity = response.readEntity(TotalToken.class);
+        final TotalToken responseEntity = readEntity(response, TotalToken.class);
 
         assertEquals(10l, responseEntity.getTotalAccessTokens());
     }
@@ -62,7 +62,7 @@ public class DashboardTokensResourceTest extends JerseySpringTest {
                 .request()
                 .get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        final TotalToken responseEntity = response.readEntity(TotalToken.class);
+        final TotalToken responseEntity = readEntity(response, TotalToken.class);
 
         assertEquals(10l, responseEntity.getTotalAccessTokens());
     }

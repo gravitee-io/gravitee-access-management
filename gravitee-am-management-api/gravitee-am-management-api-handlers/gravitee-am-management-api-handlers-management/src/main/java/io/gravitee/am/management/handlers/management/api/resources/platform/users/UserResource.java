@@ -24,18 +24,18 @@ import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
 import io.gravitee.am.service.exception.UserInvalidException;
-import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -86,23 +86,15 @@ public class UserResource extends AbstractResource {
     })
     public void get(@PathParam("user") String user,
                     @Suspended final AsyncResponse response) {
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMap(masterDomain -> userService.findById(user)
-                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
-                        .map(user1 -> {
-                            if (!user1.getDomain().equalsIgnoreCase(masterDomain.getId())) {
-                                throw new BadRequestException("User does not belong to domain");
-                            }
-                            return new UserEntity(user1);
-                        })
-                        .flatMap(this::enhanceIdentityProvider)
-                        .flatMap(this::enhanceClient)
-                        .map(user1 -> Response.ok(user1).build())
-                )
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+
+        String organizationId = "DEFAULT";
+
+        userService.findById(ReferenceType.ORGANIZATION, organizationId, user)
+                .map(UserEntity::new)
+                .flatMap(this::enhanceIdentityProvider)
+                .flatMap(this::enhanceClient)
+                .map(user1 -> Response.ok(user1).build())
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT
@@ -120,13 +112,11 @@ public class UserResource extends AbstractResource {
                            @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> userService.update(masterDomain.getId(), user, updateUser, authenticatedUser))
+        String organizationId = "DEFAULT";
+
+        userService.update(ReferenceType.ORGANIZATION, organizationId, user, updateUser, authenticatedUser)
                 .map(user1 -> Response.ok(user1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT
@@ -145,13 +135,11 @@ public class UserResource extends AbstractResource {
                                  @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> userService.updateStatus(masterDomain.getId(), user, status.isEnabled(), authenticatedUser))
+        String organizationId = "DEFAULT";
+
+        userService.updateStatus(ReferenceType.ORGANIZATION, organizationId, user, status.isEnabled(), authenticatedUser)
                 .map(user1 -> Response.ok(user1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE
@@ -166,12 +154,10 @@ public class UserResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapCompletable(__ -> userService.delete(user, authenticatedUser))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        userService.delete(ReferenceType.ORGANIZATION, organizationId, user, authenticatedUser)
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
     @POST
@@ -188,18 +174,16 @@ public class UserResource extends AbstractResource {
                               @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
+        String organizationId = "DEFAULT";
+
         // check password policy
         if (!passwordValidator.validate(password.getPassword())) {
             response.resume(new UserInvalidException(("Field [password] is invalid")));
             return;
         }
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapCompletable(masterDomain -> userService.resetPassword(masterDomain.getId(), user, password.getPassword(), authenticatedUser))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        userService.resetPassword(ReferenceType.ORGANIZATION, organizationId, user, password.getPassword(), authenticatedUser)
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
 
     }
 
@@ -216,13 +200,10 @@ public class UserResource extends AbstractResource {
                                              @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapCompletable(__ -> userService.sendRegistrationConfirmation(user, authenticatedUser))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
 
+        userService.sendRegistrationConfirmation(ReferenceType.ORGANIZATION, organizationId, user, authenticatedUser)
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
 
@@ -239,12 +220,10 @@ public class UserResource extends AbstractResource {
                            @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapCompletable(__ -> userService.unlock(user, authenticatedUser))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        userService.unlock(ReferenceType.ORGANIZATION, organizationId, user, authenticatedUser)
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
 
     }
 
@@ -253,28 +232,30 @@ public class UserResource extends AbstractResource {
         return resourceContext.getResource(UserRolesResource.class);
     }
 
-    private Maybe<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {
+    private Single<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {
         if (userEntity.getSource() != null) {
             return identityProviderService.findById(userEntity.getSource())
                     .map(idP -> {
                         userEntity.setSource(idP.getName());
                         return userEntity;
                     })
-                    .defaultIfEmpty(userEntity);
+                    .defaultIfEmpty(userEntity)
+                    .toSingle();
         }
-        return Maybe.just(userEntity);
+        return Single.just(userEntity);
     }
 
-    private Maybe<UserEntity> enhanceClient(UserEntity userEntity) {
+    private Single<UserEntity> enhanceClient(UserEntity userEntity) {
         if (userEntity.getClient() != null) {
             return applicationService.findById(userEntity.getClient())
-                    .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(userEntity.getDomain(), userEntity.getClient())))
+                    .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(userEntity.getReferenceId(), userEntity.getClient())))
                     .map(application -> {
                         userEntity.setApplicationEntity(new ApplicationEntity(application));
                         return userEntity;
                     })
-                    .defaultIfEmpty(userEntity);
+                    .defaultIfEmpty(userEntity)
+                    .toSingle();
         }
-        return Maybe.just(userEntity);
+        return Single.just(userEntity);
     }
 }

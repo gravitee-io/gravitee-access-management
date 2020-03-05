@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.reporter.mongodb.audit.model;
 
+import io.gravitee.am.model.ReferenceType;
 import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.time.Instant;
@@ -29,7 +30,8 @@ public class AuditMongo {
     private String id;
     private String transactionId;
     private String type;
-    private String domain;
+    private ReferenceType referenceType;
+    private String referenceId;
     private AuditAccessPointMongo accessPoint;
     private AuditEntityMongo actor;
     private AuditEntityMongo target;
@@ -60,12 +62,20 @@ public class AuditMongo {
         this.type = type;
     }
 
-    public String getDomain() {
-        return domain;
+    public ReferenceType getReferenceType() {
+        return referenceType;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public AuditAccessPointMongo getAccessPoint() {

@@ -20,14 +20,12 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Group;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -57,9 +55,6 @@ public class GroupsResource extends AbstractResource {
     @Autowired
     private GroupService groupService;
 
-    @Autowired
-    private DomainService domainService;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List groups of the platform")
@@ -69,14 +64,12 @@ public class GroupsResource extends AbstractResource {
     public void list(@QueryParam("page") @DefaultValue("0") int page,
                      @QueryParam("size") @DefaultValue(MAX_GROUPS_SIZE_PER_PAGE_STRING) int size,
                      @Suspended final AsyncResponse response) {
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> groupService.findByDomain(masterDomain.getId(), page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE))
-                        .map(groups -> Response.ok(groups).build())
-                )
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+
+        String organizationId = "DEFAULT";
+
+        groupService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE))
+                .map(groups -> Response.ok(groups).build())
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
@@ -93,16 +86,13 @@ public class GroupsResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> groupService.create(masterDomain.getId(), newGroup, authenticatedUser))
-                .map(group -> Response
-                        .created(URI.create("/platform/groups/" + group.getId()))
+        String organizationId = "DEFAULT";
+
+        groupService.create(ReferenceType.ORGANIZATION, organizationId, newGroup, authenticatedUser)
+                .map(group -> Response.created(URI.create("/platform/groups/" + group.getId()))
                         .entity(group)
                         .build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{group}")

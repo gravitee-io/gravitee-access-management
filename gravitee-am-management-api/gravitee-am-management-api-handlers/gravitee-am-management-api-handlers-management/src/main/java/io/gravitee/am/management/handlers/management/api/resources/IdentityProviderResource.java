@@ -19,8 +19,9 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.IdentityProviderManager;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
@@ -82,7 +83,8 @@ public class IdentityProviderResource extends AbstractResource {
                 .flatMap(irrelevant -> identityProviderService.findById(identityProvider))
                 .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identityProvider)))
                 .map(identityProvider1 -> {
-                    if (!identityProvider1.getDomain().equalsIgnoreCase(domain)) {
+                    if (identityProvider1.getReferenceType() == ReferenceType.DOMAIN
+                            && !identityProvider1.getReferenceId().equalsIgnoreCase(domain)) {
                         throw new BadRequestException("Identity provider does not belong to domain");
                     }
                     return Response.ok(identityProvider1).build();

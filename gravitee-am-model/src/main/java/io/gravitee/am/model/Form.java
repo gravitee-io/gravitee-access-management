@@ -25,7 +25,8 @@ public class Form {
 
     private String id;
     private boolean enabled;
-    private String domain;
+    private ReferenceType referenceType;
+    private String referenceId;
     private String client;
     private String template;
     private String content;
@@ -39,7 +40,8 @@ public class Form {
     public Form(Form other) {
         this.id = other.id;
         this.enabled = other.enabled;
-        this.domain = other.domain;
+        this.referenceType = other.referenceType;
+        this.referenceId = other.referenceId;
         this.client = other.client;
         this.template = other.template;
         this.content = other.content;
@@ -64,12 +66,20 @@ public class Form {
         this.enabled = enabled;
     }
 
-    public String getDomain() {
-        return domain;
+    public ReferenceType getReferenceType() {
+        return referenceType;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public String getClient() {

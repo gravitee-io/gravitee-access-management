@@ -1088,7 +1088,7 @@
 									"});",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 6000);"
 								],
 								"type": "text/javascript"
 							}

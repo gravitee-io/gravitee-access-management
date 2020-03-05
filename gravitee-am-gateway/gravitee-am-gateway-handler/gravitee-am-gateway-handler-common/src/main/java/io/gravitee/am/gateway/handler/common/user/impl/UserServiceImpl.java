@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.user.impl;
 
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source) {
-        return userService.findByDomainAndExternalIdAndSource(domain, externalId, source);
+        return userService.findByExternalIdAndSource(ReferenceType.DOMAIN, domain, externalId, source);
     }
 
     @Override

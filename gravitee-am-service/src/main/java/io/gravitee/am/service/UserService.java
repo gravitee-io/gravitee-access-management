@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Completable;
@@ -37,7 +38,11 @@ public interface UserService {
 
     Single<Set<User>> findByDomain(String domain);
 
+    Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
+
     Single<Page<User>> findByDomain(String domain, int page, int size);
+
+    Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
 
     Single<Page<User>> search(String domain, String query, int page, int size);
 
@@ -47,15 +52,23 @@ public interface UserService {
 
     Maybe<User> findByDomainAndUsername(String domain, String username);
 
+    Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source);
+
     Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
 
-    Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source);
+    Single<User> findById(ReferenceType referenceType, String referenceId, String id);
 
     Maybe<User> findById(String id);
 
+    Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source);
+
     Single<User> create(String domain, NewUser newUser);
 
+    Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser);
+
     Single<User> create(User user);
+
+    Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser);
 
     Single<User> update(String domain, String id, UpdateUser updateUser);
 

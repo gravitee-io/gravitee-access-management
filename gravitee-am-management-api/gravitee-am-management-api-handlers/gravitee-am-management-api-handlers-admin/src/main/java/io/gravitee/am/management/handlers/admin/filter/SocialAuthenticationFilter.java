@@ -27,6 +27,7 @@ import io.gravitee.am.management.handlers.admin.provider.security.EndUserAuthent
 import io.gravitee.am.management.handlers.admin.provider.security.ManagementAuthenticationContext;
 import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager;
 import io.gravitee.am.management.handlers.admin.service.AuthenticationService;
+import io.gravitee.am.model.ReferenceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -162,7 +163,11 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
         final User principal = (User) authentication.getPrincipal();
         ((DefaultUser) principal).setId(endUser.getId());
         principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
-        principal.getAdditionalInformation().put(Claims.domain, endUser.getDomain());
+
+        if(endUser.getReferenceType() == ReferenceType.DOMAIN) {
+            principal.getAdditionalInformation().put(Claims.domain, endUser.getReferenceId());
+        }
+
         return jwtGenerator.generateCookie(principal);
     }
 

@@ -22,11 +22,9 @@ import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
-import io.gravitee.am.service.model.PatchDomain;
+import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.model.PatchOrganization;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -50,7 +48,7 @@ import javax.ws.rs.core.Response;
 public class SettingsResource extends AbstractResource {
 
     @Autowired
-    private DomainService domainService;
+    private OrganizationService organizationService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -62,12 +60,13 @@ public class SettingsResource extends AbstractResource {
             @Permission(value = RolePermission.MANAGEMENT_SETTINGS, acls = RolePermissionAction.READ)
     })
     public void get(@Suspended final AsyncResponse response) {
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .subscribe(
-                        domain -> response.resume(Response.ok(domain).build()),
-                        error -> response.resume(error));
+
+        String organizationId = "DEFAULT";
+
+        organizationService.findById(organizationId)
+                .subscribe(domain -> response.resume(Response.ok(domain).build()), response::resume);
     }
+
 
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
@@ -79,15 +78,13 @@ public class SettingsResource extends AbstractResource {
     @Permissions({
             @Permission(value = RolePermission.MANAGEMENT_SETTINGS, acls = RolePermissionAction.UPDATE)
     })
-    public void patch(@ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
+    public void patch(@ApiParam(name = "domain", required = true) @Valid @NotNull final PatchOrganization patchOrganization,
                       @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> domainService.patch(masterDomain.getId(), domainToPatch, authenticatedUser))
-                .subscribe(
-                        domain -> response.resume(Response.ok(domain).build()),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        organizationService.update(organizationId, patchOrganization, authenticatedUser)
+                .subscribe(domain -> response.resume(Response.ok(domain).build()), response::resume);
     }
 }

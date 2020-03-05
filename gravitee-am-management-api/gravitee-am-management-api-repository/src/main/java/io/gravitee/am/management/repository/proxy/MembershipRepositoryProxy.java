@@ -16,7 +16,7 @@
 package io.gravitee.am.management.repository.proxy;
 
 import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.membership.ReferenceType;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;

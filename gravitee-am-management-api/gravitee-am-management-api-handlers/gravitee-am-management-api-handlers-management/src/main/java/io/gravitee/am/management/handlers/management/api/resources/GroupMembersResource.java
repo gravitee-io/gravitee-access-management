@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
@@ -81,7 +82,7 @@ public class GroupMembersResource {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> groupService.findMembers(group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE)))
+                .flatMapSingle(irrelevant -> groupService.findMembers(ReferenceType.DOMAIN, domain, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE)))
                 .flatMap(pagedMembers -> {
                     if (pagedMembers.getData() == null) {
                         return Single.just(pagedMembers);

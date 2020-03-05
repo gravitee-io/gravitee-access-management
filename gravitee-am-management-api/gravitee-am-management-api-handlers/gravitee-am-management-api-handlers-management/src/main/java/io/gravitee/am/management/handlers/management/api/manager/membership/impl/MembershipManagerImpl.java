@@ -19,7 +19,7 @@ import io.gravitee.am.common.event.MembershipEvent;
 import io.gravitee.am.management.handlers.management.api.manager.membership.MembershipManager;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.membership.ReferenceType;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;

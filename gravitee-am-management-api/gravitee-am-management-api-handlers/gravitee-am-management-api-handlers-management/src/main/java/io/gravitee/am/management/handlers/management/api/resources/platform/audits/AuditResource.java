@@ -18,14 +18,12 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.aud
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.AuditService;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.exception.AuditNotFoundException;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -60,16 +58,13 @@ public class AuditResource {
             @Permission(value = RolePermission.MANAGEMENT_AUDIT, acls = RolePermissionAction.READ)
     })
     public void get(@PathParam("audit") String audit,
-            @Suspended final AsyncResponse response) {
+                    @Suspended final AsyncResponse response) {
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMap(masterDomain -> auditService.findById(masterDomain.getId(), audit))
-                .switchIfEmpty(Maybe.error(new AuditNotFoundException(audit)))
+        String organizationId = "DEFAULT";
+
+        auditService.findById(ReferenceType.ORGANIZATION, organizationId, audit)
                 .map(audit1 -> Response.ok(audit1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
 }

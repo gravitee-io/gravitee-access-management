@@ -21,7 +21,7 @@ import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.IdentityProviderManager;
-import io.gravitee.am.model.membership.ReferenceType;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
@@ -78,9 +78,9 @@ public class DomainsResource extends AbstractResource {
     public void list(@Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-         domainService.findAll()
-                 .map(domains -> filterResources(domains, ReferenceType.DOMAIN, authenticatedUser))
-                 .map(domains ->
+        domainService.findAll()
+                .map(domains -> filterResources(domains, ReferenceType.DOMAIN, authenticatedUser))
+                .map(domains ->
                         domains.stream()
                                 .filter(domain -> !domain.isMaster())
                                 .map(domain -> new DomainListItem(domain))
@@ -107,7 +107,10 @@ public class DomainsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.create(newDomain, authenticatedUser)
+        String organizationId = "DEFAULT";
+        String environmentId = "DEFAULT";
+
+        domainService.create(organizationId, environmentId, newDomain, authenticatedUser)
                 // create default idp
                 .flatMap(domain -> identityProviderManager.create(domain.getId()).map(identityProvider -> domain))
                 // create default reporter
@@ -116,9 +119,9 @@ public class DomainsResource extends AbstractResource {
                         .toSingleDefault(domain))
                 .subscribe(
                         domain -> response.resume(Response
-                                                    .created(URI.create("/domains/" + domain.getId()))
-                                                    .entity(domain)
-                                                    .build()),
+                                .created(URI.create("/domains/" + domain.getId()))
+                                .entity(domain)
+                                .build()),
                         error -> response.resume(error));
     }
 

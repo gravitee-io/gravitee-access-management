@@ -18,12 +18,10 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.mongodb.client.model.Filters.*;
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -42,26 +41,36 @@ import static com.mongodb.client.model.Filters.*;
 public class MongoRoleRepository extends AbstractManagementMongoRepository implements RoleRepository {
 
     private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_SCOPE = "scope";
+    public static final String FIELD_SYSTEM = "system";
     private MongoCollection<RoleMongo> rolesCollection;
 
     @PostConstruct
     public void init() {
         rolesCollection = mongoOperations.getCollection("roles", RoleMongo.class);
-        super.createIndex(rolesCollection, new Document(FIELD_DOMAIN, 1));
-        super.createIndex(rolesCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1).append(FIELD_SCOPE, 1));
+        super.createIndex(rolesCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
+        super.createIndex(rolesCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1).append(FIELD_SCOPE, 1));
+    }
+
+    @Override
+    public Single<Set<Role>> findAll(ReferenceType referenceType, String referenceId) {
+        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType == null ? null : referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Single<Set<Role>> findByDomain(String domain) {
-        return Observable.fromPublisher(rolesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
+        return findAll(DOMAIN, domain);
     }
 
     @Override
     public Single<Set<Role>> findByIdIn(List<String> ids) {
         return Observable.fromPublisher(rolesCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
+    public Maybe<Role> findById(ReferenceType referenceType, String referenceId, String role) {
+        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, role))).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -88,8 +97,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Maybe<Role> findByDomainAndNameAndScope(String domain, String name, int scope) {
-        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_NAME, name), eq(FIELD_SCOPE, scope))).first()).firstElement().map(this::convert);
+    public Maybe<Role> findByNameAndScope(ReferenceType referenceType, String referenceId, String name, int scope) {
+        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType == null ? null : referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_NAME, name), eq(FIELD_SCOPE, scope))).first()).firstElement().map(this::convert);
     }
 
     private Role convert(RoleMongo roleMongo) {
@@ -101,7 +110,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         role.setId(roleMongo.getId());
         role.setName(roleMongo.getName());
         role.setDescription(roleMongo.getDescription());
-        role.setDomain(roleMongo.getDomain());
+        role.setReferenceType(roleMongo.getReferenceType() == null ? null : ReferenceType.valueOf(roleMongo.getReferenceType()));
+        role.setReferenceId(roleMongo.getReferenceId());
         role.setScope(roleMongo.getScope());
         role.setSystem(roleMongo.isSystem());
         role.setPermissions(roleMongo.getPermissions());
@@ -119,7 +129,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         roleMongo.setId(role.getId());
         roleMongo.setName(role.getName());
         roleMongo.setDescription(role.getDescription());
-        roleMongo.setDomain(role.getDomain());
+        roleMongo.setReferenceType(role.getReferenceType() == null ? null : role.getReferenceType().name());
+        roleMongo.setReferenceId(role.getReferenceId());
         roleMongo.setScope(role.getScope());
         roleMongo.setSystem(role.isSystem());
         roleMongo.setPermissions(role.getPermissions());

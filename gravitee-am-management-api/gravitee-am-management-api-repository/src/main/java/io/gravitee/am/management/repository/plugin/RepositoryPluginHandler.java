@@ -159,7 +159,8 @@ public class RepositoryPluginHandler implements PluginHandler, InitializingBean 
                             proxy.setTarget(repositoryClassInstance);
                         }
                     } catch (NoSuchBeanDefinitionException nsbde) {
-                        LOGGER.debug("Unable to proxify {} [{}]", beanName, repositoryItfClass);
+                        LOGGER.debug("Unable to proxify {} [{}]. Registering bean without proxy.", beanName, repositoryItfClass);
+                        beanFactory.registerSingleton(beanName, repositoryClassInstance);
                     }
                 }
             } else if (beanName.endsWith("TransactionManager")) {

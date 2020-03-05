@@ -16,13 +16,14 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.common.event.Type;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
@@ -42,6 +43,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -61,6 +63,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
      */
     private final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderServiceImpl.class);
 
+    @Lazy
     @Autowired
     private IdentityProviderRepository identityProviderRepository;
 
@@ -85,6 +88,18 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
+    public Single<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String id) {
+        LOGGER.debug("Find identity provider by ID: {}", id);
+        return identityProviderRepository.findById(referenceType, referenceId, id)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find an identity provider using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find an identity provider using its ID: %s", id), ex));
+                })
+                .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)));
+    }
+
+    @Override
     public Maybe<IdentityProvider> findById(String id) {
         LOGGER.debug("Find identity provider by ID: {}", id);
         return identityProviderRepository.findById(id)
@@ -96,23 +111,29 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Single<List<IdentityProvider>> findByDomain(String domain) {
-        LOGGER.debug("Find identity providers by domain: {}", domain);
-        return identityProviderRepository.findByDomain(domain)
+    public Single<List<IdentityProvider>> findAll(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("Find identity providers by {}}: {}", referenceType, referenceId);
+        return identityProviderRepository.findAll(referenceType, referenceId)
                 .map(identityProviders -> (List<IdentityProvider>) new ArrayList<>(identityProviders))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find identity providers by domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find identity providers by domain", ex));
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find identity providers by " + referenceType.name(), ex));
                 });
     }
 
     @Override
-    public Single<IdentityProvider> create(String domain, NewIdentityProvider newIdentityProvider, User principal) {
-        LOGGER.debug("Create a new identity provider {} for domain {}", newIdentityProvider, domain);
+    public Single<List<IdentityProvider>> findByDomain(String domain) {
+        return findAll(ReferenceType.DOMAIN, domain);
+    }
+
+    @Override
+    public Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal) {
+        LOGGER.debug("Create a new identity provider {} for {} {}", newIdentityProvider, referenceType, referenceId);
 
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId(newIdentityProvider.getId() == null ? RandomString.generate() : newIdentityProvider.getId());
-        identityProvider.setDomain(domain);
+        identityProvider.setReferenceType(referenceType);
+        identityProvider.setReferenceId(referenceId);
         identityProvider.setName(newIdentityProvider.getName());
         identityProvider.setType(newIdentityProvider.getType());
         identityProvider.setConfiguration(newIdentityProvider.getConfiguration());
@@ -123,7 +144,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         return identityProviderRepository.create(identityProvider)
                 .flatMap(identityProvider1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), referenceType == ReferenceType.DOMAIN ? identityProvider1.getReferenceId() : null, Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -135,10 +156,16 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
-        LOGGER.debug("Update an identity provider {} for domain {}", id, domain);
+    public Single<IdentityProvider> create(String domain, NewIdentityProvider newIdentityProvider, User principal) {
 
-        return identityProviderRepository.findById(id)
+        return create(ReferenceType.DOMAIN, domain, newIdentityProvider, principal);
+    }
+
+    @Override
+    public Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
+        LOGGER.debug("Update an identity provider {} for {} {}", id, referenceType, referenceId);
+
+        return identityProviderRepository.findById(referenceType, referenceId, id)
                 .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(id)))
                 .flatMapSingle(oldIdentity -> {
                     IdentityProvider identityToUpdate = new IdentityProvider(oldIdentity);
@@ -151,7 +178,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     return identityProviderRepository.update(identityToUpdate)
                             .flatMap(identityProvider1 -> {
                                 // create event for sync process
-                                Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getDomain(), Action.UPDATE));
+                                Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), referenceType == ReferenceType.DOMAIN ? identityProvider1.getReferenceId() : null, Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                             })
                             .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(oldIdentity).identityProvider(identityProvider1)))
@@ -168,10 +195,16 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Completable delete(String domain, String identityProviderId, User principal) {
+    public Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
+
+        return update(ReferenceType.DOMAIN, domain, id, updateIdentityProvider, principal);
+    }
+
+    @Override
+    public Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal) {
         LOGGER.debug("Delete identity provider {}", identityProviderId);
 
-        return identityProviderRepository.findById(identityProviderId)
+        return identityProviderRepository.findById(referenceType, referenceId, identityProviderId)
                 .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identityProviderId)))
                 .flatMapSingle(identityProvider -> applicationService.findByIdentityProvider(identityProviderId)
                         .flatMap(applications -> {
@@ -181,11 +214,12 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                             return Single.just(identityProvider);
                         }))
                 .flatMapCompletable(identityProvider -> {
+
                     // create event for sync process
-                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProviderId, domain, Action.DELETE));
+                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProviderId, referenceType == ReferenceType.DOMAIN ? referenceId : null, Action.DELETE));
+
                     return identityProviderRepository.delete(identityProviderId)
-                            .andThen(eventService.create(event))
-                            .toCompletable()
+                            .andThen(eventService.create(event)).toCompletable()
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).identityProvider(identityProvider)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).throwable(throwable)));
                 })
@@ -198,5 +232,11 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete identity provider: %s", identityProviderId), ex));
                 });
+    }
+
+    @Override
+    public Completable delete(String domain, String identityProviderId, User principal) {
+
+        return delete(ReferenceType.DOMAIN, domain, identityProviderId, principal);
     }
 }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.common.service.Service;
 
@@ -23,6 +24,8 @@ import io.gravitee.common.service.Service;
  * @author GraviteeSource Team
  */
 public interface AuditReporterManager extends Service<AuditReporterManager> {
+
+    Reporter getReporter(ReferenceType referenceType, String referenceId);
 
     Reporter getReporter(String domain);
 

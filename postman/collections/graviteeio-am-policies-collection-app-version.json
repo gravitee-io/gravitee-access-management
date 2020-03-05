@@ -102,7 +102,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"policies\", \n\t\"description\": \"test policies flows\"\n}"
+							"raw": "{\n\t\"name\": \"policies-app-version\", \n\t\"description\": \"test policies flows\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/",
@@ -335,7 +335,7 @@
 									"pm.environment.set('policy', body.id);",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 6000);"
 								],
 								"type": "text/javascript"
 							}
@@ -419,12 +419,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/policies/oauth/authorize/?response_type=code&client_id={{clientId}}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
+							"raw": "{{gateway_url}}/{{domain}}/oauth/authorize/?response_type=code&client_id={{clientId}}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"policies",
+								"{{domain}}",
 								"oauth",
 								"authorize",
 								""
@@ -520,6 +520,7 @@
 									"    pm.response.to.have.header('Location');",
 									"",
 									"    var location = postman.getResponseHeader(\"Location\");",
+									"    console.log(\"location : \" + location);",
 									"    pm.environment.set('redirection', location);",
 									"    tests['Redirect to Authorization Endpoint'] = location.includes('/oauth/authorize');",
 									"});"
@@ -744,7 +745,7 @@
 									"});",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 6000);"
 								],
 								"type": "text/javascript"
 							}
@@ -829,12 +830,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/policies/oauth/authorize/?response_type=code&client_id={{clientId}}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
+							"raw": "{{gateway_url}}/{{domain}}-blablab/oauth/authorize/?response_type=code&client_id={{clientId}}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"policies",
+								"{{domain}}",
 								"oauth",
 								"authorize",
 								""

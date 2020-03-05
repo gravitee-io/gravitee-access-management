@@ -62,8 +62,11 @@ public class TagsResource extends AbstractResource {
             @ApiResponse(code = 200, message = "List all the sharding tags", response = Domain.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(@Suspended final AsyncResponse response) {
-         tagService.findAll()
-                 .map(domains ->
+
+        String organizationId = "DEFAULT";
+
+        tagService.findAll(organizationId)
+                .map(domains ->
                         domains.stream()
                                 .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                                 .collect(Collectors.toList()))
@@ -83,17 +86,20 @@ public class TagsResource extends AbstractResource {
             @Permission(value = RolePermission.MANAGEMENT_TAG, acls = RolePermissionAction.CREATE)
     })
     public void create(
+            //@PathParam("organizationId") String organizationId,
             @ApiParam(name = "tag", required = true)
             @Valid @NotNull final NewTag newTag,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        tagService.create(newTag, authenticatedUser)
+        String organizationId = "DEFAULT";
+
+        tagService.create(newTag, organizationId, authenticatedUser)
                 .subscribe(
                         tag -> response.resume(Response
-                                                    .created(URI.create("/tags/" + tag.getId()))
-                                                    .entity(tag)
-                                                    .build()),
+                                .created(URI.create("/tags/" + tag.getId()))
+                                .entity(tag)
+                                .build()),
                         response::resume);
     }
 

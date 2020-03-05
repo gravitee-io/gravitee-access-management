@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -30,11 +31,19 @@ public interface EmailRepository extends CrudRepository<Email, String> {
 
     Single<List<Email>> findAll();
 
+    Single<List<Email>> findAll(ReferenceType referenceType, String referenceId);
+
     Single<List<Email>> findByDomain(String domain);
 
-    Single<List<Email>> findByDomainAndClient(String domain, String client);
+    Single<List<Email>> findByClient(ReferenceType referenceType, String referenceId, String client);
+
+    Maybe<Email> findByTemplate(ReferenceType referenceType, String referenceId, String template);
 
     Maybe<Email> findByDomainAndTemplate(String domain, String template);
 
+    Maybe<Email> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template);
+
     Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template);
+
+    Maybe<Email> findById(ReferenceType referenceType, String referenceId, String id);
 }

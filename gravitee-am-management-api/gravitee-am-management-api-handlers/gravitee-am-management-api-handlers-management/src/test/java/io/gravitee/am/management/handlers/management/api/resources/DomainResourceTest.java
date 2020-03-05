@@ -45,7 +45,7 @@ public class DomainResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Domain domain = response.readEntity(Domain.class);
+        final Domain domain = readEntity(response, Domain.class);
         assertEquals("domain-name", domain.getName());
     }
 

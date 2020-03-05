@@ -97,7 +97,7 @@ public class ApplicationFormResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        formService.delete(form, authenticatedUser)
+        formService.delete(domain, form, authenticatedUser)
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

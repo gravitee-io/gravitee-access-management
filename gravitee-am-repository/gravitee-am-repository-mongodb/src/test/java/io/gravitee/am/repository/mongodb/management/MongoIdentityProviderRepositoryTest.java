@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.reactivex.observers.TestObserver;
@@ -31,6 +32,7 @@ import java.util.Set;
  */
 public class MongoIdentityProviderRepositoryTest extends AbstractManagementRepositoryTest {
 
+    public static final String ORGANIZATION_ID = "orga#1";
     @Autowired
     private IdentityProviderRepository identityProviderRepository;
 
@@ -44,7 +46,8 @@ public class MongoIdentityProviderRepositoryTest extends AbstractManagementRepos
         // create idp
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setName("testName");
-        identityProvider.setDomain("testDomain");
+        identityProvider.setReferenceType(ReferenceType.DOMAIN);
+        identityProvider.setReferenceId("testDomain");
         identityProviderRepository.create(identityProvider).blockingGet();
 
         // fetch idps
@@ -72,6 +75,25 @@ public class MongoIdentityProviderRepositoryTest extends AbstractManagementRepos
         testObserver.assertValue(idp -> idp.getName().equals("testName"));
     }
 
+
+    @Test
+    public void testFindById_refrenceType() throws TechnicalException {
+        // create idp
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setName("testName");
+        identityProvider.setReferenceType(ReferenceType.ORGANIZATION);
+        identityProvider.setReferenceId(ORGANIZATION_ID);
+        IdentityProvider identityProviderCreated = identityProviderRepository.create(identityProvider).blockingGet();
+
+        // fetch idp
+        TestObserver<IdentityProvider> testObserver = identityProviderRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, identityProviderCreated.getId()).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(idp -> idp.getName().equals("testName"));
+    }
+
     @Test
     public void testNotFoundById() throws TechnicalException {
         identityProviderRepository.findById("test").test().assertEmpty();
@@ -82,15 +104,15 @@ public class MongoIdentityProviderRepositoryTest extends AbstractManagementRepos
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setName("testName");
         identityProvider.setMappers(Collections.singletonMap("username", "johndoe"));
-        identityProvider.setRoleMapper(Collections.singletonMap("username=johndoe", new String[] {"dev","admin"}));
+        identityProvider.setRoleMapper(Collections.singletonMap("username=johndoe", new String[]{"dev", "admin"}));
         TestObserver<IdentityProvider> testObserver = identityProviderRepository.create(identityProvider).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(idp -> idp.getName().equals(identityProvider.getName())
-                                        && idp.getMappers().containsKey("username")
-                                        && idp.getRoleMapper().containsKey("username=johndoe"));
+                && idp.getMappers().containsKey("username")
+                && idp.getRoleMapper().containsKey("username=johndoe"));
     }
 
     @Test

@@ -107,7 +107,7 @@ public class SecurityDomainHandlerCollection extends HandlerWrapper implements H
             parent.manage(handler);
             handler.start();
 
-            logger.info("Security domain {} has been been published on path {}", domain.getName(), handler.getContextPath());
+            logger.info("Security domain {} has been published on path {}", domain.getName(), handler.getContextPath());
         } catch (Exception ex) {
             logger.error("Unable to add a new handler", ex);
         }

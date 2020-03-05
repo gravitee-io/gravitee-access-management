@@ -20,15 +20,12 @@ import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
-import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -55,9 +52,6 @@ public class GroupRolesResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private GroupService groupService;
 
     @Autowired
@@ -74,19 +68,17 @@ public class GroupRolesResource extends AbstractResource {
     })
     public void list(@PathParam("group") String group,
                      @Suspended final AsyncResponse response) {
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMap(__ -> groupService.findById(group))
-                .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
-                .flatMapSingle(group1 -> {
+
+        String organizationId = "DEFAULT";
+
+        groupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
+                .flatMap(group1 -> {
                     if (group1.getRoles() == null || group1.getRoles().isEmpty()) {
                         return Single.just(Collections.emptyList());
                     }
                     return roleService.findByIdIn(group1.getRoles());
                 })
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
@@ -104,17 +96,14 @@ public class GroupRolesResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(endUser -> groupService.assignRoles(group, roles, authenticatedUser))
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        groupService.assignRoles(ReferenceType.ORGANIZATION, organizationId, group, roles, authenticatedUser)
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{role}")
     public GroupRoleResource getGroupRoleResource() {
         return resourceContext.getResource(GroupRoleResource.class);
     }
-
 }

@@ -17,6 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.reactivex.Maybe;
@@ -30,9 +31,13 @@ import java.util.Map;
  */
 public interface AuditService {
 
+    Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size);
+
     Single<Page<Audit>> search(String domain, AuditReportableCriteria criteria, int page, int size);
 
     Single<Map<Object, Object>> aggregate(String domain, AuditReportableCriteria criteria, Type analyticsType);
+
+    Single<Audit> findById(ReferenceType referenceType, String referenceId, String auditId);
 
     Maybe<Audit> findById(String domain, String auditId);
 }

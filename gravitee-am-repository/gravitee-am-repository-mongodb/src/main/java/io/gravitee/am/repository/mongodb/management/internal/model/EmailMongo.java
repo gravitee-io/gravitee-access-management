@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.codecs.pojo.annotations.BsonId;
 
@@ -29,7 +30,8 @@ public class EmailMongo extends Auditable {
     @BsonId
     private String id;
     private boolean enabled;
-    private String domain;
+    private ReferenceType referenceType;
+    private String referenceId;
     private String client;
     private String template;
     private String from;
@@ -52,14 +54,6 @@ public class EmailMongo extends Auditable {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
     }
 
     public String getClient() {
@@ -116,5 +110,21 @@ public class EmailMongo extends Auditable {
 
     public void setExpiresAfter(int expiresAfter) {
         this.expiresAfter = expiresAfter;
+    }
+
+    public ReferenceType getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 }

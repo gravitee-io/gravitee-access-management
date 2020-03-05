@@ -70,7 +70,7 @@ public class RoleManagerImpl implements RoleManager, InitializingBean, EventList
 
     @Override
     public void onEvent(Event<RoleEvent, Payload> event) {
-        if (ADMIN_DOMAIN.equals(event.content().getDomain())) {
+        if (event.content().getDomain() == null) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:
@@ -90,6 +90,7 @@ public class RoleManagerImpl implements RoleManager, InitializingBean, EventList
 
     @Override
     public boolean isAdminRoleGranted(List<String> userRoles) {
+
         if (userRoles == null || userRoles.isEmpty()) {
             return false;
         }
@@ -136,7 +137,8 @@ public class RoleManagerImpl implements RoleManager, InitializingBean, EventList
 
     private void initRoles() {
         // default system roles should at least exist at startup, repeat until we have them
-        roleService.findByDomain(ADMIN_DOMAIN)
+        // FIXME : try a proper way to get system roles.
+        roleService.findAllSystem()
                 .map(roles -> {
                     if (roles == null || roles.size() < 3) {
                         throw new RoleNotFoundException("Management roles");

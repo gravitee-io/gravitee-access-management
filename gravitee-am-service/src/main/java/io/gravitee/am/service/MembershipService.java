@@ -17,7 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.membership.ReferenceType;
+import io.gravitee.am.model.ReferenceType;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -40,14 +40,14 @@ public interface MembershipService {
 
     Maybe<Membership> findByReferenceAndMember(String referenceId, String memberId);
 
-    Single<Membership> addOrUpdate(Membership membership, User principal);
+    Single<Membership> addOrUpdate(String organizationId, Membership membership, User principal);
 
     Single<Map<String, Map<String, Object>>> getMetadata(List<Membership> memberships);
 
     Completable delete(String membershipId, User principal);
 
-    default Single<Membership> addOrUpdate(Membership membership) {
-        return addOrUpdate(membership, null);
+    default Single<Membership> addOrUpdate(String organizationId, Membership membership) {
+        return addOrUpdate(organizationId, membership, null);
     }
 
     default Completable delete(String membershipId) {

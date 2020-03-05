@@ -66,7 +66,7 @@ public class ScopesResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("scopes").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final List<Scope> responseEntity = response.readEntity(List.class);
+        final List<Scope> responseEntity = readEntity(response, List.class);
         assertTrue(responseEntity.size() == 2);
     }
 

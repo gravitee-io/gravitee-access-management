@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewEmail;
@@ -52,14 +53,15 @@ public class EmailsResourceTest extends JerseySpringTest {
         final Email mockEmail = new Email();
         mockEmail.setId("email-1-id");
         mockEmail.setTemplate(Template.LOGIN.template());
-        mockEmail.setDomain(domainId);
+        mockEmail.setReferenceType(ReferenceType.DOMAIN);
+        mockEmail.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockEmail)).when(emailTemplateService).findByDomainAndTemplate(domainId, Template.LOGIN.template());
 
         final Response response = target("domains").path(domainId).path("emails").queryParam("template", Template.LOGIN).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Email responseEntity = response.readEntity(Email.class);
+        final Email responseEntity = readEntity(response, Email.class);
         assertTrue(responseEntity.getId().equals("email-1-id"));
     }
 

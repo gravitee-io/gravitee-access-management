@@ -20,14 +20,12 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Form;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
 import io.gravitee.am.service.model.UpdateForm;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -55,9 +53,6 @@ public class FormResource extends AbstractResource {
     @Autowired
     private FormService formService;
 
-    @Autowired
-    private DomainService domainService;
-
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -73,13 +68,11 @@ public class FormResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> formService.update(masterDomain.getId(), form, updateForm, authenticatedUser))
+        String organizationId = "DEFAULT";
+
+        formService.update(ReferenceType.ORGANIZATION, organizationId, form, updateForm, authenticatedUser)
                 .map(form1 -> Response.ok(form1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE
@@ -94,9 +87,9 @@ public class FormResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        formService.delete(form, authenticatedUser)
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        formService.delete(ReferenceType.ORGANIZATION, organizationId, form, authenticatedUser)
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

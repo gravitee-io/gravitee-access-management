@@ -21,16 +21,14 @@ import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.swagger.annotations.*;
@@ -64,9 +62,6 @@ public class UsersResource extends AbstractResource {
     private UserService userService;
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private IdentityProviderService identityProviderService;
 
     @Autowired
@@ -85,36 +80,35 @@ public class UsersResource extends AbstractResource {
                      @QueryParam("page") @DefaultValue("0") int page,
                      @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
                      @Suspended final AsyncResponse response) {
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> {
-                    if (query != null) {
-                        return userService.search(masterDomain.getId(), query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
-                    } else {
-                        return userService.findByDomain(masterDomain.getId(), page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
-                    }
-                })
-                .flatMap(pagedUsers ->
-                        Observable.fromIterable(pagedUsers.getData())
-                            .flatMapSingle(user -> {
-                                if (user.getSource() != null) {
-                                    return identityProviderService.findById(user.getSource())
-                                            .map(idP -> {
-                                                user.setSource(idP.getName());
-                                                return user;
-                                            })
-                                            .defaultIfEmpty(user)
-                                            .toSingle();
-                                }
-                                return Single.just(user);
-                            })
-                            .toSortedList(Comparator.comparing(User::getUsername))
-                            .map(users -> new Page(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))
-                )
+
+        String organizationId = "DEFAULT";
+        Single<Page<User>> usersPageObs = null;
+
+        if (query != null) {
+            usersPageObs = userService.search(ReferenceType.ORGANIZATION, organizationId, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+        } else {
+            usersPageObs = userService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+        }
+
+        usersPageObs.flatMap(pagedUsers ->
+                Observable.fromIterable(pagedUsers.getData())
+                        .flatMapSingle(user -> {
+                            if (user.getSource() != null) {
+                                return identityProviderService.findById(user.getSource())
+                                        .map(idP -> {
+                                            user.setSource(idP.getName());
+                                            return user;
+                                        })
+                                        .defaultIfEmpty(user)
+                                        .toSingle();
+                            }
+                            return Single.just(user);
+                        })
+                        .toSortedList(Comparator.comparing(User::getUsername))
+                        .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))
+        )
                 .map(users -> Response.ok(users).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
@@ -131,6 +125,8 @@ public class UsersResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
+        String organizationId = "DEFAULT";
+
         // user must have a password in no pre registration mode
         if (!newUser.isPreRegistration() && newUser.getPassword() == null) {
             response.resume(new UserInvalidException(("Field [password] is required")));
@@ -145,16 +141,12 @@ public class UsersResource extends AbstractResource {
             }
         }
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> userService.create(masterDomain.getId(), newUser, authenticatedUser))
+        userService.create(ReferenceType.ORGANIZATION, organizationId, newUser, authenticatedUser)
                 .map(user -> Response
                         .created(URI.create("/platform/users/" + user.getId()))
                         .entity(user)
                         .build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{user}")

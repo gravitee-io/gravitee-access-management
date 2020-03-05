@@ -26,7 +26,8 @@ import java.util.List;
 public class Group {
 
     private String id;
-    private String domain;
+    private ReferenceType referenceType;
+    private String referenceId;
     private String name;
     private String description;
     private List<String> members;
@@ -39,7 +40,8 @@ public class Group {
 
     public Group(Group other) {
         this.id = other.id;
-        this.domain = other.domain;
+        this.referenceType = other.referenceType;
+        this.referenceId = other.referenceId;
         this.name = other.name;
         this.description = other.description;
         this.members = other.members != null ? new ArrayList<>(other.members) : null;
@@ -56,12 +58,20 @@ public class Group {
         this.id = id;
     }
 
-    public String getDomain() {
-        return domain;
+    public ReferenceType getReferenceType() {
+        return referenceType;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public String getName() {

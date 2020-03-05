@@ -35,6 +35,9 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
 
     private final Logger logger = LoggerFactory.getLogger(AbstractManagementMongoRepository.class);
 
+    protected static final String FIELD_REFERENCE_TYPE = "referenceType";
+    protected static final String FIELD_REFERENCE_ID = "referenceId";
+
     @Autowired
     @Qualifier("managementMongoTemplate")
     protected MongoDatabase mongoOperations;

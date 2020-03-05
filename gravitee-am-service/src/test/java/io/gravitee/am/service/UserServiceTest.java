@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -117,7 +118,7 @@ public class UserServiceTest {
     @Test
     public void shouldFindByDomainPagination() {
         Page pageUsers = new Page(Collections.singleton(new User()), 1 , 1);
-        when(userRepository.findByDomain(DOMAIN, 1 , 1)).thenReturn(Single.just(pageUsers));
+        when(userRepository.findAll(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq(1) , eq(1))).thenReturn(Single.just(pageUsers));
         TestObserver<Page<User>> testObserver = userService.findByDomain(DOMAIN, 1, 1).test();
         testObserver.awaitTerminalEvent();
 
@@ -128,7 +129,7 @@ public class UserServiceTest {
 
     @Test
     public void shouldFindByDomainPagination_technicalException() {
-        when(userRepository.findByDomain(DOMAIN, 1 , 1)).thenReturn(Single.error(TechnicalException::new));
+        when(userRepository.findAll(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq(1) , eq(1))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
         userService.findByDomain(DOMAIN, 1 , 1).subscribe(testObserver);
@@ -170,9 +171,13 @@ public class UserServiceTest {
     @Test
     public void shouldCreate() {
         NewUser newUser = Mockito.mock(NewUser.class);
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN);
+
         when(newUser.getUsername()).thenReturn("username");
         when(newUser.getSource()).thenReturn("source");
-        when(userRepository.create(any(User.class))).thenReturn(Single.just(new User()));
+        when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
         when(userRepository.findByDomainAndUsernameAndSource(DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -218,8 +223,12 @@ public class UserServiceTest {
     @Test
     public void shouldUpdate() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
-        when(userRepository.findById("my-user")).thenReturn(Maybe.just(new User()));
-        when(userRepository.update(any(User.class))).thenReturn(Single.just(new User()));
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN);
+
+        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
@@ -228,7 +237,7 @@ public class UserServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(userRepository, times(1)).findById("my-user");
+        verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
         verify(userRepository, times(1)).update(any(User.class));
         verify(eventService, times(1)).create(any());
     }
@@ -236,7 +245,7 @@ public class UserServiceTest {
     @Test
     public void shouldUpdate_technicalException() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
-        when(userRepository.findById("my-user")).thenReturn(Maybe.just(new User()));
+        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(new User()));
         when(userRepository.update(any(User.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
@@ -249,7 +258,7 @@ public class UserServiceTest {
     @Test
     public void shouldUpdate_userNotFound() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
-        when(userRepository.findById("my-user")).thenReturn(Maybe.empty());
+        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
         userService.update(DOMAIN, "my-user", updateUser).subscribe(testObserver);
@@ -260,7 +269,11 @@ public class UserServiceTest {
 
     @Test
     public void shouldDelete() {
-        when(userRepository.findById("my-user")).thenReturn(Maybe.just(new User()));
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN);
+
+        when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 

@@ -136,6 +136,21 @@ export class PlatformService {
     return this.http.delete<any>(this.platformURL + 'roles/' + roleId);
   }
 
+  createForm(form): Observable<any> {
+    return this.http.post<any>(this.platformURL + "forms/", form);
+  }
+
+  updateForm(id, form): Observable<any> {
+    return this.http.put<any>(this.platformURL + "forms/" + id, {
+      'enabled': form.enabled,
+      'content': form.content
+    });
+  }
+
+  deleteForm(id): Observable<any> {
+    return this.http.delete<any>(this.platformURL + "forms/" + id);
+  }
+
   groups(page?: number, size?: number): Observable<any> {
     return this.http.get<any>(this.platformURL + 'groups' +
       (page !== undefined ? '?page=' + page : '') +

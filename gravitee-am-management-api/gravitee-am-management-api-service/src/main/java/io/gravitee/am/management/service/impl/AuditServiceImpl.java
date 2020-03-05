@@ -19,9 +19,11 @@ import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.AuditService;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.provider.Reporter;
+import io.gravitee.am.service.exception.AuditNotFoundException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -44,13 +46,19 @@ public class AuditServiceImpl implements AuditService {
     private AuditReporterManager auditReporterManager;
 
     @Override
-    public Single<Page<Audit>> search(String domain, AuditReportableCriteria criteria, int page, int size) {
+    public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
         try {
-            return getReporter(domain).search(criteria, page, size);
+            return getReporter(referenceType, referenceId).search(criteria, page, size);
         } catch (Exception ex) {
-            logger.error("An error occurs during audits search for domain: {}", domain, ex);
+            logger.error("An error occurs during audits search for {}}: {}", referenceType, referenceId, ex);
             return Single.error(ex);
         }
+    }
+
+    @Override
+    public Single<Page<Audit>> search(String domain, AuditReportableCriteria criteria, int page, int size) {
+
+        return search(ReferenceType.DOMAIN, domain, criteria, page, size);
     }
 
     @Override
@@ -64,16 +72,27 @@ public class AuditServiceImpl implements AuditService {
     }
 
     @Override
-    public Maybe<Audit> findById(String domain, String auditId) {
+    public Single<Audit> findById(ReferenceType referenceType, String referenceId, String auditId) {
         try {
-            return getReporter(domain).findById(auditId);
+            return getReporter(referenceType, referenceId).findById(auditId)
+                    .switchIfEmpty(Single.error(new AuditNotFoundException(auditId)));
         } catch (Exception ex) {
-            logger.error("An error occurs while trying to find audit by id: {} and for the domain: {}", auditId, domain, ex);
-            return Maybe.error(ex);
+            logger.error("An error occurs while trying to find audit by id: {} and for the {}}: {}", auditId, referenceType, referenceId, ex);
+            return Single.error(ex);
         }
+    }
+
+    @Override
+    public Maybe<Audit> findById(String domain, String auditId) {
+        return findById(ReferenceType.DOMAIN, domain, auditId).toMaybe();
     }
 
     private Reporter getReporter(String domain) {
         return auditReporterManager.getReporter(domain);
+    }
+
+
+    private Reporter getReporter(ReferenceType referenceType, String referenceId) {
+        return auditReporterManager.getReporter(referenceType, referenceId);
     }
 }

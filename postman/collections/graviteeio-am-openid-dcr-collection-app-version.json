@@ -111,7 +111,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"dcr\", \n\t\"description\": \"test dynamic client registration\"\n}"
+							"raw": "{\n\t\"name\": \"dcr-app-version\", \n\t\"description\": \"test dynamic client registration\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/",
@@ -1068,7 +1068,7 @@
 									"pm.environment.set('clientSecret', body.settings.oauth.clientSecret);",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 6000);"
 								],
 								"type": "text/javascript"
 							}
@@ -1249,7 +1249,7 @@
 									"});",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 6000);"
 								],
 								"type": "text/javascript"
 							}
@@ -4983,7 +4983,7 @@
 									"});",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 6000);"
 								],
 								"type": "text/javascript"
 							}
@@ -5756,7 +5756,7 @@
 									"});",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 2000);"
+									"setTimeout(function(){}, 6000);"
 								],
 								"type": "text/javascript"
 							}

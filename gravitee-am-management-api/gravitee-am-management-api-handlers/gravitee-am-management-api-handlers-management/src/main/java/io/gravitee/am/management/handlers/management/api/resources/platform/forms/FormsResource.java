@@ -20,15 +20,13 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
 import io.gravitee.am.service.model.NewForm;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -55,9 +53,6 @@ public class FormsResource extends AbstractResource {
     @Autowired
     private FormService formService;
 
-    @Autowired
-    private DomainService domainService;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Find a platform form template")
@@ -69,14 +64,12 @@ public class FormsResource extends AbstractResource {
     })
     public void get(@NotNull @QueryParam("template") Template formTemplate,
                     @Suspended final AsyncResponse response) {
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMap(masterDomain -> formService.findByDomainAndTemplate(masterDomain.getId(), formTemplate.template()))
+        String organizationId = "DEFAULT";
+
+        formService.findByTemplate(ReferenceType.ORGANIZATION, organizationId, formTemplate.template())
                 .map(page -> Response.ok(page).build())
                 .defaultIfEmpty(Response.status(HttpStatusCode.NOT_FOUND_404).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
@@ -93,17 +86,14 @@ public class FormsResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> formService.create(masterDomain.getId(), newForm, authenticatedUser)
-                            .map(form -> Response
-                                    .created(URI.create("/platform/forms/" + form.getId()))
-                                    .entity(form)
-                                    .build())
-                )
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        formService.create(ReferenceType.ORGANIZATION, organizationId, newForm, authenticatedUser)
+                .map(form -> Response
+                        .created(URI.create("/platform/forms/" + form.getId()))
+                        .entity(form)
+                        .build())
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{form}")

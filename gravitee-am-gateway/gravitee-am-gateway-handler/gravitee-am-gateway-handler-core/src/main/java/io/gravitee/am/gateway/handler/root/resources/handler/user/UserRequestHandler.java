@@ -19,6 +19,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
@@ -64,7 +65,11 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
             // add ip address and user agent
             additionalInformation.put(Claims.ip_address, remoteAddress(routingContext.request()));
             additionalInformation.put(Claims.user_agent, userAgent(routingContext.request()));
-            additionalInformation.put(Claims.domain, user.getDomain());
+
+            if(user.getReferenceType() == ReferenceType.DOMAIN) {
+                additionalInformation.put(Claims.domain, user.getReferenceId());
+            }
+
             ((DefaultUser) authenticatedUser).setAdditionalInformation(additionalInformation);
             return authenticatedUser;
         }

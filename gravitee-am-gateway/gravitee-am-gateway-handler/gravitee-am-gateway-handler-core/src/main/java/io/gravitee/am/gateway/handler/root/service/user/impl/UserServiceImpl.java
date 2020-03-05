@@ -38,6 +38,7 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
@@ -136,7 +137,8 @@ public class UserServiceImpl implements UserService {
                             // set source
                             user.setSource(source);
                             // set domain
-                            user.setDomain(domain.getId());
+                            user.setReferenceType(ReferenceType.DOMAIN);
+                            user.setReferenceId(domain.getId());
                             // internal user
                             user.setInternal(true);
                             // additional information
@@ -267,7 +269,7 @@ public class UserServiceImpl implements UserService {
                 // reset login attempts in case of reset password action
                 .flatMap(user1 -> {
                     LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
-                            .domain(user1.getDomain())
+                            .domain(user1.getReferenceId())
                             .client(user1.getClient())
                             .username(user1.getUsername())
                             .build();
@@ -369,7 +371,7 @@ public class UserServiceImpl implements UserService {
             entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
         }
 
-        String redirectUrl = entryPoint + "/" + user.getDomain() + redirectUri + "?token=" + token;
+        String redirectUrl = entryPoint + "/" + user.getReferenceId() + redirectUri + "?token=" + token;
 
         Map<String, Object> params = new HashMap<>();
         params.put("user", user);

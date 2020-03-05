@@ -33,9 +33,9 @@ public interface TagService {
 
     Maybe<Tag> findById(String id);
 
-    Single<Set<Tag>> findAll();
+    Single<Set<Tag>> findAll(String organizationId);
 
-    Single<Tag> create(NewTag tag, User principal);
+    Single<Tag> create(NewTag tag, String organizationId, User principal);
 
     Single<Tag> update(String tagId, UpdateTag tag, User principal);
 

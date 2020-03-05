@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.reporter.builder.management.ManagementAuditBuilder;
 
@@ -39,7 +40,7 @@ public class UserConsentAuditBuilder extends ManagementAuditBuilder<UserConsentA
     }
 
     public UserConsentAuditBuilder user(User user) {
-        setTarget(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getDomain());
+        setTarget(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceType() == ReferenceType.DOMAIN ? user.getReferenceId() : null);
         return this;
     }
 

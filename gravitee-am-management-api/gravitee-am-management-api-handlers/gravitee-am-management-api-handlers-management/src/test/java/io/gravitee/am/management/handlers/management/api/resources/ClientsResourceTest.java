@@ -68,7 +68,7 @@ public class ClientsResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("clients").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final List<Client> responseEntity = response.readEntity(List.class);
+        final List<Client> responseEntity = readEntity(response, List.class);
         assertTrue(responseEntity.size() == 2);
     }
 

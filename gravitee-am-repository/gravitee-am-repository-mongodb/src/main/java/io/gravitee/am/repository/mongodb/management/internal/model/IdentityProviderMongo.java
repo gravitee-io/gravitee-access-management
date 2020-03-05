@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
@@ -44,7 +45,9 @@ public class IdentityProviderMongo extends Auditable {
      */
     private Document roleMapper;
 
-    private String domain;
+    private ReferenceType referenceType;
+
+    private String referenceId;
 
     private boolean external;
 
@@ -96,12 +99,20 @@ public class IdentityProviderMongo extends Auditable {
         this.roleMapper = roleMapper;
     }
 
-    public String getDomain() {
-        return domain;
+    public ReferenceType getReferenceType() {
+        return referenceType;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public boolean isExternal() {

@@ -27,7 +27,8 @@ public class Role {
     private String id;
     private String name;
     private String description;
-    private String domain;
+    private ReferenceType referenceType;
+    private String referenceId;
     private Integer scope;
     private boolean system;
     private List<String> permissions;
@@ -41,7 +42,8 @@ public class Role {
         this.id = other.id;
         this.name = other.name;
         this.description = other.description;
-        this.domain = other.domain;
+        this.referenceType = other.referenceType;
+        this.referenceId = other.referenceId;
         this.scope = other.scope;
         this.permissions = other.permissions;
         this.system = other.system;
@@ -73,12 +75,20 @@ public class Role {
         this.description = description;
     }
 
-    public String getDomain() {
-        return domain;
+    public ReferenceType getReferenceType() {
+        return referenceType;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public Integer getScope() {

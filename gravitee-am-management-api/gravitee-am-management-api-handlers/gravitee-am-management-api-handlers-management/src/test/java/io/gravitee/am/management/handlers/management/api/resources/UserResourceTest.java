@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
@@ -29,6 +30,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -49,7 +51,8 @@ public class UserResourceTest extends JerseySpringTest {
         final User mockUser = new User();
         mockUser.setId(userId);
         mockUser.setUsername("user-username");
-        mockUser.setDomain(domainId);
+        mockUser.setReferenceType(ReferenceType.DOMAIN);
+        mockUser.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockUser)).when(userService).findById(userId);
@@ -57,8 +60,8 @@ public class UserResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("users").path(userId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final User user = response.readEntity(User.class);
-        assertEquals(domainId, user.getDomain());
+        final User user = readEntity(response, User.class);
+        assertEquals(domainId, user.getReferenceId());
         assertEquals("user-username", user.getUsername());
     }
 
@@ -109,14 +112,15 @@ public class UserResourceTest extends JerseySpringTest {
         final User mockUser = new User();
         mockUser.setId(userId);
         mockUser.setUsername("user-username");
-        mockUser.setDomain(domainId);
+        mockUser.setReferenceType(ReferenceType.DOMAIN);
+        mockUser.setReferenceId(domainId);
 
         PasswordValue passwordValue = new PasswordValue();
         passwordValue.setPassword("password");
 
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(userService).resetPassword(anyString(), anyString(), anyString(),  any());
+        doReturn(Completable.complete()).when(userService).resetPassword(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString(),  any());
         doReturn(true).when(passwordValidator).validate(anyString());
 
         final Response response = target("domains")

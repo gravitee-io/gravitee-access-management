@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -67,8 +68,8 @@ public class EmailTemplateServiceTest {
 
     @Test
     public void shouldFindAll() {
-        when(emailRepository.findAll()).thenReturn(Single.just(Collections.singletonList(new Email())));
-        TestObserver testObserver = emailTemplateService.findAll().test();
+        when(emailRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.just(Collections.singletonList(new Email())));
+        TestObserver testObserver = emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
 
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
@@ -78,7 +79,7 @@ public class EmailTemplateServiceTest {
 
     @Test
     public void shouldFindByDomainAndTemplate() {
-        when(emailRepository.findByDomainAndTemplate(DOMAIN, Template.LOGIN.template())).thenReturn(Maybe.just(new Email()));
+        when(emailRepository.findByTemplate(ReferenceType.DOMAIN, DOMAIN, Template.LOGIN.template())).thenReturn(Maybe.just(new Email()));
         TestObserver testObserver = emailTemplateService.findByDomainAndTemplate(DOMAIN, Template.LOGIN.template()).test();
 
         testObserver.awaitTerminalEvent();
@@ -89,7 +90,7 @@ public class EmailTemplateServiceTest {
 
     @Test
     public void shouldFindByDomainAndTemplate_notExistingEmail() {
-        when(emailRepository.findByDomainAndTemplate(DOMAIN, Template.LOGIN.template())).thenReturn(Maybe.empty());
+        when(emailRepository.findByTemplate(ReferenceType.DOMAIN, DOMAIN, Template.LOGIN.template())).thenReturn(Maybe.empty());
         TestObserver testObserver = emailTemplateService.findByDomainAndTemplate(DOMAIN, Template.LOGIN.template()).test();
         testObserver.awaitTerminalEvent();
 
@@ -98,7 +99,7 @@ public class EmailTemplateServiceTest {
 
     @Test
     public void shouldFindByDomainAndTemplate_technicalException() {
-        when(emailRepository.findByDomainAndTemplate(DOMAIN, Template.LOGIN.template())).thenReturn(Maybe.error(TechnicalException::new));
+        when(emailRepository.findByTemplate(ReferenceType.DOMAIN, DOMAIN, Template.LOGIN.template())).thenReturn(Maybe.error(TechnicalException::new));
         TestObserver testObserver = new TestObserver();
         emailTemplateService.findByDomainAndTemplate(DOMAIN, Template.LOGIN.template()).subscribe(testObserver);
 
@@ -110,8 +111,7 @@ public class EmailTemplateServiceTest {
     public void shouldCreate() {
         NewEmail newEmail = Mockito.mock(NewEmail.class);
         when(newEmail.getTemplate()).thenReturn(Template.REGISTRATION);
-        when(emailRepository.findByDomainAndTemplate(anyString(), anyString())).thenReturn(Maybe.empty());
-        when(emailTemplateService.findByDomainAndTemplate(anyString(), anyString())).thenReturn(Maybe.empty());
+        when(emailRepository.findByTemplate(eq(ReferenceType.DOMAIN), eq(DOMAIN), anyString())).thenReturn(Maybe.empty());
         when(emailRepository.create(any(Email.class))).thenReturn(Single.just(new Email()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -121,7 +121,7 @@ public class EmailTemplateServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(emailRepository, times(1)).findByDomainAndTemplate(anyString(), anyString());
+        verify(emailRepository, times(1)).findByTemplate(eq(ReferenceType.DOMAIN), eq(DOMAIN), anyString());
         verify(emailRepository, times(1)).create(any(Email.class));
     }
 
@@ -129,7 +129,7 @@ public class EmailTemplateServiceTest {
     public void shouldCreate_technicalException() {
         NewEmail newEmail = Mockito.mock(NewEmail.class);
         when(newEmail.getTemplate()).thenReturn(Template.REGISTRATION);
-        when(emailRepository.findByDomainAndTemplate(anyString(), anyString())).thenReturn(Maybe.error(TechnicalException::new));
+        when(emailRepository.findByTemplate(eq(ReferenceType.DOMAIN), eq(DOMAIN), anyString())).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
         emailTemplateService.create(DOMAIN, newEmail).subscribe(testObserver);
@@ -144,7 +144,7 @@ public class EmailTemplateServiceTest {
     public void shouldCreate_uniquenessException() {
         NewEmail newEmail = Mockito.mock(NewEmail.class);
         when(newEmail.getTemplate()).thenReturn(Template.REGISTRATION);
-        when(emailRepository.findByDomainAndTemplate(anyString(), any())).thenReturn(Maybe.just(new Email()));
+        when(emailRepository.findByTemplate(eq(ReferenceType.DOMAIN), eq(DOMAIN), any())).thenReturn(Maybe.just(new Email()));
 
         TestObserver testObserver = new TestObserver();
         emailTemplateService.create(DOMAIN, newEmail).subscribe(testObserver);
@@ -158,17 +158,17 @@ public class EmailTemplateServiceTest {
     @Test
     public void shouldUpdate() {
         UpdateEmail updateEmail = Mockito.mock(UpdateEmail.class);
-        when(emailRepository.findById("my-email")).thenReturn(Maybe.just(new Email()));
+        when(emailRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-email")).thenReturn(Maybe.just(new Email()));
         when(emailRepository.update(any(Email.class))).thenReturn(Single.just(new Email()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver testObserver = emailTemplateService.update(DOMAIN,"my-email", updateEmail).test();
+        TestObserver testObserver = emailTemplateService.update(DOMAIN, "my-email", updateEmail).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(emailRepository, times(1)).findById("my-email");
+        verify(emailRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, "my-email");
         verify(emailRepository, times(1)).update(any(Email.class));
         verify(eventService, times(1)).create(any());
     }
@@ -176,21 +176,21 @@ public class EmailTemplateServiceTest {
     @Test
     public void shouldUpdate_technicalException() {
         UpdateEmail updateEmail = Mockito.mock(UpdateEmail.class);
-        when(emailRepository.findById("my-email")).thenReturn(Maybe.error(TechnicalException::new));
+        when(emailRepository.findById(ReferenceType.DOMAIN, DOMAIN,"my-email")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        emailTemplateService.update(DOMAIN,"my-email", updateEmail).subscribe(testObserver);
+        emailTemplateService.update(DOMAIN, "my-email", updateEmail).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
-        verify(emailRepository, never()).findByDomainAndTemplate(anyString(), any());
+        verify(emailRepository, never()).findByTemplate(any(), any(), any());
         verify(emailRepository, never()).update(any(Email.class));
     }
 
     @Test
     public void shouldUpdate_emailNotFound() {
-        when(emailRepository.findById("my-email")).thenReturn(Maybe.empty());
+        when(emailRepository.findById(ReferenceType.DOMAIN, DOMAIN,"my-email")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
         emailTemplateService.update(DOMAIN, "my-email", new UpdateEmail()).subscribe(testObserver);
@@ -228,7 +228,8 @@ public class EmailTemplateServiceTest {
     public void shouldDelete() {
         Email email = new Email();
         email.setId("my-email");
-        email.setDomain("domain-id");
+        email.setReferenceType(ReferenceType.DOMAIN);
+        email.setReferenceId(DOMAIN);
 
         when(emailRepository.findById(email.getId())).thenReturn(Maybe.just(email));
         when(emailRepository.delete(email.getId())).thenReturn(Completable.complete());
@@ -253,7 +254,8 @@ public class EmailTemplateServiceTest {
         Email mailOne = new Email();
         mailOne.setId("templateId");
         mailOne.setEnabled(true);
-        mailOne.setDomain(DOMAIN);
+        mailOne.setReferenceType(ReferenceType.DOMAIN);
+        mailOne.setReferenceId(DOMAIN);
         mailOne.setClient(sourceUid);
         mailOne.setTemplate("login");
         mailOne.setFrom("fromMail");
@@ -266,22 +268,23 @@ public class EmailTemplateServiceTest {
         mailTwo.setTemplate("error");
         mailTwo.setExpiresAfter(1000);
 
-        when(emailRepository.findByDomainAndClientAndTemplate(DOMAIN,targetUid,"login")).thenReturn(Maybe.empty());
-        when(emailRepository.findByDomainAndClientAndTemplate(DOMAIN,targetUid,"error")).thenReturn(Maybe.empty());
+        when(emailRepository.findByClient(ReferenceType.DOMAIN, DOMAIN, sourceUid)).thenReturn(Single.just(Arrays.asList(mailOne, mailTwo)));
+        when(emailRepository.findByClientAndTemplate(ReferenceType.DOMAIN, DOMAIN, targetUid, "login")).thenReturn(Maybe.empty());
+        when(emailRepository.findByClientAndTemplate(ReferenceType.DOMAIN, DOMAIN, targetUid, "error")).thenReturn(Maybe.empty());
         when(emailRepository.create(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(emailRepository.findByDomainAndClient(DOMAIN, sourceUid)).thenReturn(Single.just(Arrays.asList(mailOne, mailTwo)));
 
         TestObserver<List<Email>> testObserver = emailTemplateService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
         testObserver.assertComplete().assertNoErrors();
-        testObserver.assertValue(emails -> emails!=null && emails.size()==2 && emails.stream().filter(
-                email -> email.getDomain().equals(DOMAIN) &&
+        testObserver.assertValue(emails -> emails != null && emails.size() == 2 && emails.stream().filter(
+                email -> email.getReferenceType().equals(ReferenceType.DOMAIN) &&
+                        email.getReferenceId().equals(DOMAIN) &&
                         email.getClient().equals(targetUid) &&
                         !email.getId().equals("templateId") &&
-                        Arrays.asList("login","error").contains(email.getTemplate()) &&
+                        Arrays.asList("login", "error").contains(email.getTemplate()) &&
                         email.getFrom().equals("fromMail") &&
                         email.getFromName().equals("mailName")
-                ).count()==2
+                ).count() == 2
         );
     }
 
@@ -294,7 +297,8 @@ public class EmailTemplateServiceTest {
         Email mailOne = new Email();
         mailOne.setId("templateId");
         mailOne.setEnabled(true);
-        mailOne.setDomain(DOMAIN);
+        mailOne.setReferenceType(ReferenceType.DOMAIN);
+        mailOne.setReferenceId(DOMAIN);
         mailOne.setClient(sourceUid);
         mailOne.setTemplate("login");
         mailOne.setFrom("fromMail");
@@ -303,8 +307,8 @@ public class EmailTemplateServiceTest {
         mailOne.setContent("mailContent");
         mailOne.setExpiresAfter(0);
 
-        when(emailRepository.findByDomainAndClientAndTemplate(DOMAIN,targetUid,"login")).thenReturn(Maybe.just(new Email()));
-        when(emailRepository.findByDomainAndClient(DOMAIN, sourceUid)).thenReturn(Single.just(Arrays.asList(mailOne)));
+        when(emailRepository.findByClientAndTemplate(ReferenceType.DOMAIN, DOMAIN, targetUid, "login")).thenReturn(Maybe.just(new Email()));
+        when(emailRepository.findByClient(ReferenceType.DOMAIN, DOMAIN, sourceUid)).thenReturn(Single.just(Arrays.asList(mailOne)));
 
         TestObserver<List<Email>> testObserver = emailTemplateService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
         testObserver.assertNotComplete();

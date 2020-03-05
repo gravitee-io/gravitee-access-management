@@ -67,7 +67,7 @@ public class GroupManagerImpl implements GroupManager, InitializingBean, EventLi
 
     @Override
     public void onEvent(Event<GroupEvent, Payload> event) {
-        if (ADMIN_DOMAIN.equals(event.content().getDomain())) {
+        if (event.content().getDomain() == null) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:

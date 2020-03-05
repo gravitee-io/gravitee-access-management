@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.LoginAttemptRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
@@ -162,7 +163,8 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                     if (ex instanceof UserNotFoundException) {
                         final User newUser = new User();
                         newUser.setUsername(criteria.username());
-                        newUser.setDomain(criteria.domain());
+                        newUser.setReferenceType(ReferenceType.DOMAIN);
+                        newUser.setReferenceId(criteria.domain());
                         newUser.setClient(criteria.client());
                         newUser.setSource(criteria.identityProvider());
                         newUser.setLoginsCount(0l);

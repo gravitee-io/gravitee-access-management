@@ -16,7 +16,6 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.membership.ReferenceType;
 
 import java.util.Date;
 

@@ -20,15 +20,12 @@ import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
-import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -56,9 +53,6 @@ public class GroupResource extends AbstractResource {
     @Autowired
     private GroupService groupService;
 
-    @Autowired
-    private DomainService domainService;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a platform group")
@@ -70,21 +64,11 @@ public class GroupResource extends AbstractResource {
     })
     public void get(@PathParam("group") String group,
                     @Suspended final AsyncResponse response) {
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMap(masterDomain -> groupService.findById(group)
-                        .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
-                        .map(group1 -> {
-                            if (!group1.getDomain().equalsIgnoreCase(masterDomain.getId())) {
-                                throw new BadRequestException("Group does not belong to domain");
-                            }
-                            return group1;
-                        })
-                )
-                .map(group1 -> Response.ok(group1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+
+        String organizationId = "DEFAULT";
+
+        groupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT
@@ -102,13 +86,10 @@ public class GroupResource extends AbstractResource {
                             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> groupService.update(masterDomain.getId(), group, updateGroup, authenticatedUser))
-                .map(user1 -> Response.ok(user1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        groupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser)
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE
@@ -123,12 +104,10 @@ public class GroupResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapCompletable(__ -> groupService.delete(group, authenticatedUser))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        groupService.delete(ReferenceType.ORGANIZATION, organizationId, group, authenticatedUser)
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
     @Path("members")

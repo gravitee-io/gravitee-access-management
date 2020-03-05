@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.scim.model.Member;
 import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -131,7 +132,8 @@ public class GroupServiceImpl implements GroupService {
                     io.gravitee.am.model.Group groupModel = convert(group1);
                     // set technical ID
                     groupModel.setId(RandomString.generate());
-                    groupModel.setDomain(domain.getId());
+                    groupModel.setReferenceType(ReferenceType.DOMAIN);
+                    groupModel.setReferenceId(domain.getId());
                     groupModel.setCreatedAt(new Date());
                     groupModel.setUpdatedAt(groupModel.getCreatedAt());
                     return groupRepository.create(groupModel);
@@ -169,7 +171,8 @@ public class GroupServiceImpl implements GroupService {
                             io.gravitee.am.model.Group groupToUpdate = convert(group1);
                             // set immutable attribute
                             groupToUpdate.setId(existingGroup.getId());
-                            groupToUpdate.setDomain(existingGroup.getDomain());
+                            groupToUpdate.setReferenceType(existingGroup.getReferenceType());
+                            groupToUpdate.setReferenceId(existingGroup.getReferenceId());
                             groupToUpdate.setCreatedAt(existingGroup.getCreatedAt());
                             groupToUpdate.setUpdatedAt(new Date());
                             return groupRepository.update(groupToUpdate);

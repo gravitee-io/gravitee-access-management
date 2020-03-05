@@ -16,7 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.manager.membership;
 
 import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.membership.ReferenceType;
+import io.gravitee.am.model.ReferenceType;
 
 import java.util.List;
 

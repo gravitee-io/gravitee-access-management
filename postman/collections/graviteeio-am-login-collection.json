@@ -526,12 +526,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/login/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
+							"raw": "{{gateway_url}}/{{domain}}/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"login",
+								"{{domain}}",
 								"oauth",
 								"authorize",
 								""
@@ -731,12 +731,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/login/oauth/authorize/?response_type=code&client_id=my-client-2&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
+							"raw": "{{gateway_url}}/{{domain}}/oauth/authorize/?response_type=code&client_id=my-client-2&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"login",
+								"{{domain}}",
 								"oauth",
 								"authorize",
 								""
@@ -891,7 +891,7 @@
 									"});",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 6000);"
 								],
 								"type": "text/javascript"
 							}
@@ -985,12 +985,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/login/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
+							"raw": "{{gateway_url}}/{{domain}}/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"login",
+								"{{domain}}",
 								"oauth",
 								"authorize",
 								""
@@ -1165,7 +1165,7 @@
 									"});",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 6000);"
 								],
 								"type": "text/javascript"
 							}
@@ -1248,12 +1248,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/login/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
+							"raw": "{{gateway_url}}/{{domain}}/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"login",
+								"{{domain}}",
 								"oauth",
 								"authorize",
 								""
@@ -1466,12 +1466,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/login/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
+							"raw": "{{gateway_url}}/{{domain}}/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=http://localhost:4000/&state=1234-5678-9876",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"login",
+								"{{domain}}",
 								"oauth",
 								"authorize",
 								""

@@ -36,7 +36,9 @@ public class IdentityProvider {
 
     private Map<String, String[]> roleMapper;
 
-    private String domain;
+    private ReferenceType referenceType;
+
+    private String referenceId;
 
     private boolean external;
 
@@ -54,7 +56,8 @@ public class IdentityProvider {
         this.configuration = other.configuration;
         this.mappers = other.mappers;
         this.roleMapper = other.roleMapper;
-        this.domain = other.domain;
+        this.referenceType = other.referenceType;
+        this.referenceId = other.referenceId;
         this.external = other.external;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
@@ -108,12 +111,20 @@ public class IdentityProvider {
         this.roleMapper = roleMapper;
     }
 
-    public String getDomain() {
-        return domain;
+    public ReferenceType getReferenceType() {
+        return referenceType;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public boolean isExternal() {

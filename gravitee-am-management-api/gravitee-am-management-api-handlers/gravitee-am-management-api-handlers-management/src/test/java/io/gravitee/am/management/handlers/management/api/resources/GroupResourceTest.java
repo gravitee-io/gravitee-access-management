@@ -44,7 +44,7 @@ public class GroupResourceTest extends JerseySpringTest {
         final Group mockGroup = new Group();
         mockGroup.setId(groupId);
         mockGroup.setName("group-name");
-        mockGroup.setDomain(domainId);
+        mockGroup.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockGroup)).when(groupService).findById(groupId);
@@ -52,8 +52,8 @@ public class GroupResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("groups").path(groupId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Group group = response.readEntity(Group.class);
-        assertEquals(domainId, group.getDomain());
+        final Group group = readEntity(response, Group.class);
+        assertEquals(domainId, group.getReferenceId());
         assertEquals("group-name", group.getName());
     }
 

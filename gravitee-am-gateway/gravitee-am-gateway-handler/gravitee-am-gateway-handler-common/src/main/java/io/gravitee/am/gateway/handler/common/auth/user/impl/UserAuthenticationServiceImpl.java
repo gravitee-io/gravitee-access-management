@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -153,7 +154,8 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         // set external id
         newUser.setExternalId(principal.getId());
         newUser.setUsername(principal.getUsername());
-        newUser.setDomain(domain.getId());
+        newUser.setReferenceType(ReferenceType.DOMAIN);
+        newUser.setReferenceId(domain.getId());
         if (afterAuthentication) {
             newUser.setLoggedAt(new Date());
             newUser.setLoginsCount(1L);

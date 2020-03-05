@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewTag;
@@ -32,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -42,30 +42,34 @@ import static org.mockito.Mockito.doReturn;
  */
 public class TagsResourceTest extends JerseySpringTest {
 
+    public static final String ORGANIZATION_ID = "orga#1";
+
     @Test
     public void shouldGetTags() {
         final Tag mockRole = new Tag();
         mockRole.setId("role-1-id");
         mockRole.setName("role-1-name");
+        mockRole.setOrganizationId("orga#1");
 
         final Tag mockRole2 = new Tag();
         mockRole2.setId("role-2-id");
         mockRole2.setName("role-2-name");
+        mockRole2.setOrganizationId(ORGANIZATION_ID);
 
         final Set<Tag> tags = new HashSet<>(Arrays.asList(mockRole, mockRole2));
 
-        doReturn(Single.just(tags)).when(tagService).findAll();
+        doReturn(Single.just(tags)).when(tagService).findAll(anyString());
 
         final Response response = target("platform").path("tags").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final List<Tag> responseEntity = response.readEntity(List.class);
+        final List<Tag> responseEntity = readEntity(response, List.class);
         assertEquals(2, responseEntity.size());
     }
 
     @Test
     public void shouldGetTags_technicalManagementException() {
-        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(tagService).findAll();
+        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(tagService).findAll(anyString());
 
         final Response response = target("platform").path("tags").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
@@ -80,7 +84,7 @@ public class TagsResourceTest extends JerseySpringTest {
         tag.setId("tag-id");
         tag.setName("tag-name");
 
-        doReturn(Single.just(tag)).when(tagService).create(any(), any());
+        doReturn(Single.just(tag)).when(tagService).create(any(), anyString(), any());
 
         final Response response = target("platform")
                 .path("tags")

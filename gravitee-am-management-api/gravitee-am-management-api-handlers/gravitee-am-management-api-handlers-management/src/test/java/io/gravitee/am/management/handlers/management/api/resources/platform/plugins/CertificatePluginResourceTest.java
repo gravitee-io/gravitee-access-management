@@ -83,7 +83,7 @@ public class CertificatePluginResourceTest extends JerseySpringTest {
                 .request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final String responseEntity = response.readEntity(String.class);
+        final String responseEntity = readEntity(response, String.class);
         assertEquals(schema, responseEntity);
     }
 

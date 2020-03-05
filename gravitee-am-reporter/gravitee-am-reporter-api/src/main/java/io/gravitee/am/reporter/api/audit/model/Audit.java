@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.reporter.api.audit.model;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.Reportable;
 
 import java.time.Instant;
@@ -51,9 +52,14 @@ public class Audit implements Reportable {
     private String type;
 
     /**
-     * Security domain who triggered the action
+     * The type of the resource who triggered the action
      */
-    private String domain;
+    private ReferenceType referenceType;
+
+    /**
+     * The id of the resource who triggered the action
+     */
+    private String referenceId;
 
     /**
      * The access point that performs the event (OAuth client or HTTP client (e.g web browser) with ip address, user agent, geographical information)
@@ -89,12 +95,21 @@ public class Audit implements Reportable {
     }
 
     @Override
-    public String domain() {
-        return domain;
+    public ReferenceType getReferenceType() {
+        return referenceType;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    @Override
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public String getType() {
