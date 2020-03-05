@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Form;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.FormMongo;
 import io.reactivex.Completable;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.*;
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -41,7 +43,6 @@ import static com.mongodb.client.model.Filters.*;
 public class MongoFormRepository extends AbstractManagementMongoRepository implements FormRepository {
 
     private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_CLIENT = "client";
     private static final String FIELD_TEMPLATE = "template";
     private MongoCollection<FormMongo> formsCollection;
@@ -49,32 +50,30 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     @PostConstruct
     public void init() {
         formsCollection = mongoOperations.getCollection("forms", FormMongo.class);
-        super.createIndex(formsCollection,new Document(FIELD_DOMAIN, 1));
-        super.createIndex(formsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_TEMPLATE, 1));
-        super.createIndex(formsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1));
+        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
+        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TEMPLATE, 1));
+        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1));
     }
 
     @Override
     public Single<List<Form>> findByDomain(String domain) {
-        return Observable.fromPublisher(formsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(ArrayList::new, List::add);
+        return Observable.fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain)))).map(this::convert).collect(ArrayList::new, List::add);
     }
 
     @Override
-    public Single<List<Form>> findByDomainAndClient(String domain, String client) {
+    public Single<List<Form>> findByClient(ReferenceType referenceType, String referenceId, String client) {
         return Observable.fromPublisher(
                 formsCollection.find(
-                        and(
-                                eq(FIELD_DOMAIN, domain),
+                        and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_CLIENT, client))
-                        )).map(this::convert).collect(ArrayList::new, List::add);
+                )).map(this::convert).collect(ArrayList::new, List::add);
     }
 
     @Override
-    public Maybe<Form> findByDomainAndTemplate(String domain, String template) {
+    public Maybe<Form> findByTemplate(ReferenceType referenceType, String referenceId, String template) {
         return Observable.fromPublisher(
                 formsCollection.find(
-                        and(
-                                eq(FIELD_DOMAIN, domain),
+                        and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_TEMPLATE, template),
                                 exists(FIELD_CLIENT, false)))
                         .first())
@@ -82,11 +81,10 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Maybe<Form> findByDomainAndClientAndTemplate(String domain, String client, String template) {
+    public Maybe<Form> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template) {
         return Observable.fromPublisher(
                 formsCollection.find(
-                        and(
-                                eq(FIELD_DOMAIN, domain),
+                        and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_CLIENT, client),
                                 eq(FIELD_TEMPLATE, template)))
                         .first())
@@ -94,8 +92,13 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Maybe<Form> findById(String page) {
-        return Observable.fromPublisher(formsCollection.find(eq(FIELD_ID, page)).first()).firstElement().map(this::convert);
+    public Maybe<Form> findById(ReferenceType referenceType, String referenceId, String id) {
+        return Observable.fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+    }
+
+    @Override
+    public Maybe<Form> findById(String id) {
+        return Observable.fromPublisher(formsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -123,7 +126,8 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
         Form page = new Form();
         page.setId(pageMongo.getId());
         page.setEnabled(pageMongo.isEnabled());
-        page.setDomain(pageMongo.getDomain());
+        page.setReferenceType(ReferenceType.valueOf(pageMongo.getReferenceType()));
+        page.setReferenceId(pageMongo.getReferenceId());
         page.setClient(pageMongo.getClient());
         page.setTemplate(pageMongo.getTemplate());
         page.setContent(pageMongo.getContent());
@@ -141,7 +145,8 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
         FormMongo pageMongo = new FormMongo();
         pageMongo.setId(page.getId());
         pageMongo.setEnabled(page.isEnabled());
-        pageMongo.setDomain(page.getDomain());
+        pageMongo.setReferenceType(page.getReferenceType().name());
+        pageMongo.setReferenceId(page.getReferenceId());
         pageMongo.setClient(page.getClient());
         pageMongo.setTemplate(page.getTemplate());
         pageMongo.setContent(page.getContent());

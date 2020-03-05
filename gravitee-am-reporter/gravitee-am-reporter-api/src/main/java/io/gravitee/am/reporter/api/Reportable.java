@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.reporter.api;
 
+import io.gravitee.am.model.ReferenceType;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface Reportable extends io.gravitee.reporter.api.Reportable {
 
-    String domain();
+    String getReferenceId();
+
+    ReferenceType getReferenceType();
 }

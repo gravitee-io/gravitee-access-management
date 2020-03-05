@@ -230,7 +230,7 @@ public class DashboardClientsResourceTest extends JerseySpringTest {
                 .request()
                 .get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        final TotalClient responseEntity = response.readEntity(TotalClient.class);
+        final TotalClient responseEntity = readEntity(response, TotalClient.class);
 
         assertEquals(10l, responseEntity.getTotalClients());
     }
@@ -249,7 +249,7 @@ public class DashboardClientsResourceTest extends JerseySpringTest {
                 .request()
                 .get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        final TotalClient responseEntity = response.readEntity(TotalClient.class);
+        final TotalClient responseEntity = readEntity(response, TotalClient.class);
 
         assertEquals(10l, responseEntity.getTotalClients());
     }

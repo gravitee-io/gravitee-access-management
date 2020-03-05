@@ -19,21 +19,18 @@ import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.DELETE;
-import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
@@ -69,7 +66,7 @@ public class UserRoleResource extends AbstractResource {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(endUser -> userService.revokeRoles(user, Collections.singletonList(role), authenticatedUser))
+                .flatMapSingle(endUser -> userService.revokeRoles(ReferenceType.DOMAIN, domain, user, Collections.singletonList(role), authenticatedUser))
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

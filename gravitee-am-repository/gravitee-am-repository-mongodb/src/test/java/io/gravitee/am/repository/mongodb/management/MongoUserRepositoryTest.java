@@ -17,6 +17,7 @@ package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.reactivex.observers.TestObserver;
@@ -33,6 +34,7 @@ import java.util.Set;
  */
 public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
 
+    public static final String ORGANIZATION_ID = "orga#1";
     @Autowired
     private UserRepository userRepository;
 
@@ -46,7 +48,8 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         // create user
         User user = new User();
         user.setUsername("testsUsername");
-        user.setDomain("testDomain");
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId("testDomain");
         userRepository.create(user).blockingGet();
 
         // fetch users
@@ -67,6 +70,24 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
 
         // fetch user
         TestObserver<User> testObserver = userRepository.findById(userCreated.getId()).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getUsername().equals("testsUsername"));
+    }
+
+    @Test
+    public void testFindById_referenceType() throws TechnicalException {
+        // create user
+        User user = new User();
+        user.setUsername("testsUsername");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId(ORGANIZATION_ID);
+        User userCreated = userRepository.create(user).blockingGet();
+
+        // fetch user
+        TestObserver<User> testObserver = userRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userCreated.getId()).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -139,12 +160,14 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         final String domain = "domain";
         // create user
         User user = new User();
-        user.setDomain(domain);
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain);
         user.setUsername("testUsername");
         userRepository.create(user).blockingGet();
 
         User user2 = new User();
-        user2.setDomain(domain);
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
         user2.setUsername("testUsername2");
         userRepository.create(user2).blockingGet();
 
@@ -164,12 +187,14 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         final String domain = "domain";
         // create user
         User user = new User();
-        user.setDomain(domain);
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain);
         user.setUsername("testUsername");
         userRepository.create(user).blockingGet();
 
         User user2 = new User();
-        user2.setDomain(domain);
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
         user2.setUsername("testUsername2");
         userRepository.create(user2).blockingGet();
 
@@ -187,17 +212,20 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         final String domain = "domain";
         // create user
         User user1 = new User();
-        user1.setDomain(domain);
+        user1.setReferenceType(ReferenceType.DOMAIN);
+        user1.setReferenceId(domain);
         user1.setUsername("testUsername1");
         userRepository.create(user1).blockingGet();
 
         User user2 = new User();
-        user2.setDomain(domain);
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
         user2.setUsername("testUsername2");
         userRepository.create(user2).blockingGet();
         
         User user3 = new User();
-        user3.setDomain(domain);
+        user3.setReferenceType(ReferenceType.DOMAIN);
+        user3.setReferenceId(domain);
         user3.setUsername("testUsername3");
         userRepository.create(user3).blockingGet();
 

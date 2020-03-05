@@ -53,8 +53,8 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
     }
 
     @Override
-    public Single<Set<Tag>> findAll() {
-        return Observable.fromPublisher(tagsCollection.find()).map(this::convert).collect(HashSet::new, Set::add);
+    public Single<Set<Tag>> findAll(String organizationId) {
+        return Observable.fromPublisher(tagsCollection.find(eq("organizationId", organizationId))).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
@@ -84,6 +84,7 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
         tag.setId(tagMongo.getId());
         tag.setName(tagMongo.getName());
         tag.setDescription(tagMongo.getDescription());
+        tag.setOrganizationId(tagMongo.getOrganizationId());
         tag.setCreatedAt(tagMongo.getCreatedAt());
         tag.setUpdatedAt(tagMongo.getUpdatedAt());
 
@@ -99,6 +100,7 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
         tagMongo.setId(tag.getId());
         tagMongo.setName(tag.getName());
         tagMongo.setDescription(tag.getDescription());
+        tagMongo.setOrganizationId(tag.getOrganizationId());
         tagMongo.setCreatedAt(tag.getCreatedAt());
         tagMongo.setUpdatedAt(tag.getUpdatedAt());
 

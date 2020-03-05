@@ -67,6 +67,9 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
                 jgen.writeString(value.name().toLowerCase());
             }
         });
+
+
+
         module.addSerializer(Instant.class, new StdSerializer<Instant>(Instant.class) {
             @Override
             public void serialize(Instant instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
@@ -79,6 +82,7 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.registerModule(module);
         mapper.registerModule(new Jdk8Module());
+        mapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
     }
 
     @Override

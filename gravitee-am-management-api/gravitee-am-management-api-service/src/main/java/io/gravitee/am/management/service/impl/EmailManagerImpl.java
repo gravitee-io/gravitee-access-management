@@ -119,7 +119,7 @@ public class EmailManagerImpl implements EmailManager {
     private String getTemplateName(Email email) {
         return email.getTemplate()
                 + TEMPLATE_NAME_SEPARATOR
-                + email.getDomain()
+                + email.getReferenceType() + email.getReferenceId()
                 + ((email.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + email.getClient() : "");
     }
 

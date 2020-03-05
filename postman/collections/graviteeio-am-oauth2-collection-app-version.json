@@ -103,7 +103,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"oauth2\", \n\t\"description\": \"test oauth2 authorization framework specifications\"\n}"
+							"raw": "{\n\t\"name\": \"oauth2-app-version\", \n\t\"description\": \"test oauth2 authorization framework specifications\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/",
@@ -1480,7 +1480,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 5000);"
+													"setTimeout(function(){}, 6000);"
 												],
 												"type": "text/javascript"
 											}
@@ -1606,7 +1606,7 @@
 													"pm.environment.set('clientSecretNew3', body.settings.oauth.clientSecret);",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 5000);"
+													"setTimeout(function(){}, 6000);"
 												],
 												"type": "text/javascript"
 											}
@@ -3024,7 +3024,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 5000);"
+													"setTimeout(function(){}, 6000);"
 												],
 												"type": "text/javascript"
 											}
@@ -3471,7 +3471,7 @@
 													"    // Here we can extract the authorization_code to got further in the process",
 													"    ",
 													"    // wait for until scope approvals expire",
-													"    setTimeout(function(){}, 5000);",
+													"    setTimeout(function(){}, 6000);",
 													"});"
 												],
 												"type": "text/javascript"
@@ -3682,7 +3682,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 5000);"
+													"setTimeout(function(){}, 6000);"
 												],
 												"type": "text/javascript"
 											}
@@ -8919,7 +8919,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 5000);"
+													"setTimeout(function(){}, 6000);"
 												],
 												"type": "text/javascript"
 											}
@@ -10636,7 +10636,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 5000);"
+													"setTimeout(function(){}, 6000);"
 												],
 												"type": "text/javascript"
 											}
@@ -10744,7 +10744,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 5000);"
+													"setTimeout(function(){}, 6000);"
 												],
 												"type": "text/javascript"
 											}
@@ -11076,7 +11076,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 5000);"
+													"setTimeout(function(){}, 6000);"
 												],
 												"type": "text/javascript"
 											}
@@ -11272,7 +11272,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 5000);"
+													"setTimeout(function(){}, 6000);"
 												],
 												"type": "text/javascript"
 											}
@@ -11476,7 +11476,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 6000);"
 										],
 										"type": "text/javascript"
 									}
@@ -11626,7 +11626,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 6000);"
 										],
 										"type": "text/javascript"
 									}
@@ -11776,7 +11776,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 6000);"
 										],
 										"type": "text/javascript"
 									}
@@ -11991,7 +11991,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 6000);"
 										],
 										"type": "text/javascript"
 									}
@@ -12613,7 +12613,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"name\": \"cross\", \n\t\"description\": \"test cross domain authorization framework specifications\"\n}"
+									"raw": "{\n\t\"name\": \"cross-app-version\", \n\t\"description\": \"test cross domain authorization framework specifications\"\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/domains/",
@@ -13016,7 +13016,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 6000);"
 										],
 										"type": "text/javascript"
 									}
@@ -13329,7 +13329,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 6000);"
 										],
 										"type": "text/javascript"
 									}

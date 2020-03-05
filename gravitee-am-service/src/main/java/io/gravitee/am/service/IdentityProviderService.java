@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.Completable;
@@ -34,13 +35,23 @@ public interface IdentityProviderService {
 
     Single<List<IdentityProvider>> findAll();
 
+    Single<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String id);
+
     Maybe<IdentityProvider> findById(String id);
+
+    Single<List<IdentityProvider>> findAll(ReferenceType referenceType, String referenceId);
 
     Single<List<IdentityProvider>> findByDomain(String domain);
 
+    Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal);
+
     Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider, User principal);
 
+    Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal);
+
     Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal);
+
+    Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal);
 
     Completable delete(String domain, String identityProviderId, User principal);
 

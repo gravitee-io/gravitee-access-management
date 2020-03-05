@@ -27,7 +27,6 @@ import io.gravitee.am.service.exception.TagAlreadyExistsException;
 import io.gravitee.am.service.exception.TagNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewTag;
-import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.model.UpdateTag;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.TagAuditBuilder;
@@ -75,9 +74,9 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public Single<Set<Tag>> findAll() {
+    public Single<Set<Tag>> findAll(String organizationId) {
         LOGGER.debug("Find all tags");
-        return tagRepository.findAll()
+        return tagRepository.findAll(organizationId)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find all tags", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find all tags", ex));
@@ -85,7 +84,7 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public Single<Tag> create(NewTag newTag, User principal) {
+    public Single<Tag> create(NewTag newTag, String organizationId, User principal) {
         LOGGER.debug("Create a new tag: {}", newTag);
         String id = humanReadableId(newTag.getName());
 
@@ -97,6 +96,7 @@ public class TagServiceImpl implements TagService {
                     } else {
                         Tag tag = new Tag();
                         tag.setId(id);
+                        tag.setOrganizationId(organizationId);
                         tag.setName(newTag.getName());
                         tag.setDescription(newTag.getDescription());
                         tag.setCreatedAt(new Date());
@@ -112,8 +112,8 @@ public class TagServiceImpl implements TagService {
                     LOGGER.error("An error occurs while trying to create a tag", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a tag", ex));
                 })
-                .doOnSuccess(tag -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_CREATED)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_CREATED).throwable(throwable)));
+                .doOnSuccess(tag -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).tag(tag).principal(principal).type(EventType.TAG_CREATED)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).referenceId(organizationId).principal(principal).type(EventType.TAG_CREATED).throwable(throwable)));
     }
 
     @Override

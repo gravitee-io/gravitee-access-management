@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.IdentityProviderMongo;
 import io.reactivex.Completable;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.*;
 
+import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
 /**
@@ -41,13 +43,19 @@ import static com.mongodb.client.model.Filters.eq;
 public class MongoIdentityProviderRepository extends AbstractManagementMongoRepository implements IdentityProviderRepository {
 
     private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
+    //private static final String FIELD_DOMAIN = "domain";
     private MongoCollection<IdentityProviderMongo> identitiesCollection;
 
     @PostConstruct
     public void init() {
         identitiesCollection = mongoOperations.getCollection("identities", IdentityProviderMongo.class);
-        super.createIndex(identitiesCollection,new Document(FIELD_DOMAIN, 1));
+        super.createIndex(identitiesCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
+    }
+
+    @Override
+    public Single<Set<IdentityProvider>> findAll(ReferenceType referenceType, String referenceId) {
+        return Observable.fromPublisher(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
+                .map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
@@ -57,12 +65,17 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
 
     @Override
     public Single<Set<IdentityProvider>> findByDomain(String domain) {
-        return Observable.fromPublisher(identitiesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
+        return findAll(ReferenceType.DOMAIN, domain);
     }
 
     @Override
     public Maybe<IdentityProvider> findById(String identityProviderId) {
         return Observable.fromPublisher(identitiesCollection.find(eq(FIELD_ID, identityProviderId)).first()).firstElement().map(this::convert);
+    }
+
+    @Override
+    public Maybe<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String identityProviderId) {
+        return Observable.fromPublisher(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, identityProviderId))).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -106,7 +119,8 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
             identityProvider.setRoleMapper(roleMapper);
         }
 
-        identityProvider.setDomain(identityProviderMongo.getDomain());
+        identityProvider.setReferenceType(identityProviderMongo.getReferenceType());
+        identityProvider.setReferenceId(identityProviderMongo.getReferenceId());
         identityProvider.setExternal(identityProviderMongo.isExternal());
         identityProvider.setCreatedAt(identityProviderMongo.getCreatedAt());
         identityProvider.setUpdatedAt(identityProviderMongo.getUpdatedAt());
@@ -125,7 +139,8 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProviderMongo.setConfiguration(identityProvider.getConfiguration());
         identityProviderMongo.setMappers(identityProvider.getMappers() != null ? new Document((Map) identityProvider.getMappers()) : new Document());
         identityProviderMongo.setRoleMapper(identityProvider.getRoleMapper() != null ? convert(identityProvider.getRoleMapper()) : new Document());
-        identityProviderMongo.setDomain(identityProvider.getDomain());
+        identityProviderMongo.setReferenceType(identityProvider.getReferenceType());
+        identityProviderMongo.setReferenceId(identityProvider.getReferenceId());
         identityProviderMongo.setExternal(identityProvider.isExternal());
         identityProviderMongo.setCreatedAt(identityProvider.getCreatedAt());
         identityProviderMongo.setUpdatedAt(identityProvider.getUpdatedAt());

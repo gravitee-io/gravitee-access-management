@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.EmailRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.EmailMongo;
 import io.reactivex.Completable;
@@ -49,9 +50,10 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
     @PostConstruct
     public void init() {
         emailsCollection = mongoOperations.getCollection("emails", EmailMongo.class);
-        super.createIndex(emailsCollection, new Document(FIELD_DOMAIN, 1));
-        super.createIndex(emailsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_TEMPLATE, 1));
-        super.createIndex(emailsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1));
+        super.createIndex(emailsCollection, new Document(FIELD_ID, 1));
+        super.createIndex(emailsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
+        super.createIndex(emailsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TEMPLATE, 1));
+        super.createIndex(emailsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1));
     }
 
     @Override
@@ -60,26 +62,34 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
     }
 
     @Override
+    public Single<List<Email>> findAll(ReferenceType referenceType, String referenceId) {
+        return Observable.fromPublisher(emailsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
+                .map(this::convert).collect(ArrayList::new, List::add);
+    }
+
+    @Override
     public Single<List<Email>> findByDomain(String domain) {
         return Observable.fromPublisher(emailsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(ArrayList::new, List::add);
     }
 
     @Override
-    public Single<List<Email>> findByDomainAndClient(String domain, String client) {
+    public Single<List<Email>> findByClient(ReferenceType referenceType, String referenceId, String client) {
         return Observable.fromPublisher(
                 emailsCollection.find(
                         and(
-                                eq(FIELD_DOMAIN, domain),
+                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_CLIENT, client))
-                        )).map(this::convert).collect(ArrayList::new, List::add);
+                )).map(this::convert).collect(ArrayList::new, List::add);
     }
 
     @Override
-    public Maybe<Email> findByDomainAndTemplate(String domain, String template) {
+    public Maybe<Email> findByTemplate(ReferenceType referenceType, String referenceId, String template) {
         return Observable.fromPublisher(
                 emailsCollection.find(
                         and(
-                                eq(FIELD_DOMAIN, domain),
+                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_TEMPLATE, template),
                                 exists(FIELD_CLIENT, false)))
                         .first())
@@ -87,15 +97,31 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
     }
 
     @Override
-    public Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template) {
+    public Maybe<Email> findByDomainAndTemplate(String domain, String template) {
+        return findByTemplate(ReferenceType.DOMAIN, domain, template);
+    }
+
+    @Override
+    public Maybe<Email> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template) {
         return Observable.fromPublisher(
                 emailsCollection.find(
                         and(
-                                eq(FIELD_DOMAIN, domain),
+                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_CLIENT, client),
                                 eq(FIELD_TEMPLATE, template)))
                         .first())
                 .firstElement().map(this::convert);
+    }
+
+    @Override
+    public Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template) {
+        return findByClientAndTemplate(ReferenceType.DOMAIN, domain, client, template);
+    }
+
+    @Override
+    public Maybe<Email> findById(ReferenceType referenceType, String referenceId, String id) {
+        return Observable.fromPublisher(emailsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -128,7 +154,8 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
         Email email = new Email();
         email.setId(emailMongo.getId());
         email.setEnabled(emailMongo.isEnabled());
-        email.setDomain(emailMongo.getDomain());
+        email.setReferenceType(emailMongo.getReferenceType());
+        email.setReferenceId(emailMongo.getReferenceId());
         email.setClient(emailMongo.getClient());
         email.setTemplate(emailMongo.getTemplate());
         email.setFrom(emailMongo.getFrom());
@@ -149,7 +176,8 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
         EmailMongo emailMongo = new EmailMongo();
         emailMongo.setId(email.getId());
         emailMongo.setEnabled(email.isEnabled());
-        emailMongo.setDomain(email.getDomain());
+        emailMongo.setReferenceType(email.getReferenceType());
+        emailMongo.setReferenceId(email.getReferenceId());
         emailMongo.setClient(email.getClient());
         emailMongo.setTemplate(email.getTemplate());
         emailMongo.setFrom(email.getFrom());

@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.membership;
+package io.gravitee.am.repository.management.api;
+
+import io.gravitee.am.model.Organization;
+import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Single;
+
+import java.util.List;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum ReferenceType {
-    DOMAIN,
-    APPLICATION
+public interface OrganizationRepository extends CrudRepository<Organization, String> {
+
+    Single<Long> count();
 }

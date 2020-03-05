@@ -18,9 +18,9 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewForm;
 import io.gravitee.common.http.HttpStatusCode;
@@ -31,6 +31,8 @@ import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
+
+import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -45,7 +47,7 @@ import static org.mockito.Mockito.doReturn;
 public class FormsResourceTest extends JerseySpringTest {
 
     @Test
-    public void shouldGetForm() {
+    public void shouldGetForm() throws IOException {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -53,7 +55,8 @@ public class FormsResourceTest extends JerseySpringTest {
         final Form mockForm = new Form();
         mockForm.setId("form-1-id");
         mockForm.setTemplate(Template.LOGIN.template());
-        mockForm.setDomain(domainId);
+        mockForm.setReferenceType(ReferenceType.DOMAIN);
+        mockForm.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockForm)).when(formService).findByDomainAndTemplate(domainId, Template.LOGIN.template());
 
@@ -64,7 +67,7 @@ public class FormsResourceTest extends JerseySpringTest {
                 .get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Email responseEntity = response.readEntity(Email.class);
+        final Form responseEntity = readEntity(response, Form.class);
         assertTrue(responseEntity.getId().equals("form-1-id"));
     }
 

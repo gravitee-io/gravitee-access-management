@@ -71,8 +71,7 @@ public class FormResourceTest extends JerseySpringTest {
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
 
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(formService).delete(eq(formId), any());
+        doReturn(Completable.complete()).when(formService).delete(eq(domainId), eq(formId), any());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -89,8 +88,7 @@ public class FormResourceTest extends JerseySpringTest {
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
 
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.error(new FormNotFoundException(formId))).when(formService).delete(eq(formId), any());
+        doReturn(Completable.error(new FormNotFoundException(formId))).when(formService).delete(eq(domainId), eq(formId), any());
 
         final Response response = target("domains")
                 .path(domainId)

@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -33,8 +34,12 @@ public class IdentityProviderAuditBuilder extends ManagementAuditBuilder<Identit
         if (EventType.IDENTITY_PROVIDER_CREATED.equals(getType()) || EventType.IDENTITY_PROVIDER_UPDATED.equals(getType())) {
             setNewValue(identityProvider);
         }
-        domain(identityProvider.getDomain());
-        setTarget(identityProvider.getId(), EntityType.IDENTITY_PROVIDER, null, identityProvider.getName(), identityProvider.getDomain());
+
+        referenceType(identityProvider.getReferenceType());
+        referenceId(identityProvider.getReferenceId());
+
+        setTarget(identityProvider.getId(), EntityType.IDENTITY_PROVIDER, null, identityProvider.getName(),
+                identityProvider.getReferenceType() == ReferenceType.DOMAIN ? identityProvider.getReferenceId() : null);
         return this;
     }
 }

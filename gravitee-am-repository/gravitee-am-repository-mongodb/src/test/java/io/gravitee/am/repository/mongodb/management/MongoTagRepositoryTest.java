@@ -30,6 +30,8 @@ import java.util.Set;
  */
 public class MongoTagRepositoryTest extends AbstractManagementRepositoryTest {
 
+    public static final String ORGANIZATION_ID = "orga#1";
+
     @Autowired
     private TagRepository tagRepository;
 
@@ -44,10 +46,11 @@ public class MongoTagRepositoryTest extends AbstractManagementRepositoryTest {
         Tag tag = new Tag();
         tag.setName("testName");
         tag.setDescription("Description");
+        tag.setOrganizationId(ORGANIZATION_ID);
         tagRepository.create(tag).blockingGet();
 
         // fetch domains
-        TestObserver<Set<Tag>> testObserver1 = tagRepository.findAll().test();
+        TestObserver<Set<Tag>> testObserver1 = tagRepository.findAll(ORGANIZATION_ID).test();
         testObserver1.awaitTerminalEvent();
 
         testObserver1.assertComplete();

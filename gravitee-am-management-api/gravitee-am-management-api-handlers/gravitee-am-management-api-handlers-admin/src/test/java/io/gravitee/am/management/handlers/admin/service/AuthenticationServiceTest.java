@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.admin.service;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.admin.service.impl.AuthenticationServiceImpl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.model.NewUser;
@@ -42,6 +43,7 @@ import static org.mockito.Mockito.*;
 public class AuthenticationServiceTest {
 
     private static final String domainId = "domain-id";
+    public static final String ORGANIZATION_ID = "DEFAULT";
 
     @InjectMocks
     private AuthenticationService authenticationService = new AuthenticationServiceImpl();
@@ -69,32 +71,30 @@ public class AuthenticationServiceTest {
 
     @Test
     public void shouldCreateUser() {
-        when(domainMock.getId()).thenReturn(domainId);
         when(authenticationMock.getPrincipal()).thenReturn(userDetailsMock);
-        when(userServiceMock.findByDomainAndExternalIdAndSource(domainMock.getId(), userDetailsMock.getUsername(), null)).thenReturn(Maybe.empty());
-        when(userServiceMock.findByDomainAndUsernameAndSource(domainMock.getId(), userDetailsMock.getUsername(), null)).thenReturn(Maybe.empty());
+        when(userServiceMock.findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null)).thenReturn(Maybe.empty());
+        when(userServiceMock.findByUsernameAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null)).thenReturn(Maybe.empty());
         when(userServiceMock.create(any(io.gravitee.am.model.User.class))).thenReturn(Single.just(new io.gravitee.am.model.User()));
         when(userServiceMock.enhance(any())).thenReturn(Single.just(new io.gravitee.am.model.User()));
 
         authenticationService.onAuthenticationSuccess(authenticationMock);
 
-        verify(userServiceMock, times(1)).findByDomainAndExternalIdAndSource(domainMock.getId(), userDetailsMock.getUsername(), null);
-        verify(userServiceMock, times(1)).findByDomainAndUsernameAndSource(domainMock.getId(), userDetailsMock.getUsername(), null);
+        verify(userServiceMock, times(1)).findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null);
+        verify(userServiceMock, times(1)).findByUsernameAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null);
         verify(userServiceMock, times(1)).create(any(io.gravitee.am.model.User.class));
         verify(userServiceMock, never()).update(any(io.gravitee.am.model.User.class));
     }
 
     @Test
     public void shouldUpdatedUser() {
-        when(domainMock.getId()).thenReturn(domainId);
         when(authenticationMock.getPrincipal()).thenReturn(userDetailsMock);
-        when(userServiceMock.findByDomainAndExternalIdAndSource(domainMock.getId(), userDetailsMock.getUsername(), null)).thenReturn(Maybe.just(repositoryUserMock));
+        when(userServiceMock.findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null)).thenReturn(Maybe.just(repositoryUserMock));
         when(userServiceMock.update(any(io.gravitee.am.model.User.class))).thenReturn(Single.just(new io.gravitee.am.model.User()));
         when(userServiceMock.enhance(any())).thenReturn(Single.just(new io.gravitee.am.model.User()));
 
         authenticationService.onAuthenticationSuccess(authenticationMock);
 
-        verify(userServiceMock, times(1)).findByDomainAndExternalIdAndSource(domainMock.getId(), userDetailsMock.getUsername(), null);
+        verify(userServiceMock, times(1)).findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null);
         verify(userServiceMock, times(1)).update(any(io.gravitee.am.model.User.class));
         verify(userServiceMock, never()).create(any(String.class), any(NewUser.class));
     }

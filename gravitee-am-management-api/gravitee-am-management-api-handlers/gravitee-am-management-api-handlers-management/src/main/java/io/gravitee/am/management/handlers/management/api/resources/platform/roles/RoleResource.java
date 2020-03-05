@@ -20,17 +20,14 @@ import io.gravitee.am.management.handlers.management.api.model.RoleEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.model.permissions.RoleScope;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
-import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -61,9 +58,6 @@ public class RoleResource extends AbstractResource {
     @Autowired
     private RoleService roleService;
 
-    @Autowired
-    private DomainService domainService;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a platform role")
@@ -74,21 +68,13 @@ public class RoleResource extends AbstractResource {
             @io.gravitee.am.management.handlers.management.api.security.Permission(value = RolePermission.MANAGEMENT_ROLE, acls = RolePermissionAction.READ)
     })
     public void get(@PathParam("role") String role,
-            @Suspended final AsyncResponse response) {
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMap(masterDomain -> roleService.findById(role)
-                        .switchIfEmpty(Maybe.error(new RoleNotFoundException(role)))
-                        .map(role1 -> {
-                        if (!role1.getDomain().equalsIgnoreCase(masterDomain.getId())) {
-                            throw new BadRequestException("Role does not belong to domain");
-                        }
-                        return Response.ok(convert(role1)).build();
-                    })
-                )
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                    @Suspended final AsyncResponse response) {
+
+        String organizationId = "DEFAULT";
+
+        roleService.findById(ReferenceType.ORGANIZATION, organizationId, role)
+                .map(this::convert)
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT
@@ -102,17 +88,15 @@ public class RoleResource extends AbstractResource {
             @io.gravitee.am.management.handlers.management.api.security.Permission(value = RolePermission.MANAGEMENT_ROLE, acls = RolePermissionAction.UPDATE)
     })
     public void update(@PathParam("role") String role,
-            @ApiParam(name = "role", required = true) @Valid @NotNull UpdateRole updateRole,
-            @Suspended final AsyncResponse response) {
+                       @ApiParam(name = "role", required = true) @Valid @NotNull UpdateRole updateRole,
+                       @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> roleService.update(masterDomain.getId(), role, updateRole, authenticatedUser))
-                .map(role1 -> Response.ok(convert(role1)).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        roleService.update(ReferenceType.ORGANIZATION, organizationId, role, updateRole, authenticatedUser)
+                .map(this::convert)
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE
@@ -128,10 +112,11 @@ public class RoleResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        roleService.delete(role, authenticatedUser)
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        roleService.delete(ReferenceType.ORGANIZATION, organizationId, role, authenticatedUser)
+                .subscribe(() -> response.resume(Response.noContent().build()),
+                        response::resume);
     }
 
     private RoleEntity convert(Role role) {
@@ -141,7 +126,8 @@ public class RoleResource extends AbstractResource {
                 Permission[] permissions = Permission.findByScope(RoleScope.valueOf(role.getScope()));
                 List<String> availablePermissions = Arrays.asList(permissions).stream().map(Permission::getMask).sorted().collect(Collectors.toList());
                 roleEntity.setAvailablePermissions(availablePermissions);
-            } catch(Exception ex) { }
+            } catch (Exception ex) {
+            }
         }
         return roleEntity;
     }

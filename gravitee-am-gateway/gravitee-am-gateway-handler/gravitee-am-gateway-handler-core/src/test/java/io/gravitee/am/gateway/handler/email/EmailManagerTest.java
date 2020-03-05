@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.email;
 
-import io.gravitee.am.gateway.handler.email.EmailManager;
 import io.gravitee.am.gateway.handler.email.impl.EmailManagerImpl;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import org.junit.Assert;
 import org.junit.Before;
@@ -57,7 +57,8 @@ public class EmailManagerTest {
         domainEmail.setEnabled(true);
         domainEmail.setExpiresAfter(10000);
         domainEmail.setTemplate(Template.RESET_PASSWORD.template());
-        domainEmail.setDomain("domain1");
+        domainEmail.setReferenceType(ReferenceType.DOMAIN);
+        domainEmail.setReferenceId("domain1");
         domainEmail.setSubject("Domain subject");
 
         String templateKey = Template.RESET_PASSWORD.template();
@@ -81,14 +82,16 @@ public class EmailManagerTest {
         domainEmail.setEnabled(true);
         domainEmail.setExpiresAfter(10000);
         domainEmail.setTemplate(Template.RESET_PASSWORD.template());
-        domainEmail.setDomain("domain1");
+        domainEmail.setReferenceType(ReferenceType.DOMAIN);
+        domainEmail.setReferenceId("domain1");
         domainEmail.setSubject("Domain subject");
 
-        Email clientEmail  = new Email();
+        Email clientEmail = new Email();
         clientEmail.setEnabled(true);
         clientEmail.setExpiresAfter(10001);
         clientEmail.setTemplate(Template.RESET_PASSWORD.template());
-        clientEmail.setDomain("domain1");
+        clientEmail.setReferenceType(ReferenceType.DOMAIN);
+        clientEmail.setReferenceId("domain1");
         clientEmail.setClient("client1");
         clientEmail.setSubject("Client subject");
 

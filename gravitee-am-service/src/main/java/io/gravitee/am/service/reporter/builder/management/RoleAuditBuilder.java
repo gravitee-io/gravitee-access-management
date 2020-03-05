@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.ReferenceType;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -33,8 +34,12 @@ public class RoleAuditBuilder extends ManagementAuditBuilder<RoleAuditBuilder> {
         if (EventType.ROLE_CREATED.equals(getType()) || EventType.ROLE_UPDATED.equals(getType())) {
             setNewValue(role);
         }
-        domain(role.getDomain());
-        setTarget(role.getId(), EntityType.ROLE, null, role.getName(), role.getDomain());
+
+        referenceType(role.getReferenceType());
+        referenceId(role.getReferenceId());
+
+        setTarget(role.getId(), EntityType.ROLE, null, role.getName(),
+                role.getReferenceType() == ReferenceType.DOMAIN ? role.getReferenceId() : null);
         return this;
     }
 }

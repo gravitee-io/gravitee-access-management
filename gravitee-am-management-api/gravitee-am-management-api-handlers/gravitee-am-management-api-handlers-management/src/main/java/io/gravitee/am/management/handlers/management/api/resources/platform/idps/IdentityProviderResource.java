@@ -21,15 +21,12 @@ import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
-import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -58,9 +55,6 @@ public class IdentityProviderResource extends AbstractResource {
     private IdentityProviderService identityProviderService;
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private IdentityProviderManager identityProviderManager;
 
     @GET
@@ -74,20 +68,11 @@ public class IdentityProviderResource extends AbstractResource {
     })
     public void get(@PathParam("identity") String identityProvider,
                     @Suspended final AsyncResponse response) {
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMap(masterDomain -> identityProviderService.findById(identityProvider)
-                        .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identityProvider)))
-                        .map(identityProvider1 -> {
-                            if (!identityProvider1.getDomain().equalsIgnoreCase(masterDomain.getId())) {
-                                throw new BadRequestException("Identity provider does not belong to domain");
-                            }
-                            return Response.ok(identityProvider1).build();
-                        })
-                )
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+
+        String organizationId = "DEFAULT";
+
+        identityProviderService.findById(ReferenceType.ORGANIZATION, organizationId, identityProvider)
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT
@@ -105,14 +90,12 @@ public class IdentityProviderResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> identityProviderService.update(masterDomain.getId(), identity, updateIdentityProvider, authenticatedUser))
+        String organizationId = "DEFAULT";
+
+        identityProviderService.update(ReferenceType.ORGANIZATION, organizationId, identity, updateIdentityProvider, authenticatedUser)
                 .flatMap(identityProvider -> identityProviderManager.reloadUserProvider(identityProvider))
                 .map(identityProvider -> Response.ok(identityProvider).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE
@@ -128,11 +111,9 @@ public class IdentityProviderResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapCompletable(masterDomain -> identityProviderService.delete(masterDomain.getId(), identity, authenticatedUser))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        identityProviderService.delete(ReferenceType.ORGANIZATION, organizationId, identity, authenticatedUser)
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

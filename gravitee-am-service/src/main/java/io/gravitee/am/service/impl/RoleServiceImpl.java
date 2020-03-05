@@ -20,6 +20,8 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -40,6 +42,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -53,6 +56,7 @@ public class RoleServiceImpl implements RoleService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(RoleServiceImpl.class);
 
+    @Lazy
     @Autowired
     private RoleRepository roleRepository;
 
@@ -63,13 +67,42 @@ public class RoleServiceImpl implements RoleService {
     private EventService eventService;
 
     @Override
+    public Single<Set<Role>> findAll(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("Find roles by {}: {}", referenceType, referenceId);
+
+        // Organization roles must be zipped with system roles to get a complete list of all roles.
+        return Single.zip(findAllSystem(), roleRepository.findAll(referenceType, referenceId), (systemRoles, roles) -> {
+            roles.addAll(systemRoles);
+            return roles;
+        }).onErrorResumeNext(ex -> {
+            LOGGER.error("An error occurs while trying to find roles by {}", referenceType, ex);
+            return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find roles by %s", referenceType), ex));
+        });
+    }
+
+    @Override
+    public Single<Set<Role>> findAllSystem() {
+
+        LOGGER.debug("Find all global system roles");
+        return roleRepository.findAll(ReferenceType.PLATFORM, Platform.DEFAULT);
+    }
+
+    @Override
     public Single<Set<Role>> findByDomain(String domain) {
-        LOGGER.debug("Find roles by domain: {}", domain);
-        return roleRepository.findByDomain(domain)
+        return roleRepository.findAll(ReferenceType.DOMAIN, domain);
+    }
+
+    @Override
+    public Single<Role> findById(ReferenceType referenceType, String referenceId, String id) {
+        LOGGER.debug("Find role by ID: {}", id);
+
+        return roleRepository.findById(referenceType, referenceId, id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find roles by domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find roles by domain", ex));
-                });
+                    LOGGER.error("An error occurs while trying to find a role using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a role using its ID: %s", id), ex));
+                })
+                .switchIfEmpty(Single.error(new RoleNotFoundException(id)));
     }
 
     @Override
@@ -86,7 +119,8 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Maybe<Role> findSystemRole(SystemRole systemRole, RoleScope roleScope) {
         LOGGER.debug("Find system role : {} for the scope : {}", systemRole.name(), roleScope.name());
-        return roleRepository.findByDomainAndNameAndScope("admin", systemRole.name(), roleScope.getId())
+        return roleRepository.findByNameAndScope(ReferenceType.PLATFORM, Platform.DEFAULT, systemRole.name(), roleScope.getId())
+                .filter(Role::isSystem)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find system role : {} for the scope : {}", systemRole.name(), roleScope.name(), ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -104,19 +138,19 @@ public class RoleServiceImpl implements RoleService {
                 });
     }
 
-
     @Override
-    public Single<Role> create(String domain, NewRole newRole, User principal) {
-        LOGGER.debug("Create a new role {} for domain {}", newRole, domain);
+    public Single<Role> create(ReferenceType referenceType, String referenceId, NewRole newRole, User principal) {
+        LOGGER.debug("Create a new role {} for {} {}", newRole, referenceType, referenceId);
 
         String roleId = RandomString.generate();
 
         // check if role name is unique
-        return checkRoleUniqueness(newRole.getName(), roleId, domain)
+        return checkRoleUniqueness(newRole.getName(), roleId, referenceType, referenceId)
                 .flatMap(__ -> {
                     Role role = new Role();
                     role.setId(roleId);
-                    role.setDomain(domain);
+                    role.setReferenceType(referenceType);
+                    role.setReferenceId(referenceId);
                     role.setName(newRole.getName());
                     role.setDescription(newRole.getDescription());
                     role.setScope(newRole.getScope() != null ? newRole.getScope().getId() : null);
@@ -126,7 +160,7 @@ public class RoleServiceImpl implements RoleService {
                 })
                 // create event for sync process
                 .flatMap(role -> {
-                    Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType() == ReferenceType.DOMAIN ? role.getReferenceId() : null, Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(role));
                 })
                 .onErrorResumeNext(ex -> {
@@ -142,20 +176,25 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public Single<Role> update(String domain, String id, UpdateRole updateRole, User principal) {
-        LOGGER.debug("Update a role {} for domain {}", id, domain);
+    public Single<Role> create(String domain, NewRole newRole, User principal) {
 
-        return roleRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new RoleNotFoundException(id)))
+        return create(ReferenceType.DOMAIN, domain, newRole, principal);
+    }
+
+    @Override
+    public Single<Role> update(ReferenceType referenceType, String referenceId, String id, UpdateRole updateRole, User principal) {
+        LOGGER.debug("Update a role {} for {} {}", id, referenceType, referenceId);
+
+        return findById(referenceType, referenceId, id)
                 .map(role -> {
                     if (role.isSystem()) {
                         throw new SystemRoleUpdateException(id);
                     }
                     return role;
                 })
-                .flatMapSingle(oldRole -> {
+                .flatMap(oldRole -> {
                     // check if role name is unique
-                    return checkRoleUniqueness(updateRole.getName(), oldRole.getId(), domain)
+                    return checkRoleUniqueness(updateRole.getName(), oldRole.getId(), referenceType, referenceId)
                             .flatMap(irrelevant -> {
                                 Role roleToUpdate = new Role(oldRole);
                                 roleToUpdate.setName(updateRole.getName());
@@ -165,7 +204,7 @@ public class RoleServiceImpl implements RoleService {
                                 return roleRepository.update(roleToUpdate)
                                         // create event for sync process
                                         .flatMap(role -> {
-                                            Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getDomain(), Action.UPDATE));
+                                            Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType() == ReferenceType.DOMAIN ? role.getReferenceId() : null, Action.UPDATE));
                                             return eventService.create(event).flatMap(__ -> Single.just(role));
                                         })
                                         .doOnSuccess(role -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_UPDATED).oldValue(oldRole).role(role)))
@@ -180,13 +219,18 @@ public class RoleServiceImpl implements RoleService {
                     LOGGER.error("An error occurs while trying to update a role", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a role", ex));
                 });
-
     }
 
     @Override
-    public Completable delete(String roleId, User principal) {
+    public Single<Role> update(String domain, String id, UpdateRole updateRole, User principal) {
+
+        return update(ReferenceType.DOMAIN, domain, id, updateRole, principal);
+    }
+
+    @Override
+    public Completable delete(ReferenceType referenceType, String referenceId, String roleId, User principal) {
         LOGGER.debug("Delete role {}", roleId);
-        return roleRepository.findById(roleId)
+        return roleRepository.findById(referenceType, referenceId, roleId)
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(roleId)))
                 .map(role -> {
                     if (role.isSystem()) {
@@ -195,7 +239,7 @@ public class RoleServiceImpl implements RoleService {
                     return role;
                 })
                 .flatMapCompletable(role -> roleRepository.delete(roleId)
-                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.ROLE, new Payload(role.getId(), role.getDomain(), Action.DELETE)))))
+                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType() == ReferenceType.DOMAIN ? role.getReferenceId() : null, Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).role(role)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).throwable(throwable)))
                 )
@@ -215,7 +259,7 @@ public class RoleServiceImpl implements RoleService {
         Role role = initSystemRole(systemRole.name(), roleScope.getId(), permissions);
         return roleRepository.create(role)
                 .flatMap(role1 -> {
-                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType() == ReferenceType.DOMAIN ? role1.getReferenceId() : null, Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(role1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -243,7 +287,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private Completable upsert(Role role) {
-        return roleRepository.findByDomainAndNameAndScope(role.getDomain(), role.getName(), role.getScope())
+        return roleRepository.findByNameAndScope(role.getReferenceType(), role.getReferenceId(), role.getName(), role.getScope())
                 .map(Optional::ofNullable)
                 .defaultIfEmpty(Optional.empty())
                 .flatMapCompletable(optRole -> {
@@ -253,7 +297,7 @@ public class RoleServiceImpl implements RoleService {
                         role.setUpdatedAt(role.getCreatedAt());
                         return roleRepository.create(role)
                                 .flatMap(role1 -> {
-                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getDomain(), Action.CREATE));
+                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType() == ReferenceType.DOMAIN ? role1.getReferenceId() : null, Action.CREATE));
                                     return eventService.create(event).flatMap(__ -> Single.just(role1));
                                 })
                                 .onErrorResumeNext(ex -> {
@@ -280,7 +324,7 @@ public class RoleServiceImpl implements RoleService {
                         role.setUpdatedAt(new Date());
                         return roleRepository.update(role)
                                 .flatMap(role1 -> {
-                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getDomain(), Action.UPDATE));
+                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType() == ReferenceType.DOMAIN ? role1.getReferenceId() : null, Action.UPDATE));
                                     return eventService.create(event).flatMap(__ -> Single.just(role1));
                                 })
                                 .onErrorResumeNext(ex -> {
@@ -301,7 +345,9 @@ public class RoleServiceImpl implements RoleService {
     private Role initSystemRole(String roleName, int roleScope, List<String> permissions) {
         Role role = new Role();
         role.setSystem(true);
-        role.setDomain("admin");
+        // System role is global to the platform.
+        role.setReferenceType(ReferenceType.PLATFORM);
+        role.setReferenceId(Platform.DEFAULT);
         role.setName(roleName);
         role.setDescription("System Role. Created by Gravitee.io");
         role.setScope(roleScope);
@@ -312,8 +358,8 @@ public class RoleServiceImpl implements RoleService {
         return role;
     }
 
-    private Single<Set<Role>> checkRoleUniqueness(String roleName, String roleId, String domain) {
-        return roleRepository.findByDomain(domain)
+    private Single<Set<Role>> checkRoleUniqueness(String roleName, String roleId, ReferenceType referenceType, String referenceId) {
+        return roleRepository.findAll(referenceType, referenceId)
                 .flatMap(roles -> {
                     if (roles.stream()
                             .filter(role -> !role.getId().equals(roleId))

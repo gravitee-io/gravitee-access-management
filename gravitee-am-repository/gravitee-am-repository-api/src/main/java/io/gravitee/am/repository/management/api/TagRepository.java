@@ -27,5 +27,5 @@ import java.util.Set;
  */
 public interface TagRepository extends CrudRepository<Tag, String> {
 
-    Single<Set<Tag>> findAll();
+    Single<Set<Tag>> findAll(String organizationId);
 }

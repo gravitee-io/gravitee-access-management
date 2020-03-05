@@ -19,6 +19,7 @@ import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.service.exception.GroupAlreadyExistsException;
@@ -123,8 +124,8 @@ public class GroupServiceTest {
 
     @Test
     public void shouldFindByDomainPagination() {
-        Page pagedGroups = new Page(Collections.singleton(new Group()), 1 , 1);
-        when(groupRepository.findByDomain(DOMAIN, 1 , 1)).thenReturn(Single.just(pagedGroups));
+        Page pagedGroups = new Page(Collections.singleton(new Group()), 1, 1);
+        when(groupRepository.findAll(ReferenceType.DOMAIN, DOMAIN, 1, 1)).thenReturn(Single.just(pagedGroups));
         TestObserver<Page<Group>> testObserver = groupService.findByDomain(DOMAIN, 1, 1).test();
         testObserver.awaitTerminalEvent();
 
@@ -135,10 +136,10 @@ public class GroupServiceTest {
 
     @Test
     public void shouldFindByDomainPagination_technicalException() {
-        when(groupRepository.findByDomain(DOMAIN, 1 , 1)).thenReturn(Single.error(TechnicalException::new));
+        when(groupRepository.findAll(ReferenceType.DOMAIN, DOMAIN, 1, 1)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        groupService.findByDomain(DOMAIN, 1 , 1).subscribe(testObserver);
+        groupService.findByDomain(DOMAIN, 1, 1).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -147,9 +148,13 @@ public class GroupServiceTest {
     @Test
     public void shouldCreate() {
         NewGroup newGroup = Mockito.mock(NewGroup.class);
+        Group group = new Group();
+        group.setReferenceType(ReferenceType.DOMAIN);
+        group.setReferenceId(DOMAIN);
+
         when(newGroup.getName()).thenReturn("name");
-        when(groupRepository.findByDomainAndName(DOMAIN, newGroup.getName())).thenReturn(Maybe.empty());
-        when(groupRepository.create(any(Group.class))).thenReturn(Single.just(new Group()));
+        when(groupRepository.findByName(ReferenceType.DOMAIN, DOMAIN, newGroup.getName())).thenReturn(Maybe.empty());
+        when(groupRepository.create(any(Group.class))).thenReturn(Single.just(group));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = groupService.create(DOMAIN, newGroup).test();
@@ -165,7 +170,7 @@ public class GroupServiceTest {
     public void shouldCreate_technicalException() {
         NewGroup newGroup = Mockito.mock(NewGroup.class);
         when(newGroup.getName()).thenReturn("name");
-        when(groupRepository.findByDomainAndName(DOMAIN, newGroup.getName())).thenReturn(Maybe.empty());
+        when(groupRepository.findByName(ReferenceType.DOMAIN, DOMAIN, newGroup.getName())).thenReturn(Maybe.empty());
         when(groupRepository.create(any(Group.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
@@ -179,7 +184,7 @@ public class GroupServiceTest {
     public void shouldCreate_alreadyExists() {
         NewGroup newGroup = Mockito.mock(NewGroup.class);
         when(newGroup.getName()).thenReturn("names");
-        when(groupRepository.findByDomainAndName(DOMAIN, newGroup.getName())).thenReturn(Maybe.just(new Group()));
+        when(groupRepository.findByName(ReferenceType.DOMAIN, DOMAIN, newGroup.getName())).thenReturn(Maybe.just(new Group()));
 
         TestObserver testObserver = new TestObserver();
         groupService.create(DOMAIN, newGroup).subscribe(testObserver);
@@ -191,10 +196,14 @@ public class GroupServiceTest {
     @Test
     public void shouldUpdate() {
         UpdateGroup updateGroup = Mockito.mock(UpdateGroup.class);
+        Group group = new Group();
+        group.setReferenceType(ReferenceType.DOMAIN);
+        group.setReferenceId(DOMAIN);
+
         when(updateGroup.getName()).thenReturn("name");
-        when(groupRepository.findById("my-group")).thenReturn(Maybe.just(new Group()));
-        when(groupRepository.findByDomainAndName(DOMAIN, updateGroup.getName())).thenReturn(Maybe.empty());
-        when(groupRepository.update(any(Group.class))).thenReturn(Single.just(new Group()));
+        when(groupRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-group")).thenReturn(Maybe.just(group));
+        when(groupRepository.findByName(ReferenceType.DOMAIN, DOMAIN, updateGroup.getName())).thenReturn(Maybe.empty());
+        when(groupRepository.update(any(Group.class))).thenReturn(Single.just(group));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = groupService.update(DOMAIN, "my-group", updateGroup).test();
@@ -203,14 +212,14 @@ public class GroupServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(groupRepository, times(1)).findById("my-group");
+        verify(groupRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, "my-group");
         verify(groupRepository, times(1)).update(any(Group.class));
     }
 
     @Test
     public void shouldUpdate_technicalException() {
         UpdateGroup updateGroup = Mockito.mock(UpdateGroup.class);
-        when(groupRepository.findById("my-group")).thenReturn(Maybe.just(new Group()));
+        when(groupRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-group")).thenReturn(Maybe.just(new Group()));
 
         TestObserver testObserver = new TestObserver();
         groupService.update(DOMAIN, "my-group", updateGroup).subscribe(testObserver);
@@ -222,7 +231,7 @@ public class GroupServiceTest {
     @Test
     public void shouldUpdate_groupNotFound() {
         UpdateGroup updateGroup = Mockito.mock(UpdateGroup.class);
-        when(groupRepository.findById("my-group")).thenReturn(Maybe.empty());
+        when(groupRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-group")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
         groupService.update(DOMAIN, "my-group", updateGroup).subscribe(testObserver);
@@ -233,11 +242,11 @@ public class GroupServiceTest {
 
     @Test
     public void shouldDelete() {
-        when(groupRepository.findById("my-group")).thenReturn(Maybe.just(new Group()));
+        when(groupRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-group")).thenReturn(Maybe.just(new Group()));
         when(groupRepository.delete("my-group")).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver testObserver = groupService.delete("my-group").test();
+        TestObserver testObserver = groupService.delete(ReferenceType.DOMAIN, DOMAIN, "my-group").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -248,11 +257,11 @@ public class GroupServiceTest {
 
     @Test
     public void shouldDelete_technicalException() {
-        when(groupRepository.findById("my-group")).thenReturn(Maybe.just(new Group()));
+        when(groupRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-group")).thenReturn(Maybe.just(new Group()));
         when(groupRepository.delete("my-group")).thenReturn(Completable.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        groupService.delete("my-group").subscribe(testObserver);
+        groupService.delete(ReferenceType.DOMAIN, DOMAIN, "my-group").subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -260,10 +269,10 @@ public class GroupServiceTest {
 
     @Test
     public void shouldDelete_groupNotFound() {
-        when(groupRepository.findById("my-group")).thenReturn(Maybe.empty());
+        when(groupRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-group")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
-        groupService.delete("my-group").subscribe(testObserver);
+        groupService.delete(ReferenceType.DOMAIN, DOMAIN, "my-group").subscribe(testObserver);
 
         testObserver.assertError(GroupNotFoundException.class);
         testObserver.assertNotComplete();
@@ -286,11 +295,11 @@ public class GroupServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(groupRepository.findById(group.getId())).thenReturn(Maybe.just(group));
+        when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(groupRepository.update(any())).thenReturn(Single.just(new Group()));
 
-        TestObserver testObserver = groupService.assignRoles(group.getId(), rolesIds).test();
+        TestObserver testObserver = groupService.assignRoles(ReferenceType.DOMAIN, DOMAIN, group.getId(), rolesIds).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(groupRepository, times(1)).update(any());
@@ -311,10 +320,10 @@ public class GroupServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(groupRepository.findById(group.getId())).thenReturn(Maybe.just(group));
+        when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
-        TestObserver testObserver = groupService.assignRoles(group.getId(), rolesIds).test();
+        TestObserver testObserver = groupService.assignRoles(ReferenceType.DOMAIN, DOMAIN, group.getId(), rolesIds).test();
         testObserver.assertNotComplete();
         testObserver.assertError(RoleNotFoundException.class);
         verify(groupRepository, never()).update(any());
@@ -335,11 +344,11 @@ public class GroupServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(groupRepository.findById(group.getId())).thenReturn(Maybe.just(group));
+        when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(groupRepository.update(any())).thenReturn(Single.just(new Group()));
 
-        TestObserver testObserver = groupService.revokeRoles(group.getId(), rolesIds).test();
+        TestObserver testObserver = groupService.revokeRoles(ReferenceType.DOMAIN, DOMAIN, group.getId(), rolesIds).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(groupRepository, times(1)).update(any());
@@ -360,10 +369,10 @@ public class GroupServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(groupRepository.findById(group.getId())).thenReturn(Maybe.just(group));
+        when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
-        TestObserver testObserver = groupService.revokeRoles(group.getId(), rolesIds).test();
+        TestObserver testObserver = groupService.revokeRoles(ReferenceType.DOMAIN, DOMAIN, group.getId(), rolesIds).test();
         testObserver.assertNotComplete();
         testObserver.assertError(RoleNotFoundException.class);
         verify(groupRepository, never()).update(any());

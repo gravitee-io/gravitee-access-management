@@ -34,6 +34,8 @@ public class TagMongo extends Auditable {
 
     private String description;
 
+    private String organizationId;
+
     public String getId() {
         return id;
     }
@@ -58,6 +60,14 @@ public class TagMongo extends Auditable {
         this.description = description;
     }
 
+    public String getOrganizationId() {
+        return organizationId;
+    }
+
+    public void setOrganizationId(String organizationId) {
+        this.organizationId = organizationId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -72,4 +82,5 @@ public class TagMongo extends Auditable {
     public int hashCode() {
         return id.hashCode();
     }
+
 }

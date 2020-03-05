@@ -22,12 +22,12 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.Member;
 import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.membership.ReferenceType;
 import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.service.*;
@@ -76,6 +76,9 @@ public class MembershipServiceImpl implements MembershipService {
     private DomainService domainService;
 
     @Autowired
+    private OrganizationService organizationService;
+
+    @Autowired
     private EventService eventService;
 
     @Override
@@ -121,11 +124,11 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    public Single<Membership> addOrUpdate(Membership membership, User principal) {
+    public Single<Membership> addOrUpdate(String organizationId, Membership membership, User principal) {
         LOGGER.debug("Add or update membership {}", membership);
 
-        return checkMember(membership)
-                .andThen(checkRole(membership.getRole(), membership.getReferenceType()))
+        return checkMember(organizationId, membership)
+                .andThen(checkRole(organizationId, membership.getRole(), membership.getReferenceType(), membership.getReferenceId()))
                 .andThen(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())
                         .map(Optional::of)
                         .defaultIfEmpty(Optional.empty())
@@ -238,35 +241,18 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     /**
-     * Member must exist and be part of the platform users/groups (i.e master domain)
+     * Member must exist and be part of the organization users/groups
      * @param membership
      * @return
      */
-    private Completable checkMember(Membership membership) {
+    private Completable checkMember(String organizationId, Membership membership) {
+
         if (MemberType.USER.equals(membership.getMemberType())) {
-            return userService.findById(membership.getMemberId())
-                    .switchIfEmpty(Maybe.error(new UserNotFoundException(membership.getMemberId())))
-                    .flatMap(user -> domainService.findById(user.getDomain()))
-                    .switchIfEmpty(Maybe.error(new InvalidUserException("Invalid user domain")))
-                    .map(domain -> {
-                        if (!domain.isMaster()) {
-                            throw new UserNotFoundException(membership.getMemberId());
-                        }
-                        return domain;
-                    })
-                    .toSingle().toCompletable();
+            return userService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())
+                    .toCompletable();
         } else {
-            return groupService.findById(membership.getMemberId())
-                    .switchIfEmpty(Maybe.error(new GroupNotFoundException(membership.getMemberId())))
-                    .flatMap(user -> domainService.findById(user.getDomain()))
-                    .switchIfEmpty(Maybe.error(new InvalidGroupException("Invalid group domain")))
-                    .map(domain -> {
-                        if (!domain.isMaster()) {
-                            throw new GroupNotFoundException(membership.getMemberId());
-                        }
-                        return domain;
-                    })
-                    .toSingle().toCompletable();
+            return groupService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())
+                    .toCompletable();
         }
     }
 
@@ -275,25 +261,16 @@ public class MembershipServiceImpl implements MembershipService {
      * @param role
      * @return
      */
-    private Completable checkRole(String role, ReferenceType referenceType) {
+    private Completable checkRole(String organizationId, String role, ReferenceType referenceType, String referenceId) {
         return roleService.findById(role)
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(role)))
-                .flatMap(role1 -> domainService.findById(role1.getDomain())
-                        .switchIfEmpty(Maybe.error(new InvalidRoleException("Invalid role domain")))
-                        .map(domain -> {
-                            if (!domain.isMaster()) {
-                                throw new RoleNotFoundException(role);
-                            }
-                            try {
-                                if (!RoleScope.valueOf(role1.getScope()).name().equals(referenceType.name())) {
-                                    throw new InvalidRoleException("Invalid role scope");
-                                }
-                            } catch (Exception ex) {
-                                throw new InvalidRoleException(ex.getMessage());
-                            }
-                            return domain;
-                        })
-                )
-                .toSingle().toCompletable();
+                // Role must be on the right scope.
+                .filter(role1 -> RoleScope.valueOf(role1.getScope()).name().equals(referenceType.name()) &&
+                        // Role can be either a system role, either an organization role, either a domain role.
+                        (role1.isSystem()
+                                || (role1.getReferenceType() == ReferenceType.ORGANIZATION && organizationId.equals(role1.getReferenceId()))
+                                || (role1.getReferenceType() == referenceType && referenceId.equals(role1.getReferenceId()))))
+                .switchIfEmpty(Single.error(new InvalidRoleException("Invalid role")))
+                .toCompletable();
     }
 }

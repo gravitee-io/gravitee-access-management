@@ -24,6 +24,7 @@ import com.github.fge.jsonpatch.diff.JsonDiff;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
@@ -44,7 +45,8 @@ public abstract class AuditBuilder<T> {
     private String id;
     private String transactionalId;
     private Instant timestamp;
-    private String domain;
+    private ReferenceType referenceType;
+    private String referenceId;
     private String accessPointId;
     private String accessPointAlternativeId;
     private String accessPointName;
@@ -84,8 +86,20 @@ public abstract class AuditBuilder<T> {
         return (T) this;
     }
 
+    public T referenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+        return (T) this;
+    }
+
+    public T referenceId(String referenceId) {
+        this.referenceId = referenceId;
+        return (T) this;
+    }
+
+    // TODO: to remove when all resources will handle referenceType and referenceId.
     public T domain(String domain) {
-        this.domain = domain;
+        this.referenceType = ReferenceType.DOMAIN;
+        this.referenceId = domain;
         return (T) this;
     }
 
@@ -154,7 +168,8 @@ public abstract class AuditBuilder<T> {
         Audit audit = new Audit();
         audit.setId(id);
         audit.setTransactionId(transactionalId);
-        audit.setDomain(domain);
+        audit.setReferenceType(referenceType);
+        audit.setReferenceId(referenceId);
         audit.setType(type);
         audit.setTimestamp(timestamp);
 
@@ -233,7 +248,7 @@ public abstract class AuditBuilder<T> {
         }
 
         for (JsonNode child : current) {
-            if(child.isObject()) {
+            if (child.isObject()) {
                 parent = child;
                 if (child.fieldNames() != null && child.fieldNames().hasNext()) {
                     fieldName = child.fieldNames().next();

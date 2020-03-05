@@ -25,6 +25,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
@@ -38,10 +39,12 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -54,6 +57,7 @@ public class GroupServiceImpl implements GroupService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(GroupServiceImpl.class);
 
+    @Lazy
     @Autowired
     private GroupRepository groupRepository;
 
@@ -69,14 +73,20 @@ public class GroupServiceImpl implements GroupService {
     @Autowired
     private EventService eventService;
 
+
+    @Override
+    public Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
+        LOGGER.debug("Find groups by {}: {}", referenceType, referenceId);
+        return groupRepository.findAll(referenceType, referenceId, page, size)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find groups by {} {}", referenceType, referenceId, ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by %s %s", referenceType, referenceId), ex));
+                });
+    }
+
     @Override
     public Single<Page<Group>> findByDomain(String domain, int page, int size) {
-        LOGGER.debug("Find groups by domain: {}", domain);
-        return groupRepository.findByDomain(domain, page, size)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find groups by domain {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s", domain), ex));
-                });
+        return findAll(ReferenceType.DOMAIN, domain, page, size);
     }
 
     @Override
@@ -89,15 +99,21 @@ public class GroupServiceImpl implements GroupService {
                 });
     }
 
+
+    @Override
+    public Maybe<Group> findByName(ReferenceType referenceType, String referenceId, String groupName) {
+        LOGGER.debug("Find group by {} and name: {} {}", referenceType, referenceId, groupName);
+        return groupRepository.findByName(referenceType, referenceId, groupName)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a group using its name: {} for the {} {}", groupName, referenceType, referenceId, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a user using its name: %s for the %s %s", groupName, referenceType, referenceId), ex));
+                });
+    }
+
     @Override
     public Maybe<Group> findByDomainAndName(String domain, String groupName) {
-        LOGGER.debug("Find group by domain and name: {} {}", domain, groupName);
-        return groupRepository.findByDomainAndName(domain, groupName)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a group using its name: {} for the domain {}", groupName, domain, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a user using its name: %s for the domain %s", groupName, domain), ex));
-                });
+        return findByName(ReferenceType.DOMAIN, domain, groupName);
     }
 
     @Override
@@ -111,22 +127,36 @@ public class GroupServiceImpl implements GroupService {
                 });
     }
 
+
+    @Override
+    public Single<Group> findById(ReferenceType referenceType, String referenceId, String id) {
+        LOGGER.debug("Find group by id : {}", id);
+        return groupRepository.findById(referenceType, referenceId, id)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a group using its id {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a group using its id: %s", id), ex));
+                })
+                .switchIfEmpty(Single.error(new GroupNotFoundException(id)));
+    }
+
+
     @Override
     public Maybe<Group> findById(String id) {
         LOGGER.debug("Find group by id : {}", id);
         return groupRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a group using its ID", id, ex);
+                    LOGGER.error("An error occurs while trying to find a group using its ID {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a group using its ID: %s", id), ex));
                 });
     }
 
+
     @Override
-    public Single<Page<User>> findMembers(String groupId, int page, int size) {
+    public Single<Page<User>> findMembers(ReferenceType referenceType, String referenceId, String groupId, int page, int size) {
         LOGGER.debug("Find members for group : {}", groupId);
-        return findById(groupId)
-                .switchIfEmpty(Single.error(new GroupNotFoundException(groupId)))
+        return findById(referenceType, referenceId, groupId)
                 .flatMap(group -> {
                     if (group.getMembers() == null || group.getMembers().isEmpty()) {
                         return Single.just(new Page<>(null, page, size));
@@ -134,7 +164,7 @@ public class GroupServiceImpl implements GroupService {
                         // get members
                         List<String> sortedMembers = group.getMembers().stream().sorted().collect(Collectors.toList());
                         List<String> pagedMemberIds = sortedMembers.subList(Math.min(sortedMembers.size(), page), Math.min(sortedMembers.size(), page + size));
-                        return userService.findByIdIn(pagedMemberIds).map(users ->  new Page<>(users, page, pagedMemberIds.size()));
+                        return userService.findByIdIn(pagedMemberIds).map(users -> new Page<>(users, page, pagedMemberIds.size()));
                     }
                 });
     }
@@ -144,17 +174,17 @@ public class GroupServiceImpl implements GroupService {
         LOGGER.debug("Find groups for ids : {}", ids);
         return groupRepository.findByIdIn(ids)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a group using ids", ids, ex);
+                    LOGGER.error("An error occurs while trying to find a group using ids {}", ids, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a group using ids: %s", ids), ex));
                 });
     }
 
     @Override
-    public Single<Group> create(String domain, NewGroup newGroup, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Create a new group {} for domain {}", newGroup.getName(), domain);
+    public Single<Group> create(ReferenceType referenceType, String referenceId, NewGroup newGroup, io.gravitee.am.identityprovider.api.User principal) {
+        LOGGER.debug("Create a new group {} for {} {}", newGroup.getName(), referenceType, referenceId);
 
-        return findByDomainAndName(domain, newGroup.getName())
+        return findByName(referenceType, referenceId, newGroup.getName())
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {
@@ -163,7 +193,8 @@ public class GroupServiceImpl implements GroupService {
                         String groupId = RandomString.generate();
                         Group group = new Group();
                         group.setId(groupId);
-                        group.setDomain(domain);
+                        group.setReferenceType(referenceType);
+                        group.setReferenceId(referenceId);
                         group.setName(newGroup.getName());
                         group.setDescription(newGroup.getDescription());
                         group.setMembers(newGroup.getMembers());
@@ -172,11 +203,11 @@ public class GroupServiceImpl implements GroupService {
                         return group;
                     }
                 })
-                .flatMap(group -> setMembers(group))
+                .flatMap(this::setMembers)
                 .flatMap(group -> groupRepository.create(group))
                 // create event for sync process
                 .flatMap(group -> {
-                    Event event = new Event(Type.GROUP, new Payload(group.getId(), group.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.GROUP, new Payload(group.getId(), referenceType == ReferenceType.DOMAIN ? group.getReferenceId() : null, Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(group));
                 })
                 .onErrorResumeNext(ex -> {
@@ -189,18 +220,22 @@ public class GroupServiceImpl implements GroupService {
                 })
                 .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).group(group)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).throwable(throwable)));
-
     }
 
     @Override
-    public Single<Group> update(String domain, String id, UpdateGroup updateGroup, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Update a group {} for domain {}", id, domain);
+    public Single<Group> create(String domain, NewGroup newGroup, io.gravitee.am.identityprovider.api.User principal) {
 
-        return groupRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new GroupNotFoundException(id)))
+        return create(ReferenceType.DOMAIN, domain, newGroup, principal);
+    }
+
+    @Override
+    public Single<Group> update(ReferenceType referenceType, String referenceId, String id, UpdateGroup updateGroup, io.gravitee.am.identityprovider.api.User principal) {
+        LOGGER.debug("Update a group {} for {} {}", id, referenceType, referenceId);
+
+        return findById(referenceType, referenceId, id)
                 // check uniqueness
-                .flatMap(existingGroup -> groupRepository.findByDomainAndName(domain, updateGroup.getName())
-                        .map(group -> Optional.of(group))
+                .flatMapMaybe(existingGroup -> groupRepository.findByName(referenceType, referenceId, updateGroup.getName())
+                        .map(Optional::of)
                         .defaultIfEmpty(Optional.empty())
                         .map(optionalGroup -> {
                             if (optionalGroup.isPresent() && !optionalGroup.get().getId().equals(id)) {
@@ -221,7 +256,7 @@ public class GroupServiceImpl implements GroupService {
                             .flatMap(group -> groupRepository.update(group))
                             // create event for sync process
                             .flatMap(group -> {
-                                Event event = new Event(Type.GROUP, new Payload(group.getId(), group.getDomain(), Action.UPDATE));
+                                Event event = new Event(Type.GROUP, new Payload(group.getId(), referenceType == ReferenceType.DOMAIN ? group.getReferenceId() : null, Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(group));
                             })
                             .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).oldValue(oldGroup).group(group)))
@@ -239,13 +274,18 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Completable delete(String groupId, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<Group> update(String domain, String id, UpdateGroup updateGroup, io.gravitee.am.identityprovider.api.User principal) {
+
+        return update(ReferenceType.DOMAIN, domain, id, updateGroup, principal);
+    }
+
+    @Override
+    public Completable delete(ReferenceType referenceType, String referenceId, String groupId, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Delete group {}", groupId);
 
-        return groupRepository.findById(groupId)
-                .switchIfEmpty(Maybe.error(new GroupNotFoundException(groupId)))
+        return findById(referenceType, referenceId, groupId)
                 .flatMapCompletable(group -> groupRepository.delete(groupId)
-                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(group.getId(), group.getDomain(), Action.DELETE)))))
+                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(group.getId(), group.getReferenceType() == ReferenceType.DOMAIN ? group.getReferenceId() : null, Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).throwable(throwable)))
                 )
@@ -260,19 +300,18 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Single<Group> assignRoles(String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal) {
-        return assignRoles0(groupId, roles, principal, false);
+    public Single<Group> assignRoles(ReferenceType referenceType, String referenceId, String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal) {
+        return assignRoles0(referenceType, referenceId, groupId, roles, principal, false);
     }
 
     @Override
-    public Single<Group> revokeRoles(String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal) {
-        return assignRoles0(groupId, roles, principal, true);
+    public Single<Group> revokeRoles(ReferenceType referenceType, String referenceId, String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal) {
+        return assignRoles0(referenceType, referenceId, groupId, roles, principal, true);
     }
 
-    private Single<Group> assignRoles0(String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal, boolean revoke) {
-        return findById(groupId)
-                .switchIfEmpty(Maybe.error(new GroupNotFoundException(groupId)))
-                .flatMapSingle(oldGroup -> {
+    private Single<Group> assignRoles0(ReferenceType referenceType, String referenceId, String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal, boolean revoke) {
+        return findById(referenceType, referenceId, groupId)
+                .flatMap(oldGroup -> {
                     Group groupToUpdate = new Group(oldGroup);
                     // remove existing roles from the group
                     if (revoke) {
@@ -292,7 +331,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     private Single<Group> setMembers(Group group) {
-        List<String> userMembers = group.getMembers() != null ? group.getMembers().stream().filter(member -> member != null).distinct().collect(Collectors.toList()) : null;
+        List<String> userMembers = group.getMembers() != null ? group.getMembers().stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()) : null;
         if (userMembers != null && !userMembers.isEmpty()) {
             return userService.findByIdIn(userMembers)
                     .map(users -> {

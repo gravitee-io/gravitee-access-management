@@ -30,6 +30,8 @@ public class Tag {
 
     private String description;
 
+    private String organizationId;
+
     private Date createdAt;
 
     private Date updatedAt;
@@ -72,6 +74,14 @@ public class Tag {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getOrganizationId() {
+        return organizationId;
+    }
+
+    public void setOrganizationId(String organizationId) {
+        this.organizationId = organizationId;
     }
 
     @Override

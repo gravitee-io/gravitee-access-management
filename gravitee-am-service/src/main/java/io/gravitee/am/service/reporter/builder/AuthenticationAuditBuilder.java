@@ -21,6 +21,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,7 +47,7 @@ public class AuthenticationAuditBuilder extends AuditBuilder<AuthenticationAudit
     }
 
     public AuthenticationAuditBuilder user(User user) {
-        setActor(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getDomain());
+        setActor(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceType() == ReferenceType.DOMAIN ? user.getReferenceId() : null);
         return this;
     }
 

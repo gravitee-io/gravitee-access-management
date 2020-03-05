@@ -22,6 +22,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.admin.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.admin.service.AuthenticationService;
+import io.gravitee.am.model.ReferenceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,7 +102,10 @@ public class CustomSavedRequestAwareAuthenticationSuccessHandler extends SavedRe
         final User principal = (User) authentication.getPrincipal();
         ((DefaultUser) principal).setId(endUser.getId());
         principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
-        principal.getAdditionalInformation().put(Claims.domain, endUser.getDomain());
+
+        if(endUser.getReferenceType() == ReferenceType.DOMAIN) {
+            principal.getAdditionalInformation().put(Claims.domain, endUser.getReferenceId());
+        }
 
         // set roles
         Set<String> roles = endUser.getRoles() != null ? new HashSet<>(endUser.getRoles()) : new HashSet<>();

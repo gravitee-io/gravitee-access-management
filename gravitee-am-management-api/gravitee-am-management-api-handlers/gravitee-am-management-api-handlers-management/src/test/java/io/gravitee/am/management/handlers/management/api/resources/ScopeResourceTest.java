@@ -52,7 +52,7 @@ public class ScopeResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("scopes").path(scopeId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Scope scope = response.readEntity(Scope.class);
+        final Scope scope = readEntity(response, Scope.class);
         assertEquals(domainId, scope.getDomain());
         assertEquals(scopeId, scope.getKey());
     }

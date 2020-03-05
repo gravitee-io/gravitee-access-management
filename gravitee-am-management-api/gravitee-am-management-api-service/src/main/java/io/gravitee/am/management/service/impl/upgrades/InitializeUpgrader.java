@@ -15,23 +15,15 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Role;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.permissions.ManagementPermission;
 import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.model.permissions.SystemRole;
-import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.model.NewDomain;
-import io.gravitee.am.service.model.NewIdentityProvider;
-import io.gravitee.am.service.model.UpdateDomain;
-import io.gravitee.am.service.model.UpdateIdentityProvider;
+import io.gravitee.am.service.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +40,8 @@ import java.util.Collections;
 @Component
 public class InitializeUpgrader implements Upgrader, Ordered {
 
+    public static final String ORGANIZATION_ID = "DEFAULT";
+    public static final String ENVIRONMENT_ID = "DEFAULT";
     /**
      * Logger.
      */
@@ -66,6 +60,9 @@ public class InitializeUpgrader implements Upgrader, Ordered {
 
     @Autowired
     private RoleService roleService;
+
+    @Autowired
+    private OrganizationService organizationService;
 
     @Override
     public boolean upgrade() {
@@ -101,6 +98,7 @@ public class InitializeUpgrader implements Upgrader, Ordered {
             }
         } catch (Exception ex) {
             if (ex instanceof DomainNotFoundException) {
+                // Admin domain is (for now) still created to handle authentication.
                 domainNotFoundFallback();
             } else {
                 throw new TechnicalManagementException(ex);
@@ -116,24 +114,26 @@ public class InitializeUpgrader implements Upgrader, Ordered {
         NewDomain adminDomain = new NewDomain();
         adminDomain.setName("admin");
         adminDomain.setDescription("AM Admin domain");
-        Domain createdDomain = domainService.create(adminDomain).blockingGet();
+        Domain createdDomain = domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, adminDomain).blockingGet();
 
         // Create default admin role
         Role adminRole = roleService.createSystemRole(SystemRole.ADMIN, RoleScope.MANAGEMENT, ManagementPermission.permissions()).blockingGet();
 
+        // FIXME: **HACK** --> begin : admin idp is temporary reused for default organization (this will be soon completely removed).
         // Create an inline identity provider
         logger.info("Create an user-inline provider");
         NewIdentityProvider adminIdentityProvider = new NewIdentityProvider();
         adminIdentityProvider.setType("inline-am-idp");
         adminIdentityProvider.setName("Inline users");
         adminIdentityProvider.setConfiguration("{\"users\":[{\"firstname\":\"Administrator\",\"lastname\":\"\",\"username\":\"admin\",\"password\":\"adminadmin\"}]}");
-        IdentityProvider createdIdentityProvider = identityProviderService.create(createdDomain.getId(), adminIdentityProvider).blockingGet();
+
+        IdentityProvider createdIdentityProvider = identityProviderService.create(ReferenceType.ORGANIZATION, ORGANIZATION_ID, adminIdentityProvider, null).blockingGet();
         // Update inline identity provider to apply default role mapping
         UpdateIdentityProvider updateIdentityProvider = new UpdateIdentityProvider();
         updateIdentityProvider.setName(createdIdentityProvider.getName());
         updateIdentityProvider.setConfiguration(createdIdentityProvider.getConfiguration());
-        updateIdentityProvider.setRoleMapper(Collections.singletonMap(adminRole.getId(), new String[]{ "username=admin" } ));
-        identityProviderService.update(createdDomain.getId(), createdIdentityProvider.getId(), updateIdentityProvider).blockingGet();
+        updateIdentityProvider.setRoleMapper(Collections.singletonMap(adminRole.getId(), new String[]{"username=admin"}));
+        identityProviderService.update(ReferenceType.ORGANIZATION, ORGANIZATION_ID, createdIdentityProvider.getId(), updateIdentityProvider, null).blockingGet();
 
         logger.info("Associate user-inline provider to previously created domain");
         UpdateDomain updateDomain = new UpdateDomain();
@@ -145,12 +145,18 @@ public class InitializeUpgrader implements Upgrader, Ordered {
         updateDomain.setEnabled(true);
         domainService.update(createdDomain.getId(), updateDomain).blockingGet();
 
+        logger.info("Associate user-inline provider to default organization");
+        PatchOrganization patchOrganization = new PatchOrganization();
+        patchOrganization.setIdentities(Collections.singleton(createdIdentityProvider.getId()));
+        organizationService.update(Organization.DEFAULT, patchOrganization, null).blockingGet();
+        // FIXME: **HACK** --> end.
+
         logger.info("Set master flag for security domain {}", ADMIN_DOMAIN);
         return domainService.setMasterDomain(createdDomain.getId(), true).blockingGet();
     }
 
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
+        return Ordered.HIGHEST_PRECEDENCE + 1;
     }
 }

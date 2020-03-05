@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -31,11 +32,10 @@ public class DomainAuditBuilder extends ManagementAuditBuilder<DomainAuditBuilde
     private static final String ADMIN_DOMAIN = "admin";
 
     public DomainAuditBuilder domain(Domain domain) {
-        //  Domain create and delete events are triggered by the admin domain
-        if (EventType.DOMAIN_CREATED.equals(getType()) || EventType.DOMAIN_DELETED.equals(getType())) {
-            domain(ADMIN_DOMAIN);
-        } else {
-            domain(domain.getId());
+        //  TODO: Domain create and delete events will be triggered by the environment.
+        if (!EventType.DOMAIN_CREATED.equals(getType()) && !EventType.DOMAIN_DELETED.equals(getType())) {
+            referenceType(ReferenceType.DOMAIN);
+            referenceId(domain.getId());
         }
 
         if (EventType.DOMAIN_CREATED.equals(getType()) || EventType.DOMAIN_UPDATED.equals(getType())) {

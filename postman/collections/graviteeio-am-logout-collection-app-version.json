@@ -102,7 +102,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"logout\", \n\t\"description\": \"test logout flows\"\n}"
+							"raw": "{\n\t\"name\": \"logout-app-version\", \n\t\"description\": \"test logout flows\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/",

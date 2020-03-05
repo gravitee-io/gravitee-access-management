@@ -15,12 +15,14 @@
  */
 package io.gravitee.am.management.handlers.management.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.manager.certificate.CertificateManager;
 import io.gravitee.am.management.handlers.management.api.manager.group.GroupManager;
 import io.gravitee.am.management.handlers.management.api.manager.membership.MembershipManager;
 import io.gravitee.am.management.handlers.management.api.manager.role.RoleManager;
+import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.service.*;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.AuditService;
@@ -46,6 +48,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
@@ -63,6 +66,8 @@ import static org.mockito.Mockito.when;
 public abstract class JerseySpringTest {
 
     protected static final String USER_NAME = "UnitTests";
+
+    protected ObjectMapper objectMapper = new ObjectMapperResolver().getContext(ObjectMapper.class);
 
     @Autowired
     protected DomainService domainService;
@@ -328,11 +333,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     public void setApplicationContext(final ApplicationContext context) {
-        _jerseyTest = new JerseyTest()
-        {
+        _jerseyTest = new JerseyTest() {
             @Override
-            protected Application configure()
-            {
+            protected Application configure() {
                 ResourceConfig application = new ManagementApplication();
                 application.register(AuthenticationFilter.class);
                 application.property("contextConfig", context);
@@ -352,15 +355,44 @@ public abstract class JerseySpringTest {
                     User endUser = new DefaultUser(USER_NAME);
                     return new UsernamePasswordAuthenticationToken(endUser, null);
                 }
+
                 @Override
                 public boolean isUserInRole(String string) {
                     return true;
                 }
+
                 @Override
-                public boolean isSecure() { return true; }
+                public boolean isSecure() {
+                    return true;
+                }
+
                 @Override
-                public String getAuthenticationScheme() { return "BASIC"; }
+                public String getAuthenticationScheme() {
+                    return "BASIC";
+                }
             });
+        }
+    }
+
+    /**
+     * Allows to read response entity using object mapper instead of jersey's own implementation.
+     * It is especially useful to ensure objects are deserialize from json using same feature (ex: lower cased enum, ...).
+     *
+     * @param response the jaxrs response.
+     * @param clazz the type of entity
+     * @param <T> the expected type of entity.
+     *
+     * @return the deserialized entity.
+     */
+    protected <T> T readEntity(Response response, Class<T> clazz) {
+
+        try {
+            if(clazz == String.class) {
+                return (T) response.readEntity(String.class);
+            }
+            return objectMapper.readValue(response.readEntity(String.class), clazz);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

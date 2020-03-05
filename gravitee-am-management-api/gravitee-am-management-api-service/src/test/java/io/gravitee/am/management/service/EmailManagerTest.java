@@ -19,6 +19,7 @@ import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
 import io.gravitee.am.management.service.impl.EmailManagerImpl;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import org.junit.Assert;
 import org.junit.Before;
@@ -67,12 +68,13 @@ public class EmailManagerTest {
         domainEmail.setEnabled(true);
         domainEmail.setExpiresAfter(10000);
         domainEmail.setTemplate(Template.REGISTRATION_CONFIRMATION.template());
-        domainEmail.setDomain("domain1");
+        domainEmail.setReferenceType(ReferenceType.DOMAIN);
+        domainEmail.setReferenceId("domain1");
         domainEmail.setSubject("Domain subject");
 
         emailManager.reloadEmail(domainEmail);
 
-        String templateKey = Template.REGISTRATION_CONFIRMATION.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + "domain1";
+        String templateKey = Template.REGISTRATION_CONFIRMATION.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + "domain1";
         Email email = emailManager.getEmail(templateKey, "subject", 1000);
 
         Assert.assertNotNull(email);
@@ -88,22 +90,23 @@ public class EmailManagerTest {
         domainEmail.setEnabled(true);
         domainEmail.setExpiresAfter(10000);
         domainEmail.setTemplate(Template.RESET_PASSWORD.template());
-        domainEmail.setDomain("domain1");
+        domainEmail.setReferenceType(ReferenceType.DOMAIN);
+        domainEmail.setReferenceId("domain1");
         domainEmail.setSubject("Domain subject");
 
-        Email clientEmail  = new Email();
+        Email clientEmail = new Email();
         clientEmail.setEnabled(true);
         clientEmail.setExpiresAfter(10001);
         clientEmail.setTemplate(Template.RESET_PASSWORD.template());
-        clientEmail.setDomain("domain1");
+        clientEmail.setReferenceType(ReferenceType.DOMAIN);
+        clientEmail.setReferenceId("domain1");
         clientEmail.setClient("client1");
         clientEmail.setSubject("Client subject");
-
 
         emailManager.reloadEmail(domainEmail);
         emailManager.reloadEmail(clientEmail);
 
-        String templateKey = Template.RESET_PASSWORD.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + "domain1";
+        String templateKey = Template.RESET_PASSWORD.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + "domain1";
         String templateClientKey = templateKey + EmailManager.TEMPLATE_NAME_SEPARATOR + "client1";
 
         Email email = emailManager.getEmail(templateClientKey, "subject", 1000);

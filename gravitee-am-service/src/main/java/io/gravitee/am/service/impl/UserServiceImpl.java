@@ -23,6 +23,7 @@ import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.EventService;
@@ -41,6 +42,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -56,6 +58,7 @@ public class UserServiceImpl implements UserService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
 
+    @Lazy
     @Autowired
     private UserRepository userRepository;
 
@@ -79,23 +82,33 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<Page<User>> findByDomain(String domain, int page, int size) {
-        LOGGER.debug("Find users by domain: {}", domain);
-        return userRepository.findByDomain(domain, page, size)
+    public Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
+        LOGGER.debug("Find users by {}: {}", referenceType, referenceId);
+        return userRepository.findAll(referenceType, referenceId, page, size)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find users by domain {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s", domain), ex));
+                    LOGGER.error("An error occurs while trying to find users by {} {}", referenceType, referenceId, ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by %s %s", referenceType, referenceId), ex));
+                });
+    }
+
+    @Override
+    public Single<Page<User>> findByDomain(String domain, int page, int size) {
+        return findAll(ReferenceType.DOMAIN, domain, page, size);
+    }
+
+    @Override
+    public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
+        LOGGER.debug("Search users for {} {} with query {}", referenceType, referenceId, query);
+        return userRepository.search(referenceType, referenceId, query, page, size)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to search users for {} {} and query {}", referenceType, referenceId, query, ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for %s %s and query %s", referenceType, referenceId, query), ex));
                 });
     }
 
     @Override
     public Single<Page<User>> search(String domain, String query, int page, int size) {
-        LOGGER.debug("Search users for domain {} with query {}", domain, query);
-        return userRepository.search(domain, query, page, size)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to search users for domain {} and query {}", domain, query, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for domain %s and query %s", domain, query), ex));
-                });
+        return search(ReferenceType.DOMAIN, domain, query, page, size);
     }
 
     @Override
@@ -119,6 +132,20 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
+
+    @Override
+    public Single<User> findById(ReferenceType referenceType, String referenceId, String id) {
+
+        LOGGER.debug("Find user by id : {}", id);
+        return userRepository.findById(referenceType, referenceId, id)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a user using its ID {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a user using its ID: %s", id), ex));
+                })
+                .switchIfEmpty(Single.error(new UserNotFoundException(id)));
+    }
+
     @Override
     public Maybe<User> findById(String id) {
         LOGGER.debug("Find user by id : {}", id);
@@ -129,7 +156,6 @@ public class UserServiceImpl implements UserService {
                             String.format("An error occurs while trying to find a user using its ID: %s", id), ex));
                 });
     }
-
 
     @Override
     public Maybe<User> findByDomainAndUsername(String domain, String username) {
@@ -143,32 +169,43 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
-        LOGGER.debug("Find user by domain, username and source: {} {}", domain, username, source);
-        return userRepository.findByDomainAndUsernameAndSource(domain, username, source)
+    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
+        LOGGER.debug("Find user by {} {}, username and source: {} {}", referenceType, referenceId, username, source);
+        return userRepository.findByUsernameAndSource(referenceType, referenceId, username, source)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a user using its username: {} for the domain and source {}", username, domain, source, ex);
+                    LOGGER.error("An error occurs while trying to find a user using its username: {} for the {} {}  and source {}", username, referenceType, referenceId, source, ex);
                     return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a user using its username: %s for the domain %s and source %s", username, domain, source), ex));
+                            String.format("An error occurs while trying to find a user using its username: %s for the %s %s and source %s", username, referenceType, referenceId, source), ex));
                 });
     }
 
     @Override
-    public Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source) {
-        LOGGER.debug("Find user by domain, externalId and source: {} {}", domain, externalId, source);
-        return userRepository.findByDomainAndExternalIdAndSource(domain, externalId, source)
+    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
+        return findByUsernameAndSource(ReferenceType.DOMAIN, domain, username, source);
+    }
+
+    @Override
+    public Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source) {
+        LOGGER.debug("Find user by {} {}, externalId and source: {} {}", referenceType, referenceId, externalId, source);
+        return userRepository.findByExternalIdAndSource(referenceType, referenceId, externalId, source)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a user using its externalId: {} for the domain and source {}", externalId, domain, source, ex);
+                    LOGGER.error("An error occurs while trying to find a user using its externalId: {} for the {} and source {}", externalId, referenceType, referenceId, source, ex);
                     return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a user using its externalId: %s for the domain %s and source %s", externalId, domain, source), ex));
+                            String.format("An error occurs while trying to find a user using its externalId: %s for the %s %s and source %s", externalId, referenceType, referenceId, source), ex));
                 });
     }
 
     @Override
     public Single<User> create(String domain, NewUser newUser) {
-        LOGGER.debug("Create a new user {} for domain {}", newUser, domain);
 
-        return userRepository.findByDomainAndUsernameAndSource(domain, newUser.getUsername(), newUser.getSource())
+        return create(ReferenceType.DOMAIN, domain, newUser);
+    }
+
+    @Override
+    public Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser) {
+        LOGGER.debug("Create a new user {} for {} {}", newUser, referenceType, referenceId);
+
+        return userRepository.findByDomainAndUsernameAndSource(referenceId, newUser.getUsername(), newUser.getSource())
                 .isEmpty()
                 .flatMap(isEmpty -> {
                     if (!isEmpty) {
@@ -179,7 +216,8 @@ public class UserServiceImpl implements UserService {
                         User user = new User();
                         user.setId(userId);
                         user.setExternalId(newUser.getExternalId());
-                        user.setDomain(domain);
+                        user.setReferenceType(referenceType);
+                        user.setReferenceId(referenceId);
                         user.setClient(newUser.getClient());
                         user.setUsername(newUser.getUsername());
                         user.setFirstName(newUser.getFirstName());
@@ -200,7 +238,7 @@ public class UserServiceImpl implements UserService {
                 })
                 .flatMap(user -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.USER, new Payload(user.getId(), referenceType == ReferenceType.DOMAIN ? user.getReferenceId() : null, Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user));
                 })
                 .onErrorResumeNext(ex -> {
@@ -221,7 +259,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.create(user)
                 .flatMap(user1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType() == ReferenceType.DOMAIN ? user1.getReferenceId() : null, Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -234,10 +272,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> update(String domain, String id, UpdateUser updateUser) {
-        LOGGER.debug("Update a user {} for domain {}", id, domain);
+    public Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser) {
+        LOGGER.debug("Update a user {} for {} {}", id, referenceType, referenceId);
 
-        return userRepository.findById(id)
+        return userRepository.findById(referenceType, referenceId, id)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
                 .flatMapSingle(oldUser -> {
                     oldUser.setClient(updateUser.getClient());
@@ -254,7 +292,7 @@ public class UserServiceImpl implements UserService {
                 })
                 .flatMap(user -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getDomain(), Action.UPDATE));
+                    Event event = new Event(Type.USER, new Payload(user.getId(), referenceType == ReferenceType.DOMAIN ? user.getReferenceId() : null, Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user));
                 })
                 .onErrorResumeNext(ex -> {
@@ -268,6 +306,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Single<User> update(String domain, String id, UpdateUser updateUser) {
+
+        return update(ReferenceType.DOMAIN, domain, id, updateUser);
+    }
+
+    @Override
     public Single<User> update(User user) {
         LOGGER.debug("Update a user {}", user);
         // updated date
@@ -275,7 +319,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.update(user)
                 .flatMap(user1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getDomain(), Action.UPDATE));
+                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType() == ReferenceType.DOMAIN ? user1.getReferenceId() : null, Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -299,7 +343,7 @@ public class UserServiceImpl implements UserService {
                     if (!groups.isEmpty()) {
                         roles.addAll(groups
                                 .stream()
-                                .filter(group ->  group.getRoles() != null && !group.getRoles().isEmpty())
+                                .filter(group -> group.getRoles() != null && !group.getRoles().isEmpty())
                                 .flatMap(group -> group.getRoles().stream())
                                 .collect(Collectors.toSet()));
                     }
@@ -344,9 +388,9 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> {
-                        // create event for sync process
-                        Event event = new Event(Type.USER, new Payload(user.getId(), user.getDomain(), Action.DELETE));
-                        return userRepository.delete(userId).andThen(eventService.create(event)).toCompletable();
+                    // create event for sync process
+                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceType() == ReferenceType.DOMAIN ? user.getReferenceId() : null, Action.DELETE));
+                    return userRepository.delete(userId).andThen(eventService.create(event)).toCompletable();
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

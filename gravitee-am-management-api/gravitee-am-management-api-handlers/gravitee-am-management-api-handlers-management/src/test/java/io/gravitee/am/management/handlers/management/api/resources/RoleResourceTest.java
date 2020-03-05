@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import org.junit.Test;
@@ -43,7 +44,7 @@ public class RoleResourceTest extends JerseySpringTest {
         final Role mockRole = new Role();
         mockRole.setId(roleId);
         mockRole.setName("role-name");
-        mockRole.setDomain(domainId);
+        mockRole.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockRole)).when(roleService).findById(roleId);
@@ -51,8 +52,8 @@ public class RoleResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("roles").path(roleId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Role role = response.readEntity(Role.class);
-        assertEquals(domainId, role.getDomain());
+        final Role role = readEntity(response, Role.class);
+        assertEquals(domainId, role.getReferenceId());
         assertEquals(roleId, role.getId());
     }
 
@@ -93,7 +94,8 @@ public class RoleResourceTest extends JerseySpringTest {
         final Role mockRole = new Role();
         mockRole.setId(roleId);
         mockRole.setName("role-name");
-        mockRole.setDomain("wrong-domain");
+        mockRole.setReferenceType(ReferenceType.DOMAIN);
+        mockRole.setReferenceId("wrong-domain");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockRole)).when(roleService).findById(roleId);

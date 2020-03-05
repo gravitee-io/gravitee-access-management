@@ -52,7 +52,7 @@ public class TagRepositoryProxy extends AbstractProxy<TagRepository> implements 
     }
 
     @Override
-    public Single<Set<Tag>> findAll() {
-        return target.findAll();
+    public Single<Set<Tag>> findAll(String organizationId) {
+        return target.findAll(organizationId);
     }
 }

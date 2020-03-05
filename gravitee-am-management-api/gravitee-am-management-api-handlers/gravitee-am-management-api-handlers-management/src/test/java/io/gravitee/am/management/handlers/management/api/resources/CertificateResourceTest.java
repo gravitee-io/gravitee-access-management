@@ -51,7 +51,7 @@ public class CertificateResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("certificates").path(certificateId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Certificate certificate = response.readEntity(Certificate.class);
+        final Certificate certificate = readEntity(response, Certificate.class);
         assertEquals(domainId, certificate.getDomain());
         assertEquals(certificateId, certificate.getId());
     }

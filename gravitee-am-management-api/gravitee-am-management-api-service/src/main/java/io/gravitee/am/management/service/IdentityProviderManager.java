@@ -17,6 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -29,6 +30,8 @@ public interface IdentityProviderManager {
     Single<IdentityProvider> reloadUserProvider(IdentityProvider identityProvider);
 
     Maybe<UserProvider> getUserProvider(String userProvider);
+
+    Single<IdentityProvider> create(ReferenceType referenceType, String referenceId);
 
     Single<IdentityProvider> create(String domain);
 

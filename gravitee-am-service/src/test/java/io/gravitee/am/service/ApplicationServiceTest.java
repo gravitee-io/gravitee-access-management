@@ -23,7 +23,6 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.membership.ReferenceType;
 import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -59,6 +58,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class ApplicationServiceTest {
 
+    public static final String ORGANIZATION_ID = "DEFAULT";
     @InjectMocks
     private ApplicationService applicationService = new ApplicationServiceImpl();
 
@@ -375,7 +375,7 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
             return mock;
         }).when(applicationTemplateManager).apply(any());
-        when(membershipService.addOrUpdate(any())).thenReturn(Single.just(new Membership()));
+        when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.PRIMARY_OWNER, RoleScope.APPLICATION)).thenReturn(Maybe.just(new Role()));
 
         TestObserver testObserver = applicationService.create(DOMAIN, newClient, new DefaultUser("username")).test();
@@ -386,7 +386,7 @@ public class ApplicationServiceTest {
 
         verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
         verify(applicationRepository, times(1)).create(any(Application.class));
-        verify(membershipService).addOrUpdate(any());
+        verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
     }
 
     @Test
@@ -802,10 +802,10 @@ public class ApplicationServiceTest {
         Form form = new Form();
         form.setId("form-id");
         when(formService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.singletonList(form)));
-        when(formService.delete(form.getId())).thenReturn(Completable.complete());
+        when(formService.delete(eq("my-domain"), eq(form.getId()))).thenReturn(Completable.complete());
         Email email = new Email();
         email.setId("email-id");
-        when(emailTemplateService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.singletonList(email)));
+        when(emailTemplateService.findByClient(ReferenceType.DOMAIN, existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.singletonList(email)));
         when(emailTemplateService.delete(email.getId())).thenReturn(Completable.complete());
         Membership membership = new Membership();
         membership.setId("membership-id");
@@ -819,7 +819,7 @@ public class ApplicationServiceTest {
         testObserver.assertNoErrors();
 
         verify(applicationRepository, times(1)).delete(existingClient.getId());
-        verify(formService, times(1)).delete(anyString());
+        verify(formService, times(1)).delete(eq("my-domain"), anyString());
         verify(emailTemplateService, times(1)).delete(anyString());
         verify(membershipService, times(1)).delete(anyString());
     }
@@ -833,7 +833,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.delete(existingClient.getId())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(formService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.emptyList()));
-        when(emailTemplateService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.emptyList()));
+        when(emailTemplateService.findByClient(ReferenceType.DOMAIN, existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.emptyList()));
         when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Single.just(Collections.emptyList()));
 
         TestObserver testObserver = applicationService.delete(existingClient.getId()).test();
@@ -843,7 +843,7 @@ public class ApplicationServiceTest {
         testObserver.assertNoErrors();
 
         verify(applicationRepository, times(1)).delete(existingClient.getId());
-        verify(formService, never()).delete(anyString());
+        verify(formService, never()).delete(anyString(), anyString());
         verify(emailTemplateService, never()).delete(anyString());
         verify(membershipService, never()).delete(anyString());
     }

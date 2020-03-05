@@ -19,13 +19,11 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Group;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -45,9 +43,6 @@ import java.util.Collections;
 public class GroupRoleResource extends AbstractResource {
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private GroupService groupService;
 
     @DELETE
@@ -65,11 +60,9 @@ public class GroupRoleResource extends AbstractResource {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(endUser -> groupService.revokeRoles(group, Collections.singletonList(role), authenticatedUser))
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        groupService.revokeRoles(ReferenceType.ORGANIZATION, organizationId, group, Collections.singletonList(role), authenticatedUser)
+                .subscribe(response::resume, response::resume);
     }
 }

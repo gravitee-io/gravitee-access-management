@@ -102,7 +102,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"applications\", \n\t\"description\": \"test application management through Access Management API\"\n}"
+							"raw": "{\n\t\"name\": \"applications-app-version\", \n\t\"description\": \"test application management through Access Management API\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/",

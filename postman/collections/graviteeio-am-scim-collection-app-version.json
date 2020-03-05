@@ -103,7 +103,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"scim-domain\", \n\t\"description\": \"test System for Cross-domain Identity Management specifications\"\n}"
+							"raw": "{\n\t\"name\": \"scim-domain-app-version\", \n\t\"description\": \"test System for Cross-domain Identity Management specifications\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/",
@@ -339,7 +339,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 6000);"
 										],
 										"type": "text/javascript"
 									}
@@ -1253,7 +1253,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 6000);"
 										],
 										"type": "text/javascript"
 									}

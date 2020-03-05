@@ -102,7 +102,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"user-domain\", \n\t\"description\": \"test System for Cross-domain Identity Management specifications\"\n}"
+							"raw": "{\n\t\"name\": \"user-domain-app-version\", \n\t\"description\": \"test System for Cross-domain Identity Management specifications\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/",
@@ -127,7 +127,7 @@
 								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
 								"exec": [
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 10000);"
 								],
 								"type": "text/javascript"
 							}
@@ -281,7 +281,7 @@
 													"",
 													"pm.test(\"UM - create role - name field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[name: ne peut pas être nul]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[name: may not be null]\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -849,7 +849,7 @@
 													"",
 													"pm.test(\"UM - create user - username field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[username: ne peut pas être nul]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[username: may not be null]\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -904,7 +904,7 @@
 													"",
 													"pm.test(\"UM - create user - email field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[email: ne peut pas être nul]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[email: may not be null]\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1641,7 +1641,7 @@
 													"",
 													"pm.test(\"UM - create group - name field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[name: ne peut pas être nul]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[name: may not be null]\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -2555,7 +2555,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 6000);"
 										],
 										"type": "text/javascript"
 									}

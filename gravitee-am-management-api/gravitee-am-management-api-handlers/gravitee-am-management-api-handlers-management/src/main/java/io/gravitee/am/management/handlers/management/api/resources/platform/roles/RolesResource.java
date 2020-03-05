@@ -20,15 +20,13 @@ import io.gravitee.am.management.handlers.management.api.model.RoleEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.model.permissions.RoleScope;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -57,9 +55,6 @@ public class RolesResource extends AbstractResource {
     @Autowired
     private RoleService roleService;
 
-    @Autowired
-    private DomainService domainService;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered roles of the platform")
@@ -68,34 +63,32 @@ public class RolesResource extends AbstractResource {
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(@QueryParam("scope") RoleScope scope,
                      @Suspended final AsyncResponse response) {
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(domain -> roleService.findByDomain(domain.getId())
-                        .map(roles -> {
-                            List<RoleEntity> sortedRoles = roles.stream()
-                                    // filter by scope
-                                    .filter(role -> {
-                                        if (scope == null) {
-                                            return true;
-                                        }
-                                        return role.getScope() != null && scope.getId() == role.getScope();
-                                    })
-                                    // if scope is not management return only non system role
-                                    .filter(role -> {
-                                        if (scope == null || RoleScope.MANAGEMENT.getId() == role.getScope()) {
-                                            return true;
-                                        }
-                                        return !role.isSystem();
-                                    })
-                                    .map(RoleEntity::new)
-                                    .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                                    .collect(Collectors.toList());
-                            return Response.ok(sortedRoles).build();
-                        })
-                )
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+
+        String organizationId = "DEFAULT";
+
+        roleService.findAll(ReferenceType.ORGANIZATION, organizationId)
+                .map(roles -> {
+                    List<RoleEntity> sortedRoles = roles.stream()
+                            // filter by scope
+                            .filter(role -> {
+                                if (scope == null) {
+                                    return true;
+                                }
+                                return role.getScope() != null && scope.getId() == role.getScope();
+                            })
+                            // if scope is not management return only non system role
+                            .filter(role -> {
+                                if (scope == null || RoleScope.MANAGEMENT.getId() == role.getScope()) {
+                                    return true;
+                                }
+                                return !role.isSystem();
+                            })
+                            .map(RoleEntity::new)
+                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                            .collect(Collectors.toList());
+                    return Response.ok(sortedRoles).build();
+                })
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
@@ -112,17 +105,14 @@ public class RolesResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> roleService.create(masterDomain.getId(), newRole, authenticatedUser)
-                        .map(role -> Response
-                                .created(URI.create("/platform/roles/" + role.getId()))
-                                .entity(role)
-                                .build())
-                )
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        roleService.create(ReferenceType.ORGANIZATION, organizationId, newRole, authenticatedUser)
+                .map(role -> Response
+                        .created(URI.create("/platform/roles/" + role.getId()))
+                        .entity(role)
+                        .build())
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{role}")

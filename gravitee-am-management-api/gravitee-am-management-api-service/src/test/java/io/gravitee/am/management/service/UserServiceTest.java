@@ -20,6 +20,7 @@ import io.gravitee.am.management.service.impl.UserServiceImpl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
@@ -52,6 +53,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
 
+    public static final String DOMAIN_ID = "domain#1";
     @InjectMocks
     private UserService userService = new UserServiceImpl();
 
@@ -140,7 +142,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
 
-        when(commonUserService.findById(id)).thenReturn(Maybe.just(user));
+        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq(id))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.empty());
         when(applicationService.findByDomainAndClientId(domain, updateUser.getClient())).thenReturn(Maybe.empty());
@@ -166,7 +168,7 @@ public class UserServiceTest {
         Application application = mock(Application.class);
         when(application.getDomain()).thenReturn("other-domain");
 
-        when(commonUserService.findById(id)).thenReturn(Maybe.just(user));
+        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq(id))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.just(application));
 
@@ -192,7 +194,7 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
 
-        when(commonUserService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
@@ -219,7 +221,7 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.empty());
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
 
-        when(commonUserService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
@@ -245,14 +247,14 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(userService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(commonUserService.update(any())).thenReturn(Single.just(new User()));
 
-       TestObserver testObserver = userService.assignRoles(user.getId(), rolesIds).test();
-       testObserver.assertComplete();
-       testObserver.assertNoErrors();
-       verify(commonUserService, times(1)).update(any());
+        TestObserver testObserver = userService.assignRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(commonUserService, times(1)).update(any());
     }
 
     @Test
@@ -270,10 +272,10 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(userService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
-        TestObserver testObserver = userService.assignRoles(user.getId(), rolesIds).test();
+        TestObserver testObserver = userService.assignRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds).test();
         testObserver.assertNotComplete();
         testObserver.assertError(RoleNotFoundException.class);
         verify(commonUserService, never()).update(any());
@@ -294,11 +296,11 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(userService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(commonUserService.update(any())).thenReturn(Single.just(new User()));
 
-        TestObserver testObserver = userService.revokeRoles(user.getId(), rolesIds).test();
+        TestObserver testObserver = userService.revokeRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(commonUserService, times(1)).update(any());
@@ -319,10 +321,10 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(userService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
-        TestObserver testObserver = userService.revokeRoles(user.getId(), rolesIds).test();
+        TestObserver testObserver = userService.revokeRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds).test();
         testObserver.assertNotComplete();
         testObserver.assertError(RoleNotFoundException.class);
         verify(commonUserService, never()).update(any());

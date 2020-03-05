@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Form;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewForm;
 import io.gravitee.am.service.model.UpdateForm;
 import io.reactivex.Completable;
@@ -36,23 +37,35 @@ public interface FormService {
 
     Single<List<Form>> findByDomain(String domain);
 
+    Single<List<Form>> findByClient(ReferenceType referenceType, String referenceId, String client);
+
     Single<List<Form>> findByDomainAndClient(String domain, String client);
 
+    Maybe<Form> findByTemplate(ReferenceType referenceType, String referenceId, String template);
+
     Maybe<Form> findByDomainAndTemplate(String domain, String template);
+
+    Maybe<Form> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template);
 
     Maybe<Form> findByDomainAndClientAndTemplate(String domain, String client, String template);
 
     Single<List<Form>> copyFromClient(String domain, String clientSource, String clientTarget);
 
+    Single<Form> create(ReferenceType referenceType, String referenceId, NewForm newForm, User principal);
+
     Single<Form> create(String domain, NewForm form, User principal);
 
     Single<Form> create(String domain, String client, NewForm form, User principal);
+
+    Single<Form> update(ReferenceType referenceType, String referenceId, String id, UpdateForm updateForm, User principal);
 
     Single<Form> update(String domain, String id, UpdateForm form, User principal);
 
     Single<Form> update(String domain, String client, String id, UpdateForm form, User principal);
 
-    Completable delete(String pageId, User principal);
+    Completable delete(ReferenceType referenceType, String referenceId, String formId, User principal);
+
+    Completable delete(String domain, String pageId, User principal);
 
     default Single<Form> create(String domain, NewForm form) {
         return create(domain, form, null);
@@ -70,8 +83,8 @@ public interface FormService {
         return update(domain, client, id, form, null);
     }
 
-    default Completable delete(String pageId) {
-        return delete(pageId, null);
+    default Completable delete(String domain, String pageId) {
+        return delete(domain, pageId, null);
     }
 
 }

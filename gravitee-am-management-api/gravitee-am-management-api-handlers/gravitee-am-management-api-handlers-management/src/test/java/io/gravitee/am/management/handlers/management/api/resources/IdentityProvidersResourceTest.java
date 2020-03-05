@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.HttpStatusCode;
@@ -51,12 +52,14 @@ public class IdentityProvidersResourceTest extends JerseySpringTest {
         final IdentityProvider mockIdentityProvider = new IdentityProvider();
         mockIdentityProvider.setId("identityProvider-1-id");
         mockIdentityProvider.setName("identityProvider-1-name");
-        mockIdentityProvider.setDomain(domainId);
+        mockIdentityProvider.setReferenceType(ReferenceType.DOMAIN);
+        mockIdentityProvider.setReferenceId(domainId);
 
         final IdentityProvider mockIdentityProvider2 = new IdentityProvider();
         mockIdentityProvider2.setId("identityProvider-2-id");
         mockIdentityProvider2.setName("identityProvider-2-name");
-        mockIdentityProvider2.setDomain(domainId);
+        mockIdentityProvider2.setReferenceType(ReferenceType.DOMAIN);
+        mockIdentityProvider2.setReferenceId(domainId);
 
         final List<IdentityProvider> identityProviders = Arrays.asList(mockIdentityProvider, mockIdentityProvider2);
 
@@ -66,7 +69,7 @@ public class IdentityProvidersResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("identities").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final List<IdentityProvider> responseEntity = response.readEntity(List.class);
+        final List<IdentityProvider> responseEntity = readEntity(response, List.class);
         assertTrue(responseEntity.size() == 2);
     }
 

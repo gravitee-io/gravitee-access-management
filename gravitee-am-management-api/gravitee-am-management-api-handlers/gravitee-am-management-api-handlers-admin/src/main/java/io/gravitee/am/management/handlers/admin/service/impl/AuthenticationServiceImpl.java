@@ -15,12 +15,11 @@
  */
 package io.gravitee.am.management.handlers.admin.service.impl;
 
-import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.management.handlers.admin.provider.security.EndUserAuthentication;
 import io.gravitee.am.management.handlers.admin.provider.security.ManagementAuthenticationContext;
 import io.gravitee.am.management.handlers.admin.service.AuthenticationService;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -48,9 +47,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private static final String CLIENT_ID = "admin";
 
     @Autowired
-    private Domain domain;
-
-    @Autowired
     private UserService userService;
 
     @Autowired
@@ -63,13 +59,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         ManagementAuthenticationContext authenticationContext = new ManagementAuthenticationContext();
         Map<String, String> details = auth.getDetails() == null ? new HashMap<>() : new HashMap<>((Map) auth.getDetails());
         details.forEach(authenticationContext::set);
-        authenticationContext.set(Claims.domain, domain.getId());
+        String organizationId = "DEFAULT";
+        authenticationContext.set("organization", organizationId);
 
         final EndUserAuthentication authentication = new EndUserAuthentication(principal.getUsername(), null, authenticationContext);
 
         final String source = details.get(SOURCE);
-        return userService.findByDomainAndExternalIdAndSource(domain.getId(), principal.getId(), source)
-                .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), principal.getUsername(), source)))
+        return userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getId(), source)
+                .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getUsername(), source)))
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
                 .flatMapSingle(existingUser -> {
                     existingUser.setSource(details.get(SOURCE));
@@ -94,7 +91,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         newUser.setUsername(principal.getUsername());
                         newUser.setSource(details.get(SOURCE));
                         newUser.setClient(CLIENT_ID);
-                        newUser.setDomain(domain.getId());
+                        newUser.setReferenceType(ReferenceType.ORGANIZATION);
+                        newUser.setReferenceId(organizationId);
                         newUser.setLoggedAt(new Date());
                         newUser.setLoginsCount(1l);
                         newUser.setRoles(principal.getRoles());
@@ -104,7 +102,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     return Single.error(ex);
                 })
                 .flatMap(userService::enhance)
-                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).domain(domain.getId()).client(CLIENT_ID).user(user)))
+                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).referenceType(ReferenceType.ORGANIZATION).referenceId(organizationId).client(CLIENT_ID).user(user)))
                 .blockingGet();
     }
 }

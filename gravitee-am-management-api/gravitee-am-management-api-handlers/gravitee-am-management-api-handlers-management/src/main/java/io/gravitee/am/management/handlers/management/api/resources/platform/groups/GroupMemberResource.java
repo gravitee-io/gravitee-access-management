@@ -19,14 +19,14 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.MemberAlreadyExistsException;
+import io.gravitee.am.service.exception.MemberNotFoundException;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -39,7 +39,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,9 +50,6 @@ public class GroupMemberResource extends AbstractResource {
 
     @Autowired
     private GroupService groupService;
-
-    @Autowired
-    private DomainService domainService;
 
     @Autowired
     private UserService userService;
@@ -73,34 +69,26 @@ public class GroupMemberResource extends AbstractResource {
                           @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> groupService.findById(group)
-                        .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
-                        .flatMapSingle(group1 -> userService.findById(userId)
-                                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                                .flatMapSingle(user -> {
-                                    if (group1.getMembers() != null && group1.getMembers().contains(userId)) {
-                                        return Single.error(new MemberAlreadyExistsException(userId));
-                                    }
+        String organizationId = "DEFAULT";
 
-                                    List<String> groupMembers = group1.getMembers() != null ? new ArrayList(group1.getMembers()) : new ArrayList();
-                                    groupMembers.add(userId);
+        groupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
+                .flatMap(group1 -> userService.findById(ReferenceType.ORGANIZATION, organizationId, userId)
+                        .flatMap(user -> {
+                            if (group1.getMembers() != null && group1.getMembers().contains(userId)) {
+                                return Single.error(new MemberAlreadyExistsException(userId));
+                            }
 
-                                    UpdateGroup updateGroup = new UpdateGroup();
-                                    updateGroup.setName(group1.getName());
-                                    updateGroup.setDescription(group1.getDescription());
-                                    updateGroup.setRoles(group1.getRoles());
-                                    updateGroup.setMembers(groupMembers);
-                                    return groupService.update(masterDomain.getId(), group, updateGroup, authenticatedUser);
-                                })
-                        )
-                )
-                .map(group1 -> Response.ok(group1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                            List<String> groupMembers = group1.getMembers() != null ? new ArrayList(group1.getMembers()) : new ArrayList();
+                            groupMembers.add(userId);
 
+                            UpdateGroup updateGroup = new UpdateGroup();
+                            updateGroup.setName(group1.getName());
+                            updateGroup.setDescription(group1.getDescription());
+                            updateGroup.setRoles(group1.getRoles());
+                            updateGroup.setMembers(groupMembers);
+                            return groupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser);
+                        }))
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE
@@ -118,33 +106,25 @@ public class GroupMemberResource extends AbstractResource {
                              @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> groupService.findById(group)
-                        .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
-                        .flatMapSingle(group1 -> userService.findById(userId)
-                                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                                .flatMapSingle(user -> {
-                                    if (group1.getMembers() == null || !group1.getMembers().contains(userId)){
-                                        return Single.error(new MemberNotFoundException(userId));
-                                    }
+        String organizationId = "DEFAULT";
 
-                                    List<String> groupMembers = group1.getMembers() != null ? new ArrayList(group1.getMembers()) : new ArrayList();
-                                    groupMembers.remove(userId);
+        groupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
+                .flatMap(group1 -> userService.findById(ReferenceType.ORGANIZATION, organizationId, userId)
+                        .flatMap(user -> {
+                            if (group1.getMembers() == null || !group1.getMembers().contains(userId)) {
+                                return Single.error(new MemberNotFoundException(userId));
+                            }
 
-                                    UpdateGroup updateGroup = new UpdateGroup();
-                                    updateGroup.setName(group1.getName());
-                                    updateGroup.setDescription(group1.getDescription());
-                                    updateGroup.setRoles(group1.getRoles());
-                                    updateGroup.setMembers(groupMembers);
-                                    return groupService.update(masterDomain.getId(), group, updateGroup, authenticatedUser);
-                                })
-                        )
-                )
-                .map(group1 -> Response.ok(group1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                            List<String> groupMembers = group1.getMembers() != null ? new ArrayList(group1.getMembers()) : new ArrayList();
+                            groupMembers.remove(userId);
 
+                            UpdateGroup updateGroup = new UpdateGroup();
+                            updateGroup.setName(group1.getName());
+                            updateGroup.setDescription(group1.getDescription());
+                            updateGroup.setRoles(group1.getRoles());
+                            updateGroup.setMembers(groupMembers);
+                            return groupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser);
+                        }))
+                .subscribe(response::resume, response::resume);
     }
 }

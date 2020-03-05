@@ -33,6 +33,7 @@ export interface DialogData {
   styleUrls: ['./form.component.scss']
 })
 export class FormComponent implements OnInit, AfterViewInit {
+  private adminContext = false;
   private domainId: string;
   private appId: string;
   private defaultFormContent = `// Custom form...`;
@@ -63,7 +64,7 @@ export class FormComponent implements OnInit, AfterViewInit {
     this.domainId = (this.route.snapshot.parent.parent.params['domainId']) ? this.route.snapshot.parent.parent.params['domainId'] : this.route.snapshot.parent.parent.parent.params['domainId'];
     this.appId = this.route.snapshot.parent.parent.params['appId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
+      this.adminContext = true;
       this.rawTemplate = 'LOGIN';
     } else {
       this.rawTemplate = this.route.snapshot.queryParams['template'];
@@ -139,7 +140,7 @@ export class FormComponent implements OnInit, AfterViewInit {
 
   create() {
     this.form['content'] = this.formContent;
-    this.formService.create(this.domainId, this.appId, this.form).subscribe(data => {
+    this.formService.create(this.domainId, this.appId, this.form, this.adminContext).subscribe(data => {
       this.snackbarService.open('Form created');
       this.formFound = true;
       this.form = data;
@@ -149,7 +150,7 @@ export class FormComponent implements OnInit, AfterViewInit {
 
   update() {
     this.form['content'] = this.formContent;
-    this.formService.update(this.domainId, this.appId, this.form.id, this.form).subscribe(data => {
+    this.formService.update(this.domainId, this.appId, this.form.id, this.form, this.adminContext).subscribe(data => {
       this.snackbarService.open('Form updated');
       this.formFound = true;
       this.form = data;
@@ -163,7 +164,7 @@ export class FormComponent implements OnInit, AfterViewInit {
       .confirm('Delete form', 'Are you sure you want to delete this form ?')
       .subscribe(res => {
         if (res) {
-          this.formService.delete(this.domainId, this.appId, this.form.id).subscribe(response => {
+          this.formService.delete(this.domainId, this.appId, this.form.id, this.adminContext).subscribe(response => {
             this.snackbarService.open('Form deleted');
             this.form = {};
             this.form.template = this.route.snapshot.queryParams['template'];

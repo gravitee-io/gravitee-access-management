@@ -26,6 +26,7 @@ import io.gravitee.am.management.handlers.management.api.resources.platform.sear
 import io.gravitee.am.management.handlers.management.api.resources.platform.settings.SettingsResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.tags.TagsResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.users.UsersResource;
+import io.swagger.annotations.Api;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ResourceContext;
@@ -36,6 +37,7 @@ import javax.ws.rs.core.Context;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Api(tags = "platform")
 @Path("/platform")
 public class PlatformResource {
 

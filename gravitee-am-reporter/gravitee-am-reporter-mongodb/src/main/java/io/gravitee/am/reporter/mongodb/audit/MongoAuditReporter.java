@@ -266,7 +266,8 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         AuditMongo auditMongo = new AuditMongo();
         auditMongo.setId(audit.getId());
         auditMongo.setTransactionId(audit.getTransactionId());
-        auditMongo.setDomain(audit.domain());
+        auditMongo.setReferenceType(audit.getReferenceType());
+        auditMongo.setReferenceId(audit.getReferenceId());
         auditMongo.setType(audit.getType());
         auditMongo.setTimestamp(audit.timestamp());
 
@@ -321,7 +322,8 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         Audit audit = new Audit();
         audit.setId(auditMongo.getId());
         audit.setTransactionId(auditMongo.getTransactionId());
-        audit.setDomain(auditMongo.getDomain());
+        audit.setReferenceType(auditMongo.getReferenceType());
+        audit.setReferenceId(auditMongo.getReferenceId());
         audit.setType(auditMongo.getType());
         audit.setTimestamp(auditMongo.getTimestamp());
 

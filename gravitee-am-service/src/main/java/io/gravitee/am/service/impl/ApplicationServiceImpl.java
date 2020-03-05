@@ -32,7 +32,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.membership.ReferenceType;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
@@ -333,7 +333,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     return applicationRepository.delete(id)
                             .andThen(eventService.create(event).toCompletable())
                             // delete email templates
-                            .andThen(emailTemplateService.findByDomainAndClient(application.getDomain(), application.getId())
+                            .andThen(emailTemplateService.findByClient(ReferenceType.DOMAIN, application.getDomain(), application.getId())
                                     .flatMapCompletable(emails -> {
                                         List<Completable> deleteEmailsCompletable = emails.stream().map(e -> emailTemplateService.delete(e.getId())).collect(Collectors.toList());
                                         return Completable.concat(deleteEmailsCompletable);
@@ -342,7 +342,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                             // delete form templates
                             .andThen(formService.findByDomainAndClient(application.getDomain(), application.getId())
                                     .flatMapCompletable(forms -> {
-                                        List<Completable> deleteFormsCompletable = forms.stream().map(f -> formService.delete(f.getId())).collect(Collectors.toList());
+                                        List<Completable> deleteFormsCompletable = forms.stream().map(f -> formService.delete(application.getDomain(), f.getId())).collect(Collectors.toList());
                                         return Completable.concat(deleteFormsCompletable);
                                     })
                             )
@@ -463,7 +463,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 membership.setReferenceId(application1.getId());
                                 membership.setReferenceType(ReferenceType.APPLICATION);
                                 membership.setRole(role.getId());
-                                return membershipService.addOrUpdate(membership)
+                                // FIXME: propagate organizationId.
+                                return membershipService.addOrUpdate("DEFAULT", membership)
                                         .map(__ -> domain);
                             });
                 })

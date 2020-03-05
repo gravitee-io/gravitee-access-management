@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RoleScope;
 
 import java.util.Date;
@@ -30,7 +31,8 @@ public class RoleEntity {
     private String id;
     private String name;
     private String description;
-    private String domain;
+    private ReferenceType referenceType;
+    private String referenceId;
     private String scope;
     private List<String> permissions;
     private List<String> availablePermissions;
@@ -42,7 +44,8 @@ public class RoleEntity {
         this.id = other.getId();
         this.name = other.getName();
         this.description = other.getDescription();
-        this.domain = other.getDomain();
+        this.referenceType = other.getReferenceType();
+        this.referenceId = other.getReferenceId();
         this.scope = convert(other.getScope());
         this.permissions = other.getPermissions();
         this.system = other.isSystem();
@@ -74,12 +77,20 @@ public class RoleEntity {
         this.description = description;
     }
 
-    public String getDomain() {
-        return domain;
+    public ReferenceType getReferenceType() {
+        return referenceType;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public String getScope() {

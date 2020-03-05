@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.model.NewRole;
@@ -34,7 +35,13 @@ import java.util.Set;
  */
 public interface RoleService {
 
+    Single<Set<Role>> findAll(ReferenceType referenceType, String referenceId);
+
+    Single<Set<Role>> findAllSystem();
+
     Single<Set<Role>> findByDomain(String domain);
+
+    Single<Role> findById(ReferenceType referenceType, String referenceId, String id);
 
     Maybe<Role> findById(String id);
 
@@ -44,11 +51,15 @@ public interface RoleService {
 
     Single<Role> createSystemRole(SystemRole systemRole, RoleScope roleScope, List<String> permissions, User principal);
 
+    Single<Role> create(ReferenceType referenceType, String referenceId, NewRole newRole, User principal);
+
     Single<Role> create(String domain, NewRole role, User principal);
+
+    Single<Role> update(ReferenceType referenceType, String referenceId, String id, UpdateRole updateRole, User principal);
 
     Single<Role> update(String domain, String id, UpdateRole role, User principal);
 
-    Completable delete(String roleId, User principal);
+    Completable delete(ReferenceType referenceType, String referenceId, String roleId, User principal);
 
     Completable createOrUpdateSystemRoles();
 
@@ -64,8 +75,8 @@ public interface RoleService {
         return update(domain, id, role, null);
     }
 
-    default Completable delete(String roleId) {
-        return delete(roleId, null);
+    default Completable delete(ReferenceType referenceType, String referenceId, String roleId) {
+        return delete(referenceType, referenceId, roleId, null);
     }
 
 }

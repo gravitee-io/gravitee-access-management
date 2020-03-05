@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.RoleEntity;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
@@ -76,7 +77,8 @@ public class RoleResource extends AbstractResource {
                 .flatMap(irrelevant -> roleService.findById(role))
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(role)))
                 .map(role1 -> {
-                    if (!role1.getDomain().equalsIgnoreCase(domain)) {
+                    if (role1.getReferenceType() == ReferenceType.DOMAIN
+                            &&!role1.getReferenceId().equalsIgnoreCase(domain)) {
                         throw new BadRequestException("Role does not belong to domain");
                     }
                     return Response.ok(role1).build();
@@ -126,7 +128,7 @@ public class RoleResource extends AbstractResource {
                            @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        roleService.delete(role, authenticatedUser)
+        roleService.delete(ReferenceType.DOMAIN, domain, role, authenticatedUser)
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

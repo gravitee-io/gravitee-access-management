@@ -51,7 +51,7 @@ public class ExtensionGrantResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("extensionGrants").path(extensionGrantId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final ExtensionGrant extensionGrant = response.readEntity(ExtensionGrant.class);
+        final ExtensionGrant extensionGrant = readEntity(response, ExtensionGrant.class);
         assertEquals(domainId, extensionGrant.getDomain());
         assertEquals(extensionGrantId, extensionGrant.getId());
     }

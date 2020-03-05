@@ -333,7 +333,7 @@
 									"pm.environment.set('policy', body.id);",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 6000);"
 								],
 								"type": "text/javascript"
 							}
@@ -417,12 +417,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/policies/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
+							"raw": "{{gateway_url}}/{{domain}}/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"policies",
+								"{{domain}}",
 								"oauth",
 								"authorize",
 								""
@@ -742,7 +742,7 @@
 									"});",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function(){}, 6000);"
 								],
 								"type": "text/javascript"
 							}
@@ -827,12 +827,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/policies/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
+							"raw": "{{gateway_url}}/{{domain}}/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"policies",
+								"{{domain}}",
 								"oauth",
 								"authorize",
 								""

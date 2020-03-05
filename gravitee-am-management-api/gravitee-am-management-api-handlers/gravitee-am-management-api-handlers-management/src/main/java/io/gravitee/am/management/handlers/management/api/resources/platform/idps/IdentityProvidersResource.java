@@ -21,14 +21,12 @@ import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,26 +57,24 @@ public class IdentityProvidersResource extends AbstractResource {
     private IdentityProviderService identityProviderService;
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private IdentityProviderManager identityProviderManager;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered identity providers of the platform")
+    @ApiOperation(value = "List registered identity providers of the organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered identity providers of the platform", response = IdentityProvider.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List registered identity providers of the organization", response = IdentityProvider.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
     @Permissions({
             @Permission(value = RolePermission.MANAGEMENT_IDENTITY_PROVIDER, acls = RolePermissionAction.READ)
     })
     public void list(@QueryParam("userProvider") boolean userProvider,
                      @Suspended final AsyncResponse response) {
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> identityProviderService.findByDomain(masterDomain.getId()))
-                .flatMapObservable(identities -> Observable.fromIterable(identities))
+
+        String organizationId = "DEFAULT";
+
+        identityProviderService.findAll(ReferenceType.ORGANIZATION, organizationId)
+                .flatMapObservable(Observable::fromIterable)
                 .filter(identityProvider -> {
                     if (userProvider) {
                         return identityProviderManager.userProviderExists(identityProvider.getId());
@@ -92,15 +88,13 @@ public class IdentityProvidersResource extends AbstractResource {
                             .collect(Collectors.toList());
                     return Response.ok(sortedIdentityProviders).build();
                 })
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create an identity provider for the platform")
+    @ApiOperation(value = "Create an identity provider for the organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Identity provider successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -111,17 +105,15 @@ public class IdentityProvidersResource extends AbstractResource {
                        @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(masterDomain -> identityProviderService.create(masterDomain.getId(), newIdentityProvider, authenticatedUser))
-                .flatMap(identityProvider -> identityProviderManager.reloadUserProvider(identityProvider))
+        String organizationId = "DEFAULT";
+
+        identityProviderService.create(ReferenceType.ORGANIZATION, organizationId, newIdentityProvider, authenticatedUser)
+                .flatMap(identityProviderManager::reloadUserProvider)
                 .map(identityProvider -> Response
                         .created(URI.create("/platform/identities/" + identityProvider.getId()))
                         .entity(identityProvider)
                         .build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{identity}")

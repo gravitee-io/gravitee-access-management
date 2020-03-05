@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -41,7 +42,7 @@ public class EmailAuditBuilder extends AuditBuilder<EmailAuditBuilder> {
     }
 
     public EmailAuditBuilder user(User user) {
-        setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getDomain());
+        setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType() == ReferenceType.DOMAIN ? user.getReferenceId() : null);
         return this;
     }
 }

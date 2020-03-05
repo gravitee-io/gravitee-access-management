@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
@@ -24,12 +25,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class MongoRoleRepositoryTest extends AbstractManagementRepositoryTest {
 
+    public static final String DOMAIN_ID = "domain#1";
     @Autowired
     private RoleRepository roleRepository;
 
@@ -43,7 +48,8 @@ public class MongoRoleRepositoryTest extends AbstractManagementRepositoryTest {
         // create role
         Role role = new Role();
         role.setName("testName");
-        role.setDomain("testDomain");
+        role.setReferenceType(ReferenceType.DOMAIN);
+        role.setReferenceId("testDomain");
         roleRepository.create(role).blockingGet();
 
         // fetch roles
@@ -69,6 +75,60 @@ public class MongoRoleRepositoryTest extends AbstractManagementRepositoryTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(r -> r.getName().equals("testName"));
+    }
+
+    @Test
+    public void testFindById_referenceType() throws TechnicalException {
+        // create role
+        Role role = new Role();
+        role.setName("testName");
+        role.setReferenceType(ReferenceType.DOMAIN);
+        role.setReferenceId(DOMAIN_ID);
+        Role roleCreated = roleRepository.create(role).blockingGet();
+
+        // fetch role
+        TestObserver<Role> testObserver = roleRepository.findById(ReferenceType.DOMAIN, DOMAIN_ID, roleCreated.getId()).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(r -> r.getName().equals("testName"));
+    }
+
+    @Test
+    public void testFindAll() throws TechnicalException {
+        // create role
+        Role role1 = new Role();
+        role1.setName("testName1");
+        role1.setReferenceType(ReferenceType.DOMAIN);
+        role1.setReferenceId(DOMAIN_ID);
+        Role roleCreated1 = roleRepository.create(role1).blockingGet();
+
+        Role role2 = new Role();
+        role2.setName("testName2");
+        role2.setReferenceType(ReferenceType.DOMAIN);
+        role2.setReferenceId(DOMAIN_ID);
+        Role roleCreated2 = roleRepository.create(role2).blockingGet();
+
+        // Role 3 is on domain#2.
+        Role role3 = new Role();
+        role3.setName("testName3");
+        role3.setReferenceType(ReferenceType.DOMAIN);
+        role3.setReferenceId("domain#2");
+        roleRepository.create(role3).blockingGet();
+
+        // fetch role
+        TestObserver<Set<Role>> testObserver = roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(roles -> {
+            assertEquals(2, roles.size());
+            assertTrue(roles.stream().anyMatch(role -> role.getId().equals(roleCreated1.getId())));
+            assertTrue(roles.stream().anyMatch(role -> role.getId().equals(roleCreated2.getId())));
+            return true;
+        });
     }
 
     @Test
@@ -129,5 +189,4 @@ public class MongoRoleRepositoryTest extends AbstractManagementRepositoryTest {
         // fetch role
         roleRepository.findById(roleCreated.getId()).test().assertEmpty();
     }
-
 }

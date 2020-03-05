@@ -71,7 +71,7 @@ public class FormsResource extends AbstractResource {
             @NotNull  @QueryParam("template") Template formTemplate,
             @Suspended final AsyncResponse response) {
         formService.findByDomainAndTemplate(domain, formTemplate.template())
-                .map(page -> Response.ok(page).build())
+                .map(form -> Response.ok(form).build())
                 .defaultIfEmpty(Response.status(HttpStatusCode.NOT_FOUND_404).build())
                 .subscribe(
                         result -> response.resume(result),

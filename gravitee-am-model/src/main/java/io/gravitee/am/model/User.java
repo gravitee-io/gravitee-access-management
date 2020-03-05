@@ -90,7 +90,9 @@ public class User {
 
     private boolean registrationCompleted;
 
-    private String domain;
+    private ReferenceType referenceType;
+
+    private String referenceId;
 
     private String source;
 
@@ -142,7 +144,8 @@ public class User {
         this.internal = other.internal;
         this.preRegistration = other.preRegistration;
         this.registrationCompleted = other.registrationCompleted;
-        this.domain = other.domain;
+        this.referenceType = other.referenceType;
+        this.referenceId = other.referenceId;
         this.source = other.source;
         this.client = other.client;
         this.loginsCount = other.loginsCount;
@@ -397,12 +400,20 @@ public class User {
         this.registrationCompleted = registrationCompleted;
     }
 
-    public String getDomain() {
-        return domain;
+    public ReferenceType getReferenceType() {
+        return referenceType;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public String getSource() {

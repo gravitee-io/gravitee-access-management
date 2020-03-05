@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.service.DomainService;
@@ -76,7 +77,8 @@ public class GroupResource extends AbstractResource {
                 .flatMap(irrelevant -> groupService.findById(group))
                 .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
                 .flatMap(group1 -> {
-                    if (!group1.getDomain().equalsIgnoreCase(domain)) {
+                    if (group1.getReferenceType() == ReferenceType.DOMAIN
+                            && !group1.getReferenceId().equalsIgnoreCase(domain)) {
                         throw new BadRequestException("Group does not belong to domain");
                     }
                     return Maybe.just(group1);
@@ -122,13 +124,13 @@ public class GroupResource extends AbstractResource {
             @Permission(value = RolePermission.DOMAIN_GROUP, acls = RolePermissionAction.DELETE)
     })
     public void delete(@PathParam("domain") String domain,
-                           @PathParam("group") String group,
-                           @Suspended final AsyncResponse response) {
+                       @PathParam("group") String group,
+                       @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(irrelevant -> groupService.delete(group, authenticatedUser))
+                .flatMapCompletable(irrelevant -> groupService.delete(ReferenceType.DOMAIN, domain, group, authenticatedUser))
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

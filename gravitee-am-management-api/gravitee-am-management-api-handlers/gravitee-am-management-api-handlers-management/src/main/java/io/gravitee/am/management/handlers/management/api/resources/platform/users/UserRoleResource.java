@@ -20,12 +20,10 @@ import io.gravitee.am.management.handlers.management.api.security.Permission;
 import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.exception.DomainMasterNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,9 +42,6 @@ import java.util.Collections;
 public class UserRoleResource extends AbstractResource {
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private UserService userService;
 
     @DELETE
@@ -63,11 +58,9 @@ public class UserRoleResource extends AbstractResource {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findMaster()
-                .switchIfEmpty(Maybe.error(new DomainMasterNotFoundException()))
-                .flatMapSingle(__ -> userService.revokeRoles(user, Collections.singletonList(role), authenticatedUser))
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        String organizationId = "DEFAULT";
+
+        userService.revokeRoles(ReferenceType.ORGANIZATION, organizationId, user, Collections.singletonList(role), authenticatedUser)
+                .subscribe(response::resume, response::resume);
     }
 }

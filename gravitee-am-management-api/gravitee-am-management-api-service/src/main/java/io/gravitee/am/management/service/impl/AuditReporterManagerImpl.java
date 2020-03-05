@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.management.service.AuditReporterManager;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.am.service.ReporterService;
@@ -30,9 +31,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -42,10 +46,13 @@ import java.util.concurrent.ConcurrentMap;
  * @author GraviteeSource Team
  */
 @Component
-public class AuditReporterManagerImpl extends AbstractService<AuditReporterManager>  implements AuditReporterManager {
+public class AuditReporterManagerImpl extends AbstractService<AuditReporterManager> implements AuditReporterManager {
 
     public static final Logger logger = LoggerFactory.getLogger(AuditReporterManagerImpl.class);
     private String deploymentId;
+
+    @Autowired
+    private Environment environment;
 
     @Autowired
     private ReporterPluginManager reporterPluginManager;
@@ -61,9 +68,21 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
     private ConcurrentMap<io.gravitee.am.model.Reporter, Reporter> auditReporters = new ConcurrentHashMap<>();
 
+    private Reporter internalReporter;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
+
+        String mongoHost = environment.getProperty("management.mongodb.host", "localhost");
+        String mongoPort = environment.getProperty("management.mongodb.port", "27017");
+        String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
+        String mongoUri = environment.getProperty("management.mongodb.uri", "mongodb://" + mongoHost + ":" + mongoPort + "/" + mongoDBName);
+
+
+        String configuration = "{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits" + "\",\"bulkActions\":1000,\"flushInterval\":5}";
+
+        internalReporter = reporterPluginManager.create("mongodb", configuration);
 
         reporterService.findAll()
                 .subscribe(reporters -> {
@@ -74,7 +93,11 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                             auditReporters.put(reporter, new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter));
                         }
                     });
-                    deployReporterVerticle(auditReporters.values());
+
+                    List<Reporter> allReporters = new ArrayList<>(auditReporters.values());
+                    allReporters.add(new EventBusReporterWrapper(vertx, internalReporter));
+
+                    deployReporterVerticle(allReporters);
                 });
     }
 
@@ -84,7 +107,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
         if (deploymentId != null) {
             vertx.undeploy(deploymentId, event -> {
-                for(io.gravitee.reporter.api.Reporter reporter: auditReporters.values()) {
+                for (io.gravitee.reporter.api.Reporter reporter : auditReporters.values()) {
                     try {
                         logger.info("Stopping reporter: {}", reporter);
                         reporter.stop();
@@ -99,6 +122,17 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     @Override
     protected String name() {
         return "AM Management API Reporter service";
+    }
+
+    @Override
+    public Reporter getReporter(ReferenceType referenceType, String referenceId) {
+
+        if (referenceType == ReferenceType.DOMAIN) {
+            return getReporter(referenceId);
+        } else {
+            // Internal reporter must be use for all other resources.
+            return internalReporter;
+        }
     }
 
     @Override
@@ -163,7 +197,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         try {
             Reporter reporter = getReporter(domain);
             reporter.stop();
-            auditReporters.entrySet().removeIf(entry -> entry.getKey().getDomain().equals(((EventBusReporterWrapper) reporter).getDomain()));
+            auditReporters.entrySet().removeIf(entry -> entry.getKey().getDomain().equals(((EventBusReporterWrapper) reporter).getReferenceId()) && ((EventBusReporterWrapper) reporter).getReferenceType() == ReferenceType.DOMAIN);
         } catch (Exception e) {
             logger.error("Unexpected error while removing reporter", e);
         }
@@ -176,7 +210,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         deployment.subscribe(id -> {
             // Deployed
             deploymentId = id;
-            if (! reporters.isEmpty()) {
+            if (!reporters.isEmpty()) {
                 for (io.gravitee.reporter.api.Reporter reporter : reporters) {
                     try {
                         logger.info("Starting reporter: {}", reporter);

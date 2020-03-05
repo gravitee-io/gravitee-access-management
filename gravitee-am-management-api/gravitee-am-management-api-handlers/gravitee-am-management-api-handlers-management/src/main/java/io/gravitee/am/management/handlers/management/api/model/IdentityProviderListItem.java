@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 
 import java.util.Date;
 
@@ -42,7 +43,11 @@ public class IdentityProviderListItem {
 
     public IdentityProviderListItem(IdentityProvider identityProvider) {
         id = identityProvider.getId();
-        domain = identityProvider.getDomain();
+
+        if (identityProvider.getReferenceType() == ReferenceType.DOMAIN) {
+            domain = identityProvider.getReferenceId();
+        }
+
         name = identityProvider.getName();
         type = identityProvider.getType();
         createdAt = identityProvider.getCreatedAt();

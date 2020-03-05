@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -34,7 +35,11 @@ public interface UserRepository extends CrudRepository<User, String> {
 
     Single<Set<User>> findByDomain(String domain);
 
+    Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
+
     Single<Page<User>> findByDomain(String domain, int page, int size);
+
+    Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
 
     Single<Page<User>> search(String domain, String query, int page, int size);
 
@@ -42,11 +47,15 @@ public interface UserRepository extends CrudRepository<User, String> {
 
     Maybe<User> findByUsernameAndDomain(String domain, String username);
 
+    Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source);
+
     Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
 
-    Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source);
+    Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source);
 
     Single<List<User>> findByIdIn(List<String> ids);
+
+    Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId);
 
     Single<Long> countByDomain(String domain);
 

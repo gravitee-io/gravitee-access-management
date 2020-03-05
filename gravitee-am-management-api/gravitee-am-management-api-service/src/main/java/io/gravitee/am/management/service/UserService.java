@@ -18,6 +18,7 @@ package io.gravitee.am.management.service;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Completable;
@@ -32,29 +33,43 @@ import java.util.List;
  */
 public interface UserService {
 
+    Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
+
     Single<Page<User>> search(String domain, String query, int page, int size);
+
+    Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
 
     Single<Page<User>> findByDomain(String domain, int page, int size);
 
+    Single<User> findById(ReferenceType referenceType, String referenceId, String id);
+
     Maybe<User> findById(String id);
+
+    Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> create(String domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
 
+    Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal);
+
     Single<User> update(String domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal);
+
+    Single<User> updateStatus(ReferenceType referenceType, String referenceId, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> updateStatus(String domain, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal);
+    Completable delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
+
+    Completable resetPassword(ReferenceType referenceType, String referenceId, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
 
     Completable resetPassword(String domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable sendRegistrationConfirmation(String userId, io.gravitee.am.identityprovider.api.User principal);
+    Completable sendRegistrationConfirmation(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable unlock(String userId, io.gravitee.am.identityprovider.api.User principal);
+    Completable unlock(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> assignRoles(String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> assignRoles(ReferenceType referenceType, String referenceId, String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> revokeRoles(String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> revokeRoles(ReferenceType referenceType, String referenceId, String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> enrollFactors(String userId, List<EnrolledFactor> factors, io.gravitee.am.identityprovider.api.User principal);
 
@@ -70,28 +85,28 @@ public interface UserService {
         return updateStatus(domain, userId, status, null);
     }
 
-    default Completable delete(String userId) {
-        return delete(userId, null);
+    default Completable delete(ReferenceType referenceType, String referenceId, String userId) {
+        return delete(referenceType, referenceId, userId, null);
     }
 
     default Completable resetPassword(String domain, String userId, String password) {
         return resetPassword(domain, userId, password, null);
     }
 
-    default Completable sendRegistrationConfirmation(String userId) {
-        return sendRegistrationConfirmation(userId, null);
+    default Completable sendRegistrationConfirmation(ReferenceType referenceType, String referenceId, String userId) {
+        return sendRegistrationConfirmation(referenceType, referenceId, userId, null);
     }
 
-    default Completable unlock(String userId) {
-        return unlock(userId, null);
+    default Completable unlock(ReferenceType referenceType, String referenceId, String userId) {
+        return unlock(referenceType, referenceId, userId, null);
     }
 
-    default Single<User> assignRoles(String userId, List<String> roles) {
-        return assignRoles(userId, roles, null);
+    default Single<User> assignRoles(ReferenceType referenceType, String referenceId, String userId, List<String> roles) {
+        return assignRoles(referenceType, referenceId, userId, roles, null);
     }
 
-    default Single<User> revokeRoles(String userId, List<String> roles) {
-        return revokeRoles(userId, roles, null);
+    default Single<User> revokeRoles(ReferenceType referenceType, String referenceId, String userId, List<String> roles) {
+        return revokeRoles(referenceType, referenceId, userId, roles, null);
     }
 
     default Single<User> enrollFactors(String userId, List<EnrolledFactor> factors) {

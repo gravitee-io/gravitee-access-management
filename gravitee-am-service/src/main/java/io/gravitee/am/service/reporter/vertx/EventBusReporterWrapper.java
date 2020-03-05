@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.vertx;
 
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.reporter.api.provider.ReportableCriteria;
 import io.gravitee.am.reporter.api.provider.Reporter;
@@ -30,7 +31,6 @@ import io.vertx.reactivex.core.eventbus.MessageConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,20 +42,36 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
     public static final Logger logger = LoggerFactory.getLogger(EventBusReporterWrapper.class);
     public static final String EVENT_BUS_ADDRESS = "node:audits";
     private Vertx vertx;
-    private String domain;
+    private ReferenceType referenceType;
+    private String referenceId;
     private Reporter reporter;
     private MessageConsumer messageConsumer;
 
     public EventBusReporterWrapper(Vertx vertx, String domain, Reporter reporter) {
+        this(vertx, ReferenceType.DOMAIN, domain, reporter);
+    }
+
+    public EventBusReporterWrapper(Vertx vertx, Reporter reporter) {
+        this(vertx, null, null, reporter);
+    }
+
+    private EventBusReporterWrapper(Vertx vertx, ReferenceType referenceType, String referenceId, Reporter reporter) {
         this.vertx = vertx;
-        this.domain = domain;
+        this.referenceType = referenceType;
+        this.referenceId = referenceId;
         this.reporter = reporter;
     }
 
     @Override
     public void handle(Message<Reportable> reportableMsg) {
         Reportable reportable = reportableMsg.body();
-        if (domain.equals(reportable.domain()) && reporter.canHandle(reportable)) {
+
+        if (reportable.getReferenceType() == ReferenceType.DOMAIN) {
+            if (referenceType == ReferenceType.DOMAIN
+                    && referenceId.equals(reportable.getReferenceId()) && reporter.canHandle(reportable)) {
+                reporter.report(reportable);
+            }
+        } else if (referenceType == null) {
             reporter.report(reportable);
         }
     }
@@ -116,7 +132,12 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
         messageConsumer.unregister();
     }
 
-    public String getDomain() {
-        return domain;
+
+    public ReferenceType getReferenceType() {
+        return referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
     }
 }

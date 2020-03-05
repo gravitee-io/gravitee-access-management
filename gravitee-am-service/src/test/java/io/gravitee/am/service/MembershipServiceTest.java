@@ -18,7 +18,6 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.membership.ReferenceType;
 import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.MembershipRepository;
@@ -46,14 +45,14 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class MembershipServiceTest {
 
+    public static final String ORGANIZATION_ID = "orga#1";
+    public static final String MASTER_DOMAIN_ID = "master-domain";
+
     @InjectMocks
     private MembershipService membershipService = new MembershipServiceImpl();
 
     @Mock
     private UserService userService;
-
-    @Mock
-    private DomainService domainService;
 
     @Mock
     private RoleService roleService;
@@ -94,32 +93,31 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldCreate_userMembership() {
-        Membership membership = Mockito.mock(Membership.class);
-        when(membership.getReferenceId()).thenReturn("reference-id");
-        when(membership.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
-        when(membership.getMemberId()).thenReturn("user-id");
-        when(membership.getMemberType()).thenReturn(MemberType.USER);
-        when(membership.getRole()).thenReturn("role-id");
 
-        User user = Mockito.mock(User.class);
-        when(user.getDomain()).thenReturn("master-domain");
+        Membership membership = new Membership();
+        membership.setReferenceId(MASTER_DOMAIN_ID);
+        membership.setReferenceType(ReferenceType.DOMAIN);
+        membership.setMemberId("user-id");
+        membership.setMemberType(MemberType.USER);
+        membership.setRole("role-id");
 
-        Role role = Mockito.mock(Role.class);
-        when(role.getId()).thenReturn("role-id");
-        when(role.getDomain()).thenReturn("master-domain");
-        when(role.getScope()).thenReturn(RoleScope.DOMAIN.getId());
+        User user = new User();
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
 
-        Domain domain = Mockito.mock(Domain.class);
-        when(domain.isMaster()).thenReturn(true);
+        Role role = new Role();
+        role.setId("role-id");
+        role.setReferenceId(MASTER_DOMAIN_ID);
+        role.setReferenceType(ReferenceType.DOMAIN);
+        role.setScope(RoleScope.DOMAIN.getId());
 
-        when(userService.findById(membership.getMemberId())).thenReturn(Maybe.just(user));
-        when(domainService.findById(user.getDomain())).thenReturn(Maybe.just(domain));
+        when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())).thenReturn(Maybe.empty());
         when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver testObserver = membershipService.addOrUpdate(membership).test();
+        TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -128,32 +126,31 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldCreate_groupMembership() {
-        Membership membership = Mockito.mock(Membership.class);
-        when(membership.getReferenceId()).thenReturn("reference-id");
-        when(membership.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
-        when(membership.getMemberId()).thenReturn("group-id");
-        when(membership.getMemberType()).thenReturn(MemberType.GROUP);
-        when(membership.getRole()).thenReturn("role-id");
 
-        Group group = Mockito.mock(Group.class);
-        when(group.getDomain()).thenReturn("master-domain");
+        Membership membership = new Membership();
+        membership.setReferenceId(MASTER_DOMAIN_ID);
+        membership.setReferenceType(ReferenceType.DOMAIN);
+        membership.setMemberId("group-id");
+        membership.setMemberType(MemberType.GROUP);
+        membership.setRole("role-id");
 
-        Role role = Mockito.mock(Role.class);
-        when(role.getId()).thenReturn("role-id");
-        when(role.getDomain()).thenReturn("master-domain");
-        when(role.getScope()).thenReturn(RoleScope.DOMAIN.getId());
+        Role role = new Role();
+        role.setId("role-id");
+        role.setReferenceId(MASTER_DOMAIN_ID);
+        role.setReferenceType(ReferenceType.DOMAIN);
+        role.setScope(RoleScope.DOMAIN.getId());
 
-        Domain domain = Mockito.mock(Domain.class);
-        when(domain.isMaster()).thenReturn(true);
+        Group group = new Group();
+        group.setReferenceId(MASTER_DOMAIN_ID);
+        group.setReferenceType(ReferenceType.DOMAIN);
 
-        when(groupService.findById(membership.getMemberId())).thenReturn(Maybe.just(group));
-        when(domainService.findById(group.getDomain())).thenReturn(Maybe.just(domain));
+        when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(group));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())).thenReturn(Maybe.empty());
         when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver testObserver = membershipService.addOrUpdate(membership).test();
+        TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -162,21 +159,25 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldNotCreate_memberNotFound() {
-        Membership membership = Mockito.mock(Membership.class);
-        when(membership.getReferenceId()).thenReturn("reference-id");
-        when(membership.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
-        when(membership.getMemberId()).thenReturn("user-id");
-        when(membership.getMemberType()).thenReturn(MemberType.USER);
-        when(membership.getRole()).thenReturn("role-id");
 
-        Role role = Mockito.mock(Role.class);
-        when(role.getId()).thenReturn("role-id");
+        Membership membership = new Membership();
+        membership.setReferenceId(MASTER_DOMAIN_ID);
+        membership.setReferenceType(ReferenceType.DOMAIN);
+        membership.setMemberId("user-id");
+        membership.setMemberType(MemberType.USER);
+        membership.setRole("role-id");
 
-        when(userService.findById(membership.getMemberId())).thenReturn(Maybe.empty());
+        Role role = new Role();
+        role.setId("role-id");
+        role.setReferenceId(MASTER_DOMAIN_ID);
+        role.setReferenceType(ReferenceType.DOMAIN);
+        role.setScope(RoleScope.DOMAIN.getId());
+
+        when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.error(new UserNotFoundException("user-id")));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = membershipService.addOrUpdate(membership).test();
+        TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertNotComplete();
@@ -187,21 +188,25 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldNotCreate_groupNotFound() {
-        Membership membership = Mockito.mock(Membership.class);
-        when(membership.getReferenceId()).thenReturn("reference-id");
-        when(membership.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
-        when(membership.getMemberId()).thenReturn("group-id");
-        when(membership.getMemberType()).thenReturn(MemberType.GROUP);
-        when(membership.getRole()).thenReturn("role-id");
 
-        Role role = Mockito.mock(Role.class);
-        when(role.getId()).thenReturn("role-id");
+        Membership membership = new Membership();
+        membership.setReferenceId(MASTER_DOMAIN_ID);
+        membership.setReferenceType(ReferenceType.DOMAIN);
+        membership.setMemberId("group-id");
+        membership.setMemberType(MemberType.GROUP);
+        membership.setRole("role-id");
 
-        when(groupService.findById(membership.getMemberId())).thenReturn(Maybe.empty());
+        Role role = new Role();
+        role.setId("role-id");
+        role.setReferenceId(MASTER_DOMAIN_ID);
+        role.setReferenceType(ReferenceType.DOMAIN);
+        role.setScope(RoleScope.DOMAIN.getId());
+
+        when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.error(new GroupNotFoundException("group-id")));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = membershipService.addOrUpdate(membership).test();
+        TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertNotComplete();
@@ -212,28 +217,29 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldNotCreate_roleNotFound() {
-        Membership membership = Mockito.mock(Membership.class);
-        when(membership.getReferenceId()).thenReturn("reference-id");
-        when(membership.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
-        when(membership.getMemberId()).thenReturn("user-id");
-        when(membership.getMemberType()).thenReturn(MemberType.USER);
-        when(membership.getRole()).thenReturn("role-id");
 
-        User user = Mockito.mock(User.class);
-        when(user.getDomain()).thenReturn("master-domain");
+        Membership membership = new Membership();
+        membership.setReferenceId(MASTER_DOMAIN_ID);
+        membership.setReferenceType(ReferenceType.DOMAIN);
+        membership.setMemberId("user-id");
+        membership.setMemberType(MemberType.USER);
+        membership.setRole("role-id");
 
-        Role role = Mockito.mock(Role.class);
-        when(role.getId()).thenReturn("role-id");
+        User user = new User();
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
 
-        Domain domain = Mockito.mock(Domain.class);
-        when(domain.isMaster()).thenReturn(true);
+        Role role = new Role();
+        role.setId("role-id");
+        role.setReferenceId("master-domain");
+        role.setReferenceType(ReferenceType.DOMAIN);
+        role.setScope(RoleScope.DOMAIN.getId());
 
-        when(userService.findById(membership.getMemberId())).thenReturn(Maybe.just(user));
-        when(domainService.findById(user.getDomain())).thenReturn(Maybe.just(domain));
+        when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
         when(roleService.findById(role.getId())).thenReturn(Maybe.empty());
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = membershipService.addOrUpdate(membership).test();
+        TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertNotComplete();
@@ -243,31 +249,99 @@ public class MembershipServiceTest {
     }
 
     @Test
-    public void shouldNotCreate_invalidRole() {
-        Membership membership = Mockito.mock(Membership.class);
-        when(membership.getReferenceId()).thenReturn("reference-id");
-        when(membership.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
-        when(membership.getMemberId()).thenReturn("user-id");
-        when(membership.getMemberType()).thenReturn(MemberType.USER);
-        when(membership.getRole()).thenReturn("role-id");
+    public void shouldNotCreate_invalidRoleScope() {
 
-        User user = Mockito.mock(User.class);
-        when(user.getDomain()).thenReturn("master-domain");
+        Membership membership = new Membership();
+        membership.setReferenceId(MASTER_DOMAIN_ID);
+        membership.setReferenceType(ReferenceType.DOMAIN);
+        membership.setMemberId("user-id");
+        membership.setMemberType(MemberType.USER);
+        membership.setRole("role-id");
 
-        Role role = Mockito.mock(Role.class);
-        when(role.getId()).thenReturn("role-id");
-        when(role.getDomain()).thenReturn("master-domain");
-        when(role.getScope()).thenReturn(RoleScope.APPLICATION.getId());
+        User user = new User();
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
 
-        Domain domain = Mockito.mock(Domain.class);
-        when(domain.isMaster()).thenReturn(true);
+        Role role = new Role();
+        role.setId("role-id");
+        role.setReferenceId(MASTER_DOMAIN_ID);
+        role.setReferenceType(ReferenceType.DOMAIN);
+        // Scope application can't be use for domain.
+        role.setScope(RoleScope.APPLICATION.getId());
 
-        when(userService.findById(membership.getMemberId())).thenReturn(Maybe.just(user));
-        when(domainService.findById(user.getDomain())).thenReturn(Maybe.just(domain));
+        when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = membershipService.addOrUpdate(membership).test();
+        TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidRoleException.class);
+
+        verify(membershipRepository, never()).create(any());
+    }
+
+    @Test
+    public void shouldNotCreate_invalidDomain() {
+
+        Membership membership = new Membership();
+        membership.setReferenceId(MASTER_DOMAIN_ID);
+        membership.setReferenceType(ReferenceType.DOMAIN);
+        membership.setMemberId("user-id");
+        membership.setMemberType(MemberType.USER);
+        membership.setRole("role-id");
+
+        User user = new User();
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+
+        Role role = new Role();
+        role.setId("role-id");
+        // Role is not on the same domain.
+        role.setReferenceId("domain#2");
+        role.setReferenceType(ReferenceType.DOMAIN);
+        role.setScope(RoleScope.DOMAIN.getId());
+
+        when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
+        when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
+        when(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())).thenReturn(Maybe.empty());
+
+        TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidRoleException.class);
+
+        verify(membershipRepository, never()).create(any());
+    }
+
+    @Test
+    public void shouldNotCreate_invalidOrganization() {
+
+        Membership membership = new Membership();
+        membership.setReferenceId("master-domain");
+        membership.setReferenceType(ReferenceType.DOMAIN);
+        membership.setMemberId("user-id");
+        membership.setMemberType(MemberType.USER);
+        membership.setRole("role-id");
+
+        User user = new User();
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+
+        // Role is not a system and belongs to another organization.
+        Role role = new Role();
+        role.setId("role-id");
+        role.setReferenceId("orga#2");
+        role.setReferenceType(ReferenceType.ORGANIZATION);
+        role.setScope(RoleScope.DOMAIN.getId());
+
+        when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
+        when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
+        when(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())).thenReturn(Maybe.empty());
+
+        TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertNotComplete();

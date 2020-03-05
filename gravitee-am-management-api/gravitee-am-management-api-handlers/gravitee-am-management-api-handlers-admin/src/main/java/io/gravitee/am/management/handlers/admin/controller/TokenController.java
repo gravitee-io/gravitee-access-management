@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.admin.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.admin.service.AuthenticationService;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.common.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -63,7 +64,11 @@ public class TokenController {
         final User principal = (User) authentication.getPrincipal();
         ((DefaultUser) principal).setId(endUser.getId());
         principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
-        principal.getAdditionalInformation().put(Claims.domain, endUser.getDomain());
+
+        if (endUser.getReferenceType() == ReferenceType.DOMAIN) {
+            principal.getAdditionalInformation().put(Claims.domain, endUser.getReferenceId());
+        }
+
         Set<String> roles = endUser.getRoles() != null ? new HashSet<>(endUser.getRoles()) : new HashSet<>();
         if (principal.getRoles() != null) {
             roles.addAll(principal.getRoles());

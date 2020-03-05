@@ -69,7 +69,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("applications").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Map responseEntity = response.readEntity(Map.class);
+        final Map responseEntity = readEntity(response, Map.class);
         assertTrue(((List)responseEntity.get("data")).size() == 2);
     }
 

@@ -19,7 +19,7 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.membership.ReferenceType;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.MembershipMongo;
 import io.reactivex.*;
