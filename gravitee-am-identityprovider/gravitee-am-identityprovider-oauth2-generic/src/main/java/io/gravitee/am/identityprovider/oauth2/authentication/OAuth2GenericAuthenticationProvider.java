@@ -50,6 +50,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
+import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
@@ -181,7 +182,13 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
                         throw new BadCredentialsException(httpResponse.statusMessage());
                     }
 
-                    String accessToken = httpResponse.bodyAsJsonObject().getString(ACCESS_TOKEN_PARAMETER);
+                    JsonObject response = httpResponse.bodyAsJsonObject();
+                    String accessToken = response.getString(ACCESS_TOKEN_PARAMETER);
+                    if (configuration.isUseIdTokenForUserInfo()) {
+                        // put the id_token in context for later use
+                        String idToken = response.getString(ID_TOKEN_PARAMETER);
+                        authentication.getContext().set(ID_TOKEN_PARAMETER, idToken);
+                    }
                     return new Token(accessToken, TokenTypeHint.ACCESS_TOKEN);
                 });
 
