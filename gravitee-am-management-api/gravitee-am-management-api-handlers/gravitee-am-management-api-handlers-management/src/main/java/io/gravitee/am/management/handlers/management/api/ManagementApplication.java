@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperReso
 import io.gravitee.am.management.handlers.management.api.provider.*;
 import io.gravitee.am.management.handlers.management.api.resources.CurrentUserResource;
 import io.gravitee.am.management.handlers.management.api.resources.DomainsResource;
+import io.gravitee.am.management.handlers.management.api.resources.EnvironmentsResource;
 import io.gravitee.am.management.handlers.management.api.resources.OrganizationsResource;
 import io.gravitee.am.management.handlers.management.api.resources.dashboard.DashboardResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.PlatformResource;
@@ -46,6 +47,7 @@ public class ManagementApplication extends ResourceConfig {
         beanConfig.setScan(true);
 
         register(OrganizationsResource.class);
+        register(EnvironmentsResource.class);
 
         register(DomainsResource.class);
         register(PlatformResource.class);

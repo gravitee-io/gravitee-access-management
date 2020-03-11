@@ -118,6 +118,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setLoginSettings(convert(domainMongo.getLoginSettings()));
         domain.setAccountSettings(convert(domainMongo.getAccountSettings()));
         domain.setTags(domainMongo.getTags());
+        domain.setReferenceType(domainMongo.getReferenceType());
+        domain.setReferenceId(domainMongo.getReferenceId());
         return domain;
     }
 
@@ -142,6 +144,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setLoginSettings(convert(domain.getLoginSettings()));
         domainMongo.setAccountSettings(convert(domain.getAccountSettings()));
         domainMongo.setTags(domain.getTags());
+        domainMongo.setReferenceType(domain.getReferenceType());
+        domainMongo.setReferenceId(domain.getReferenceId());
         return domainMongo;
     }
 
@@ -170,7 +174,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     }
 
     private OIDCSettings convert(OIDCSettingsMongo oidcMongo) {
-        if(oidcMongo==null) {
+        if (oidcMongo == null) {
             return null;
         }
 
@@ -182,7 +186,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     }
 
     private ClientRegistrationSettings convert(ClientRegistrationSettingsMongo dcrMongo) {
-        if(dcrMongo==null) {
+        if (dcrMongo == null) {
             return null;
         }
 
@@ -201,7 +205,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     }
 
     private OIDCSettingsMongo convert(OIDCSettings oidc) {
-        if(oidc==null) {
+        if (oidc == null) {
             return null;
         }
 
@@ -213,7 +217,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     }
 
     private ClientRegistrationSettingsMongo convert(ClientRegistrationSettings dcr) {
-        if(dcr==null) {
+        if (dcr == null) {
             return null;
         }
 

@@ -205,6 +205,14 @@ public interface EventType {
     String ORGANIZATION_CREATED = "ORGANIZATION_CREATED";
     String ORGANIZATION_UPDATED = "ORGANIZATION_UPDATED";
 
+    /**
+     * ----------
+     * Environment audit log actions
+     * ----------
+     */
+    String ENVIRONMENT_CREATED = "ENVIRONMENT_CREATED";
+    String ENVIRONMENT_UPDATED = "ENVIRONMENT_UPDATED";
+
 
     static Collection<String> types() {
         return new TreeSet(Arrays.asList(
@@ -226,7 +234,8 @@ public interface EventType {
                 POLICY_CREATED, POLICY_UPDATED, POLICY_DELETED,
                 MEMBERSHIP_CREATED, MEMBERSHIP_UPDATED, MEMBERSHIP_DELETED,
                 FACTOR_CREATED, FACTOR_UPDATED, FACTOR_DELETED,
-                ORGANIZATION_CREATED, ORGANIZATION_UPDATED
+                ORGANIZATION_CREATED, ORGANIZATION_UPDATED,
+                ENVIRONMENT_CREATED, ENVIRONMENT_UPDATED
         ));
     }
 }

@@ -93,7 +93,6 @@ public class UserResource extends AbstractResource {
                 .map(UserEntity::new)
                 .flatMap(this::enhanceIdentityProvider)
                 .flatMap(this::enhanceClient)
-                .map(user1 -> Response.ok(user1).build())
                 .subscribe(response::resume, response::resume);
     }
 

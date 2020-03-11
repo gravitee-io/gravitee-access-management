@@ -20,7 +20,6 @@ import io.gravitee.am.management.handlers.management.api.resources.platform.form
 import io.gravitee.am.management.handlers.management.api.resources.platform.groups.GroupsResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.idps.IdentityProvidersResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.PluginsResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.reporters.ReportersResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.roles.RolesResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.search.SearchResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.settings.SettingsResource;
@@ -77,11 +76,6 @@ public class PlatformResource {
     @Path("users")
     public UsersResource getUsersResource() {
         return resourceContext.getResource(UsersResource.class);
-    }
-
-    @Path("reporters")
-    public ReportersResource getReportersResource() {
-        return resourceContext.getResource(ReportersResource.class);
     }
 
     @Path("settings")

@@ -127,16 +127,6 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public Maybe<Domain> findMaster() {
-        LOGGER.debug("Find master domain");
-        return domainRepository.findMaster()
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find the master domain", ex);
-                    return Maybe.error(new TechnicalManagementException("An error occurs while trying to find the master domain", ex));
-                });
-    }
-
-    @Override
     public Single<Set<Domain>> findAll() {
         LOGGER.debug("Find all domains");
         return domainRepository.findAll()
@@ -174,6 +164,8 @@ public class DomainServiceImpl implements DomainService {
                         domain.setDescription(newDomain.getDescription());
                         domain.setEnabled(false);
                         domain.setOidc(OIDCSettings.defaultSettings());
+                        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+                        domain.setReferenceId(environmentId);
                         domain.setCreatedAt(new Date());
                         domain.setUpdatedAt(domain.getCreatedAt());
                         return domainRepository.create(domain);

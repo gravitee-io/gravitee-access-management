@@ -79,7 +79,6 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
         String mongoUri = environment.getProperty("management.mongodb.uri", "mongodb://" + mongoHost + ":" + mongoPort + "/" + mongoDBName);
 
-
         String configuration = "{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits" + "\",\"bulkActions\":1000,\"flushInterval\":5}";
 
         internalReporter = reporterPluginManager.create("mongodb", configuration);
