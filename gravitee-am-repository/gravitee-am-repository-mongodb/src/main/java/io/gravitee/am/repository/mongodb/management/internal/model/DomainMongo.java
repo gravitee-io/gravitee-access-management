@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import org.bson.Document;
@@ -54,6 +55,10 @@ public class DomainMongo extends Auditable {
     private AccountSettingsMongo accountSettings;
 
     private Set<String> tags;
+
+    private ReferenceType referenceType;
+
+    private String referenceId;
 
     public String getId() {
         return id;
@@ -172,5 +177,21 @@ public class DomainMongo extends Auditable {
     @Override
     public int hashCode() {
         return id.hashCode();
+    }
+
+    public ReferenceType getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 }

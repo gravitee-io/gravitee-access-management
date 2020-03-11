@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "0fb37c68-ed7b-493d-bc04-a4938c205569",
-		"name": "Gravitee.io - AM - Organization Management",
+		"_postman_id": "e7cd1428-020c-4144-b95d-2f7c2b624ddd",
+		"name": "Gravitee.io - AM - Environment Management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -68,6 +68,58 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Create organization",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    ",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('organizationId', jsonData.id);",
+									"    ",
+									"    ",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"Test organization\", \n\t\"description\": \"Organization created for tests\",\n\t\"domainRestrictions\": [ \"restriction.domain.io\" ]\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/test",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"test"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"event": [
@@ -129,24 +181,26 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"description\": \"Organization created for tests\",\n\t\"domainRestrictions\": [ \"restriction.domain.io\" ]\n}"
+					"raw": "{\n\t\"description\": \"Environment created for tests\",\n\t\"domainRestrictions\": [ \"env.restriction.domain.io\" ]\n}"
 				},
 				"url": {
-					"raw": "{{management_url}}/management/organizations/test",
+					"raw": "{{management_url}}/management/organizations/{{organizationId}}/environments/myIdEnv",
 					"host": [
 						"{{management_url}}"
 					],
 					"path": [
 						"management",
 						"organizations",
-						"test"
+						"{{organizationId}}",
+						"environments",
+						"myIdEnv"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Create organization",
+			"name": "Create environment",
 			"event": [
 				{
 					"listen": "test",
@@ -158,7 +212,7 @@
 							"    ",
 							"    var requestBodyJson = JSON.parse(pm.request.body);",
 							"    var jsonData = pm.response.json();",
-							"    pm.environment.set('organizationId', jsonData.id);",
+							"    pm.environment.set('environmentId', jsonData.id);",
 							"    pm.expect(jsonData.name).to.equal(requestBodyJson.name);",
 							"    pm.expect(jsonData.description).to.equal(requestBodyJson.description);",
 							"    pm.expect(jsonData.domainRestrictions).to.deep.equal(requestBodyJson.domainRestrictions);",
@@ -183,24 +237,26 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"name\": \"Test organization\", \n\t\"description\": \"Organization created for tests\",\n\t\"domainRestrictions\": [ \"restriction.domain.io\" ]\n}"
+					"raw": "{\n\t\"name\": \"Test environment\", \n\t\"description\": \"Environment created for tests\",\n\t\"domainRestrictions\": [ \"env.restriction.domain.io\" ]\n}"
 				},
 				"url": {
-					"raw": "{{management_url}}/management/organizations/test",
+					"raw": "{{management_url}}/management/organizations/{{organizationId}}/environments/myIdEnv",
 					"host": [
 						"{{management_url}}"
 					],
 					"path": [
 						"management",
 						"organizations",
-						"test"
+						"{{organizationId}}",
+						"environments",
+						"myIdEnv"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Update organization",
+			"name": "Update environment",
 			"event": [
 				{
 					"listen": "test",
@@ -236,17 +292,19 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"name\": \"Test organization updated\", \n\t\"description\": \"Organization updated for tests\",\n\t\"domainRestrictions\": [ \"restriction.domain.io\", \"restriction2.domain.io\" ]\n}"
+					"raw": "{\n\t\"name\": \"Test environment updated\", \n\t\"description\": \"Environment updated for tests\",\n\t\"domainRestrictions\": [ \"env-updated.restriction.domain.io\" ]\n}"
 				},
 				"url": {
-					"raw": "{{management_url}}/management/organizations/{{organizationId}}",
+					"raw": "{{management_url}}/management/organizations/{{organizationId}}/environments/{{environmentId}}",
 					"host": [
 						"{{management_url}}"
 					],
 					"path": [
 						"management",
 						"organizations",
-						"{{organizationId}}"
+						"{{organizationId}}",
+						"environments",
+						"{{environmentId}}"
 					]
 				}
 			},

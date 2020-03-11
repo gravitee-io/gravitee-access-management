@@ -132,7 +132,7 @@ public class OrganizationServiceTest {
     public void shouldCreateDefault_OrganizationsAlreadyExists() {
 
         Organization defaultOrganization = new Organization();
-        defaultOrganization.setId("DEFAULT");
+        defaultOrganization.setId(Organization.DEFAULT);
 
         when(organizationRepository.count()).thenReturn(Single.just(1L));
 

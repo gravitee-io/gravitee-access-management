@@ -84,6 +84,16 @@ public class Domain implements Resource {
 
     private Set<String> tags;
 
+    /**
+     * The type of reference the domain is attached to (for now, should be ENVIRONMENT).
+     */
+    private ReferenceType referenceType;
+
+    /**
+     * The id of the reference the domain is attached to (for now, should be the environment id).
+     */
+    private String referenceId;
+
     public Domain() {
     }
 
@@ -279,5 +289,21 @@ public class Domain implements Resource {
     @Override
     public int hashCode() {
         return id.hashCode();
+    }
+
+    public ReferenceType getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 }

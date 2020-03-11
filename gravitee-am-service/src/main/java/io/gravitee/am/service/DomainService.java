@@ -36,8 +36,6 @@ public interface DomainService {
 
     Maybe<Domain> findById(String id);
 
-    Maybe<Domain> findMaster();
-
     Single<Set<Domain>> findAll();
 
     Single<Set<Domain>> findByIdIn(Collection<String> ids);
