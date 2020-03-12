@@ -18,6 +18,7 @@ package io.gravitee.am.common.web;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -143,6 +144,16 @@ public class UriBuilder {
         try {
             result = URLEncoder.encode(s, "UTF-8");
         } catch (UnsupportedEncodingException e) {
+            result = s;
+        }
+        return result;
+    }
+
+    public static String decodeURIComponent(String s) {
+        String result;
+        try {
+            result = URLDecoder.decode(s, "UTF-8");
+        } catch (Exception e) {
             result = s;
         }
         return result;

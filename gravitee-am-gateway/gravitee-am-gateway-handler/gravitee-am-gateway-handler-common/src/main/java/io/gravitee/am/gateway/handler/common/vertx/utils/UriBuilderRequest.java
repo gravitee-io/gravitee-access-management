@@ -111,10 +111,13 @@ public class UriBuilderRequest {
             builder.parameters(parameters);
         } else {
             if (parameters != null) {
-                parameters.forEach((k, v) -> builder.addParameter(k, UriBuilder.encodeURIComponent(v)));
+                parameters.forEach((k, v) -> {
+                    // some parameters can be already URL encoded, decode first
+                    builder.addParameter(k, UriBuilder.encodeURIComponent(UriBuilder.decodeURIComponent(v)));
+                });
             }
         }
-        return builder.build().toString();
+        return builder.buildString();
     }
 
     private static void handleHost(UriBuilder builder, String host) {
