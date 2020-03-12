@@ -40,6 +40,7 @@ public class OAuth2GenericIdentityProviderConfiguration implements IdentityProvi
     private Signature signature = Signature.RSA_RS256;
     private KeyResolver publicKeyResolver;
     private String resolverParameter;
+    private boolean encodeRedirectUri;
 
     public String getClientId() {
         return clientId;
@@ -139,5 +140,13 @@ public class OAuth2GenericIdentityProviderConfiguration implements IdentityProvi
 
     public void setResolverParameter(String resolverParameter) {
         this.resolverParameter = resolverParameter;
+    }
+
+    public boolean isEncodeRedirectUri() {
+        return encodeRedirectUri;
+    }
+
+    public void setEncodeRedirectUri(boolean encodeRedirectUri) {
+        this.encodeRedirectUri = encodeRedirectUri;
     }
 }
