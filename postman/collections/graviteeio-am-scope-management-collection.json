@@ -58,12 +58,12 @@
 							]
 						},
 						"url": {
-							"raw": "{{management_url}}/admin/token",
+							"raw": "{{management_url}}/auth/token",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
-								"admin",
+								"auth",
 								"token"
 							]
 						}
@@ -190,7 +190,7 @@
 									"    pm.response.to.be.header('Content-Type', 'application/json');",
 									"    var body = pm.response.json();",
 									"",
-									"    pm.expect(body.message).to.eql('[description: may not be null]');",
+									"    pm.expect(body.message).to.eql('[description: must not be null]');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -351,7 +351,7 @@
 									"pm.test(\"Check scope properties\", function () {",
 									"    pm.response.to.be.header('Content-Type', 'application/json');",
 									"    var body = pm.response.json();",
-									"    pm.expect(body.message).to.eql('[name: may not be null]');",
+									"    pm.expect(body.message).to.eql('[name: must not be null]');",
 									"});"
 								],
 								"type": "text/javascript"

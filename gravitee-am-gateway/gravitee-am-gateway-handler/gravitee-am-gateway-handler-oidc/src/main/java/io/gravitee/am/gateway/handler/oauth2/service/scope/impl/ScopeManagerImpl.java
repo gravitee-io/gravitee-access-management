@@ -19,6 +19,7 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ScopeEvent;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.ScopeService;
@@ -80,7 +81,7 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
 
     @Override
     public void onEvent(Event<ScopeEvent, Payload> event) {
-        if (domain.getId().equals(event.content().getDomain())) {
+        if (event.content().getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(event.content().getReferenceId())) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:

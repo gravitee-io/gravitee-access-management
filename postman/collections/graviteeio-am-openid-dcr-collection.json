@@ -58,12 +58,12 @@
 							]
 						},
 						"url": {
-							"raw": "{{management_url}}/admin/token",
+							"raw": "{{management_url}}/auth/token",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
-								"admin",
+								"auth",
 								"token"
 							]
 						}

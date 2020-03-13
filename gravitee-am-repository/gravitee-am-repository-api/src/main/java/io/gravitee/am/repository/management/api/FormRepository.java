@@ -29,6 +29,8 @@ import java.util.List;
  */
 public interface FormRepository extends CrudRepository<Form, String> {
 
+    Single<List<Form>> findAll(ReferenceType referenceType, String referenceId);
+
     Single<List<Form>> findByDomain(String domain);
 
     Single<List<Form>> findByClient(ReferenceType referenceType, String referenceId, String client);

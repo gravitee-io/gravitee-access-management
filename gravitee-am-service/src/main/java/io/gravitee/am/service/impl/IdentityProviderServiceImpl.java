@@ -21,9 +21,9 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
@@ -144,7 +144,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         return identityProviderRepository.create(identityProvider)
                 .flatMap(identityProvider1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), referenceType == ReferenceType.DOMAIN ? identityProvider1.getReferenceId() : null, Action.CREATE));
+                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -178,7 +178,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     return identityProviderRepository.update(identityToUpdate)
                             .flatMap(identityProvider1 -> {
                                 // create event for sync process
-                                Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), referenceType == ReferenceType.DOMAIN ? identityProvider1.getReferenceId() : null, Action.UPDATE));
+                                Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                             })
                             .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(oldIdentity).identityProvider(identityProvider1)))
@@ -216,7 +216,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                 .flatMapCompletable(identityProvider -> {
 
                     // create event for sync process
-                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProviderId, referenceType == ReferenceType.DOMAIN ? referenceId : null, Action.DELETE));
+                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProviderId, referenceType, referenceId, Action.DELETE));
 
                     return identityProviderRepository.delete(identityProviderId)
                             .andThen(eventService.create(event)).toCompletable()

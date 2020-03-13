@@ -39,6 +39,8 @@ public interface GroupService {
 
     Single<Page<User>> findMembers(ReferenceType referenceType, String referenceId, String groupId, int page, int size);
 
+    Single<List<Group>> findAll(ReferenceType referenceType, String referenceId);
+
     Single<List<Group>> findByDomain(String domain);
 
     Single<List<Group>> findByMember(String userId);

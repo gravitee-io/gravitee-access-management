@@ -18,12 +18,12 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.EventService;
@@ -238,7 +238,7 @@ public class UserServiceImpl implements UserService {
                 })
                 .flatMap(user -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user.getId(), referenceType == ReferenceType.DOMAIN ? user.getReferenceId() : null, Action.CREATE));
+                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceType(), user.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user));
                 })
                 .onErrorResumeNext(ex -> {
@@ -259,7 +259,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.create(user)
                 .flatMap(user1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType() == ReferenceType.DOMAIN ? user1.getReferenceId() : null, Action.CREATE));
+                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -292,7 +292,7 @@ public class UserServiceImpl implements UserService {
                 })
                 .flatMap(user -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user.getId(), referenceType == ReferenceType.DOMAIN ? user.getReferenceId() : null, Action.UPDATE));
+                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceType(), user.getReferenceId(), Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user));
                 })
                 .onErrorResumeNext(ex -> {
@@ -319,7 +319,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.update(user)
                 .flatMap(user1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType() == ReferenceType.DOMAIN ? user1.getReferenceId() : null, Action.UPDATE));
+                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(user1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -389,7 +389,7 @@ public class UserServiceImpl implements UserService {
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceType() == ReferenceType.DOMAIN ? user.getReferenceId() : null, Action.DELETE));
+                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceType(), user.getReferenceId(), Action.DELETE));
                     return userRepository.delete(userId).andThen(eventService.create(event)).toCompletable();
                 })
                 .onErrorResumeNext(ex -> {

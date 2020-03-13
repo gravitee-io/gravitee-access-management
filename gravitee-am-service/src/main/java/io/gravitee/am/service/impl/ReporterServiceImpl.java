@@ -16,13 +16,14 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
-import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.common.event.Type;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -102,16 +103,16 @@ public class ReporterServiceImpl implements ReporterService {
     public Single<Reporter> createDefault(String domain) {
         // get env configuration
         String mongoHost = environment.getProperty("management.mongodb.host", "localhost");
-        String mongoPort =  environment.getProperty("management.mongodb.port", "27017");
+        String mongoPort = environment.getProperty("management.mongodb.port", "27017");
         String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
-        String mongoUri = environment.getProperty("management.mongodb.uri", "mongodb://"+ mongoHost + ":" + mongoPort + "/" + mongoDBName);
+        String mongoUri = environment.getProperty("management.mongodb.uri", "mongodb://" + mongoHost + ":" + mongoPort + "/" + mongoDBName);
 
         NewReporter newReporter = new NewReporter();
         newReporter.setId(RandomString.generate());
         newReporter.setEnabled(true);
         newReporter.setName("MongoDB Reporter");
         newReporter.setType("mongodb");
-        newReporter.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\""+ mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits_" + domain + "\",\"bulkActions\":1000,\"flushInterval\":5}");
+        newReporter.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits_" + domain + "\",\"bulkActions\":1000,\"flushInterval\":5}");
 
         LOGGER.debug("Create default reporter for domain {}", domain);
         return create(domain, newReporter);
@@ -136,7 +137,7 @@ public class ReporterServiceImpl implements ReporterService {
         return reporterRepository.create(reporter)
                 .flatMap(reporter1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), reporter1.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), ReferenceType.DOMAIN, reporter1.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(reporter1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -165,7 +166,7 @@ public class ReporterServiceImpl implements ReporterService {
                                 // create event for sync process
                                 // except for admin domain
                                 if (!ADMIN_DOMAIN.equals(domain)) {
-                                    Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), reporter1.getDomain(), Action.UPDATE));
+                                    Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), ReferenceType.DOMAIN, reporter1.getDomain(), Action.UPDATE));
                                     return eventService.create(event).flatMap(__ -> Single.just(reporter1));
                                 } else {
                                     return Single.just(reporter1);
@@ -190,7 +191,7 @@ public class ReporterServiceImpl implements ReporterService {
                 .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
                 .flatMapCompletable(reporter -> {
                     // create event for sync process
-                    Event event = new Event(Type.REPORTER, new Payload(reporterId, reporter.getDomain(), Action.DELETE));
+                    Event event = new Event(Type.REPORTER, new Payload(reporterId, ReferenceType.DOMAIN, reporter.getDomain(), Action.DELETE));
                     return reporterRepository.delete(reporterId)
                             .andThen(eventService.create(event))
                             .toCompletable()

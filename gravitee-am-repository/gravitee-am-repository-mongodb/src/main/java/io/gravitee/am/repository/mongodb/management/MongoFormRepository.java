@@ -56,8 +56,13 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
+    public Single<List<Form>> findAll(ReferenceType referenceType, String referenceId) {
+        return Observable.fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert).collect(ArrayList::new, List::add);
+    }
+
+    @Override
     public Single<List<Form>> findByDomain(String domain) {
-        return Observable.fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain)))).map(this::convert).collect(ArrayList::new, List::add);
+        return findAll(ReferenceType.DOMAIN, domain);
     }
 
     @Override

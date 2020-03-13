@@ -39,6 +39,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -326,7 +327,7 @@ public class OrganizationServiceTest {
         when(organizationRepository.update(argThat(toUpdate -> toUpdate.getIdentities() != null))).thenAnswer(i -> Single.just(i.getArgument(0)));
 
         PatchOrganization patchOrganization = new PatchOrganization();
-        Set<String> identities = Collections.singleton("test");
+        List<String> identities = Collections.singletonList("test");
         patchOrganization.setIdentities(identities);
 
         TestObserver<Organization> obs = cut.update(ORGANIZATION_ID, patchOrganization, new DefaultUser("username")).test();
@@ -341,7 +342,7 @@ public class OrganizationServiceTest {
         when(organizationRepository.findById(ORGANIZATION_ID)).thenReturn(Maybe.empty());
 
         PatchOrganization patchOrganization = new PatchOrganization();
-        patchOrganization.setIdentities(Collections.singleton("test"));
+        patchOrganization.setIdentities(Collections.singletonList("test"));
 
         TestObserver<Organization> obs = cut.update(ORGANIZATION_ID, patchOrganization, new DefaultUser("username")).test();
 

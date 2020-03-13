@@ -57,12 +57,12 @@
 							]
 						},
 						"url": {
-							"raw": "{{management_url}}/admin/token",
+							"raw": "{{management_url}}/auth/token",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
-								"admin",
+								"auth",
 								"token"
 							]
 						}
@@ -281,7 +281,7 @@
 													"",
 													"pm.test(\"UM - create role - name field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[name: may not be null]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[name: must not be null]\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -849,7 +849,7 @@
 													"",
 													"pm.test(\"UM - create user - username field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[username: may not be null]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[username: must not be null]\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -904,7 +904,7 @@
 													"",
 													"pm.test(\"UM - create user - email field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[email: may not be null]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[email: must not be null]\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1641,7 +1641,7 @@
 													"",
 													"pm.test(\"UM - create group - name field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[name: may not be null]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[name: must not be null]\");",
 													"});"
 												],
 												"type": "text/javascript"

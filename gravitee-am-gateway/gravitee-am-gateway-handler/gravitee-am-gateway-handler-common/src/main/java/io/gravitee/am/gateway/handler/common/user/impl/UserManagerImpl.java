@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.common.user.UserManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.user.UserStore;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.common.event.Event;
@@ -76,7 +77,7 @@ public class UserManagerImpl extends AbstractService implements UserManager, Eve
 
     @Override
     public void onEvent(Event<UserEvent, Payload> event) {
-        if (domain.getId().equals(event.content().getDomain())) {
+        if (event.content().getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(event.content().getReferenceId())) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:

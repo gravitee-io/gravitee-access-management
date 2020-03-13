@@ -28,7 +28,7 @@
           </div>
           <div>
           <mat-form-field appearance="outline" floatLabel="always">
-            <mat-select placeholder="Identity providers" multiple name="identities" [(ngModel)]="settings.identities" [disabled]="readonly">
+            <mat-select placeholder="Identity providers" multiple name="identities" [(ngModel)]="settings.identityProviders" [disabled]="readonly">
               <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
             </mat-select>
           </mat-form-field>
@@ -42,8 +42,8 @@
           </div>
           <div>
             <mat-form-field appearance="outline" floatLabel="always">
-              <mat-select placeholder="Social providers" multiple name="oauth2Identities" [(ngModel)]="settings.socialIdentities" [disabled]="readonly">
-                <mat-option *ngFor="let identityProvider of oauth2IdentityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
+              <mat-select placeholder="Social providers" multiple name="socialIdentities" [(ngModel)]="settings.socialIdentities" [disabled]="readonly">
+                <mat-option *ngFor="let socialIdentityProvider of socialIdentities" [value]="socialIdentityProvider.id">{{ socialIdentityProvider.name }}</mat-option>
               </mat-select>
             </mat-form-field>
           </div>

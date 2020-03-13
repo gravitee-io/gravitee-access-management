@@ -37,11 +37,11 @@ public class ClientCredentialsAuthHandlerTest extends GraviteeAuthHandlerTestBas
             rc.response().end();
         };
 
-        router.route("/token/*")
+        router.route("/token")
                 .handler(ClientCredentialsAuthHandler.create(new DummyAuthProvider()).getDelegate())
                 .handler(handler);
 
-        testRequest(HttpMethod.GET, "/token/", 401, "Unauthorized");
+        testRequest(HttpMethod.GET, "/token", 401, "Unauthorized");
 
         // Now try again with credentials
         testRequest(HttpMethod.GET, "/token?client_id=my-client&client_secret=my-secret", resp -> {

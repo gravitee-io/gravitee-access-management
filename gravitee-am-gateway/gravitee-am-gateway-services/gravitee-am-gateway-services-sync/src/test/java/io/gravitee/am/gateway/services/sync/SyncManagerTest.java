@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.reactor.impl.DefaultClientManager;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
@@ -177,7 +178,7 @@ public class SyncManagerTest {
 
         Event event = new Event();
         event.setType(Type.DOMAIN);
-        event.setPayload(new Payload("domain-1", "domain-1", Action.DELETE));
+        event.setPayload(new Payload("domain-1", ReferenceType.DOMAIN, "domain-1", Action.DELETE));
 
         when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Single.just(Collections.singletonList(event)));
 
@@ -203,7 +204,7 @@ public class SyncManagerTest {
 
         Event event = new Event();
         event.setType(Type.DOMAIN);
-        event.setPayload(new Payload("domain-1", "domain-1", Action.UPDATE));
+        event.setPayload(new Payload("domain-1", ReferenceType.DOMAIN, "domain-1", Action.UPDATE));
 
         final Domain domainToUpdate = new Domain();
         domainToUpdate.setId("domain-1");
@@ -231,7 +232,7 @@ public class SyncManagerTest {
 
         Event event = new Event();
         event.setType(Type.IDENTITY_PROVIDER);
-        event.setPayload(new Payload("idp-1", "domain-1", Action.UPDATE));
+        event.setPayload(new Payload("idp-1", ReferenceType.DOMAIN, "domain-1", Action.UPDATE));
 
         when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Single.just(Collections.singletonList(event)));
 
@@ -254,7 +255,7 @@ public class SyncManagerTest {
 
         Event event = new Event();
         event.setType(Type.APPLICATION);
-        event.setPayload(new Payload("client-1", "domain-1", Action.CREATE));
+        event.setPayload(new Payload("client-1", ReferenceType.DOMAIN, "domain-1", Action.CREATE));
 
         when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Single.just(Collections.singletonList(event)));
 
@@ -276,7 +277,7 @@ public class SyncManagerTest {
 
         Event event = new Event();
         event.setType(Type.CERTIFICATE);
-        event.setPayload(new Payload("certificate-1", "domain-1", Action.CREATE));
+        event.setPayload(new Payload("certificate-1", ReferenceType.DOMAIN, "domain-1", Action.CREATE));
 
         when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Single.just(Collections.singletonList(event)));
 

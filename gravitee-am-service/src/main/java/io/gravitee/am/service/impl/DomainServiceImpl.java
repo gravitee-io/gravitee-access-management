@@ -196,7 +196,7 @@ public class DomainServiceImpl implements DomainService {
                 })
                 // create event for sync process
                 .flatMap(domain -> {
-                    Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), domain.getId(), Action.CREATE));
+                    Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), ReferenceType.DOMAIN, domain.getId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(domain));
                 })
                 .onErrorResumeNext(ex -> {
@@ -237,7 +237,7 @@ public class DomainServiceImpl implements DomainService {
                     return domainRepository.update(domain)
                             // create event for sync process
                             .flatMap(domain1 -> {
-                                Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), domain1.getId(), Action.UPDATE));
+                                Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(domain1));
                             })
                             .doOnSuccess(domain1 -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1)))
@@ -264,7 +264,7 @@ public class DomainServiceImpl implements DomainService {
                 })
                 // create event for sync process
                 .flatMap(domain1 -> {
-                    Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), domain1.getId(), Action.UPDATE));
+                    Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(domain1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -287,7 +287,7 @@ public class DomainServiceImpl implements DomainService {
                     return domainRepository.update(toPatch)
                             // create event for sync process
                             .flatMap(domain1 -> {
-                                Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), domain1.getId(), Action.UPDATE));
+                                Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(domain1));
                             })
                             .doOnSuccess(domain1 -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1)))
@@ -434,7 +434,7 @@ public class DomainServiceImpl implements DomainService {
                                     })
                             )
                             .andThen(domainRepository.delete(domainId))
-                            .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, domainId, Action.DELETE)))))
+                            .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, ReferenceType.DOMAIN, domainId, Action.DELETE)))))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).domain(domain)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).throwable(throwable)));
                 })

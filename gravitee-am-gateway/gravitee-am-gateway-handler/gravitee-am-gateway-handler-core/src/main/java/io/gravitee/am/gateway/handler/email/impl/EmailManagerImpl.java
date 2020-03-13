@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.email.EmailManager;
 import io.gravitee.am.gateway.handler.vertx.view.freemarker.DomainBasedEmailTemplateLoader;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.EmailRepository;
 import io.gravitee.common.event.Event;
@@ -104,7 +105,7 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
 
     @Override
     public void onEvent(Event<EmailEvent, Payload> event) {
-        if (domain.getId().equals(event.content().getDomain())) {
+        if (event.content().getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(event.content().getReferenceId())) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:

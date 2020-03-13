@@ -18,6 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.utils.SetterUtils;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -30,7 +31,7 @@ public class PatchOrganization {
     public PatchOrganization() {
     }
 
-    private Optional<Set<String>> identities = Optional.empty();
+    private Optional<List<String>> identities = Optional.empty();
 
     public Organization patch(Organization _toPatch) {
         // create new object for audit purpose (patch json result)
@@ -41,7 +42,7 @@ public class PatchOrganization {
         return toPatch;
     }
 
-    public void setIdentities(Set<String> identities) {
+    public void setIdentities(List<String> identities) {
         this.identities = Optional.ofNullable(identities);
     }
 }

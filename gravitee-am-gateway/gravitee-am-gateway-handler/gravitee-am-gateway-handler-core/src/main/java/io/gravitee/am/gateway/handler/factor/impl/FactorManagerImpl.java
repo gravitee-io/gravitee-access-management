@@ -21,6 +21,7 @@ import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.factor.FactorManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.factor.core.FactorPluginManager;
 import io.gravitee.am.service.FactorService;
@@ -89,7 +90,7 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
 
     @Override
     public void onEvent(Event<FactorEvent, Payload> event) {
-        if (domain.getId().equals(event.content().getDomain())) {
+        if (event.content().getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(event.content().getReferenceId())) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:

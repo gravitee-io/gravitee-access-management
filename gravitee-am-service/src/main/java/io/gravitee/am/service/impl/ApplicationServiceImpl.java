@@ -26,13 +26,13 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
@@ -274,7 +274,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return applicationRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
                 .flatMapSingle(existingApplication -> {
-                    Application toPatch  = patchApplication.patch(existingApplication);
+                    Application toPatch = patchApplication.patch(existingApplication);
                     applicationTemplateManager.apply(toPatch);
                     return update0(domain, existingApplication, toPatch, principal);
                 })
@@ -307,7 +307,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 })
                 // create event for sync process
                 .flatMap(application1 -> {
-                    Event event = new Event(Type.APPLICATION, new Payload(application1.getId(), application1.getDomain(), Action.UPDATE));
+                    Event event = new Event(Type.APPLICATION, new Payload(application1.getId(), ReferenceType.DOMAIN, application1.getDomain(), Action.UPDATE));
                     return eventService.create(event).flatMap(domain1 -> Single.just(application1));
                 })
                 .doOnSuccess(updatedApplication -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).application(updatedApplication)))
@@ -329,7 +329,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
                 .flatMapCompletable(application -> {
                     // create event for sync process
-                    Event event = new Event(Type.APPLICATION, new Payload(application.getId(), application.getDomain(), Action.DELETE));
+                    Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.DELETE));
                     return applicationRepository.delete(id)
                             .andThen(eventService.create(event).toCompletable())
                             // delete email templates
@@ -470,7 +470,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 })
                 // create event for sync process
                 .flatMap(application1 -> {
-                    Event event = new Event(Type.APPLICATION, new Payload(application.getId(), application.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(domain1 -> Single.just(application));
                 })
                 .doOnSuccess(application1 -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).application(application1)))
@@ -489,7 +489,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .flatMap(applicationRepository::update)
                 // create event for sync process
                 .flatMap(application1 -> {
-                    Event event = new Event(Type.APPLICATION, new Payload(application1.getId(), application1.getDomain(), Action.UPDATE));
+                    Event event = new Event(Type.APPLICATION, new Payload(application1.getId(), ReferenceType.DOMAIN, application1.getDomain(), Action.UPDATE));
                     return eventService.create(event).flatMap(domain1 -> Single.just(application1));
                 })
                 .doOnSuccess(application -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_UPDATED).oldValue(currentApplication).application(application)))
@@ -563,7 +563,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(application.getDomain())))
                 .flatMapSingle(domain -> {
                     //check redirect_uri
-                    if(GrantTypeUtils.isRedirectUriRequired(oAuthSettings.getGrantTypes()) && CollectionUtils.isEmpty(oAuthSettings.getRedirectUris())) {
+                    if (GrantTypeUtils.isRedirectUriRequired(oAuthSettings.getGrantTypes()) && CollectionUtils.isEmpty(oAuthSettings.getRedirectUris())) {
                         return Single.error(new InvalidRedirectUriException());
                     }
 
@@ -574,7 +574,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                             try {
                                 URI uri = UriBuilder.fromURIString(redirectUri).build();
 
-                                if(uri.getScheme()==null) {
+                                if (uri.getScheme() == null) {
                                     return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + " is malformed"));
                                 }
 
@@ -593,8 +593,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 if (uri.getFragment() != null) {
                                     return Single.error(new InvalidRedirectUriException("redirect_uri with fragment is forbidden"));
                                 }
-                            }
-                            catch (IllegalArgumentException | URISyntaxException ex) {
+                            } catch (IllegalArgumentException | URISyntaxException ex) {
                                 return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + " is malformed"));
                             }
                         }

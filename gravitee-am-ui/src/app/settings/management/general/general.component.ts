@@ -28,7 +28,7 @@ import { AuthService } from "../../../services/auth.service";
 export class ManagementGeneralComponent implements OnInit {
   settings: any;
   identityProviders: any[] = [];
-  oauth2IdentityProviders: any[] = [];
+  socialIdentities: any[] = [];
   readonly: boolean;
 
   constructor(private providerService: ProviderService,
@@ -41,18 +41,23 @@ export class ManagementGeneralComponent implements OnInit {
     this.settings = this.route.snapshot.data['settings'];
     this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['management_settings_update']);
     this.platformService.identityProviders().subscribe(data => {
+
+      // Separate all idps and all social idps.
       this.identityProviders = data.filter(idp => !idp.external);
-      this.oauth2IdentityProviders = data.filter(idp => idp.external);
+      this.socialIdentities = data.filter(idp => idp.external);
+
+      // Prepare the list of selected idps and social idps.
+      this.settings.identityProviders = this.identityProviders.filter(idp => !idp.external && this.settings.identities.includes(idp.id)).map(idp => idp.id);
+      this.settings.socialIdentities = this.socialIdentities.filter(idp => idp.external && this.settings.identities.includes(idp.id)).map(idp => idp.id);
     })
   }
 
   update() {
     const settings = {};
-    settings['identities'] = this.settings.identities;
+    settings['identities'] = this.settings.identityProviders.concat(this.settings.socialIdentities);
+
     this.platformService.patchSettings(settings).subscribe(response => {
-      this.settings = response;
       this.snackbarService.open('Settings updated');
     });
   }
-
 }

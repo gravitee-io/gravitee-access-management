@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
@@ -111,7 +112,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     @Override
     public void onEvent(Event<ExtensionGrantEvent, Payload> event) {
-        if (domain.getId().equals(event.content().getDomain())) {
+        if (event.content().getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(event.content().getReferenceId())) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:

@@ -16,11 +16,10 @@
 package io.gravitee.am.management.standalone.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.management.core.spring.CoreConfiguration;
-import io.gravitee.am.management.jetty.spring.JettyContainerConfiguration;
 import io.gravitee.am.management.repository.spring.RepositoryConfiguration;
 import io.gravitee.am.management.service.spring.ServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
+import io.gravitee.am.management.standalone.server.ManagementApiServer;
 import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
 import io.gravitee.am.plugins.factor.spring.FactorConfiguration;
@@ -33,9 +32,12 @@ import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
+import io.vertx.reactivex.core.Vertx;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -46,21 +48,24 @@ import org.springframework.context.annotation.Import;
 @Import({
         VertxConfiguration.class,
         PluginConfiguration.class,
-        // TODO: Jetty configuration should be loaded implicitely (using plugin system ?)
-        io.gravitee.am.service.spring.ServiceConfiguration.class,
-        JettyContainerConfiguration.class,
+        ManagementApiServer.class,
         ServiceConfiguration.class,
+        io.gravitee.am.service.spring.ServiceConfiguration.class,
         RepositoryConfiguration.class,
         IdentityProviderConfiguration.class,
         CertificateConfiguration.class,
         ExtensionGrantConfiguration.class,
         ReporterConfiguration.class,
         PolicyConfiguration.class,
-        CoreConfiguration.class,
         AlertPluginConfiguration.class,
         FactorConfiguration.class
 })
 public class StandaloneConfiguration {
+
+    @Bean
+    public Vertx vertx(io.vertx.core.Vertx vertx) {
+        return Vertx.newInstance(vertx);
+    }
 
     @Bean
     public NodeFactory node() {
